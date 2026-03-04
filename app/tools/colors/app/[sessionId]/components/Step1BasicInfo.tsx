@@ -155,7 +155,7 @@ export function Step1BasicInfo({ project, onNext, onSaveField }: Step1Props) {
             value={brandName}
             onChange={(e) => setBrandName(e.target.value)}
             onBlur={() => autoSave('brand_name', brandName.trim())}
-            placeholder="例: brandconnect"
+            placeholder="例: branding.bz"
             maxLength={100}
             className={errors.brandName ? 'border-red-400' : ''}
           />

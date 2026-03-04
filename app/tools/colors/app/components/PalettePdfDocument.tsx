@@ -241,7 +241,7 @@ export function PalettePdfDocument({
         {/* フッター */}
         <Text style={styles.footer}>Page 1</Text>
         {showWatermark && (
-          <Text style={styles.watermark}>Created with brandconnect</Text>
+          <Text style={styles.watermark}>Created with branding.bz</Text>
         )}
       </Page>
     </Document>

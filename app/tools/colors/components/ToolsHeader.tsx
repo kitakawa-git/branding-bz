@@ -17,7 +17,7 @@ export function ToolsHeader({ onSignOut, showSignOut = false }: ToolsHeaderProps
           href="/tools/colors"
           className="text-lg font-bold text-gray-900 no-underline hover:opacity-80"
         >
-          brandconnect
+          branding.bz
           <span className="ml-2 text-sm font-normal text-gray-500">
             カラー定義ツール
           </span>

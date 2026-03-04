@@ -129,7 +129,7 @@ export default function ToolsAuthPage() {
           <CardContent className="p-10">
             <div className="mb-8 text-center">
               <h1 className="mb-2 text-2xl font-bold text-white">
-                brandconnect
+                branding.bz
               </h1>
               <p className="m-0 text-sm text-[hsl(216_12%_70%)]">
                 {mode === 'login' ? 'カラー定義ツールにログイン' : 'アカウントを作成'}
@@ -220,7 +220,7 @@ export default function ToolsAuthPage() {
             </p>
 
             <p className="mb-0 mt-3 text-center text-xs text-[hsl(216_12%_60%)]">
-              brandconnect本体をご利用の方も
+              branding.bz本体をご利用の方も
               <br />
               同じアカウントでログインできます
             </p>

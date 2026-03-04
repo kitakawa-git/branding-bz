@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'ブランドカラー定義ツール | brandconnect',
+  title: 'ブランドカラー定義ツール | branding.bz',
   description: 'AIがガイドする、ブランドに最適なカラーパレット策定ツール。プライマリ・セカンダリ・アクセントカラーをプロ品質で定義。',
 }
 

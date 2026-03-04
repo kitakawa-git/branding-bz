@@ -22,7 +22,7 @@ export function Step5Export({
 }: Step5ExportProps) {
   const palette: PaletteProposal = project.final_palette || project.current_palette || project.proposals[0]
   const [exporting, setExporting] = useState<string | null>(null)
-  const [linked, setLinked] = useState(project.linked_to_brandconnect)
+  const [linked, setLinked] = useState(project.linked_to_brandconnect) // DB列名はそのまま
   const [confirmed, setConfirmed] = useState(!!project.final_palette)
 
   const handleConfirm = async () => {
@@ -92,7 +92,7 @@ export function Step5Export({
 
       if (!res.ok) {
         if (data.needsAccount) {
-          toast.error('brandconnectアカウントとの連携が必要です')
+          toast.error('branding.bzアカウントとの連携が必要です')
         } else {
           toast.error(data.error || '連携に失敗しました')
         }
@@ -100,7 +100,7 @@ export function Step5Export({
       }
 
       setLinked(true)
-      toast.success('brandconnect本体に連携しました')
+      toast.success('branding.bz本体に連携しました')
     } catch {
       toast.error('連携中にエラーが発生しました')
     } finally {
@@ -209,7 +209,7 @@ export function Step5Export({
               <p className="mt-0.5 text-xs text-gray-500">カスタムプロパティをクリップボードに</p>
             </button>
 
-            {/* brandconnect連携 */}
+            {/* branding.bz連携 */}
             <button
               onClick={handleLink}
               disabled={linked || exporting === 'link'}
@@ -222,7 +222,7 @@ export function Step5Export({
                 </svg>
               </div>
               <p className="text-sm font-bold text-gray-900">
-                {linked ? '連携済み' : 'brandconnectに連携'}
+                {linked ? '連携済み' : 'branding.bzに連携'}
               </p>
               <p className="mt-0.5 text-xs text-gray-500">
                 {linked ? 'ビジュアルアイデンティティに反映済み' : '管理画面のカラーパレットに反映'}

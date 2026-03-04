@@ -47,7 +47,7 @@ const STEPS = [
   { icon: '2', title: 'イメージ選択', description: 'キーワードやムードボードで方向性を設定' },
   { icon: '3', title: 'AI提案', description: 'AIが3パターンのカラーパレットを提案' },
   { icon: '4', title: '調整・磨き込み', description: 'AIチャットで細かく調整' },
-  { icon: '5', title: '確定・出力', description: 'PDF出力やbrandconnect連携' },
+  { icon: '5', title: '確定・出力', description: 'PDF出力やbranding.bz連携' },
 ]
 
 export default function ColorsLandingPage() {
@@ -60,7 +60,7 @@ export default function ColorsLandingPage() {
             href="/tools/colors"
             className="text-lg font-bold text-gray-900 no-underline"
           >
-            brandconnect
+            branding.bz
           </Link>
           <Link href="/tools/colors/auth">
             <Button variant="outline" size="sm">ログイン</Button>
@@ -216,7 +216,7 @@ export default function ColorsLandingPage() {
       {/* フッター */}
       <footer className="border-t py-8">
         <div className="mx-auto max-w-7xl px-6 text-center text-sm text-gray-400">
-          &copy; {new Date().getFullYear()} brandconnect. All rights reserved.
+          &copy; {new Date().getFullYear()} branding.bz — ID INC.
         </div>
       </footer>
     </div>
