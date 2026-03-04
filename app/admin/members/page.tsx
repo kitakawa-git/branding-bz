@@ -22,7 +22,8 @@ import {
 } from '@/components/ui/alert-dialog'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
 import { Button } from '@/components/ui/button'
-import { Check, Pencil, Eye, EyeOff, Trash2, Link2, ChevronDown, ChevronUp } from 'lucide-react'
+import { Check, Pencil, Eye, EyeOff, Trash2, Link2, ChevronDown, ChevronUp, Plus } from 'lucide-react'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
@@ -44,6 +45,7 @@ type MemberWithProfile = {
     name: string
     slug: string
     card_enabled: boolean
+    photo_url: string | null
   } | null
 }
 
@@ -115,7 +117,7 @@ export default function MembersPage() {
         Promise.race([
           supabase
             .from('members')
-            .select('id, auth_id, display_name, email, is_active, created_at, profile:profiles(id, name, slug, card_enabled)')
+            .select('id, auth_id, display_name, email, is_active, created_at, profile:profiles(id, name, slug, card_enabled, photo_url)')
             .eq('company_id', companyId)
             .order('created_at', { ascending: false }),
           new Promise<never>((_, reject) =>
@@ -131,7 +133,10 @@ export default function MembersPage() {
 
       if (membersResult.error) throw new Error(membersResult.error.message)
 
-      const membersData = (membersResult.data ?? []) as unknown as MemberWithProfile[]
+      const membersData = (membersResult.data ?? []).map((m: any) => {
+        const profile = Array.isArray(m.profile) ? m.profile[0] : m.profile
+        return { ...m, profile: profile || null } as MemberWithProfile
+      })
       const linksData = (linksResult.data ?? []) as InviteLink[]
 
       setMembers(membersData)
@@ -386,7 +391,7 @@ export default function MembersPage() {
           <p className="text-xs text-muted-foreground mb-4 m-0">名刺プロフィールも同時に作成されます</p>
 
           <form onSubmit={handleCreateMember}>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-2">
               <div>
                 <label className="text-xs font-bold mb-1.5 block">メールアドレス</label>
                 <Input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="member@example.com" required className="h-9" />
@@ -403,8 +408,8 @@ export default function MembersPage() {
                 <Input type="text" value={newDisplayName} onChange={(e) => setNewDisplayName(e.target.value)} placeholder="山田太郎" required className="h-9" />
               </div>
             </div>
-            <Button type="submit" disabled={creating} size="sm">
-              {creating ? '作成中...' : 'アカウントを作成'}
+            <Button type="submit" disabled={creating} variant="outline" className="py-2 px-4 text-[13px]">
+              {creating ? '作成中...' : <><Plus size={16} />アカウントを追加</>}
             </Button>
           </form>
         </CardContent>
@@ -507,7 +512,13 @@ export default function MembersPage() {
                   return (
                     <tr key={member.id} className="border-b last:border-b-0 hover:bg-muted/30 transition-colors">
                       <td className="px-4 py-3">
-                        <span className="text-sm font-medium text-foreground">{member.display_name}</span>
+                        <div className="flex items-center gap-2">
+                          <Avatar className="size-9 shrink-0">
+                            {member.profile?.photo_url && <AvatarImage src={member.profile.photo_url} alt={member.display_name} />}
+                            <AvatarFallback className="text-xs">{member.display_name.slice(0, 1)}</AvatarFallback>
+                          </Avatar>
+                          <span className="text-sm font-bold text-foreground">{member.display_name}</span>
+                        </div>
                       </td>
                       <td className="px-4 py-3">
                         <span className="text-xs text-foreground">{member.email}</span>

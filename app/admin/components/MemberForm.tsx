@@ -209,7 +209,7 @@ export function MemberForm({ initialData, companyId }: Props) {
             <h2 className="text-sm font-bold mb-3">スラッグ（URL） *</h2>
             <Input type="text" value={form.slug} onChange={(e) => handleChange('slug', e.target.value)} placeholder="taro-yamada" required className="h-10" />
             <p className="text-xs text-muted-foreground mt-1 m-0">
-              名刺ページURL: brandcommit.vercel.app/card/{form.slug || '...'}
+              名刺ページURL: branding.bz/card/{form.slug || '...'}
             </p>
           </div>
 

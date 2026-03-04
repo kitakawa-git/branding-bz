@@ -5,6 +5,7 @@
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
+import { fetchWithRetry } from '@/lib/supabase-fetch'
 import { useAuth } from '../../components/AuthProvider'
 import { ImageUpload } from '../../components/ImageUpload'
 import { Card, CardContent } from '@/components/ui/card'
@@ -14,7 +15,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { AutoResizeTextarea } from '@/components/ui/auto-resize-textarea'
 import { DEFAULT_SUBTITLES, type PortalSubtitles } from '@/lib/portal-subtitles'
-import { GripVertical, Trash2 } from 'lucide-react'
+import { GripVertical, Plus, Trash2 } from 'lucide-react'
 import {
   DndContext,
   closestCenter,
@@ -164,16 +165,12 @@ export default function BrandGuidelinesPage() {
     setFetchError('')
 
     try {
-      const result = await Promise.race([
-        supabase
-          .from('brand_guidelines')
-          .select('*')
-          .eq('company_id', companyId)
-          .single(),
-        new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('timeout')), 10000)
-        ),
-      ])
+      const { data, error: fetchErr } = await fetchWithRetry(() =>
+        supabase.from('brand_guidelines').select('*').eq('company_id', companyId).single()
+      )
+      if (fetchErr) throw new Error(fetchErr)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const result = data as Record<string, any> | null
 
       // ポータルサブタイトル取得
       let fetchedSubtitlesData: PortalSubtitles | null = null
@@ -195,32 +192,32 @@ export default function BrandGuidelinesPage() {
         // サブタイトル取得失敗は無視
       }
 
-      if (result.data) {
-        const parsedId = result.data.id as string
+      if (result) {
+        const parsedId = result.id as string
         const parsedGuidelines: Guidelines = {
-          slogan: result.data.slogan || '',
-          concept_visual_url: result.data.concept_visual_url || '',
-          brand_video_url: result.data.brand_video_url || '',
-          brand_statement: result.data.brand_statement || '',
-          mission: result.data.mission || '',
-          vision: result.data.vision || '',
-          values: ((result.data.values as { name: string; description: string; added_index?: number }[]) || []).map((v, i) => ({
+          slogan: result.slogan || '',
+          concept_visual_url: result.concept_visual_url || '',
+          brand_video_url: result.brand_video_url || '',
+          brand_statement: result.brand_statement || '',
+          mission: result.mission || '',
+          vision: result.vision || '',
+          values: ((result.values as { name: string; description: string; added_index?: number }[]) || []).map((v, i) => ({
             ...v,
             added_index: v.added_index ?? i,
           })),
-          values_sort: (result.data.values_sort as 'registered' | 'custom') || 'registered',
-          brand_story: result.data.brand_story || '',
-          history: result.data.history || [],
-          business_content: ((result.data.business_content as { title: string; description: string; added_index?: number }[]) || []).map((b, i) => ({
+          values_sort: (result.values_sort as 'registered' | 'custom') || 'registered',
+          brand_story: result.brand_story || '',
+          history: result.history || [],
+          business_content: ((result.business_content as { title: string; description: string; added_index?: number }[]) || []).map((b, i) => ({
             ...b,
             added_index: b.added_index ?? i,
           })),
-          business_content_sort: (result.data.business_content_sort as 'registered' | 'custom') || 'registered',
-          traits: ((result.data.traits as { name: string; score: number; description: string; added_index?: number }[]) || []).map((t, i) => ({
+          business_content_sort: (result.business_content_sort as 'registered' | 'custom') || 'registered',
+          traits: ((result.traits as { name: string; score: number; description: string; added_index?: number }[]) || []).map((t, i) => ({
             ...t,
             added_index: t.added_index ?? i,
           })),
-          traits_sort: (result.data.traits_sort as 'registered' | 'custom') || 'registered',
+          traits_sort: (result.traits_sort as 'registered' | 'custom') || 'registered',
         }
         setGuidelinesId(parsedId)
         setGuidelines(parsedGuidelines)
@@ -233,9 +230,7 @@ export default function BrandGuidelinesPage() {
       }
     } catch (err) {
       console.error('[BrandGuidelines] データ取得エラー:', err)
-      const msg = err instanceof Error && err.message === 'timeout'
-        ? 'データの取得がタイムアウトしました'
-        : 'データの取得に失敗しました'
+      const msg = err instanceof Error ? err.message : 'データの取得に失敗しました'
       setFetchError(msg)
     } finally {
       setLoading(false)
@@ -663,7 +658,7 @@ export default function BrandGuidelinesPage() {
               )}
               {guidelines.values.length < 10 && (
                 <Button type="button" variant="outline" onClick={addValue} className="py-2 px-4 text-[13px]">
-                  + バリューを追加
+                  <Plus size={16} />バリューを追加
                 </Button>
               )}
             </div>
@@ -710,7 +705,7 @@ export default function BrandGuidelinesPage() {
                 </div>
               ))}
               <Button type="button" variant="outline" onClick={addHistory} className="py-2 px-4 text-[13px]">
-                + 沿革を追加
+                <Plus size={16} />沿革を追加
               </Button>
             </div>
 
@@ -762,7 +757,7 @@ export default function BrandGuidelinesPage() {
                 </>
               )}
               <Button type="button" variant="outline" onClick={addBusiness} className="py-2 px-4 text-[13px]">
-                + 事業内容を追加
+                <Plus size={16} />事業内容を追加
               </Button>
             </div>
           </CardContent>
@@ -817,7 +812,7 @@ export default function BrandGuidelinesPage() {
               )}
               {guidelines.traits.length < 5 && (
                 <Button type="button" variant="outline" onClick={addTrait} className="py-2 px-4 text-[13px]">
-                  + 特性を追加
+                  <Plus size={16} />特性を追加
                 </Button>
               )}
             </div>

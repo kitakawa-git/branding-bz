@@ -175,7 +175,7 @@ export default function AnnouncementsListPage() {
         <h1 className="text-2xl font-bold text-foreground">お知らせ管理</h1>
         <Button asChild>
           <Link href="/admin/announcements/new">
-            <Plus size={16} className="mr-1.5" />
+            <Plus size={16} />
             新規作成
           </Link>
         </Button>

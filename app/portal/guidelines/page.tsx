@@ -6,6 +6,9 @@ import { supabase } from '@/lib/supabase'
 import { fetchWithRetry } from '@/lib/supabase-fetch'
 import { usePortalAuth } from '../components/PortalAuthProvider'
 import { getSubtitle } from '@/lib/portal-subtitles'
+import { useBrandFonts } from '@/hooks/useBrandFonts'
+import { BrandFontLoader } from '@/components/BrandFontLoader'
+import { getCssFontFamily } from '@/lib/brand-fonts'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
@@ -54,6 +57,9 @@ function getYouTubeEmbedUrl(url: string): string | null {
 
 export default function PortalGuidelinesPage() {
   const { companyId, portalSubtitles } = usePortalAuth()
+  const brandFonts = useBrandFonts(companyId)
+  const primaryStyle = brandFonts ? { fontFamily: getCssFontFamily(brandFonts.primary_font) } : undefined
+  const secondaryStyle = brandFonts ? { fontFamily: getCssFontFamily(brandFonts.secondary_font) } : undefined
   const cacheKey = `portal-guidelines-${companyId}`
   const cached = companyId ? getPageCache<Guidelines>(cacheKey) : null
   const [data, setData] = useState<Guidelines | null>(cached)
@@ -96,7 +102,7 @@ export default function PortalGuidelinesPage() {
   }, [companyId, cacheKey])
 
   if (loading) return (
-    <div className="max-w-4xl mx-auto px-5 py-8 space-y-6">
+    <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
       <div>
         <Skeleton className="h-8 w-40" />
         <Skeleton className="h-4 w-64 mt-2" />
@@ -163,7 +169,9 @@ export default function PortalGuidelinesPage() {
   const embedUrl = data.brand_video_url ? getYouTubeEmbedUrl(data.brand_video_url) : null
 
   return (
-    <div className="max-w-4xl mx-auto px-5 py-8 space-y-6">
+    <>
+    <BrandFontLoader fonts={brandFonts} />
+    <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-foreground mb-1">ブランド方針</h1>
         <p className="text-sm text-muted-foreground">
@@ -179,7 +187,7 @@ export default function PortalGuidelinesPage() {
               {data.slogan && (
                 <div>
                   <h2 className="text-sm font-bold text-foreground mb-2 tracking-wide">スローガン</h2>
-                  <p className="text-xl font-bold text-foreground m-0">{data.slogan}</p>
+                  <p className="text-3xl font-bold text-foreground m-0" style={primaryStyle}>{data.slogan}</p>
                 </div>
               )}
               {data.concept_visual_url && (
@@ -220,7 +228,7 @@ export default function PortalGuidelinesPage() {
               {data.brand_statement && (
                 <div>
                   <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">メッセージ</h2>
-                  <p className="text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0">{data.brand_statement}</p>
+                  <p className="text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0" style={secondaryStyle}>{data.brand_statement}</p>
                 </div>
               )}
             </CardContent>
@@ -236,13 +244,13 @@ export default function PortalGuidelinesPage() {
               {data.mission && (
                 <div>
                   <h2 className="text-sm font-bold text-foreground mb-2 tracking-wide">ミッション</h2>
-                  <p className="text-xl font-bold text-foreground m-0">{data.mission}</p>
+                  <p className="text-2xl font-bold text-foreground m-0" style={primaryStyle}>{data.mission}</p>
                 </div>
               )}
               {data.vision && (
                 <div>
                   <h2 className="text-sm font-bold text-foreground mb-2 tracking-wide">ビジョン</h2>
-                  <p className="text-xl font-bold text-foreground m-0">{data.vision}</p>
+                  <p className="text-2xl font-bold text-foreground m-0" style={primaryStyle}>{data.vision}</p>
                 </div>
               )}
               {filteredValues.length > 0 && (
@@ -251,11 +259,11 @@ export default function PortalGuidelinesPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {filteredValues.map((v, i) => (
                       <div key={i} className="rounded-lg border border-border bg-background p-5">
-                        <p className="text-base font-bold text-foreground mb-1.5 m-0">
+                        <p className="text-lg font-bold text-foreground mb-1.5 m-0" style={primaryStyle}>
                           {v.name}
                         </p>
                         {v.description && (
-                          <p className="text-sm text-muted-foreground leading-relaxed m-0">
+                          <p className="text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0" style={secondaryStyle}>
                             {v.description}
                           </p>
                         )}
@@ -277,7 +285,7 @@ export default function PortalGuidelinesPage() {
               {data.brand_story && (
                 <div>
                   <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">ブランドストーリー</h2>
-                  <p className="text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0">{data.brand_story}</p>
+                  <p className="text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0" style={secondaryStyle}>{data.brand_story}</p>
                 </div>
               )}
               {filteredHistory.length > 0 && (
@@ -309,9 +317,9 @@ export default function PortalGuidelinesPage() {
                           {String(i + 1).padStart(2, '0')}
                         </span>
                         <div className="flex-1 min-w-0">
-                          <span className="text-sm font-semibold text-foreground">{item.title}</span>
+                          <span className="text-base font-semibold text-foreground">{item.title}</span>
                           {item.description && (
-                            <p className="text-xs text-muted-foreground leading-relaxed mt-1 m-0">
+                            <p className="text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap mt-1 m-0">
                               {item.description}
                             </p>
                           )}
@@ -361,11 +369,11 @@ export default function PortalGuidelinesPage() {
                 {filteredTraits.map((trait, i) => (
                   <div key={i} className="rounded-lg border border-border bg-background p-4 flex items-center gap-4">
                     <div className="flex-1">
-                      <p className="text-sm font-bold text-foreground mb-0.5 m-0">
+                      <p className="text-base font-bold text-foreground mb-0.5 m-0">
                         {trait.name}
                       </p>
                       {trait.description && (
-                        <p className="text-xs text-muted-foreground leading-relaxed m-0">
+                        <p className="text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0">
                           {trait.description}
                         </p>
                       )}
@@ -384,5 +392,6 @@ export default function PortalGuidelinesPage() {
         </section>
       )}
     </div>
+    </>
   )
 }

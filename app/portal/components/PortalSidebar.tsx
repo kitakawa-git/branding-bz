@@ -116,7 +116,7 @@ export function PortalSidebar() {
                     )}
                   </div>
                   <div className={`flex flex-col leading-none ${slogan ? 'gap-0.5' : 'justify-center'}`}>
-                    <span className="font-semibold">{companyName || 'brandcommit'}</span>
+                    <span className="font-semibold">{companyName || 'brandconnect'}</span>
                     {slogan && <span className="text-xs text-sidebar-foreground/70">{slogan}</span>}
                   </div>
                 </Link>

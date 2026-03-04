@@ -3,13 +3,14 @@
 // 提供価値 編集ページ（全削除→全INSERT方式）
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { fetchWithRetry } from '@/lib/supabase-fetch'
 import { useAuth } from '../../components/AuthProvider'
 import { colors } from '../../components/AdminStyles'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
 import { DEFAULT_SUBTITLES, type PortalSubtitles } from '@/lib/portal-subtitles'
-import { Trash2 } from 'lucide-react'
+import { Plus, Trash2 } from 'lucide-react'
 
 type ValueItem = {
   title: string
@@ -41,16 +42,10 @@ export default function BrandValuesPage() {
     setFetchError('')
 
     try {
-      const result = await Promise.race([
-        supabase
-          .from('brand_values')
-          .select('*')
-          .eq('company_id', companyId)
-          .order('sort_order'),
-        new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('timeout')), 10000)
-        ),
-      ])
+      const { data, error: fetchErr } = await fetchWithRetry(() =>
+        supabase.from('brand_values').select('*').eq('company_id', companyId).order('sort_order')
+      )
+      if (fetchErr) throw new Error(fetchErr)
 
       // ポータルサブタイトル取得
       let fetchedSubtitle = ''
@@ -72,10 +67,9 @@ export default function BrandValuesPage() {
         // サブタイトル取得失敗は無視
       }
 
-      if (result.error) throw new Error(result.error.message)
       let parsedValues: ValueItem[] = []
-      if (result.data && result.data.length > 0) {
-        parsedValues = result.data.map((d: Record<string, unknown>) => ({
+      if (data && data.length > 0) {
+        parsedValues = data.map((d: Record<string, unknown>) => ({
           title: (d.title as string) || '',
           description: (d.description as string) || '',
         }))
@@ -89,9 +83,7 @@ export default function BrandValuesPage() {
       })
     } catch (err) {
       console.error('[BrandValues] データ取得エラー:', err)
-      const msg = err instanceof Error && err.message === 'timeout'
-        ? 'データの取得がタイムアウトしました'
-        : 'データの取得に失敗しました'
+      const msg = err instanceof Error ? err.message : 'データの取得に失敗しました'
       setFetchError(msg)
     } finally {
       setLoading(false)
@@ -323,7 +315,7 @@ export default function BrandValuesPage() {
             onClick={addValue}
             className="inline-block px-4 py-2 bg-transparent text-gray-900 border border-gray-200 rounded-lg text-sm cursor-pointer hover:bg-gray-50 transition-colors mb-5"
           >
-            + 提供価値を追加
+            <Plus size={16} className="inline" />提供価値を追加
           </button>
 
           <div>

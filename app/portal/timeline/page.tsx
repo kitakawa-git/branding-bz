@@ -731,7 +731,7 @@ export default function PortalTimelinePage() {
   // ============================================
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto px-5 py-8 space-y-6">
+      <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
         <div>
           <Skeleton className="h-8 w-56" />
           <Skeleton className="h-4 w-72 mt-2" />
@@ -775,7 +775,7 @@ export default function PortalTimelinePage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-5 py-8 space-y-6">
+    <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-foreground mb-1">Good Job タイムライン</h1>
         <p className="text-sm text-muted-foreground">
@@ -1183,7 +1183,7 @@ function PostCard({
 
         {/* Images */}
         {post.images && post.images.length > 0 && (
-          <div className="mb-3 max-h-[400px]">
+          <div className="mb-3">
             {post.images.length === 1 && (
               <img
                 src={post.images[0]}
@@ -1206,25 +1206,25 @@ function PostCard({
               </div>
             )}
             {post.images.length === 3 && (
-              <div className="grid grid-cols-3 gap-1 h-[320px]">
+              <div className="grid grid-cols-3 gap-1">
                 <img
                   src={post.images[0]}
                   alt=""
                   onClick={() => onImageClick(post.images[0])}
-                  className="col-span-2 w-full h-full object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
+                  className="col-span-2 w-full h-[320px] object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
                 />
                 <div className="flex flex-col gap-1">
                   <img
                     src={post.images[1]}
                     alt=""
                     onClick={() => onImageClick(post.images[1])}
-                    className="w-full flex-1 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
+                    className="w-full h-[159px] object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
                   />
                   <img
                     src={post.images[2]}
                     alt=""
                     onClick={() => onImageClick(post.images[2])}
-                    className="w-full flex-1 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
+                    className="w-full h-[157px] object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
                   />
                 </div>
               </div>

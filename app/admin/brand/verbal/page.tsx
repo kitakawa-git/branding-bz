@@ -4,6 +4,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
+import { fetchWithRetry } from '@/lib/supabase-fetch'
 import { useAuth } from '../../components/AuthProvider'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -12,7 +13,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { AutoResizeTextarea } from '@/components/ui/auto-resize-textarea'
 import { DEFAULT_SUBTITLES, type PortalSubtitles } from '@/lib/portal-subtitles'
-import { Trash2 } from 'lucide-react'
+import { Plus, Trash2 } from 'lucide-react'
 
 type Personality = {
   tone_of_voice: string
@@ -54,16 +55,15 @@ export default function VerbalIdentityPage() {
     setFetchError('')
 
     try {
-      const [personalityResult, termsResult] = await Promise.all([
-        Promise.race([
-          supabase.from('brand_personalities').select('*').eq('company_id', companyId).single(),
-          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 10000)),
-        ]),
-        Promise.race([
-          supabase.from('brand_terms').select('*').eq('company_id', companyId).order('sort_order'),
-          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 10000)),
-        ]),
+      const [personalityRes, termsRes] = await Promise.all([
+        fetchWithRetry(() => supabase.from('brand_personalities').select('*').eq('company_id', companyId).single()),
+        fetchWithRetry(() => supabase.from('brand_terms').select('*').eq('company_id', companyId).order('sort_order')),
       ])
+      if (personalityRes.error) throw new Error(personalityRes.error)
+      if (termsRes.error) throw new Error(termsRes.error)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const personalityData = personalityRes.data as Record<string, any> | null
+      const termsData = termsRes.data as Record<string, unknown>[] | null
 
       // ポータルサブタイトル取得
       let fetchedSubtitle = ''
@@ -87,18 +87,18 @@ export default function VerbalIdentityPage() {
 
       let parsedPersonalityId: string | null = null
       let parsedPersonality: Personality = { tone_of_voice: '' }
-      if (personalityResult.data) {
-        parsedPersonalityId = personalityResult.data.id
+      if (personalityData) {
+        parsedPersonalityId = personalityData.id
         parsedPersonality = {
-          tone_of_voice: personalityResult.data.tone_of_voice || '',
+          tone_of_voice: personalityData.tone_of_voice || '',
         }
         setPersonalityId(parsedPersonalityId)
         setPersonality(parsedPersonality)
       }
 
       let parsedTerms: TermItem[] = []
-      if (termsResult.data && termsResult.data.length > 0) {
-        parsedTerms = termsResult.data.map((d: Record<string, unknown>) => ({
+      if (termsData && termsData.length > 0) {
+        parsedTerms = termsData.map((d: Record<string, unknown>) => ({
           preferred_term: (d.preferred_term as string) || '',
           avoided_term: (d.avoided_term as string) || '',
           context: (d.context as string) || '',
@@ -116,9 +116,7 @@ export default function VerbalIdentityPage() {
       })
     } catch (err) {
       console.error('[VerbalIdentity] データ取得エラー:', err)
-      const msg = err instanceof Error && err.message === 'timeout'
-        ? 'データの取得がタイムアウトしました'
-        : 'データの取得に失敗しました'
+      const msg = err instanceof Error ? err.message : 'データの取得に失敗しました'
       setFetchError(msg)
     } finally {
       setLoading(false)
@@ -456,7 +454,7 @@ export default function VerbalIdentityPage() {
               onClick={addTerm}
               className="py-2 px-4 text-[13px]"
             >
-              + 用語ルールを追加
+              <Plus size={16} />用語ルールを追加
             </Button>
           </CardContent>
         </Card>

@@ -87,7 +87,7 @@ export function Sidebar() {
             margin: 0,
             fontWeight: 'bold',
           }}>
-            brandcommit
+            brandconnect
           </h1>
         </Link>
         <p style={{

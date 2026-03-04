@@ -20,7 +20,7 @@ export function SuperAdminSidebar() {
       <div className="px-5 mb-8">
         <Link href="/superadmin" className="no-underline">
           <h1 className="text-white text-lg m-0 font-bold">
-            brandcommit
+            brandconnect
           </h1>
         </Link>
         <div className="inline-block mt-1.5 py-0.5 px-2 bg-amber-500 text-[#1e3a5f] text-[10px] font-bold rounded tracking-wide">

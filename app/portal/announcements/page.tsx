@@ -105,7 +105,7 @@ export default function PortalAnnouncementsPage() {
 
   if (loading) {
     return (
-      <div className="max-w-3xl mx-auto px-5 py-8">
+      <div className="max-w-3xl mx-auto px-5 pt-4 pb-8">
         <Skeleton className="h-8 w-32 mb-6" />
         <div className="flex gap-2 mb-6">
           {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-8 w-16 rounded-full" />)}
@@ -127,7 +127,7 @@ export default function PortalAnnouncementsPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-5 py-8">
+    <div className="max-w-3xl mx-auto px-5 pt-4 pb-8">
       <h1 className="text-2xl font-bold text-foreground mb-6">お知らせ</h1>
 
       {/* カテゴリフィルタ */}

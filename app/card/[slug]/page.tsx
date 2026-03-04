@@ -1,7 +1,9 @@
+import type { Metadata } from 'next'
 import { createClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
 import QRCode from 'qrcode'
 import { generateHighResQRDataURL, getQRFilename } from '@/lib/qr-download'
+import { parseFontsFromDB, getCssFontFamily, getGoogleFontsUrl } from '@/lib/brand-fonts'
 import { CardViewTracker } from './CardViewTracker'
 import { VCardButton } from './VCardButton'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
@@ -12,6 +14,34 @@ import { Mail, Phone, ExternalLink } from 'lucide-react'
 
 type Props = {
   params: Promise<{ slug: string }>
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  if (!supabaseUrl || !supabaseKey) return { title: 'brandconnect' }
+
+  const supabase = createClient(supabaseUrl, supabaseKey)
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('name, companies(name, logo_url)')
+    .eq('slug', slug)
+    .eq('card_enabled', true)
+    .single()
+
+  if (!profile) return { title: 'brandconnect' }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const companies = profile.companies as any
+  const companyName = companies?.name as string | undefined
+  const companyLogoUrl = companies?.logo_url as string | undefined
+  return {
+    title: {
+      absolute: companyName ? `${profile.name} | ${companyName}` : (profile.name || 'brandconnect'),
+    },
+    icons: { icon: companyLogoUrl || '/icon.svg' },
+  }
 }
 
 // 明暗判定: ブランドカラーに応じて読みやすい文字色（白or黒）を返す
@@ -116,6 +146,11 @@ export default async function CardPage({ params }: Props) {
   const guidelines = guidelinesRes.data
   const visuals = visualsRes.data
 
+  // ブランドフォント
+  const brandFonts = parseFontsFromDB(visuals?.fonts)
+  const primaryFontFamily = getCssFontFamily(brandFonts.primary_font)
+  const secondaryFontFamily = getCssFontFamily(brandFonts.secondary_font)
+
   // ブランドカラー
   const palette = visuals?.color_palette as { brand_colors?: { hex: string }[]; secondary_colors?: { hex: string }[]; accent_colors?: { hex: string }[] } | null
   const primaryColor = palette?.brand_colors?.[0]?.hex || '#1a1a1a'
@@ -140,7 +175,7 @@ export default async function CardPage({ params }: Props) {
     : []
 
   // QRコードをサーバーサイドで生成
-  const cardUrl = `https://brandcommit.vercel.app/card/${slug}`
+  const cardUrl = `https://branding.bz/card/${slug}`
   const qrDataUrl = await QRCode.toDataURL(cardUrl, {
     width: 160,
     margin: 1,
@@ -167,6 +202,10 @@ export default async function CardPage({ params }: Props) {
         '--brand-accent': accentColor,
       } as React.CSSProperties}
     >
+      {/* フォント読み込み */}
+      {/* eslint-disable-next-line @next/next/no-page-custom-font */}
+      <link rel="stylesheet" href={getGoogleFontsUrl(brandFonts)} />
+
       {/* アクセス記録（クライアントコンポーネント） */}
       <CardViewTracker profileId={profile.id} />
 
@@ -209,10 +248,10 @@ export default async function CardPage({ params }: Props) {
             </div>
           </div>
           {/* 名前・役職 */}
-          <div className="text-center pt-3 pb-6 px-5">
-            <h1 className="text-xl font-semibold mb-1 tracking-wide text-foreground">{profile.name}</h1>
-            <p className="text-sm text-muted-foreground m-0">
-              {profile.position} / {profile.department}
+          <div className="text-center pt-3 pb-1 px-5">
+            <h1 className="text-xl font-semibold mb-1 tracking-wide text-foreground" style={{ fontFamily: primaryFontFamily, fontWeight: 700 }}>{profile.name}</h1>
+            <p className="text-sm text-muted-foreground m-0" style={{ fontFamily: secondaryFontFamily }}>
+              {[profile.position, profile.department].filter(Boolean).join(' / ')}
             </p>
           </div>
         </>
@@ -229,18 +268,18 @@ export default async function CardPage({ params }: Props) {
               {profile.name?.charAt(0)}
             </AvatarFallback>
           </Avatar>
-          <h1 className="text-xl font-semibold mb-1 tracking-wide">{profile.name}</h1>
-          <p className="text-sm opacity-75 m-0">
-            {profile.position} / {profile.department}
+          <h1 className="text-xl font-semibold mb-1 tracking-wide" style={{ fontFamily: primaryFontFamily, fontWeight: 700 }}>{profile.name}</h1>
+          <p className="text-sm opacity-75 m-0" style={{ fontFamily: secondaryFontFamily }}>
+            {[profile.position, profile.department].filter(Boolean).join(' / ')}
           </p>
         </div>
       )}
 
       {/* コンテンツ */}
-      <div className="max-w-md mx-auto px-5 py-8 space-y-5">
+      <div className="max-w-md mx-auto px-5 pt-3 pb-8 space-y-5">
         {/* 2. 自己紹介 */}
         {profile.bio && (
-          <p className="text-sm leading-[1.8] text-foreground/80 m-0">
+          <p className="text-sm leading-[1.8] text-foreground/80 m-0" style={{ fontFamily: secondaryFontFamily }}>
             {profile.bio}
           </p>
         )}
@@ -308,29 +347,33 @@ export default async function CardPage({ params }: Props) {
         {company && (
           <Card className="bg-muted/50 border shadow-none">
             <CardHeader className="pb-0">
-              {company.logo_url && (
-                <img
-                  src={company.logo_url}
-                  alt={company.name}
-                  className="max-w-[120px] max-h-[48px] object-contain mb-2 block self-start"
-                />
-              )}
-              <CardTitle
-                className="text-lg"
-                style={{ color: primaryColor }}
-              >
-                {company.name}
-              </CardTitle>
-              {slogan && (
-                <CardDescription className="italic">
-                  {slogan}
-                </CardDescription>
-              )}
+              <div className="flex items-center gap-3">
+                {company.logo_url && (
+                  <img
+                    src={company.logo_url}
+                    alt={company.name}
+                    className="max-w-[120px] max-h-[48px] object-contain shrink-0"
+                  />
+                )}
+                <div>
+                  <CardTitle
+                    className="text-lg"
+                    style={{ color: primaryColor, fontFamily: primaryFontFamily }}
+                  >
+                    {company.name}
+                  </CardTitle>
+                  {slogan && (
+                    <CardDescription className="mt-0.5" style={{ fontFamily: primaryFontFamily }}>
+                      {slogan}
+                    </CardDescription>
+                  )}
+                </div>
+              </div>
             </CardHeader>
             {missionText && (
               <CardContent className="pt-4">
                 <Separator className="mb-4" />
-                <p className="text-[13px] text-foreground/70 leading-[1.8] m-0">
+                <p className="text-base font-bold text-foreground leading-[1.8] m-0 whitespace-pre-line" style={{ fontFamily: secondaryFontFamily }}>
                   {missionText}
                 </p>
               </CardContent>
@@ -386,7 +429,7 @@ export default async function CardPage({ params }: Props) {
             </h3>
             <Card className="bg-muted/50 border shadow-none">
               <CardContent className="p-5">
-                <p className="text-[13px] text-foreground/70 leading-[1.8] whitespace-pre-wrap m-0">
+                <p className="text-[13px] text-foreground/70 leading-[1.8] whitespace-pre-wrap m-0" style={{ fontFamily: secondaryFontFamily }}>
                   {brandStory}
                 </p>
               </CardContent>
@@ -439,7 +482,7 @@ export default async function CardPage({ params }: Props) {
         <div className="pt-2">
           <Separator className="mb-4" />
           <p className="text-center text-[11px] text-muted-foreground m-0">
-            Powered by brandcommit
+            Powered by brandconnect
           </p>
         </div>
       </div>

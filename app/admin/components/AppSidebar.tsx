@@ -40,6 +40,7 @@ import {
   LayoutDashboard,
   Bell,
   Target,
+  BookOpen,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -51,11 +52,11 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   { href: '/admin/dashboard', label: 'ダッシュボード', icon: LayoutDashboard },
-  { href: '/admin/announcements', label: 'お知らせ管理', icon: Bell },
-  { href: '/admin/kpi', label: '目標管理', icon: Target },
   { href: '/admin/company', label: 'ブランド基本情報', icon: Sparkles },
   { href: '/admin/members', label: 'アカウント管理', icon: Users },
+  { href: '/admin/kpi', label: '目標・KPI管理', icon: Target },
   { href: '/admin/card-template', label: 'QRコード出力', icon: CreditCard },
+  { href: '/admin/announcements', label: 'お知らせ管理', icon: Bell },
 ]
 
 const brandItems: NavItem[] = [
@@ -63,6 +64,10 @@ const brandItems: NavItem[] = [
   { href: '/admin/brand/strategy', label: 'ブランド戦略', icon: Compass },
   { href: '/admin/brand/visuals', label: 'ビジュアル', icon: Palette },
   { href: '/admin/brand/verbal', label: 'バーバル', icon: MessageSquare },
+]
+
+const utilityItems: NavItem[] = [
+  { href: '/admin/ci-manual', label: 'CIマニュアル出力', icon: BookOpen },
 ]
 
 export function AppSidebar() {
@@ -85,7 +90,7 @@ export function AppSidebar() {
                   <Settings2 className="size-4" />
                 </div>
                 <div className="flex flex-col gap-0.5 leading-none">
-                  <span className="font-semibold">brandcommit</span>
+                  <span className="font-semibold">brandconnect</span>
                   <span className="text-xs">管理画面</span>
                 </div>
               </Link>
@@ -126,6 +131,27 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {brandItems.map((item) => {
+                const Icon = item.icon
+                return (
+                  <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton asChild isActive={pathname.startsWith(item.href)}>
+                      <Link href={item.href}>
+                        <Icon size={18} />
+                        <span>{item.label}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* ユーティリティセクション */}
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {utilityItems.map((item) => {
                 const Icon = item.icon
                 return (
                   <SidebarMenuItem key={item.href}>

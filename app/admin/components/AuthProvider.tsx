@@ -9,6 +9,7 @@ import type { User } from '@supabase/supabase-js'
 import { clearPageCache } from '@/lib/page-cache'
 import { AppSidebar } from './AppSidebar'
 import { AdminHeader } from './AdminHeader'
+import { AdminDynamicTitle } from './AdminDynamicTitle'
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 
 type AuthContextType = {
@@ -236,13 +237,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // 認証済み + admin_users登録済み: サイドバー + ヘッダー + コンテンツ
   return (
     <AuthContext.Provider value={contextValue}>
+      <AdminDynamicTitle />
       <SidebarProvider
         style={{ '--sidebar-width': '19rem' } as React.CSSProperties}
       >
         <AppSidebar />
         <SidebarInset>
           <AdminHeader />
-          <main className="max-w-4xl mx-auto px-5 py-6 w-full">
+          <main className="max-w-4xl mx-auto px-5 pt-4 pb-6 w-full">
             {children}
           </main>
         </SidebarInset>

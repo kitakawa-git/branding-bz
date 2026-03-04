@@ -589,7 +589,7 @@ export default function KpiPage() {
   // ============================================
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto px-5 py-8 space-y-6">
+      <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-4 w-64" />
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none"><CardContent className="p-5"><Skeleton className="h-4 w-56 mb-3" /></CardContent></Card>
@@ -604,7 +604,7 @@ export default function KpiPage() {
   // ============================================
   if (!goal) {
     return (
-      <div className="max-w-4xl mx-auto px-5 py-8 space-y-6">
+      <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-foreground">目標・KPI</h1>
           <p className="text-sm text-muted-foreground mt-1">個人目標の設定とKPI管理</p>
@@ -660,7 +660,7 @@ export default function KpiPage() {
   const canReview = goalPeriod?.show_review_banner === true
 
   return (
-    <div className="max-w-4xl mx-auto px-5 py-8 space-y-6">
+    <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-foreground">目標・KPI</h1>
         <p className="text-sm text-muted-foreground mt-1">個人目標の設定とKPI管理</p>

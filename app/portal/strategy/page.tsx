@@ -6,6 +6,9 @@ import { supabase } from '@/lib/supabase'
 import { fetchWithRetry } from '@/lib/supabase-fetch'
 import { usePortalAuth } from '../components/PortalAuthProvider'
 import { getSubtitle } from '@/lib/portal-subtitles'
+import { useBrandFonts } from '@/hooks/useBrandFonts'
+import { BrandFontLoader } from '@/components/BrandFontLoader'
+import { getCssFontFamily } from '@/lib/brand-fonts'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
@@ -33,6 +36,8 @@ type ActionGuideline = {
 
 export default function PortalStrategyPage() {
   const { companyId, portalSubtitles } = usePortalAuth()
+  const brandFonts = useBrandFonts(companyId)
+  const secondaryStyle = brandFonts ? { fontFamily: getCssFontFamily(brandFonts.secondary_font) } : undefined
 
   type StrategyCache = {
     target: string
@@ -105,7 +110,7 @@ export default function PortalStrategyPage() {
   }, [companyId, cacheKey])
 
   if (loading) return (
-    <div className="max-w-4xl mx-auto px-5 py-8 space-y-6">
+    <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
       <div>
         <Skeleton className="h-8 w-40" />
         <Skeleton className="h-4 w-64 mt-2" />
@@ -159,7 +164,9 @@ export default function PortalStrategyPage() {
   const validPersonas = personas.filter(p => p.name)
 
   return (
-    <div className="max-w-4xl mx-auto px-5 py-8 space-y-6">
+    <>
+    <BrandFontLoader fonts={brandFonts} />
+    <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-foreground mb-1">ブランド戦略</h1>
         <p className="text-sm text-muted-foreground">
@@ -175,7 +182,7 @@ export default function PortalStrategyPage() {
               {target && (
                 <div>
                   <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">ターゲット</h2>
-                  <p className="text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0">{target}</p>
+                  <p className="text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0" style={secondaryStyle}>{target}</p>
                 </div>
               )}
               {validPersonas.length > 0 && (
@@ -188,7 +195,7 @@ export default function PortalStrategyPage() {
                     <p className="text-base font-bold text-foreground mb-0.5 m-0">
                       {persona.name}
                     </p>
-                    <p className="text-xs text-muted-foreground m-0">
+                    <p className="text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0">
                       {[persona.age_range, persona.occupation].filter(Boolean).join(' / ')}
                     </p>
                   </div>
@@ -282,9 +289,9 @@ export default function PortalStrategyPage() {
                       {String(i + 1).padStart(2, '0')}
                     </span>
                     <div className="flex-1 min-w-0">
-                      <span className="text-sm font-semibold text-foreground">{g.title}</span>
+                      <span className="text-base font-semibold text-foreground">{g.title}</span>
                       {g.description && (
-                        <p className="text-xs text-muted-foreground leading-relaxed mt-1 m-0">
+                        <p className="text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap mt-1 m-0">
                           {g.description}
                         </p>
                       )}
@@ -297,5 +304,6 @@ export default function PortalStrategyPage() {
         </section>
       )}
     </div>
+    </>
   )
 }

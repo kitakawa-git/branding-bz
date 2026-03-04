@@ -659,7 +659,7 @@ export default function PortalTopPage() {
     }, {})
 
   return (
-    <div className="max-w-4xl mx-auto px-5 pt-4 pb-10">
+    <div className="max-w-4xl mx-auto px-5 pb-10">
       {/* ===== 1. スローガン ===== */}
       <div className="text-center mb-8">
         <h1 className="text-4xl font-bold text-foreground">
@@ -729,10 +729,10 @@ export default function PortalTopPage() {
               </h2>
               <ArrowRight size={16} className="text-muted-foreground" />
             </Link>
-            <p className="text-xl font-bold text-foreground mb-4 m-0 leading-relaxed">
+            <p className="text-2xl font-bold text-foreground mb-4 m-0 leading-relaxed">
               {mission}
             </p>
-            <p className="text-sm text-muted-foreground leading-relaxed m-0">
+            <p className="text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0">
               デザインにおいてもブランディングにおいても日々の積み重ねと寄り添う気持ちが大切です。仕事の中での発見を綴り、一日一投稿を心がけましょう！
             </p>
           </CardContent>
@@ -771,22 +771,22 @@ export default function PortalTopPage() {
                   </Link>
                 </div>
                 {goalTitle && (
-                  <p className="text-xl font-semibold text-foreground m-0 mb-4 leading-relaxed">{goalTitle}</p>
+                  <p className="text-2xl font-semibold text-foreground m-0 mb-3 leading-relaxed">{goalTitle}</p>
                 )}
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs text-muted-foreground">KPI 総合進捗率</span>
-                  <span className="text-lg font-bold text-foreground">{overallProgress}%</span>
+                  <span className="text-2xl font-bold text-foreground">{overallProgress}%</span>
                 </div>
                 <Progress value={overallProgress} className="h-2 mb-4" animate />
                 {displayKpis.length > 0 && (
                   <div className="space-y-2">
                     {displayKpis.map(k => (
                       <div key={k.id} className="flex items-center gap-3">
-                        <span className="text-xs text-foreground flex-1 truncate">{k.title}</span>
+                        <span className="text-sm font-bold text-foreground flex-1 truncate">{k.title}</span>
                         <Badge variant="secondary" className={`text-[10px] px-1.5 py-0 shrink-0 ${STATUS_COLORS[k.status] || ''}`}>
                           {STATUS_LABELS[k.status] || k.status}
                         </Badge>
-                        <span className="text-xs font-semibold text-foreground w-10 text-right shrink-0">{k.progress}%</span>
+                        <span className="text-sm font-semibold text-foreground w-10 text-right shrink-0">{k.progress}%</span>
                       </div>
                     ))}
                   </div>

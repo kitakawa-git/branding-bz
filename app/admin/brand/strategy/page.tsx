@@ -4,6 +4,7 @@
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
+import { fetchWithRetry } from '@/lib/supabase-fetch'
 import { useAuth } from '../../components/AuthProvider'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -15,7 +16,7 @@ import { DEFAULT_SUBTITLES, type PortalSubtitles } from '@/lib/portal-subtitles'
 import { Label } from '@/components/ui/label'
 import { Slider } from '@/components/ui/slider'
 import { PositioningMap } from '@/components/PositioningMap'
-import { Trash2 } from 'lucide-react'
+import { Plus, Trash2 } from 'lucide-react'
 import type { PositioningMapData, PositioningMapItem, PositioningMapSize } from '@/lib/types/positioning-map'
 
 type PersonaItem = {
@@ -94,16 +95,10 @@ export default function BrandStrategyPage() {
     setFetchError('')
 
     try {
-      const result = await Promise.race([
-        supabase
-          .from('brand_personas')
-          .select('*')
-          .eq('company_id', companyId)
-          .order('sort_order'),
-        new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('timeout')), 10000)
-        ),
-      ])
+      const { data, error: fetchErr } = await fetchWithRetry(() =>
+        supabase.from('brand_personas').select('*').eq('company_id', companyId).order('sort_order')
+      )
+      if (fetchErr) throw new Error(fetchErr)
 
       // ポータルサブタイトル取得
       let fetchedSubtitlesData: PortalSubtitles | null = null
@@ -125,13 +120,12 @@ export default function BrandStrategyPage() {
         // サブタイトル取得失敗は無視
       }
 
-      if (result.error) throw new Error(result.error.message)
-      if (result.data && result.data.length > 0) {
-        const first = result.data[0] as Record<string, unknown>
+      if (data && data.length > 0) {
+        const first = data[0] as Record<string, unknown>
         const parsedTarget = (first.target as string) || ''
         const parsedMapData = (first.positioning_map_data as PositioningMapData) || null
         const parsedActionGuidelines = (first.action_guidelines as ActionGuideline[]) || []
-        const parsedPersonas = result.data.map((d: Record<string, unknown>) => ({
+        const parsedPersonas = data.map((d: Record<string, unknown>) => ({
           name: (d.name as string) || '',
           age_range: (d.age_range as string) || '',
           occupation: (d.occupation as string) || '',
@@ -155,9 +149,7 @@ export default function BrandStrategyPage() {
       }
     } catch (err) {
       console.error('[BrandStrategy] データ取得エラー:', err)
-      const msg = err instanceof Error && err.message === 'timeout'
-        ? 'データの取得がタイムアウトしました'
-        : 'データの取得に失敗しました'
+      const msg = err instanceof Error ? err.message : 'データの取得に失敗しました'
       setFetchError(msg)
     } finally {
       setLoading(false)
@@ -601,7 +593,7 @@ export default function BrandStrategyPage() {
                       onClick={() => addNeed(index)}
                       className="py-1.5 px-3 text-xs"
                     >
-                      + ニーズを追加
+                      <Plus size={16} />ニーズを追加
                     </Button>
                   </div>
 
@@ -633,7 +625,7 @@ export default function BrandStrategyPage() {
                       onClick={() => addPainPoint(index)}
                       className="py-1.5 px-3 text-xs"
                     >
-                      + 課題を追加
+                      <Plus size={16} />課題を追加
                     </Button>
                   </div>
                 </div>
@@ -646,7 +638,7 @@ export default function BrandStrategyPage() {
                   onClick={addPersona}
                   className="py-2 px-4 text-[13px]"
                 >
-                  + ペルソナを追加
+                  <Plus size={16} />ペルソナを追加
                 </Button>
               )}
             </div>
@@ -816,7 +808,7 @@ export default function BrandStrategyPage() {
                       onClick={addMapItem}
                       className="py-2 px-4 text-[13px]"
                     >
-                      + 項目を追加
+                      <Plus size={16} />項目を追加
                     </Button>
                   )}
                 </div>
@@ -896,7 +888,7 @@ export default function BrandStrategyPage() {
                 onClick={addGuideline}
                 className="py-1.5 px-3 text-xs"
               >
-                + 行動指針を追加
+                <Plus size={16} />行動指針を追加
               </Button>
             )}
           </CardContent>

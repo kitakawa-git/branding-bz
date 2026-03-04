@@ -7,6 +7,7 @@ import { useAuth } from '../components/AuthProvider'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -32,7 +33,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import { Switch } from '@/components/ui/switch'
-import { ChevronDown, ChevronUp, AlertCircle, CalendarDays, Trash2, Clock, Archive } from 'lucide-react'
+import { ChevronDown, ChevronUp, AlertCircle, CalendarDays, Trash2, Clock, Archive, Search } from 'lucide-react'
 import { toast } from 'sonner'
 
 // ============================================
@@ -161,6 +162,7 @@ export default function AdminKpiPage() {
   const [members, setMembers] = useState<MemberSummary[]>(cached?.members ?? [])
   const [loading, setLoading] = useState(!cached)
   const [filter, setFilter] = useState<'all' | 'no_goals' | 'low_progress'>('all')
+  const [searchQuery, setSearchQuery] = useState('')
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
   // ゴール期間
@@ -524,12 +526,22 @@ export default function AdminKpiPage() {
   // Filter
   // ============================================
   const filtered = useMemo(() => {
-    switch (filter) {
-      case 'no_goals': return members.filter(m => !m.goalText)
-      case 'low_progress': return [...members].sort((a, b) => a.overallProgress - b.overallProgress)
-      default: return members
+    let result = members
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase()
+      result = result.filter(m =>
+        m.name.toLowerCase().includes(q) ||
+        (m.position && m.position.toLowerCase().includes(q)) ||
+        (m.goalText && m.goalText.toLowerCase().includes(q)) ||
+        m.kpis.some(k => k.title.toLowerCase().includes(q))
+      )
     }
-  }, [members, filter])
+    switch (filter) {
+      case 'no_goals': return result.filter(m => !m.goalText)
+      case 'low_progress': return [...result].sort((a, b) => a.overallProgress - b.overallProgress)
+      default: return result
+    }
+  }, [members, filter, searchQuery])
 
   const stats = useMemo(() => {
     const total = members.length
@@ -560,7 +572,7 @@ export default function AdminKpiPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-foreground mb-6">目標管理</h1>
+      <h1 className="text-2xl font-bold text-foreground mb-6">目標・KPI管理</h1>
 
       {/* ===== 承認待ちバナー ===== */}
       {pendingPeriod && isPeriodExpired && (
@@ -658,34 +670,38 @@ export default function AdminKpiPage() {
         </CardContent>
       </Card>
 
-      {/* ===== 統計 ===== */}
-      <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-6">
-        <CardContent className="p-5">
+      {/* ===== 統計 + フィルター + メンバー一覧 ===== */}
+      <div className="border rounded-lg overflow-hidden bg-[hsl(0_0%_97%)]">
+        <div className="p-5 space-y-4">
           <div className="flex flex-wrap gap-4">
             <div className="text-sm"><span className="text-muted-foreground">全社員</span><span className="ml-1.5 font-bold">{stats.total}名</span></div>
             <div className="text-sm"><span className="text-muted-foreground">目標設定済み</span><span className="ml-1.5 font-bold text-green-600">{stats.withGoals}名</span></div>
             <div className="text-sm"><span className="text-muted-foreground">目標未設定</span><span className="ml-1.5 font-bold text-red-600">{stats.noGoals}名</span></div>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* ===== フィルター ===== */}
-      <div className="flex flex-wrap gap-2 mb-4">
-        {([{ key: 'all', label: 'すべて' }, { key: 'no_goals', label: '目標未設定者' }, { key: 'low_progress', label: '進捗率が低い順' }] as const).map(f => (
-          <button key={f.key} onClick={() => setFilter(f.key)} className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${filter === f.key ? 'bg-foreground text-background' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}>{f.label}</button>
-        ))}
-      </div>
-
-      {/* ===== メンバー一覧 ===== */}
-      {filtered.length === 0 ? (
-        <Card className="bg-[hsl(0_0%_97%)] border shadow-none"><CardContent className="p-10 text-center"><p className="text-sm text-muted-foreground">該当するメンバーがいません</p></CardContent></Card>
-      ) : (
-        <div className="space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            {([{ key: 'all', label: 'すべて' }, { key: 'no_goals', label: '目標未設定者' }, { key: 'low_progress', label: '進捗率が低い順' }] as const).map(f => (
+              <button key={f.key} onClick={() => setFilter(f.key)} className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${filter === f.key ? 'bg-foreground text-background' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}>{f.label}</button>
+            ))}
+            <div className="relative ml-auto">
+              <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="名前・目標・KPIで検索..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="h-8 w-52 pl-8 text-xs"
+              />
+            </div>
+          </div>
+        </div>
+        {filtered.length === 0 ? (
+          <div className="border-t p-10 text-center"><p className="text-sm text-muted-foreground">該当するメンバーがいません</p></div>
+        ) : (
+          <div className="divide-y border-t">
           {filtered.map(m => {
             const isExp = expandedId === m.auth_id
             return (
-              <Card key={m.auth_id} className="bg-[hsl(0_0%_97%)] border shadow-none">
-                <CardContent className="p-0">
+              <div key={m.auth_id} className="bg-[hsl(0_0%_97%)]">
                   <button onClick={() => setExpandedId(isExp ? null : m.auth_id)} className="w-full p-4 flex items-center gap-3 hover:bg-muted/30 transition-colors text-left">
                     <Avatar className="size-9 shrink-0">
                       {m.photo_url && <AvatarImage src={m.photo_url} alt={m.name} />}
@@ -772,12 +788,12 @@ export default function AdminKpiPage() {
                       {m.kpis.length === 0 && <p className="text-xs text-muted-foreground">KPIが設定されていません</p>}
                     </div>
                   )}
-                </CardContent>
-              </Card>
+              </div>
             )
           })}
-        </div>
-      )}
+          </div>
+        )}
+      </div>
 
       {/* ===== 過去の期間 ===== */}
       {archivedPeriods.length > 0 && (

@@ -60,7 +60,7 @@ export default function PortalLoginPage() {
         <CardContent className="p-10">
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold text-foreground mb-2">
-              brandcommit
+              brandconnect
             </h1>
             <p className="text-sm text-muted-foreground m-0">
               メンバーログイン

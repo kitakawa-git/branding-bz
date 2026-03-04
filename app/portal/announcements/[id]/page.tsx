@@ -194,7 +194,7 @@ export default function PortalAnnouncementDetailPage() {
 
   if (loading) {
     return (
-      <div className="max-w-3xl mx-auto px-5 py-8">
+      <div className="max-w-3xl mx-auto px-5 pt-4 pb-8">
         <Skeleton className="h-4 w-32 mb-6" />
         <Skeleton className="h-5 w-24 mb-3" />
         <Skeleton className="h-8 w-3/4 mb-4" />
@@ -212,14 +212,14 @@ export default function PortalAnnouncementDetailPage() {
 
   if (!announcement) {
     return (
-      <div className="max-w-3xl mx-auto px-5 py-8 text-center">
+      <div className="max-w-3xl mx-auto px-5 pt-4 pb-8 text-center">
         <p className="text-muted-foreground">お知らせが見つかりません</p>
       </div>
     )
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-5 py-8">
+    <div className="max-w-3xl mx-auto px-5 pt-4 pb-8">
       {/* 戻るリンク */}
       <Link
         href="/portal/announcements"

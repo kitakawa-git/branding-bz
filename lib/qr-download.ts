@@ -1,7 +1,7 @@
 import QRCode from 'qrcode'
 
 // === 定数 ===
-const BASE_URL = 'https://brandcommit.vercel.app'
+const BASE_URL = 'https://branding.bz'
 const HIGH_RES_WIDTH = 1000
 const HIGH_RES_MARGIN = 2
 const PREVIEW_WIDTH = 160

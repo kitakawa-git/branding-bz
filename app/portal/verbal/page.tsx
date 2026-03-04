@@ -6,6 +6,9 @@ import { supabase } from '@/lib/supabase'
 import { fetchWithRetry } from '@/lib/supabase-fetch'
 import { usePortalAuth } from '../components/PortalAuthProvider'
 import { getSubtitle } from '@/lib/portal-subtitles'
+import { useBrandFonts } from '@/hooks/useBrandFonts'
+import { BrandFontLoader } from '@/components/BrandFontLoader'
+import { getCssFontFamily } from '@/lib/brand-fonts'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
@@ -27,6 +30,8 @@ type VerbalCache = { personality: Personality | null; terms: Term[] }
 
 export default function PortalVerbalIdentityPage() {
   const { companyId, portalSubtitles } = usePortalAuth()
+  const brandFonts = useBrandFonts(companyId)
+  const secondaryStyle = brandFonts ? { fontFamily: getCssFontFamily(brandFonts.secondary_font) } : undefined
   const cacheKey = `portal-verbal-${companyId}`
   const cached = companyId ? getPageCache<VerbalCache>(cacheKey) : null
 
@@ -104,7 +109,7 @@ export default function PortalVerbalIdentityPage() {
   }, [terms, selectedCategory, searchQuery])
 
   if (loading) return (
-    <div className="max-w-4xl mx-auto px-5 py-8 space-y-6">
+    <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
       <div>
         <Skeleton className="h-8 w-56" />
         <Skeleton className="h-4 w-64 mt-2" />
@@ -149,7 +154,9 @@ export default function PortalVerbalIdentityPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-5 py-8 space-y-6">
+    <>
+    <BrandFontLoader fonts={brandFonts} />
+    <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-foreground mb-1">バーバルアイデンティティ</h1>
         <p className="text-sm text-muted-foreground">
@@ -163,7 +170,7 @@ export default function PortalVerbalIdentityPage() {
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
             <CardContent className="p-5">
               <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">トーン・オブ・ボイス</h2>
-              <p className="text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0">{personality!.tone_of_voice}</p>
+              <p className="text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0" style={secondaryStyle}>{personality!.tone_of_voice}</p>
             </CardContent>
           </Card>
         </section>
@@ -274,5 +281,6 @@ export default function PortalVerbalIdentityPage() {
         </section>
       )}
     </div>
+    </>
   )
 }

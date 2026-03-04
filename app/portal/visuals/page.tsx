@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase'
 import { fetchWithRetry } from '@/lib/supabase-fetch'
 import { usePortalAuth } from '../components/PortalAuthProvider'
 import { getSubtitle } from '@/lib/portal-subtitles'
+import { parseFontsFromDB, getCssFontFamily, getFontRoleLabel, getGoogleFontsUrl, FONT_PREVIEW_TEXT, type BrandFonts } from '@/lib/brand-fonts'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
@@ -37,16 +38,10 @@ const COLOR_CATEGORIES: ColorCategory[] = [
   { key: 'utility_colors', label: 'ユーティリティカラー' },
 ]
 
-type FontPair = { primary: string; secondary: string }
-type Fonts = {
-  latin: FontPair
-  japanese: FontPair
-}
-
 type GuidelineImage = { url: string; caption: string; added_index?: number }
 
 type Visuals = {
-  fonts: Fonts
+  fonts: BrandFonts
   visual_guidelines: string | null
   visual_guidelines_images: GuidelineImage[]
   visual_guidelines_sort: 'registered' | 'custom'
@@ -89,14 +84,7 @@ export default function PortalVisualsPage() {
       if (d) {
         const rec = d as Record<string, unknown>
         const parsed: Visuals = {
-          fonts: (() => {
-            const raw = rec.fonts as Record<string, unknown> | null
-            if (raw && raw.latin) return raw as unknown as Fonts
-            return {
-              latin: { primary: '', secondary: '' },
-              japanese: { primary: (raw?.primary as string) || '', secondary: (raw?.secondary as string) || '' },
-            }
-          })(),
+          fonts: parseFontsFromDB(rec.fonts),
           visual_guidelines: (rec.visual_guidelines as string) || null,
           visual_guidelines_images: (rec.visual_guidelines_images as GuidelineImage[]) || [],
           visual_guidelines_sort: (rec.visual_guidelines_sort as 'registered' | 'custom') || 'registered',
@@ -113,7 +101,7 @@ export default function PortalVisualsPage() {
   }, [companyId, cacheKey])
 
   if (loading) return (
-    <div className="max-w-4xl mx-auto px-5 py-8 space-y-6">
+    <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
       <div>
         <Skeleton className="h-8 w-56" />
         <Skeleton className="h-4 w-64 mt-2" />
@@ -220,7 +208,7 @@ export default function PortalVisualsPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-5 py-8 space-y-6">
+    <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-foreground mb-1">ビジュアルアイデンティティ</h1>
         <p className="text-sm text-muted-foreground">
@@ -248,7 +236,7 @@ export default function PortalVisualsPage() {
                       {sIdx > 0 && <Separator className="my-5" />}
 
                       {section.title && (
-                        <h3 className="text-sm font-bold text-foreground mb-3 m-0">
+                        <h3 className="text-xs font-bold text-muted-foreground/60 mb-3 m-0">
                           {section.title}
                         </h3>
                       )}
@@ -296,7 +284,7 @@ export default function PortalVisualsPage() {
               {visibleCategories.map((cat, catIdx) => (
                 <div key={cat.key}>
                   {catIdx > 0 && <Separator className="my-5" />}
-                  <h3 className="text-sm font-bold text-foreground mb-3 m-0">
+                  <h3 className="text-xs font-bold text-muted-foreground/60 mb-3 m-0">
                     {cat.label}
                   </h3>
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
@@ -314,59 +302,40 @@ export default function PortalVisualsPage() {
       )}
 
       {/* 3. フォント */}
-      {(data.fonts.latin.primary || data.fonts.latin.secondary || data.fonts.japanese.primary || data.fonts.japanese.secondary) && (
+      {data.fonts.primary_font && (
         <section>
+          {/* eslint-disable-next-line @next/next/no-page-custom-font */}
+          <link rel="stylesheet" href={getGoogleFontsUrl(data.fonts)} />
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
             <CardContent className="p-5">
               <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">フォント</h2>
 
-              {(data.fonts.latin.primary || data.fonts.latin.secondary) && (
-                <div>
-                  <h3 className="text-sm font-bold text-foreground mb-3 m-0">欧文</h3>
-                  {data.fonts.latin.primary && (
-                    <div className="mb-2">
-                      <p className="text-xs text-muted-foreground mb-0.5 m-0">プライマリフォント</p>
-                      <p className="text-lg text-foreground m-0" style={{ fontFamily: data.fonts.latin.primary }}>
-                        {data.fonts.latin.primary}
-                      </p>
-                    </div>
-                  )}
-                  {data.fonts.latin.secondary && (
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-0.5 m-0">セカンダリフォント</p>
-                      <p className="text-lg text-foreground m-0" style={{ fontFamily: data.fonts.latin.secondary }}>
-                        {data.fonts.latin.secondary}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
+              <div className="mb-4">
+                <p className="text-xs font-bold text-muted-foreground/60 mb-3 m-0">プライマリフォント（見出し・タイトル用）</p>
+                <p className="text-2xl font-bold text-foreground m-0">
+                  {getFontRoleLabel(data.fonts.primary_font)}
+                </p>
+                <p
+                  className="text-base text-foreground/80 mt-1 m-0 leading-relaxed"
+                  style={{ fontFamily: getCssFontFamily(data.fonts.primary_font), fontWeight: 700 }}
+                >
+                  {FONT_PREVIEW_TEXT}
+                </p>
+              </div>
 
-              {(data.fonts.latin.primary || data.fonts.latin.secondary) && (data.fonts.japanese.primary || data.fonts.japanese.secondary) && (
-                <Separator className="my-5" />
-              )}
-
-              {(data.fonts.japanese.primary || data.fonts.japanese.secondary) && (
-                <div>
-                  <h3 className="text-sm font-bold text-foreground mb-3 m-0">和文</h3>
-                  {data.fonts.japanese.primary && (
-                    <div className="mb-2">
-                      <p className="text-xs text-muted-foreground mb-0.5 m-0">プライマリフォント</p>
-                      <p className="text-lg text-foreground m-0" style={{ fontFamily: data.fonts.japanese.primary }}>
-                        {data.fonts.japanese.primary}
-                      </p>
-                    </div>
-                  )}
-                  {data.fonts.japanese.secondary && (
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-0.5 m-0">セカンダリフォント</p>
-                      <p className="text-lg text-foreground m-0" style={{ fontFamily: data.fonts.japanese.secondary }}>
-                        {data.fonts.japanese.secondary}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
+              <Separator className="my-4" />
+              <div>
+                <p className="text-xs font-bold text-muted-foreground/60 mb-3 m-0">セカンダリフォント（本文・説明文用）</p>
+                <p className="text-2xl font-bold text-foreground m-0">
+                  {getFontRoleLabel(data.fonts.secondary_font)}
+                </p>
+                <p
+                  className="text-base text-foreground/80 mt-1 m-0 leading-relaxed"
+                  style={{ fontFamily: getCssFontFamily(data.fonts.secondary_font) }}
+                >
+                  {FONT_PREVIEW_TEXT}
+                </p>
+              </div>
             </CardContent>
           </Card>
         </section>

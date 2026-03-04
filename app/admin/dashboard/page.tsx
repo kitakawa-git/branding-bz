@@ -1,7 +1,7 @@
 'use client'
 
 // タイムライン ダッシュボード（管理画面）
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, PieChart, Pie, Cell } from 'recharts'
@@ -83,18 +83,14 @@ type StreakItem = {
 type MonthlyData = { month: string; label: string; count: number }
 type CategoryData = { category: string; count: number }
 
+type PeriodFilter = 'all' | '90d' | '30d' | 'month'
+
 type DashboardCache = {
-  monthlyPosts: number
-  postsMoM: number | null
-  utilizationRate: number
-  postedUsersCount: number
-  totalMembersCount: number
-  monthlyLikes: number
-  monthlyComments: number
-  monthlyTrendData: MonthlyData[]
-  categoryData: CategoryData[]
-  ranking: RankingItem[]
-  streakRanking: StreakItem[]
+  posts: PostRow[]
+  likes: LikeRow[]
+  comments: CommentRow[]
+  members: MemberRow[]
+  actionGuidelineCategories: string[]
 }
 
 // ============================================
@@ -116,6 +112,13 @@ const trendChartConfig = {
     color: '#1785F3',
   },
 } satisfies ChartConfig
+
+const PERIOD_FILTERS: { value: PeriodFilter; label: string }[] = [
+  { value: 'all', label: 'すべて' },
+  { value: '90d', label: '90日間' },
+  { value: '30d', label: '30日間' },
+  { value: 'month', label: '今月' },
+]
 
 // ============================================
 // Helpers
@@ -177,26 +180,19 @@ const dashboardTabs = [
 export default function DashboardPage() {
   const { companyId } = useAuth()
   const pathname = usePathname()
-  const cacheKey = `dashboard-${companyId}`
+  const cacheKey = `dashboard-v2-${companyId}`
   const cached = companyId ? getPageCache<DashboardCache>(cacheKey) : null
   const [loading, setLoading] = useState(!cached)
 
-  // Summary
-  const [monthlyPosts, setMonthlyPosts] = useState(cached?.monthlyPosts ?? 0)
-  const [postsMoM, setPostsMoM] = useState<number | null>(cached?.postsMoM ?? null)
-  const [utilizationRate, setUtilizationRate] = useState(cached?.utilizationRate ?? 0)
-  const [postedUsersCount, setPostedUsersCount] = useState(cached?.postedUsersCount ?? 0)
-  const [totalMembersCount, setTotalMembersCount] = useState(cached?.totalMembersCount ?? 0)
-  const [monthlyLikes, setMonthlyLikes] = useState(cached?.monthlyLikes ?? 0)
-  const [monthlyComments, setMonthlyComments] = useState(cached?.monthlyComments ?? 0)
+  // Period filter
+  const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('all')
 
-  // Charts
-  const [monthlyTrendData, setMonthlyTrendData] = useState<MonthlyData[]>(cached?.monthlyTrendData ?? [])
-  const [categoryData, setCategoryData] = useState<CategoryData[]>(cached?.categoryData ?? [])
-
-  // Ranking
-  const [ranking, setRanking] = useState<RankingItem[]>(cached?.ranking ?? [])
-  const [streakRanking, setStreakRanking] = useState<StreakItem[]>(cached?.streakRanking ?? [])
+  // Raw data
+  const [rawPosts, setRawPosts] = useState<PostRow[]>(cached?.posts ?? [])
+  const [rawLikes, setRawLikes] = useState<LikeRow[]>(cached?.likes ?? [])
+  const [rawComments, setRawComments] = useState<CommentRow[]>(cached?.comments ?? [])
+  const [rawMembers, setRawMembers] = useState<MemberRow[]>(cached?.members ?? [])
+  const [actionGuidelineCategories, setActionGuidelineCategories] = useState<string[]>(cached?.actionGuidelineCategories ?? [])
 
   useEffect(() => {
     if (!companyId) return
@@ -204,30 +200,20 @@ export default function DashboardPage() {
 
     const fetchDashboard = async () => {
       try {
-        const now = new Date()
-        const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1)
-        const prevMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-        const prevMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59)
-        const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1)
-        const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000)
-
         const [postsRes, likesRes, commentsRes, membersRes, personasRes] = await Promise.allSettled([
           supabase
             .from('timeline_posts')
             .select('id, user_id, category, created_at')
             .eq('company_id', companyId)
-            .gte('created_at', sixMonthsAgo.toISOString())
             .order('created_at', { ascending: false }),
           supabase
             .from('timeline_likes')
             .select('id, post_id, created_at')
-            .eq('company_id', companyId)
-            .gte('created_at', prevMonthStart.toISOString()),
+            .eq('company_id', companyId),
           supabase
             .from('timeline_comments')
             .select('id, created_at')
-            .eq('company_id', companyId)
-            .gte('created_at', prevMonthStart.toISOString()),
+            .eq('company_id', companyId),
           supabase
             .from('members')
             .select('id, auth_id, display_name, profile:profiles(name, photo_url)')
@@ -247,145 +233,24 @@ export default function DashboardPage() {
         const members: MemberRow[] = membersRes.status === 'fulfilled' ? membersRes.value.data || [] : []
         const personasData = personasRes.status === 'fulfilled' ? personasRes.value.data : null
 
-        // Profile map: auth_id -> {name, photoUrl}
-        const profileMap = new Map<string, { name: string; photoUrl: string | null }>()
-        members.forEach(m => {
-          profileMap.set(m.auth_id, resolveProfile(m))
-        })
-
-        // --- Summary ---
-        const currentMonthISO = currentMonthStart.toISOString()
-        const prevMonthISO = prevMonthStart.toISOString()
-        const prevMonthEndISO = prevMonthEnd.toISOString()
-
-        const currentMonthPosts = posts.filter(p => p.created_at >= currentMonthISO)
-        const prevMonthPosts = posts.filter(p => p.created_at >= prevMonthISO && p.created_at <= prevMonthEndISO)
-
-        const computedMonthlyPosts = currentMonthPosts.length
-        const computedPostsMoM = prevMonthPosts.length > 0
-          ? ((currentMonthPosts.length - prevMonthPosts.length) / prevMonthPosts.length) * 100
-          : null
-
-        setMonthlyPosts(computedMonthlyPosts)
-        setPostsMoM(computedPostsMoM)
-
-        // Utilization
-        const postedUserIds = new Set(currentMonthPosts.map(p => p.user_id))
-        const computedPostedUsersCount = postedUserIds.size
-        const computedTotalMembersCount = members.length
-        const computedUtilizationRate = members.length > 0 ? (postedUserIds.size / members.length) * 100 : 0
-        setPostedUsersCount(computedPostedUsersCount)
-        setTotalMembersCount(computedTotalMembersCount)
-        setUtilizationRate(computedUtilizationRate)
-
-        // Likes & Comments this month
-        const currentMonthLikes = likes.filter(l => l.created_at >= currentMonthISO)
-        const currentMonthComments = comments.filter(c => c.created_at >= currentMonthISO)
-        const computedMonthlyLikes = currentMonthLikes.length
-        const computedMonthlyComments = currentMonthComments.length
-        setMonthlyLikes(computedMonthlyLikes)
-        setMonthlyComments(computedMonthlyComments)
-
-        // --- Monthly Trend (past 6 months) ---
-        const monthlyMap = new Map<string, number>()
-        const monthLabels = new Map<string, string>()
-        for (let i = 5; i >= 0; i--) {
-          const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
-          const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-          monthlyMap.set(key, 0)
-          monthLabels.set(key, `${d.getMonth() + 1}月`)
-        }
-        posts.forEach(p => {
-          const d = new Date(p.created_at)
-          const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-          if (monthlyMap.has(key)) {
-            monthlyMap.set(key, monthlyMap.get(key)! + 1)
-          }
-        })
-        const trendData: MonthlyData[] = []
-        monthlyMap.forEach((count, month) => {
-          trendData.push({ month, label: monthLabels.get(month) || month, count })
-        })
-        setMonthlyTrendData(trendData)
-
-        // --- Category Distribution (current month) ---
-        const catMap = new Map<string, number>()
-        // カテゴリラベルを brand_personas から初期化
+        const categories: string[] = []
         if (personasData && personasData.length > 0) {
           const guidelines = personasData[0].action_guidelines as { title: string }[] | null
-          if (guidelines) {
-            guidelines.forEach(g => catMap.set(g.title, 0))
-          }
+          if (guidelines) guidelines.forEach(g => categories.push(g.title))
         }
-        currentMonthPosts.forEach(p => {
-          catMap.set(p.category, (catMap.get(p.category) || 0) + 1)
-        })
-        const catData: CategoryData[] = []
-        catMap.forEach((count, category) => {
-          catData.push({ category, count })
-        })
-        catData.sort((a, b) => b.count - a.count)
-        setCategoryData(catData)
 
-        // --- Individual Ranking (top 10) ---
-        const userPostCount = new Map<string, number>()
-        currentMonthPosts.forEach(p => {
-          userPostCount.set(p.user_id, (userPostCount.get(p.user_id) || 0) + 1)
-        })
-
-        const postOwnerMap = new Map<string, string>()
-        posts.forEach(p => postOwnerMap.set(p.id, p.user_id))
-
-        const userLikeReceived = new Map<string, number>()
-        currentMonthLikes.forEach(l => {
-          const ownerId = postOwnerMap.get(l.post_id)
-          if (ownerId) {
-            userLikeReceived.set(ownerId, (userLikeReceived.get(ownerId) || 0) + 1)
-          }
-        })
-
-        const allUserIds = new Set([...userPostCount.keys(), ...userLikeReceived.keys()])
-        const rankingData: RankingItem[] = [...allUserIds].map(uid => {
-          const p = profileMap.get(uid)
-          return {
-            userId: uid,
-            name: p?.name || '不明',
-            photoUrl: p?.photoUrl || null,
-            postCount: userPostCount.get(uid) || 0,
-            likeCount: userLikeReceived.get(uid) || 0,
-          }
-        })
-        rankingData.sort((a, b) => (b.postCount + b.likeCount) - (a.postCount + a.likeCount))
-        setRanking(rankingData.slice(0, 10))
-
-        // --- Streak Ranking (top 5, past 90 days) ---
-        const maxStreaks = calculateMaxStreaks(posts, ninetyDaysAgo)
-        const streakData: StreakItem[] = [...maxStreaks.entries()]
-          .map(([userId, streak]) => {
-            const p = profileMap.get(userId)
-            return {
-              userId,
-              name: p?.name || '不明',
-              photoUrl: p?.photoUrl || null,
-              streak,
-            }
-          })
-          .sort((a, b) => b.streak - a.streak)
-          .slice(0, 5)
-        setStreakRanking(streakData)
+        setRawPosts(posts)
+        setRawLikes(likes)
+        setRawComments(comments)
+        setRawMembers(members)
+        setActionGuidelineCategories(categories)
 
         setPageCache(cacheKey, {
-          monthlyPosts: computedMonthlyPosts,
-          postsMoM: computedPostsMoM,
-          utilizationRate: computedUtilizationRate,
-          postedUsersCount: computedPostedUsersCount,
-          totalMembersCount: computedTotalMembersCount,
-          monthlyLikes: computedMonthlyLikes,
-          monthlyComments: computedMonthlyComments,
-          monthlyTrendData: trendData,
-          categoryData: catData,
-          ranking: rankingData.slice(0, 10),
-          streakRanking: streakData,
+          posts,
+          likes,
+          comments,
+          members,
+          actionGuidelineCategories: categories,
         })
       } catch (err) {
         console.error('[Dashboard] データ取得エラー:', err)
@@ -396,6 +261,152 @@ export default function DashboardPage() {
 
     fetchDashboard()
   }, [companyId, cacheKey])
+
+  // Profile map: auth_id -> {name, photoUrl}
+  const profileMap = useMemo(() => {
+    const map = new Map<string, { name: string; photoUrl: string | null }>()
+    rawMembers.forEach(m => map.set(m.auth_id, resolveProfile(m)))
+    return map
+  }, [rawMembers])
+
+  // ============================================
+  // Computed data (reactive to periodFilter)
+  // ============================================
+
+  const {
+    periodPosts, postsMoM, utilizationRate, postedUsersCount, totalMembersCount,
+    periodLikes, periodComments, monthlyTrendData, categoryData, ranking, streakRanking,
+  } = useMemo(() => {
+    const now = new Date()
+
+    // --- Period start ---
+    let periodStart: Date | null = null
+    switch (periodFilter) {
+      case 'month':
+        periodStart = new Date(now.getFullYear(), now.getMonth(), 1)
+        break
+      case '30d':
+        periodStart = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+        break
+      case '90d':
+        periodStart = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000)
+        break
+      case 'all':
+        periodStart = null
+        break
+    }
+    const periodStartISO = periodStart?.toISOString() ?? ''
+
+    // --- Filter by period ---
+    const filteredPosts = periodStart
+      ? rawPosts.filter(p => p.created_at >= periodStartISO)
+      : rawPosts
+    const filteredLikes = periodStart
+      ? rawLikes.filter(l => l.created_at >= periodStartISO)
+      : rawLikes
+    const filteredComments = periodStart
+      ? rawComments.filter(c => c.created_at >= periodStartISO)
+      : rawComments
+
+    // --- Summary ---
+    const periodPosts = filteredPosts.length
+    const periodLikes = filteredLikes.length
+    const periodComments = filteredComments.length
+
+    // MoM（「今月」選択時のみ）
+    let postsMoM: number | null = null
+    if (periodFilter === 'month') {
+      const prevMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+      const prevMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59)
+      const prevStartISO = prevMonthStart.toISOString()
+      const prevEndISO = prevMonthEnd.toISOString()
+      const prevMonthPosts = rawPosts.filter(p => p.created_at >= prevStartISO && p.created_at <= prevEndISO)
+      postsMoM = prevMonthPosts.length > 0
+        ? ((periodPosts - prevMonthPosts.length) / prevMonthPosts.length) * 100
+        : null
+    }
+
+    // --- Utilization ---
+    const postedUserIds = new Set(filteredPosts.map(p => p.user_id))
+    const totalMembersCount = rawMembers.length
+    const postedUsersCount = postedUserIds.size
+    const utilizationRate = totalMembersCount > 0 ? (postedUsersCount / totalMembersCount) * 100 : 0
+
+    // --- Monthly Trend (always 6 months, unaffected by filter) ---
+    const monthlyMap = new Map<string, number>()
+    const monthLabels = new Map<string, string>()
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+      monthlyMap.set(key, 0)
+      monthLabels.set(key, `${d.getMonth() + 1}月`)
+    }
+    rawPosts.forEach(p => {
+      const d = new Date(p.created_at)
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+      if (monthlyMap.has(key)) monthlyMap.set(key, monthlyMap.get(key)! + 1)
+    })
+    const monthlyTrendData: MonthlyData[] = []
+    monthlyMap.forEach((count, month) => {
+      monthlyTrendData.push({ month, label: monthLabels.get(month) || month, count })
+    })
+
+    // --- Category Distribution (filtered) ---
+    const catMap = new Map<string, number>()
+    actionGuidelineCategories.forEach(cat => catMap.set(cat, 0))
+    filteredPosts.forEach(p => catMap.set(p.category, (catMap.get(p.category) || 0) + 1))
+    const categoryData: CategoryData[] = []
+    catMap.forEach((count, category) => categoryData.push({ category, count }))
+    categoryData.sort((a, b) => b.count - a.count)
+
+    // --- Individual Ranking (filtered) ---
+    const userPostCount = new Map<string, number>()
+    filteredPosts.forEach(p => userPostCount.set(p.user_id, (userPostCount.get(p.user_id) || 0) + 1))
+
+    const postOwnerMap = new Map<string, string>()
+    rawPosts.forEach(p => postOwnerMap.set(p.id, p.user_id))
+
+    const userLikeReceived = new Map<string, number>()
+    filteredLikes.forEach(l => {
+      const ownerId = postOwnerMap.get(l.post_id)
+      if (ownerId) userLikeReceived.set(ownerId, (userLikeReceived.get(ownerId) || 0) + 1)
+    })
+
+    const allUserIds = new Set([...userPostCount.keys(), ...userLikeReceived.keys()])
+    const ranking: RankingItem[] = [...allUserIds].map(uid => ({
+      userId: uid,
+      name: profileMap.get(uid)?.name || '不明',
+      photoUrl: profileMap.get(uid)?.photoUrl || null,
+      postCount: userPostCount.get(uid) || 0,
+      likeCount: userLikeReceived.get(uid) || 0,
+    }))
+    ranking.sort((a, b) => (b.postCount + b.likeCount) - (a.postCount + a.likeCount))
+
+    // --- Streak Ranking (always 90 days, unaffected by filter) ---
+    const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000)
+    const maxStreaks = calculateMaxStreaks(rawPosts, ninetyDaysAgo)
+    const streakRanking: StreakItem[] = [...maxStreaks.entries()]
+      .map(([userId, streak]) => ({
+        userId,
+        name: profileMap.get(userId)?.name || '不明',
+        photoUrl: profileMap.get(userId)?.photoUrl || null,
+        streak,
+      }))
+      .sort((a, b) => b.streak - a.streak)
+      .slice(0, 5)
+
+    return {
+      periodPosts, postsMoM, utilizationRate, postedUsersCount, totalMembersCount,
+      periodLikes, periodComments, monthlyTrendData, categoryData,
+      ranking: ranking.slice(0, 10), streakRanking,
+    }
+  }, [rawPosts, rawLikes, rawComments, rawMembers, actionGuidelineCategories, periodFilter, profileMap])
+
+  // Period label for card titles
+  const periodLabel = periodFilter === 'month' ? '今月の'
+    : periodFilter === '30d' ? '30日間の'
+    : periodFilter === '90d' ? '90日間の'
+    : ''
 
   // ============================================
   // Render
@@ -484,16 +495,33 @@ export default function DashboardPage() {
         ))}
       </div>
 
+      {/* === 期間フィルター === */}
+      <div className="flex gap-2 mb-4">
+        {PERIOD_FILTERS.map(f => (
+          <button
+            key={f.value}
+            onClick={() => setPeriodFilter(f.value)}
+            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              periodFilter === f.value
+                ? 'bg-foreground text-background'
+                : 'bg-muted text-muted-foreground hover:bg-muted/80'
+            }`}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
+
       {/* === サマリーカード === */}
       <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-3 mb-3">
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-5 pb-3">
             <div className="flex items-center gap-2 mb-3">
               <FileText size={18} className="text-foreground" />
-              <h3 className="text-sm font-semibold text-foreground m-0">今月の投稿数</h3>
+              <h3 className="text-sm font-semibold text-foreground m-0">{periodLabel}投稿数</h3>
             </div>
             <p className="text-3xl font-bold text-foreground m-0 text-center">
-              {monthlyPosts.toLocaleString()}
+              {periodPosts.toLocaleString()}
             </p>
             {postsMoM !== null && (
               <p className={`text-xs font-medium mt-1 text-center ${postsMoM >= 0 ? 'text-green-600' : 'text-red-500'}`}>
@@ -522,10 +550,10 @@ export default function DashboardPage() {
           <CardContent className="p-5 pb-3">
             <div className="flex items-center gap-2 mb-3">
               <Heart size={18} className="text-foreground" />
-              <h3 className="text-sm font-semibold text-foreground m-0">今月のいいね</h3>
+              <h3 className="text-sm font-semibold text-foreground m-0">{periodLabel}いいね</h3>
             </div>
             <p className="text-3xl font-bold text-foreground m-0 text-center">
-              {monthlyLikes.toLocaleString()}
+              {periodLikes.toLocaleString()}
             </p>
           </CardContent>
         </Card>
@@ -534,10 +562,10 @@ export default function DashboardPage() {
           <CardContent className="p-5 pb-3">
             <div className="flex items-center gap-2 mb-3">
               <MessageCircle size={18} className="text-foreground" />
-              <h3 className="text-sm font-semibold text-foreground m-0">今月のコメント</h3>
+              <h3 className="text-sm font-semibold text-foreground m-0">{periodLabel}コメント</h3>
             </div>
             <p className="text-3xl font-bold text-foreground m-0 text-center">
-              {monthlyComments.toLocaleString()}
+              {periodComments.toLocaleString()}
             </p>
           </CardContent>
         </Card>

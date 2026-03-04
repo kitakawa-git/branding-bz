@@ -4,6 +4,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
+import { fetchWithRetry } from '@/lib/supabase-fetch'
 import { useAuth } from '../../components/AuthProvider'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -22,8 +23,11 @@ import { getPageCache, setPageCache } from '@/lib/page-cache'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { AutoResizeTextarea } from '@/components/ui/auto-resize-textarea'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { DEFAULT_SUBTITLES, type PortalSubtitles } from '@/lib/portal-subtitles'
-import { GripVertical, Trash2 } from 'lucide-react'
+import { FONT_PREVIEW_TEXT, DEFAULT_FONT_ID, DEFAULT_FONT_ROLE, getCssFontFamily, getGoogleFontsUrl, parseFontsFromDB, type BrandFonts, type FontSource } from '@/lib/brand-fonts'
+import { GoogleFontPicker } from '@/components/GoogleFontPicker'
+import { GripVertical, Plus, Trash2 } from 'lucide-react'
 import {
   DndContext,
   closestCenter,
@@ -39,12 +43,6 @@ import {
   arrayMove,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-
-type FontPair = { primary: string; secondary: string }
-type Fonts = {
-  latin: FontPair
-  japanese: FontPair
-}
 
 type LogoItem = { url: string; caption: string; added_index: number }
 type LogoSection = { title: string; items: LogoItem[] }
@@ -76,7 +74,7 @@ const DEFAULT_PALETTE: ColorPalette = {
 type GuidelineImage = { url: string; caption: string; added_index: number }
 
 type Visuals = {
-  fonts: Fonts
+  fonts: BrandFonts
   visual_guidelines: string
   visual_guidelines_images: GuidelineImage[]
   visual_guidelines_sort: 'registered' | 'custom'
@@ -245,7 +243,7 @@ export default function BrandVisualsPage() {
   const cached = companyId ? getPageCache<VisualsCache>(cacheKey) : null
   const [visualsId, setVisualsId] = useState<string | null>(cached?.visualsId ?? null)
   const [visuals, setVisuals] = useState<Visuals>(cached?.visuals ?? {
-    fonts: { latin: { primary: '', secondary: '' }, japanese: { primary: '', secondary: '' } },
+    fonts: { primary_font: { ...DEFAULT_FONT_ROLE }, secondary_font: { ...DEFAULT_FONT_ROLE } },
     visual_guidelines: '',
     visual_guidelines_images: [],
     visual_guidelines_sort: 'registered',
@@ -297,16 +295,12 @@ export default function BrandVisualsPage() {
     setFetchError('')
 
     try {
-      const result = await Promise.race([
-        supabase
-          .from('brand_visuals')
-          .select('*')
-          .eq('company_id', companyId)
-          .single(),
-        new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('timeout')), 10000)
-        ),
-      ])
+      const { data, error: fetchErr } = await fetchWithRetry(() =>
+        supabase.from('brand_visuals').select('*').eq('company_id', companyId).single()
+      )
+      if (fetchErr) throw new Error(fetchErr)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const result = data as Record<string, any> | null
 
       // ポータルサブタイトル取得
       let fetchedSubtitle = ''
@@ -328,10 +322,10 @@ export default function BrandVisualsPage() {
         // サブタイトル取得失敗は無視
       }
 
-      if (result.data) {
-        setVisualsId(result.data.id)
+      if (result) {
+        setVisualsId(result.id)
 
-        const cp = (result.data.color_palette as ColorPalette) || { brand_colors: [], secondary_colors: [], accent_colors: [], utility_colors: [] }
+        const cp = (result.color_palette as ColorPalette) || { brand_colors: [], secondary_colors: [], accent_colors: [], utility_colors: [] }
         const palette: ColorPalette = {
           brand_colors: cp.brand_colors || [{ name: 'Primary', hex: '#1a1a1a' }],
           secondary_colors: cp.secondary_colors || [{ name: 'Secondary', hex: '#666666' }],
@@ -340,35 +334,28 @@ export default function BrandVisualsPage() {
         }
 
         const parsedVisuals: Visuals = {
-          fonts: (() => {
-            const raw = result.data.fonts as Record<string, unknown> | null
-            if (raw && raw.latin) return raw as unknown as Fonts
-            return {
-              latin: { primary: '', secondary: '' },
-              japanese: { primary: (raw?.primary as string) || '', secondary: (raw?.secondary as string) || '' },
-            }
-          })(),
-          visual_guidelines: result.data.visual_guidelines || '',
-          visual_guidelines_images: ((result.data.visual_guidelines_images as { url: string; caption: string; added_index?: number }[]) || []).map((img, i) => ({
+          fonts: parseFontsFromDB(result.fonts),
+          visual_guidelines: result.visual_guidelines || '',
+          visual_guidelines_images: ((result.visual_guidelines_images as { url: string; caption: string; added_index?: number }[]) || []).map((img, i) => ({
             ...img,
             added_index: img.added_index ?? i,
           })),
-          visual_guidelines_sort: (result.data.visual_guidelines_sort as 'registered' | 'custom') || 'registered',
-          logo_concept: result.data.logo_concept || '',
-          logo_sections: ((result.data.logo_sections as { title: string; items: { url: string; caption: string; added_index?: number }[] }[]) || []).map(section => ({
+          visual_guidelines_sort: (result.visual_guidelines_sort as 'registered' | 'custom') || 'registered',
+          logo_concept: result.logo_concept || '',
+          logo_sections: ((result.logo_sections as { title: string; items: { url: string; caption: string; added_index?: number }[] }[]) || []).map(section => ({
             ...section,
             items: section.items.map((item, i) => ({
               ...item,
               added_index: item.added_index ?? i,
             })),
           })),
-          logo_sections_sort: (result.data.logo_sections_sort as 'registered' | 'custom') || 'registered',
+          logo_sections_sort: (result.logo_sections_sort as 'registered' | 'custom') || 'registered',
           color_palette: palette,
         }
 
         setVisuals(parsedVisuals)
         setPageCache(cacheKey, {
-          visualsId: result.data.id,
+          visualsId: result.id,
           visuals: parsedVisuals,
           portalSubtitle: fetchedSubtitle,
           portalSubtitlesData: fetchedSubtitlesData,
@@ -376,9 +363,7 @@ export default function BrandVisualsPage() {
       }
     } catch (err) {
       console.error('[BrandVisuals] データ取得エラー:', err)
-      const msg = err instanceof Error && err.message === 'timeout'
-        ? 'データの取得がタイムアウトしました'
-        : 'データの取得に失敗しました'
+      const msg = err instanceof Error ? err.message : 'データの取得に失敗しました'
       setFetchError(msg)
     } finally {
       setLoading(false)
@@ -395,15 +380,27 @@ export default function BrandVisualsPage() {
     setVisuals(prev => ({ ...prev, [field]: value }))
   }
 
-  const handleFontChange = (script: 'latin' | 'japanese', role: 'primary' | 'secondary', value: string) => {
+  const handleFontChange = (
+    fontRole: 'primary_font' | 'secondary_font',
+    field: 'latin' | 'japanese',
+    value: string,
+    source: FontSource = 'google'
+  ) => {
     setVisuals(prev => ({
       ...prev,
       fonts: {
         ...prev.fonts,
-        [script]: { ...prev.fonts[script], [role]: value },
+        [fontRole]: {
+          ...prev.fonts[fontRole],
+          [field]: value,
+          [`${field}_source`]: source,
+        },
       },
     }))
   }
+
+  type FontPickerTarget = { fontRole: 'primary_font' | 'secondary_font'; field: 'latin' | 'japanese' } | null
+  const [fontPickerTarget, setFontPickerTarget] = useState<FontPickerTarget>(null)
 
   // --- カラーパレット操作 ---
   const addColor = (category: ColorCategory) => {
@@ -978,7 +975,7 @@ export default function BrandVisualsPage() {
                         onClick={() => fileInputRefs.current[`file-${sIdx}`]?.click()}
                         className="py-2 px-4 text-[13px]"
                       >
-                        {uploadingMap[`${sIdx}`] ? 'アップロード中...' : '+ 画像を追加'}
+                        {uploadingMap[`${sIdx}`] ? 'アップロード中...' : <><Plus size={16} />画像を追加</>}
                       </Button>
                     </div>
                   )}
@@ -992,7 +989,7 @@ export default function BrandVisualsPage() {
                   onClick={addSection}
                   className="py-2 px-4 text-[13px]"
                 >
-                  + セクションを追加
+                  <Plus size={16} />セクションを追加
                 </Button>
               )}
             </div>
@@ -1065,7 +1062,7 @@ export default function BrandVisualsPage() {
                     onClick={() => addColor(cat.key)}
                     className="py-2 px-4 text-[13px] mt-2"
                   >
-                    + 色を追加
+                    <Plus size={16} />色を追加
                   </Button>
                 )}
               </div>
@@ -1076,55 +1073,86 @@ export default function BrandVisualsPage() {
         {/* カード3: フォント設定 */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-5">
+            {/* Google Fonts CDN 読み込み */}
+            {/* eslint-disable-next-line @next/next/no-page-custom-font */}
+            <link rel="stylesheet" href={getGoogleFontsUrl(visuals.fonts)} />
             <h2 className="text-sm font-bold mb-5">フォント</h2>
 
+            {/* プライマリフォント */}
             <div className="mb-6">
-              <h3 className="text-sm font-bold mb-3 text-muted-foreground">欧文</h3>
-              <div className="mb-3">
-                <p className="text-xs text-muted-foreground mb-1.5 m-0">プライマリフォント</p>
-                <Input
-                  type="text"
-                  value={visuals.fonts.latin.primary}
-                  onChange={(e) => handleFontChange('latin', 'primary', e.target.value)}
-                  placeholder="Inter"
-                  className="h-10"
-                />
+              <p className="text-xs font-semibold text-foreground mb-3 m-0">プライマリフォント（見出し・タイトル用）</p>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground w-10 shrink-0">欧文</span>
+                  <button
+                    type="button"
+                    onClick={() => setFontPickerTarget({ fontRole: 'primary_font', field: 'latin' })}
+                    className="flex-1 h-9 px-3 text-left text-sm bg-background border border-input rounded-md hover:bg-accent/50 transition-colors truncate"
+                  >
+                    {visuals.fonts.primary_font.latin}
+                  </button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground w-10 shrink-0">和文</span>
+                  <button
+                    type="button"
+                    onClick={() => setFontPickerTarget({ fontRole: 'primary_font', field: 'japanese' })}
+                    className="flex-1 h-9 px-3 text-left text-sm bg-background border border-input rounded-md hover:bg-accent/50 transition-colors truncate"
+                  >
+                    {visuals.fonts.primary_font.japanese}
+                  </button>
+                </div>
               </div>
-              <div>
-                <p className="text-xs text-muted-foreground mb-1.5 m-0">セカンダリフォント</p>
-                <Input
-                  type="text"
-                  value={visuals.fonts.latin.secondary}
-                  onChange={(e) => handleFontChange('latin', 'secondary', e.target.value)}
-                  placeholder="Roboto"
-                  className="h-10"
-                />
-              </div>
+              <p
+                className="mt-2 text-sm leading-relaxed text-muted-foreground m-0"
+                style={{ fontFamily: getCssFontFamily(visuals.fonts.primary_font), fontWeight: 700 }}
+              >
+                {FONT_PREVIEW_TEXT}
+              </p>
             </div>
 
+            {/* セカンダリフォント */}
             <div>
-              <h3 className="text-sm font-bold mb-3 text-muted-foreground">和文</h3>
-              <div className="mb-3">
-                <p className="text-xs text-muted-foreground mb-1.5 m-0">プライマリフォント</p>
-                <Input
-                  type="text"
-                  value={visuals.fonts.japanese.primary}
-                  onChange={(e) => handleFontChange('japanese', 'primary', e.target.value)}
-                  placeholder="Noto Sans JP"
-                  className="h-10"
-                />
+              <p className="text-xs font-semibold text-foreground mb-3 m-0">セカンダリフォント（本文・説明文用）</p>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground w-10 shrink-0">欧文</span>
+                  <button
+                    type="button"
+                    onClick={() => setFontPickerTarget({ fontRole: 'secondary_font', field: 'latin' })}
+                    className="flex-1 h-9 px-3 text-left text-sm bg-background border border-input rounded-md hover:bg-accent/50 transition-colors truncate"
+                  >
+                    {visuals.fonts.secondary_font.latin}
+                  </button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground w-10 shrink-0">和文</span>
+                  <button
+                    type="button"
+                    onClick={() => setFontPickerTarget({ fontRole: 'secondary_font', field: 'japanese' })}
+                    className="flex-1 h-9 px-3 text-left text-sm bg-background border border-input rounded-md hover:bg-accent/50 transition-colors truncate"
+                  >
+                    {visuals.fonts.secondary_font.japanese}
+                  </button>
+                </div>
               </div>
-              <div>
-                <p className="text-xs text-muted-foreground mb-1.5 m-0">セカンダリフォント</p>
-                <Input
-                  type="text"
-                  value={visuals.fonts.japanese.secondary}
-                  onChange={(e) => handleFontChange('japanese', 'secondary', e.target.value)}
-                  placeholder="M PLUS 1p"
-                  className="h-10"
-                />
-              </div>
+              <p
+                className="mt-2 text-sm leading-relaxed text-muted-foreground m-0"
+                style={{ fontFamily: getCssFontFamily(visuals.fonts.secondary_font) }}
+              >
+                {FONT_PREVIEW_TEXT}
+              </p>
             </div>
+
+            <GoogleFontPicker
+              open={fontPickerTarget !== null}
+              onOpenChange={(open) => { if (!open) setFontPickerTarget(null) }}
+              value={fontPickerTarget ? visuals.fonts[fontPickerTarget.fontRole][fontPickerTarget.field] : null}
+              onSelect={(family, source) => {
+                if (fontPickerTarget) handleFontChange(fontPickerTarget.fontRole, fontPickerTarget.field, family, source)
+              }}
+              mode={fontPickerTarget?.field || 'latin'}
+            />
           </CardContent>
         </Card>
 
@@ -1251,7 +1279,7 @@ export default function BrandVisualsPage() {
                   onClick={() => fileInputRefs.current['guideline']?.click()}
                   className="py-2 px-4 text-[13px]"
                 >
-                  {uploadingMap['guideline'] ? 'アップロード中...' : '+ 参考画像を追加'}
+                  {uploadingMap['guideline'] ? 'アップロード中...' : <><Plus size={16} />参考画像を追加</>}
                 </Button>
               </div>
             )}

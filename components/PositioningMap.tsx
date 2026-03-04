@@ -15,37 +15,50 @@ type PositioningMapProps = {
 }
 
 export function PositioningMap({ data, className }: PositioningMapProps) {
-  const PAD = 70
-  const SIZE = 700
-  const MAP_SIZE = SIZE - PAD * 2
+  const PAD = 50
+  const WIDTH = 700
+  const HEIGHT = 525
+  const MAP_W = WIDTH - PAD * 2
+  const MAP_H = HEIGHT - PAD * 2
 
-  const toSvgX = (x: number) => PAD + (x / 100) * MAP_SIZE
-  const toSvgY = (y: number) => PAD + ((100 - y) / 100) * MAP_SIZE
+  const toSvgX = (x: number) => PAD + (x / 100) * MAP_W
+  const toSvgY = (y: number) => PAD + ((100 - y) / 100) * MAP_H
 
-  const centerX = PAD + MAP_SIZE / 2
-  const centerY = PAD + MAP_SIZE / 2
+  const centerX = PAD + MAP_W / 2
+  const centerY = PAD + MAP_H / 2
 
   return (
     <div className={className}>
       <svg
-        viewBox={`0 0 ${SIZE} ${SIZE}`}
+        viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
         width="100%"
         className="rounded-lg"
-        style={{ aspectRatio: '1 / 1' }}
+        style={{ aspectRatio: '4 / 3' }}
       >
         {/* XY軸 */}
         <line
           x1={centerX} y1={PAD}
-          x2={centerX} y2={PAD + MAP_SIZE}
+          x2={centerX} y2={PAD + MAP_H}
           stroke="#d1d5db"
           strokeWidth={1}
         />
         <line
           x1={PAD} y1={centerY}
-          x2={PAD + MAP_SIZE} y2={centerY}
+          x2={PAD + MAP_W} y2={centerY}
           stroke="#d1d5db"
           strokeWidth={1}
         />
+
+        {/* 目盛り */}
+        {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100].map((val) => {
+          const t = val % 10 === 0 ? 6 : 2
+          return (
+            <g key={`tick-${val}`}>
+              <line x1={toSvgX(val)} y1={centerY - t} x2={toSvgX(val)} y2={centerY + t} stroke="#d1d5db" strokeWidth={1} />
+              <line x1={centerX - t} y1={toSvgY(val)} x2={centerX + t} y2={toSvgY(val)} stroke="#d1d5db" strokeWidth={1} />
+            </g>
+          )
+        })}
 
         {/* 軸ラベル */}
         {data.x_axis.left && (
@@ -62,7 +75,7 @@ export function PositioningMap({ data, className }: PositioningMapProps) {
         )}
         {data.x_axis.right && (
           <text
-            x={PAD + MAP_SIZE + 8}
+            x={PAD + MAP_W + 8}
             y={centerY}
             textAnchor="start"
             dominantBaseline="middle"
@@ -86,7 +99,7 @@ export function PositioningMap({ data, className }: PositioningMapProps) {
         {data.y_axis.bottom && (
           <text
             x={centerX}
-            y={PAD + MAP_SIZE + 22}
+            y={PAD + MAP_H + 22}
             textAnchor="middle"
             fontSize="12"
             fill="#6b7280"

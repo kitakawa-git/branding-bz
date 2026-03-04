@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
 import { Button } from '@/components/ui/button'
+import { QrCode } from 'lucide-react'
 import {
   generatePreviewQRDataURL,
   generateHighResQRDataURL,
@@ -73,7 +74,7 @@ export default function CardTemplatePage() {
     setDownloadingId(null)
   }
 
-  // 一括ダウンロード（ZIP）
+  // 一括ダウンロード
   const handleBulkDownload = async () => {
     setBulkDownloading(true)
     try {
@@ -112,7 +113,7 @@ export default function CardTemplatePage() {
           disabled={bulkDownloading || members.length === 0}
           className={bulkDownloading || members.length === 0 ? 'opacity-60' : ''}
         >
-          {bulkDownloading ? '生成中...' : '一括ダウンロード（ZIP）'}
+          {bulkDownloading ? '生成中...' : <><QrCode className="h-4 w-4" />一括ダウンロード</>}
         </Button>
       </div>
 

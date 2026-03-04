@@ -13,7 +13,35 @@ const config: Config = {
   			md: 'calc(var(--radius) - 2px)',
   			sm: 'calc(var(--radius) - 4px)'
   		},
+  		fontFamily: {
+  			comfortaa: [
+  				'Comfortaa',
+  				'sans-serif'
+  			],
+  			'open-sans': [
+  				'Open Sans',
+  				'sans-serif'
+  			],
+  			'noto-sans-jp': [
+  				'Noto Sans JP',
+  				'sans-serif'
+  			]
+  		},
   		colors: {
+  			teal: {
+  				DEFAULT: '#6bcdcf',
+  				light: '#8edcdd',
+  				dark: '#4fb8ba'
+  			},
+  			'lp-orange': '#ff6900',
+  			'lp-pink': '#f6405f',
+  			'lp-gray': {
+  				DEFAULT: '#666666',
+  				dark: '#5a5a5a',
+  				light: '#a4a4a4',
+  				bg: '#f9f9f9',
+  				bg2: '#f5f5f5'
+  			},
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
   			card: {
@@ -64,6 +92,28 @@ const config: Config = {
   				border: 'hsl(var(--sidebar-border))',
   				ring: 'hsl(var(--sidebar-ring))'
   			}
+  		},
+  		keyframes: {
+  			'accordion-down': {
+  				from: {
+  					height: '0'
+  				},
+  				to: {
+  					height: 'var(--radix-accordion-content-height)'
+  				}
+  			},
+  			'accordion-up': {
+  				from: {
+  					height: 'var(--radix-accordion-content-height)'
+  				},
+  				to: {
+  					height: '0'
+  				}
+  			}
+  		},
+  		animation: {
+  			'accordion-down': 'accordion-down 0.2s ease-out',
+  			'accordion-up': 'accordion-up 0.2s ease-out'
   		}
   	}
   },

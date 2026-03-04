@@ -44,7 +44,7 @@ export default function PortalValuesPage() {
   }, [companyId, cacheKey])
 
   if (loading) return (
-    <div className="max-w-4xl mx-auto px-5 py-8 space-y-6">
+    <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
       <div>
         <Skeleton className="h-8 w-32" />
         <Skeleton className="h-4 w-64 mt-2" />
@@ -67,7 +67,7 @@ export default function PortalValuesPage() {
   if (values.length === 0) return <div className="text-center py-16 text-muted-foreground text-[15px]">まだ登録されていません</div>
 
   return (
-    <div className="max-w-4xl mx-auto px-5 py-8 space-y-6">
+    <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-foreground mb-1">提供価値</h1>
         <p className="text-sm text-muted-foreground">
