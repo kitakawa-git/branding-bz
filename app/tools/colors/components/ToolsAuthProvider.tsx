@@ -32,6 +32,13 @@ export function ToolsAuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
   const router = useRouter()
   const loadedRef = useRef(false)
+  const loadingRef = useRef(true)
+
+  // loading状態をRefにも同期（タイムアウトのクロージャ対策）
+  const updateLoading = (value: boolean) => {
+    loadingRef.current = value
+    setLoading(value)
+  }
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -41,7 +48,7 @@ export function ToolsAuthProvider({ children }: { children: React.ReactNode }) {
         if (event === 'SIGNED_OUT') {
           setUser(null)
           setSession(null)
-          setLoading(false)
+          updateLoading(false)
           router.replace('/tools/colors')
           return
         }
@@ -53,7 +60,7 @@ export function ToolsAuthProvider({ children }: { children: React.ReactNode }) {
         ) {
           if (!authSession?.user) {
             // 未認証 → Landing へリダイレクト
-            setLoading(false)
+            updateLoading(false)
             router.replace('/tools/colors')
             return
           }
@@ -62,7 +69,7 @@ export function ToolsAuthProvider({ children }: { children: React.ReactNode }) {
 
           // データ読込済み & 初回セッションでない場合はスキップ
           if (loadedRef.current && event !== 'INITIAL_SESSION') {
-            setLoading(false)
+            updateLoading(false)
             return
           }
 
@@ -85,16 +92,16 @@ export function ToolsAuthProvider({ children }: { children: React.ReactNode }) {
             console.error('[ToolsAuth] セッション取得エラー:', err)
           }
 
-          setLoading(false)
+          updateLoading(false)
         }
       }
     )
 
-    // 10秒タイムアウト
+    // 10秒タイムアウト（loadingRefで最新値を参照）
     const timeout = setTimeout(() => {
-      if (loading) {
+      if (loadingRef.current) {
         console.warn('[ToolsAuth] 初期セッション取得タイムアウト')
-        setLoading(false)
+        updateLoading(false)
         router.replace('/tools/colors')
       }
     }, 10000)
