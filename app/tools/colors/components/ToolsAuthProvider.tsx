@@ -48,7 +48,8 @@ export function ToolsAuthProvider({ children }: { children: React.ReactNode }) {
 
         if (
           event === 'INITIAL_SESSION' ||
-          event === 'SIGNED_IN'
+          event === 'SIGNED_IN' ||
+          event === 'TOKEN_REFRESHED'
         ) {
           if (!authSession?.user) {
             // 未認証 → Landing へリダイレクト
@@ -59,7 +60,7 @@ export function ToolsAuthProvider({ children }: { children: React.ReactNode }) {
 
           setUser(authSession.user)
 
-          // TOKEN_REFRESHED 時のデータ再取得スキップ
+          // データ読込済み & 初回セッションでない場合はスキップ
           if (loadedRef.current && event !== 'INITIAL_SESSION') {
             setLoading(false)
             return
@@ -85,12 +86,6 @@ export function ToolsAuthProvider({ children }: { children: React.ReactNode }) {
           }
 
           setLoading(false)
-        }
-
-        if (event === 'TOKEN_REFRESHED') {
-          if (authSession?.user) {
-            setUser(authSession.user)
-          }
         }
       }
     )
