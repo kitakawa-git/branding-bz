@@ -146,7 +146,7 @@ export default function ColorsLandingPage() {
           <h2 className="mb-12 text-center text-2xl font-bold text-gray-900">
             5ステップでカラーを確定
           </h2>
-          <div className="relative flex flex-col gap-4 md:flex-row md:items-start md:gap-0">
+          <div className="relative flex flex-col gap-4 md:flex-row md:items-start md:gap-10">
             {/* デスクトップ: ステップ間の接続線（丸の中心を横断） */}
             <div className="hidden md:block absolute top-5 left-[10%] right-[10%] h-px bg-gray-300" />
             {STEPS.map((step) => (
