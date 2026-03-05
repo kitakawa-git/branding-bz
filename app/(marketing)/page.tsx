@@ -62,25 +62,22 @@ function HeroSection() {
 /* ─── セクション2: 3レイヤー ─── */
 const layers = [
   {
-    num: '01',
     label: '構築',
-    title: 'AIが、ブランドの言語化を支える',
+    title: 'ブランドの言語化を、AIがサポート',
     description:
       '「自社の"らしさ"は分かっているけど、うまく言葉にできない」そんな悩みに、AIが壁打ち相手として伴走。理念・スローガン・カラー・ペルソナを、対話しながら形にします。',
     icon: MessageSquareText,
   },
   {
-    num: '02',
     label: '浸透',
-    title: 'AIが、ブランドの定着を支える',
+    title: 'ブランドの定着を、AIがサポート',
     description:
       'ブランド掲示・タイムライン・KPIを統合した浸透プラットフォーム。AIが社員の活動データから浸透度を分析し、「どこが根づいていて、どこに手を打つべきか」を可視化します。',
     icon: ChartLine,
   },
   {
-    num: '03',
     label: '発信',
-    title: 'スマート名刺が、ブランドの発信を支える',
+    title: 'ブランドの発信を、スマート名刺がサポート',
     description:
       'QRコードから社員プロフィール＋企業ブランドページへ。社内で根づいた"らしさ"が、一人ひとりの名刺を通じて社外に届きます。',
     icon: CreditCard,
@@ -92,13 +89,13 @@ function LayersSection() {
     <section className="px-6 py-16">
       <div className="mx-auto max-w-7xl">
         <h2 className="text-center text-2xl font-bold text-gray-900 mb-8">
-          ブランディングのすべてのステップを、AIが支える。
+          あらゆるステップを、AIがサポート。
         </h2>
 
         <div className="grid md:grid-cols-3 gap-6">
           {layers.map((layer) => (
             <div
-              key={layer.num}
+              key={layer.label}
               className="relative rounded-2xl overflow-hidden transition-all hover:scale-[1.02] hover:shadow-2xl"
               style={{
                 background: 'rgba(255, 255, 255, 0.12)',
@@ -119,18 +116,7 @@ function LayersSection() {
               />
               {/* カードコンテンツ */}
               <div className="relative z-10 p-8">
-                <div className="flex items-center gap-3 mb-5">
-                  <div
-                    className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold text-gray-900"
-                    style={{
-                      background: 'rgba(255, 255, 255, 0.15)',
-                      border: '1px solid rgba(255, 255, 255, 0.3)',
-                      backdropFilter: 'blur(8px)',
-                      WebkitBackdropFilter: 'blur(8px)',
-                    }}
-                  >
-                    {layer.num}
-                  </div>
+                <div className="mb-5">
                   <span className="text-sm font-semibold tracking-wide text-gray-700">
                     {layer.label}
                   </span>
