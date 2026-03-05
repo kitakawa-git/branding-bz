@@ -151,7 +151,7 @@ export default function ColorsLandingPage() {
             <div className="hidden md:block absolute top-5 left-[10%] right-[10%] h-px bg-gray-300" />
             {STEPS.map((step) => (
               <div key={step.title} className="flex items-center gap-3 md:flex-1 md:flex-col md:gap-0 md:text-center">
-                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gray-900 text-sm font-bold text-white md:mb-3">
+                <div className="relative z-10 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gray-900 text-sm font-bold text-white md:mb-3">
                   {step.icon}
                 </div>
                 <div className="md:mt-0">
