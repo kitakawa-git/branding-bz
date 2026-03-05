@@ -120,8 +120,8 @@ export default function ColorsLandingPage() {
                   ))}
                 </div>
                 <CardContent className="p-4">
-                  <p className="text-sm font-bold text-gray-900">{palette.name}</p>
-                  <p className="mt-0.5 text-xs text-gray-500">{palette.concept}</p>
+                  <p className="text-base font-bold text-gray-900">{palette.name}</p>
+                  <p className="mt-0.5 text-sm text-gray-500">{palette.concept}</p>
                   <div className="mt-3 flex gap-1.5">
                     {palette.colors.map((color, i) => (
                       <div key={i} className="flex items-center gap-1">
