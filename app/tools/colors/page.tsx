@@ -43,11 +43,11 @@ const EXAMPLE_PALETTES = [
 ]
 
 const STEPS = [
-  { icon: '1', title: '基本情報', description: 'ブランド名や業種を入力' },
+  { icon: '1', title: '基本情報', description: 'ブランド名や業種・ターゲットを入力' },
   { icon: '2', title: 'イメージ選択', description: 'キーワードやムードボードで方向性を設定' },
   { icon: '3', title: 'AI提案', description: 'AIが3パターンのカラーパレットを提案' },
-  { icon: '4', title: '調整・磨き込み', description: 'AIチャットで細かく調整' },
-  { icon: '5', title: '確定・出力', description: 'PDF出力やbranding.bz連携' },
+  { icon: '4', title: '調整・磨き込み', description: 'AIチャットで色味やトーンを細かく調整' },
+  { icon: '5', title: '確定・出力', description: 'PDFカード出力やbranding.bzへの連携' },
 ]
 
 export default function ColorsLandingPage() {
