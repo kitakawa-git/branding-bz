@@ -330,9 +330,20 @@ function CTASection() {
         </p>
 
         {/* βテスター募集 */}
-        <div className="mt-8 inline-flex items-center gap-2 rounded-full bg-blue-50 px-5 py-2">
-          <span className="text-blue-700 font-bold text-sm">残り2社限定</span>
-          <span className="text-blue-700 text-sm">無料で最新バージョンをいち早くお試しいただけます</span>
+        <div
+          className="mt-8 inline-flex items-center gap-2 rounded-full px-6 py-1.5 text-sm text-blue-700 relative overflow-hidden"
+          style={{
+            background: 'rgba(0, 97, 255, 0.1)',
+            backdropFilter: 'blur(12px) saturate(120%)',
+            WebkitBackdropFilter: 'blur(12px) saturate(120%)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            boxShadow: '0px 8px 24px 0 rgba(12, 74, 110, 0.15), inset 0px 0px 4px 2px rgba(255, 255, 255, 0.2)',
+          }}
+        >
+          <div className="absolute inset-0 pointer-events-none rounded-full"
+            style={{ background: 'linear-gradient(to left top, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 50%)' }} />
+          <span className="relative z-10 font-bold">残り2社限定</span>
+          <span className="relative z-10">無料で最新バージョンをいち早くお試しいただけます</span>
         </div>
 
         <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
