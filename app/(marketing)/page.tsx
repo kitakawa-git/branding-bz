@@ -252,15 +252,17 @@ function FeaturesSection() {
                 </div>
               </CardContent>
               {feature.gif && (
-                <div className="aspect-video bg-gray-100">
-                  <Image
-                    src={feature.gif}
-                    alt={`${feature.title}のデモ`}
-                    width={600}
-                    height={338}
-                    className="w-full h-full object-cover"
-                    unoptimized
-                  />
+                <div className="px-6 pb-6">
+                  <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden">
+                    <Image
+                      src={feature.gif}
+                      alt={`${feature.title}のデモ`}
+                      width={600}
+                      height={338}
+                      className="w-full h-full object-cover"
+                      unoptimized
+                    />
+                  </div>
                 </div>
               )}
             </Card>
