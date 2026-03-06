@@ -238,20 +238,37 @@ function FeaturesSection() {
 
         <div className="columns-1 md:columns-2 gap-6 space-y-6">
           {features.map((feature) => (
-            <Card
+            <div
               key={feature.title}
-              className="overflow-hidden transition-shadow hover:shadow-lg break-inside-avoid"
+              className="relative rounded-2xl overflow-hidden transition-all hover:scale-[1.02] hover:shadow-2xl break-inside-avoid"
+              style={{
+                background: 'rgba(255, 255, 255, 0.12)',
+                backdropFilter: 'blur(12px) saturate(120%)',
+                WebkitBackdropFilter: 'blur(12px) saturate(120%)',
+                border: '1px solid rgba(255, 255, 255, 0.25)',
+                boxShadow: '0px 8px 24px 0 rgba(12, 74, 110, 0.12), inset 0px 0px 4px 2px rgba(255, 255, 255, 0.15)',
+              }}
             >
-              <CardContent className="p-6 flex items-start gap-4">
+              {/* リフレクションハイライト */}
+              <div
+                className="absolute inset-0 pointer-events-none rounded-2xl"
+                style={{ background: 'linear-gradient(to left top, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 50%)' }}
+              />
+              <div
+                className="absolute inset-0 pointer-events-none rounded-2xl"
+                style={{ background: 'linear-gradient(to bottom, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0) 100%)' }}
+              />
+              {/* カードコンテンツ */}
+              <div className="relative z-10 p-6 flex items-start gap-4">
                 <feature.icon size={32} strokeWidth={1.5} className="mt-1 text-gray-900 shrink-0" />
                 <div>
                   <h3 className="text-lg font-bold text-gray-900 mb-2">{feature.title}</h3>
-                  <p className="text-sm text-gray-500 leading-relaxed">{feature.description}</p>
+                  <p className="text-sm text-gray-600 leading-relaxed">{feature.description}</p>
                 </div>
-              </CardContent>
+              </div>
               {feature.gif && (
-                <div className="px-6 pb-6">
-                  <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden">
+                <div className="relative z-10 px-6 pb-6">
+                  <div className="aspect-video bg-gray-100/50 rounded-lg overflow-hidden">
                     <Image
                       src={feature.gif}
                       alt={`${feature.title}のデモ`}
@@ -263,7 +280,7 @@ function FeaturesSection() {
                   </div>
                 </div>
               )}
-            </Card>
+            </div>
           ))}
         </div>
       </div>
