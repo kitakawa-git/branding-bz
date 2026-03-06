@@ -106,7 +106,7 @@ function LayersSection() {
   return (
     <section className="px-6 py-16">
       <div className="mx-auto max-w-7xl">
-        <h2 className="text-center text-2xl md:text-3xl font-bold text-gray-900 mb-8">
+        <h2 className="text-center text-xl md:text-2xl font-bold text-gray-900 mb-8">
           あらゆるステップを、AIがサポート
         </h2>
 
@@ -160,7 +160,7 @@ function AboutSection() {
   return (
     <section className="bg-gray-50 px-6 py-16 md:py-24">
       <div className="mx-auto max-w-7xl">
-        <h2 className="text-center text-2xl md:text-3xl font-bold text-gray-900 mb-10">
+        <h2 className="text-center text-xl md:text-2xl font-bold text-gray-900 mb-10">
           ブランディング会社の現場から生まれたSaaS
         </h2>
 
@@ -247,7 +247,7 @@ function FeaturesSection() {
   return (
     <section className="bg-white px-6 py-16 md:py-24">
       <div className="mx-auto max-w-7xl">
-        <h2 className="text-center text-2xl md:text-3xl font-bold text-gray-900 mb-4">
+        <h2 className="text-center text-xl md:text-2xl font-bold text-gray-900 mb-4">
           ブランドを加速させる機能
         </h2>
         <p className="text-center text-gray-500 mb-12">
@@ -337,7 +337,7 @@ function CTASection() {
           <span className="relative z-10 font-bold">残り2社限定</span>
           <span className="relative z-10">無料で最新バージョンをいち早くお試しいただけます</span>
         </div>
-        <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-gray-900">
+        <h2 className="text-2xl md:text-4xl font-bold tracking-tight text-gray-900">
           さぁ、&ldquo;らしさ&rdquo;をひろげよう
         </h2>
         <p className="mt-6 text-lg md:text-xl text-gray-700 max-w-2xl mx-auto leading-relaxed">
