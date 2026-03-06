@@ -241,8 +241,18 @@ export default function ColorsLandingPage() {
       </section>
 
       {/* 機能ハイライト */}
-      <section className="px-6 py-16">
-        <div className="mx-auto max-w-7xl">
+      <section className="relative overflow-hidden px-6 py-16">
+        {/* グラデーション背景 */}
+        <div className="absolute inset-0 z-0" style={{
+          background: [
+            'radial-gradient(ellipse 180% 160% at 5% 20%, rgba(196, 181, 253, 0.8) 0%, transparent 55%)',
+            'radial-gradient(ellipse 160% 140% at 85% 10%, rgba(253, 186, 116, 0.7) 0%, transparent 55%)',
+            'radial-gradient(ellipse 150% 130% at 50% 90%, rgba(167, 243, 208, 0.65) 0%, transparent 55%)',
+            'radial-gradient(ellipse 130% 110% at 95% 65%, rgba(251, 207, 232, 0.6) 0%, transparent 55%)',
+            'linear-gradient(135deg, rgba(245, 243, 255, 1) 0%, rgba(255, 251, 245, 1) 50%, rgba(243, 255, 251, 1) 100%)',
+          ].join(', '),
+        }} />
+        <div className="relative z-10 mx-auto max-w-7xl">
           <h2 className="text-center text-2xl md:text-3xl font-bold text-gray-900 mb-8">
             あらゆるステップを、AIがサポート
           </h2>
