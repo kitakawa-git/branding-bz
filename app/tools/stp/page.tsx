@@ -27,11 +27,11 @@ const STP_CARDS = [
 ]
 
 const STEPS = [
-  { icon: '1', title: '基本情報', description: '業種や商品、競合の情報を入力' },
-  { icon: '2', title: 'セグメンテーション', description: 'AIが市場の分け方を提案' },
-  { icon: '3', title: 'ターゲティング', description: 'セグメントを評価しターゲットを決定' },
-  { icon: '4', title: 'ポジショニング', description: 'マップ上に自社と競合を配置' },
-  { icon: '5', title: '確認・出力', description: '分析シートとマップをPDF出力' },
+  { icon: '1', title: '基本情報', description: '業種や商品、競合など基本的な情報を入力' },
+  { icon: '2', title: 'セグメンテーション', description: 'AIが業種に最適な市場の分け方を提案' },
+  { icon: '3', title: 'ターゲティング', description: '各セグメントを評価して狙う市場を決定' },
+  { icon: '4', title: 'ポジショニング', description: 'スライダーで自社と競合をマップ上に配置' },
+  { icon: '5', title: '確認・出力', description: '分析シートとマップをPDF出力・本体連携' },
 ]
 
 const HIGHLIGHTS = [
@@ -118,9 +118,9 @@ export default function STPLandingPage() {
           STP分析ツール
         </h1>
         <p className="mt-6 mx-auto max-w-2xl text-[20px] text-gray-600 leading-relaxed">
-          市場分析からポジショニングマップまで。
+          市場をどう分け、誰を狙い、どう差別化するか。
           <br />
-          AIがあなたのSTP戦略をサポートします。
+          AIがあなたのSTP戦略を、分析からマップ作成までサポートします。
         </p>
         <div className="mt-10">
           <Link href="/tools/stp/auth">
