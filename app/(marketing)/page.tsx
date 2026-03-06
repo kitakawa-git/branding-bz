@@ -294,11 +294,11 @@ function CTASection() {
     <section className="bg-gray-50 px-6 py-16 md:py-24 text-center">
       <div className="mx-auto max-w-7xl">
         <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
-          さぁ、&ldquo;らしさ&rdquo;をひろげよう。
+          さぁ、&ldquo;らしさ&rdquo;をひろげよう
         </h2>
         <p className="text-gray-600 mb-6 leading-relaxed">
-          ブランドは、作った瞬間から走り出す。<br className="hidden sm:block" />
-          branding.bz で、その加速を始めませんか。
+          ブランドは、作った瞬間から走り出す<br className="hidden sm:block" />
+          branding.bz で、その加速を始めませんか
         </p>
 
         {/* βテスター募集 */}
