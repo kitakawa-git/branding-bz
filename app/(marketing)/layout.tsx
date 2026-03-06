@@ -29,13 +29,24 @@ function Header() {
             <Link
               key={item.href}
               href={item.href}
-              className="px-3 py-2 text-sm text-gray-600 rounded-md hover:text-gray-900 hover:bg-gray-100 transition-colors"
+              className="px-3 py-2 text-sm font-semibold text-gray-600 rounded-md hover:text-gray-900 hover:bg-gray-100 transition-colors"
             >
               {item.label}
             </Link>
           ))}
           <Link href="/portal/login" className="ml-3">
-            <Button variant="outline" size="sm">ログイン</Button>
+            <button
+              className="relative h-8 px-4 rounded-full text-sm font-semibold text-gray-900 overflow-hidden transition-all hover:scale-105 hover:shadow-lg"
+              style={{
+                background: 'rgba(255, 255, 255, 0.25)',
+                backdropFilter: 'blur(12px) saturate(120%)',
+                WebkitBackdropFilter: 'blur(12px) saturate(120%)',
+                border: '1px solid rgba(255, 255, 255, 0.4)',
+                boxShadow: '0px 4px 12px 0 rgba(12, 74, 110, 0.08), inset 0px 1px 0px 0px rgba(255, 255, 255, 0.3)',
+              }}
+            >
+              <span className="relative z-10">ログイン</span>
+            </button>
           </Link>
         </nav>
 
