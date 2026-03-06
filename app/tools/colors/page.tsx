@@ -164,8 +164,8 @@ export default function ColorsLandingPage() {
       </section>
 
       {/* カラーパレット例 */}
-      <section className="bg-gray-50 px-6 py-12 md:py-16">
-        <div className="mx-auto max-w-7xl">
+      <section className="bg-gray-50 py-12 md:py-16">
+        <div className="mx-auto w-full">
           <h2 className="mb-8 text-center text-xl md:text-[1.625rem] font-bold text-gray-900">
             こんなカラーパレットが作れます
           </h2>
