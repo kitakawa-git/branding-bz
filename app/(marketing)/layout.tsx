@@ -93,45 +93,108 @@ function Header() {
   )
 }
 
+const footerLinks = {
+  product: [
+    { href: '/', label: 'トップ' },
+    { href: '/plan', label: '料金プラン' },
+    { href: '/faq', label: 'よくある質問' },
+    { href: '/contact', label: 'お問い合わせ' },
+  ],
+  tools: [
+    { href: '/tools/colors', label: 'ブランドカラー定義' },
+  ],
+  legal: [
+    { href: '/portal/terms', label: '利用規約' },
+    { href: '/privacy-policy', label: 'プライバシーポリシー' },
+    { href: '/tokusho', label: '特定商取引法に基づく表記' },
+  ],
+  login: [
+    { href: '/portal/login', label: 'メンバーログイン' },
+    { href: '/admin/login', label: '管理者ログイン' },
+  ],
+}
+
 function Footer() {
   return (
-    <footer className="border-t bg-gray-900 text-white">
-      <div className="mx-auto max-w-7xl px-6 py-14">
-        <div className="grid md:grid-cols-3 gap-10">
+    <footer className="relative z-10 bg-gray-950 text-white">
+      <div className="mx-auto max-w-7xl px-6 pt-16 pb-10">
+        {/* 上部: ロゴ + リンク群 */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-10 md:gap-8">
           {/* ブランド */}
-          <div>
-            <p className="text-lg font-bold mb-3">branding.bz</p>
-            <p className="text-sm text-gray-400 leading-relaxed">
-              AIで、ブランディングを加速させる。
+          <div className="col-span-2 md:col-span-1">
+            <Link href="/" className="text-lg font-bold text-white no-underline">
+              branding.bz
+            </Link>
+            <p className="mt-3 text-sm text-gray-400 leading-relaxed">
+              AIで、ブランディングを加速させる
             </p>
           </div>
 
-          {/* サービス */}
+          {/* プロダクト */}
           <div>
-            <p className="text-sm font-bold mb-4">サービス</p>
-            <ul className="space-y-2 text-sm text-gray-400">
-              <li><Link href="/plan" className="hover:text-white transition-colors">料金プラン</Link></li>
-              <li><Link href="/faq" className="hover:text-white transition-colors">よくある質問</Link></li>
-              <li><Link href="/contact" className="hover:text-white transition-colors">お問い合わせ</Link></li>
-              <li><Link href="/tools/colors" className="hover:text-white transition-colors">ブランドカラー定義ツール</Link></li>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Product</p>
+            <ul className="space-y-2.5">
+              {footerLinks.product.map((link) => (
+                <li key={link.href}>
+                  <Link href={link.href} className="text-sm text-gray-400 hover:text-white transition-colors">
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* ツール */}
+          <div>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Tools</p>
+            <ul className="space-y-2.5">
+              {footerLinks.tools.map((link) => (
+                <li key={link.href}>
+                  <Link href={link.href} className="text-sm text-gray-400 hover:text-white transition-colors">
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
           {/* リーガル */}
           <div>
-            <p className="text-sm font-bold mb-4">その他</p>
-            <ul className="space-y-2 text-sm text-gray-400">
-              <li><Link href="/portal/terms" className="hover:text-white transition-colors">利用規約</Link></li>
-              <li><Link href="/privacy-policy" className="hover:text-white transition-colors">プライバシーポリシー</Link></li>
-              <li><Link href="/portal/login" className="hover:text-white transition-colors">メンバーログイン</Link></li>
-              <li><Link href="/admin/login" className="hover:text-white transition-colors">管理者ログイン</Link></li>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Legal</p>
+            <ul className="space-y-2.5">
+              {footerLinks.legal.map((link) => (
+                <li key={link.href}>
+                  <Link href={link.href} className="text-sm text-gray-400 hover:text-white transition-colors">
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* ログイン */}
+          <div>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Account</p>
+            <ul className="space-y-2.5">
+              {footerLinks.login.map((link) => (
+                <li key={link.href}>
+                  <Link href={link.href} className="text-sm text-gray-400 hover:text-white transition-colors">
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
         </div>
 
-        <div className="mt-12 pt-8 border-t border-gray-800 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <p className="text-xs text-gray-500">&copy; {new Date().getFullYear()} branding.bz — ID INC.</p>
-          <p className="text-xs text-gray-500">川崎市 | CEO 北川巧</p>
+        {/* 下部: コピーライト + 運営情報 */}
+        <div className="mt-14 pt-8 border-t border-gray-800/60 flex flex-col sm:flex-row justify-between items-center gap-3">
+          <p className="text-xs text-gray-500">
+            &copy; {new Date().getFullYear()} branding.bz — ID INC.
+          </p>
+          <p className="text-xs text-gray-600">
+            川崎市 | CEO 北川巧
+          </p>
         </div>
       </div>
     </footer>
