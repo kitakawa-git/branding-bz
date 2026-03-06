@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { ProgressBar } from '../components/ProgressBar'
 import { Step1BasicInfo } from './components/Step1BasicInfo'
 import { Step2Segmentation } from './components/Step2Segmentation'
+import { Step3Targeting } from './components/Step3Targeting'
 import { StepPlaceholder } from './components/StepPlaceholder'
 
 // STPセッションデータの型
@@ -34,7 +35,17 @@ interface STPSessionData {
       }>
     }>
   }
-  targeting: Record<string, unknown>
+  targeting: {
+    evaluations: Array<{
+      segment_name: string
+      attractiveness: number
+      competitiveness: number
+      priority: '高' | '中' | '低'
+    }>
+    main_target: string
+    sub_targets: string[]
+    target_description: string
+  }
   positioning: Record<string, unknown>
   completed: boolean
 }
@@ -185,12 +196,12 @@ export default function STPSessionPage() {
         />
       )}
       {currentStep === 3 && (
-        <StepPlaceholder
-          stepNumber={3}
-          title="ターゲティング"
-          description="狙うべきセグメントを選定します"
-          onNext={() => saveAndAdvance(4)}
+        <Step3Targeting
+          segmentation={session.session_data.segmentation}
+          targeting={session.session_data.targeting}
+          onNext={(data) => saveAndAdvance(4, { targeting: data })}
           onBack={() => saveAndAdvance(2)}
+          onSaveField={(data) => saveField({ targeting: data })}
         />
       )}
       {currentStep === 4 && (
