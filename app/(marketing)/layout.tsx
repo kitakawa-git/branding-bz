@@ -94,11 +94,20 @@ function Header() {
                 <ChevronDown className="h-3.5 w-3.5" />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="bg-white">
+            <DropdownMenuContent
+              align="start"
+              className="border-0 p-1"
+              style={{
+                background: 'rgba(255, 255, 255, 0.7)',
+                backdropFilter: 'blur(12px) saturate(120%)',
+                WebkitBackdropFilter: 'blur(12px) saturate(120%)',
+                border: '1px solid rgba(255, 255, 255, 0.8)',
+                boxShadow: '0px 8px 24px 0 rgba(12, 74, 110, 0.12), inset 0px 0px 4px 2px rgba(255, 255, 255, 0.15)',
+              }}
+            >
               {toolItems.map((tool) => (
                 <DropdownMenuItem key={tool.href} asChild>
-                  <Link href={tool.href} className="flex items-center gap-2 cursor-pointer">
-                    <tool.icon className="h-4 w-4" />
+                  <Link href={tool.href} className="cursor-pointer">
                     {tool.label}
                   </Link>
                 </DropdownMenuItem>
