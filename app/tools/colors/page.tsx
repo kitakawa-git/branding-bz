@@ -4,7 +4,7 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Palette, Sparkles, Download, ArrowRight, CheckCircle2 } from 'lucide-react'
+import { Palette, Sparkles, Download, ArrowRight } from 'lucide-react'
 import Footer from '@/components/Footer'
 
 const EXAMPLE_PALETTES = [
@@ -340,15 +340,21 @@ export default function ColorsLandingPage() {
               </button>
             </Link>
           </div>
-          <div className="mt-4 flex items-center justify-center gap-4 text-sm text-gray-500">
-            <span className="flex items-center gap-1">
-              <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
-              クレジットカード不要
-            </span>
-            <span className="flex items-center gap-1">
-              <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
-              約5〜10分で完了
-            </span>
+          <div
+            className="mt-6 inline-flex items-center gap-2 rounded-full px-6 py-2 text-sm font-medium text-blue-600 relative overflow-hidden"
+            style={{
+              background: 'rgba(255, 255, 255, 0.25)',
+              backdropFilter: 'blur(12px) saturate(120%)',
+              WebkitBackdropFilter: 'blur(12px) saturate(120%)',
+              border: '1px solid rgba(255, 255, 255, 0.4)',
+              boxShadow: '0px 4px 12px 0 rgba(12, 74, 110, 0.08), inset 0px 1px 0px 0px rgba(255, 255, 255, 0.3)',
+            }}
+          >
+            <div className="absolute inset-0 pointer-events-none rounded-full"
+              style={{ background: 'linear-gradient(to left top, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 50%)' }} />
+            <span className="relative z-10">クレジットカード不要</span>
+            <span className="relative z-10 opacity-40">|</span>
+            <span className="relative z-10">約5〜10分で完了</span>
           </div>
         </div>
       </section>
