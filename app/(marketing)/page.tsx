@@ -233,7 +233,7 @@ function FeaturesSection() {
           ブランドを加速させる機能
         </h2>
         <p className="text-center text-gray-500 mb-12">
-          ブランドの浸透に必要なすべてを、ひとつのプラットフォームに。
+          必要なすべてを、ひとつのプラットフォームに。
         </p>
 
         <div className="grid md:grid-cols-2 gap-6">
