@@ -72,10 +72,10 @@ function Header() {
           {/* トップ */}
           <Link
             href="/"
-            className={`px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-300 ${
+            className={`px-3 py-2 text-sm font-semibold rounded-md transition-all duration-300 hover:bg-white/30 hover:backdrop-blur-[10px] ${
               isOverDark
-                ? 'text-gray-300 hover:text-white hover:bg-white/10'
-                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                ? 'text-gray-300 hover:text-white'
+                : 'text-gray-600 hover:text-gray-900'
             }`}
           >
             トップ
@@ -89,10 +89,10 @@ function Header() {
           <DropdownMenu open={toolsOpen} onOpenChange={setToolsOpen}>
             <DropdownMenuTrigger asChild>
               <button
-                className={`flex items-center gap-1 px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-300 outline-none ${
+                className={`flex items-center gap-1 px-3 py-2 text-sm font-semibold rounded-md transition-all duration-300 outline-none hover:bg-white/30 hover:backdrop-blur-[10px] ${
                   isOverDark
-                    ? 'text-gray-300 hover:text-white hover:bg-white/10'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    ? 'text-gray-300 hover:text-white'
+                    : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
                 ツール
@@ -126,10 +126,10 @@ function Header() {
             <Link
               key={item.href}
               href={item.href}
-              className={`px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-300 ${
+              className={`px-3 py-2 text-sm font-semibold rounded-md transition-all duration-300 hover:bg-white/30 hover:backdrop-blur-[10px] ${
                 isOverDark
-                  ? 'text-gray-300 hover:text-white hover:bg-white/10'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                  ? 'text-gray-300 hover:text-white'
+                  : 'text-gray-600 hover:text-gray-900'
               }`}
             >
               {item.label}
