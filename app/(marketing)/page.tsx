@@ -44,14 +44,32 @@ function HeroSection() {
         </p>
         <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
           <Link href="/contact">
-            <Button size="lg" className="h-12 w-48 text-base font-bold">
-              無料で始める
-            </Button>
+            <button
+              className="relative h-12 w-48 rounded-full text-base font-bold text-white overflow-hidden transition-all hover:scale-105 hover:shadow-2xl"
+              style={{
+                background: 'rgba(0, 0, 0, 0.75)',
+                backdropFilter: 'blur(12px) saturate(120%)',
+                WebkitBackdropFilter: 'blur(12px) saturate(120%)',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                boxShadow: '0px 8px 24px 0 rgba(0, 0, 0, 0.2), inset 0px 1px 0px 0px rgba(255, 255, 255, 0.15)',
+              }}
+            >
+              <span className="relative z-10">無料で始める</span>
+            </button>
           </Link>
           <Link href="/plan">
-            <Button variant="outline" size="lg" className="h-12 w-48 text-base font-bold">
-              料金を見る
-            </Button>
+            <button
+              className="relative h-12 w-48 rounded-full text-base font-bold text-gray-900 overflow-hidden transition-all hover:scale-105 hover:shadow-2xl"
+              style={{
+                background: 'rgba(255, 255, 255, 0.25)',
+                backdropFilter: 'blur(12px) saturate(120%)',
+                WebkitBackdropFilter: 'blur(12px) saturate(120%)',
+                border: '1px solid rgba(255, 255, 255, 0.4)',
+                boxShadow: '0px 8px 24px 0 rgba(12, 74, 110, 0.1), inset 0px 1px 0px 0px rgba(255, 255, 255, 0.3)',
+              }}
+            >
+              <span className="relative z-10">料金を見る</span>
+            </button>
           </Link>
         </div>
       </div>
@@ -309,15 +327,35 @@ function CTASection() {
 
         <div className="flex gap-4 justify-center flex-wrap">
           <Link href="/contact">
-            <Button size="lg" className="h-12 px-8 text-base font-bold">
-              お問い合わせ
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
+            <button
+              className="relative h-12 px-8 rounded-full text-base font-bold text-white overflow-hidden transition-all hover:scale-105 hover:shadow-2xl inline-flex items-center"
+              style={{
+                background: 'rgba(0, 0, 0, 0.75)',
+                backdropFilter: 'blur(12px) saturate(120%)',
+                WebkitBackdropFilter: 'blur(12px) saturate(120%)',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                boxShadow: '0px 8px 24px 0 rgba(0, 0, 0, 0.2), inset 0px 1px 0px 0px rgba(255, 255, 255, 0.15)',
+              }}
+            >
+              <span className="relative z-10 inline-flex items-center">
+                お問い合わせ
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </span>
+            </button>
           </Link>
           <Link href="/plan">
-            <Button variant="outline" size="lg" className="h-12 px-8 text-base font-medium">
-              料金プランを見る
-            </Button>
+            <button
+              className="relative h-12 px-8 rounded-full text-base font-medium text-gray-900 overflow-hidden transition-all hover:scale-105 hover:shadow-2xl"
+              style={{
+                background: 'rgba(255, 255, 255, 0.25)',
+                backdropFilter: 'blur(12px) saturate(120%)',
+                WebkitBackdropFilter: 'blur(12px) saturate(120%)',
+                border: '1px solid rgba(255, 255, 255, 0.4)',
+                boxShadow: '0px 8px 24px 0 rgba(12, 74, 110, 0.1), inset 0px 1px 0px 0px rgba(255, 255, 255, 0.3)',
+              }}
+            >
+              <span className="relative z-10">料金プランを見る</span>
+            </button>
           </Link>
         </div>
 
