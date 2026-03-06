@@ -241,30 +241,70 @@ export default function ColorsLandingPage() {
       </section>
 
       {/* 機能ハイライト */}
-      <section className="bg-gray-50 py-16">
-        <div className="mx-auto max-w-7xl px-6">
-          <div className="grid gap-8 md:grid-cols-3">
-            <div className="flex items-start gap-3">
-              <Palette className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600" />
-              <div>
-                <h3 className="mb-1 text-sm font-bold text-gray-900">WCAG準拠チェック</h3>
-                <p className="text-sm text-gray-500">アクセシビリティ基準を自動で検証し、誰にでも見やすい配色を提案</p>
+      <section className="px-6 py-16">
+        <div className="mx-auto max-w-7xl">
+          <h2 className="text-center text-2xl md:text-3xl font-bold text-gray-900 mb-8">
+            あらゆるステップを、AIがサポート
+          </h2>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {[
+              {
+                label: 'アクセシビリティ',
+                icon: Palette,
+                title: 'WCAG準拠チェック',
+                description: 'アクセシビリティ基準を自動で検証し、誰にでも見やすい配色を提案',
+              },
+              {
+                label: '対話型調整',
+                icon: Sparkles,
+                title: 'AIチャットで磨き込み',
+                description: '「もう少し温かみがほしい」など、自然な言葉でカラーを調整',
+              },
+              {
+                label: '出力',
+                icon: Download,
+                title: 'PDF・CSS出力',
+                description: 'パレットカードPDFやCSSカスタムプロパティをワンクリックで出力',
+              },
+            ].map((item) => (
+              <div
+                key={item.label}
+                className="relative rounded-2xl overflow-hidden transition-all hover:scale-[1.02] hover:shadow-2xl"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.12)',
+                  backdropFilter: 'blur(12px) saturate(120%)',
+                  WebkitBackdropFilter: 'blur(12px) saturate(120%)',
+                  border: '1px solid rgba(255, 255, 255, 0.25)',
+                  boxShadow: '0px 8px 24px 0 rgba(12, 74, 110, 0.12), inset 0px 0px 4px 2px rgba(255, 255, 255, 0.15)',
+                }}
+              >
+                {/* リフレクションハイライト */}
+                <div
+                  className="absolute inset-0 pointer-events-none rounded-2xl"
+                  style={{ background: 'linear-gradient(to left top, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 50%)' }}
+                />
+                <div
+                  className="absolute inset-0 pointer-events-none rounded-2xl"
+                  style={{ background: 'linear-gradient(to bottom, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0) 100%)' }}
+                />
+                {/* カードコンテンツ */}
+                <div className="relative z-10 p-8">
+                  <div className="mb-5">
+                    <span className="text-sm font-semibold tracking-wide text-gray-700">
+                      {item.label}
+                    </span>
+                  </div>
+                  <div className="mb-4">
+                    <item.icon size={32} strokeWidth={1.5} className="text-foreground" />
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-900 mb-3">
+                    {item.title}
+                  </h3>
+                  <p className="text-sm text-gray-600 leading-relaxed">{item.description}</p>
+                </div>
               </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <Sparkles className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600" />
-              <div>
-                <h3 className="mb-1 text-sm font-bold text-gray-900">AIチャットで磨き込み</h3>
-                <p className="text-sm text-gray-500">「もう少し温かみがほしい」など、自然な言葉でカラーを調整</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <Download className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600" />
-              <div>
-                <h3 className="mb-1 text-sm font-bold text-gray-900">PDF・CSS出力</h3>
-                <p className="text-sm text-gray-500">パレットカードPDFやCSSカスタムプロパティをワンクリックで出力</p>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
