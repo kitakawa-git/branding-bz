@@ -321,17 +321,9 @@ function CTASection() {
         ].join(', '),
       }} />
       <div className="w-full max-w-4xl mx-auto">
-        <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-gray-900">
-          さぁ、&ldquo;らしさ&rdquo;をひろげよう
-        </h2>
-        <p className="mt-6 text-lg md:text-xl text-gray-700 max-w-2xl mx-auto leading-relaxed">
-          ブランドは、作った瞬間から走り出す<br className="hidden sm:block" />
-          branding.bz で、その加速を始めませんか
-        </p>
-
         {/* βテスター募集 */}
         <div
-          className="mt-8 inline-flex items-center gap-2 rounded-full px-6 py-1.5 text-sm text-blue-700 relative overflow-hidden"
+          className="mb-8 inline-flex items-center gap-2 rounded-full px-6 py-1.5 text-sm text-blue-700 relative overflow-hidden"
           style={{
             background: 'rgba(0, 97, 255, 0.1)',
             backdropFilter: 'blur(12px) saturate(120%)',
@@ -345,6 +337,13 @@ function CTASection() {
           <span className="relative z-10 font-bold">残り2社限定</span>
           <span className="relative z-10">無料で最新バージョンをいち早くお試しいただけます</span>
         </div>
+        <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-gray-900">
+          さぁ、&ldquo;らしさ&rdquo;をひろげよう
+        </h2>
+        <p className="mt-6 text-lg md:text-xl text-gray-700 max-w-2xl mx-auto leading-relaxed">
+          ブランドは、作った瞬間から走り出す<br className="hidden sm:block" />
+          branding.bz で、その加速を始めませんか
+        </p>
 
         <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
           <Link href="/contact">
