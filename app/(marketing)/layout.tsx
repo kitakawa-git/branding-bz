@@ -26,6 +26,7 @@ const toolItems = [
 
 function Header() {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [toolsOpen, setToolsOpen] = useState(false)
   const [isOverDark, setIsOverDark] = useState(false)
 
   useEffect(() => {
@@ -80,8 +81,12 @@ function Header() {
             トップ
           </Link>
 
-          {/* ツールドロップダウン */}
-          <DropdownMenu>
+          {/* ツールドロップダウン（ホバーで開閉） */}
+          <div
+            onMouseEnter={() => setToolsOpen(true)}
+            onMouseLeave={() => setToolsOpen(false)}
+          >
+          <DropdownMenu open={toolsOpen} onOpenChange={setToolsOpen}>
             <DropdownMenuTrigger asChild>
               <button
                 className={`flex items-center gap-1 px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-300 outline-none ${
@@ -114,6 +119,7 @@ function Header() {
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
+          </div>
 
           {/* 料金・FAQ・お問い合わせ */}
           {navItems.slice(1).map((item) => (
