@@ -349,7 +349,7 @@ export default function ColorsLandingPage() {
             今すぐカラーパレットを作成
           </h2>
           <p className="mt-6 text-lg md:text-xl text-gray-700 max-w-2xl mx-auto leading-relaxed">
-            約5〜10分で作成完了<br />無料で3回まで利用可能
+            無料で3回まで利用可能<br />約5〜10分で作成完了
           </p>
           <div className="mt-10">
             <Link href="/tools/colors/auth">
