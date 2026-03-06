@@ -38,7 +38,7 @@ export default function Footer() {
             <ul className="space-y-2.5">
               {footerLinks.product.map((link) => (
                 <li key={link.href}>
-                  <Link href={link.href} className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                  <Link href={link.href} className="text-xs text-gray-600 hover:text-gray-900 transition-colors">
                     {link.label}
                   </Link>
                 </li>
@@ -52,7 +52,7 @@ export default function Footer() {
             <ul className="space-y-2.5">
               {footerLinks.tools.map((link) => (
                 <li key={link.href}>
-                  <Link href={link.href} className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                  <Link href={link.href} className="text-xs text-gray-600 hover:text-gray-900 transition-colors">
                     {link.label}
                   </Link>
                 </li>
@@ -66,7 +66,7 @@ export default function Footer() {
             <ul className="space-y-2.5">
               {footerLinks.legal.map((link) => (
                 <li key={link.href}>
-                  <Link href={link.href} className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                  <Link href={link.href} className="text-xs text-gray-600 hover:text-gray-900 transition-colors">
                     {link.label}
                   </Link>
                 </li>
@@ -80,7 +80,7 @@ export default function Footer() {
             <ul className="space-y-2.5">
               {footerLinks.login.map((link) => (
                 <li key={link.href}>
-                  <Link href={link.href} className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                  <Link href={link.href} className="text-xs text-gray-600 hover:text-gray-900 transition-colors">
                     {link.label}
                   </Link>
                 </li>
