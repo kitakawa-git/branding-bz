@@ -241,7 +241,7 @@ export default function ColorsLandingPage() {
       </section>
 
       {/* 機能ハイライト */}
-      <section className="bg-gray-50 px-6 py-16">
+      <section className="bg-gray-50 px-6 py-16 md:py-24">
         <div className="mx-auto max-w-7xl">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {[
