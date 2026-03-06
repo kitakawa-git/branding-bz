@@ -335,10 +335,10 @@ function CTASection() {
           <span className="text-blue-700 text-sm">無料で最新バージョンをいち早くお試しいただけます</span>
         </div>
 
-        <div className="flex gap-4 justify-center flex-wrap">
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link href="/contact">
             <button
-              className="relative h-12 px-8 rounded-full text-base font-bold text-white overflow-hidden transition-all hover:scale-105 hover:shadow-2xl inline-flex items-center"
+              className="relative h-12 w-48 rounded-full text-base font-bold text-white overflow-hidden transition-all hover:scale-105 hover:shadow-2xl"
               style={{
                 background: 'rgba(0, 0, 0, 0.75)',
                 backdropFilter: 'blur(12px) saturate(120%)',
@@ -347,15 +347,12 @@ function CTASection() {
                 boxShadow: '0px 8px 24px 0 rgba(0, 0, 0, 0.2), inset 0px 1px 0px 0px rgba(255, 255, 255, 0.15)',
               }}
             >
-              <span className="relative z-10 inline-flex items-center">
-                お問い合わせ
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </span>
+              <span className="relative z-10">お問い合わせ</span>
             </button>
           </Link>
           <Link href="/plan">
             <button
-              className="relative h-12 px-8 rounded-full text-base font-medium text-gray-900 overflow-hidden transition-all hover:scale-105 hover:shadow-2xl"
+              className="relative h-12 w-48 rounded-full text-base font-bold text-gray-900 overflow-hidden transition-all hover:scale-105 hover:shadow-2xl"
               style={{
                 background: 'rgba(255, 255, 255, 0.25)',
                 backdropFilter: 'blur(12px) saturate(120%)',
