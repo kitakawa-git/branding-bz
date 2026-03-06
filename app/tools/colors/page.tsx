@@ -248,25 +248,25 @@ export default function ColorsLandingPage() {
               {
                 label: 'アクセシビリティ',
                 icon: Palette,
-                title: 'WCAG準拠の配色チェック',
+                title: ['WCAG準拠の', '配色チェック'],
                 description: 'アクセシビリティ基準を自動で検証し、誰にでも見やすい配色を提案します',
               },
               {
                 label: '対話型調整',
                 icon: Sparkles,
-                title: 'AIチャットで自由に調整',
+                title: ['AIチャットで', '自由に調整'],
                 description: '「もう少し温かみがほしい」など、自然な言葉でカラーを何度でも調整できます',
               },
               {
                 label: '出力',
                 icon: Download,
-                title: 'PDF・CSSをワンクリック出力',
+                title: ['PDF・CSSを', 'ワンクリック出力'],
                 description: 'パレットカードPDFやCSSカスタムプロパティをワンクリックでダウンロードできます',
               },
               {
                 label: '連携',
                 icon: Plug,
-                title: 'ブランド管理ツールに即登録',
+                title: ['ブランド管理ツールに', '即登録'],
                 description: '確定したカラーをブランディングSaaS「branding.bz」に登録。社内ガイドラインや名刺に即反映',
               },
             ].map((item) => (
@@ -301,7 +301,7 @@ export default function ColorsLandingPage() {
                     <item.icon size={32} strokeWidth={1.5} className="text-foreground" />
                   </div>
                   <h3 className="text-lg font-bold text-gray-900 mb-3">
-                    {item.title}
+                    {item.title[0]}<br />{item.title[1]}
                   </h3>
                   <p className="text-sm text-gray-600 leading-relaxed">{item.description}</p>
                 </div>
