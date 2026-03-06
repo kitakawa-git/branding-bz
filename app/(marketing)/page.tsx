@@ -244,6 +244,13 @@ function FeaturesSection() {
                 i === features.length - 1 && features.length % 2 !== 0 ? 'md:col-span-2 md:max-w-[calc(50%-0.75rem)] md:mx-auto' : ''
               }`}
             >
+              <CardContent className="p-6 flex items-start gap-4">
+                <feature.icon size={24} strokeWidth={1.5} className="mt-1 text-gray-900 shrink-0" />
+                <div>
+                  <h3 className="text-base font-bold text-gray-900 mb-2">{feature.title}</h3>
+                  <p className="text-sm text-gray-500 leading-relaxed">{feature.description}</p>
+                </div>
+              </CardContent>
               {feature.gif && (
                 <div className="aspect-video bg-gray-100">
                   <Image
@@ -256,13 +263,6 @@ function FeaturesSection() {
                   />
                 </div>
               )}
-              <CardContent className="p-6 flex items-start gap-4">
-                <feature.icon size={24} strokeWidth={1.5} className="mt-1 text-gray-900 shrink-0" />
-                <div>
-                  <h3 className="text-base font-bold text-gray-900 mb-2">{feature.title}</h3>
-                  <p className="text-sm text-gray-500 leading-relaxed">{feature.description}</p>
-                </div>
-              </CardContent>
             </Card>
           ))}
         </div>
