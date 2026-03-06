@@ -267,7 +267,7 @@ export default function ColorsLandingPage() {
                 label: '連携',
                 icon: Plug,
                 title: ['ワンクリックで', 'branding.bz に連携'],
-                description: '確定したカラーをブランディングSaaS「branding.bz」に登録。社内ガイドラインや名刺に即反映',
+                description: '確定したカラーをブランディングプラットフォームに登録。社内ガイドラインや名刺に即反映',
               },
             ].map((item) => (
               <div
