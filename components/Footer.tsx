@@ -10,6 +10,7 @@ const footerLinks = {
   ],
   tools: [
     { href: '/tools/colors', label: 'ブランドカラー定義' },
+    { href: '/tools/stp', label: 'STP分析' },
   ],
   legal: [
     { href: '/portal/terms', label: '利用規約' },
