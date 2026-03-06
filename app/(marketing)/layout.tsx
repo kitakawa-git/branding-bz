@@ -101,7 +101,7 @@ function Header() {
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="start"
-              className="border-0 p-1"
+              className="!bg-transparent !border-0 !shadow-none p-1 rounded-xl"
               style={{
                 background: 'rgba(255, 255, 255, 0.7)',
                 backdropFilter: 'blur(12px) saturate(120%)',
