@@ -29,7 +29,7 @@ const footerLinks = {
 export default function Footer() {
   return (
     <footer className="relative z-10 bg-white text-gray-900">
-      <div className="mx-auto max-w-7xl px-6 pt-16 pb-10">
+      <div className="mx-auto max-w-7xl px-6 py-16">
         {/* 上部: リンク群 */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-10 md:gap-8">
           {/* プロダクト */}
