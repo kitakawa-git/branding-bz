@@ -341,8 +341,8 @@ function CTASection() {
           さぁ、&ldquo;らしさ&rdquo;をひろげよう
         </h2>
         <p className="mt-6 text-lg md:text-xl text-gray-700 max-w-2xl mx-auto leading-relaxed">
-          ブランドは、作った瞬間から走り出す<br className="hidden sm:block" />
-          branding.bz で、その加速を始めませんか
+          ブランドは、作った瞬間から走り出す。<br className="hidden sm:block" />
+          branding.bz で、その加速を始めませんか。
         </p>
 
         <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
