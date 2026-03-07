@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react'
 import type { PaletteProposal } from '@/lib/types/color-tool'
 import { AccessibilityBadge } from './AccessibilityBadge'
 import { PalettePreview } from './PalettePreview'
@@ -13,9 +12,6 @@ interface PaletteCardProps {
 }
 
 export function PaletteCard({ proposal, selected, onSelect }: PaletteCardProps) {
-  const [showPreview, setShowPreview] = useState(false)
-  const [showReasoning, setShowReasoning] = useState(false)
-
   const allColors = [
     { label: 'メイン', color: proposal.primary },
     ...proposal.secondary.map((c, i) => ({ label: `サブ${i + 1}`, color: c })),
@@ -79,48 +75,18 @@ export function PaletteCard({ proposal, selected, onSelect }: PaletteCardProps) 
             ))}
           </div>
 
-          {/* 提案理由（折りたたみ） */}
+          {/* 提案理由 */}
           <div>
-            <button
-              onClick={() => setShowReasoning(!showReasoning)}
-              className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700"
-            >
-              <svg
-                className={`h-3 w-3 transition-transform ${showReasoning ? 'rotate-90' : ''}`}
-                viewBox="0 0 12 12"
-                fill="none"
-              >
-                <path d="M4 3l4 3-4 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              提案理由
-            </button>
-            {showReasoning && (
-              <p className="mt-2 text-xs leading-relaxed text-gray-600">
-                {proposal.reasoning}
-              </p>
-            )}
+            <p className="text-xs font-semibold text-gray-700 mb-1">提案理由</p>
+            <p className="text-xs leading-relaxed text-gray-600">
+              {proposal.reasoning}
+            </p>
           </div>
 
-          {/* プレビュー（折りたたみ） */}
+          {/* プレビュー */}
           <div>
-            <button
-              onClick={() => setShowPreview(!showPreview)}
-              className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700"
-            >
-              <svg
-                className={`h-3 w-3 transition-transform ${showPreview ? 'rotate-90' : ''}`}
-                viewBox="0 0 12 12"
-                fill="none"
-              >
-                <path d="M4 3l4 3-4 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              プレビュー
-            </button>
-            {showPreview && (
-              <div className="mt-2">
-                <PalettePreview proposal={proposal} />
-              </div>
-            )}
+            <p className="text-xs font-semibold text-gray-700 mb-1">プレビュー</p>
+            <PalettePreview proposal={proposal} />
           </div>
 
           {/* 選択ボタン */}
