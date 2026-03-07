@@ -9,6 +9,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '../components/AuthProvider'
 import { ImageUpload } from '../components/ImageUpload'
 import { IndustrySelect } from '@/components/shared/IndustrySelect'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
@@ -340,23 +341,21 @@ export default function CompanyPage() {
             {/* ブランドステージ */}
             <div className="mb-5">
               <h2 className="text-sm font-bold mb-3">ブランドステージ</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {BRAND_STAGES.map((stage) => (
-                  <button
-                    key={stage.value}
-                    type="button"
-                    onClick={() => handleChange('brand_stage', company.brand_stage === stage.value ? '' : stage.value)}
-                    className={`rounded-lg border-2 p-4 text-left transition-all ${
-                      company.brand_stage === stage.value
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-200 bg-white hover:border-gray-300'
-                    }`}
-                  >
-                    <div className="text-sm font-bold text-gray-900">{stage.label}</div>
-                    <div className="text-xs text-gray-500 mt-1">{stage.description}</div>
-                  </button>
-                ))}
-              </div>
+              <Select
+                value={company.brand_stage || ''}
+                onValueChange={(val) => handleChange('brand_stage', val)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="選択してください" />
+                </SelectTrigger>
+                <SelectContent>
+                  {BRAND_STAGES.map((stage) => (
+                    <SelectItem key={stage.value} value={stage.value}>
+                      {stage.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* WebサイトURL */}
