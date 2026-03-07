@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { PalettePreview } from '../../components/PalettePreview'
 import { AccessibilityBadge } from '../../components/AccessibilityBadge'
 import type { BrandColorProject, PaletteProposal, ColorValue } from '@/lib/types/color-tool'
+import { supabase } from '@/lib/supabase'
 
 interface Step5ExportProps {
   project: BrandColorProject
@@ -37,6 +38,26 @@ export function Step5Export({
       })
     } catch {
       // ステータス更新失敗は無視
+    }
+
+    // 本体（companies）への書き戻し
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        await fetch('/api/tools/shared-profile', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: user.id,
+            industry_category: project.industry_category,
+            industry_subcategory: project.industry_subcategory,
+            brand_stage: project.brand_stage,
+            competitor_colors: project.competitor_colors,
+          }),
+        })
+      }
+    } catch {
+      // 書き戻し失敗は無視
     }
 
     setConfirmed(true)

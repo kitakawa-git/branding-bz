@@ -1,20 +1,20 @@
 'use client'
 
 // Step 1: 基本情報フォーム
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { IndustrySelect } from '@/components/shared/IndustrySelect'
 import { ColorPicker } from '../../components/ColorPicker'
 import { Plus, Trash2, HelpCircle } from 'lucide-react'
 import {
-  INDUSTRY_CATEGORIES,
   type BrandStage,
   type CompetitorColor,
   type BrandColorProject,
 } from '@/lib/types/color-tool'
+import { supabase } from '@/lib/supabase'
 
 interface Step1Props {
   project: BrandColorProject
@@ -38,10 +38,64 @@ export function Step1BasicInfo({ project, onNext, onSaveField }: Step1Props) {
   )
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
+  const [prefilled, setPrefilled] = useState(false)
+  const [showPrefilledBanner, setShowPrefilledBanner] = useState(false)
 
-  // 業種の中分類リストを取得
-  const selectedIndustry = INDUSTRY_CATEGORIES.find(c => c.value === industryCategory)
-  const subcategories = selectedIndustry?.subcategories || []
+  // プリフィル: 初回表示時に本体 or 過去セッションからデータを読み込み
+  useEffect(() => {
+    // 既にフォームにデータがある場合はスキップ
+    if (project.brand_name || project.industry_category) return
+
+    const fetchProfile = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return
+
+        const res = await fetch(`/api/tools/shared-profile?userId=${user.id}`)
+        if (!res.ok) return
+
+        const result = await res.json()
+        if (result.source === 'none' || !result.data) return
+
+        const d = result.data
+        if (d.brand_name && !brandName) setBrandName(d.brand_name)
+        if (d.industry_category && !industryCategory) {
+          setIndustryCategory(d.industry_category)
+          // 自動保存
+          onSaveField({ industry_category: d.industry_category })
+        }
+        if (d.industry_subcategory && !industrySubcategory) {
+          setIndustrySubcategory(d.industry_subcategory)
+          onSaveField({ industry_subcategory: d.industry_subcategory })
+        }
+        if (d.brand_stage && !brandStage) {
+          setBrandStage(d.brand_stage)
+          onSaveField({ brand_stage: d.brand_stage })
+        }
+        if (d.competitor_colors?.length && competitorColors.length === 0) {
+          setCompetitorColors(d.competitor_colors)
+          onSaveField({ competitor_colors: d.competitor_colors })
+        }
+        if (d.brand_name) {
+          onSaveField({ brand_name: d.brand_name })
+        }
+
+        setPrefilled(true)
+        setShowPrefilledBanner(true)
+      } catch {
+        // プリフィル失敗は無視
+      }
+    }
+
+    fetchProfile()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // プリフィルバナーの5秒後フェードアウト
+  useEffect(() => {
+    if (!showPrefilledBanner) return
+    const timer = setTimeout(() => setShowPrefilledBanner(false), 5000)
+    return () => clearTimeout(timer)
+  }, [showPrefilledBanner])
 
   // 自動保存（onBlur）
   const autoSave = useCallback((field: string, value: unknown) => {
@@ -53,9 +107,9 @@ export function Step1BasicInfo({ project, onNext, onSaveField }: Step1Props) {
     const newErrors: Record<string, string> = {}
 
     if (!brandName.trim()) {
-      newErrors.brandName = 'ブランド名を入力してください'
+      newErrors.brandName = '企業名・ブランド名を入力してください'
     } else if (brandName.length > 100) {
-      newErrors.brandName = 'ブランド名は100文字以内で入力してください'
+      newErrors.brandName = '企業名・ブランド名は100文字以内で入力してください'
     }
 
     if (!industryCategory) {
@@ -137,10 +191,19 @@ export function Step1BasicInfo({ project, onNext, onSaveField }: Step1Props) {
           </p>
         </div>
 
-        {/* ブランド名 */}
+        {/* プリフィルバナー */}
+        {showPrefilledBanner && (
+          <div className="rounded-md bg-blue-50 px-4 py-2 text-sm text-blue-600 transition-opacity duration-500"
+            style={{ opacity: showPrefilledBanner ? 1 : 0 }}
+          >
+            branding.bz のデータを読み込みました
+          </div>
+        )}
+
+        {/* 企業名・ブランド名 */}
         <div>
           <div className="mb-2 flex items-center gap-1.5">
-            <label className="text-sm font-bold text-gray-700">ブランド名</label>
+            <label className="text-sm font-bold text-gray-700">企業名・ブランド名</label>
             <span className="text-xs text-red-500">*</span>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -165,64 +228,29 @@ export function Step1BasicInfo({ project, onNext, onSaveField }: Step1Props) {
         </div>
 
         {/* 業種 */}
-        <div className="grid gap-4 md:grid-cols-2">
-          <div>
-            <div className="mb-2 flex items-center gap-1.5">
-              <label className="text-sm font-bold text-gray-700">業種（大分類）</label>
-              <span className="text-xs text-red-500">*</span>
-            </div>
-            <Select
-              value={industryCategory}
-              onValueChange={(val) => {
-                setIndustryCategory(val)
-                setIndustrySubcategory('')
-                autoSave('industry_category', val)
-              }}
-            >
-              <SelectTrigger className={errors.industryCategory ? 'border-red-400' : ''}>
-                <SelectValue placeholder="選択してください" />
-              </SelectTrigger>
-              <SelectContent>
-                {INDUSTRY_CATEGORIES.map((cat) => (
-                  <SelectItem key={cat.value} value={cat.value}>
-                    {cat.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.industryCategory && (
-              <p className="mt-1 text-xs text-red-500">{errors.industryCategory}</p>
-            )}
+        <div>
+          <div className="mb-2 flex items-center gap-1.5">
+            <label className="text-sm font-bold text-gray-700">業種</label>
+            <span className="text-xs text-red-500">*</span>
           </div>
-
-          <div>
-            <div className="mb-2 flex items-center gap-1.5">
-              <label className="text-sm font-bold text-gray-700">業種（中分類）</label>
-              <span className="text-xs text-red-500">*</span>
-            </div>
-            <Select
-              value={industrySubcategory}
-              onValueChange={(val) => {
-                setIndustrySubcategory(val)
-                autoSave('industry_subcategory', val)
-              }}
-              disabled={!industryCategory}
-            >
-              <SelectTrigger className={errors.industrySubcategory ? 'border-red-400' : ''}>
-                <SelectValue placeholder={industryCategory ? '選択してください' : '大分類を先に選択'} />
-              </SelectTrigger>
-              <SelectContent>
-                {subcategories.map((sub) => (
-                  <SelectItem key={sub} value={sub}>
-                    {sub}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.industrySubcategory && (
-              <p className="mt-1 text-xs text-red-500">{errors.industrySubcategory}</p>
-            )}
-          </div>
+          <IndustrySelect
+            category={industryCategory}
+            subcategory={industrySubcategory}
+            onCategoryChange={(val) => {
+              setIndustryCategory(val)
+              setIndustrySubcategory('')
+              autoSave('industry_category', val)
+            }}
+            onSubcategoryChange={(val) => {
+              setIndustrySubcategory(val)
+              autoSave('industry_subcategory', val)
+            }}
+          />
+          {(errors.industryCategory || errors.industrySubcategory) && (
+            <p className="mt-1 text-xs text-red-500">
+              {errors.industryCategory || errors.industrySubcategory}
+            </p>
+          )}
         </div>
 
         {/* ブランドステージ */}
