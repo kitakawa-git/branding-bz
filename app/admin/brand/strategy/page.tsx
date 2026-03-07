@@ -106,15 +106,17 @@ export default function BrandStrategyPage() {
       )
       if (fetchErr) throw new Error(fetchErr)
 
-      // ポータルサブタイトル取得
+      // ポータルサブタイトル・ターゲットセグメント取得
       let fetchedSubtitlesData: PortalSubtitles | null = null
       let fetchedSubtitle = ''
+      let companyData: Record<string, unknown> | null = null
       try {
-        const { data: companyData } = await supabase
+        const { data: cd } = await supabase
           .from('companies')
           .select('portal_subtitles, target_segments')
           .eq('id', companyId)
           .single()
+        companyData = cd as Record<string, unknown> | null
         if (companyData) {
           const subtitles = (companyData.portal_subtitles as PortalSubtitles) || null
           fetchedSubtitlesData = subtitles
@@ -123,11 +125,11 @@ export default function BrandStrategyPage() {
           setPortalSubtitle(fetchedSubtitle)
         }
       } catch {
-        // サブタイトル取得失敗は無視
+        // 取得失敗は無視
       }
 
       // target_segments 構造化データ: companies.target_segments 優先
-      const rawTs = ((companyData as Record<string, unknown> | null)?.target_segments as TargetSegment[]) || []
+      const rawTs = (companyData?.target_segments as TargetSegment[]) || []
       const companyTargetSegments = rawTs
         .filter(ts => ts && ts.name)
         .map(ts => ({ name: ts.name || '', description: ts.description || '' }))
