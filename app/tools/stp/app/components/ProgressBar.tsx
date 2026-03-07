@@ -19,7 +19,7 @@ export function ProgressBar({ currentStep, totalSteps = 5 }: ProgressBarProps) {
   return (
     <div className="w-full">
       {/* ステップインジケーター */}
-      <div className="mx-auto max-w-lg flex items-center justify-between">
+      <div className="flex items-center justify-between">
         {STEPS.slice(0, totalSteps).map(({ step, label }, index) => (
           <div key={step} className="flex flex-1 items-center">
             {/* ステップ丸 */}
