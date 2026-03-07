@@ -5,7 +5,6 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { ArrowLeft, Plus, Trash2, Type, Palette } from 'lucide-react'
 
 import { KeywordSelector } from '../../components/KeywordSelector'
@@ -118,23 +117,30 @@ export function Step2ImageInput({ project, onNext, onBack, onSaveField }: Step2P
             ブランドのイメージに近い方向性を選んでください
           </p>
 
-          <Tabs
-            value={approach || 'keyword'}
-            onValueChange={(v) => { setApproach(v as ApproachType); setErrors({}) }}
-          >
-            <TabsList className="w-full">
-              <TabsTrigger value="keyword" className="flex-1 gap-1.5">
-                <Type className="h-4 w-4" />
-                キーワード
-              </TabsTrigger>
-              <TabsTrigger value="moodboard" className="flex-1 gap-1.5">
-                <Palette className="h-4 w-4" />
-                ムードボード
-              </TabsTrigger>
-            </TabsList>
+          {/* タブ切替 */}
+          <div className="flex gap-6 border-b mb-5">
+            {([
+              { value: 'keyword' as const, label: 'キーワード', icon: Type },
+              { value: 'moodboard' as const, label: 'ムードボード', icon: Palette },
+            ]).map(tab => (
+              <button
+                key={tab.value}
+                onClick={() => { setApproach(tab.value); setErrors({}) }}
+                className={`flex items-center gap-1.5 pb-2 text-sm font-semibold border-b-2 -mb-px transition-colors ${
+                  approach === tab.value
+                    ? 'border-foreground text-foreground'
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <tab.icon className="h-4 w-4" />
+                {tab.label}
+              </button>
+            ))}
+          </div>
 
-            {/* キーワードモード */}
-            <TabsContent value="keyword">
+          {/* キーワードモード */}
+          {approach === 'keyword' && (
+            <div>
               <KeywordSelector value={keywords} onChange={setKeywords} />
               {errors.keywords && (
                 <p className="mt-2 text-xs text-red-500">{errors.keywords}</p>
@@ -150,10 +156,12 @@ export function Step2ImageInput({ project, onNext, onBack, onSaveField }: Step2P
                   </Button>
                 </div>
               )}
-            </TabsContent>
+            </div>
+          )}
 
-            {/* ムードボードモード */}
-            <TabsContent value="moodboard">
+          {/* ムードボードモード */}
+          {approach === 'moodboard' && (
+            <div>
               <MoodboardPairSelector
                 value={moodboardChoices}
                 onChange={setMoodboardChoices}
@@ -162,8 +170,8 @@ export function Step2ImageInput({ project, onNext, onBack, onSaveField }: Step2P
               {errors.moodboard && (
                 <p className="mt-2 text-xs text-red-500">{errors.moodboard}</p>
               )}
-            </TabsContent>
-          </Tabs>
+            </div>
+          )}
 
           {/* 共通の追加質問 */}
           {showAdditional && (
