@@ -375,13 +375,13 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
                           value={comp.name}
                           onChange={(e) => updateCompetitor(i, 'name', e.target.value)}
                           placeholder="企業名（必須）"
-                          className="h-9 text-sm"
+                          className="h-10 text-sm"
                         />
                         <Input
                           value={comp.url}
                           onChange={(e) => updateCompetitor(i, 'url', e.target.value)}
                           placeholder="https://..."
-                          className="h-9 text-sm"
+                          className="h-10 text-sm"
                         />
                       </div>
                     </div>

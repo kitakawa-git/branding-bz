@@ -375,7 +375,7 @@ export function Step2Segmentation({
                       value={variable.name}
                       onChange={(e) => updateVariableName(varIndex, e.target.value)}
                       placeholder="変数名（例: 購買動機）"
-                      className="h-9 flex-1 text-sm font-bold"
+                      className="h-10 flex-1 text-sm font-bold"
                     />
                     <Button
                       variant="ghost"

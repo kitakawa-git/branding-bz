@@ -328,7 +328,7 @@ export function Step1BasicInfo({ project, onNext, onSaveField }: Step1Props) {
                       value={comp.name}
                       onChange={(e) => updateCompetitor(i, 'name', e.target.value)}
                       placeholder="ブランド名"
-                      className="h-9 max-w-[160px] text-sm"
+                      className="h-10 max-w-[160px] text-sm"
                     />
                     <ColorPicker
                       value={comp.hex}

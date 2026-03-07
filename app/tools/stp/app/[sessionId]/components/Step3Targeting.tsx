@@ -4,7 +4,7 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Textarea } from '@/components/ui/textarea'
+import { AutoResizeTextarea } from '@/components/ui/auto-resize-textarea'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Slider } from '@/components/ui/slider'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
@@ -417,11 +417,11 @@ export function Step3Targeting({
               <h2 className="text-sm font-bold">ターゲットの詳細定義</h2>
           <span className="text-xs text-gray-400">（任意）</span>
         </div>
-        <Textarea
+        <AutoResizeTextarea
           value={targetDescription}
           onChange={(e) => setTargetDescription(e.target.value)}
           placeholder="例: 従業員50〜200名の中小製造業で、ブランディングに課題を感じているが、コンサルに頼む予算がない経営者・経営企画担当者"
-          rows={4}
+          className="min-h-[100px]"
           maxLength={500}
         />
           </div>

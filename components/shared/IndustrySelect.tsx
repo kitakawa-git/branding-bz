@@ -61,7 +61,7 @@ export function IndustrySelect({
         <label className="text-sm font-bold text-gray-700">業種（中分類）</label>
         {isOtherCategory ? (
           <Input
-            className="mt-1"
+            className="mt-1 h-10"
             placeholder="業種を入力してください"
             value={subcategory}
             onChange={(e) => onSubcategoryChange(e.target.value)}
