@@ -108,20 +108,25 @@ export function Step3Proposals({
               ブランドの特徴を分析し、最適な3パターンを提案中...
             </p>
           </div>
-          <div className="grid gap-4 pt-4 md:grid-cols-3">
+          <div className="space-y-4 pt-4">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="space-y-3 rounded-lg border border-gray-100 p-4">
-                <Skeleton className="h-12 w-full rounded-lg" />
-                <Skeleton className="h-4 w-3/4" />
-                <Skeleton className="h-3 w-full" />
-                <div className="flex gap-2">
-                  <Skeleton className="h-6 w-6 rounded" />
-                  <Skeleton className="h-6 w-6 rounded" />
-                  <Skeleton className="h-6 w-6 rounded" />
+              <div key={i} className="flex flex-col md:flex-row rounded-lg border border-gray-100 overflow-hidden">
+                <Skeleton className="h-28 w-full md:h-auto md:w-[40%] md:min-h-[160px] rounded-none" />
+                <div className="flex-1 space-y-3 p-5">
+                  <Skeleton className="h-5 w-1/3" />
+                  <Skeleton className="h-3 w-2/3" />
+                  <div className="flex gap-3">
+                    <Skeleton className="h-6 w-6 rounded-full" />
+                    <Skeleton className="h-6 w-6 rounded-full" />
+                    <Skeleton className="h-6 w-6 rounded-full" />
+                    <Skeleton className="h-6 w-6 rounded-full" />
+                    <Skeleton className="h-6 w-6 rounded-full" />
+                  </div>
+                  <Skeleton className="h-8 w-32" />
                 </div>
               </div>
             ))}
-            </div>
+          </div>
           </div>
           </CardContent>
         </Card>
@@ -162,7 +167,7 @@ export function Step3Proposals({
   // 提案表示
   return (
     <div>
-      <h1 className="text-2xl font-bold text-foreground mb-6">AI提案</h1>
+      <h1 className="text-2xl font-bold text-foreground mb-6">Step 3: AI提案</h1>
 
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
         <CardContent className="p-5">
@@ -180,16 +185,16 @@ export function Step3Proposals({
             </Button>
           </div>
 
-          {/* パレットカード */}
-          <div className="grid gap-6 md:grid-cols-3">
-        {proposals.map((proposal) => (
-          <PaletteCard
-            key={proposal.id}
-            proposal={proposal}
-            selected={selectedId === proposal.id}
-            onSelect={handleSelect}
-          />
-        ))}
+          {/* パレットカード（1カラム縦積み） */}
+          <div className="space-y-4">
+            {proposals.map((proposal) => (
+              <PaletteCard
+                key={proposal.id}
+                proposal={proposal}
+                selected={selectedId === proposal.id}
+                onSelect={handleSelect}
+              />
+            ))}
           </div>
         </CardContent>
       </Card>

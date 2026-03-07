@@ -20,8 +20,8 @@ export function PaletteCard({ proposal, selected, onSelect }: PaletteCardProps) 
     { label: 'メイン', color: proposal.primary },
     ...proposal.secondary.map((c, i) => ({ label: `サブ${i + 1}`, color: c })),
     { label: 'アクセント', color: proposal.accent },
-    { label: '明背景', color: proposal.neutrals.light },
-    { label: '暗/文字', color: proposal.neutrals.dark },
+    { label: '明', color: proposal.neutrals.light },
+    { label: '暗', color: proposal.neutrals.dark },
   ]
 
   return (
@@ -32,96 +32,107 @@ export function PaletteCard({ proposal, selected, onSelect }: PaletteCardProps) 
           : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
       }`}
     >
-      {/* カラースウォッチ帯 */}
-      <div className="flex h-16 overflow-hidden rounded-t-[10px]">
-        <div className="flex-[3]" style={{ backgroundColor: proposal.primary.hex }} />
-        {proposal.secondary.map((s, i) => (
-          <div key={i} className="flex-[2]" style={{ backgroundColor: s.hex }} />
-        ))}
-        <div className="flex-[1.5]" style={{ backgroundColor: proposal.accent.hex }} />
-        <div className="flex-1" style={{ backgroundColor: proposal.neutrals.light.hex }} />
-        <div className="flex-1" style={{ backgroundColor: proposal.neutrals.dark.hex }} />
-      </div>
-
-      <div className="space-y-4 p-5">
-        {/* ヘッダー */}
-        <div className="flex items-start justify-between gap-2">
-          <div>
-            <h3 className="text-base font-bold text-gray-900">{proposal.name}</h3>
-            <p className="mt-0.5 text-sm text-gray-500">{proposal.concept}</p>
-          </div>
-          <AccessibilityBadge score={proposal.accessibilityScore} />
-        </div>
-
-        {/* カラーチップ一覧 */}
-        <div className="grid grid-cols-3 gap-2">
-          {allColors.map((item) => (
-            <div key={item.label} className="flex items-center gap-2">
-              <div
-                className="h-7 w-7 flex-shrink-0 rounded-md border border-gray-200"
-                style={{ backgroundColor: item.color.hex }}
-              />
-              <div className="min-w-0">
-                <p className="truncate text-[10px] text-gray-400">{item.label}</p>
-                <p className="truncate text-xs font-medium text-gray-700">{item.color.name}</p>
-                <p className="font-mono text-[10px] text-gray-400">{item.color.hex}</p>
-              </div>
-            </div>
+      {/* 横長レイアウト: デスクトップ flex-row / モバイル flex-col */}
+      <div className="flex flex-col md:flex-row">
+        {/* 左側: カラーバー */}
+        <div className="flex h-28 overflow-hidden rounded-t-[10px] md:h-auto md:w-[40%] md:min-h-[200px] md:rounded-l-[10px] md:rounded-tr-none">
+          {allColors.map((item, i) => (
+            <div
+              key={i}
+              className="flex-1"
+              style={{ backgroundColor: item.color.hex }}
+            />
           ))}
         </div>
 
-        {/* 提案理由（折りたたみ） */}
-        <div>
-          <button
-            onClick={() => setShowReasoning(!showReasoning)}
-            className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700"
-          >
-            <svg
-              className={`h-3 w-3 transition-transform ${showReasoning ? 'rotate-90' : ''}`}
-              viewBox="0 0 12 12"
-              fill="none"
-            >
-              <path d="M4 3l4 3-4 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            提案理由
-          </button>
-          {showReasoning && (
-            <p className="mt-2 text-xs leading-relaxed text-gray-600">
-              {proposal.reasoning}
-            </p>
-          )}
-        </div>
-
-        {/* プレビュー（折りたたみ） */}
-        <div>
-          <button
-            onClick={() => setShowPreview(!showPreview)}
-            className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700"
-          >
-            <svg
-              className={`h-3 w-3 transition-transform ${showPreview ? 'rotate-90' : ''}`}
-              viewBox="0 0 12 12"
-              fill="none"
-            >
-              <path d="M4 3l4 3-4 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            プレビュー
-          </button>
-          {showPreview && (
-            <div className="mt-2">
-              <PalettePreview proposal={proposal} />
+        {/* 右側: テキスト情報 */}
+        <div className="flex-1 space-y-3 p-5">
+          {/* パレット名 + AA準拠バッジ */}
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <h3 className="text-base font-bold text-gray-900">{proposal.name}</h3>
+              <p className="mt-0.5 text-sm text-gray-500">{proposal.concept}</p>
             </div>
-          )}
-        </div>
+            <AccessibilityBadge score={proposal.accessibilityScore} />
+          </div>
 
-        {/* 選択ボタン */}
-        <Button
-          onClick={() => onSelect(proposal.id)}
-          variant={selected ? 'default' : 'outline'}
-          className="w-full"
-        >
-          {selected ? '選択中' : 'この案を選ぶ'}
-        </Button>
+          {/* カラー詳細（横並び・省略なし） */}
+          <div className="flex flex-wrap gap-x-4 gap-y-2">
+            {allColors.map((item) => (
+              <div key={item.label} className="flex items-center gap-2">
+                <div
+                  className="h-6 w-6 flex-shrink-0 rounded-full border border-gray-200"
+                  style={{ backgroundColor: item.color.hex }}
+                />
+                <div className="flex items-baseline gap-1">
+                  <span className="text-xs font-medium text-gray-700 whitespace-nowrap">
+                    {item.label}
+                  </span>
+                  <span className="text-xs text-gray-500 whitespace-nowrap">
+                    {item.color.name}
+                  </span>
+                  <span className="font-mono text-[10px] text-gray-400 whitespace-nowrap">
+                    {item.color.hex}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* 提案理由（折りたたみ） */}
+          <div>
+            <button
+              onClick={() => setShowReasoning(!showReasoning)}
+              className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700"
+            >
+              <svg
+                className={`h-3 w-3 transition-transform ${showReasoning ? 'rotate-90' : ''}`}
+                viewBox="0 0 12 12"
+                fill="none"
+              >
+                <path d="M4 3l4 3-4 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              提案理由
+            </button>
+            {showReasoning && (
+              <p className="mt-2 text-xs leading-relaxed text-gray-600">
+                {proposal.reasoning}
+              </p>
+            )}
+          </div>
+
+          {/* プレビュー（折りたたみ） */}
+          <div>
+            <button
+              onClick={() => setShowPreview(!showPreview)}
+              className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700"
+            >
+              <svg
+                className={`h-3 w-3 transition-transform ${showPreview ? 'rotate-90' : ''}`}
+                viewBox="0 0 12 12"
+                fill="none"
+              >
+                <path d="M4 3l4 3-4 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              プレビュー
+            </button>
+            {showPreview && (
+              <div className="mt-2">
+                <PalettePreview proposal={proposal} />
+              </div>
+            )}
+          </div>
+
+          {/* 選択ボタン */}
+          <Button
+            onClick={() => onSelect(proposal.id)}
+            variant={selected ? 'default' : 'outline'}
+            size="sm"
+            className="w-full md:w-auto"
+          >
+            {selected ? '選択中' : 'この案を選ぶ'}
+          </Button>
+        </div>
       </div>
     </div>
   )
