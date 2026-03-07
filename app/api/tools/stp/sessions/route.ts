@@ -12,7 +12,7 @@ const DEFAULT_SESSION_DATA = {
     industry_category: '',
     industry_subcategory: '',
     business_descriptions: [] as Array<{ title: string; description: string }>,
-    current_customers: '',
+    target_segments: [] as Array<{ name: string; description: string }>,
     competitors: [] as Array<{ name: string; url: string }>,
   },
   segmentation: {

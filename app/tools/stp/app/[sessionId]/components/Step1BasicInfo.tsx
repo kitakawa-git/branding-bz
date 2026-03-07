@@ -19,17 +19,23 @@ interface BusinessDescription {
   description: string
 }
 
+interface TargetSegment {
+  name: string
+  description: string
+}
+
 interface BasicInfo {
   company_name: string
   industry_category: string
   industry_subcategory: string
   business_descriptions: BusinessDescription[]
-  current_customers: string
+  target_segments: TargetSegment[]
   competitors: Competitor[]
   // 旧フィールド（後方互換）
   industry?: string
   industry_other?: string
   products?: string
+  current_customers?: string
 }
 
 interface Step1Props {
@@ -68,6 +74,21 @@ function migrateCompetitors(
   return []
 }
 
+// 旧 current_customers テキストを構造化データに変換
+function migrateTargetSegments(
+  basicInfo: BasicInfo
+): TargetSegment[] {
+  // 新形式があればそのまま
+  if (basicInfo.target_segments?.length > 0) {
+    return basicInfo.target_segments
+  }
+  // 旧形式（current_customersテキスト）があれば変換
+  if (basicInfo.current_customers && basicInfo.current_customers.trim()) {
+    return [{ name: 'ターゲット', description: basicInfo.current_customers.trim() }]
+  }
+  return []
+}
+
 // 旧 products テキストを構造化データに変換
 function migrateProducts(
   basicInfo: BasicInfo
@@ -99,7 +120,9 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
   const [businessDescriptions, setBusinessDescriptions] = useState<BusinessDescription[]>(
     migrateProducts(basicInfo)
   )
-  const [currentCustomers, setCurrentCustomers] = useState(basicInfo.current_customers || '')
+  const [targetSegments, setTargetSegments] = useState<TargetSegment[]>(
+    migrateTargetSegments(basicInfo)
+  )
   const [competitors, setCompetitors] = useState<Competitor[]>(
     migrateCompetitors(basicInfo.competitors)
   )
@@ -144,8 +167,8 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
           setBusinessDescriptions(d.business_descriptions)
           changed = true
         }
-        if (d.target_customers && !currentCustomers) {
-          setCurrentCustomers(d.target_customers)
+        if (d.target_segments?.length > 0 && targetSegments.length === 0) {
+          setTargetSegments(d.target_segments)
           changed = true
         }
         if (d.competitors?.length > 0 && competitors.length === 0) {
@@ -177,9 +200,9 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
     industry_category: industryCategory,
     industry_subcategory: industrySubcategory,
     business_descriptions: businessDescriptions.filter(b => b.title.trim()),
-    current_customers: currentCustomers.trim(),
+    target_segments: targetSegments.filter(ts => ts.name.trim()),
     competitors: competitors.filter(c => c.name.trim()),
-  }), [companyName, industryCategory, industrySubcategory, businessDescriptions, currentCustomers, competitors])
+  }), [companyName, industryCategory, industrySubcategory, businessDescriptions, targetSegments, competitors])
 
   // 1秒デバウンスのオートセーブ
   const triggerAutoSave = useCallback(() => {
@@ -193,7 +216,7 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
 
   // フォーム値が変わるたびにオートセーブをトリガー
   useEffect(() => {
-    const hasData = companyName || industryCategory || businessDescriptions.length > 0 || currentCustomers || competitors.length > 0
+    const hasData = companyName || industryCategory || businessDescriptions.length > 0 || targetSegments.length > 0 || competitors.length > 0
     if (hasData) {
       triggerAutoSave()
     }
@@ -203,7 +226,7 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [companyName, industryCategory, industrySubcategory, businessDescriptions, currentCustomers, competitors])
+  }, [companyName, industryCategory, industrySubcategory, businessDescriptions, targetSegments, competitors])
 
   // バリデーション
   const validate = (): boolean => {
@@ -256,6 +279,22 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
     const updated = [...businessDescriptions]
     updated[index] = { ...updated[index], [field]: value }
     setBusinessDescriptions(updated)
+  }
+
+  // ターゲットセグメント操作
+  const addTargetSegment = () => {
+    if (targetSegments.length >= 10) return
+    setTargetSegments([...targetSegments, { name: '', description: '' }])
+  }
+
+  const removeTargetSegment = (index: number) => {
+    setTargetSegments(targetSegments.filter((_, i) => i !== index))
+  }
+
+  const updateTargetSegment = (index: number, field: 'name' | 'description', value: string) => {
+    const updated = [...targetSegments]
+    updated[index] = { ...updated[index], [field]: value }
+    setTargetSegments(updated)
   }
 
   // 競合企業操作
@@ -397,19 +436,57 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
         )}
       </div>
 
-      {/* 現在の主な顧客層 */}
+      {/* ターゲット顧客層（構造化入力） */}
       <div>
         <div className="mb-2 flex items-center gap-1.5">
-          <label className="text-sm font-bold text-gray-700">現在の主な顧客層</label>
+          <label className="text-sm font-bold text-gray-700">ターゲット顧客層</label>
           <span className="text-xs text-gray-400">（任意）</span>
         </div>
-        <Textarea
-          value={currentCustomers}
-          onChange={(e) => setCurrentCustomers(e.target.value)}
-          placeholder="例: 中小企業の経営者・マーケティング担当者（従業員30〜100名規模）"
-          rows={3}
-          maxLength={500}
-        />
+
+        <div className="space-y-2">
+          {targetSegments.map((ts, i) => (
+            <div key={i} className="rounded-lg border bg-white p-3">
+              <div className="mb-2 flex items-center gap-2">
+                <Input
+                  value={ts.name}
+                  onChange={(e) => updateTargetSegment(i, 'name', e.target.value)}
+                  placeholder="セグメント名（例: 中小企業の経営者）"
+                  className="h-10 flex-1"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeTargetSegment(i)}
+                  className="shrink-0 rounded p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+              <Textarea
+                value={ts.description}
+                onChange={(e) => updateTargetSegment(i, 'description', e.target.value)}
+                placeholder="セグメントの説明"
+                className="min-h-[60px] resize-none"
+                rows={2}
+                onInput={(e) => {
+                  const target = e.target as HTMLTextAreaElement
+                  target.style.height = 'auto'
+                  target.style.height = target.scrollHeight + 'px'
+                }}
+              />
+            </div>
+          ))}
+
+          {targetSegments.length < 10 && (
+            <button
+              type="button"
+              onClick={addTargetSegment}
+              className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              ターゲットを追加
+            </button>
+          )}
+        </div>
       </div>
 
       {/* 競合企業 */}

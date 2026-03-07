@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
       // 2. companies テーブルから読み込み
       const { data: company } = await supabaseAdmin
         .from('companies')
-        .select('name, industry_category, industry_subcategory, brand_stage, competitors')
+        .select('name, industry_category, industry_subcategory, brand_stage, competitors, target_segments')
         .eq('id', adminUser.company_id)
         .single()
 
@@ -53,6 +53,21 @@ export async function GET(request: NextRequest) {
           description: c.description || '',
         }))
 
+        // target_segments 構造化データ（companies.target_segments → フォールバック: brand_personas.target テキスト）
+        const rawTargetSegments = (company.target_segments as Array<{ name: string; description: string }>) || []
+        let targetSegments: Array<{ name: string; description: string }>
+        if (rawTargetSegments.length > 0) {
+          targetSegments = rawTargetSegments.map(ts => ({
+            name: ts.name || '',
+            description: ts.description || '',
+          }))
+        } else if (persona?.target && typeof persona.target === 'string' && persona.target.trim()) {
+          // 後方互換: テキスト全体を1つのセグメントとして返す
+          targetSegments = [{ name: 'ターゲット', description: persona.target.trim() }]
+        } else {
+          targetSegments = []
+        }
+
         return NextResponse.json({
           source: 'company',
           data: {
@@ -65,6 +80,7 @@ export async function GET(request: NextRequest) {
             competitors: extractCompetitors(company.competitors || []),
             business_descriptions: businessDescriptions,
             target_customers: persona?.target || '',
+            target_segments: targetSegments,
           },
         })
       }
@@ -93,6 +109,7 @@ export async function GET(request: NextRequest) {
             competitors: meta.competitors || [],
             business_descriptions: meta.business_descriptions || [],
             target_customers: meta.target_customers || '',
+            target_segments: meta.target_segments || [],
           },
         })
       }
@@ -112,7 +129,7 @@ export async function PATCH(request: NextRequest) {
   try {
     const supabaseAdmin = getSupabaseAdmin()
     const body = await request.json()
-    const { userId, industry_category, industry_subcategory, brand_stage, competitor_colors, competitors, business_descriptions } = body
+    const { userId, industry_category, industry_subcategory, brand_stage, competitor_colors, competitors, business_descriptions, target_segments } = body
 
     if (!userId) {
       return NextResponse.json({ error: 'userId が必要です' }, { status: 400 })
@@ -155,6 +172,16 @@ export async function PATCH(request: NextRequest) {
     if (competitors !== undefined) {
       const base = (updateData.competitors as typeof existingCompetitors) || existingCompetitors
       updateData.competitors = mergeCompetitorsFromSTP(base, competitors || [])
+    }
+
+    // ターゲットセグメントの書き込み
+    if (target_segments !== undefined && Array.isArray(target_segments)) {
+      updateData.target_segments = target_segments
+        .filter((ts: { name: string; description: string }) => ts.name?.trim())
+        .map((ts: { name: string; description: string }) => ({
+          name: ts.name.trim(),
+          description: ts.description?.trim() || '',
+        }))
     }
 
     if (Object.keys(updateData).length > 0) {
@@ -208,6 +235,43 @@ export async function PATCH(request: NextRequest) {
         if (guidelinesError) {
           console.error('[SharedProfile PATCH] brand_guidelines挿入エラー:', guidelinesError)
         }
+      }
+    }
+
+    // brand_personas.target にもターゲット情報をテキスト整形して書き込み
+    if (target_segments !== undefined && Array.isArray(target_segments)) {
+      const validSegments = target_segments.filter(
+        (ts: { name: string; description: string }) => ts.name?.trim()
+      )
+      const targetText = validSegments
+        .map((ts: { name: string; description: string }) => {
+          const desc = ts.description?.trim() ? `：${ts.description.trim()}` : ''
+          return `・${ts.name.trim()}${desc}`
+        })
+        .join('\n')
+
+      const { data: existingPersona } = await supabaseAdmin
+        .from('brand_personas')
+        .select('id')
+        .eq('company_id', adminUser.company_id)
+        .order('sort_order', { ascending: true })
+        .limit(1)
+        .maybeSingle()
+
+      if (existingPersona) {
+        await supabaseAdmin
+          .from('brand_personas')
+          .update({ target: targetText || null })
+          .eq('id', existingPersona.id)
+      } else if (targetText) {
+        await supabaseAdmin
+          .from('brand_personas')
+          .insert({
+            company_id: adminUser.company_id,
+            name: '',
+            sort_order: 0,
+            target: targetText,
+          })
       }
     }
 

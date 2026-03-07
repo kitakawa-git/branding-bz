@@ -24,6 +24,12 @@ interface Competitor {
   notes: string
 }
 
+// ターゲットセグメントの型
+interface TargetSegment {
+  name: string
+  description: string
+}
+
 type Company = {
   id: string
   name: string
@@ -33,6 +39,7 @@ type Company = {
   industry_subcategory: string
   brand_stage: string
   competitors: Competitor[]
+  target_segments: TargetSegment[]
 }
 
 // ブランドステージの定義
@@ -64,7 +71,7 @@ export default function CompanyPage() {
       const result = await Promise.race([
         supabase
           .from('companies')
-          .select('id, name, logo_url, website_url, industry_category, industry_subcategory, brand_stage, competitors')
+          .select('id, name, logo_url, website_url, industry_category, industry_subcategory, brand_stage, competitors, target_segments')
           .eq('id', companyId)
           .single(),
         new Promise<never>((_, reject) =>
@@ -83,6 +90,7 @@ export default function CompanyPage() {
           industry_subcategory: result.data.industry_subcategory || '',
           brand_stage: result.data.brand_stage || '',
           competitors: (result.data.competitors as Competitor[]) || [],
+          target_segments: (result.data.target_segments as TargetSegment[]) || [],
         }
         setCompany(companyData)
         setPageCache(cacheKey, companyData)
@@ -110,7 +118,7 @@ export default function CompanyPage() {
     fetchCompany()
   }, [companyId, cacheKey])
 
-  const handleChange = (field: keyof Company, value: string | Competitor[]) => {
+  const handleChange = (field: keyof Company, value: string | Competitor[] | TargetSegment[]) => {
     setCompany(prev => prev ? { ...prev, [field]: value } : null)
   }
 
@@ -143,6 +151,29 @@ export default function CompanyPage() {
     if (!company) return
     const updated = company.competitors.filter((_, i) => i !== index)
     handleChange('competitors', updated)
+  }
+
+  // ターゲットセグメントの操作
+  const addTargetSegment = () => {
+    if (!company) return
+    if (company.target_segments.length >= 10) {
+      toast.error('ターゲットセグメントは最大10件まで登録できます')
+      return
+    }
+    handleChange('target_segments', [...company.target_segments, { name: '', description: '' }])
+  }
+
+  const updateTargetSegment = (index: number, field: keyof TargetSegment, value: string) => {
+    if (!company) return
+    const updated = [...company.target_segments]
+    updated[index] = { ...updated[index], [field]: value }
+    handleChange('target_segments', updated)
+  }
+
+  const removeTargetSegment = (index: number) => {
+    if (!company) return
+    const updated = company.target_segments.filter((_, i) => i !== index)
+    handleChange('target_segments', updated)
   }
 
   // Supabase REST APIに直接fetchで保存（JSクライアントの認証ハングを回避）
@@ -201,6 +232,14 @@ export default function CompanyPage() {
           notes: c.notes.trim(),
         }))
 
+      // ターゲットセグメントの空名を除外
+      const cleanedTargetSegments = company.target_segments
+        .filter(ts => ts.name.trim() !== '')
+        .map(ts => ({
+          name: ts.name.trim(),
+          description: ts.description.trim(),
+        }))
+
       const updateData: Record<string, unknown> = {
         name: company.name,
         logo_url: company.logo_url,
@@ -209,6 +248,7 @@ export default function CompanyPage() {
         industry_subcategory: company.industry_subcategory || null,
         brand_stage: company.brand_stage || null,
         competitors: cleanedCompetitors,
+        target_segments: cleanedTargetSegments,
       }
 
       const result = await supabasePatch('companies', company.id, updateData)
@@ -220,6 +260,7 @@ export default function CompanyPage() {
         toast.success('保存しました')
         handleChange('website_url', normalizedWebsiteUrl)
         handleChange('competitors', cleanedCompetitors)
+        handleChange('target_segments', cleanedTargetSegments)
       }
     } catch (err) {
       console.error('[Company Save] 予期しないエラー:', err)
@@ -354,7 +395,7 @@ export default function CompanyPage() {
             </div>
 
             {/* 競合企業 */}
-            <div>
+            <div className="mb-5">
               <h2 className="text-sm font-bold mb-3">競合企業</h2>
               {company.competitors.length > 0 && (
                 <div className="space-y-3 mb-3">
@@ -424,6 +465,63 @@ export default function CompanyPage() {
               )}
               {company.competitors.length >= 10 && (
                 <p className="text-xs text-muted-foreground mt-1">最大10社まで登録できます</p>
+              )}
+            </div>
+
+            {/* ターゲットセグメント */}
+            <div>
+              <h2 className="text-sm font-bold mb-3">ターゲットセグメント</h2>
+              {company.target_segments.length > 0 && (
+                <div className="space-y-3 mb-3">
+                  {company.target_segments.map((ts, index) => (
+                    <div key={index} className="flex items-start gap-2 rounded-lg border border-gray-200 bg-white p-3">
+                      <div className="flex-1 space-y-2">
+                        <Input
+                          value={ts.name}
+                          onChange={(e) => updateTargetSegment(index, 'name', e.target.value)}
+                          placeholder="セグメント名（例: 中小企業の経営者）"
+                          className="h-9 text-sm"
+                        />
+                        <textarea
+                          value={ts.description}
+                          onChange={(e) => updateTargetSegment(index, 'description', e.target.value)}
+                          placeholder="説明"
+                          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 min-h-[60px] resize-none"
+                          rows={2}
+                          onInput={(e) => {
+                            const target = e.target as HTMLTextAreaElement
+                            target.style.height = 'auto'
+                            target.style.height = target.scrollHeight + 'px'
+                          }}
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeTargetSegment(index)}
+                        className="shrink-0 h-9 w-9 p-0 text-gray-400 hover:text-red-500"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {company.target_segments.length < 10 && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addTargetSegment}
+                  className="text-sm"
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  ターゲットを追加
+                </Button>
+              )}
+              {company.target_segments.length >= 10 && (
+                <p className="text-xs text-muted-foreground mt-1">最大10件まで登録できます</p>
               )}
             </div>
           </CardContent>
