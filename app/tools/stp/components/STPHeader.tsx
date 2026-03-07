@@ -12,7 +12,7 @@ interface STPHeaderProps {
 export function STPHeader({ onSignOut, showSignOut = false }: STPHeaderProps) {
   return (
     <header className="sticky top-0 z-50 border-b bg-white/80 backdrop-blur-sm">
-      <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
+      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-6">
         <Link
           href="/tools/stp"
           className="text-lg font-bold text-gray-900 no-underline hover:opacity-80"
