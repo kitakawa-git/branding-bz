@@ -5,8 +5,9 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
-import { cn } from '@/lib/utils'
-import { ArrowLeft, Plus, Trash2 } from 'lucide-react'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { ArrowLeft, Plus, Trash2, Type, Palette } from 'lucide-react'
+
 import { KeywordSelector } from '../../components/KeywordSelector'
 import { MoodboardPairSelector } from '../../components/MoodboardPair'
 import { ColorPicker } from '../../components/ColorPicker'
@@ -25,8 +26,8 @@ interface Step2Props {
 }
 
 export function Step2ImageInput({ project, onNext, onBack, onSaveField }: Step2Props) {
-  const [approach, setApproach] = useState<ApproachType | null>(
-    project.approach_type || null
+  const [approach, setApproach] = useState<ApproachType>(
+    project.approach_type || 'keyword'
   )
   const [keywords, setKeywords] = useState<KeywordSelection[]>(
     project.keywords || []
@@ -46,12 +47,6 @@ export function Step2ImageInput({ project, onNext, onBack, onSaveField }: Step2P
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {}
-
-    if (!approach) {
-      newErrors.approach = 'アプローチを選択してください'
-      setErrors(newErrors)
-      return false
-    }
 
     if (approach === 'keyword' && keywords.length < 3) {
       newErrors.keywords = 'キーワードを3つ以上選択してください'
@@ -123,169 +118,133 @@ export function Step2ImageInput({ project, onNext, onBack, onSaveField }: Step2P
             ブランドのイメージに近い方向性を選んでください
           </p>
 
-          {/* アプローチ選択 */}
-      {!approach && (
-        <div className="grid gap-4 md:grid-cols-2">
-          <button
-            onClick={() => setApproach('keyword')}
-            className="rounded-xl border-2 border-gray-200 bg-white p-6 text-left transition-all hover:border-blue-300 hover:shadow-md"
+          <Tabs
+            value={approach || 'keyword'}
+            onValueChange={(v) => { setApproach(v as ApproachType); setErrors({}) }}
           >
-            <div className="mb-2 text-2xl">🏷️</div>
-            <h3 className="mb-1 text-base font-bold text-gray-900">キーワードで選ぶ</h3>
-            <p className="text-sm text-gray-500">
-              ブランドの印象に近いキーワードを3〜5個選んでください
-            </p>
-          </button>
-          <button
-            onClick={() => setApproach('moodboard')}
-            className="rounded-xl border-2 border-gray-200 bg-white p-6 text-left transition-all hover:border-blue-300 hover:shadow-md"
-          >
-            <div className="mb-2 text-2xl">🎨</div>
-            <h3 className="mb-1 text-base font-bold text-gray-900">直感で選ぶ</h3>
-            <p className="text-sm text-gray-500">
-              2つの雰囲気からブランドに近い方を直感的に選んでください
-            </p>
-          </button>
-        </div>
-      )}
+            <TabsList className="w-full">
+              <TabsTrigger value="keyword" className="flex-1 gap-1.5">
+                <Type className="h-4 w-4" />
+                キーワード
+              </TabsTrigger>
+              <TabsTrigger value="moodboard" className="flex-1 gap-1.5">
+                <Palette className="h-4 w-4" />
+                ムードボード
+              </TabsTrigger>
+            </TabsList>
 
-      {/* アプローチ選択済みの場合のヘッダー */}
-      {approach && (
-        <div className="flex items-center gap-2">
-          <span className={cn(
-            'rounded-full px-3 py-1 text-xs font-medium',
-            approach === 'keyword'
-              ? 'bg-blue-100 text-blue-700'
-              : 'bg-purple-100 text-purple-700'
-          )}>
-            {approach === 'keyword' ? 'キーワード' : 'ムードボード'}
-          </span>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => { setApproach(null); setErrors({}) }}
-            className="text-xs"
-          >
-            変更する
-          </Button>
-        </div>
-      )}
-
-      {/* キーワードモード */}
-      {approach === 'keyword' && (
-        <div>
-          <KeywordSelector value={keywords} onChange={setKeywords} />
-          {errors.keywords && (
-            <p className="mt-2 text-xs text-red-500">{errors.keywords}</p>
-          )}
-          {keywords.length >= 3 && !showAdditional && (
-            <div className="mt-5">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowAdditional(true)}
-              >
-                追加の質問に答える（任意）→
-              </Button>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ムードボードモード */}
-      {approach === 'moodboard' && (
-        <div>
-          <MoodboardPairSelector
-            value={moodboardChoices}
-            onChange={setMoodboardChoices}
-            onComplete={() => setShowAdditional(true)}
-          />
-          {errors.moodboard && (
-            <p className="mt-2 text-xs text-red-500">{errors.moodboard}</p>
-          )}
-        </div>
-      )}
-
-      {/* 共通の追加質問 */}
-      {showAdditional && (
-        <div className="mt-5 space-y-5 rounded-lg border border-gray-200 bg-white p-4">
-          <h2 className="text-sm font-bold mb-3">追加の質問（任意）</h2>
-
-          {/* 避けたい色 */}
-          <div>
-            <h2 className="text-sm font-bold mb-3">
-              避けたい色はありますか？
-            </h2>
-            <div className="space-y-2">
-              {avoidColors.map((color, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <ColorPicker
-                    value={color}
-                    onChange={(hex) => updateAvoidColor(i, hex)}
-                  />
+            {/* キーワードモード */}
+            <TabsContent value="keyword">
+              <KeywordSelector value={keywords} onChange={setKeywords} />
+              {errors.keywords && (
+                <p className="mt-2 text-xs text-red-500">{errors.keywords}</p>
+              )}
+              {keywords.length >= 3 && !showAdditional && (
+                <div className="mt-5">
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
-                    onClick={() => removeAvoidColor(i)}
-                    className="shrink-0 h-9 w-9 p-0 text-gray-400 hover:text-red-500"
+                    onClick={() => setShowAdditional(true)}
                   >
-                    <Trash2 className="h-4 w-4" />
+                    追加の質問に答える（任意）→
                   </Button>
                 </div>
-              ))}
-              {avoidColors.length < 3 && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={addAvoidColor}
-                  className="text-sm"
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  色を追加（最大3色）
-                </Button>
               )}
-            </div>
-          </div>
+            </TabsContent>
 
-          {/* 参考ブランド */}
-          <div>
-            <h2 className="text-sm font-bold mb-3">
-              参考にしたいブランドがあれば教えてください
-            </h2>
-            <div className="space-y-2">
-              {referenceBrands.map((brand, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <Input
-                    value={brand}
-                    onChange={(e) => updateReferenceBrand(i, e.target.value)}
-                    placeholder="ブランド名"
-                    className="h-10 text-sm"
-                  />
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeReferenceBrand(i)}
-                    className="shrink-0 h-9 w-9 p-0 text-gray-400 hover:text-red-500"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-              {referenceBrands.length < 3 && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={addReferenceBrand}
-                  className="text-sm"
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  ブランドを追加（最大3件）
-                </Button>
+            {/* ムードボードモード */}
+            <TabsContent value="moodboard">
+              <MoodboardPairSelector
+                value={moodboardChoices}
+                onChange={setMoodboardChoices}
+                onComplete={() => setShowAdditional(true)}
+              />
+              {errors.moodboard && (
+                <p className="mt-2 text-xs text-red-500">{errors.moodboard}</p>
               )}
+            </TabsContent>
+          </Tabs>
+
+          {/* 共通の追加質問 */}
+          {showAdditional && (
+            <div className="mt-5 space-y-5 rounded-lg border border-gray-200 bg-white p-4">
+              <h2 className="text-sm font-bold mb-3">追加の質問（任意）</h2>
+
+              {/* 避けたい色 */}
+              <div>
+                <h2 className="text-sm font-bold mb-3">
+                  避けたい色はありますか？
+                </h2>
+                <div className="space-y-2">
+                  {avoidColors.map((color, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <ColorPicker
+                        value={color}
+                        onChange={(hex) => updateAvoidColor(i, hex)}
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeAvoidColor(i)}
+                        className="shrink-0 h-9 w-9 p-0 text-gray-400 hover:text-red-500"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  {avoidColors.length < 3 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={addAvoidColor}
+                      className="text-sm"
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      色を追加（最大3色）
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              {/* 参考ブランド */}
+              <div>
+                <h2 className="text-sm font-bold mb-3">
+                  参考にしたいブランドがあれば教えてください
+                </h2>
+                <div className="space-y-2">
+                  {referenceBrands.map((brand, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <Input
+                        value={brand}
+                        onChange={(e) => updateReferenceBrand(i, e.target.value)}
+                        placeholder="ブランド名"
+                        className="h-10 text-sm"
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeReferenceBrand(i)}
+                        className="shrink-0 h-9 w-9 p-0 text-gray-400 hover:text-red-500"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  {referenceBrands.length < 3 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={addReferenceBrand}
+                      className="text-sm"
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      ブランドを追加（最大3件）
+                    </Button>
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          )}
 
         </CardContent>
       </Card>
