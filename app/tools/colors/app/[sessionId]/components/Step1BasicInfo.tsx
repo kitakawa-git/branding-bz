@@ -369,7 +369,7 @@ export function Step1BasicInfo({ project, onNext, onSaveField }: Step1Props) {
           onClick={handleNext}
           disabled={saving}
         >
-          {saving ? '保存中...' : '次へ：イメージ入力'}
+          {saving ? '保存中...' : 'イメージ入力へ'}
         </Button>
       </div>
     </div>

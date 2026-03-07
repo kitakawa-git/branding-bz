@@ -264,7 +264,7 @@ export function Step2ImageInput({ project, onNext, onBack, onSaveField }: Step2P
             onClick={handleNext}
             disabled={saving}
           >
-            {saving ? '保存中...' : '次へ：AI提案を受ける'}
+            {saving ? '保存中...' : 'AI提案を受ける'}
           </Button>
         )}
       </div>
