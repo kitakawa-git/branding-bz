@@ -128,7 +128,6 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
   )
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
-  const [showPrefilledBanner, setShowPrefilledBanner] = useState(false)
 
   // デバウンス用タイマー
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -183,7 +182,7 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
         }
 
         if (changed) {
-          setShowPrefilledBanner(true)
+          // プリフィル完了（バナー表示なし）
         }
       } catch {
         // プリフィル失敗は無視
@@ -192,13 +191,6 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
 
     fetchProfile()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  // プリフィルバナーの5秒後フェードアウト
-  useEffect(() => {
-    if (!showPrefilledBanner) return
-    const timer = setTimeout(() => setShowPrefilledBanner(false), 5000)
-    return () => clearTimeout(timer)
-  }, [showPrefilledBanner])
 
   // 現在のフォームデータを取得
   const getCurrentData = useCallback((): BasicInfo => ({
@@ -303,16 +295,6 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
           STP分析の対象となる事業の基本情報を入力してください
         </p>
       </div>
-
-      {/* プリフィルバナー */}
-      {showPrefilledBanner && (
-        <div
-          className="rounded-md bg-blue-50 px-4 py-2 text-sm text-blue-600 transition-opacity duration-500"
-          style={{ opacity: showPrefilledBanner ? 1 : 0 }}
-        >
-          branding.bz のデータを読み込みました
-        </div>
-      )}
 
       {/* 企業名・ブランド名 */}
       <div>

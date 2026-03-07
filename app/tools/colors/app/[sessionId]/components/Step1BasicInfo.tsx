@@ -39,7 +39,6 @@ export function Step1BasicInfo({ project, onNext, onSaveField }: Step1Props) {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
   const [prefilled, setPrefilled] = useState(false)
-  const [showPrefilledBanner, setShowPrefilledBanner] = useState(false)
 
   // プリフィル: 初回表示時に本体 or 過去セッションからデータを読み込み
   useEffect(() => {
@@ -78,7 +77,6 @@ export function Step1BasicInfo({ project, onNext, onSaveField }: Step1Props) {
         }
 
         setPrefilled(true)
-        setShowPrefilledBanner(true)
       } catch {
         // プリフィル失敗は無視
       }
@@ -86,13 +84,6 @@ export function Step1BasicInfo({ project, onNext, onSaveField }: Step1Props) {
 
     fetchProfile()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  // プリフィルバナーの5秒後フェードアウト
-  useEffect(() => {
-    if (!showPrefilledBanner) return
-    const timer = setTimeout(() => setShowPrefilledBanner(false), 5000)
-    return () => clearTimeout(timer)
-  }, [showPrefilledBanner])
 
   // 自動保存（onBlur）
   const autoSave = useCallback((field: string, value: unknown) => {
@@ -187,15 +178,6 @@ export function Step1BasicInfo({ project, onNext, onSaveField }: Step1Props) {
             ブランドの基本情報を入力してください
           </p>
         </div>
-
-        {/* プリフィルバナー */}
-        {showPrefilledBanner && (
-          <div className="rounded-md bg-blue-50 px-4 py-2 text-sm text-blue-600 transition-opacity duration-500"
-            style={{ opacity: showPrefilledBanner ? 1 : 0 }}
-          >
-            branding.bz のデータを読み込みました
-          </div>
-        )}
 
         {/* 企業名・ブランド名 */}
         <div>
