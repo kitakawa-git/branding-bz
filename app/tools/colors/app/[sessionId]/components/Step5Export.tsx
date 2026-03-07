@@ -7,8 +7,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { ArrowLeft } from 'lucide-react'
 import { PalettePreview } from '../../components/PalettePreview'
 import { AccessibilityBadge } from '../../components/AccessibilityBadge'
-import { ColorPaletteDisplay, extractColors } from '../../components/ColorPaletteDisplay'
-import type { BrandColorProject, PaletteProposal } from '@/lib/types/color-tool'
+import type { BrandColorProject, PaletteProposal, ColorValue } from '@/lib/types/color-tool'
 import { supabase } from '@/lib/supabase'
 
 interface Step5ExportProps {
@@ -133,7 +132,13 @@ export function Step5Export({
     }
   }
 
-  const colors = extractColors(palette)
+  const allColors: { label: string; color: ColorValue }[] = [
+    { label: 'メインカラー', color: palette.primary },
+    ...palette.secondary.map((c, i) => ({ label: `サブカラー${i + 1}`, color: c })),
+    { label: 'アクセントカラー', color: palette.accent },
+    { label: '明るい背景', color: palette.neutrals.light },
+    { label: '暗い背景/文字', color: palette.neutrals.dark },
+  ]
 
   return (
     <div>
@@ -147,22 +152,37 @@ export function Step5Export({
 
           {/* パレット確認 */}
           <div className="rounded-lg border border-gray-200 bg-white p-5">
-            <div className="mb-4 flex items-start justify-between">
-              <div>
-                <h3 className="text-lg font-bold text-gray-900">{palette.name}</h3>
-                <p className="text-sm text-gray-500">{palette.concept}</p>
-              </div>
-              <AccessibilityBadge score={palette.accessibilityScore} />
-            </div>
-
-            {/* カラー一覧 */}
-            <div className="mb-6">
-              <ColorPaletteDisplay colors={colors} layout="grid" />
-            </div>
-
-            {/* プレビュー */}
-            <PalettePreview proposal={palette} />
+        <div className="mb-4 flex items-start justify-between">
+          <div>
+            <h3 className="text-lg font-bold text-gray-900">{palette.name}</h3>
+            <p className="text-sm text-gray-500">{palette.concept}</p>
           </div>
+          <AccessibilityBadge score={palette.accessibilityScore} />
+        </div>
+
+        {/* カラー一覧 */}
+        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {allColors.map((item) => (
+            <div key={item.label} className="flex items-center gap-3 rounded-lg bg-gray-50 p-3">
+              <div
+                className="h-10 w-10 flex-shrink-0 rounded-lg border border-gray-200"
+                style={{ backgroundColor: item.color.hex }}
+              />
+              <div className="min-w-0">
+                <p className="text-[10px] text-gray-400">{item.label}</p>
+                <p className="truncate text-sm font-medium text-gray-900">{item.color.name}</p>
+                <p className="font-mono text-xs text-gray-500">{item.color.hex.toUpperCase()}</p>
+                <p className="text-[10px] text-gray-400">
+                  RGB({item.color.rgb.r}, {item.color.rgb.g}, {item.color.rgb.b})
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* プレビュー */}
+        <PalettePreview proposal={palette} />
+      </div>
 
           {/* 確定ボタン */}
           {!confirmed && (

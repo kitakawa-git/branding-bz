@@ -5,12 +5,12 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { ArrowLeft, ArrowRight, ChevronRight } from 'lucide-react'
+import { ColorPicker } from '../../components/ColorPicker'
 import { AccessibilityBadge } from '../../components/AccessibilityBadge'
-import { ColorPaletteDisplay, extractColors } from '../../components/ColorPaletteDisplay'
 import { PalettePreview } from '../../components/PalettePreview'
 import { ChatInterface } from '../../components/ChatInterface'
 import { calculateAccessibilityScore } from '@/lib/color-utils'
-import type { BrandColorProject, PaletteProposal } from '@/lib/types/color-tool'
+import type { BrandColorProject, PaletteProposal, ColorValue } from '@/lib/types/color-tool'
 
 interface Step4RefinementProps {
   project: BrandColorProject
@@ -33,14 +33,17 @@ export function Step4Refinement({
   const [adjustmentCount, setAdjustmentCount] = useState(project.adjustment_count)
   const [showPreview, setShowPreview] = useState(false)
 
-  // カラー配列とパスマッピング
-  const colors = extractColors(palette)
-  const colorPaths = [
-    'primary',
-    ...palette.secondary.map((_, i) => `secondary.${i}`),
-    'accent',
-    'neutrals.light',
-    'neutrals.dark',
+  // 5色の定義
+  const allColors: { label: string; path: string; color: ColorValue }[] = [
+    { label: 'メインカラー', path: 'primary', color: palette.primary },
+    ...palette.secondary.map((s, i) => ({
+      label: `サブカラー${i + 1}`,
+      path: `secondary.${i}`,
+      color: s,
+    })),
+    { label: 'アクセントカラー', path: 'accent', color: palette.accent },
+    { label: '明るい背景', path: 'neutrals.light', color: palette.neutrals.light },
+    { label: '暗い背景/文字', path: 'neutrals.dark', color: palette.neutrals.dark },
   ]
 
   // パレットの色を更新
@@ -94,17 +97,18 @@ export function Step4Refinement({
     [onSaveField]
   )
 
-  // インデックスからパスに変換してupdateColorを呼ぶ
-  const handleColorChange = useCallback(
-    (index: number, hex: string) => {
-      updateColor(colorPaths[index], hex)
-    },
-    [updateColor, colorPaths]
-  )
-
   const handleNext = async () => {
     const ok = await onNext({ current_palette: palette })
     if (!ok) toast.error('保存に失敗しました')
+  }
+
+  // HEX→RGB文字列
+  const hexToRgbStr = (hex: string) => {
+    const clean = hex.replace('#', '')
+    const r = parseInt(clean.slice(0, 2), 16) || 0
+    const g = parseInt(clean.slice(2, 4), 16) || 0
+    const b = parseInt(clean.slice(4, 6), 16) || 0
+    return `${r}, ${g}, ${b}`
   }
 
   return (
@@ -121,17 +125,44 @@ export function Step4Refinement({
             <p className="mt-1 text-sm text-gray-600">{palette.concept}</p>
           </div>
 
-          {/* 【2】2カラムエリア */}
+          {/* 【2】カラーバー */}
+          <div className="flex h-[60px] w-full overflow-hidden rounded-lg">
+            {allColors.map((c) => (
+              <div
+                key={c.path}
+                className="flex-1"
+                style={{ backgroundColor: c.color.hex }}
+              />
+            ))}
+          </div>
+
+          {/* 【3】2カラムエリア */}
           <div className="flex flex-col gap-5 md:flex-row">
             {/* 左カラム: 5色カラーカード */}
             <div className="w-full md:w-1/2">
-              <ColorPaletteDisplay
-                colors={colors}
-                layout="grid"
-                editable
-                onColorChange={handleColorChange}
-                showColorBar
-              />
+              <div className="grid grid-cols-2 gap-3">
+                {allColors.map((c) => (
+                  <div
+                    key={c.path}
+                    className="rounded-lg border border-gray-200 bg-white p-3"
+                  >
+                    {/* 色の丸 + 役割名 */}
+                    <div className="mb-2 flex items-center gap-2">
+                      <ColorPicker
+                        value={c.color.hex}
+                        onChange={(hex) => updateColor(c.path, hex)}
+                      />
+                      <span className="text-xs font-medium text-gray-700">{c.label}</span>
+                    </div>
+                    {/* HEX + RGB */}
+                    <div className="space-y-0.5 pl-10">
+                      <p className="font-mono text-xs text-gray-600">{c.color.hex.toUpperCase()}</p>
+                      <p className="text-[11px] text-gray-400">RGB({hexToRgbStr(c.color.hex)})</p>
+                      <p className="text-[11px] text-gray-500">{c.color.name}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* 右カラム: AIチャット */}

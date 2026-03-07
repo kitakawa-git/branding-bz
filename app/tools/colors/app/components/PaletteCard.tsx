@@ -2,7 +2,6 @@
 
 import type { PaletteProposal } from '@/lib/types/color-tool'
 import { AccessibilityBadge } from './AccessibilityBadge'
-import { ColorPaletteDisplay, extractColors } from './ColorPaletteDisplay'
 import { PalettePreview } from './PalettePreview'
 import { Button } from '@/components/ui/button'
 import { Check } from 'lucide-react'
@@ -14,7 +13,13 @@ interface PaletteCardProps {
 }
 
 export function PaletteCard({ proposal, selected, onSelect }: PaletteCardProps) {
-  const colors = extractColors(proposal)
+  const allColors = [
+    { label: 'メイン', color: proposal.primary },
+    ...proposal.secondary.map((c, i) => ({ label: `サブ${i + 1}`, color: c })),
+    { label: 'アクセント', color: proposal.accent },
+    { label: '明', color: proposal.neutrals.light },
+    { label: '暗', color: proposal.neutrals.dark },
+  ]
 
   return (
     <div
@@ -26,11 +31,11 @@ export function PaletteCard({ proposal, selected, onSelect }: PaletteCardProps) 
     >
       {/* 上部: カラーバー（5色横並び） */}
       <div className="flex h-20 overflow-hidden rounded-t-[6px]">
-        {colors.map((item, i) => (
+        {allColors.map((item, i) => (
           <div
             key={i}
             className="flex-1"
-            style={{ backgroundColor: item.hex }}
+            style={{ backgroundColor: item.color.hex }}
           />
         ))}
       </div>
@@ -46,8 +51,26 @@ export function PaletteCard({ proposal, selected, onSelect }: PaletteCardProps) 
         {/* 2行目: 説明文 */}
         <p className="text-sm text-gray-600">{proposal.concept}</p>
 
-        {/* 3行目: カラー詳細（inline表示） */}
-        <ColorPaletteDisplay colors={colors} layout="inline" />
+        {/* 3行目: カラー詳細（5色横並び） */}
+        <div className="flex flex-wrap gap-3">
+          {allColors.map((item) => (
+            <div key={item.label} className="flex items-center gap-1.5">
+              <div
+                className="h-5 w-5 flex-shrink-0 rounded-full border border-gray-200"
+                style={{ backgroundColor: item.color.hex }}
+              />
+              <span className="text-xs font-medium text-gray-700 whitespace-nowrap">
+                {item.label}
+              </span>
+              <span className="text-xs text-gray-500 whitespace-nowrap">
+                {item.color.name}
+              </span>
+              <span className="font-mono text-[10px] text-gray-400 whitespace-nowrap">
+                {item.color.hex}
+              </span>
+            </div>
+          ))}
+        </div>
 
         {/* 4行目: 提案理由 */}
         <div>
