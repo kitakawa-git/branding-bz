@@ -244,7 +244,8 @@ export function ChatInterface({
           <Button
             onClick={sendMessage}
             disabled={!input.trim() || streaming || remainingTurns <= 0}
-            size="sm"
+            size="default"
+            className="text-sm"
           >
             送信
           </Button>
