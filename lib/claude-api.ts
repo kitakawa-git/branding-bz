@@ -63,10 +63,17 @@ export function streamClaude(options: {
           messages: options.messages,
         })
 
+        // content_block の種別を追跡し、thinking ブロックを除外する
+        let currentBlockType = ''
+
         for await (const event of stream) {
+          if (event.type === 'content_block_start') {
+            currentBlockType = event.content_block.type // 'text' | 'thinking' 等
+          }
           if (
             event.type === 'content_block_delta' &&
-            event.delta.type === 'text_delta'
+            event.delta.type === 'text_delta' &&
+            currentBlockType === 'text'
           ) {
             const chunk = `data: ${JSON.stringify({ type: 'text', content: event.delta.text })}\n\n`
             controller.enqueue(encoder.encode(chunk))
