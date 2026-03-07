@@ -112,7 +112,7 @@ function Header() {
             >
               {toolItems.map((tool) => (
                 <DropdownMenuItem key={tool.href} asChild className="focus:bg-white/30 focus:text-foreground rounded-sm">
-                  <Link href={tool.href} className={`cursor-pointer font-semibold ${isOverDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                  <Link href={tool.href} className={`cursor-pointer ${isOverDark ? 'text-gray-300' : 'text-gray-600'}`}>
                     {tool.label}
                   </Link>
                 </DropdownMenuItem>
