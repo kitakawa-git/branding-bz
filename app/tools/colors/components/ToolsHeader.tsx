@@ -11,7 +11,7 @@ interface ToolsHeaderProps {
 
 export function ToolsHeader({ onSignOut, showSignOut = false }: ToolsHeaderProps) {
   return (
-    <header className="sticky top-0 z-50 border-b bg-white/80 backdrop-blur-sm">
+    <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-sm">
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-6">
         <Link
           href="/tools/colors"
