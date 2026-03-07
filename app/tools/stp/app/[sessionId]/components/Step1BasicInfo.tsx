@@ -4,10 +4,10 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
 import { IndustrySelect } from '@/components/shared/IndustrySelect'
+import { TitleDescriptionList } from '@/components/shared/TitleDescriptionList'
 import { supabase } from '@/lib/supabase'
-import { ChevronRight, Plus, Trash2 } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 
 interface Competitor {
   name: string
@@ -266,37 +266,6 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
     if (!success) setSaving(false)
   }
 
-  // 事業内容操作
-  const addBusinessDescription = () => {
-    setBusinessDescriptions([...businessDescriptions, { title: '', description: '' }])
-  }
-
-  const removeBusinessDescription = (index: number) => {
-    setBusinessDescriptions(businessDescriptions.filter((_, i) => i !== index))
-  }
-
-  const updateBusinessDescription = (index: number, field: 'title' | 'description', value: string) => {
-    const updated = [...businessDescriptions]
-    updated[index] = { ...updated[index], [field]: value }
-    setBusinessDescriptions(updated)
-  }
-
-  // ターゲットセグメント操作
-  const addTargetSegment = () => {
-    if (targetSegments.length >= 10) return
-    setTargetSegments([...targetSegments, { name: '', description: '' }])
-  }
-
-  const removeTargetSegment = (index: number) => {
-    setTargetSegments(targetSegments.filter((_, i) => i !== index))
-  }
-
-  const updateTargetSegment = (index: number, field: 'name' | 'description', value: string) => {
-    const updated = [...targetSegments]
-    updated[index] = { ...updated[index], [field]: value }
-    setTargetSegments(updated)
-  }
-
   // 競合企業操作
   const addCompetitor = () => {
     if (competitors.length >= 10) return
@@ -382,112 +351,28 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
       </div>
 
       {/* 事業内容（構造化入力） */}
-      <div>
-        <div className="mb-2 flex items-center gap-1.5">
-          <label className="text-sm font-bold text-gray-700">事業内容</label>
-          <span className="text-xs text-red-500">*</span>
-        </div>
-
-        <div className="space-y-2">
-          {businessDescriptions.map((item, i) => (
-            <div key={i} className="rounded-lg border bg-white p-3">
-              <div className="mb-2 flex items-center gap-2">
-                <Input
-                  value={item.title}
-                  onChange={(e) => updateBusinessDescription(i, 'title', e.target.value)}
-                  placeholder="事業タイトル"
-                  className="h-10 flex-1"
-                />
-                <button
-                  type="button"
-                  onClick={() => removeBusinessDescription(i)}
-                  className="shrink-0 rounded p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-              <Textarea
-                value={item.description}
-                onChange={(e) => updateBusinessDescription(i, 'description', e.target.value)}
-                placeholder="事業の説明"
-                className="min-h-[60px] resize-none"
-                rows={2}
-                onInput={(e) => {
-                  const target = e.target as HTMLTextAreaElement
-                  target.style.height = 'auto'
-                  target.style.height = target.scrollHeight + 'px'
-                }}
-              />
-            </div>
-          ))}
-
-          <button
-            type="button"
-            onClick={addBusinessDescription}
-            className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            事業内容を追加
-          </button>
-        </div>
-
-        {errors.businessDescriptions && (
-          <p className="mt-1 text-xs text-red-500">{errors.businessDescriptions}</p>
-        )}
-      </div>
+      <TitleDescriptionList
+        label="事業内容"
+        items={businessDescriptions}
+        onChange={setBusinessDescriptions}
+        addButtonLabel="事業内容を追加"
+        titlePlaceholder="事業タイトル"
+        descriptionPlaceholder="事業の説明"
+        required
+        error={errors.businessDescriptions}
+      />
 
       {/* ターゲット顧客層（構造化入力） */}
-      <div>
-        <div className="mb-2 flex items-center gap-1.5">
-          <label className="text-sm font-bold text-gray-700">ターゲット顧客層</label>
-          <span className="text-xs text-gray-400">（任意）</span>
-        </div>
-
-        <div className="space-y-2">
-          {targetSegments.map((ts, i) => (
-            <div key={i} className="rounded-lg border bg-white p-3">
-              <div className="mb-2 flex items-center gap-2">
-                <Input
-                  value={ts.name}
-                  onChange={(e) => updateTargetSegment(i, 'name', e.target.value)}
-                  placeholder="セグメント名（例: 中小企業の経営者）"
-                  className="h-10 flex-1"
-                />
-                <button
-                  type="button"
-                  onClick={() => removeTargetSegment(i)}
-                  className="shrink-0 rounded p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-              <Textarea
-                value={ts.description}
-                onChange={(e) => updateTargetSegment(i, 'description', e.target.value)}
-                placeholder="セグメントの説明"
-                className="min-h-[60px] resize-none"
-                rows={2}
-                onInput={(e) => {
-                  const target = e.target as HTMLTextAreaElement
-                  target.style.height = 'auto'
-                  target.style.height = target.scrollHeight + 'px'
-                }}
-              />
-            </div>
-          ))}
-
-          {targetSegments.length < 10 && (
-            <button
-              type="button"
-              onClick={addTargetSegment}
-              className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              ターゲットを追加
-            </button>
-          )}
-        </div>
-      </div>
+      <TitleDescriptionList
+        label="ターゲット顧客層"
+        items={targetSegments.map(ts => ({ title: ts.name, description: ts.description }))}
+        onChange={(newItems) => {
+          setTargetSegments(newItems.map(item => ({ name: item.title, description: item.description })))
+        }}
+        addButtonLabel="ターゲットを追加"
+        titlePlaceholder="セグメント名（例: 中小企業の経営者）"
+        descriptionPlaceholder="セグメントの説明"
+      />
 
       {/* 競合企業 */}
       <div>

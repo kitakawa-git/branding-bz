@@ -14,6 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { TitleDescriptionList } from '@/components/shared/TitleDescriptionList'
 import { Plus, Trash2 } from 'lucide-react'
 
 // 競合企業の型
@@ -151,29 +152,6 @@ export default function CompanyPage() {
     if (!company) return
     const updated = company.competitors.filter((_, i) => i !== index)
     handleChange('competitors', updated)
-  }
-
-  // ターゲットセグメントの操作
-  const addTargetSegment = () => {
-    if (!company) return
-    if (company.target_segments.length >= 10) {
-      toast.error('ターゲットセグメントは最大10件まで登録できます')
-      return
-    }
-    handleChange('target_segments', [...company.target_segments, { name: '', description: '' }])
-  }
-
-  const updateTargetSegment = (index: number, field: keyof TargetSegment, value: string) => {
-    if (!company) return
-    const updated = [...company.target_segments]
-    updated[index] = { ...updated[index], [field]: value }
-    handleChange('target_segments', updated)
-  }
-
-  const removeTargetSegment = (index: number) => {
-    if (!company) return
-    const updated = company.target_segments.filter((_, i) => i !== index)
-    handleChange('target_segments', updated)
   }
 
   // Supabase REST APIに直接fetchで保存（JSクライアントの認証ハングを回避）
@@ -469,61 +447,19 @@ export default function CompanyPage() {
             </div>
 
             {/* ターゲットセグメント */}
-            <div>
-              <h2 className="text-sm font-bold mb-3">ターゲットセグメント</h2>
-              {company.target_segments.length > 0 && (
-                <div className="space-y-3 mb-3">
-                  {company.target_segments.map((ts, index) => (
-                    <div key={index} className="flex items-start gap-2 rounded-lg border border-gray-200 bg-white p-3">
-                      <div className="flex-1 space-y-2">
-                        <Input
-                          value={ts.name}
-                          onChange={(e) => updateTargetSegment(index, 'name', e.target.value)}
-                          placeholder="セグメント名（例: 中小企業の経営者）"
-                          className="h-9 text-sm"
-                        />
-                        <textarea
-                          value={ts.description}
-                          onChange={(e) => updateTargetSegment(index, 'description', e.target.value)}
-                          placeholder="説明"
-                          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 min-h-[60px] resize-none"
-                          rows={2}
-                          onInput={(e) => {
-                            const target = e.target as HTMLTextAreaElement
-                            target.style.height = 'auto'
-                            target.style.height = target.scrollHeight + 'px'
-                          }}
-                        />
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeTargetSegment(index)}
-                        className="shrink-0 h-9 w-9 p-0 text-gray-400 hover:text-red-500"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-              {company.target_segments.length < 10 && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={addTargetSegment}
-                  className="text-sm"
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  ターゲットを追加
-                </Button>
-              )}
-              {company.target_segments.length >= 10 && (
-                <p className="text-xs text-muted-foreground mt-1">最大10件まで登録できます</p>
-              )}
-            </div>
+            <TitleDescriptionList
+              label="ターゲットセグメント"
+              items={company.target_segments.map(ts => ({ title: ts.name, description: ts.description }))}
+              onChange={(newItems) => {
+                handleChange('target_segments', newItems.map(item => ({
+                  name: item.title,
+                  description: item.description,
+                })))
+              }}
+              addButtonLabel="ターゲットを追加"
+              titlePlaceholder="セグメント名（例: 中小企業の経営者）"
+              descriptionPlaceholder="説明"
+            />
           </CardContent>
         </Card>
       </form>

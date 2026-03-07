@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { AutoResizeTextarea } from '@/components/ui/auto-resize-textarea'
 import { DEFAULT_SUBTITLES, type PortalSubtitles } from '@/lib/portal-subtitles'
+import { TitleDescriptionList } from '@/components/shared/TitleDescriptionList'
 import { GripVertical, Plus, Trash2 } from 'lucide-react'
 import {
   DndContext,
@@ -734,31 +735,28 @@ export default function BrandGuidelinesPage() {
                   </SortableContext>
                 </DndContext>
               ) : (
-                <>
-                  {[...guidelines.business_content]
+                <TitleDescriptionList
+                  label=""
+                  items={[...guidelines.business_content]
                     .sort((a, b) => (a.added_index ?? 0) - (b.added_index ?? 0))
-                    .map((item) => {
-                      const realIndex = guidelines.business_content.indexOf(item)
-                      return (
-                        <div key={realIndex} className="border border-border rounded-lg p-3 mb-2 bg-background">
-                          <div className="flex gap-2 mb-2 items-center">
-                            <Input type="text" value={item.title} onChange={(e) => updateBusiness(realIndex, 'title', e.target.value)} placeholder="事業タイトル" className="h-10 flex-1" />
-                            <Button type="button" variant="outline" size="icon" onClick={() => removeBusiness(realIndex)} className="size-9 shrink-0 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"><Trash2 size={14} /></Button>
-                          </div>
-                          <AutoResizeTextarea
-                            value={item.description}
-                            onChange={(e) => updateBusiness(realIndex, 'description', e.target.value)}
-                            placeholder="事業の説明"
-                            className="min-h-[60px]"
-                          />
-                        </div>
-                      )
-                    })}
-                </>
+                    .map(item => ({ title: item.title, description: item.description }))}
+                  onChange={(newItems) => {
+                    // added_index を保持してマージ
+                    const sorted = [...guidelines.business_content].sort((a, b) => (a.added_index ?? 0) - (b.added_index ?? 0))
+                    const maxIndex = sorted.reduce((max, b) => Math.max(max, b.added_index ?? 0), -1)
+                    const result: BusinessItem[] = newItems.map((item, i) => ({
+                      title: item.title,
+                      description: item.description,
+                      added_index: i < sorted.length ? sorted[i].added_index : maxIndex + 1 + (i - sorted.length),
+                    }))
+                    handleChange('business_content', result)
+                  }}
+                  addButtonLabel="事業内容を追加"
+                  titlePlaceholder="事業タイトル"
+                  descriptionPlaceholder="事業の説明"
+                  required={false}
+                />
               )}
-              <Button type="button" variant="outline" onClick={addBusiness} className="py-2 px-4 text-[13px]">
-                <Plus size={16} />事業内容を追加
-              </Button>
             </div>
           </CardContent>
         </Card>
