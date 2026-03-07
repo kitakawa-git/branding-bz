@@ -57,26 +57,40 @@ export function Step1BasicInfo({ project, onNext, onSaveField }: Step1Props) {
         if (result.source === 'none' || !result.data) return
 
         const d = result.data
-        if (d.brand_name && !brandName) setBrandName(d.brand_name)
-        if (d.industry_category && !industryCategory) {
+        // source === 'company': 管理画面（companies）のデータを常に最新として優先
+        // source === 'session': 過去セッションのデータは空フィールドのみ補完
+        const isCompany = result.source === 'company'
+        const updates: Record<string, unknown> = {}
+
+        if (d.brand_name && (isCompany || !brandName)) {
+          setBrandName(d.brand_name)
+          updates.brand_name = d.brand_name
+        }
+        if (d.industry_category && (isCompany || !industryCategory)) {
           setIndustryCategory(d.industry_category)
-          // 自動保存
-          onSaveField({ industry_category: d.industry_category })
+          updates.industry_category = d.industry_category
+          // 大分類が変わったら中分類もリセットしてから適用
+          if (isCompany && d.industry_category !== industryCategory) {
+            setIndustrySubcategory(d.industry_subcategory || '')
+            updates.industry_subcategory = d.industry_subcategory || ''
+          }
         }
-        if (d.industry_subcategory && !industrySubcategory) {
+        if (d.industry_subcategory && (isCompany || !industrySubcategory)) {
           setIndustrySubcategory(d.industry_subcategory)
-          onSaveField({ industry_subcategory: d.industry_subcategory })
+          updates.industry_subcategory = d.industry_subcategory
         }
-        if (d.brand_stage && !brandStage) {
+        if (d.brand_stage && (isCompany || !brandStage)) {
           setBrandStage(d.brand_stage)
-          onSaveField({ brand_stage: d.brand_stage })
+          updates.brand_stage = d.brand_stage
         }
-        if (d.competitor_colors?.length && competitorColors.length === 0) {
+        if (d.competitor_colors?.length && (isCompany || competitorColors.length === 0)) {
           setCompetitorColors(d.competitor_colors)
-          onSaveField({ competitor_colors: d.competitor_colors })
+          updates.competitor_colors = d.competitor_colors
         }
-        if (d.brand_name) {
-          onSaveField({ brand_name: d.brand_name })
+
+        // 変更があればセッションに一括保存
+        if (Object.keys(updates).length > 0) {
+          onSaveField(updates)
         }
 
         setPrefilled(true)

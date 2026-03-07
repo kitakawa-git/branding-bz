@@ -147,42 +147,37 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
         if (result.source === 'none' || !result.data) return
 
         const d = result.data
-        let changed = false
+        // source === 'company': 管理画面（companies）のデータを常に最新として優先
+        // source === 'session': 過去セッションのデータは空フィールドのみ補完
+        const isCompany = result.source === 'company'
 
-        // スカラー値: セッションが空の場合のみ補完
-        if (d.brand_name && !companyName) {
+        // スカラー値
+        if (d.brand_name && (isCompany || !companyName)) {
           setCompanyName(d.brand_name)
-          changed = true
         }
-        if (d.industry_category && !industryCategory) {
+        if (d.industry_category && (isCompany || !industryCategory)) {
           setIndustryCategory(d.industry_category)
-          changed = true
+          // 大分類が変わったら中分類もリセットしてから適用
+          if (isCompany && d.industry_category !== industryCategory) {
+            setIndustrySubcategory(d.industry_subcategory || '')
+          }
         }
-        if (d.industry_subcategory && !industrySubcategory) {
+        if (d.industry_subcategory && (isCompany || !industrySubcategory)) {
           setIndustrySubcategory(d.industry_subcategory)
-          changed = true
         }
 
-        // 構造化データ: 本体のデータがセッションより項目数が多い場合は上書き
-        // （旧セッションのテキスト一括マイグレーション結果を正しい構造化データで置き換える）
+        // 構造化データ: company なら常に上書き、session なら項目数が多い場合のみ
         if (d.business_descriptions?.length > 0 &&
-            d.business_descriptions.length > businessDescriptions.length) {
+            (isCompany || d.business_descriptions.length > businessDescriptions.length)) {
           setBusinessDescriptions(d.business_descriptions)
-          changed = true
         }
         if (d.target_segments?.length > 0 &&
-            d.target_segments.length > targetSegments.length) {
+            (isCompany || d.target_segments.length > targetSegments.length)) {
           setTargetSegments(d.target_segments)
-          changed = true
         }
         if (d.competitors?.length > 0 &&
-            d.competitors.length > competitors.length) {
+            (isCompany || d.competitors.length > competitors.length)) {
           setCompetitors(d.competitors)
-          changed = true
-        }
-
-        if (changed) {
-          // プリフィル完了（バナー表示なし）
         }
       } catch {
         // プリフィル失敗は無視
