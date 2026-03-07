@@ -1,41 +1,29 @@
 'use client'
 
-// Step 1: 基本情報フォーム（会社名・業種・商品/サービス・顧客・競合）
+// Step 1: 基本情報フォーム（会社名・業種・事業内容・顧客・競合）
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { ChevronRight } from 'lucide-react'
+import { IndustrySelect } from '@/components/shared/IndustrySelect'
+import { supabase } from '@/lib/supabase'
+import { ChevronRight, Plus, Trash2 } from 'lucide-react'
 
-// 業種リスト
-const INDUSTRIES = [
-  '製造業',
-  '情報通信業',
-  '小売・卸売業',
-  'サービス業',
-  '建設・不動産業',
-  '飲食業',
-  '医療・福祉',
-  '教育・学習支援',
-  '金融・保険業',
-  '運輸・物流業',
-  'その他',
-] as const
+interface Competitor {
+  name: string
+  url: string
+}
 
 interface BasicInfo {
   company_name: string
-  industry: string
-  industry_other?: string
+  industry_category: string
+  industry_subcategory: string
   products: string
   current_customers: string
-  competitors: string
+  competitors: Competitor[]
+  // 旧フィールド（後方互換）
+  industry?: string
+  industry_other?: string
 }
 
 interface Step1Props {
@@ -44,28 +32,133 @@ interface Step1Props {
   onSaveField: (data: BasicInfo) => Promise<void>
 }
 
+// 旧 industry ラベルから新 industry_category への移行マッピング
+const LEGACY_INDUSTRY_MAP: Record<string, { category: string; subcategory: string }> = {
+  '製造業': { category: 'manufacturing', subcategory: 'その他' },
+  '情報通信業': { category: 'it_tech', subcategory: 'その他' },
+  '小売・卸売業': { category: 'retail_wholesale', subcategory: 'その他' },
+  'サービス業': { category: 'service', subcategory: 'その他' },
+  '建設・不動産業': { category: 'construction_realestate', subcategory: 'その他' },
+  '飲食業': { category: 'food_beverage', subcategory: 'その他' },
+  '医療・福祉': { category: 'medical_welfare', subcategory: 'その他' },
+  '教育・学習支援': { category: 'education', subcategory: 'その他' },
+  '金融・保険業': { category: 'finance_insurance', subcategory: 'その他' },
+  '運輸・物流業': { category: 'other', subcategory: '' },
+}
+
+// 旧 competitors テキストを構造化データに変換
+function migrateCompetitors(
+  competitorsField: string | Competitor[] | undefined
+): Competitor[] {
+  if (!competitorsField) return []
+  // 既に配列なら（新形式）そのまま
+  if (Array.isArray(competitorsField)) return competitorsField
+  // 旧形式（テキスト）をパース
+  if (typeof competitorsField === 'string' && competitorsField.trim()) {
+    return competitorsField
+      .split(/[、,\n]/)
+      .map(s => s.trim())
+      .filter(Boolean)
+      .map(name => ({ name, url: '' }))
+  }
+  return []
+}
+
 export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
+  // 旧 industry フィールドのマイグレーション
+  const migratedIndustry = basicInfo.industry
+    ? LEGACY_INDUSTRY_MAP[basicInfo.industry] || null
+    : null
+
   const [companyName, setCompanyName] = useState(basicInfo.company_name || '')
-  const [industry, setIndustry] = useState(basicInfo.industry || '')
-  const [industryOther, setIndustryOther] = useState(basicInfo.industry_other || '')
+  const [industryCategory, setIndustryCategory] = useState(
+    basicInfo.industry_category || migratedIndustry?.category || ''
+  )
+  const [industrySubcategory, setIndustrySubcategory] = useState(
+    basicInfo.industry_subcategory || migratedIndustry?.subcategory || ''
+  )
   const [products, setProducts] = useState(basicInfo.products || '')
   const [currentCustomers, setCurrentCustomers] = useState(basicInfo.current_customers || '')
-  const [competitors, setCompetitors] = useState(basicInfo.competitors || '')
+  const [competitors, setCompetitors] = useState<Competitor[]>(
+    migrateCompetitors(basicInfo.competitors)
+  )
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
+  const [showPrefilledBanner, setShowPrefilledBanner] = useState(false)
 
   // デバウンス用タイマー
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  // プリフィル: 初回表示時に本体 or 過去セッションからデータを読み込み
+  useEffect(() => {
+    // 既にフォームにデータがある場合はスキップ
+    if (basicInfo.company_name || basicInfo.industry_category || basicInfo.industry) return
+
+    const fetchProfile = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return
+
+        const res = await fetch(`/api/tools/shared-profile?userId=${user.id}`)
+        if (!res.ok) return
+
+        const result = await res.json()
+        if (result.source === 'none' || !result.data) return
+
+        const d = result.data
+        let changed = false
+        if (d.brand_name && !companyName) {
+          setCompanyName(d.brand_name)
+          changed = true
+        }
+        if (d.industry_category && !industryCategory) {
+          setIndustryCategory(d.industry_category)
+          changed = true
+        }
+        if (d.industry_subcategory && !industrySubcategory) {
+          setIndustrySubcategory(d.industry_subcategory)
+          changed = true
+        }
+        if (d.business_description && !products) {
+          setProducts(d.business_description)
+          changed = true
+        }
+        if (d.target_customers && !currentCustomers) {
+          setCurrentCustomers(d.target_customers)
+          changed = true
+        }
+        if (d.competitors?.length > 0 && competitors.length === 0) {
+          setCompetitors(d.competitors)
+          changed = true
+        }
+
+        if (changed) {
+          setShowPrefilledBanner(true)
+        }
+      } catch {
+        // プリフィル失敗は無視
+      }
+    }
+
+    fetchProfile()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // プリフィルバナーの5秒後フェードアウト
+  useEffect(() => {
+    if (!showPrefilledBanner) return
+    const timer = setTimeout(() => setShowPrefilledBanner(false), 5000)
+    return () => clearTimeout(timer)
+  }, [showPrefilledBanner])
+
   // 現在のフォームデータを取得
   const getCurrentData = useCallback((): BasicInfo => ({
     company_name: companyName.trim(),
-    industry,
-    industry_other: industry === 'その他' ? industryOther.trim() : undefined,
+    industry_category: industryCategory,
+    industry_subcategory: industrySubcategory,
     products: products.trim(),
     current_customers: currentCustomers.trim(),
-    competitors: competitors.trim(),
-  }), [companyName, industry, industryOther, products, currentCustomers, competitors])
+    competitors: competitors.filter(c => c.name.trim()),
+  }), [companyName, industryCategory, industrySubcategory, products, currentCustomers, competitors])
 
   // 1秒デバウンスのオートセーブ
   const triggerAutoSave = useCallback(() => {
@@ -79,8 +172,7 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
 
   // フォーム値が変わるたびにオートセーブをトリガー
   useEffect(() => {
-    // 初回レンダリングではスキップ
-    const hasData = companyName || industry || products || currentCustomers || competitors
+    const hasData = companyName || industryCategory || products || currentCustomers || competitors.length > 0
     if (hasData) {
       triggerAutoSave()
     }
@@ -90,7 +182,7 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [companyName, industry, industryOther, products, currentCustomers, competitors])
+  }, [companyName, industryCategory, industrySubcategory, products, currentCustomers, competitors])
 
   // バリデーション
   const validate = (): boolean => {
@@ -100,16 +192,16 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
       newErrors.companyName = '企業名・ブランド名を入力してください'
     }
 
-    if (!industry) {
-      newErrors.industry = '業種を選択してください'
+    if (!industryCategory) {
+      newErrors.industryCategory = '業種（大分類）を選択してください'
     }
 
-    if (industry === 'その他' && !industryOther.trim()) {
-      newErrors.industryOther = '業種を入力してください'
+    if (!industrySubcategory) {
+      newErrors.industrySubcategory = '業種（中分類）を選択してください'
     }
 
     if (!products.trim()) {
-      newErrors.products = '主な商品・サービスを入力してください'
+      newErrors.products = '事業内容を入力してください'
     }
 
     setErrors(newErrors)
@@ -120,7 +212,6 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
     if (!validate()) return
 
     setSaving(true)
-    // デバウンス中のオートセーブをキャンセル
     if (debounceRef.current) {
       clearTimeout(debounceRef.current)
     }
@@ -130,11 +221,27 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
     if (!success) setSaving(false)
   }
 
+  // 競合企業操作
+  const addCompetitor = () => {
+    if (competitors.length >= 10) return
+    setCompetitors([...competitors, { name: '', url: '' }])
+  }
+
+  const removeCompetitor = (index: number) => {
+    setCompetitors(competitors.filter((_, i) => i !== index))
+  }
+
+  const updateCompetitor = (index: number, field: 'name' | 'url', value: string) => {
+    const updated = [...competitors]
+    updated[index] = { ...updated[index], [field]: value }
+    setCompetitors(updated)
+  }
+
   // 必須フィールドが埋まっているかチェック（次へボタンの活性化用）
   const isValid =
     companyName.trim() !== '' &&
-    industry !== '' &&
-    (industry !== 'その他' || industryOther.trim() !== '') &&
+    industryCategory !== '' &&
+    industrySubcategory !== '' &&
     products.trim() !== ''
 
   return (
@@ -145,6 +252,16 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
           STP分析の対象となる事業の基本情報を入力してください
         </p>
       </div>
+
+      {/* プリフィルバナー */}
+      {showPrefilledBanner && (
+        <div
+          className="rounded-md bg-blue-50 px-4 py-2 text-sm text-blue-600 transition-opacity duration-500"
+          style={{ opacity: showPrefilledBanner ? 1 : 0 }}
+        >
+          branding.bz のデータを読み込みました
+        </div>
+      )}
 
       {/* 企業名・ブランド名 */}
       <div>
@@ -170,51 +287,28 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
           <label className="text-sm font-bold text-gray-700">業種</label>
           <span className="text-xs text-red-500">*</span>
         </div>
-        <Select
-          value={industry}
-          onValueChange={(val) => {
-            setIndustry(val)
-            if (val !== 'その他') {
-              setIndustryOther('')
-            }
+        <IndustrySelect
+          category={industryCategory}
+          subcategory={industrySubcategory}
+          onCategoryChange={(val) => {
+            setIndustryCategory(val)
+            setIndustrySubcategory('')
           }}
-        >
-          <SelectTrigger className={errors.industry ? 'border-red-400' : ''}>
-            <SelectValue placeholder="選択してください" />
-          </SelectTrigger>
-          <SelectContent>
-            {INDUSTRIES.map((ind) => (
-              <SelectItem key={ind} value={ind}>
-                {ind}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {errors.industry && (
-          <p className="mt-1 text-xs text-red-500">{errors.industry}</p>
-        )}
-
-        {/* その他の場合のテキストフィールド */}
-        {industry === 'その他' && (
-          <div className="mt-3">
-            <Input
-              value={industryOther}
-              onChange={(e) => setIndustryOther(e.target.value)}
-              placeholder="業種を入力してください"
-              maxLength={50}
-              className={errors.industryOther ? 'border-red-400' : ''}
-            />
-            {errors.industryOther && (
-              <p className="mt-1 text-xs text-red-500">{errors.industryOther}</p>
-            )}
-          </div>
+          onSubcategoryChange={(val) => {
+            setIndustrySubcategory(val)
+          }}
+        />
+        {(errors.industryCategory || errors.industrySubcategory) && (
+          <p className="mt-1 text-xs text-red-500">
+            {errors.industryCategory || errors.industrySubcategory}
+          </p>
         )}
       </div>
 
-      {/* 主な商品・サービス */}
+      {/* 事業内容 */}
       <div>
         <div className="mb-2 flex items-center gap-1.5">
-          <label className="text-sm font-bold text-gray-700">主な商品・サービス</label>
+          <label className="text-sm font-bold text-gray-700">事業内容</label>
           <span className="text-xs text-red-500">*</span>
         </div>
         <Textarea
@@ -245,24 +339,53 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
         />
       </div>
 
-      {/* 競合企業・サービス */}
+      {/* 競合企業 */}
       <div>
         <div className="mb-2 flex items-center gap-1.5">
-          <label className="text-sm font-bold text-gray-700">競合企業・サービス</label>
+          <label className="text-sm font-bold text-gray-700">競合企業</label>
           <span className="text-xs text-gray-400">（任意）</span>
         </div>
-        <Textarea
-          value={competitors}
-          onChange={(e) => setCompetitors(e.target.value)}
-          placeholder="例: A社（大手向けCRM）、B社（低価格帯のマーケ支援）、C社（コンサルティング型）"
-          rows={3}
-          maxLength={500}
-        />
+
+        <div className="space-y-3">
+          {competitors.map((comp, i) => (
+            <div key={i} className="flex items-center gap-3 rounded-lg border bg-white p-3">
+              <Input
+                value={comp.name}
+                onChange={(e) => updateCompetitor(i, 'name', e.target.value)}
+                placeholder="企業名"
+                className="h-8 max-w-[160px] text-sm"
+              />
+              <Input
+                value={comp.url}
+                onChange={(e) => updateCompetitor(i, 'url', e.target.value)}
+                placeholder="https://..."
+                className="h-8 flex-1 text-sm"
+              />
+              <button
+                type="button"
+                onClick={() => removeCompetitor(i)}
+                className="shrink-0 text-gray-400 hover:text-red-500"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
+          ))}
+
+          {competitors.length < 10 && (
+            <button
+              type="button"
+              onClick={addCompetitor}
+              className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              競合企業を追加（最大10社）
+            </button>
+          )}
+        </div>
       </div>
 
       {/* フッターナビゲーション */}
       <div className="flex items-center justify-between border-t pt-6">
-        {/* Step1では「戻る」は無効 */}
         <div />
 
         <Button

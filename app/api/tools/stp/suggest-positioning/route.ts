@@ -38,23 +38,38 @@ export async function POST(request: NextRequest) {
     if (basic_info.company_name) {
       parts.push(`- 企業名・ブランド名: ${basic_info.company_name}`)
     }
-    if (basic_info.industry) {
+    // 業種（新形式 or 旧形式に対応）
+    if (basic_info.industry_category) {
+      const sub = basic_info.industry_subcategory ? `（${basic_info.industry_subcategory}）` : ''
+      parts.push(`- 業種: ${basic_info.industry_category}${sub}`)
+    } else if (basic_info.industry) {
       const industry = basic_info.industry === 'その他' && basic_info.industry_other
         ? basic_info.industry_other
         : basic_info.industry
       parts.push(`- 業種: ${industry}`)
     }
     if (basic_info.products) {
-      parts.push(`- 主な商品・サービス: ${basic_info.products}`)
+      parts.push(`- 事業内容: ${basic_info.products}`)
     }
     if (basic_info.current_customers) {
       parts.push(`- 現在の主な顧客層: ${basic_info.current_customers}`)
     }
 
-    // 競合情報
+    // 競合情報（構造化データ or 旧テキスト形式に対応）
     if (basic_info.competitors) {
-      parts.push(`- 競合企業・サービス: ${basic_info.competitors}`)
-      parts.push('  ※ 上記の競合企業をitemsに含めてください')
+      if (Array.isArray(basic_info.competitors)) {
+        const names = basic_info.competitors
+          .map((c: { name: string }) => c.name)
+          .filter(Boolean)
+          .join('、')
+        if (names) {
+          parts.push(`- 競合企業: ${names}`)
+          parts.push('  ※ 上記の競合企業をitemsに含めてください')
+        }
+      } else {
+        parts.push(`- 競合企業・サービス: ${basic_info.competitors}`)
+        parts.push('  ※ 上記の競合企業をitemsに含めてください')
+      }
     }
 
     // ターゲティング情報

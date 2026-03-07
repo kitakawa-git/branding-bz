@@ -9,10 +9,11 @@ const DEFAULT_SESSION_DATA = {
   current_step: 1,
   basic_info: {
     company_name: '',
-    industry: '',
+    industry_category: '',
+    industry_subcategory: '',
     products: '',
     current_customers: '',
-    competitors: '',
+    competitors: [] as Array<{ name: string; url: string }>,
   },
   segmentation: {
     mode: 'ai',

@@ -28,11 +28,14 @@ interface SegmentationData {
 
 interface BasicInfo {
   company_name: string
-  industry: string
-  industry_other?: string
+  industry_category: string
+  industry_subcategory: string
   products: string
   current_customers: string
-  competitors: string
+  competitors: Array<{ name: string; url: string }>
+  // 旧フィールド（後方互換）
+  industry?: string
+  industry_other?: string
 }
 
 interface Step2Props {

@@ -67,11 +67,14 @@ interface PositioningData {
 
 interface BasicInfo {
   company_name: string
-  industry: string
-  industry_other?: string
+  industry_category: string
+  industry_subcategory: string
   products: string
   current_customers: string
-  competitors: string
+  competitors: Array<{ name: string; url: string }>
+  // 旧フィールド（後方互換）
+  industry?: string
+  industry_other?: string
 }
 
 interface Step5Props {
@@ -247,6 +250,25 @@ export function Step5Result({
         const data = await res.json()
         toast.error(data.error || '連携に失敗しました')
         return
+      }
+
+      // 基本情報を本体（companies）へ書き戻し
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          await fetch('/api/tools/shared-profile', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: user.id,
+              industry_category: basicInfo.industry_category,
+              industry_subcategory: basicInfo.industry_subcategory,
+              competitors: basicInfo.competitors,
+            }),
+          })
+        }
+      } catch {
+        // 書き戻し失敗は無視
       }
 
       toast.success('branding.bz のブランド戦略に連携しました')
