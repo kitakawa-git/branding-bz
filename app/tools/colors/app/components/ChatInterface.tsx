@@ -159,9 +159,17 @@ export function ChatInterface({
     }
   }
 
-  // アシスタントメッセージ内の ```palette ブロックを除去して表示
+  // アシスタントメッセージからパレットJSON等を除去してテキストのみ表示
   const formatContent = (content: string) => {
-    return content.replace(/```palette[\s\S]*?```/g, '').trim()
+    let text = content
+    // 完全な ```...``` コードブロックを除去
+    text = text.replace(/```[a-z]*[\s\S]*?```/g, '')
+    // ストリーミング中の未完了コードブロックを除去（``` 以降すべて）
+    text = text.replace(/```[a-z]*[\s\S]*$/g, '')
+    // コードブロック外の生JSONオブジェクト（palette構造）を除去
+    text = text.replace(/\{[\s\S]*?"primary"\s*:\s*\{[\s\S]*?"hex"[\s\S]*$/g, '')
+    text = text.replace(/\{[\s\S]*?"primary"\s*:\s*\{[\s\S]*?"hex"[\s\S]*?\}[\s\S]*?\}/g, '')
+    return text.trim()
   }
 
   return (
