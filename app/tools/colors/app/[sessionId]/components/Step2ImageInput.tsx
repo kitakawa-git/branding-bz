@@ -253,7 +253,7 @@ export function Step2ImageInput({ project, onNext, onBack, onSaveField }: Step2P
       </Card>
 
       {/* ナビゲーション（スティッキー） */}
-      <div className="sticky bottom-0 mt-6 -mx-4 bg-background/80 backdrop-blur border-t border-border px-4 py-3 flex gap-3">
+      <div className="sticky bottom-0 mt-6 -mx-4 bg-background/80 backdrop-blur border-t border-border px-4 py-3 flex justify-between">
         <Button variant="outline" onClick={onBack}>
           <ArrowLeft className="mr-1 h-4 w-4" />
           戻る
@@ -263,7 +263,6 @@ export function Step2ImageInput({ project, onNext, onBack, onSaveField }: Step2P
           <Button
             onClick={handleNext}
             disabled={saving}
-            className="font-bold"
           >
             {saving ? '保存中...' : '次へ：AI提案を受ける'}
           </Button>
