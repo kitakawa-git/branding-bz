@@ -1,5 +1,6 @@
 'use client'
 
+import { Fragment } from 'react'
 import { cn } from '@/lib/utils'
 
 interface StepProgressBarProps {
@@ -11,19 +12,16 @@ interface StepProgressBarProps {
 export function StepProgressBar({ steps, currentStep, className }: StepProgressBarProps) {
   return (
     <div className={cn('w-full', className)}>
-      <div className="flex items-center">
+      <div className="flex items-start">
         {steps.map(({ label }, index) => {
           const step = index + 1
           const isCompleted = step < currentStep
           const isCurrent = step === currentStep
 
           return (
-            <div
-              key={index}
-              className={cn('flex items-center', index < steps.length - 1 ? 'flex-1' : '')}
-            >
+            <Fragment key={index}>
               {/* ステップ丸 + ラベル */}
-              <div className="flex flex-col items-center">
+              <div className="flex shrink-0 flex-col items-center">
                 <div
                   className={cn(
                     'flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition-colors',
@@ -44,16 +42,16 @@ export function StepProgressBar({ steps, currentStep, className }: StepProgressB
                 </span>
               </div>
 
-              {/* コネクティングライン */}
+              {/* コネクティングライン（丸の中心 = 16px に配置） */}
               {index < steps.length - 1 && (
                 <div
                   className={cn(
-                    'mx-1 h-0.5 flex-1 transition-colors',
+                    'mt-[15px] mx-1 h-0.5 flex-1 transition-colors',
                     isCompleted ? 'bg-blue-600' : 'bg-gray-200'
                   )}
                 />
               )}
-            </div>
+            </Fragment>
           )
         })}
       </div>
