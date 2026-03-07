@@ -90,7 +90,7 @@ export function AppSidebar() {
                   <Settings2 className="size-4" />
                 </div>
                 <div className="flex flex-col gap-0.5 leading-none">
-                  <span className="font-semibold">brandconnect</span>
+                  <span className="font-semibold">branding.bz</span>
                   <span className="text-xs">管理画面</span>
                 </div>
               </Link>

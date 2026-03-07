@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  if (!supabaseUrl || !supabaseKey) return { title: 'brandconnect' }
+  if (!supabaseUrl || !supabaseKey) return { title: 'branding.bz' }
 
   const supabase = createClient(supabaseUrl, supabaseKey)
   const { data: profile } = await supabase
@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     .eq('card_enabled', true)
     .single()
 
-  if (!profile) return { title: 'brandconnect' }
+  if (!profile) return { title: 'branding.bz' }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const companies = profile.companies as any
@@ -38,7 +38,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const companyLogoUrl = companies?.logo_url as string | undefined
   return {
     title: {
-      absolute: companyName ? `${profile.name} | ${companyName}` : (profile.name || 'brandconnect'),
+      absolute: companyName ? `${profile.name} | ${companyName}` : (profile.name || 'branding.bz'),
     },
     icons: { icon: companyLogoUrl || '/icon.svg' },
   }
@@ -482,7 +482,7 @@ export default async function CardPage({ params }: Props) {
         <div className="pt-2">
           <Separator className="mb-4" />
           <p className="text-center text-[11px] text-muted-foreground m-0">
-            Powered by brandconnect
+            Powered by branding.bz
           </p>
         </div>
       </div>

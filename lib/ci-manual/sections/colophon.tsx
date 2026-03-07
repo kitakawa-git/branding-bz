@@ -47,7 +47,7 @@ export function ColophonSection({ data }: { data: CIManualData }) {
         <Text style={styles.companyName}>{data.company.name}</Text>
         <View style={styles.separator} />
         <Text style={styles.date}>{dateStr}</Text>
-        <Text style={styles.powered}>Powered by brandconnect</Text>
+        <Text style={styles.powered}>Powered by branding.bz</Text>
       </View>
     </Page>
   )

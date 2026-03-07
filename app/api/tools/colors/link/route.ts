@@ -1,4 +1,4 @@
-// brandconnect本体連携API
+// branding.bz本体連携API
 // POST /api/tools/colors/link
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
 
     if (!session.company_id) {
       return NextResponse.json(
-        { error: 'brandconnectアカウントとの連携が必要です。管理画面からアカウントを作成してください。', needsAccount: true },
+        { error: 'branding.bzアカウントとの連携が必要です。管理画面からアカウントを作成してください。', needsAccount: true },
         { status: 400 }
       )
     }

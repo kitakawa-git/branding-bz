@@ -99,7 +99,7 @@ export default function SignupPage() {
           <div className="text-center mb-6">
             <Link href="/" className="no-underline">
               <h1 className="text-2xl font-bold text-foreground mb-2">
-                brandconnect
+                branding.bz
               </h1>
             </Link>
             <p className="text-sm text-muted-foreground m-0">

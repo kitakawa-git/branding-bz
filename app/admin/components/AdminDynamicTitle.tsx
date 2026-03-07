@@ -41,9 +41,9 @@ export function AdminDynamicTitle() {
     const pageName = titleMap[pathname]
     if (!pageName) return
     if (companyName) {
-      document.title = `管理 ${pageName} | ${companyName} on brandconnect`
+      document.title = `管理 ${pageName} | ${companyName} on branding.bz`
     } else {
-      document.title = `管理 ${pageName} | brandconnect`
+      document.title = `管理 ${pageName} | branding.bz`
     }
   }, [pathname, companyName])
 

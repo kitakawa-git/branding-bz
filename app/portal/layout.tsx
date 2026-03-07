@@ -4,7 +4,7 @@ import PortalLayoutClient from './PortalLayoutClient'
 
 export const metadata: Metadata = {
   title: {
-    template: '%s | brandconnect',
+    template: '%s | branding.bz',
     default: 'ダッシュボード',
   },
 }

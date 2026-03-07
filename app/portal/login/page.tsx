@@ -84,7 +84,7 @@ export default function PortalLoginPage() {
         <div className="relative z-10 p-10">
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              brandconnect
+              branding.bz
             </h1>
             <p className="text-sm text-gray-500 m-0">
               メンバーログイン

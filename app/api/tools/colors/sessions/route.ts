@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // 既存のbrandconnectアカウントか確認（company_id取得）
+    // 既存のbranding.bzアカウントか確認（company_id取得）
     let companyId: string | null = null
     const { data: adminUser } = await supabaseAdmin
       .from('admin_users')
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
 
     if (adminUser) {
       companyId = adminUser.company_id
-      console.log('[ColorSessions] brandconnect本体アカウント検出: company_id=', companyId)
+      console.log('[ColorSessions] branding.bz本体アカウント検出: company_id=', companyId)
     }
 
     // 新規セッション作成

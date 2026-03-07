@@ -139,7 +139,7 @@ export interface BrandColorProject {
   // Step 5
   final_palette: PaletteProposal | null
   exported_formats: string[]
-  linked_to_brandconnect: boolean
+  linked_to_brandconnect: boolean // DB列名はそのまま維持
   created_at: string
   updated_at: string
 }

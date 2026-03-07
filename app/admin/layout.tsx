@@ -4,7 +4,7 @@ import { AuthProvider } from './components/AuthProvider'
 
 export const metadata: Metadata = {
   title: {
-    template: '管理 %s | brandconnect',
+    template: '管理 %s | branding.bz',
     default: '管理',
   },
 }

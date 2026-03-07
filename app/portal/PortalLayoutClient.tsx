@@ -77,7 +77,7 @@ function PortalLayoutInner({ children }: { children: React.ReactNode }) {
             <footer className="px-6 py-4 text-center">
               <Separator className="mb-4" />
               <p className="text-xs text-muted-foreground m-0">
-                Powered by brandconnect
+                Powered by branding.bz
               </p>
             </footer>
           </div>

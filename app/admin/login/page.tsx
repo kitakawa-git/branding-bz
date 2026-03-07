@@ -89,7 +89,7 @@ export default function LoginPage() {
           <CardContent className="p-10">
             <div className="text-center mb-6">
               <h1 className="text-2xl font-bold text-white mb-2">
-                brandconnect
+                branding.bz
               </h1>
               <p className="text-sm text-[hsl(216_12%_70%)] m-0">
                 ログイン成功 — 遷移先を選択
@@ -120,7 +120,7 @@ export default function LoginPage() {
         <CardContent className="p-10">
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold text-white mb-2">
-              brandconnect
+              branding.bz
             </h1>
             <p className="text-sm text-[hsl(216_12%_70%)] m-0">
               管理画面にログイン

@@ -24,9 +24,9 @@ export function PortalDynamicTitle() {
     const pageName = titleMap[pathname]
     if (!pageName) return
     if (companyName) {
-      document.title = `${pageName} | ${companyName} on brandconnect`
+      document.title = `${pageName} | ${companyName} on branding.bz`
     } else {
-      document.title = `${pageName} | brandconnect`
+      document.title = `${pageName} | branding.bz`
     }
   }, [pathname, companyName])
 

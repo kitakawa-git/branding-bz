@@ -100,10 +100,10 @@ function BusinessCardPreview({
       <rect x="0" y="0" width="340" height="6" fill={primary} />
       {/* ロゴエリア */}
       <circle cx="40" cy="50" r="16" fill={primary} />
-      <text x="40" y="54" textAnchor="middle" fill={light} fontSize="12" fontWeight="bold">BC</text>
+      <text x="40" y="54" textAnchor="middle" fill={light} fontSize="12" fontWeight="bold">BZ</text>
       {/* ブランド名 */}
       <text x="66" y="47" fill={dark} fontSize="14" fontWeight="bold">{brandName.slice(0, 20)}</text>
-      <text x="66" y="62" fill={secondary} fontSize="9">Brand Color Palette</text>
+      <text x="66" y="62" fill={secondary} fontSize="9">branding.bz</text>
       {/* 名前 */}
       <text x="30" y="110" fill={dark} fontSize="16" fontWeight="bold">田中 太郎</text>
       <text x="30" y="128" fill={secondary} fontSize="10">代表取締役 / CEO</text>
@@ -136,7 +136,7 @@ function WebHeaderPreview({
       <rect width="340" height="52" fill={primary} />
       {/* ナビ */}
       <circle cx="24" cy="26" r="10" fill={light} opacity="0.2" />
-      <text x="24" y="30" textAnchor="middle" fill={light} fontSize="8" fontWeight="bold">BC</text>
+      <text x="24" y="30" textAnchor="middle" fill={light} fontSize="8" fontWeight="bold">BZ</text>
       <text x="80" y="30" fill={light} fontSize="10" opacity="0.9">Home</text>
       <text x="130" y="30" fill={light} fontSize="10" opacity="0.7">About</text>
       <text x="182" y="30" fill={light} fontSize="10" opacity="0.7">Service</text>
