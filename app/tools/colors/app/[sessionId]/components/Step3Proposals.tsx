@@ -189,7 +189,7 @@ export function Step3Proposals({
       </Card>
 
       {/* ナビゲーション（スティッキー） */}
-      <div className="sticky bottom-0 mt-6 -mx-4 bg-background/80 backdrop-blur border-t border-border px-4 py-3 flex justify-between">
+      <div className="sticky bottom-0 mt-6 -mx-4 bg-background/80 backdrop-blur px-4 py-3 flex justify-between">
         <Button variant="outline" onClick={onBack}>
           <ArrowLeft className="mr-1 h-4 w-4" />
           戻る

@@ -112,6 +112,7 @@ export function Step4Refinement({
   }
 
   return (
+    <>
     <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
       <CardContent className="p-5">
         <div className="space-y-5">
@@ -196,20 +197,21 @@ export function Step4Refinement({
             )}
           </div>
         </div>
-
-        {/* 【5】フッター */}
-        <div className="sticky bottom-0 -mx-5 -mb-5 mt-6 flex items-center justify-between border-t border-border bg-background/80 px-5 py-3 backdrop-blur">
-          <Button variant="outline" onClick={onBack}>
-            <ArrowLeft className="mr-1 h-4 w-4" />
-            戻る
-          </Button>
-          <Button onClick={handleNext}>
-            確定・出力へ進む
-            <ArrowRight className="ml-1 h-4 w-4" />
-          </Button>
-        </div>
       </CardContent>
     </Card>
+
+    {/* 【5】フッター */}
+    <div className="sticky bottom-0 mt-6 -mx-4 bg-background/80 backdrop-blur px-4 py-3 flex items-center justify-between">
+      <Button variant="outline" onClick={onBack}>
+        <ArrowLeft className="mr-1 h-4 w-4" />
+        戻る
+      </Button>
+      <Button onClick={handleNext}>
+        確定・出力へ進む
+        <ArrowRight className="ml-1 h-4 w-4" />
+      </Button>
+    </div>
+  </>
   )
 }
 
