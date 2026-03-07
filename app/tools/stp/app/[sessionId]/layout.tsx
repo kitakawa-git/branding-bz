@@ -21,7 +21,7 @@ function STPSessionLayoutInner({ children }: { children: React.ReactNode }) {
   const { signOut } = useSTPAuth()
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-50">
+    <div className="flex min-h-screen flex-col bg-background">
       <STPHeader showSignOut onSignOut={signOut} />
       <main className="flex-1">{children}</main>
       <Footer />
