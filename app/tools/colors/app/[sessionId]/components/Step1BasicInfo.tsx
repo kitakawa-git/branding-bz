@@ -5,10 +5,11 @@ import { useState, useCallback, useEffect } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Card, CardContent } from '@/components/ui/card'
 import { IndustrySelect } from '@/components/shared/IndustrySelect'
 import { ColorPicker } from '../../components/ColorPicker'
-import { Plus, Trash2, HelpCircle } from 'lucide-react'
+import { Plus, Trash2 } from 'lucide-react'
 import {
   type BrandStage,
   type CompetitorColor,
@@ -188,224 +189,189 @@ export function Step1BasicInfo({ project, onNext, onSaveField }: Step1Props) {
   }
 
   return (
-    <TooltipProvider>
-      <div className="space-y-8">
-        <div>
-          <h2 className="text-xl font-bold text-gray-900">基本情報</h2>
-          <p className="mt-1 text-sm text-gray-500">
-            ブランドの基本情報を入力してください
-          </p>
-        </div>
+    <div>
+      <h1 className="text-2xl font-bold text-foreground mb-6">基本情報</h1>
 
-        {/* 企業名・ブランド名 */}
-        <div>
-          <div className="mb-2 flex items-center gap-1.5">
-            <label className="text-sm font-bold text-gray-700">企業名・ブランド名</label>
-            <span className="text-xs text-red-500">*</span>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <HelpCircle className="h-3.5 w-3.5 text-gray-400" />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="text-xs">会社名またはブランド名を入力してください</p>
-              </TooltipContent>
-            </Tooltip>
-          </div>
-          <Input
-            value={brandName}
-            onChange={(e) => setBrandName(e.target.value)}
-            onBlur={() => autoSave('brand_name', brandName.trim())}
-            placeholder="例: branding.bz"
-            maxLength={100}
-            className={errors.brandName ? 'border-red-400' : ''}
-          />
-          {errors.brandName && (
-            <p className="mt-1 text-xs text-red-500">{errors.brandName}</p>
-          )}
-        </div>
-
-        {/* 業種 */}
-        <div>
-          <div className="mb-2 flex items-center gap-1.5">
-            <label className="text-sm font-bold text-gray-700">業種</label>
-            <span className="text-xs text-red-500">*</span>
-          </div>
-          <IndustrySelect
-            category={industryCategory}
-            subcategory={industrySubcategory}
-            onCategoryChange={(val) => {
-              setIndustryCategory(val)
-              setIndustrySubcategory('')
-              autoSave('industry_category', val)
-            }}
-            onSubcategoryChange={(val) => {
-              setIndustrySubcategory(val)
-              autoSave('industry_subcategory', val)
-            }}
-          />
-          {(errors.industryCategory || errors.industrySubcategory) && (
-            <p className="mt-1 text-xs text-red-500">
-              {errors.industryCategory || errors.industrySubcategory}
-            </p>
-          )}
-        </div>
-
-        {/* ブランドステージ */}
-        <div>
-          <div className="mb-2 flex items-center gap-1.5">
-            <label className="text-sm font-bold text-gray-700">ブランドステージ</label>
-            <span className="text-xs text-red-500">*</span>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <HelpCircle className="h-3.5 w-3.5 text-gray-400" />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="text-xs">現在のブランドの状況を選んでください</p>
-              </TooltipContent>
-            </Tooltip>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            {[
-              { value: 'new' as BrandStage, label: '新規ブランド', desc: 'カラーをゼロから決める' },
-              { value: 'rebrand' as BrandStage, label: 'リブランド', desc: '既存カラーを大幅に刷新' },
-            ].map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => {
-                  setBrandStage(option.value)
-                  autoSave('brand_stage', option.value)
-                }}
-                className={`flex-1 rounded-lg border px-4 py-3 text-left transition-colors ${
-                  brandStage === option.value
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 bg-white hover:border-gray-300'
-                }`}
-              >
-                <div className="text-sm font-medium text-gray-900">{option.label}</div>
-                <div className="text-xs text-gray-500">{option.desc}</div>
-              </button>
-            ))}
-          </div>
-          {errors.brandStage && (
-            <p className="mt-1 text-xs text-red-500">{errors.brandStage}</p>
-          )}
-        </div>
-
-        {/* 既存カラー */}
-        <div>
-          <div className="mb-3 flex items-center justify-between">
-            <div className="flex items-center gap-1.5">
-              <label className="text-sm font-bold text-gray-700">既存のブランドカラーがある</label>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <HelpCircle className="h-3.5 w-3.5 text-gray-400" />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="text-xs">現在使用中のカラーがあれば入力してください</p>
-                </TooltipContent>
-              </Tooltip>
-            </div>
-            <Switch
-              checked={hasExistingColors}
-              onCheckedChange={setHasExistingColors}
+      <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+        <CardContent className="p-5">
+          {/* 企業名・ブランド名 */}
+          <div className="mb-5">
+            <h2 className="text-sm font-bold mb-3">
+              企業名・ブランド名 <span className="text-xs text-red-500 font-normal">*</span>
+            </h2>
+            <Input
+              value={brandName}
+              onChange={(e) => setBrandName(e.target.value)}
+              onBlur={() => autoSave('brand_name', brandName.trim())}
+              placeholder="例: branding.bz"
+              maxLength={100}
+              className={`h-10 ${errors.brandName ? 'border-red-400' : ''}`}
             />
-          </div>
-
-          {hasExistingColors && (
-            <div className="space-y-2 rounded-lg border bg-white p-4">
-              {existingColors.map((color, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <ColorPicker
-                    value={color.hex}
-                    onChange={(hex) => updateExistingColor(i, hex)}
-                  />
-                  {existingColors.length > 1 && (
-                    <button
-                      onClick={() => removeExistingColor(i)}
-                      className="text-gray-400 hover:text-red-500"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  )}
-                </div>
-              ))}
-              {existingColors.length < 5 && (
-                <button
-                  onClick={addExistingColor}
-                  className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  色を追加（最大5色）
-                </button>
-              )}
-              {errors.existingColors && (
-                <p className="text-xs text-red-500">{errors.existingColors}</p>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* 競合カラー */}
-        <div>
-          <div className="mb-2 flex items-center gap-1.5">
-            <label className="text-sm font-bold text-gray-700">競合ブランドのカラー</label>
-            <span className="text-xs text-gray-400">（任意）</span>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <HelpCircle className="h-3.5 w-3.5 text-gray-400" />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="text-xs">競合と差別化するために参考にします</p>
-              </TooltipContent>
-            </Tooltip>
-          </div>
-
-          <div className="space-y-3">
-            {competitorColors.map((comp, i) => (
-              <div key={i} className="flex items-center gap-3 rounded-lg border bg-white p-3">
-                <Input
-                  value={comp.name}
-                  onChange={(e) => updateCompetitor(i, 'name', e.target.value)}
-                  placeholder="ブランド名"
-                  className="h-8 max-w-[160px] text-sm"
-                />
-                <ColorPicker
-                  value={comp.hex}
-                  onChange={(hex) => updateCompetitor(i, 'hex', hex)}
-                />
-                <button
-                  onClick={() => removeCompetitor(i)}
-                  className="text-gray-400 hover:text-red-500"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-            ))}
-
-            {competitorColors.length < 3 && (
-              <button
-                onClick={addCompetitor}
-                className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                競合を追加（最大3社）
-              </button>
+            <p className="text-[13px] text-muted-foreground mt-1.5">
+              会社名またはブランド名を入力してください
+            </p>
+            {errors.brandName && (
+              <p className="mt-1 text-xs text-red-500">{errors.brandName}</p>
             )}
           </div>
-        </div>
 
-        {/* 次へボタン */}
-        <div className="pt-4">
-          <Button
-            onClick={handleNext}
-            disabled={saving}
-            className="h-11 w-full text-base font-bold md:w-auto md:px-12"
-          >
-            {saving ? '保存中...' : '次へ：イメージ入力'}
-          </Button>
-        </div>
+          {/* 業種 */}
+          <div className="mb-5">
+            <h2 className="text-sm font-bold mb-3">
+              業種 <span className="text-xs text-red-500 font-normal">*</span>
+            </h2>
+            <IndustrySelect
+              category={industryCategory}
+              subcategory={industrySubcategory}
+              onCategoryChange={(val) => {
+                setIndustryCategory(val)
+                setIndustrySubcategory('')
+                autoSave('industry_category', val)
+              }}
+              onSubcategoryChange={(val) => {
+                setIndustrySubcategory(val)
+                autoSave('industry_subcategory', val)
+              }}
+            />
+            {(errors.industryCategory || errors.industrySubcategory) && (
+              <p className="mt-1 text-xs text-red-500">
+                {errors.industryCategory || errors.industrySubcategory}
+              </p>
+            )}
+          </div>
+
+          {/* ブランドステージ */}
+          <div className="mb-5">
+            <h2 className="text-sm font-bold mb-3">
+              ブランドステージ <span className="text-xs text-red-500 font-normal">*</span>
+            </h2>
+            <Select
+              value={brandStage || ''}
+              onValueChange={(val) => {
+                setBrandStage(val as BrandStage)
+                autoSave('brand_stage', val)
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="選択してください" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="new">新規ブランド</SelectItem>
+                <SelectItem value="rebrand">リブランド</SelectItem>
+              </SelectContent>
+            </Select>
+            {errors.brandStage && (
+              <p className="mt-1 text-xs text-red-500">{errors.brandStage}</p>
+            )}
+          </div>
+
+          {/* 既存カラー */}
+          <div className="mb-5">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-bold">既存のブランドカラーがある</h2>
+              <Switch
+                checked={hasExistingColors}
+                onCheckedChange={setHasExistingColors}
+              />
+            </div>
+
+            {hasExistingColors && (
+              <div className="space-y-2 rounded-lg border border-gray-200 bg-white p-4">
+                {existingColors.map((color, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <ColorPicker
+                      value={color.hex}
+                      onChange={(hex) => updateExistingColor(i, hex)}
+                    />
+                    {existingColors.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeExistingColor(i)}
+                        className="shrink-0 h-9 w-9 p-0 text-gray-400 hover:text-red-500"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+                {existingColors.length < 5 && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addExistingColor}
+                    className="text-sm"
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    色を追加（最大5色）
+                  </Button>
+                )}
+                {errors.existingColors && (
+                  <p className="text-xs text-red-500">{errors.existingColors}</p>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* 競合カラー */}
+          <div className="mb-5">
+            <h2 className="text-sm font-bold mb-3">
+              競合ブランドのカラー <span className="text-xs text-gray-400 font-normal">（任意）</span>
+            </h2>
+            {competitorColors.length > 0 && (
+              <div className="space-y-3 mb-3">
+                {competitorColors.map((comp, i) => (
+                  <div key={i} className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white p-3">
+                    <Input
+                      value={comp.name}
+                      onChange={(e) => updateCompetitor(i, 'name', e.target.value)}
+                      placeholder="ブランド名"
+                      className="h-9 max-w-[160px] text-sm"
+                    />
+                    <ColorPicker
+                      value={comp.hex}
+                      onChange={(hex) => updateCompetitor(i, 'hex', hex)}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeCompetitor(i)}
+                      className="shrink-0 h-9 w-9 p-0 text-gray-400 hover:text-red-500"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+            {competitorColors.length < 3 && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={addCompetitor}
+                className="text-sm"
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                競合を追加（最大3社）
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 次へボタン */}
+      <div className="mt-6">
+        <Button
+          onClick={handleNext}
+          disabled={saving}
+        >
+          {saving ? '保存中...' : '次へ：イメージ入力'}
+        </Button>
       </div>
-    </TooltipProvider>
+    </div>
   )
 }

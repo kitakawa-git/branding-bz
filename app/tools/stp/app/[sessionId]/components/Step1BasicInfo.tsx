@@ -4,6 +4,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
 import { IndustrySelect } from '@/components/shared/IndustrySelect'
 import { TitleDescriptionList } from '@/components/shared/TitleDescriptionList'
 import { supabase } from '@/lib/supabase'
@@ -283,129 +284,138 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
     businessDescriptions.some(b => b.title.trim() !== '')
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h2 className="text-xl font-bold text-gray-900">基本情報</h2>
-        <p className="mt-1 text-sm text-gray-500">
-          STP分析の対象となる事業の基本情報を入力してください
-        </p>
-      </div>
+    <div>
+      <h1 className="text-2xl font-bold text-foreground mb-6">基本情報</h1>
 
-      {/* 企業名・ブランド名 */}
-      <div>
-        <div className="mb-2 flex items-center gap-1.5">
-          <label className="text-sm font-bold text-gray-700">企業名・ブランド名</label>
-          <span className="text-xs text-red-500">*</span>
-        </div>
-        <Input
-          value={companyName}
-          onChange={(e) => setCompanyName(e.target.value)}
-          placeholder="例: 株式会社○○ / ブランド名"
-          maxLength={100}
-          className={errors.companyName ? 'border-red-400' : ''}
-        />
-        {errors.companyName && (
-          <p className="mt-1 text-xs text-red-500">{errors.companyName}</p>
-        )}
-      </div>
+      <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+        <CardContent className="p-5">
+          {/* 企業名・ブランド名 */}
+          <div className="mb-5">
+            <h2 className="text-sm font-bold mb-3">
+              企業名・ブランド名 <span className="text-xs text-red-500 font-normal">*</span>
+            </h2>
+            <Input
+              value={companyName}
+              onChange={(e) => setCompanyName(e.target.value)}
+              placeholder="例: 株式会社○○ / ブランド名"
+              maxLength={100}
+              className={`h-10 ${errors.companyName ? 'border-red-400' : ''}`}
+            />
+            <p className="text-[13px] text-muted-foreground mt-1.5">
+              企業名・サービス名・個人名など、ブランディングの対象となる名称を入力してください
+            </p>
+            {errors.companyName && (
+              <p className="mt-1 text-xs text-red-500">{errors.companyName}</p>
+            )}
+          </div>
 
-      {/* 業種 */}
-      <div>
-        <div className="mb-2 flex items-center gap-1.5">
-          <label className="text-sm font-bold text-gray-700">業種</label>
-          <span className="text-xs text-red-500">*</span>
-        </div>
-        <IndustrySelect
-          category={industryCategory}
-          subcategory={industrySubcategory}
-          onCategoryChange={(val) => {
-            setIndustryCategory(val)
-            setIndustrySubcategory('')
-          }}
-          onSubcategoryChange={(val) => {
-            setIndustrySubcategory(val)
-          }}
-        />
-        {(errors.industryCategory || errors.industrySubcategory) && (
-          <p className="mt-1 text-xs text-red-500">
-            {errors.industryCategory || errors.industrySubcategory}
-          </p>
-        )}
-      </div>
+          {/* 業種 */}
+          <div className="mb-5">
+            <h2 className="text-sm font-bold mb-3">
+              業種 <span className="text-xs text-red-500 font-normal">*</span>
+            </h2>
+            <IndustrySelect
+              category={industryCategory}
+              subcategory={industrySubcategory}
+              onCategoryChange={(val) => {
+                setIndustryCategory(val)
+                setIndustrySubcategory('')
+              }}
+              onSubcategoryChange={(val) => {
+                setIndustrySubcategory(val)
+              }}
+            />
+            {(errors.industryCategory || errors.industrySubcategory) && (
+              <p className="mt-1 text-xs text-red-500">
+                {errors.industryCategory || errors.industrySubcategory}
+              </p>
+            )}
+          </div>
 
-      {/* 事業内容（構造化入力） */}
-      <TitleDescriptionList
-        label="事業内容"
-        items={businessDescriptions}
-        onChange={setBusinessDescriptions}
-        addButtonLabel="事業内容を追加"
-        titlePlaceholder="事業タイトル"
-        descriptionPlaceholder="事業の説明"
-        required
-        error={errors.businessDescriptions}
-      />
+          {/* 事業内容（構造化入力） */}
+          <div className="mb-5">
+            <TitleDescriptionList
+              label="事業内容"
+              items={businessDescriptions}
+              onChange={setBusinessDescriptions}
+              addButtonLabel="事業内容を追加"
+              titlePlaceholder="事業タイトル"
+              descriptionPlaceholder="事業の説明"
+              required
+              error={errors.businessDescriptions}
+            />
+          </div>
 
-      {/* ターゲット顧客層（構造化入力） */}
-      <TitleDescriptionList
-        label="ターゲット顧客層"
-        items={targetSegments.map(ts => ({ title: ts.name, description: ts.description }))}
-        onChange={(newItems) => {
-          setTargetSegments(newItems.map(item => ({ name: item.title, description: item.description })))
-        }}
-        addButtonLabel="ターゲットを追加"
-        titlePlaceholder="セグメント名（例: 中小企業の経営者）"
-        descriptionPlaceholder="セグメントの説明"
-      />
+          {/* ターゲット顧客層（構造化入力） */}
+          <div className="mb-5">
+            <TitleDescriptionList
+              label="ターゲット顧客層"
+              items={targetSegments.map(ts => ({ title: ts.name, description: ts.description }))}
+              onChange={(newItems) => {
+                setTargetSegments(newItems.map(item => ({ name: item.title, description: item.description })))
+              }}
+              addButtonLabel="ターゲットを追加"
+              titlePlaceholder="セグメント名（例: 中小企業の経営者）"
+              descriptionPlaceholder="セグメントの説明"
+            />
+          </div>
 
-      {/* 競合企業 */}
-      <div>
-        <div className="mb-2 flex items-center gap-1.5">
-          <label className="text-sm font-bold text-gray-700">競合企業</label>
-          <span className="text-xs text-gray-400">（任意）</span>
-        </div>
-
-        <div className="space-y-3">
-          {competitors.map((comp, i) => (
-            <div key={i} className="flex items-center gap-3 rounded-lg border bg-white p-3">
-              <Input
-                value={comp.name}
-                onChange={(e) => updateCompetitor(i, 'name', e.target.value)}
-                placeholder="企業名"
-                className="h-8 max-w-[160px] text-sm"
-              />
-              <Input
-                value={comp.url}
-                onChange={(e) => updateCompetitor(i, 'url', e.target.value)}
-                placeholder="https://..."
-                className="h-8 flex-1 text-sm"
-              />
-              <button
+          {/* 競合企業 */}
+          <div className="mb-5">
+            <h2 className="text-sm font-bold mb-3">
+              競合企業 <span className="text-xs text-gray-400 font-normal">（任意）</span>
+            </h2>
+            {competitors.length > 0 && (
+              <div className="space-y-3 mb-3">
+                {competitors.map((comp, i) => (
+                  <div key={i} className="flex items-start gap-2 rounded-lg border border-gray-200 bg-white p-3">
+                    <div className="flex-1">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <Input
+                          value={comp.name}
+                          onChange={(e) => updateCompetitor(i, 'name', e.target.value)}
+                          placeholder="企業名（必須）"
+                          className="h-9 text-sm"
+                        />
+                        <Input
+                          value={comp.url}
+                          onChange={(e) => updateCompetitor(i, 'url', e.target.value)}
+                          placeholder="https://..."
+                          className="h-9 text-sm"
+                        />
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeCompetitor(i)}
+                      className="shrink-0 h-9 w-9 p-0 text-gray-400 hover:text-red-500"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+            {competitors.length < 10 && (
+              <Button
                 type="button"
-                onClick={() => removeCompetitor(i)}
-                className="shrink-0 text-gray-400 hover:text-red-500"
+                variant="outline"
+                size="sm"
+                onClick={addCompetitor}
+                className="text-sm"
               >
-                <Trash2 className="h-4 w-4" />
-              </button>
-            </div>
-          ))}
+                <Plus className="h-4 w-4 mr-1" />
+                競合企業を追加
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
-          {competitors.length < 10 && (
-            <button
-              type="button"
-              onClick={addCompetitor}
-              className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              競合企業を追加（最大10社）
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* フッターナビゲーション */}
-      <div className="flex items-center justify-between border-t pt-6">
-        <div />
-
+      {/* 次へボタン */}
+      <div className="mt-6">
         <Button
           onClick={handleNext}
           disabled={saving || !isValid}
