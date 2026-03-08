@@ -15,7 +15,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { TitleDescriptionList } from '@/components/shared/TitleDescriptionList'
+
 import { Plus, Trash2 } from 'lucide-react'
 
 // 競合企業の型
@@ -370,9 +370,9 @@ export default function CompanyPage() {
               />
             </div>
 
-            {/* 競合企業 */}
+            {/* 競合企業・サービス */}
             <div className="mb-5">
-              <h2 className="text-sm font-bold mb-3">競合企業</h2>
+              <h2 className="text-sm font-bold mb-3">競合企業・サービス</h2>
               {company.competitors.length > 0 && (
                 <div className="space-y-3 mb-3">
                   {company.competitors.map((comp, index) => (
@@ -416,12 +416,12 @@ export default function CompanyPage() {
                       </div>
                       <Button
                         type="button"
-                        variant="ghost"
-                        size="sm"
+                        variant="outline"
+                        size="icon"
                         onClick={() => removeCompetitor(index)}
-                        className="shrink-0 h-9 w-9 p-0 text-gray-400 hover:text-red-500"
+                        className="size-9 shrink-0 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 size={14} />
                       </Button>
                     </div>
                   ))}
@@ -436,7 +436,7 @@ export default function CompanyPage() {
                   className="text-sm"
                 >
                   <Plus className="h-4 w-4 mr-1" />
-                  競合企業を追加
+                  競合企業・サービスを追加
                 </Button>
               )}
               {company.competitors.length >= 10 && (
@@ -444,20 +444,6 @@ export default function CompanyPage() {
               )}
             </div>
 
-            {/* ターゲットセグメント */}
-            <TitleDescriptionList
-              label="ターゲットセグメント"
-              items={company.target_segments.map(ts => ({ title: ts.name, description: ts.description }))}
-              onChange={(newItems) => {
-                handleChange('target_segments', newItems.map(item => ({
-                  name: item.title,
-                  description: item.description,
-                })))
-              }}
-              addButtonLabel="ターゲットを追加"
-              titlePlaceholder="セグメント名（例: 中小企業の経営者）"
-              descriptionPlaceholder="説明"
-            />
           </CardContent>
         </Card>
       </form>

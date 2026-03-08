@@ -1,11 +1,26 @@
 // Claude API ユーティリティ（サーバーサイド専用）
 import Anthropic from '@anthropic-ai/sdk'
+import { readFileSync } from 'fs'
+import { join } from 'path'
 
 let _client: Anthropic | null = null
 
+// .env.local からAPIキーを直接読み取る（process.envが親プロセスに上書きされている場合のフォールバック）
+function loadApiKeyFromEnvFile(): string | undefined {
+  try {
+    const envPath = join(process.cwd(), '.env.local')
+    const content = readFileSync(envPath, 'utf-8')
+    const match = content.match(/^ANTHROPIC_API_KEY=(.+)$/m)
+    return match?.[1]?.trim()
+  } catch {
+    return undefined
+  }
+}
+
 function getClient(): Anthropic {
   if (!_client) {
-    const apiKey = process.env.ANTHROPIC_API_KEY
+    // process.env を優先し、空の場合は .env.local から直接読み取る
+    const apiKey = process.env.ANTHROPIC_API_KEY || loadApiKeyFromEnvFile()
     if (!apiKey) {
       throw new Error('ANTHROPIC_API_KEY が設定されていません。.env.local に追加してください。')
     }

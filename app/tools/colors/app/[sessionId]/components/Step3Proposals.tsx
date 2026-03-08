@@ -5,7 +5,7 @@ import { toast } from 'sonner'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { ArrowLeft, RefreshCw } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Sparkles } from 'lucide-react'
 import { PaletteCard } from '../../components/PaletteCard'
 import type { BrandColorProject, PaletteProposal } from '@/lib/types/color-tool'
 
@@ -172,6 +172,21 @@ export function Step3Proposals({
       <h1 className="text-2xl font-bold text-foreground mb-2">Step 3: AI提案</h1>
       <p className="mb-5 text-[13px] text-muted-foreground">3パターンの提案からお好みのパレットを選んでください</p>
 
+      {/* AI再提案ボタン（カード上・左寄せ） */}
+      {!generating && (
+        <div className="flex justify-start mb-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={generateProposals}
+            className="gap-1.5 text-xs"
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            AIに再提案してもらう
+          </Button>
+        </div>
+      )}
+
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
         <CardContent className="p-5">
           {/* パレットカード（1カラム縦積み） */}
@@ -194,20 +209,23 @@ export function Step3Proposals({
           <ArrowLeft className="mr-1 h-4 w-4" />
           戻る
         </Button>
-        <div className="flex gap-3">
-          <Button
-            variant="outline"
-            onClick={generateProposals}
-            disabled={generating}
-          >
-            <RefreshCw className={`mr-1 h-4 w-4 ${generating ? 'animate-spin' : ''}`} />
-            再生成
-          </Button>
+        <div className="flex items-center gap-2">
+          {!generating && (
+            <Button
+              variant="outline"
+              onClick={generateProposals}
+              className="gap-1.5"
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              AIに再提案してもらう
+            </Button>
+          )}
           <Button
             onClick={handleNext}
             disabled={!selectedId}
           >
             {selectedId ? 'この案で調整に進む' : 'パレットを選択してください'}
+            {selectedId && <ArrowRight className="ml-1 h-4 w-4" />}
           </Button>
         </div>
       </div>

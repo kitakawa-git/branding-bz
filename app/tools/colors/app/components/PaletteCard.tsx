@@ -51,23 +51,22 @@ export function PaletteCard({ proposal, selected, onSelect }: PaletteCardProps) 
         {/* 2行目: 説明文 */}
         <p className="text-sm text-gray-600">{proposal.concept}</p>
 
-        {/* 3行目: カラー詳細（5色横並び） */}
-        <div className="flex flex-wrap gap-3">
+        {/* 3行目: カラー詳細（グリッド） */}
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {allColors.map((item) => (
-            <div key={item.label} className="flex items-center gap-1.5">
+            <div key={item.label} className="flex items-center gap-3 rounded-lg bg-gray-50 p-3">
               <div
-                className="h-5 w-5 flex-shrink-0 rounded-full border border-gray-200"
+                className="h-10 w-10 flex-shrink-0 rounded-lg border border-gray-200"
                 style={{ backgroundColor: item.color.hex }}
               />
-              <span className="text-xs font-medium text-gray-700 whitespace-nowrap">
-                {item.label}
-              </span>
-              <span className="text-xs text-gray-500 whitespace-nowrap">
-                {item.color.name}
-              </span>
-              <span className="font-mono text-[10px] text-gray-400 whitespace-nowrap">
-                {item.color.hex}
-              </span>
+              <div className="min-w-0">
+                <p className="text-[10px] text-gray-400">{item.label}</p>
+                <p className="truncate text-sm font-medium text-gray-900">{item.color.name}</p>
+                <p className="font-mono text-xs text-gray-500">{item.color.hex.toUpperCase()}</p>
+                <p className="text-[10px] text-gray-400">
+                  RGB({item.color.rgb.r}, {item.color.rgb.g}, {item.color.rgb.b})
+                </p>
+              </div>
             </div>
           ))}
         </div>

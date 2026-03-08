@@ -1,7 +1,6 @@
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import type { Metadata } from 'next'
-import { Button } from '@/components/ui/button'
 import {
   Accordion,
   AccordionContent,
@@ -93,21 +92,23 @@ export default function FAQPage() {
   return (
     <>
       {/* ヒーロー */}
-      <section className="bg-white px-6 pt-16 pb-8 text-center">
-        <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-          よくある質問
-        </h1>
-        <p className="text-gray-600 max-w-lg mx-auto">
-          branding.bz についてよくいただくご質問にお答えします。
-        </p>
+      <section className="px-6 py-16 md:py-24 text-center">
+        <div className="mx-auto max-w-4xl">
+          <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-gray-900 mb-4">
+            よくある質問
+          </h1>
+          <p className="text-lg md:text-xl text-gray-700 leading-relaxed max-w-2xl mx-auto">
+            branding.bz についてよくいただくご質問にお答えします。
+          </p>
+        </div>
       </section>
 
       {/* FAQ本体 */}
-      <section className="bg-white px-6 pb-16">
+      <section className="bg-white px-6 pb-16 md:pb-24">
         <div className="mx-auto max-w-5xl space-y-12">
           {faqCategories.map((category) => (
             <div key={category.title}>
-              <h2 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-200">
+              <h2 className="text-xl md:text-[1.625rem] font-bold text-gray-900 mb-4 pb-2 border-b border-gray-200">
                 {category.title}
               </h2>
               <Accordion type="single" collapsible className="w-full">
@@ -116,7 +117,7 @@ export default function FAQPage() {
                     <AccordionTrigger className="text-left text-sm font-medium text-gray-900 hover:no-underline">
                       {item.q}
                     </AccordionTrigger>
-                    <AccordionContent className="text-sm text-gray-500 leading-relaxed">
+                    <AccordionContent className="text-sm text-gray-600 leading-relaxed">
                       {item.a}
                     </AccordionContent>
                   </AccordionItem>
@@ -128,16 +129,29 @@ export default function FAQPage() {
       </section>
 
       {/* CTA */}
-      <section className="bg-gray-50 px-6 py-16 text-center">
-        <p className="text-gray-500 mb-6">
-          ご不明な点がございましたら、お気軽にお問い合わせください。
-        </p>
-        <Link href="/contact">
-          <Button size="lg" className="h-12 px-8 text-base font-bold">
-            お問い合わせ
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
-        </Link>
+      <section className="bg-gray-50 px-6 py-16 md:py-24 text-center">
+        <div className="mx-auto max-w-7xl">
+          <p className="text-sm text-gray-600 mb-10">
+            ご不明な点がございましたら、お気軽にお問い合わせください。
+          </p>
+          <Link href="/contact">
+            <button
+              className="relative h-12 px-12 rounded-full text-base font-bold text-white overflow-hidden transition-all hover:scale-105 hover:shadow-2xl"
+              style={{
+                background: 'rgba(0, 0, 0, 0.75)',
+                backdropFilter: 'blur(12px) saturate(120%)',
+                WebkitBackdropFilter: 'blur(12px) saturate(120%)',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                boxShadow: '0px 8px 24px 0 rgba(0, 0, 0, 0.2), inset 0px 1px 0px 0px rgba(255, 255, 255, 0.15)',
+              }}
+            >
+              <span className="relative z-10 inline-flex items-center gap-2">
+                お問い合わせ
+                <ArrowRight className="h-4 w-4" />
+              </span>
+            </button>
+          </Link>
+        </div>
       </section>
     </>
   )

@@ -8,11 +8,12 @@ import { Card, CardContent } from '@/components/ui/card'
 import { IndustrySelect } from '@/components/shared/IndustrySelect'
 import { TitleDescriptionList } from '@/components/shared/TitleDescriptionList'
 import { supabase } from '@/lib/supabase'
-import { ChevronRight, Plus, Trash2 } from 'lucide-react'
+import { ArrowRight, Plus, Trash2 } from 'lucide-react'
 
 interface Competitor {
   name: string
   url: string
+  notes?: string
 }
 
 interface BusinessDescription {
@@ -70,7 +71,7 @@ function migrateCompetitors(
       .split(/[、,\n]/)
       .map(s => s.trim())
       .filter(Boolean)
-      .map(name => ({ name, url: '' }))
+      .map(name => ({ name, url: '', notes: '' }))
   }
   return []
 }
@@ -132,9 +133,10 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
 
   // デバウンス用タイマー
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const userIdRef = useRef<string | null>(null)
 
   // プリフィル: 本体(companies/brand_guidelines)の最新データを取得
-  // セッションに古い形式のデータがある場合でも、本体の構造化データで上書きする
+  // 全フィールド: セッションにデータがなければ companies から読み込み（マージはしない）
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -148,37 +150,53 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
         if (result.source === 'none' || !result.data) return
 
         const d = result.data
-        // source === 'company': 管理画面（companies）のデータを常に最新として優先
-        // source === 'session': 過去セッションのデータは空フィールドのみ補完
+        // company ソース: 管理画面の最新データを常に反映（syncToCompanyで双方向同期済み）
+        // session ソース: 空の場合のみ補完
         const isCompany = result.source === 'company'
+        const updates: Partial<BasicInfo> = {}
 
         // スカラー値
         if (d.brand_name && (isCompany || !companyName)) {
           setCompanyName(d.brand_name)
+          updates.company_name = d.brand_name
         }
         if (d.industry_category && (isCompany || !industryCategory)) {
           setIndustryCategory(d.industry_category)
-          // 大分類が変わったら中分類もリセットしてから適用
-          if (isCompany && d.industry_category !== industryCategory) {
+          updates.industry_category = d.industry_category
+          if (isCompany || !industrySubcategory) {
             setIndustrySubcategory(d.industry_subcategory || '')
+            updates.industry_subcategory = d.industry_subcategory || ''
           }
         }
         if (d.industry_subcategory && (isCompany || !industrySubcategory)) {
           setIndustrySubcategory(d.industry_subcategory)
+          updates.industry_subcategory = d.industry_subcategory
         }
 
-        // 構造化データ: company なら常に上書き、session なら項目数が多い場合のみ
-        if (d.business_descriptions?.length > 0 &&
-            (isCompany || d.business_descriptions.length > businessDescriptions.length)) {
+        // 構造化データ
+        if (d.business_descriptions?.length > 0 && (isCompany || businessDescriptions.length === 0)) {
           setBusinessDescriptions(d.business_descriptions)
+          updates.business_descriptions = d.business_descriptions
         }
-        if (d.target_segments?.length > 0 &&
-            (isCompany || d.target_segments.length > targetSegments.length)) {
+        if (d.target_segments?.length > 0 && (isCompany || targetSegments.length === 0)) {
           setTargetSegments(d.target_segments)
+          updates.target_segments = d.target_segments
         }
-        if (d.competitors?.length > 0 &&
-            (isCompany || d.competitors.length > competitors.length)) {
-          setCompetitors(d.competitors)
+
+        // 競合: company ソースなら常に最新値を適用、それ以外は空の場合のみ
+        if (d.competitors?.length > 0 && (isCompany || competitors.length === 0)) {
+          const comps = (d.competitors as Array<{ name: string; url: string; notes: string }>)
+            .filter((c: { name: string }) => c.name?.trim())
+            .map((c: { name: string; url: string; notes: string }) => ({
+              name: c.name.trim(), url: c.url || '', notes: c.notes || '',
+            }))
+          setCompetitors(comps)
+          updates.competitors = comps
+        }
+
+        // 変更があればセッションに一括保存
+        if (Object.keys(updates).length > 0) {
+          onSaveField(updates as BasicInfo)
         }
       } catch {
         // プリフィル失敗は無視
@@ -187,6 +205,13 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
 
     fetchProfile()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ユーザーID取得（companies同期用）
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      userIdRef.current = user?.id || null
+    })
+  }, [])
 
   // 現在のフォームデータを取得
   const getCurrentData = useCallback((): BasicInfo => ({
@@ -198,15 +223,36 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
     competitors: competitors.filter(c => c.name.trim()),
   }), [companyName, industryCategory, industrySubcategory, businessDescriptions, targetSegments, competitors])
 
-  // 1秒デバウンスのオートセーブ
+  // 本体（companies）へリアルタイム同期（fire and forget）
+  const syncToCompany = useCallback((data: BasicInfo) => {
+    const userId = userIdRef.current
+    if (!userId) return
+    fetch('/api/tools/shared-profile', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId,
+        company_name: data.company_name,
+        industry_category: data.industry_category,
+        industry_subcategory: data.industry_subcategory,
+        competitors: data.competitors,
+        business_descriptions: data.business_descriptions,
+        target_segments: data.target_segments,
+      }),
+    }).catch(() => {})
+  }, [])
+
+  // 1秒デバウンスのオートセーブ（セッション + companies同期）
   const triggerAutoSave = useCallback(() => {
     if (debounceRef.current) {
       clearTimeout(debounceRef.current)
     }
     debounceRef.current = setTimeout(() => {
-      onSaveField(getCurrentData())
+      const data = getCurrentData()
+      onSaveField(data)
+      syncToCompany(data)
     }, 1000)
-  }, [getCurrentData, onSaveField])
+  }, [getCurrentData, onSaveField, syncToCompany])
 
   // フォーム値が変わるたびにオートセーブをトリガー
   useEffect(() => {
@@ -256,21 +302,24 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
     }
 
     const data = getCurrentData()
+    syncToCompany(data)
     const success = await onNext(data)
     if (!success) setSaving(false)
   }
 
-  // 競合企業操作
+  // 競合企業操作（最大5社）
+  const MAX_COMPETITORS = 5
+
   const addCompetitor = () => {
-    if (competitors.length >= 10) return
-    setCompetitors([...competitors, { name: '', url: '' }])
+    if (competitors.length >= MAX_COMPETITORS) return
+    setCompetitors([...competitors, { name: '', url: '', notes: '' }])
   }
 
   const removeCompetitor = (index: number) => {
     setCompetitors(competitors.filter((_, i) => i !== index))
   }
 
-  const updateCompetitor = (index: number, field: 'name' | 'url', value: string) => {
+  const updateCompetitor = (index: number, field: 'name' | 'url' | 'notes', value: string) => {
     const updated = [...competitors]
     updated[index] = { ...updated[index], [field]: value }
     setCompetitors(updated)
@@ -346,10 +395,10 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
             />
           </div>
 
-          {/* ターゲット顧客層（構造化入力） */}
+          {/* ターゲット（構造化入力） */}
           <div className="mb-5">
             <TitleDescriptionList
-              label="ターゲット顧客層"
+              label="ターゲット"
               items={targetSegments.map(ts => ({ title: ts.name, description: ts.description }))}
               onChange={(newItems) => {
                 setTargetSegments(newItems.map(item => ({ name: item.title, description: item.description })))
@@ -360,45 +409,55 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
             />
           </div>
 
-          {/* 競合企業 */}
+          {/* 競合企業・サービス */}
           <div className="mb-5">
-            <h2 className="text-sm font-bold mb-3">
-              競合企業 <span className="text-xs text-gray-400 font-normal">（任意）</span>
+            <h2 className="text-sm font-bold mb-1.5">
+              競合企業・サービス <span className="text-xs text-gray-400 font-normal">（任意）</span>
             </h2>
+            <p className="text-[13px] text-muted-foreground mb-3">
+              Step 4のポジショニングマップに競合を配置します。企業名に加えてURLやメモを入力すると、AIの分析精度が向上します。
+            </p>
             {competitors.length > 0 && (
               <div className="space-y-3 mb-3">
                 {competitors.map((comp, i) => (
                   <div key={i} className="flex items-start gap-2 rounded-lg border border-gray-200 bg-white p-3">
-                    <div className="flex-1">
+                    <div className="flex-1 space-y-2">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <Input
                           value={comp.name}
                           onChange={(e) => updateCompetitor(i, 'name', e.target.value)}
                           placeholder="企業名（必須）"
-                          className="h-10 text-sm"
+                          className="h-8 text-sm font-medium"
                         />
                         <Input
                           value={comp.url}
                           onChange={(e) => updateCompetitor(i, 'url', e.target.value)}
                           placeholder="https://..."
-                          className="h-10 text-sm"
+                          className="h-8 text-sm"
                         />
                       </div>
+                      <Input
+                        value={comp.notes || ''}
+                        onChange={(e) => updateCompetitor(i, 'notes', e.target.value)}
+                        placeholder="例: 大手向けブランディング会社、高額だがリブランドに強い"
+                        className="h-8 text-xs text-gray-600"
+                        maxLength={200}
+                      />
                     </div>
                     <Button
                       type="button"
-                      variant="ghost"
-                      size="sm"
+                      variant="outline"
+                      size="icon"
                       onClick={() => removeCompetitor(i)}
-                      className="shrink-0 h-9 w-9 p-0 text-gray-400 hover:text-red-500"
+                      className="size-9 shrink-0 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 size={14} />
                     </Button>
                   </div>
                 ))}
               </div>
             )}
-            {competitors.length < 10 && (
+            {competitors.length < MAX_COMPETITORS ? (
               <Button
                 type="button"
                 variant="outline"
@@ -409,20 +468,22 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
                 <Plus className="h-4 w-4 mr-1" />
                 競合企業を追加
               </Button>
+            ) : (
+              <p className="text-xs text-gray-400">最大5社まで</p>
             )}
           </div>
         </CardContent>
       </Card>
 
-      {/* 次へボタン */}
-      <div className="mt-6">
+      {/* フッターナビゲーション */}
+      <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 bg-background/80 backdrop-blur border-t border-border px-6 py-3 flex justify-end">
         <Button
           onClick={handleNext}
           disabled={saving || !isValid}
           className="gap-1"
         >
-          {saving ? '保存中...' : '次へ：セグメンテーション'}
-          {!saving && <ChevronRight className="h-4 w-4" />}
+          {saving ? '保存中...' : 'セグメンテーションへ'}
+          {!saving && <ArrowRight className="h-4 w-4" />}
         </Button>
       </div>
     </div>

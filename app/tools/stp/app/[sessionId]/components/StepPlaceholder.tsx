@@ -2,7 +2,7 @@
 
 // ステップ2〜5のプレースホルダーコンポーネント
 import { Button } from '@/components/ui/button'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ArrowLeft, ArrowRight } from 'lucide-react'
 
 interface StepPlaceholderProps {
   stepNumber: number
@@ -47,14 +47,14 @@ export function StepPlaceholder({
           disabled={!onBack}
           className="gap-1"
         >
-          <ChevronLeft className="h-4 w-4" />
+          <ArrowLeft className="h-4 w-4" />
           戻る
         </Button>
 
         {!isLast && onNext && (
           <Button onClick={onNext} className="gap-1">
             次へ
-            <ChevronRight className="h-4 w-4" />
+            <ArrowRight className="h-4 w-4" />
           </Button>
         )}
       </div>

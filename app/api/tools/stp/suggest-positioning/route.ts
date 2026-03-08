@@ -3,7 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { callClaude } from '@/lib/claude-api'
 
-const SYSTEM_PROMPT = `あなたはブランドマーケティングの専門家です。STP分析のポジショニング（軸の定義と企業の配置）を提案してください。X軸とY軸は、この業界でターゲット顧客が重視する差別化要素を選んでください。自社は強みが活きるポジションに配置してください。回答はJSON形式のみで、前後に説明文やマークダウンのコードブロックを含めないでください。
+const SYSTEM_PROMPT = `あなたはブランドマーケティングの専門家です。STP分析のポジショニング（軸の定義と企業の配置）を提案してください。X軸とY軸は、ターゲットの購買決定要因を考慮して、ターゲットに刺さる差別化軸を選んでください。自社の強みが活きるポジションに配置し、競合との差別化が明確になるよう配置してください。回答はJSON形式のみで、前後に説明文やマークダウンのコードブロックを含めないでください。
 
 出力JSONスキーマ:
 {
@@ -79,15 +79,20 @@ export async function POST(request: NextRequest) {
       parts.push(`- 現在の主な顧客層: ${basic_info.current_customers}`)
     }
 
-    // 競合情報（構造化データ or 旧テキスト形式に対応）
+    // 競合情報（メモ付き構造化データ or 旧テキスト形式に対応）
     if (basic_info.competitors) {
       if (Array.isArray(basic_info.competitors)) {
-        const names = basic_info.competitors
-          .map((c: { name: string }) => c.name)
-          .filter(Boolean)
-          .join('、')
-        if (names) {
-          parts.push(`- 競合企業: ${names}`)
+        const competitorLines = basic_info.competitors
+          .filter((c: { name: string }) => c.name?.trim())
+          .map((c: { name: string; url?: string; notes?: string }) => {
+            let line = c.name.trim()
+            if (c.notes?.trim()) {
+              line += `（メモ: ${c.notes.trim()}）`
+            }
+            return line
+          })
+        if (competitorLines.length > 0) {
+          parts.push(`- 競合企業:\n${competitorLines.map((l: string, i: number) => `  ${i + 1}. ${l}`).join('\n')}`)
           parts.push('  ※ 上記の競合企業をitemsに含めてください')
         }
       } else {
@@ -108,6 +113,15 @@ export async function POST(request: NextRequest) {
       }
       if (targeting.target_description) {
         parts.push(`- ターゲット詳細: ${targeting.target_description}`)
+      }
+      if (targeting.buying_factors?.length > 0) {
+        parts.push(`- ターゲットの購買決定要因: ${targeting.buying_factors.join('、')}`)
+      }
+      if (targeting.strengths) {
+        parts.push(`- 自社の強み: ${targeting.strengths}`)
+      }
+      if (targeting.competitor_traits) {
+        parts.push(`- 競合の特徴: ${targeting.competitor_traits}`)
       }
     }
 

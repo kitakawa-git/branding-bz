@@ -10,7 +10,17 @@ import type { PositioningMapData } from '@/lib/types/positioning-map'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import {
-  ChevronLeft,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import {
+  ArrowLeft,
   Download,
   Link as LinkIcon,
   LayoutGrid,
@@ -230,16 +240,18 @@ export function Step5Result({
   }, [sessionId, basicInfo.company_name])
 
   // branding.bz連携
-  const handleConnect = useCallback(async () => {
+  const [connectConfirmOpen, setConnectConfirmOpen] = useState(false)
+
+  const handleConnectClick = useCallback(() => {
     if (!adminCompanyId) {
       router.push('/admin/login')
       return
     }
+    setConnectConfirmOpen(true)
+  }, [adminCompanyId, router])
 
-    const ok = window.confirm(
-      '以下のデータをブランド戦略ページに反映します。\n既存のターゲット・ポジショニングマップデータは上書きされます。\nよろしいですか？'
-    )
-    if (!ok) return
+  const handleConnect = useCallback(async () => {
+    if (!adminCompanyId) return
 
     setConnectLoading(true)
     try {
@@ -286,12 +298,9 @@ export function Step5Result({
   }, [sessionId, adminCompanyId, router, basicInfo])
 
   // 最初からやり直す
-  const handleRestart = useCallback(async () => {
-    const ok = window.confirm(
-      '分析結果は保存されています。新しい分析を始めますか？'
-    )
-    if (!ok) return
+  const [restartConfirmOpen, setRestartConfirmOpen] = useState(false)
 
+  const handleRestart = useCallback(async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
@@ -490,7 +499,7 @@ export function Step5Result({
           {/* branding.bz連携 */}
           {!checkingAdmin && (
             <Button
-              onClick={handleConnect}
+              onClick={handleConnectClick}
               disabled={connectLoading}
               variant={isAdminUser ? 'default' : 'outline'}
               className="flex-1 gap-2"
@@ -514,7 +523,7 @@ export function Step5Result({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={handleRestart}
+                onClick={() => setRestartConfirmOpen(true)}
                 className="text-xs text-gray-500"
               >
                 <RotateCcw className="h-3 w-3 mr-1" />
@@ -526,12 +535,44 @@ export function Step5Result({
       </Card>
 
       {/* フッターナビゲーション */}
-      <div className="mt-6 flex items-center justify-between">
+      <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 bg-background/80 backdrop-blur border-t border-border px-6 py-3 flex items-center justify-between">
         <Button variant="outline" onClick={onBack} className="gap-1">
-          <ChevronLeft className="h-4 w-4" />
+          <ArrowLeft className="h-4 w-4" />
           戻る
         </Button>
       </div>
+
+      {/* branding.bz連携の確認ダイアログ */}
+      <AlertDialog open={connectConfirmOpen} onOpenChange={setConnectConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>branding.bz に連携</AlertDialogTitle>
+            <AlertDialogDescription>
+              分析データをブランド戦略ページに反映します。既存のターゲット・ポジショニングマップデータは上書きされます。よろしいですか？
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>キャンセル</AlertDialogCancel>
+            <AlertDialogAction onClick={() => handleConnect()}>連携する</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* やり直しの確認ダイアログ */}
+      <AlertDialog open={restartConfirmOpen} onOpenChange={setRestartConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>最初からやり直す</AlertDialogTitle>
+            <AlertDialogDescription>
+              分析結果は保存されています。新しい分析を始めますか？
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>キャンセル</AlertDialogCancel>
+            <AlertDialogAction onClick={() => handleRestart()}>やり直す</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

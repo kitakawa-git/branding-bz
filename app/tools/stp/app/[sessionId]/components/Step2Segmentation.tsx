@@ -1,24 +1,41 @@
 'use client'
 
-// Step 2: セグメンテーション（AI提案 / 手動入力）
+// Step 2: セグメンテーション
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Checkbox } from '@/components/ui/checkbox'
-import { ChevronLeft, ChevronRight, Plus, Trash2, Sparkles, RefreshCw } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Plus, Trash2, Sparkles, Lightbulb, MapPin, Users, Heart, Activity } from 'lucide-react'
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 
 // 型定義
 interface Segment {
   name: string
   description: string
   size_hint: '大' | '中' | '小'
+  priorities?: string
   selected: boolean
 }
 
 interface Variable {
   name: string
+  reason?: string
   segments: Segment[]
 }
 
@@ -49,33 +66,6 @@ interface Step2Props {
   onSaveField: (data: SegmentationData) => Promise<void>
 }
 
-// 市場規模感バッジ
-const SIZE_HINTS: Array<{ value: '大' | '中' | '小'; color: string }> = [
-  { value: '大', color: 'bg-green-100 text-green-700 border-green-200' },
-  { value: '中', color: 'bg-yellow-100 text-yellow-700 border-yellow-200' },
-  { value: '小', color: 'bg-gray-100 text-gray-500 border-gray-200' },
-]
-
-function SizeHintBadge({
-  value,
-  onClick,
-}: {
-  value: '大' | '中' | '小'
-  onClick: () => void
-}) {
-  const hint = SIZE_HINTS.find((h) => h.value === value) || SIZE_HINTS[2]
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`rounded-full border px-2.5 py-0.5 text-xs font-medium transition-colors hover:opacity-80 ${hint.color}`}
-      title="クリックで切替"
-    >
-      {value}
-    </button>
-  )
-}
-
 export function Step2Segmentation({
   segmentation,
   basicInfo,
@@ -83,8 +73,8 @@ export function Step2Segmentation({
   onBack,
   onSaveField,
 }: Step2Props) {
-  // 既存データがあればそれを使い、なければ空
-  const [mode, setMode] = useState<'ai' | 'manual'>(segmentation.mode || 'ai')
+  // 後方互換のためmodeは保持（UIからの切替は廃止）
+  const mode = segmentation.mode || 'ai'
   const [variables, setVariables] = useState<Variable[]>(
     segmentation.variables?.length > 0 ? segmentation.variables : []
   )
@@ -140,12 +130,14 @@ export function Step2Segmentation({
       const { variables: suggestedVars } = await res.json()
       // selected: true をデフォルトで付与
       const withSelected: Variable[] = suggestedVars.map(
-        (v: { name: string; segments: Array<{ name: string; description: string; size_hint: string }> }) => ({
+        (v: { name: string; reason?: string; segments: Array<{ name: string; description: string; size_hint: string; priorities?: string }> }) => ({
           name: v.name,
+          reason: v.reason || '',
           segments: v.segments.map(
-            (s: { name: string; description: string; size_hint: string }) => ({
+            (s: { name: string; description: string; size_hint: string; priorities?: string }) => ({
               ...s,
               size_hint: s.size_hint || '中',
+              priorities: s.priorities || '',
               selected: true,
             })
           ),
@@ -160,9 +152,9 @@ export function Step2Segmentation({
     }
   }, [basicInfo, triggerAutoSave])
 
-  // AIモードで初回マウント時、データがなければ自動リクエスト
+  // 初回マウント時、データがなければ自動でAI提案を実行
   useEffect(() => {
-    if (mode === 'ai' && variables.length === 0 && !aiRequestedRef.current) {
+    if (variables.length === 0 && !aiRequestedRef.current) {
       aiRequestedRef.current = true
       fetchAISuggestion()
     }
@@ -177,27 +169,21 @@ export function Step2Segmentation({
   }, [])
 
   // 再提案（確認ダイアログ付き）
+  const [confirmOpen, setConfirmOpen] = useState(false)
+
   const handleRegenerate = () => {
     if (variables.length > 0) {
-      const ok = window.confirm('現在の内容が上書きされます。よろしいですか？')
-      if (!ok) return
+      setConfirmOpen(true)
+      return
     }
     fetchAISuggestion()
-  }
-
-  // モード切替
-  const handleModeChange = (newMode: 'ai' | 'manual') => {
-    setMode(newMode)
-    // モード変更時にオートセーブ
-    if (debounceRef.current) clearTimeout(debounceRef.current)
-    onSaveField({ mode: newMode, variables })
   }
 
   // --- 変数操作 ---
   const addVariable = () => {
     updateVariables((prev) => [
       ...prev,
-      { name: '', segments: [{ name: '', description: '', size_hint: '中', selected: true }] },
+      { name: '', segments: [{ name: '', description: '', size_hint: '中', priorities: '', selected: true }] },
     ])
   }
 
@@ -220,7 +206,7 @@ export function Step2Segmentation({
               ...v,
               segments: [
                 ...v.segments,
-                { name: '', description: '', size_hint: '中' as const, selected: true },
+                { name: '', description: '', size_hint: '中' as const, priorities: '', selected: true },
               ],
             }
           : v
@@ -258,16 +244,9 @@ export function Step2Segmentation({
     )
   }
 
-  const cycleSizeHint = (varIndex: number, segIndex: number) => {
-    const current = variables[varIndex].segments[segIndex].size_hint
-    const order: Array<'大' | '中' | '小'> = ['大', '中', '小']
-    const nextIdx = (order.indexOf(current) + 1) % order.length
-    updateSegment(varIndex, segIndex, 'size_hint', order[nextIdx])
-  }
-
-  // バリデーション: selected=true のセグメントが1つ以上
-  const hasSelectedSegment = variables.some((v) =>
-    v.segments.some((s) => s.selected)
+  // バリデーション: グループが1つ以上（名前あり）
+  const hasSegment = variables.some((v) =>
+    v.segments.some((s) => s.name.trim())
   )
 
   const handleNext = async () => {
@@ -280,55 +259,72 @@ export function Step2Segmentation({
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-foreground mb-6">Step 2: セグメンテーション</h1>
+      <h1 className="text-2xl font-bold text-foreground mb-2">Step 2: セグメンテーション</h1>
+      <p className="mb-5 text-[13px] text-muted-foreground">
+        市場をどのような切り口で分けるかを定義し、各グループの特徴を整理します
+      </p>
 
-      <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-        <CardContent className="p-5">
-          <p className="mb-5 text-[13px] text-muted-foreground">
-            市場をどのような切り口で分けるか定義しましょう
-          </p>
-
-          {/* モード切替タブ */}
-      <div className="flex rounded-lg border bg-gray-100 p-1">
-        <button
-          type="button"
-          onClick={() => handleModeChange('ai')}
-          className={`flex flex-1 items-center justify-center gap-1.5 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-            mode === 'ai'
-              ? 'bg-white text-gray-900 shadow-sm'
-              : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          <Sparkles className="h-4 w-4" />
-          AIに提案してもらう
-        </button>
-        <button
-          type="button"
-          onClick={() => handleModeChange('manual')}
-          className={`flex flex-1 items-center justify-center gap-1.5 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-            mode === 'manual'
-              ? 'bg-white text-gray-900 shadow-sm'
-              : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          自分で入力する
-        </button>
-      </div>
-
-      {/* AI再提案ボタン（AIモード時） */}
-      {mode === 'ai' && !aiLoading && variables.length > 0 && (
-        <div className="flex justify-end">
+      {/* AI提案ボタン（カード右上） */}
+      {!aiLoading && (
+        <div className="flex justify-start mb-3">
           <Button
             variant="outline"
             size="sm"
             onClick={handleRegenerate}
             className="gap-1.5 text-xs"
           >
-            <RefreshCw className="h-3.5 w-3.5" />
-            AIに再提案してもらう
+            <Sparkles className="h-3.5 w-3.5" />
+            {variables.length > 0 ? 'AIに再提案してもらう' : 'AIに提案してもらう'}
           </Button>
         </div>
       )}
+
+      <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+        <CardContent className="p-5">
+
+          {/* 切り口の選び方ヒント */}
+          <Accordion type="single" collapsible className="mb-4">
+            <AccordionItem value="guide" className="border-none">
+              <AccordionTrigger className="py-2 text-sm font-medium text-gray-600 hover:no-underline gap-1.5 [&>svg]:h-4 [&>svg]:w-4">
+                <span className="flex items-center gap-1.5">
+                  <Lightbulb className="h-4 w-4 text-amber-500" />
+                  切り口の選び方ヒント
+                </span>
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="rounded-lg border border-blue-100 bg-blue-50 p-3">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <MapPin className="h-4 w-4 text-blue-600" />
+                      <span className="text-sm font-semibold text-gray-800">地理的</span>
+                    </div>
+                    <p className="text-xs text-gray-600 leading-relaxed">地域・都道府県・都市規模・気候など、場所に基づく分け方</p>
+                  </div>
+                  <div className="rounded-lg border border-blue-100 bg-blue-50 p-3">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <Users className="h-4 w-4 text-blue-600" />
+                      <span className="text-sm font-semibold text-gray-800">属性（デモグラフィック）</span>
+                    </div>
+                    <p className="text-xs text-gray-600 leading-relaxed">年齢・性別・職業・年収・企業規模・業種など、客観的な特徴</p>
+                  </div>
+                  <div className="rounded-lg border border-blue-100 bg-blue-50 p-3">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <Heart className="h-4 w-4 text-blue-600" />
+                      <span className="text-sm font-semibold text-gray-800">価値観（サイコグラフィック）</span>
+                    </div>
+                    <p className="text-xs text-gray-600 leading-relaxed">ライフスタイル・価値観・性格・関心ごとなど、内面的な特徴</p>
+                  </div>
+                  <div className="rounded-lg border border-blue-100 bg-blue-50 p-3">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <Activity className="h-4 w-4 text-blue-600" />
+                      <span className="text-sm font-semibold text-gray-800">行動</span>
+                    </div>
+                    <p className="text-xs text-gray-600 leading-relaxed">購買頻度・利用シーン・ブランドロイヤルティ・情報収集方法など</p>
+                  </div>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
 
       {/* AIエラー表示 */}
       {aiError && (
@@ -356,7 +352,7 @@ export function Step2Segmentation({
             </div>
           ))}
           <p className="text-center text-sm text-gray-400">
-            AIがセグメンテーションを分析中...
+            AIが市場の分け方を分析中...
           </p>
         </div>
       )}
@@ -370,61 +366,46 @@ export function Step2Segmentation({
                   className="rounded-lg border border-gray-200 bg-white p-5"
                 >
                   {/* 変数名ヘッダー */}
-                  <div className="mb-4 flex items-center gap-2">
+                  <div className="mb-1 flex items-center gap-2">
                     <Input
                       value={variable.name}
                       onChange={(e) => updateVariableName(varIndex, e.target.value)}
-                      placeholder="変数名（例: 購買動機）"
+                      placeholder="例: 企業規模、業種、予算規模、課題意識"
                       className="h-10 flex-1 text-sm font-bold"
                     />
                     <Button
-                      variant="ghost"
-                      size="sm"
+                      variant="outline"
+                      size="icon"
                       onClick={() => removeVariable(varIndex)}
-                      className="shrink-0 h-9 w-9 p-0 text-gray-400 hover:text-red-500"
-                      title="変数を削除"
+                      className="size-9 shrink-0 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+                      title="切り口を削除"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 size={14} />
                     </Button>
                   </div>
+                  {/* 選定理由（AI提案時） */}
+                  {variable.reason && (
+                    <p className="mb-4 text-sm text-gray-500 italic pl-1">{variable.reason}</p>
+                  )}
+                  {!variable.reason && <div className="mb-3" />}
 
               {/* セグメントカード一覧 */}
               <div className="space-y-3">
                 {variable.segments.map((segment, segIndex) => (
                   <div
                     key={segIndex}
-                    className={`flex items-start gap-3 rounded-lg border p-3 transition-colors ${
-                      segment.selected
-                        ? 'border-gray-200 bg-white'
-                        : 'border-gray-100 bg-gray-50 opacity-60'
-                    }`}
+                    className="flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-3"
                   >
-                    {/* チェックボックス */}
-                    <div className="pt-1">
-                      <Checkbox
-                        checked={segment.selected}
-                        onCheckedChange={(checked) =>
-                          updateSegment(varIndex, segIndex, 'selected', !!checked)
-                        }
-                      />
-                    </div>
-
                     {/* セグメント内容 */}
                     <div className="flex-1 space-y-2">
-                      <div className="flex items-center gap-2">
-                        <Input
-                          value={segment.name}
-                          onChange={(e) =>
-                            updateSegment(varIndex, segIndex, 'name', e.target.value)
-                          }
-                          placeholder="セグメント名"
-                          className="h-8 flex-1 text-sm font-medium"
-                        />
-                        <SizeHintBadge
-                          value={segment.size_hint}
-                          onClick={() => cycleSizeHint(varIndex, segIndex)}
-                        />
-                      </div>
+                      <Input
+                        value={segment.name}
+                        onChange={(e) =>
+                          updateSegment(varIndex, segIndex, 'name', e.target.value)
+                        }
+                        placeholder="グループ名"
+                        className="h-8 flex-1 text-sm font-medium"
+                      />
                       <Input
                         value={segment.description}
                         onChange={(e) =>
@@ -438,13 +419,13 @@ export function Step2Segmentation({
 
                     {/* 削除ボタン */}
                     <Button
-                      variant="ghost"
-                      size="sm"
+                      variant="outline"
+                      size="icon"
                       onClick={() => removeSegment(varIndex, segIndex)}
-                      className="shrink-0 h-8 w-8 p-0 text-gray-400 hover:text-red-500"
-                      title="セグメントを削除"
+                      className="size-9 shrink-0 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+                      title="グループを削除"
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
+                      <Trash2 size={14} />
                     </Button>
                   </div>
                 ))}
@@ -459,7 +440,7 @@ export function Step2Segmentation({
                       className="text-sm"
                     >
                       <Plus className="h-4 w-4 mr-1" />
-                      セグメントを追加
+                      グループを追加
                     </Button>
                   </div>
                 </div>
@@ -473,7 +454,7 @@ export function Step2Segmentation({
                   className="flex w-full items-center justify-center gap-1.5 rounded-lg border-2 border-dashed border-gray-200 py-4 text-sm text-gray-500 transition-colors hover:border-gray-300 hover:text-gray-700"
                 >
                   <Plus className="h-4 w-4" />
-                  変数を追加
+                  切り口を追加
                 </button>
               )}
             </div>
@@ -483,21 +464,49 @@ export function Step2Segmentation({
       </Card>
 
       {/* フッターナビゲーション */}
-      <div className="mt-6 flex items-center justify-between">
+      <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 bg-background/80 backdrop-blur border-t border-border px-6 py-3 flex items-center justify-between">
         <Button variant="outline" onClick={onBack} className="gap-1">
-          <ChevronLeft className="h-4 w-4" />
+          <ArrowLeft className="h-4 w-4" />
           戻る
         </Button>
 
-        <Button
-          onClick={handleNext}
-          disabled={saving || !hasSelectedSegment || aiLoading}
-          className="gap-1"
-        >
-          {saving ? '保存中...' : '次へ：ターゲティング'}
-          {!saving && <ChevronRight className="h-4 w-4" />}
-        </Button>
+        <div className="flex items-center gap-2">
+          {!aiLoading && (
+            <Button
+              variant="outline"
+              onClick={handleRegenerate}
+              className="gap-1.5"
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              AIに再提案してもらう
+            </Button>
+          )}
+          <Button
+            onClick={handleNext}
+            disabled={saving || !hasSegment || aiLoading}
+            className="gap-1"
+          >
+            {saving ? '保存中...' : 'ターゲティングへ'}
+            {!saving && <ArrowRight className="h-4 w-4" />}
+          </Button>
+        </div>
       </div>
+
+      {/* AI再提案の確認ダイアログ */}
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>確認</AlertDialogTitle>
+            <AlertDialogDescription>
+              現在の内容が上書きされます。よろしいですか？
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>キャンセル</AlertDialogCancel>
+            <AlertDialogAction onClick={() => fetchAISuggestion()}>OK</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
-import { ArrowLeft, Plus, Trash2 } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Plus, Trash2 } from 'lucide-react'
 
 import { KeywordSelector } from '../../components/KeywordSelector'
 import { MoodboardPairSelector } from '../../components/MoodboardPair'
@@ -265,6 +265,7 @@ export function Step2ImageInput({ project, onNext, onBack, onSaveField }: Step2P
             disabled={saving}
           >
             {saving ? '保存中...' : 'AI提案を受ける'}
+            {!saving && <ArrowRight className="ml-1 h-4 w-4" />}
           </Button>
         )}
       </div>

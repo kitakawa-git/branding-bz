@@ -188,7 +188,7 @@ export default function STPSessionPage() {
   const currentStep = session.current_step
 
   return (
-    <div className={`mx-auto px-4 py-8 ${currentStep === 4 ? 'max-w-5xl' : 'max-w-3xl'}`}>
+    <div className={`mx-auto px-5 py-8 ${currentStep === 4 ? 'max-w-5xl' : 'max-w-4xl'}`}>
       {/* プログレスバー */}
       <StepProgressBar
         steps={[
@@ -221,6 +221,7 @@ export default function STPSessionPage() {
       )}
       {currentStep === 3 && (
         <Step3Targeting
+          basicInfo={session.session_data.basic_info}
           segmentation={session.session_data.segmentation}
           targeting={session.session_data.targeting}
           onNext={(data) => saveAndAdvance(4, { targeting: data })}

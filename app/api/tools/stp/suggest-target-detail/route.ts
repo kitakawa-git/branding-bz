@@ -1,38 +1,36 @@
-// STP分析ツール セグメンテーション提案API
-// POST /api/tools/stp/suggest-segments
-// Claude APIにセグメンテーション提案をリクエスト
+// STP分析ツール ターゲット深掘り提案API
+// POST /api/tools/stp/suggest-target-detail
 import { NextRequest, NextResponse } from 'next/server'
 import { callClaude } from '@/lib/claude-api'
 
-const SYSTEM_PROMPT = `あなたはブランドマーケティングの専門家です。以下の企業情報をもとに、STP分析のセグメンテーション（市場細分化）を提案してください。業種や商品特性に適した切り口（変数）を3〜4つ選び、各切り口について代表的なグループ（セグメント）を2〜4つ提案してください。各グループが商品・サービスを選ぶ際に重視することも記載してください。回答はJSON形式のみで、前後に説明文やマークダウンのコードブロックを含めないでください。
+const SYSTEM_PROMPT = `あなたはブランドマーケティングの専門家です。STP分析のターゲティングにおいて、選択されたメインターゲットの深掘り情報を提案してください。企業情報とセグメンテーション結果を踏まえ、実践的で具体的な内容を提案してください。回答はJSON形式のみで、前後に説明文やマークダウンのコードブロックを含めないでください。
 
 出力JSONスキーマ:
 {
-  "variables": [
-    {
-      "name": "切り口名（例: 購買動機、企業規模、地域）",
-      "reason": "この切り口を選んだ理由（1〜2文）",
-      "segments": [
-        {
-          "name": "グループ名",
-          "description": "50字以内の説明",
-          "size_hint": "大 or 中 or 小",
-          "priorities": "このグループが重視すること（例: コスト、品質、サポート体制）"
-        }
-      ]
-    }
-  ]
-}`
+  "buying_factors": ["購買決定要因1", "購買決定要因2", "購買決定要因3"],
+  "strengths": "自社の強み（ターゲットに対して活かせる強み。2〜3文）",
+  "competitor_traits": "競合の特徴（主な競合の強みや弱み。2〜3文）",
+  "target_description": "ターゲットの詳細定義（具体的なペルソナ像。2〜3文）"
+}
+
+注意:
+- buying_factors は3〜5個の短いキーワードで
+- strengths はターゲットに刺さる自社の強みを具体的に
+- competitor_traits は主要な競合との差別化ポイントがわかるように
+- target_description は企業規模・業種・課題・行動パターンなどを含む具体的なペルソナ`
 
 export async function POST(request: NextRequest) {
-  console.log('[SuggestSegments] ===== API呼び出し開始 =====')
+  console.log('[SuggestTargetDetail] ===== API呼び出し開始 =====')
 
   try {
     const body = await request.json()
-    const { basic_info } = body
+    const { basic_info, segmentation, main_target } = body
 
-    if (!basic_info) {
-      return NextResponse.json({ error: 'basic_info が必要です' }, { status: 400 })
+    if (!basic_info || !main_target) {
+      return NextResponse.json(
+        { error: 'basic_info と main_target が必要です' },
+        { status: 400 }
+      )
     }
 
     // ユーザープロンプト構築
@@ -81,36 +79,64 @@ export async function POST(request: NextRequest) {
     } else if (basic_info.current_customers) {
       parts.push(`- 現在の主な顧客層: ${basic_info.current_customers}`)
     }
-    // 競合情報（メモ付き構造化データ or 旧テキスト形式に対応）
+    // 競合情報（メモ付き）
     if (basic_info.competitors) {
       if (Array.isArray(basic_info.competitors)) {
         const competitorLines = basic_info.competitors
           .filter((c: { name: string }) => c.name?.trim())
-          .map((c: { name: string; notes?: string }) => {
+          .map((c: { name: string; url?: string; notes?: string }) => {
             let line = c.name.trim()
             if (c.notes?.trim()) {
               line += `（メモ: ${c.notes.trim()}）`
             }
+            if (c.url?.trim()) {
+              line += ` [${c.url.trim()}]`
+            }
             return line
           })
         if (competitorLines.length > 0) {
-          parts.push(`- 競合企業: ${competitorLines.join('、')}`)
+          parts.push(`- 競合企業:\n${competitorLines.map((l: string, i: number) => `  ${i + 1}. ${l}`).join('\n')}`)
         }
       } else {
         parts.push(`- 競合企業・サービス: ${basic_info.competitors}`)
       }
     }
 
+    // セグメンテーション情報
+    if (segmentation?.variables && Array.isArray(segmentation.variables)) {
+      parts.push('')
+      parts.push('## セグメンテーション結果')
+      for (const variable of segmentation.variables) {
+        if (variable.name) {
+          const segNames = (variable.segments || [])
+            .filter((s: { name: string }) => s.name?.trim())
+            .map((s: { name: string }) => s.name)
+            .join('、')
+          if (segNames) {
+            parts.push(`- ${variable.name}: ${segNames}`)
+          }
+        }
+      }
+    }
+
+    // メインターゲット
     parts.push('')
-    parts.push('上記の情報をもとに、セグメンテーション変数とセグメントをJSON形式で提案してください。')
+    parts.push('## メインターゲット')
+    parts.push(`- グループ名: ${main_target.name}`)
+    if (main_target.description) {
+      parts.push(`- 説明: ${main_target.description}`)
+    }
+
+    parts.push('')
+    parts.push('上記のメインターゲットについて、購買決定要因・自社の強み・競合の特徴・ターゲット詳細定義をJSON形式で提案してください。')
 
     const userMessage = parts.join('\n')
 
-    console.log('[SuggestSegments] Claude API呼び出し中...')
+    console.log('[SuggestTargetDetail] Claude API呼び出し中...')
     const response = await callClaude({
       system: SYSTEM_PROMPT,
       userMessage,
-      maxTokens: 2000,
+      maxTokens: 1500,
     })
 
     // JSONパース
@@ -120,28 +146,33 @@ export async function POST(request: NextRequest) {
       jsonStr = jsonMatch[1]
     }
 
-    let parsed: { variables: unknown[] }
+    let parsed: {
+      buying_factors: string[]
+      strengths: string
+      competitor_traits: string
+      target_description: string
+    }
     try {
       parsed = JSON.parse(jsonStr)
     } catch {
-      console.error('[SuggestSegments] JSONパースエラー:', response.substring(0, 300))
+      console.error('[SuggestTargetDetail] JSONパースエラー:', response.substring(0, 300))
       return NextResponse.json(
         { error: 'AIの応答を解析できませんでした。再度お試しください。' },
         { status: 500 }
       )
     }
 
-    if (!parsed.variables || !Array.isArray(parsed.variables)) {
+    if (!parsed.buying_factors || !Array.isArray(parsed.buying_factors)) {
       return NextResponse.json(
         { error: 'AIの応答形式が不正です。再度お試しください。' },
         { status: 500 }
       )
     }
 
-    console.log('[SuggestSegments] ===== 提案完了 ===== variables=', parsed.variables.length)
-    return NextResponse.json({ variables: parsed.variables })
+    console.log('[SuggestTargetDetail] ===== 提案完了 ===== buying_factors=', parsed.buying_factors.length)
+    return NextResponse.json(parsed)
   } catch (err) {
-    console.error('[SuggestSegments] エラー:', err)
+    console.error('[SuggestTargetDetail] エラー:', err)
     return NextResponse.json(
       { error: `サーバーエラー: ${err instanceof Error ? err.message : String(err)}` },
       { status: 500 }

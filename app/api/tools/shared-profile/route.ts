@@ -290,69 +290,89 @@ export async function PATCH(request: NextRequest) {
 }
 
 // companies.competitors から競合カラー情報を抽出（カラーツール向け）
+// 全競合を返す（色未設定の場合はデフォルトカラーを付与）
 function extractCompetitorColors(
   competitors: Array<{ name: string; colors?: string[]; url?: string; notes?: string }>
 ): Array<{ name: string; hex: string }> {
-  const result: Array<{ name: string; hex: string }> = []
-  for (const c of competitors) {
-    if (c.colors && c.colors.length > 0) {
-      for (const hex of c.colors) {
-        result.push({ name: c.name, hex })
-      }
-    }
-  }
-  return result
+  return competitors
+    .filter(c => c.name?.trim())
+    .map(c => ({
+      name: c.name,
+      hex: c.colors?.[0] || '#888888',
+    }))
 }
 
 // companies.competitors から競合リストを抽出（STPツール向け）
 function extractCompetitors(
   competitors: Array<{ name: string; url?: string; colors?: string[]; notes?: string }>
-): Array<{ name: string; url: string }> {
+): Array<{ name: string; url: string; notes: string }> {
   return competitors.map(c => ({
     name: c.name,
     url: c.url || '',
+    notes: c.notes || '',
   }))
 }
 
-// カラーツールの competitor_colors を既存の competitors にマージ
+// カラーツールの competitor_colors で既存を置換（STPツール由来のデータは保持）
 function mergeCompetitorsFromColors(
   existing: Array<{ name: string; url: string; colors: string[]; notes: string }>,
   toolColors: Array<{ name: string; hex: string }>
 ): Array<{ name: string; url: string; colors: string[]; notes: string }> {
-  const result = existing.map(c => ({ ...c }))
+  // カラーツールの送信リストをソースオブトゥルースとして構築
+  const result: Array<{ name: string; url: string; colors: string[]; notes: string }> = []
 
   for (const tc of toolColors) {
     if (!tc.name.trim()) continue
-    const found = result.find(c => c.name === tc.name.trim())
-    if (found) {
-      if (!found.colors.includes(tc.hex)) {
-        found.colors = [...found.colors, tc.hex]
-      }
-    } else {
-      result.push({ name: tc.name.trim(), url: '', colors: [tc.hex], notes: '' })
+    const normalizedName = tc.name.trim().toLowerCase()
+    const found = existing.find(c => c.name.trim().toLowerCase() === normalizedName)
+    result.push({
+      name: tc.name.trim(),
+      url: found?.url || '',
+      colors: tc.hex ? [tc.hex] : [],
+      notes: found?.notes || '',
+    })
+  }
+
+  // STPツールのみで追加された競合（カラーリストにないがURL/notesがある）を保持
+  for (const ec of existing) {
+    if (!ec.name?.trim()) continue
+    const normalizedName = ec.name.trim().toLowerCase()
+    const inResult = result.find(r => r.name.trim().toLowerCase() === normalizedName)
+    if (!inResult && (ec.url || ec.notes)) {
+      result.push({ ...ec, colors: [] })
     }
   }
 
   return result
 }
 
-// STPツールの competitors を既存の competitors にマージ（name + url）
+// STPツールの competitors で既存を置換（カラーツール由来のデータは保持）
 function mergeCompetitorsFromSTP(
   existing: Array<{ name: string; url: string; colors: string[]; notes: string }>,
-  stpCompetitors: Array<{ name: string; url: string }>
+  stpCompetitors: Array<{ name: string; url: string; notes?: string }>
 ): Array<{ name: string; url: string; colors: string[]; notes: string }> {
-  const result = existing.map(c => ({ ...c }))
+  // STPツールの送信リストをソースオブトゥルースとして構築
+  const result: Array<{ name: string; url: string; colors: string[]; notes: string }> = []
 
   for (const sc of stpCompetitors) {
     if (!sc.name.trim()) continue
-    const found = result.find(c => c.name === sc.name.trim())
-    if (found) {
-      // URLが空でなければ更新
-      if (sc.url && sc.url.trim()) {
-        found.url = sc.url.trim()
-      }
-    } else {
-      result.push({ name: sc.name.trim(), url: sc.url?.trim() || '', colors: [], notes: '' })
+    const normalizedName = sc.name.trim().toLowerCase()
+    const found = existing.find(c => c.name.trim().toLowerCase() === normalizedName)
+    result.push({
+      name: sc.name.trim(),
+      url: sc.url?.trim() || '',
+      colors: found?.colors || [],
+      notes: sc.notes?.trim() || '',
+    })
+  }
+
+  // カラーツールのみで追加された競合（STPリストにないが色情報がある）を保持
+  for (const ec of existing) {
+    if (!ec.name?.trim()) continue
+    const normalizedName = ec.name.trim().toLowerCase()
+    const inResult = result.find(r => r.name.trim().toLowerCase() === normalizedName)
+    if (!inResult && ec.colors && ec.colors.length > 0) {
+      result.push({ ...ec })
     }
   }
 

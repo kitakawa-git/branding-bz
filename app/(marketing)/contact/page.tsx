@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { toast } from 'sonner'
-import { Button } from '@/components/ui/button'
 import { CheckCircle2 } from 'lucide-react'
 
 export default function ContactPage() {
@@ -58,7 +57,7 @@ export default function ContactPage() {
   // 送信完了
   if (submitted) {
     return (
-      <section className="bg-white px-6 py-32 text-center">
+      <section className="px-6 py-32 text-center">
         <div className="mx-auto max-w-md">
           <div className="w-16 h-16 rounded-full bg-green-50 text-green-500 flex items-center justify-center mx-auto mb-6">
             <CheckCircle2 className="h-8 w-8" />
@@ -66,14 +65,23 @@ export default function ContactPage() {
           <h1 className="text-2xl font-bold text-gray-900 mb-4">
             お問い合わせありがとうございます
           </h1>
-          <p className="text-gray-500 mb-8 leading-relaxed">
+          <p className="text-sm text-gray-600 mb-8 leading-relaxed">
             内容を確認のうえ、担当者より折り返しご連絡いたします。<br />
             通常2営業日以内にお返事いたします。
           </p>
           <Link href="/">
-            <Button size="lg" className="h-12 px-8 font-bold">
-              トップに戻る
-            </Button>
+            <button
+              className="relative h-12 px-12 rounded-full text-base font-bold text-white overflow-hidden transition-all hover:scale-105 hover:shadow-2xl"
+              style={{
+                background: 'rgba(0, 0, 0, 0.75)',
+                backdropFilter: 'blur(12px) saturate(120%)',
+                WebkitBackdropFilter: 'blur(12px) saturate(120%)',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                boxShadow: '0px 8px 24px 0 rgba(0, 0, 0, 0.2), inset 0px 1px 0px 0px rgba(255, 255, 255, 0.15)',
+              }}
+            >
+              <span className="relative z-10">トップに戻る</span>
+            </button>
           </Link>
         </div>
       </section>
@@ -85,17 +93,19 @@ export default function ContactPage() {
   return (
     <>
       {/* ヒーロー */}
-      <section className="bg-white px-6 pt-16 pb-6 text-center">
-        <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-          お問い合わせ
-        </h1>
-        <p className="text-gray-600 max-w-lg mx-auto">
-          ご質問・ご相談・お申し込みなど、お気軽にお問い合わせください。
-        </p>
+      <section className="px-6 py-16 md:py-24 text-center">
+        <div className="mx-auto max-w-4xl">
+          <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-gray-900 mb-4">
+            お問い合わせ
+          </h1>
+          <p className="text-lg md:text-xl text-gray-700 leading-relaxed max-w-2xl mx-auto">
+            ご質問・ご相談・お申し込みなど、お気軽にお問い合わせください。
+          </p>
+        </div>
       </section>
 
       {/* フォーム */}
-      <section className="bg-white px-6 pb-16">
+      <section className="bg-white px-6 pb-16 md:pb-24">
         <form onSubmit={handleSubmit} className="mx-auto max-w-2xl space-y-6">
           {/* 会社名 */}
           <div>
@@ -172,14 +182,20 @@ export default function ContactPage() {
 
           {/* 送信ボタン */}
           <div className="text-center pt-4">
-            <Button
+            <button
               type="submit"
               disabled={loading}
-              size="lg"
-              className="h-12 px-12 text-base font-bold"
+              className="relative h-12 px-12 rounded-full text-base font-bold text-white overflow-hidden transition-all hover:scale-105 hover:shadow-2xl disabled:opacity-50 disabled:hover:scale-100"
+              style={{
+                background: 'rgba(0, 0, 0, 0.75)',
+                backdropFilter: 'blur(12px) saturate(120%)',
+                WebkitBackdropFilter: 'blur(12px) saturate(120%)',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                boxShadow: '0px 8px 24px 0 rgba(0, 0, 0, 0.2), inset 0px 1px 0px 0px rgba(255, 255, 255, 0.15)',
+              }}
             >
-              {loading ? '送信中...' : '送信する'}
-            </Button>
+              <span className="relative z-10">{loading ? '送信中...' : '送信する'}</span>
+            </button>
           </div>
 
           <p className="text-center text-xs text-gray-400">

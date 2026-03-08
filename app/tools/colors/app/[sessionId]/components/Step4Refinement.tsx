@@ -5,7 +5,8 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { ArrowLeft, ArrowRight, ChevronRight } from 'lucide-react'
-import { ColorPicker } from '../../components/ColorPicker'
+import { HexColorPicker } from 'react-colorful'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { AccessibilityBadge } from '../../components/AccessibilityBadge'
 import { PalettePreview } from '../../components/PalettePreview'
 import { ChatInterface } from '../../components/ChatInterface'
@@ -126,7 +127,7 @@ export function Step4Refinement({
           </div>
 
           {/* 【2】カラーバー */}
-          <div className="flex h-[60px] w-full overflow-hidden rounded-lg">
+          <div className="flex h-20 w-full overflow-hidden rounded-lg">
             {allColors.map((c) => (
               <div
                 key={c.path}
@@ -144,21 +145,28 @@ export function Step4Refinement({
                 {allColors.map((c) => (
                   <div
                     key={c.path}
-                    className="rounded-lg border border-gray-200 bg-white p-3"
+                    className="flex items-center gap-3 rounded-lg bg-white p-3"
                   >
-                    {/* 色の丸 + 役割名 */}
-                    <div className="mb-2 flex items-center gap-2">
-                      <ColorPicker
-                        value={c.color.hex}
-                        onChange={(hex) => updateColor(c.path, hex)}
-                      />
-                      <span className="text-xs font-medium text-gray-700">{c.label}</span>
-                    </div>
-                    {/* HEX + RGB */}
-                    <div className="space-y-0.5 pl-10">
-                      <p className="font-mono text-xs text-gray-600">{c.color.hex.toUpperCase()}</p>
-                      <p className="text-[11px] text-gray-400">RGB({hexToRgbStr(c.color.hex)})</p>
-                      <p className="text-[11px] text-gray-500">{c.color.name}</p>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <button
+                          className="h-10 w-10 flex-shrink-0 rounded-lg border border-gray-200 shadow-sm transition-shadow hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                          style={{ backgroundColor: c.color.hex }}
+                          aria-label={`${c.label}のカラーピッカーを開く`}
+                        />
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-3" align="start">
+                        <HexColorPicker
+                          color={c.color.hex}
+                          onChange={(hex) => updateColor(c.path, hex)}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <div className="min-w-0">
+                      <p className="text-[10px] text-gray-400">{c.label}</p>
+                      <p className="truncate text-sm font-medium text-gray-900">{c.color.name}</p>
+                      <p className="font-mono text-xs text-gray-500">{c.color.hex.toUpperCase()}</p>
+                      <p className="text-[10px] text-gray-400">RGB({hexToRgbStr(c.color.hex)})</p>
                     </div>
                   </div>
                 ))}

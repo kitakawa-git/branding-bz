@@ -142,13 +142,13 @@ export function Step5Export({
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-foreground mb-6">Step 5: 確定・出力</h1>
+      <h1 className="text-2xl font-bold text-foreground mb-2">Step 5: 確定・出力</h1>
+      <p className="mb-5 text-[13px] text-muted-foreground">
+        パレットを確認して確定し、出力や連携を行いましょう
+      </p>
 
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
         <CardContent className="p-5">
-          <p className="mb-5 text-[13px] text-muted-foreground">
-            パレットを確認して確定し、出力や連携を行いましょう
-          </p>
 
           {/* パレット確認 */}
           <div className="rounded-lg border border-gray-200 bg-white p-5">

@@ -1,7 +1,7 @@
 'use client'
 
 // Step 1: 基本情報フォーム
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent } from '@/components/ui/card'
 import { IndustrySelect } from '@/components/shared/IndustrySelect'
 import { ColorPicker } from '../../components/ColorPicker'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2, ArrowRight } from 'lucide-react'
 import {
   type BrandStage,
   type CompetitorColor,
@@ -44,8 +44,13 @@ export function Step1BasicInfo({ project, onNext, onSaveField }: Step1Props) {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
   const [prefilled, setPrefilled] = useState(false)
+  const userIdRef = useRef<string | null>(null)
+  const companySyncRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // フォーム最新値を保持するref（デバウンスタイマー内から安定して読み取るため）
+  const formDataRef = useRef({ brandName: '', industryCategory: '', industrySubcategory: '', brandStage: '' as BrandStage | '', competitorColors: [] as CompetitorColor[] })
 
-  // プリフィル: 初回表示時に本体 or 過去セッションからデータを読み込み
+  // プリフィル: 本体(companies)の最新データを取得
+  // 全フィールド: セッションにデータがなければ companies から読み込み（マージはしない）
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -59,11 +64,12 @@ export function Step1BasicInfo({ project, onNext, onSaveField }: Step1Props) {
         if (result.source === 'none' || !result.data) return
 
         const d = result.data
-        // source === 'company': 管理画面（companies）のデータを常に最新として優先
-        // source === 'session': 過去セッションのデータは空フィールドのみ補完
+        // company ソース: 管理画面の最新データを常に反映（syncToCompanyで双方向同期済み）
+        // session ソース: 空の場合のみ補完
         const isCompany = result.source === 'company'
         const updates: Record<string, unknown> = {}
 
+        // スカラー値
         if (d.brand_name && (isCompany || !brandName)) {
           setBrandName(d.brand_name)
           updates.brand_name = d.brand_name
@@ -71,8 +77,7 @@ export function Step1BasicInfo({ project, onNext, onSaveField }: Step1Props) {
         if (d.industry_category && (isCompany || !industryCategory)) {
           setIndustryCategory(d.industry_category)
           updates.industry_category = d.industry_category
-          // 大分類が変わったら中分類もリセットしてから適用
-          if (isCompany && d.industry_category !== industryCategory) {
+          if (isCompany || !industrySubcategory) {
             setIndustrySubcategory(d.industry_subcategory || '')
             updates.industry_subcategory = d.industry_subcategory || ''
           }
@@ -85,9 +90,14 @@ export function Step1BasicInfo({ project, onNext, onSaveField }: Step1Props) {
           setBrandStage(d.brand_stage)
           updates.brand_stage = d.brand_stage
         }
-        if (d.competitor_colors?.length && (isCompany || competitorColors.length === 0)) {
-          setCompetitorColors(d.competitor_colors)
-          updates.competitor_colors = d.competitor_colors
+
+        // 競合カラー: company ソースなら常に最新値を適用、それ以外は空の場合のみ
+        if (d.competitor_colors?.length > 0 && (isCompany || competitorColors.length === 0)) {
+          const colors = (d.competitor_colors as Array<{ name: string; hex: string }>)
+            .filter((c: { name: string }) => c.name?.trim())
+            .map((c: { name: string; hex: string }) => ({ name: c.name.trim(), hex: c.hex || '#888888' }))
+          setCompetitorColors(colors)
+          updates.competitor_colors = colors
         }
 
         // 変更があればセッションに一括保存
@@ -104,10 +114,51 @@ export function Step1BasicInfo({ project, onNext, onSaveField }: Step1Props) {
     fetchProfile()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // 自動保存（onBlur）
+  // ユーザーID取得（companies同期用）
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      userIdRef.current = user?.id || null
+    })
+  }, [])
+
+  // フォーム最新値をrefに同期
+  useEffect(() => {
+    formDataRef.current = { brandName, industryCategory, industrySubcategory, brandStage, competitorColors }
+  })
+
+  // 本体（companies）へリアルタイム同期（fire and forget）
+  const syncToCompany = useCallback((data: {
+    company_name: string
+    industry_category: string
+    industry_subcategory: string
+    brand_stage: string
+    competitor_colors: CompetitorColor[]
+  }) => {
+    const userId = userIdRef.current
+    if (!userId) return
+    fetch('/api/tools/shared-profile', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, ...data }),
+    }).catch(() => {})
+  }, [])
+
+  // 自動保存（onBlur）: セッション保存 + デバウンスで本体同期
   const autoSave = useCallback((field: string, value: unknown) => {
     onSaveField({ [field]: value })
-  }, [onSaveField])
+    // 本体同期は1.5秒デバウンス（連続onBlurをバッチ化）
+    if (companySyncRef.current) clearTimeout(companySyncRef.current)
+    companySyncRef.current = setTimeout(() => {
+      const d = formDataRef.current
+      syncToCompany({
+        company_name: d.brandName.trim(),
+        industry_category: d.industryCategory,
+        industry_subcategory: d.industrySubcategory,
+        brand_stage: d.brandStage as string,
+        competitor_colors: d.competitorColors.filter(c => c.name.trim()),
+      })
+    }, 1500)
+  }, [onSaveField, syncToCompany])
 
   // バリデーション
   const validate = (): boolean => {
@@ -143,6 +194,7 @@ export function Step1BasicInfo({ project, onNext, onSaveField }: Step1Props) {
     if (!validate()) return
 
     setSaving(true)
+    if (companySyncRef.current) clearTimeout(companySyncRef.current)
     const data: Record<string, unknown> = {
       brand_name: brandName.trim(),
       industry_category: industryCategory,
@@ -151,6 +203,13 @@ export function Step1BasicInfo({ project, onNext, onSaveField }: Step1Props) {
       existing_colors: hasExistingColors ? existingColors : [],
       competitor_colors: competitorColors.filter(c => c.name.trim()),
     }
+    syncToCompany({
+      company_name: brandName.trim(),
+      industry_category: industryCategory,
+      industry_subcategory: industrySubcategory,
+      brand_stage: brandStage as string,
+      competitor_colors: competitorColors.filter(c => c.name.trim()),
+    })
 
     const success = await onNext(data)
     if (!success) setSaving(false)
@@ -174,7 +233,7 @@ export function Step1BasicInfo({ project, onNext, onSaveField }: Step1Props) {
 
   // 競合カラー操作
   const addCompetitor = () => {
-    if (competitorColors.length >= 3) return
+    if (competitorColors.length >= 5) return
     setCompetitorColors([...competitorColors, { name: '', hex: '#888888' }])
   }
 
@@ -318,7 +377,7 @@ export function Step1BasicInfo({ project, onNext, onSaveField }: Step1Props) {
           {/* 競合カラー */}
           <div className="mb-5">
             <h2 className="text-sm font-bold mb-3">
-              競合ブランドのカラー <span className="text-xs text-gray-400 font-normal">（任意）</span>
+              競合企業・サービスのブランドカラー <span className="text-xs text-gray-400 font-normal">（任意）</span>
             </h2>
             {competitorColors.length > 0 && (
               <div className="space-y-3 mb-3">
@@ -334,20 +393,21 @@ export function Step1BasicInfo({ project, onNext, onSaveField }: Step1Props) {
                       value={comp.hex}
                       onChange={(hex) => updateCompetitor(i, 'hex', hex)}
                     />
+                    <div className="flex-1" />
                     <Button
                       type="button"
-                      variant="ghost"
-                      size="sm"
+                      variant="outline"
+                      size="icon"
                       onClick={() => removeCompetitor(i)}
-                      className="shrink-0 h-9 w-9 p-0 text-gray-400 hover:text-red-500"
+                      className="size-9 shrink-0 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 size={14} />
                     </Button>
                   </div>
                 ))}
               </div>
             )}
-            {competitorColors.length < 3 && (
+            {competitorColors.length < 5 && (
               <Button
                 type="button"
                 variant="outline"
@@ -356,7 +416,7 @@ export function Step1BasicInfo({ project, onNext, onSaveField }: Step1Props) {
                 className="text-sm"
               >
                 <Plus className="h-4 w-4 mr-1" />
-                競合を追加（最大3社）
+                競合を追加（最大5社）
               </Button>
             )}
           </div>
@@ -370,6 +430,7 @@ export function Step1BasicInfo({ project, onNext, onSaveField }: Step1Props) {
           disabled={saving}
         >
           {saving ? '保存中...' : 'イメージ入力へ'}
+          {!saving && <ArrowRight className="ml-1 h-4 w-4" />}
         </Button>
       </div>
     </div>

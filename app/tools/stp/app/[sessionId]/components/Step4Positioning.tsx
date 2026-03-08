@@ -10,8 +10,18 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { PositioningMap } from '@/components/PositioningMap'
 import type { PositioningMapData } from '@/lib/types/positioning-map'
 import {
-  ChevronLeft,
-  ChevronRight,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import {
+  ArrowLeft,
+  ArrowRight,
   Plus,
   Trash2,
   Sparkles,
@@ -52,6 +62,9 @@ interface TargetingData {
   main_target: string
   sub_targets: string[]
   target_description: string
+  buying_factors?: string[]
+  strengths?: string
+  competitor_traits?: string
 }
 
 interface Step4Props {
@@ -177,10 +190,12 @@ export function Step4Positioning({
   }, [])
 
   // 再提案
+  const [confirmOpen, setConfirmOpen] = useState(false)
+
   const handleRegenerate = () => {
     if (items.length > 0) {
-      const ok = window.confirm('現在の軸と配置が上書きされます。よろしいですか？')
-      if (!ok) return
+      setConfirmOpen(true)
+      return
     }
     fetchAISuggestion()
   }
@@ -425,9 +440,9 @@ export function Step4Positioning({
       )}
 
       {/* フッターナビゲーション */}
-      <div className="mt-6 flex items-center justify-between">
+      <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 bg-background/80 backdrop-blur border-t border-border px-6 py-3 flex items-center justify-between">
         <Button variant="outline" onClick={onBack} className="gap-1">
-          <ChevronLeft className="h-4 w-4" />
+          <ArrowLeft className="h-4 w-4" />
           戻る
         </Button>
 
@@ -436,10 +451,26 @@ export function Step4Positioning({
           disabled={saving || !isValid || aiLoading}
           className="gap-1"
         >
-          {saving ? '保存中...' : '次へ：確認・出力'}
-          {!saving && <ChevronRight className="h-4 w-4" />}
+          {saving ? '保存中...' : '確認・出力へ'}
+          {!saving && <ArrowRight className="h-4 w-4" />}
         </Button>
       </div>
+
+      {/* AI再提案の確認ダイアログ */}
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>確認</AlertDialogTitle>
+            <AlertDialogDescription>
+              現在の軸と配置が上書きされます。よろしいですか？
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>キャンセル</AlertDialogCancel>
+            <AlertDialogAction onClick={() => fetchAISuggestion()}>OK</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

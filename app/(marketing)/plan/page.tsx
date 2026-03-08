@@ -1,8 +1,7 @@
 import Link from 'next/link'
 import { Check, Minus, ArrowRight } from 'lucide-react'
 import type { Metadata } from 'next'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card } from '@/components/ui/card'
 
 export const metadata: Metadata = {
   title: '料金プラン',
@@ -79,67 +78,102 @@ export default function PlanPage() {
   return (
     <>
       {/* ヒーロー */}
-      <section className="bg-white px-6 pt-16 pb-8 text-center">
-        <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-          料金プラン
-        </h1>
-        <p className="text-gray-600 max-w-lg mx-auto">
-          チーム規模に合わせて選べる3つのプラン。<br />
-          すべてのプランで主要機能をお使いいただけます。
-        </p>
+      <section className="px-6 py-16 md:py-24 text-center">
+        <div className="mx-auto max-w-4xl">
+          <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-gray-900 mb-4">
+            料金プラン
+          </h1>
+          <p className="text-lg md:text-xl text-gray-700 leading-relaxed max-w-2xl mx-auto">
+            チーム規模に合わせて選べる3つのプラン。<br className="hidden sm:block" />
+            すべてのプランで主要機能をお使いいただけます。
+          </p>
+        </div>
       </section>
 
       {/* プランカード */}
-      <section className="bg-white px-6 pb-16">
+      <section className="bg-white px-6 pb-16 md:pb-24">
         <div className="mx-auto max-w-7xl grid md:grid-cols-3 gap-6">
           {plans.map((plan) => (
             <div
               key={plan.name}
-              className={`rounded-xl p-8 text-center transition-shadow ${
-                plan.highlight
-                  ? 'bg-gray-900 text-white ring-2 ring-blue-600 shadow-xl'
-                  : 'bg-gray-50 border border-gray-200 hover:shadow-md'
-              }`}
+              className="relative rounded-2xl overflow-hidden text-center transition-all hover:scale-[1.02] hover:shadow-2xl"
+              style={plan.highlight ? {
+                background: 'rgba(15, 15, 15, 0.9)',
+                backdropFilter: 'blur(12px) saturate(120%)',
+                WebkitBackdropFilter: 'blur(12px) saturate(120%)',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                boxShadow: '0px 8px 24px 0 rgba(0, 0, 0, 0.2), inset 0px 0px 4px 2px rgba(255, 255, 255, 0.08)',
+              } : {
+                background: 'rgba(255, 255, 255, 0.12)',
+                backdropFilter: 'blur(12px) saturate(120%)',
+                WebkitBackdropFilter: 'blur(12px) saturate(120%)',
+                border: '1px solid rgba(255, 255, 255, 0.25)',
+                boxShadow: '0px 8px 24px 0 rgba(12, 74, 110, 0.12), inset 0px 0px 4px 2px rgba(255, 255, 255, 0.15)',
+              }}
             >
-              <p className={`text-sm font-medium mb-1 ${plan.highlight ? 'text-blue-400' : 'text-gray-500'}`}>
-                {plan.subtitle}
-              </p>
-              <h3 className="text-2xl font-bold mb-4">{plan.name}</h3>
+              {/* リフレクション */}
+              <div className="absolute inset-0 pointer-events-none rounded-2xl"
+                style={{ background: 'linear-gradient(to left top, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 50%)' }} />
+              <div className="absolute inset-0 pointer-events-none rounded-2xl"
+                style={{ background: 'linear-gradient(to bottom, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0) 100%)' }} />
 
-              {plan.price ? (
-                <div className="mb-2">
-                  <span className="text-4xl font-bold tracking-tight" style={{ letterSpacing: '-2px' }}>
-                    ¥{plan.price}
-                  </span>
-                  <span className={`text-sm ml-1 ${plan.highlight ? 'text-gray-300' : 'text-gray-500'}`}>/月</span>
-                </div>
-              ) : (
-                <div className="mb-2">
-                  <span className="text-3xl font-bold">ASK</span>
-                </div>
-              )}
-
-              <p className={`text-sm mb-6 ${plan.highlight ? 'text-gray-300' : 'text-gray-500'}`}>
-                {plan.userLimit}
-              </p>
-
-              {plan.perUser && (
-                <p className={`text-xs mb-6 ${plan.highlight ? 'text-gray-400' : 'text-gray-400'}`}>
-                  1ユーザーあたり ¥{plan.perUser}
+              <div className={`relative z-10 p-8 ${plan.highlight ? 'text-white' : ''}`}>
+                <p className={`text-sm font-medium mb-1 ${plan.highlight ? 'text-blue-400' : 'text-gray-500'}`}>
+                  {plan.subtitle}
                 </p>
-              )}
+                <h3 className="text-2xl font-bold mb-4">{plan.name}</h3>
 
-              <Link href="/contact">
-                {plan.highlight ? (
-                  <Button size="lg" className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-bold">
-                    {plan.price ? 'お申し込み' : 'お問い合わせ'}
-                  </Button>
+                {plan.price ? (
+                  <div className="mb-2">
+                    <span className="text-4xl font-bold tracking-tight" style={{ letterSpacing: '-2px' }}>
+                      ¥{plan.price}
+                    </span>
+                    <span className={`text-sm ml-1 ${plan.highlight ? 'text-gray-300' : 'text-gray-500'}`}>/月</span>
+                  </div>
                 ) : (
-                  <Button variant="outline" size="lg" className="w-full h-12 font-bold bg-gray-900 text-white hover:bg-gray-800 border-0">
-                    {plan.price ? 'お申し込み' : 'お問い合わせ'}
-                  </Button>
+                  <div className="mb-2">
+                    <span className="text-3xl font-bold">ASK</span>
+                  </div>
                 )}
-              </Link>
+
+                <p className={`text-sm mb-6 ${plan.highlight ? 'text-gray-300' : 'text-gray-500'}`}>
+                  {plan.userLimit}
+                </p>
+
+                {plan.perUser && (
+                  <p className={`text-xs mb-6 ${plan.highlight ? 'text-gray-400' : 'text-gray-400'}`}>
+                    1ユーザーあたり ¥{plan.perUser}
+                  </p>
+                )}
+
+                <Link href="/contact">
+                  {plan.highlight ? (
+                    <button
+                      className="relative w-full h-12 rounded-full text-base font-bold text-white overflow-hidden transition-all hover:scale-105 hover:shadow-2xl"
+                      style={{
+                        background: 'rgba(37, 99, 235, 0.9)',
+                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                        boxShadow: '0px 8px 24px 0 rgba(37, 99, 235, 0.3), inset 0px 1px 0px 0px rgba(255, 255, 255, 0.2)',
+                      }}
+                    >
+                      <span className="relative z-10">{plan.price ? 'お申し込み' : 'お問い合わせ'}</span>
+                    </button>
+                  ) : (
+                    <button
+                      className="relative w-full h-12 rounded-full text-base font-bold text-white overflow-hidden transition-all hover:scale-105 hover:shadow-2xl"
+                      style={{
+                        background: 'rgba(0, 0, 0, 0.75)',
+                        backdropFilter: 'blur(12px) saturate(120%)',
+                        WebkitBackdropFilter: 'blur(12px) saturate(120%)',
+                        border: '1px solid rgba(255, 255, 255, 0.15)',
+                        boxShadow: '0px 8px 24px 0 rgba(0, 0, 0, 0.2), inset 0px 1px 0px 0px rgba(255, 255, 255, 0.15)',
+                      }}
+                    >
+                      <span className="relative z-10">{plan.price ? 'お申し込み' : 'お問い合わせ'}</span>
+                    </button>
+                  )}
+                </Link>
+              </div>
             </div>
           ))}
         </div>
@@ -154,9 +188,9 @@ export default function PlanPage() {
       </section>
 
       {/* 機能比較テーブル */}
-      <section className="bg-gray-50 px-6 py-16">
+      <section className="bg-gray-50 px-6 py-16 md:py-24">
         <div className="mx-auto max-w-5xl">
-          <h2 className="text-center text-2xl font-bold text-gray-900 mb-10">
+          <h2 className="text-center text-xl md:text-[1.625rem] font-bold text-gray-900 mb-10">
             機能比較
           </h2>
           <Card className="overflow-hidden">
@@ -198,9 +232,9 @@ export default function PlanPage() {
       </section>
 
       {/* 導入ステップ */}
-      <section className="bg-white px-6 py-16">
+      <section className="bg-white px-6 py-16 md:py-24">
         <div className="mx-auto max-w-5xl">
-          <h2 className="text-center text-2xl font-bold text-gray-900 mb-12">
+          <h2 className="text-center text-xl md:text-[1.625rem] font-bold text-gray-900 mb-12">
             かんたん3ステップで導入
           </h2>
           <div className="grid md:grid-cols-3 gap-8">
@@ -210,7 +244,7 @@ export default function PlanPage() {
                   {step.num}
                 </div>
                 <h3 className="font-bold text-gray-900 mb-2">{step.title}</h3>
-                <p className="text-sm text-gray-500 leading-relaxed">{step.description}</p>
+                <p className="text-sm text-gray-600 leading-relaxed">{step.description}</p>
               </div>
             ))}
           </div>
@@ -218,19 +252,30 @@ export default function PlanPage() {
       </section>
 
       {/* CTA */}
-      <section className="bg-gray-50 px-6 py-16 text-center">
+      <section className="bg-gray-50 px-6 py-16 md:py-24 text-center">
         <div className="mx-auto max-w-7xl">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+          <h2 className="text-xl md:text-[1.625rem] font-bold text-gray-900 mb-4">
             無料トライアルのお申し込み
           </h2>
-          <p className="text-sm text-gray-500 mb-8">
+          <p className="text-sm text-gray-600 mb-10">
             利用規約 & プライバシーポリシーをよく読み、お問い合わせフォームよりお申し込みください。
           </p>
           <Link href="/contact">
-            <Button size="lg" className="h-12 px-8 text-base font-bold">
-              お問い合わせ
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
+            <button
+              className="relative h-12 px-12 rounded-full text-base font-bold text-white overflow-hidden transition-all hover:scale-105 hover:shadow-2xl"
+              style={{
+                background: 'rgba(0, 0, 0, 0.75)',
+                backdropFilter: 'blur(12px) saturate(120%)',
+                WebkitBackdropFilter: 'blur(12px) saturate(120%)',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                boxShadow: '0px 8px 24px 0 rgba(0, 0, 0, 0.2), inset 0px 1px 0px 0px rgba(255, 255, 255, 0.15)',
+              }}
+            >
+              <span className="relative z-10 inline-flex items-center gap-2">
+                お問い合わせ
+                <ArrowRight className="h-4 w-4" />
+              </span>
+            </button>
           </Link>
           <p className="mt-6 text-xs text-gray-400">
             ※ 業種業態によっては、ご利用をお断りさせていただく場合がございます。
