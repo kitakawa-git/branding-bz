@@ -261,16 +261,16 @@ function PdfPositioningMap({
         />
 
         {/* 軸ラベル */}
-        <Text x={PAD} y={H / 2 - 8} style={{ fontSize: 8, color: '#9CA3AF' }}>
+        <Text x={PAD} y={H / 2 - 8} style={{ fontSize: 8, fontFamily: FONT, color: '#9CA3AF' }}>
           {positioning.x_axis.left}
         </Text>
-        <Text x={W - PAD - 2} y={H / 2 - 8} style={{ fontSize: 8, color: '#9CA3AF', textAnchor: 'end' as unknown as undefined }}>
+        <Text x={W - PAD - 2} y={H / 2 - 8} style={{ fontSize: 8, fontFamily: FONT, color: '#9CA3AF', textAnchor: 'end' as unknown as undefined }}>
           {positioning.x_axis.right}
         </Text>
-        <Text x={W / 2 + 4} y={PAD + 4} style={{ fontSize: 8, color: '#9CA3AF' }}>
+        <Text x={W / 2 + 4} y={PAD + 4} style={{ fontSize: 8, fontFamily: FONT, color: '#9CA3AF' }}>
           {positioning.y_axis.top}
         </Text>
-        <Text x={W / 2 + 4} y={H - PAD + 12} style={{ fontSize: 8, color: '#9CA3AF' }}>
+        <Text x={W / 2 + 4} y={H - PAD + 12} style={{ fontSize: 8, fontFamily: FONT, color: '#9CA3AF' }}>
           {positioning.y_axis.bottom}
         </Text>
 
@@ -285,7 +285,7 @@ function PdfPositioningMap({
               <Text
                 x={cx}
                 y={cy + r + 10}
-                style={{ fontSize: 7, color: '#374151', textAnchor: 'middle' as unknown as undefined }}
+                style={{ fontSize: 7, fontFamily: FONT, color: '#374151', textAnchor: 'middle' as unknown as undefined }}
               >
                 {item.name}
               </Text>
