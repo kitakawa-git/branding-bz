@@ -187,7 +187,7 @@ export default function Header() {
             >
               <Link
                 href="/news"
-                className="block px-3 py-2.5 text-base font-semibold text-gray-700 rounded-xl hover:bg-white/60 hover:text-gray-900 transition-colors"
+                className="block px-3 py-2.5 text-base font-semibold text-gray-600 rounded-xl hover:bg-white/60 hover:text-gray-900 transition-colors"
                 onClick={() => setMenuOpen(false)}
               >
                 お知らせ
@@ -197,7 +197,7 @@ export default function Header() {
                 <Link
                   key={tool.href}
                   href={tool.href}
-                  className="block px-3 py-2.5 pl-5 text-base font-semibold text-gray-700 rounded-xl hover:bg-white/60 hover:text-gray-900 transition-colors"
+                  className="block px-3 py-2.5 pl-5 text-base font-semibold text-gray-600 rounded-xl hover:bg-white/60 hover:text-gray-900 transition-colors"
                   onClick={() => setMenuOpen(false)}
                 >
                   {tool.label}
@@ -207,7 +207,7 @@ export default function Header() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="block px-3 py-2.5 text-base font-semibold text-gray-700 rounded-xl hover:bg-white/60 hover:text-gray-900 transition-colors"
+                  className="block px-3 py-2.5 text-base font-semibold text-gray-600 rounded-xl hover:bg-white/60 hover:text-gray-900 transition-colors"
                   onClick={() => setMenuOpen(false)}
                 >
                   {item.label}
