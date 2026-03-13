@@ -26,17 +26,18 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
-  FileText,
   Compass,
+  Map,
   Palette,
   MessageSquare,
-  Trophy,
-  Target,
+  MessageSquareHeart,
+  Milestone,
   LayoutDashboard,
   CircleUser,
   CreditCard,
   LogOut,
   ChevronsUpDown,
+  ArrowLeftRight,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -46,10 +47,10 @@ type NavItem = {
   icon: LucideIcon
 }
 
-// ブランド掲示グループ
+// ブランド基盤グループ
 const brandItems: NavItem[] = [
-  { href: '/portal/guidelines', label: 'ブランド方針', icon: FileText },
-  { href: '/portal/strategy', label: 'ブランド戦略', icon: Compass },
+  { href: '/portal/guidelines', label: 'ブランド方針', icon: Compass },
+  { href: '/portal/strategy', label: 'ブランド戦略', icon: Map },
   { href: '/portal/visuals', label: 'ビジュアル', icon: Palette },
   { href: '/portal/verbal', label: 'バーバル', icon: MessageSquare },
 ]
@@ -57,8 +58,8 @@ const brandItems: NavItem[] = [
 // 浸透グループ
 const engagementItems: NavItem[] = [
   { href: '/portal', label: 'ダッシュボード', icon: LayoutDashboard },
-  { href: '/portal/timeline', label: 'タイムライン', icon: Trophy },
-  { href: '/portal/kpi', label: '目標・KPI', icon: Target },
+  { href: '/portal/timeline', label: 'タイムライン', icon: MessageSquareHeart },
+  { href: '/portal/kpi', label: '目標・KPI', icon: Milestone },
 ]
 
 function NavGroup({ label, items, pathname }: { label: string; items: NavItem[]; pathname: string }) {
@@ -88,7 +89,7 @@ function NavGroup({ label, items, pathname }: { label: string; items: NavItem[];
 
 export function PortalSidebar() {
   const pathname = usePathname()
-  const { member, companyName, companyLogoUrl, slogan, profileName, profilePhotoUrl, profileSlug, signOut } = usePortalAuth()
+  const { member, companyName, companyLogoUrl, slogan, profileName, profilePhotoUrl, profileSlug, isAdmin, signOut } = usePortalAuth()
   const [cardPreviewOpen, setCardPreviewOpen] = useState(false)
 
   const brandInitial = companyName?.slice(0, 1) || 'B'
@@ -146,7 +147,7 @@ export function PortalSidebar() {
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
-          <NavGroup label="ブランド掲示" items={brandItems} pathname={pathname} />
+          <NavGroup label="ブランド基盤" items={brandItems} pathname={pathname} />
 
         </SidebarContent>
 
@@ -191,6 +192,14 @@ export function PortalSidebar() {
                     <CreditCard className="size-4" />
                     名刺プレビュー
                   </DropdownMenuItem>
+                  {isAdmin && (
+                    <DropdownMenuItem asChild className="h-10 px-3 gap-2 text-base font-medium rounded-md">
+                      <Link href="/admin" className="no-underline">
+                        <ArrowLeftRight className="size-4" />
+                        管理画面
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem onClick={signOut} className="h-10 px-3 gap-2 text-base font-medium rounded-md">
                     <LogOut className="size-4" />
                     ログアウト

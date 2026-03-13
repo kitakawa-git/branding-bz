@@ -39,7 +39,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import { DatePicker } from '@/components/date-picker'
-import { Target, Plus, Pencil, Trash2, AlertCircle, CalendarDays, X, ChevronDown, ChevronUp, Archive } from 'lucide-react'
+import { Milestone, Plus, Pencil, Trash2, AlertCircle, CalendarDays, X, ChevronDown, ChevronUp, Archive } from 'lucide-react'
 import { toast } from 'sonner'
 
 // ============================================
@@ -625,7 +625,7 @@ export default function KpiPage() {
 
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="py-16 text-center">
-            <Target size={48} className="mx-auto text-muted-foreground mb-4" />
+            <Milestone size={48} className="mx-auto text-muted-foreground mb-4" />
             <h2 className="text-lg font-bold text-foreground mb-2">目標がまだ設定されていません</h2>
             {(goalPeriod?.show_goal_banner !== false) ? (
               <>

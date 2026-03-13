@@ -173,6 +173,7 @@ function resolveProfile(member: MemberRow): { name: string; photoUrl: string | n
 // ============================================
 
 const dashboardTabs = [
+  { label: 'スコア', href: '/admin/brand-score' },
   { label: 'タイムライン投稿', href: '/admin/dashboard' },
   { label: 'スマート名刺', href: '/admin/analytics' },
 ]

@@ -161,7 +161,7 @@ export default function PlanPage() {
           </p>
           <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-gray-900 leading-snug md:leading-snug">
             あなたのブランドフェーズに<br className="hidden sm:block" />
-            最適なプランを。
+            最適なプランを
           </h1>
           <p className="mt-6 text-lg md:text-xl text-gray-700 max-w-2xl mx-auto leading-relaxed">
             体験から始めて、ブランドの成長に合わせてステップアップ。<br className="hidden sm:block" />

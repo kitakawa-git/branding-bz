@@ -70,19 +70,25 @@ const rows = [
 
 export default function TokushoPage() {
   return (
-    <div className="bg-white min-h-screen">
-      <div className="mx-auto max-w-4xl px-6 py-24 md:py-32">
-
-        {/* ページ見出し */}
-        <div className="mb-12">
-          <p className="text-sm font-semibold tracking-wide text-gray-500 mb-2">Legal</p>
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-gray-900">
+    <>
+      {/* ヒーロー */}
+      <section className="px-6 pt-[120px] pb-16 md:pt-[120px] md:pb-24 text-center">
+        <div className="mx-auto max-w-4xl">
+          <p className="text-xs font-semibold tracking-[0.25em] text-gray-400 uppercase mb-4">
+            Legal
+          </p>
+          <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-gray-900 leading-snug md:leading-snug">
             特定商取引法に基づく表記
           </h1>
-          <p className="mt-4 text-sm text-gray-500">最終更新日：2026年3月10日</p>
+          <p className="mt-6 text-lg md:text-xl text-gray-700 leading-relaxed max-w-2xl mx-auto">
+            最終更新日：2026年3月10日
+          </p>
         </div>
+      </section>
 
-        {/* テーブル */}
+      {/* テーブル */}
+      <section className="bg-white px-6 pb-16 md:pb-24">
+        <div className="mx-auto max-w-4xl">
         <div className="border border-gray-200 rounded-xl overflow-hidden">
           <table className="w-full text-sm">
             <tbody>
@@ -120,7 +126,8 @@ export default function TokushoPage() {
           ※ 本表記は特定商取引に関する法律第11条に基づき掲載しています。
           お問い合わせは <a href="mailto:bz@include.bz" className="text-blue-600 hover:underline">bz@include.bz</a> までご連絡ください。
         </p>
-      </div>
-    </div>
+        </div>
+      </section>
+    </>
   )
 }

@@ -7,18 +7,25 @@ export const metadata: Metadata = {
 
 export default function PrivacyPolicyPage() {
   return (
-    <div className="bg-white min-h-screen">
-      <div className="mx-auto max-w-4xl px-6 py-24 md:py-32">
-
-        {/* ページ見出し */}
-        <div className="mb-12">
-          <p className="text-sm font-semibold tracking-wide text-gray-500 mb-2">Legal</p>
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-gray-900">プライバシーポリシー</h1>
-          <p className="mt-4 text-sm text-gray-500">最終更新日：2026年3月10日</p>
+    <>
+      {/* ヒーロー */}
+      <section className="px-6 pt-[120px] pb-16 md:pt-[120px] md:pb-24 text-center">
+        <div className="mx-auto max-w-4xl">
+          <p className="text-xs font-semibold tracking-[0.25em] text-gray-400 uppercase mb-4">
+            Privacy Policy
+          </p>
+          <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-gray-900 leading-snug md:leading-snug">
+            プライバシーポリシー
+          </h1>
+          <p className="mt-6 text-lg md:text-xl text-gray-700 leading-relaxed max-w-2xl mx-auto">
+            最終更新日：2026年3月10日
+          </p>
         </div>
+      </section>
 
-        {/* 本文 */}
-        <div className="space-y-10 text-sm leading-relaxed text-gray-700">
+      {/* 本文 */}
+      <section className="bg-white px-6 pb-16 md:pb-24">
+        <div className="mx-auto max-w-4xl space-y-10 text-sm leading-relaxed text-gray-700">
 
           <p>
             ID INC.（アイディー株式会社、以下「当社」といいます。）は、当社が運営するブランディング支援プラットフォーム
@@ -135,8 +142,8 @@ export default function PrivacyPolicyPage() {
           </Section>
 
         </div>
-      </div>
-    </div>
+      </section>
+    </>
   )
 }
 

@@ -31,14 +31,25 @@ export default async function NewsListPage() {
   const items = (news || []) as NewsItem[]
 
   return (
-    <section className="bg-white px-6 py-16 md:py-24" style={{ paddingTop: 'calc(56px + 4rem)' }}>
-      <div className="mx-auto max-w-7xl">
-        <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-gray-900 text-center mb-4">
-          ニュース
-        </h1>
-        <p className="text-lg text-gray-500 text-center mb-12">
-          最新のお知らせ・アップデート情報
-        </p>
+    <>
+      {/* ヒーロー */}
+      <section className="px-6 pt-[120px] pb-16 md:pt-[120px] md:pb-24 text-center">
+        <div className="mx-auto max-w-4xl">
+          <p className="text-xs font-semibold tracking-[0.25em] text-gray-400 uppercase mb-4">
+            News
+          </p>
+          <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-gray-900 leading-snug md:leading-snug">
+            ニュース
+          </h1>
+          <p className="mt-6 text-lg md:text-xl text-gray-700 leading-relaxed max-w-2xl mx-auto">
+            最新のお知らせ・アップデート情報
+          </p>
+        </div>
+      </section>
+
+      {/* ニュース一覧 */}
+      <section className="bg-white px-6 pb-16 md:pb-24">
+        <div className="mx-auto max-w-7xl">
 
         {items.length === 0 ? (
           <p className="text-center text-gray-500 py-16">
@@ -78,5 +89,6 @@ export default async function NewsListPage() {
         )}
       </div>
     </section>
+    </>
   )
 }

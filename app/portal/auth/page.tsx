@@ -184,11 +184,11 @@ function PortalAuthContent() {
       className="flex min-h-screen flex-col items-center justify-center font-sans"
       style={{
         background: [
-          'radial-gradient(ellipse 180% 160% at 5% 20%, rgba(196, 181, 253, 0.8) 0%, transparent 55%)',
-          'radial-gradient(ellipse 160% 140% at 85% 10%, rgba(253, 186, 116, 0.7) 0%, transparent 55%)',
-          'radial-gradient(ellipse 150% 130% at 50% 90%, rgba(167, 243, 208, 0.65) 0%, transparent 55%)',
-          'radial-gradient(ellipse 130% 110% at 95% 65%, rgba(251, 207, 232, 0.6) 0%, transparent 55%)',
-          'linear-gradient(135deg, rgba(245, 243, 255, 1) 0%, rgba(255, 251, 245, 1) 50%, rgba(243, 255, 251, 1) 100%)',
+          'radial-gradient(ellipse 180% 160% at 5% 20%, rgba(196, 181, 253, 0.5) 0%, transparent 55%)',
+          'radial-gradient(ellipse 160% 140% at 85% 10%, rgba(253, 186, 116, 0.4) 0%, transparent 55%)',
+          'radial-gradient(ellipse 150% 130% at 50% 90%, rgba(167, 243, 208, 0.45) 0%, transparent 55%)',
+          'radial-gradient(ellipse 130% 110% at 95% 65%, rgba(251, 207, 232, 0.4) 0%, transparent 55%)',
+          '#ffffff',
         ].join(', '),
       }}
     >
@@ -209,9 +209,12 @@ function PortalAuthContent() {
 
         <div className="relative z-10 p-10">
           <div className="mb-8 text-center">
-            <h1 className="mb-2 text-2xl font-bold text-gray-900">
-              branding.bz
-            </h1>
+            <img
+              src="/logo.svg"
+              alt="branding.bz"
+              className="mx-auto mb-3"
+              style={{ height: '32px', width: 'auto' }}
+            />
             <p className="m-0 text-sm text-gray-500">
               {mode === 'login' ? subtitle : 'アカウントを作成'}
             </p>
@@ -268,7 +271,7 @@ function PortalAuthContent() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="6文字以上"
+                placeholder="パスワードを入力"
                 required
                 minLength={6}
                 className="h-10 bg-white/60 border-white/80 focus-visible:ring-gray-400"
