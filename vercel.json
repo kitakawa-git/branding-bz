@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/brand-score-snapshot",
+      "schedule": "0 18 * * *"
+    }
+  ]
+}
