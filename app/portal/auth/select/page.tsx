@@ -10,7 +10,7 @@ import { Palette, BarChart3, UserCircle, Building2 } from 'lucide-react'
 
 interface ServiceCard {
   id: string
-  icon: React.ReactNode
+  Icon: typeof BarChart3
   title: string
   description: string
   href: string
@@ -21,7 +21,7 @@ interface ServiceCard {
 const SERVICES: ServiceCard[] = [
   {
     id: 'stp',
-    icon: <BarChart3 size={28} strokeWidth={1.5} className="text-blue-600" />,
+    Icon: BarChart3,
     title: 'STP分析ツール',
     description: 'AIがセグメンテーション・ターゲティング・ポジショニングを支援',
     href: '/tools/stp/app',
@@ -30,7 +30,7 @@ const SERVICES: ServiceCard[] = [
   },
   {
     id: 'persona',
-    icon: <UserCircle size={28} strokeWidth={1.5} className="text-orange-600" />,
+    Icon: UserCircle,
     title: 'ペルソナビルダー',
     description: 'AIがターゲット顧客の人物像とカスタマージャーニーを生成',
     href: '/tools/persona/app',
@@ -39,7 +39,7 @@ const SERVICES: ServiceCard[] = [
   },
   {
     id: 'colors',
-    icon: <Palette size={28} strokeWidth={1.5} className="text-violet-600" />,
+    Icon: Palette,
     title: 'ブランドカラー定義ツール',
     description: 'AIがブランドに最適なカラーパレットを3案提案します',
     href: '/tools/colors/app',
@@ -48,7 +48,7 @@ const SERVICES: ServiceCard[] = [
   },
   {
     id: 'platform',
-    icon: <Building2 size={28} strokeWidth={1.5} className="text-emerald-600" />,
+    Icon: Building2,
     title: 'ブランド管理プラットフォーム',
     description: 'ブランド掲示・名刺・KPI管理を一元管理',
     href: '/portal',
@@ -177,7 +177,7 @@ function ServiceSelectContent() {
 
               <div className="relative z-10 flex items-center gap-4 p-5">
                 <div className="flex-shrink-0 flex items-center justify-center w-12 h-12">
-                  {service.icon}
+                  <service.Icon size={28} strokeWidth={1.5} className={isHighlighted ? 'text-blue-600' : 'text-gray-900'} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="text-sm font-bold text-gray-900 mb-0.5">
