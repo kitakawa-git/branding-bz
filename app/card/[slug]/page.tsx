@@ -7,6 +7,8 @@ import { parseFontsFromDB, getCssFontFamily, getGoogleFontsUrl } from '@/lib/bra
 import { CardViewTracker } from './CardViewTracker'
 import { VCardButton } from './VCardButton'
 import { CardEventWrapper } from './CardEventWrapper'
+import { CardBrandSection } from './CardBrandSection'
+import { MicroFeedback } from '@/components/analytics/MicroFeedback'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
@@ -161,13 +163,20 @@ export default async function CardPage({ params }: Props) {
   // アクセントカラー
   const accentColor = palette?.accent_colors?.[0]?.hex || secondaryColor
 
-  // スローガン・ミッション・バリュー・ブランドストーリー（brand_guidelines テーブルから取得）
+  // スローガン・ミッション・ビジョン・バリュー・ブランドストーリー（brand_guidelines テーブルから取得）
   const slogan = guidelines?.slogan || ''
   const mission = guidelines?.mission || ''
+  const vision = guidelines?.vision || ''
   const brandStory = guidelines?.brand_story || ''
 
   // ミッション表示用テキスト
   const missionText = mission || ''
+
+  // バリュー（JSONB配列 [{name, description, added_index}, ...] を安全にパース）
+  type ValueItem = { name: string; description?: string }
+  const brandValues: ValueItem[] = Array.isArray(guidelines?.values)
+    ? guidelines.values.filter((item: ValueItem) => item.name).map((item: ValueItem) => ({ name: item.name, description: item.description }))
+    : []
 
   // 事業内容（JSONB配列 [{title, description}, ...] を安全にパース）
   type BusinessContent = { title: string; description?: string }
@@ -392,12 +401,30 @@ export default async function CardPage({ params }: Props) {
                 </div>
               </div>
             </CardHeader>
-            {missionText && (
+            {(missionText || vision || brandValues.length > 0) && (
               <CardContent className="pt-4">
                 <Separator className="mb-4" />
-                <p className="text-base font-bold text-foreground leading-[1.8] m-0 whitespace-pre-line" style={{ fontFamily: secondaryFontFamily }}>
-                  {missionText}
-                </p>
+                {/* ミッション（常時表示） */}
+                {missionText && (
+                  <div>
+                    <span className="text-xs font-bold text-muted-foreground tracking-wider uppercase">
+                      Mission
+                    </span>
+                    <p className="text-base font-bold text-foreground leading-[1.8] m-0 mt-1 whitespace-pre-line" style={{ fontFamily: secondaryFontFamily }}>
+                      {missionText}
+                    </p>
+                  </div>
+                )}
+                {/* ビジョン・バリュー（アコーディオン）+ ページ閲覧行動トラッキング */}
+                <CardBrandSection
+                  vision={vision}
+                  values={brandValues}
+                  profileId={profile.id}
+                  companyId={companyId}
+                  secondaryFontFamily={secondaryFontFamily}
+                  hasVision={vision.trim().length > 0}
+                  hasValues={brandValues.length > 0}
+                />
               </CardContent>
             )}
           </Card>
@@ -479,32 +506,14 @@ export default async function CardPage({ params }: Props) {
           </CardEventWrapper>
         )}
 
-        {/* 9. QRコード */}
-        <div className="pt-2">
-          <Separator className="mb-6" />
-          <div className="text-center">
-            <img
-              src={qrDataUrl}
-              alt="QRコード"
-              width={140}
-              height={140}
-              className="block mx-auto rounded-lg"
-            />
-            <p
-              className="text-[11px] mt-3 mb-1"
-              style={{ color: primaryColor }}
-            >
-              名刺に印刷用
-            </p>
-            <a
-              href={highResQrDataUrl}
-              download={downloadFilename}
-              className="text-[11px] text-muted-foreground underline"
-            >
-              高解像度ダウンロード（1000x1000px）
-            </a>
-          </div>
-        </div>
+        {/* 9. マイクロフィードバック */}
+        {company && (
+          <MicroFeedback
+            companyId={companyId}
+            sourceProfileId={profile.id}
+            companyName={company.name || ''}
+          />
+        )}
 
         {/* 10. フッター */}
         <div className="pt-2">

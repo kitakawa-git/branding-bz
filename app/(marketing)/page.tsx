@@ -3,7 +3,7 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { ArrowRight, Sparkles, MessageSquareText, ChartLine, CreditCard, LayoutDashboard, Trophy, Target, FileText, Bell, BarChart3, Headset, type LucideIcon } from 'lucide-react'
+import { ArrowRight, WandSparkles, BotMessageSquare, ChartLine, CreditCard, LayoutDashboard, MessageSquareHeart, Milestone, Compass, Bell, BarChart3, Activity, Headset, type LucideIcon } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'branding.bz — AIで、ブランディングを加速させる。',
@@ -32,7 +32,7 @@ function HeroSection() {
         >
           <div className="absolute inset-0 pointer-events-none rounded-full"
             style={{ background: 'linear-gradient(to left top, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 50%)' }} />
-          <Sparkles className="h-4 w-4 relative z-10" />
+          <WandSparkles className="h-4 w-4 relative z-10" />
           <span className="relative z-10">AIガイドで約5〜10分</span>
         </div>
         <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-gray-900">
@@ -83,21 +83,21 @@ const layers = [
     label: '構築',
     title: 'ブランドの言語化を対話型AIがサポート',
     description:
-      '「自社の"らしさ"は分かっているけど、うまく言葉にできない」そんな悩みに、AIが壁打ち相手として伴走。理念・スローガン・カラー・ペルソナを、対話しながら形にします。',
-    icon: MessageSquareText,
+      '「自社の"らしさ"は分かっているけど、うまく言葉にできない」そんな悩みに、AIが壁打ち相手として伴走。理念・カラー・ターゲット戦略・ペルソナを、対話しながら形にします。',
+    icon: BotMessageSquare,
   },
   {
     label: '浸透',
     title: 'ブランドの定着と可視化をAIがサポート',
     description:
-      'ブランド掲示・タイムライン・KPIを統合した浸透プラットフォーム。AIが社員の活動データから浸透度を分析し、「どこが根づいていて、どこに手を打つべきか」を可視化します。',
+      'ブランド掲示・タイムライン・KPIに加え、社員サーベイでブランド浸透度をスコア化。部署別ヒートマップやギャップ分析で「どこが根づいていて、どこに手を打つべきか」が数字で見えます。',
     icon: ChartLine,
   },
   {
     label: '発信',
     title: 'ブランドの発信をスマート名刺がサポート',
     description:
-      'QRコードから社員プロフィール＋企業ブランドページへ。社内で根づいた"らしさ"が、一人ひとりの名刺を通じて社外に届きます。誰の名刺が、いつ、どれだけ見られたかも把握できます。',
+      'QRコードから社員プロフィール＋企業ブランドページへ。社内で根づいた"らしさ"が、一人ひとりの名刺を通じて社外に届きます。閲覧数だけでなく、相手がどんな印象を持ったかまで把握できます。',
     icon: CreditCard,
   },
 ]
@@ -203,19 +203,19 @@ const features: { title: string; description: string; gif: string | null; icon: 
     title: 'Good Job タイムライン',
     description: '行動指針に基づいた取り組みを、写真付きで手軽にシェア。いいね・コメントで称え合い、ブランドを体現する文化を育てます。',
     gif: '/marketing/gifs/timeline.gif',
-    icon: Trophy,
+    icon: MessageSquareHeart,
   },
   {
     title: '個人目標と KPI',
     description: 'ブランド行動指針に紐づく個人目標を設定し、達成状況を管理。重み付け・達成時期で、優先順位を見える化します。',
     gif: '/marketing/gifs/kpi.gif',
-    icon: Target,
+    icon: Milestone,
   },
   {
     title: 'ブランド掲示',
     description: '方針・戦略・ビジュアルID・バーバルID・提供価値を全社に掲示。いつでも"らしさ"を参照できる、ブランドの拠りどころです。',
     gif: '/marketing/gifs/guidelines.gif',
-    icon: FileText,
+    icon: Compass,
   },
   {
     title: 'お知らせ',
@@ -234,6 +234,12 @@ const features: { title: string; description: string; gif: string | null; icon: 
     description: '名刺の閲覧数・閲覧トレンド・メンバー別ランキングを自動集計。誰の名刺が、いつ、どれだけ見られたかを把握できます。',
     gif: null,
     icon: BarChart3,
+  },
+  {
+    title: 'ブランドスコア',
+    description: '社員サーベイと名刺の行動データを統合し、ブランド浸透度をスコア化。部署別ヒートマップやギャップ分析で「どこに手を打つべきか」が見えます。',
+    gif: null,
+    icon: Activity,
   },
   {
     title: 'ブランディングサポート',

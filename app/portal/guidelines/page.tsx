@@ -336,12 +336,12 @@ export default function PortalGuidelinesPage() {
         </section>
       )}
 
-      {/* 11. ブランド特性（レーダーチャート＋リスト） */}
+      {/* 11. ブランドパーソナリティ（レーダーチャート＋リスト） */}
       {filteredTraits.length > 0 && (
         <section>
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
             <CardContent className="p-5">
-              <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">ブランド特性</h2>
+              <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">ブランドパーソナリティ</h2>
 
               {/* レーダーチャート（3つ以上の場合のみ） */}
               {chartData.length >= 3 && (

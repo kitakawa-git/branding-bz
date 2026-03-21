@@ -108,7 +108,7 @@ export function GuidelinesSection({ data, styles, brandColor }: { data: CIManual
 
       {/* 特性 */}
       {gl.traits.length > 0 && (
-        <SubSection title="ブランド特性" styles={styles}>
+        <SubSection title="ブランドパーソナリティ" styles={styles}>
           {gl.traits.map((t, i) => (
             <View key={i} wrap={false} style={{ marginBottom: 8 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2 }}>

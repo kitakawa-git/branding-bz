@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'QRコード出力',
+  title: 'スマート名刺',
 }
 
 export default function Layout({ children }: { children: React.ReactNode }) {

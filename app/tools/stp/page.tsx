@@ -2,7 +2,7 @@
 
 // STP分析ツール ランディングページ
 import Link from 'next/link'
-import { Sparkles, LayoutGrid, Target, MapPin, ArrowRight, CheckCircle2, Lightbulb, SlidersHorizontal, Download, Unplug } from 'lucide-react'
+import { WandSparkles, LayoutGrid, Target, MapPin, ArrowRight, CheckCircle2, Lightbulb, SlidersHorizontal, Download, Unplug } from 'lucide-react'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 
@@ -81,7 +81,7 @@ export default function STPLandingPage() {
         >
           <div className="absolute inset-0 pointer-events-none rounded-full"
             style={{ background: 'linear-gradient(to left top, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 50%)' }} />
-          <Sparkles className="h-4 w-4 relative z-10" />
+          <WandSparkles className="h-4 w-4 relative z-10" />
           <span className="relative z-10">AIガイドで約10〜15分</span>
         </div>
         <h1 className="text-3xl font-bold tracking-tight text-gray-900 md:text-5xl">

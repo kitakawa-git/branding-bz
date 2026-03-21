@@ -103,7 +103,7 @@ export function Sidebar() {
       <nav>
         {navItems.map(renderNavLink)}
 
-        {/* 区切り線 + ブランド掲示セクション */}
+        {/* 区切り線 + ブランド基盤セクション */}
         <div style={{
           borderTop: `1px solid ${colors.sidebarActiveBg}`,
           margin: '12px 20px',
@@ -115,7 +115,7 @@ export function Sidebar() {
           margin: 0,
           letterSpacing: 1,
         }}>
-          ブランド掲示
+          ブランド基盤
         </p>
         {brandItems.map(renderNavLink)}
       </nav>

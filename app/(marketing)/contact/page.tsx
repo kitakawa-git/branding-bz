@@ -93,12 +93,15 @@ export default function ContactPage() {
   return (
     <>
       {/* ヒーロー */}
-      <section className="px-6 py-16 md:py-24 text-center">
+      <section className="px-6 pt-[120px] pb-16 md:pt-[120px] md:pb-24 text-center">
         <div className="mx-auto max-w-4xl">
-          <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-gray-900 mb-4">
+          <p className="text-xs font-semibold tracking-[0.25em] text-gray-400 uppercase mb-4">
+            Contact
+          </p>
+          <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-gray-900 leading-snug md:leading-snug">
             お問い合わせ
           </h1>
-          <p className="text-lg md:text-xl text-gray-700 leading-relaxed max-w-2xl mx-auto">
+          <p className="mt-6 text-lg md:text-xl text-gray-700 leading-relaxed max-w-2xl mx-auto">
             ご質問・ご相談・お申し込みなど、お気軽にお問い合わせください。
           </p>
         </div>

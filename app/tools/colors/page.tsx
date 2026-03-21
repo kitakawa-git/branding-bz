@@ -4,7 +4,7 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Palette, Sparkles, Download, ArrowRight, CheckCircle2, Plug } from 'lucide-react'
+import { Palette, WandSparkles, Download, ArrowRight, CheckCircle2, Plug } from 'lucide-react'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 
@@ -104,7 +104,7 @@ export default function ColorsLandingPage() {
         >
           <div className="absolute inset-0 pointer-events-none rounded-full"
             style={{ background: 'linear-gradient(to left top, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 50%)' }} />
-          <Sparkles className="h-4 w-4 relative z-10" />
+          <WandSparkles className="h-4 w-4 relative z-10" />
           <span className="relative z-10">AIガイドで約5〜10分</span>
         </div>
         <h1 className="text-3xl font-bold tracking-tight text-gray-900 md:text-5xl">
@@ -223,7 +223,7 @@ export default function ColorsLandingPage() {
               },
               {
                 label: '対話型調整',
-                icon: Sparkles,
+                icon: WandSparkles,
                 title: ['AIチャットで', '自由に調整'],
                 description: '「もう少し温かみがほしい」など、自然な言葉でカラーを何度でも調整できます。',
               },

@@ -17,8 +17,8 @@
 - 本番URL: https://branding.bz
 ## Supabase設定
 - URL: https://wfabdmfgngjtihhlrrpk.supabase.co
-- テーブル: companies, profiles
-- Storage: avatarsバケット（公開）
+- 主要テーブル: companies, profiles, admin_users, members, brand_guidelines, brand_surveys, brand_survey_responses, brand_micro_feedbacks, brand_score_snapshots, card_views, card_events, timeline_posts, announcements, goal_kpis, invite_links
+- Storage: avatars, logos, brand-assets, timeline-images
 - RLS: 無効（プロトタイプ段階）
 ## 現在のDB構造
 ### companies
@@ -26,20 +26,37 @@ id (uuid), name, logo_url, slogan, mvv, brand_color_primary, brand_color_seconda
 ### profiles
 id (uuid), company_id (FK→companies), name, position, department, bio, photo_url, email, phone, slug (unique), created_at
 ## 現在完成している機能
-- スマート名刺の簡易ページ (/card/[slug])
-- Supabaseからプロフィール＋企業データ取得
-- プロフィール写真表示（Supabase Storage）
-- テストデータ: /card/kitakawa
+- スマート名刺 (/card/[slug]) — プロフィール＋企業ブランド＋MVV＋マイクロフィードバック
+- 管理画面 (/admin) — 企業情報・メンバー・ブランドガイドライン・お知らせ・名刺テンプレート
+- ポータル (/portal) — メンバー向けブランド掲示・タイムライン・KPI・サーベイ回答
+- Brand Score (/admin/brand-score) — インナースコア（サーベイ）＋アウタースコア（名刺分析）＋マイクロフィードバック
+- STP分析ツール (/tools/stp) — 5ステップAI提案＋PDF出力＋branding.bz連携
+- カラー定義ツール (/tools/colors) — 5ステップAIパレット提案＋PDF出力＋branding.bz連携
+- スーパー管理画面 (/superadmin) — 企業管理・ニュース管理
+- マーケティングページ — LP・料金・FAQ・お問い合わせ・お知らせ
 ## 開発フェーズ
-- Phase 0（現在）: スマート名刺プロトタイプ
-- Phase 1: ブランド掲示＋スマート名刺
-- Phase 2: Good Jobタイムライン、ダッシュボード
-- Phase 3: ミニアプリ群
+- Phase 0 ✅: スマート名刺プロトタイプ
+- Phase 1 ✅: ブランド掲示＋スマート名刺＋管理画面＋ポータル
+- Phase 2（進行中）: タイムライン、KPI、Brand Score（サーベイ・マイクロフィードバック・ダッシュボード）
+- Phase 3: ミニアプリ群（STP・カラー定義は完了）
+## 絶対ルール
+### DB変更ルール
+- テーブル追加・カラム追加・RLSポリシー変更・RPC関数作成が必要な場合は、コード修正より先にSQLを出力し、ユーザーの実行完了を待つこと
+- Supabase MCP接続が使えない場合は、SQL Editorで手動実行する前提で出力する
+- 既存テーブルの構造が不明な場合は、想定で進めずユーザーに確認すること
+
 ## コーディング規約
 - 日本語コメント推奨
 - コミットメッセージは日本語
-- スタイルは現状inline style（後でTailwindに移行予定）
-- git pushまで自動で行うこと
+- スタイル: Tailwind CSS + shadcn/ui（グラスモーフィズム部分のみinline style）
+- git pushは明示的な指示がない限り行わない
+- Plan不要、即座に実装に入ること
+- 共通コンポーネント化よりもインライン実装を優先
+
+## コマンド
+- `npm run dev` — 開発サーバー起動（port 3000）
+- `npx tsc --noEmit` — 型チェック
+- `npx next build` — プロダクションビルド
 
 ## 開発経緯・技術メモ
 
@@ -48,6 +65,15 @@ id (uuid), company_id (FK→companies), name, position, department, bio, photo_u
 - profiles: name, title, department, bio, email, phone, slug, photo_url, company_id, sns_x, sns_linkedin, sns_facebook, sns_instagram
 - admin_users: auth_id, company_id, role, is_superadmin
 - card_views: profile_id, viewed_at, ip_address, user_agent, referer, country, city
+- members: id, company_id, profile_id, role, status, invited_at, joined_at
+- brand_guidelines: id, company_id, mission, vision, values(jsonb), slogan, brand_story, business_content(jsonb)
+- brand_surveys: id, company_id, title, status, starts_at, ends_at, target_response_rate, total_members
+- brand_survey_responses: id, survey_id, question_id, score(1-5), department, role_category
+- brand_micro_feedbacks: id, company_id, source_profile_id, tags(text[]), visitor_id
+- brand_score_snapshots: id, company_id, snapshot_date, inner_score, outer_score, total_score, rank
+- card_events: profile_id, company_id, event_type, event_data(jsonb)
+- timeline_posts: id, company_id, author_id, content, images
+- announcements: id, company_id, title, body, published_at
 
 ### 認証
 - Supabase Auth（メール/パスワード）
@@ -76,6 +102,9 @@ id (uuid), company_id (FK→companies), name, position, department, bio, photo_u
 
 ## デザインシステム（公開ページ共通）
 新しい画面を作成する際は、以下のトークンとパターンに必ず準拠すること。
+
+### ツール画面・管理画面のデザインルール
+→ 詳細: memory/tool-screen-design.md（コンテナ・Card・フッター・フォーム要素・削除ボタン等）
 
 ### カラー
 | トークン | 用途 | 備考 |
@@ -249,3 +278,21 @@ background: [
 - カードアイコン: `size={32} strokeWidth={1.5} className="text-foreground"`
 - バッジアイコン: `className="h-4 w-4"`
 - チェックアイコン: `className="h-3.5 w-3.5"`（バッジ内）
+
+## プラグイン活用ルール
+
+### 新しい画面・UIコンポーネント作成時
+- Frontend designスキルを使って実装すること
+- ツール画面デザインルール（memory/tool-screen-design.md）を必ず参照
+
+### ライブラリAPI使用時
+- Next.js App Router、Supabase、shadcn/ui、@react-pdf/renderer等のAPIを使う際は、context7で最新ドキュメントを取得してから実装すること
+- 古い記憶に頼らず、必ず最新仕様を確認
+
+### 実装完了時
+- /typecheck で型チェックを実行
+- /commit で日本語コミットメッセージを作成（pushはしない）
+
+### セッション終了時
+- 実装中に発見したハマりポイントや解決策をCLAUDE.mdまたはMEMORY.mdに記録
+- 特にSupabase RLS、認証パターン、共通コンポーネントの使い方

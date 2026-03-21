@@ -42,7 +42,7 @@ export default async function NewsListPage() {
             ニュース
           </h1>
           <p className="mt-6 text-lg md:text-xl text-gray-700 leading-relaxed max-w-2xl mx-auto">
-            最新のお知らせ・アップデート情報
+            最新のニュース・アップデート情報
           </p>
         </div>
       </section>

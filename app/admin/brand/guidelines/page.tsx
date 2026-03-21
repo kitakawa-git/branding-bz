@@ -761,12 +761,12 @@ export default function BrandGuidelinesPage() {
           </CardContent>
         </Card>
 
-        {/* Card 4: ブランド特性 */}
+        {/* Card 4: ブランドパーソナリティ */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-5">
             <div>
               <div className="flex items-center justify-between mb-3">
-                <h2 className="text-sm font-bold">ブランド特性（最大5つ）</h2>
+                <h2 className="text-sm font-bold">ブランドパーソナリティ（最大5つ）</h2>
                 {guidelines.traits.length > 1 && (
                   <div className="flex rounded-lg border border-border overflow-hidden">
                     <button type="button" onClick={() => handleChange('traits_sort', 'registered')}

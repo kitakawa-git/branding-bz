@@ -15,6 +15,8 @@ import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 type AuthContextType = {
   user: User | null
   companyId: string | null
+  companyName: string | null
+  companyLogoUrl: string | null
   role: string | null
   isSuperAdmin: boolean
   profileName: string | null
@@ -26,6 +28,8 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   companyId: null,
+  companyName: null,
+  companyLogoUrl: null,
   role: null,
   isSuperAdmin: false,
   profileName: null,
@@ -37,6 +41,8 @@ const AuthContext = createContext<AuthContextType>({
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [companyId, setCompanyId] = useState<string | null>(null)
+  const [companyName, setCompanyName] = useState<string | null>(null)
+  const [companyLogoUrl, setCompanyLogoUrl] = useState<string | null>(null)
   const [role, setRole] = useState<string | null>(null)
   const [isSuperAdmin, setIsSuperAdmin] = useState(false)
   const [profileName, setProfileName] = useState<string | null>(null)
@@ -75,7 +81,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsSuperAdmin(data.is_superadmin === true)
       setAdminError(false)
 
-      // ステップ4: members → profiles からプロフィール情報を取得
+      // ステップ4: 企業情報を取得
+      try {
+        const { data: companyData } = await supabase
+          .from('companies')
+          .select('name, logo_url')
+          .eq('id', data.company_id)
+          .single()
+        if (companyData) {
+          setCompanyName(companyData.name || null)
+          setCompanyLogoUrl(companyData.logo_url || null)
+        }
+      } catch {
+        // 企業情報取得失敗は無視
+      }
+
+      // ステップ5: members → profiles からプロフィール情報を取得
       try {
         const { data: memberData } = await supabase
           .from('members')
@@ -173,6 +194,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     clearPageCache()
     await supabase.auth.signOut()
     setCompanyId(null)
+    setCompanyName(null)
+    setCompanyLogoUrl(null)
     setRole(null)
     setIsSuperAdmin(false)
     setProfileName(null)
@@ -181,7 +204,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     router.push('/admin/login')
   }
 
-  const contextValue = { user, companyId, role, isSuperAdmin, profileName, profilePhotoUrl, loading, signOut }
+  const contextValue = { user, companyId, companyName, companyLogoUrl, role, isSuperAdmin, profileName, profilePhotoUrl, loading, signOut }
 
   // ログインページではそのまま表示（サイドバー・ヘッダーなし）
   if (pathname === '/admin/login') {

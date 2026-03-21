@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { Check } from 'lucide-react'
+import { Check, ArrowRight } from 'lucide-react'
 import ComparisonSection from './ComparisonSection'
 
 export const metadata: Metadata = {
@@ -130,6 +130,16 @@ const UPSELL_STEPS = [
   },
 ]
 
+/* ─── 共通事項 ─── */
+const COMMON_ITEMS = [
+  '初期費用 ¥0',
+  '月払い（年払い割引は今後検討）',
+  'データエクスポート対応',
+  'SSL暗号化通信',
+  'プランの変更・解約はいつでも可能',
+  '名刺カードは追加発注可（実費）',
+]
+
 /* ─── グラスカード共通スタイル ─── */
 const glassCard = {
   background: 'rgba(255, 255, 255, 0.7)',
@@ -173,11 +183,10 @@ export default function PlanPage() {
       {/* ── セクション B: プランカード ── */}
       <section className="bg-gray-50 px-6 pb-16 md:pb-24">
         <div className="mx-auto max-w-7xl">
-          {/* MOST POPULARバッジ分の余白 */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 pt-5">
             {PLANS.map((plan) => (
               <div key={plan.id} className="relative flex flex-col">
-                {/* MOST POPULAR バッジ（Brand Standard のみ） */}
+                {/* おすすめバッジ（Brand Standard のみ） */}
                 {plan.isHighlight && (
                   <div className="absolute -top-4 inset-x-0 flex justify-center z-20 pointer-events-none">
                     <span
@@ -187,7 +196,7 @@ export default function PlanPage() {
                         boxShadow: '0px 4px 12px rgba(251, 146, 60, 0.4)',
                       }}
                     >
-                      人気 No.1
+                      おすすめ
                     </span>
                   </div>
                 )}
@@ -231,7 +240,7 @@ export default function PlanPage() {
                       )}
                     </div>
 
-                    {/* 4. 説明文（min-height で高さ揃え） */}
+                    {/* 4. 説明文 */}
                     <p className="text-sm text-gray-600 leading-relaxed mb-4"
                       style={{ minHeight: '5rem' }}>
                       {plan.description}
@@ -277,10 +286,10 @@ export default function PlanPage() {
                       ))}
                     </ul>
 
-                    {/* スペーサー：ボタン位置を底部に固定 */}
+                    {/* スペーサー */}
                     <div className="flex-1" />
 
-                    {/* 7. CTAボタン（rounded-xl、幅いっぱい） */}
+                    {/* 7. CTAボタン */}
                     <Link href={plan.ctaHref}>
                       {plan.ctaStyle === 'primary' ? (
                         <button
@@ -309,7 +318,6 @@ export default function PlanPage() {
                           <span className="relative z-10">{plan.ctaLabel}</span>
                         </button>
                       ) : (
-                        /* outline style（Free） */
                         <button
                           className="relative w-full h-11 rounded-xl text-sm font-semibold text-gray-600 overflow-hidden transition-all hover:bg-gray-100 hover:scale-105"
                           style={{
@@ -322,7 +330,7 @@ export default function PlanPage() {
                       )}
                     </Link>
 
-                    {/* 8. 参考テキスト（固定高さ確保でボタン位置を揃える） */}
+                    {/* 8. 参考テキスト */}
                     <div className="min-h-[60px] mt-3 flex items-start justify-center">
                       {plan.reference && (
                         <p className="text-center text-xs text-gray-400 leading-relaxed">
@@ -347,19 +355,42 @@ export default function PlanPage() {
           <h2 className="mb-12 text-center text-xl md:text-[1.625rem] font-bold text-gray-900">
             ブランドの成長に合わせてステップアップ
           </h2>
-          <div className="relative flex flex-col gap-4 md:flex-row md:items-start md:gap-24">
-            {/* デスクトップ: ステップ間の接続線 */}
-            <div className="hidden md:block absolute top-5 h-px bg-gray-900" style={{ left: 'calc((100% - 24rem) / 10)', right: 'calc((100% - 24rem) / 10)' }} />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 items-start">
             {UPSELL_STEPS.map((step, idx) => (
-              <div key={step.name} className="flex items-center gap-3 md:flex-1 md:flex-col md:gap-0 md:text-center">
-                <div className="relative z-10 flex h-10 flex-shrink-0 items-center justify-center rounded-full bg-gray-900 px-4 text-sm font-bold text-white md:mb-3">
-                  {step.subtitle}
-                </div>
-                <div className="md:mt-0">
-                  <h3 className="text-base font-bold text-gray-900">{step.name}</h3>
-                  {step.trigger && (
-                    <p className="text-sm text-gray-500 whitespace-pre-line">{step.trigger}</p>
-                  )}
+              <div key={step.name} className="relative flex flex-col items-center text-center">
+                {/* 矢印（md以上、最後のステップ以外） */}
+                {idx < UPSELL_STEPS.length - 1 && (
+                  <div className="hidden md:flex absolute top-5 -right-3 md:-right-[18px] z-10 items-center justify-center">
+                    <ArrowRight size={16} className="text-gray-400" />
+                  </div>
+                )}
+                {/* グラスモーフィズムカード（小） */}
+                <div
+                  className="relative w-full rounded-2xl overflow-hidden transition-all hover:scale-[1.02]"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.7)',
+                    backdropFilter: 'blur(12px) saturate(120%)',
+                    WebkitBackdropFilter: 'blur(12px) saturate(120%)',
+                    border: '1px solid rgba(255, 255, 255, 0.8)',
+                    boxShadow: '0px 8px 24px 0 rgba(12, 74, 110, 0.08), inset 0px 0px 4px 2px rgba(255, 255, 255, 0.3)',
+                  }}
+                >
+                  <div className="absolute inset-0 pointer-events-none rounded-2xl"
+                    style={{ background: 'linear-gradient(to left top, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 50%)' }} />
+                  <div className="absolute inset-0 pointer-events-none rounded-2xl"
+                    style={{ background: 'linear-gradient(to bottom, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0) 100%)' }} />
+                  <div className="relative z-10 px-4 py-5">
+                    <div className="inline-flex items-center justify-center rounded-full bg-gray-900 px-3 py-1 text-xs font-bold text-white mb-3">
+                      {step.subtitle}
+                    </div>
+                    <h3 className="text-base font-bold text-gray-900 mb-2">{step.name}</h3>
+                    <div
+                      className="inline-block rounded-lg px-3 py-1.5"
+                      style={{ background: 'rgba(0, 97, 255, 0.06)' }}
+                    >
+                      <p className="text-xs text-gray-500 whitespace-pre-line leading-relaxed">{step.trigger}</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}
@@ -367,9 +398,44 @@ export default function PlanPage() {
         </div>
       </section>
 
+      {/* ── セクション E: 共通事項 ── */}
+      <section className="bg-gray-50 px-6 py-16 md:py-24">
+        <div className="mx-auto max-w-4xl">
+          <div
+            className="relative rounded-2xl overflow-hidden"
+            style={{
+              background: 'rgba(255, 255, 255, 0.7)',
+              backdropFilter: 'blur(12px) saturate(120%)',
+              WebkitBackdropFilter: 'blur(12px) saturate(120%)',
+              border: '1px solid rgba(255, 255, 255, 0.8)',
+              boxShadow: '0px 8px 24px 0 rgba(12, 74, 110, 0.08), inset 0px 0px 4px 2px rgba(255, 255, 255, 0.3)',
+            }}
+          >
+            <div className="absolute inset-0 pointer-events-none rounded-2xl"
+              style={{ background: 'linear-gradient(to left top, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 50%)' }} />
+            <div className="absolute inset-0 pointer-events-none rounded-2xl"
+              style={{ background: 'linear-gradient(to bottom, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0) 100%)' }} />
+            <div className="relative z-10 px-6 py-8 text-center">
+              <h2 className="text-xl md:text-[1.625rem] font-bold text-gray-900 mb-6">
+                すべてのプランに共通
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-xl mx-auto">
+                {COMMON_ITEMS.map((item, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                      <Check size={11} className="text-green-600" strokeWidth={2.5} />
+                    </div>
+                    <span className="text-sm text-gray-600 text-left">{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ── セクション F: CTA ── */}
       <section className="relative overflow-hidden px-6 py-16 md:py-24 text-center">
-        {/* トップLPと同じグラデーション背景 */}
         <div
           className="absolute inset-0 z-0"
           style={{
@@ -382,7 +448,6 @@ export default function PlanPage() {
             ].join(', '),
           }}
         />
-
         <div className="relative z-10 mx-auto max-w-4xl">
           <h2 className="text-2xl md:text-4xl font-bold tracking-tight text-gray-900">
             まずは無料でAIブランディングを体験

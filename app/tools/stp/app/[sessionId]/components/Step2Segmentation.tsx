@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { ArrowLeft, ArrowRight, Plus, Trash2, Sparkles, Lightbulb, MapPin, Users, Heart, Activity } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Plus, Trash2, WandSparkles, Lightbulb, MapPin, Users, Heart, Activity } from 'lucide-react'
 import {
   Accordion,
   AccordionContent,
@@ -273,7 +273,7 @@ export function Step2Segmentation({
             onClick={handleRegenerate}
             className="gap-1.5 text-xs"
           >
-            <Sparkles className="h-3.5 w-3.5" />
+            <WandSparkles className="h-3.5 w-3.5" />
             {variables.length > 0 ? 'AIに再提案してもらう' : 'AIに提案してもらう'}
           </Button>
         </div>
@@ -477,7 +477,7 @@ export function Step2Segmentation({
               onClick={handleRegenerate}
               className="gap-1.5"
             >
-              <Sparkles className="h-3.5 w-3.5" />
+              <WandSparkles className="h-3.5 w-3.5" />
               AIに再提案してもらう
             </Button>
           )}

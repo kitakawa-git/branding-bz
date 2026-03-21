@@ -185,7 +185,7 @@ export default function PortalVisualsPage() {
   }
 
   // 表示するカテゴリ（色が1つ以上あるもの）
-  const visibleCategories = COLOR_CATEGORIES.filter(cat => palette[cat.key].length > 0)
+  const visibleCategories = COLOR_CATEGORIES.filter(cat => (palette[cat.key] || []).length > 0)
 
   const colorCard = (color: ColorItem) => {
     const { r, g, b } = hexToRgb(color.hex)

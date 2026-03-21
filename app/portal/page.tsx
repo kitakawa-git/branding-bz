@@ -5,6 +5,7 @@ import { useEffect, useState, useMemo } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { usePortalAuth } from './components/PortalAuthProvider'
+import { SurveyBanner } from './components/SurveyBanner'
 import { getRelativeTime } from '@/lib/time-utils'
 import { PieChart, Pie, Cell } from 'recharts'
 import { Button } from '@/components/ui/button'
@@ -27,7 +28,7 @@ import {
   ArrowRight,
   MessageCircle,
   PieChart as PieChartIcon,
-  PenSquare,
+  User,
   Users,
   Bell,
   Target,
@@ -672,6 +673,11 @@ export default function PortalTopPage() {
         )}
       </div>
 
+      {/* ===== 1.3. 未回答サーベイバナー ===== */}
+      <div className="mb-6">
+        <SurveyBanner />
+      </div>
+
       {/* ===== 1.5. 最新のお知らせ ===== */}
       {latestAnnouncements.length > 0 && (
         <div className="mb-6">
@@ -1000,7 +1006,7 @@ export default function PortalTopPage() {
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-5">
             <div className="flex items-center gap-2 mb-4">
-              <PenSquare size={18} className="text-foreground" />
+              <User size={18} className="text-foreground" />
               <h3 className="text-sm font-semibold text-foreground m-0">あなたの投稿</h3>
             </div>
             <div className="space-y-2">

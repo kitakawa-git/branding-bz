@@ -24,7 +24,7 @@ import {
   ArrowRight,
   Plus,
   Trash2,
-  Sparkles,
+  WandSparkles,
   ArrowLeftRight,
   ArrowUpDown,
 } from 'lucide-react'
@@ -253,7 +253,7 @@ export function Step4Positioning({
             onClick={handleRegenerate}
             className="shrink-0 gap-1.5 text-xs"
           >
-            <Sparkles className="h-3.5 w-3.5" />
+            <WandSparkles className="h-3.5 w-3.5" />
             AIに提案してもらう
           </Button>
         )}

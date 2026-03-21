@@ -5,7 +5,7 @@ import { toast } from 'sonner'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { ArrowLeft, ArrowRight, Sparkles } from 'lucide-react'
+import { ArrowLeft, ArrowRight, WandSparkles } from 'lucide-react'
 import { PaletteCard } from '../../components/PaletteCard'
 import type { BrandColorProject, PaletteProposal } from '@/lib/types/color-tool'
 
@@ -181,7 +181,7 @@ export function Step3Proposals({
             onClick={generateProposals}
             className="gap-1.5 text-xs"
           >
-            <Sparkles className="h-3.5 w-3.5" />
+            <WandSparkles className="h-3.5 w-3.5" />
             AIに再提案してもらう
           </Button>
         </div>
@@ -216,7 +216,7 @@ export function Step3Proposals({
               onClick={generateProposals}
               className="gap-1.5"
             >
-              <Sparkles className="h-3.5 w-3.5" />
+              <WandSparkles className="h-3.5 w-3.5" />
               AIに再提案してもらう
             </Button>
           )}

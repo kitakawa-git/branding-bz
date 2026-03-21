@@ -4,6 +4,29 @@
     "Write",
     "Edit",
     "Glob",
-    "Grep"
-  ]
+    "Grep",
+    "Bash(npx tsc:*)",
+    "Bash(npx next build:*)",
+    "Bash(npm run:*)",
+    "Bash(curl *localhost*)",
+    "Bash(git status:*)",
+    "Bash(git diff:*)",
+    "Bash(git log:*)",
+    "Bash(git add:*)",
+    "Bash(git commit:*)",
+    "Bash(ls:*)"
+  ],
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "case \"$CLAUDE_TOOL_INPUT\" in *.env*|*lock*) echo 'BLOCK: このファイルは編集できません'; exit 2;; esac"
+          }
+        ]
+      }
+    ]
+  }
 }

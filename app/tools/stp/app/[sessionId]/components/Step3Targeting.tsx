@@ -5,7 +5,7 @@ import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { AutoResizeTextarea } from '@/components/ui/auto-resize-textarea'
-import { ArrowLeft, ArrowRight, X, Sparkles, Loader2 } from 'lucide-react'
+import { ArrowLeft, ArrowRight, X, WandSparkles, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   AlertDialog,
@@ -411,7 +411,7 @@ export function Step3Targeting({
                             {aiLoading ? (
                               <Loader2 className="h-3.5 w-3.5 animate-spin" />
                             ) : (
-                              <Sparkles className="h-3.5 w-3.5" />
+                              <WandSparkles className="h-3.5 w-3.5" />
                             )}
                             {aiLoading ? 'AI分析中...' : 'AIに提案してもらう'}
                           </Button>
