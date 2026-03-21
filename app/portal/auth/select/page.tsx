@@ -164,7 +164,7 @@ function ServiceSelectContent() {
                 background: isHighlighted ? 'rgba(239, 246, 255, 0.9)' : 'rgba(255, 255, 255, 0.7)',
                 backdropFilter: 'blur(12px) saturate(120%)',
                 WebkitBackdropFilter: 'blur(12px) saturate(120%)',
-                border: '1px solid rgba(255, 255, 255, 0.8)',
+                border: isHighlighted ? '1px solid rgba(191, 219, 254, 0.8)' : '1px solid rgba(255, 255, 255, 0.8)',
                 borderLeft: isHighlighted ? '3px solid rgba(59, 130, 246, 0.7)' : '1px solid rgba(255, 255, 255, 0.8)',
                 boxShadow: isHighlighted
                   ? '0px 8px 24px 0 rgba(59, 130, 246, 0.1), inset 0px 0px 4px 2px rgba(255, 255, 255, 0.15)'
