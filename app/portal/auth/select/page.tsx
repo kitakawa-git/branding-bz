@@ -6,7 +6,7 @@
 import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { Palette, BarChart3, Building2 } from 'lucide-react'
+import { Palette, BarChart3, UserCircle, Building2 } from 'lucide-react'
 
 interface ServiceCard {
   id: string
@@ -34,6 +34,15 @@ const SERVICES: ServiceCard[] = [
     title: 'STP分析ツール',
     description: 'AIがセグメンテーション・ターゲティング・ポジショニングを支援',
     href: '/tools/stp/app',
+    buttonLabel: '始める',
+    highlightButtonLabel: '続ける',
+  },
+  {
+    id: 'persona',
+    icon: <UserCircle size={28} strokeWidth={1.5} className="text-orange-600" />,
+    title: 'ペルソナビルダー',
+    description: 'AIがターゲット顧客の人物像とカスタマージャーニーを生成',
+    href: '/tools/persona/app',
     buttonLabel: '始める',
     highlightButtonLabel: '続ける',
   },

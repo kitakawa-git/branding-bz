@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
-import { Menu, X, ChevronDown, Palette, Target } from 'lucide-react'
+import { Menu, X, ChevronDown, Palette, Target, UserCircle } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,7 +12,7 @@ import {
 
 const navItems = [
   { href: '/', label: 'トップ' },
-  { href: '/news', label: 'お知らせ' },
+  { href: '/news', label: 'ニュース' },
   { href: '/plan', label: '料金・機能' },
   { href: '/faq', label: 'よくある質問' },
   { href: '/contact', label: 'お問い合わせ' },
@@ -21,6 +21,7 @@ const navItems = [
 const toolItems = [
   { href: '/tools/colors', label: 'ブランドカラー定義', icon: Palette },
   { href: '/tools/stp', label: 'STP分析', icon: Target },
+  { href: '/tools/persona', label: 'ペルソナビルダー', icon: UserCircle },
 ]
 
 /**
@@ -76,14 +77,14 @@ export default function Header() {
 
           {/* デスクトップナビ */}
           <nav className="hidden md:flex items-center gap-1">
-            {/* お知らせ */}
+            {/* ニュース */}
             <Link
               href="/news"
               className={`px-3 py-2 text-sm font-semibold rounded-md transition-all duration-300 hover:bg-white/30 hover:backdrop-blur-[10px] ${
                 isOverDark ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'
               }`}
             >
-              お知らせ
+              ニュース
             </Link>
 
             {/* ツールドロップダウン（ホバーで開閉） */}
@@ -190,7 +191,7 @@ export default function Header() {
                 className="block px-3 py-2.5 text-base font-semibold text-gray-600 rounded-xl hover:bg-white/60 hover:text-gray-900 transition-colors"
                 onClick={() => setMenuOpen(false)}
               >
-                お知らせ
+                ニュース
               </Link>
               <div className="px-3 pt-2 pb-1 text-sm font-semibold text-gray-400">無料ツール</div>
               {toolItems.map((tool) => (
