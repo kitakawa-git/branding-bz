@@ -20,15 +20,6 @@ interface ServiceCard {
 
 const SERVICES: ServiceCard[] = [
   {
-    id: 'colors',
-    icon: <Palette size={28} strokeWidth={1.5} className="text-violet-600" />,
-    title: 'ブランドカラー定義ツール',
-    description: 'AIがブランドに最適なカラーパレットを3案提案します',
-    href: '/tools/colors/app',
-    buttonLabel: '始める',
-    highlightButtonLabel: '続ける',
-  },
-  {
     id: 'stp',
     icon: <BarChart3 size={28} strokeWidth={1.5} className="text-blue-600" />,
     title: 'STP分析ツール',
@@ -43,6 +34,15 @@ const SERVICES: ServiceCard[] = [
     title: 'ペルソナビルダー',
     description: 'AIがターゲット顧客の人物像とカスタマージャーニーを生成',
     href: '/tools/persona/app',
+    buttonLabel: '始める',
+    highlightButtonLabel: '続ける',
+  },
+  {
+    id: 'colors',
+    icon: <Palette size={28} strokeWidth={1.5} className="text-violet-600" />,
+    title: 'ブランドカラー定義ツール',
+    description: 'AIがブランドに最適なカラーパレットを3案提案します',
+    href: '/tools/colors/app',
     buttonLabel: '始める',
     highlightButtonLabel: '続ける',
   },
@@ -176,7 +176,7 @@ function ServiceSelectContent() {
                 style={{ background: 'linear-gradient(to left top, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 50%)' }} />
 
               <div className="relative z-10 flex items-center gap-4 p-5">
-                <div className="flex-shrink-0 flex items-center justify-center w-12 h-12 rounded-xl bg-gray-50">
+                <div className="flex-shrink-0 flex items-center justify-center w-12 h-12">
                   {service.icon}
                 </div>
                 <div className="flex-1 min-w-0">
