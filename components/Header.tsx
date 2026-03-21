@@ -19,9 +19,9 @@ const navItems = [
 ]
 
 const toolItems = [
-  { href: '/tools/colors', label: 'ブランドカラー定義', icon: Palette },
   { href: '/tools/stp', label: 'STP分析', icon: Target },
   { href: '/tools/persona', label: 'ペルソナビルダー', icon: UserCircle },
+  { href: '/tools/colors', label: 'ブランドカラー定義', icon: Palette },
 ]
 
 /**

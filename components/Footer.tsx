@@ -10,8 +10,9 @@ const footerLinks = {
     { href: '/contact', label: 'お問い合わせ' },
   ],
   tools: [
-    { href: '/tools/colors', label: 'ブランドカラー定義' },
     { href: '/tools/stp', label: 'STP分析' },
+    { href: '/tools/persona', label: 'ペルソナビルダー' },
+    { href: '/tools/colors', label: 'ブランドカラー定義' },
   ],
   legal: [
     { href: '/terms', label: '利用規約' },
