@@ -183,7 +183,7 @@ function ServiceSelectContent() {
                   <h3 className="text-sm font-bold text-gray-900 mb-0.5">
                     {service.title}
                   </h3>
-                  <p className="text-xs text-gray-500 m-0 leading-relaxed">
+                  <p className="text-xs text-gray-600 m-0 leading-relaxed">
                     {service.description}
                   </p>
                 </div>
