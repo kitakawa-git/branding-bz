@@ -218,8 +218,8 @@ export async function POST(request: NextRequest, context: RouteContext) {
 }
 
 // 既存の最大sort_orderを取得するヘルパー
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function getMaxSortOrder(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   supabase: any,
   surveyId: string
 ): Promise<number> {

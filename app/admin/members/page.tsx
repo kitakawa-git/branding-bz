@@ -133,6 +133,7 @@ export default function MembersPage() {
 
       if (membersResult.error) throw new Error(membersResult.error.message)
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const membersData = (membersResult.data ?? []).map((m: any) => {
         const profile = Array.isArray(m.profile) ? m.profile[0] : m.profile
         return { ...m, profile: profile || null } as MemberWithProfile

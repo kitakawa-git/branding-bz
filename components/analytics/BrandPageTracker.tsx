@@ -17,7 +17,7 @@ export function BrandPageTracker({
   sourceProfileId?: string
 }) {
   // 開始時刻
-  const startTimeRef = useRef<number>(Date.now())
+  const startTimeRef = useRef<number>(0)
   // スクロール深度（0-100）
   const maxScrollDepthRef = useRef<number>(0)
   // Intersection Observerで検出したセクション名

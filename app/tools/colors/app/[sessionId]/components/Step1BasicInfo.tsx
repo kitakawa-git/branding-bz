@@ -43,7 +43,6 @@ export function Step1BasicInfo({ project, onNext, onSaveField }: Step1Props) {
   )
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
-  const [prefilled, setPrefilled] = useState(false)
   const userIdRef = useRef<string | null>(null)
   const companySyncRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   // フォーム最新値を保持するref（デバウンスタイマー内から安定して読み取るため）
@@ -104,8 +103,6 @@ export function Step1BasicInfo({ project, onNext, onSaveField }: Step1Props) {
         if (Object.keys(updates).length > 0) {
           onSaveField(updates)
         }
-
-        setPrefilled(true)
       } catch {
         // プリフィル失敗は無視
       }

@@ -13,13 +13,20 @@ export function useBrandFonts(companyId: string | null | undefined): BrandFonts 
     if (!companyId) return null
     return cache.get(companyId) ?? null
   })
+  const [prevCompanyId, setPrevCompanyId] = useState(companyId)
+
+  // companyId が変わった場合、キャッシュから同期的にセット（React推奨パターン）
+  if (prevCompanyId !== companyId) {
+    setPrevCompanyId(companyId)
+    if (!companyId) {
+      setFonts(null)
+    } else if (cache.has(companyId)) {
+      setFonts(cache.get(companyId)!)
+    }
+  }
 
   useEffect(() => {
-    if (!companyId) return
-    if (cache.has(companyId)) {
-      setFonts(cache.get(companyId)!)
-      return
-    }
+    if (!companyId || cache.has(companyId)) return
     fetchWithRetry(() =>
       supabase
         .from('brand_visuals')

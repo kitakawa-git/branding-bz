@@ -24,7 +24,7 @@ interface Step2Props {
   onSaveField: (data: Record<string, unknown>) => Promise<void>
 }
 
-export function Step2ImageInput({ project, onNext, onBack, onSaveField }: Step2Props) {
+export function Step2ImageInput({ project, onNext, onBack }: Step2Props) {
   const [approach, setApproach] = useState<ApproachType>(
     project.approach_type || 'keyword'
   )

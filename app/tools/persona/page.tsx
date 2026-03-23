@@ -2,7 +2,7 @@
 
 // ペルソナビルダー ランディングページ
 import Link from 'next/link'
-import { WandSparkles, UserCircle, Brain, Route, ArrowRight, CheckCircle2, Lightbulb, Download, Unplug, Target } from 'lucide-react'
+import { WandSparkles, UserCircle, Route, CheckCircle2, Lightbulb, Download, Unplug, Target } from 'lucide-react'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 
@@ -68,7 +68,7 @@ export default function PersonaLandingPage() {
       <Header />
 
       {/* ヒーロー */}
-      <section className="mx-auto max-w-7xl px-6 py-16 text-center md:py-24">
+      <section className="mx-auto max-w-7xl px-6 pt-24 pb-8 text-center md:pt-32 md:pb-12">
         <div
           className="mb-8 inline-flex items-center gap-2 rounded-full px-6 py-1.5 text-sm text-blue-700 relative overflow-hidden"
           style={{
@@ -87,11 +87,9 @@ export default function PersonaLandingPage() {
         <h1 className="text-3xl font-bold tracking-tight text-gray-900 md:text-5xl">
           ペルソナビルダー
         </h1>
-        <p className="mt-4 text-lg md:text-xl text-gray-500">
-          AIと一緒に、ターゲット顧客の人物像を具体化する
-        </p>
         <p className="mt-6 mx-auto max-w-2xl text-[20px] text-gray-600 leading-relaxed">
-          STP分析で決めた「誰に届けるか」を、名前・年齢・職業・行動パターンまで具体的な1人の人物像に落とし込みます。カスタマージャーニーマップも自動生成。
+          STP分析で決めた「誰に届けるか」を、リアルな顧客像に。<br className="hidden sm:block" />
+          名前・年齢・職業・行動パターンまで、AIと一緒に深掘りします。
         </p>
         <div className="mt-10">
           <Link

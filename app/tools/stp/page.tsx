@@ -2,7 +2,7 @@
 
 // STP分析ツール ランディングページ
 import Link from 'next/link'
-import { WandSparkles, LayoutGrid, Target, MapPin, ArrowRight, CheckCircle2, Lightbulb, SlidersHorizontal, Download, Unplug } from 'lucide-react'
+import { WandSparkles, LayoutGrid, Target, MapPin, CheckCircle2, Lightbulb, SlidersHorizontal, Download, Unplug } from 'lucide-react'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 
@@ -68,7 +68,7 @@ export default function STPLandingPage() {
       <Header />
 
       {/* ヒーロー */}
-      <section className="mx-auto max-w-7xl px-6 py-16 text-center md:py-24">
+      <section className="mx-auto max-w-7xl px-6 pt-24 pb-8 text-center md:pt-32 md:pb-12">
         <div
           className="mb-8 inline-flex items-center gap-2 rounded-full px-6 py-1.5 text-sm text-blue-700 relative overflow-hidden"
           style={{

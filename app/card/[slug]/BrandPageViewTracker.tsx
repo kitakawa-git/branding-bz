@@ -28,11 +28,12 @@ export function BrandPageViewTracker({
   hasValues,
 }: BrandPageViewTrackerProps) {
   const hasSentRef = useRef(false)
-  const startTimeRef = useRef(Date.now())
+  const startTimeRef = useRef(0)
   const maxScrollDepthRef = useRef(0)
 
   // スクロール深度の追跡
   useEffect(() => {
+    startTimeRef.current = Date.now()
     const handleScroll = () => {
       const scrollDepth = Math.round(
         ((window.scrollY + window.innerHeight) / document.documentElement.scrollHeight) * 100

@@ -588,9 +588,8 @@ export default function BrandScoreDashboard() {
                     }}
                   />
                   <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} />
-                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                   <Tooltip
-                    formatter={(value: any, name: any) => {
+                    formatter={(value: number | string, name: string) => {
                       const label = name === 'total_score' ? '総合'
                         : name === 'inner_score' ? 'インナー'
                         : 'アウター'

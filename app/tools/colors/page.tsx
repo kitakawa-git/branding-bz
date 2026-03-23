@@ -2,9 +2,8 @@
 
 // ランディングページ（未認証でもアクセス可）
 import Link from 'next/link'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Palette, WandSparkles, Download, ArrowRight, CheckCircle2, Plug } from 'lucide-react'
+import { Palette, WandSparkles, Download, CheckCircle2, Plug } from 'lucide-react'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 
@@ -91,7 +90,7 @@ export default function ColorsLandingPage() {
       <Header />
 
       {/* ヒーロー */}
-      <section className="mx-auto max-w-7xl px-6 py-16 text-center md:py-24">
+      <section className="mx-auto max-w-7xl px-6 pt-24 pb-8 text-center md:pt-32 md:pb-12">
         <div
           className="mb-8 inline-flex items-center gap-2 rounded-full px-6 py-1.5 text-sm text-blue-700 relative overflow-hidden"
           style={{

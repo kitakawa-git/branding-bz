@@ -105,26 +105,6 @@ export default function PersonaSessionPage() {
     }
   }, [sessionId])
 
-  // 部分保存（オートセーブ用、ステップ変更なし）
-  const saveField = useCallback(async (sessionData: Record<string, unknown>) => {
-    try {
-      await fetch(`/api/tools/persona/sessions/${sessionId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionData }),
-      })
-      setSession(prev => {
-        if (!prev) return prev
-        return {
-          ...prev,
-          session_data: { ...prev.session_data, ...sessionData } as PersonaSessionData,
-        }
-      })
-    } catch {
-      console.error('[Persona AutoSave] 保存エラー')
-    }
-  }, [sessionId])
-
   if (loading) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-8">

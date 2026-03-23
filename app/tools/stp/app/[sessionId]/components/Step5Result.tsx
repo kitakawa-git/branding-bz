@@ -295,7 +295,7 @@ export function Step5Result({
     } finally {
       setConnectLoading(false)
     }
-  }, [sessionId, adminCompanyId, router, basicInfo])
+  }, [sessionId, adminCompanyId, basicInfo])
 
   // 最初からやり直す
   const [restartConfirmOpen, setRestartConfirmOpen] = useState(false)

@@ -249,6 +249,13 @@ function VirtualList({
   const scrollRef = useRef<HTMLDivElement>(null)
   const [scrollTop, setScrollTop] = useState(0)
   const [visibleCount, setVisibleCount] = useState(BATCH_SIZE)
+  const [prevItems, setPrevItems] = useState(items)
+
+  // items が変わったらvisibleCountをリセット（React推奨パターン）
+  if (prevItems !== items) {
+    setPrevItems(items)
+    setVisibleCount(BATCH_SIZE)
+  }
 
   const displayItems = useMemo(() => items.slice(0, visibleCount), [items, visibleCount])
   const totalHeight = displayItems.length * ITEM_HEIGHT
@@ -269,8 +276,8 @@ function VirtualList({
     }
   }, [items.length])
 
+  // scrollTopのリセットはDOM操作なのでuseEffect内に残す
   useEffect(() => {
-    setVisibleCount(BATCH_SIZE)
     if (scrollRef.current) scrollRef.current.scrollTop = 0
   }, [items])
 
@@ -326,14 +333,18 @@ export function GoogleFontPicker({
   const [selected, setSelected] = useState<string | null>(value)
   const [tab, setTab] = useState<'google' | 'manual'>('google')
   const [manualInput, setManualInput] = useState('')
+  const [prevOpen, setPrevOpen] = useState(open)
 
-  useEffect(() => {
-    if (!open) return
+  // open が false → true に変わった瞬間だけ状態を初期化（React推奨パターン）
+  if (open && !prevOpen) {
     setSelected(value)
     setSearch('')
     setTab('google')
     setManualInput(value || '')
-  }, [open, value])
+  }
+  if (prevOpen !== open) {
+    setPrevOpen(open)
+  }
 
   const previewText = mode === 'latin'
     ? 'ABCabc 123 The quick brown fox'

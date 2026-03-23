@@ -19,7 +19,7 @@ export const metadata: Metadata = {
 function HeroSection() {
   return (
     <section className="text-center">
-      <div className="w-full max-w-4xl mx-auto px-6 pt-16 pb-16 md:pt-24 md:pb-24">
+      <div className="w-full max-w-4xl mx-auto px-6 pt-24 pb-8 md:pt-32 md:pb-12">
         <div
           className="mb-8 inline-flex items-center gap-2 rounded-full px-6 py-1.5 text-sm text-blue-700 relative overflow-hidden"
           style={{
@@ -38,7 +38,7 @@ function HeroSection() {
         <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-gray-900">
           AIでブランディングを加速させる
         </h1>
-        <p className="mt-6 text-lg md:text-xl text-gray-700 max-w-2xl mx-auto leading-relaxed">
+        <p className="mt-6 text-[20px] text-gray-700 max-w-2xl mx-auto leading-relaxed">
           社員が体現し、顧客に届く。<br className="hidden sm:block" />
           ブランドの構築・浸透・発信を、ひとつのプラットフォームで。
         </p>

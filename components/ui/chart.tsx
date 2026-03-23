@@ -107,6 +107,7 @@ type ChartTooltipContentProps = React.ComponentProps<"div"> & {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payload?: any[]
   label?: React.ReactNode
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   labelFormatter?: (label: React.ReactNode, payload: any[]) => React.ReactNode
   labelClassName?: string
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
