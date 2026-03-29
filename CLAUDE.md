@@ -32,13 +32,14 @@ id (uuid), company_id (FK→companies), name, position, department, bio, photo_u
 - Brand Score (/admin/brand-score) — インナースコア（サーベイ）＋アウタースコア（名刺分析）＋マイクロフィードバック
 - STP分析ツール (/tools/stp) — 5ステップAI提案＋PDF出力＋branding.bz連携
 - カラー定義ツール (/tools/colors) — 5ステップAIパレット提案＋PDF出力＋branding.bz連携
+- ペルソナビルダー (/tools/persona) — 5ステップAIペルソナ＋ジャーニーマップ＋branding.bz連携
 - スーパー管理画面 (/superadmin) — 企業管理・ニュース管理
 - マーケティングページ — LP・料金・FAQ・お問い合わせ・お知らせ
 ## 開発フェーズ
 - Phase 0 ✅: スマート名刺プロトタイプ
 - Phase 1 ✅: ブランド掲示＋スマート名刺＋管理画面＋ポータル
 - Phase 2（進行中）: タイムライン、KPI、Brand Score（サーベイ・マイクロフィードバック・ダッシュボード）
-- Phase 3: ミニアプリ群（STP・カラー定義は完了）
+- Phase 3: ミニアプリ群（STP・カラー定義・ペルソナビルダーは完了）
 ## 絶対ルール
 ### DB変更ルール
 - テーブル追加・カラム追加・RLSポリシー変更・RPC関数作成が必要な場合は、コード修正より先にSQLを出力し、ユーザーの実行完了を待つこと

@@ -7,18 +7,24 @@ import { useParams } from 'next/navigation'
 import { toast } from 'sonner'
 import { Skeleton } from '@/components/ui/skeleton'
 import { StepProgressBar } from '@/components/shared/StepProgressBar'
-import { StepPlaceholder } from './components/StepPlaceholder'
+import { Step1BasicInfo } from './components/Step1BasicInfo'
+import { Step2Demographics } from './components/Step2Demographics'
+import { Step3Goals } from './components/Step3Goals'
+import { Step4Journey } from './components/Step4Journey'
+import { Step5Result } from './components/Step5Result'
 
 // ペルソナセッションデータの型
+/* eslint-disable @typescript-eslint/no-explicit-any */
 interface PersonaSessionData {
   current_step: number
-  basic_info: Record<string, unknown>
-  target_info: Record<string, unknown>
-  demographics: Record<string, unknown>
-  goals: Record<string, unknown>
-  journey_map: Record<string, unknown>
+  basic_info: any
+  target_info: any
+  demographics: any
+  goals: any
+  journey_map: any
   completed: boolean
 }
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 interface PersonaSession {
   id: string
@@ -32,11 +38,11 @@ interface PersonaSession {
 }
 
 const STEP_DEFINITIONS = [
-  { label: '基本情報', description: '企業情報とターゲットの選択' },
-  { label: 'デモグラフィック', description: 'AIがペルソナの属性を提案' },
-  { label: 'ゴール・課題', description: '目標や悩み、購買行動を深掘り' },
-  { label: 'ジャーニーマップ', description: 'AIが5段階のカスタマージャーニーを生成' },
-  { label: '確認・出力', description: 'ペルソナシートとジャーニーマップをPDF出力' },
+  { label: '基本情報' },
+  { label: 'デモグラフィック' },
+  { label: 'ゴール・課題' },
+  { label: 'ジャーニーマップ' },
+  { label: '確認・出力' },
 ]
 
 export default function PersonaSessionPage() {
@@ -105,6 +111,26 @@ export default function PersonaSessionPage() {
     }
   }, [sessionId])
 
+  // 部分保存（オートセーブ用、ステップ変更なし）
+  const saveField = useCallback(async (sessionData: Record<string, unknown>) => {
+    try {
+      await fetch(`/api/tools/persona/sessions/${sessionId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionData }),
+      })
+      setSession(prev => {
+        if (!prev) return prev
+        return {
+          ...prev,
+          session_data: { ...prev.session_data, ...sessionData } as PersonaSessionData,
+        }
+      })
+    } catch {
+      console.error('[Persona AutoSave] 保存エラー')
+    }
+  }, [sessionId])
+
   if (loading) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-8">
@@ -128,25 +154,64 @@ export default function PersonaSessionPage() {
   }
 
   const currentStep = session.current_step
+  const sd = session.session_data
 
   return (
     <div className="mx-auto max-w-4xl px-5 py-8">
       {/* プログレスバー */}
       <StepProgressBar
-        steps={STEP_DEFINITIONS.map(s => ({ label: s.label }))}
+        steps={STEP_DEFINITIONS}
         currentStep={currentStep}
         className="mb-8"
       />
 
-      {/* ステップコンテンツ（全ステップPlaceholder） */}
-      {currentStep >= 1 && currentStep <= 5 && (
-        <StepPlaceholder
-          stepNumber={currentStep}
-          title={STEP_DEFINITIONS[currentStep - 1].label}
-          description={STEP_DEFINITIONS[currentStep - 1].description}
-          onNext={currentStep < 5 ? () => saveAndAdvance(currentStep + 1) : undefined}
-          onBack={currentStep > 1 ? () => saveAndAdvance(currentStep - 1) : undefined}
-          isLast={currentStep === 5}
+      {/* ステップコンテンツ */}
+      {currentStep === 1 && (
+        <Step1BasicInfo
+          basicInfo={sd.basic_info || {}}
+          onNext={(data) => saveAndAdvance(2, { basic_info: data })}
+          onSaveField={(data) => saveField({ basic_info: data })}
+        />
+      )}
+      {currentStep === 2 && (
+        <Step2Demographics
+          demographics={sd.demographics || {}}
+          basicInfo={sd.basic_info || {}}
+          onNext={(data) => saveAndAdvance(3, { demographics: data })}
+          onBack={() => saveAndAdvance(1)}
+          onSaveField={(data) => saveField({ demographics: data })}
+        />
+      )}
+      {currentStep === 3 && (
+        <Step3Goals
+          goals={sd.goals || {}}
+          demographics={sd.demographics || {}}
+          basicInfo={sd.basic_info || {}}
+          onNext={(data) => saveAndAdvance(4, { goals: data })}
+          onBack={() => saveAndAdvance(2)}
+          onSaveField={(data) => saveField({ goals: data })}
+        />
+      )}
+      {currentStep === 4 && (
+        <Step4Journey
+          journey={sd.journey_map || {}}
+          basicInfo={sd.basic_info || {}}
+          demographics={sd.demographics || {}}
+          goals={sd.goals || {}}
+          onNext={(data) => saveAndAdvance(5, { journey_map: data })}
+          onBack={() => saveAndAdvance(3)}
+          onSaveField={(data) => saveField({ journey_map: data })}
+        />
+      )}
+      {currentStep === 5 && (
+        <Step5Result
+          sessionId={sessionId}
+          basicInfo={sd.basic_info || {}}
+          demographics={sd.demographics || {}}
+          goals={sd.goals || {}}
+          journey={sd.journey_map || {}}
+          companyId={session.company_id}
+          onBack={() => saveAndAdvance(4)}
         />
       )}
     </div>
