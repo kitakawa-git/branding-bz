@@ -163,7 +163,7 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {}
-    if (!companyName.trim()) newErrors.companyName = '企業名・ブランド名を入力してください'
+    if (!companyName.trim()) newErrors.companyName = '企業名またはブランド名を入力してください'
     if (!industryCategory) newErrors.industryCategory = '業種を選択してください'
     const validDescriptions = businessDescriptions.filter(b => b.title.trim())
     if (validDescriptions.length === 0) newErrors.businessDescriptions = '事業内容を1つ以上入力してください'
@@ -198,12 +198,12 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
           {/* 企業名 */}
           <div className="mb-5">
             <h2 className="text-sm font-bold mb-3">
-              企業名・ブランド名 <span className="text-xs text-red-500 font-normal">*</span>
+              企業名またはブランド名 <span className="text-xs text-red-500 font-normal">*</span>
             </h2>
             <Input
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
-              placeholder="例: 株式会社○○"
+              placeholder="例: 株式会社○○ / ブランド名"
               maxLength={100}
               className={`h-10 ${errors.companyName ? 'border-red-400' : ''}`}
             />

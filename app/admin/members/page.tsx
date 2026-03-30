@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
 import { Button } from '@/components/ui/button'
-import { Check, Pencil, Eye, EyeOff, Trash2, Link2, ChevronDown, ChevronUp, Plus } from 'lucide-react'
+import { Check, Pencil, Eye, EyeOff, Trash2, Link2, ChevronDown, ChevronUp, Plus, UserPlus, CheckCircle2, XCircle } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
@@ -47,6 +47,15 @@ type MemberWithProfile = {
     card_enabled: boolean
     photo_url: string | null
   } | null
+}
+
+type JoinRequest = {
+  id: string
+  auth_id: string
+  display_name: string
+  email: string
+  created_at: string
+  profile_id: string | null
 }
 
 type InviteLink = {
@@ -88,6 +97,10 @@ export default function MembersPage() {
   const [loading, setLoading] = useState(!cached)
   const [fetchError, setFetchError] = useState('')
   const [togglingId, setTogglingId] = useState<string | null>(null)
+
+  // 参加リクエスト
+  const [joinRequests, setJoinRequests] = useState<JoinRequest[]>([])
+  const [processingRequestId, setProcessingRequestId] = useState<string | null>(null)
 
   // 招待リンク
   const [inviteLinks, setInviteLinks] = useState<InviteLink[]>(cached?.inviteLinks ?? [])
@@ -165,6 +178,62 @@ export default function MembersPage() {
     if (getPageCache<AdminMembersCache>(cacheKey)) return
     fetchData()
   }, [companyId, cacheKey])
+
+  // ============================================
+  // Join Requests
+  // ============================================
+  const fetchJoinRequests = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) return
+      const res = await fetch('/api/members/join-requests', {
+        headers: { 'Authorization': `Bearer ${session.access_token}` },
+      })
+      if (!res.ok) return
+      const data = await res.json()
+      setJoinRequests(data.requests || [])
+    } catch {
+      // 取得失敗は無視
+    }
+  }
+
+  useEffect(() => {
+    if (companyId) fetchJoinRequests()
+  }, [companyId])
+
+  const handleJoinRequest = async (memberId: string, action: 'approve' | 'reject') => {
+    setProcessingRequestId(memberId)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) return
+
+      const res = await fetch('/api/members/join-requests', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ memberId, action }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        toast.error(data.error || '処理に失敗しました')
+        return
+      }
+
+      if (action === 'approve') {
+        toast.success(`${data.member.name} を承認しました`)
+        await fetchData()
+      } else {
+        toast.success(`${data.member.name} のリクエストを拒否しました`)
+      }
+      setJoinRequests(prev => prev.filter(r => r.id !== memberId))
+    } catch (err) {
+      toast.error('処理に失敗しました: ' + (err instanceof Error ? err.message : '不明'))
+    } finally {
+      setProcessingRequestId(null)
+    }
+  }
 
   // ============================================
   // Card toggle
@@ -483,6 +552,58 @@ export default function MembersPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* ===== 参加リクエスト ===== */}
+      {joinRequests.length > 0 && (
+        <Card className="border-amber-200 bg-amber-50/50 shadow-none mb-6">
+          <CardContent className="p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <UserPlus size={16} className="text-amber-600" />
+              <h3 className="text-sm font-bold text-foreground">
+                参加リクエスト
+                <span className="ml-2 inline-flex items-center justify-center h-5 min-w-[20px] px-1.5 rounded-full bg-amber-500 text-white text-xs font-bold">
+                  {joinRequests.length}
+                </span>
+              </h3>
+            </div>
+            <div className="space-y-2">
+              {joinRequests.map((req) => (
+                <div key={req.id} className="flex items-center justify-between gap-3 p-3 rounded-lg bg-white border border-border">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-foreground m-0 truncate">{req.display_name}</p>
+                    <p className="text-xs text-muted-foreground m-0 truncate">{req.email}</p>
+                    <p className="text-xs text-muted-foreground m-0">
+                      {new Date(req.created_at).toLocaleDateString('ja-JP')} 申請
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 text-xs gap-1 text-green-600 border-green-200 hover:bg-green-50 hover:text-green-700"
+                      disabled={processingRequestId === req.id}
+                      onClick={() => handleJoinRequest(req.id, 'approve')}
+                    >
+                      <CheckCircle2 size={14} />
+                      承認
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 text-xs gap-1 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+                      disabled={processingRequestId === req.id}
+                      onClick={() => handleJoinRequest(req.id, 'reject')}
+                    >
+                      <XCircle size={14} />
+                      拒否
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* ===== アカウント一覧 ===== */}
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">

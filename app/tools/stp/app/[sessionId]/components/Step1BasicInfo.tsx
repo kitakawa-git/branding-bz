@@ -273,7 +273,7 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
     const newErrors: Record<string, string> = {}
 
     if (!companyName.trim()) {
-      newErrors.companyName = '企業名・ブランド名を入力してください'
+      newErrors.companyName = '企業名またはブランド名を入力してください'
     }
 
     if (!industryCategory) {
@@ -338,10 +338,10 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
 
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
         <CardContent className="p-5">
-          {/* 企業名・ブランド名 */}
+          {/* 企業名またはブランド名 */}
           <div className="mb-5">
             <h2 className="text-sm font-bold mb-3">
-              企業名・ブランド名 <span className="text-xs text-red-500 font-normal">*</span>
+              企業名またはブランド名 <span className="text-xs text-red-500 font-normal">*</span>
             </h2>
             <Input
               value={companyName}
@@ -397,15 +397,21 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
 
           {/* ターゲット（構造化入力） */}
           <div className="mb-5">
+            <h2 className="text-sm font-bold mb-1.5">
+              ターゲット <span className="text-xs text-gray-400 font-normal">（任意）</span>
+            </h2>
+            <p className="text-[13px] text-muted-foreground mb-3">
+              すでに決めているターゲットがある場合には内容を入力してください。
+            </p>
             <TitleDescriptionList
-              label="ターゲット"
+              label=""
               items={targetSegments.map(ts => ({ title: ts.name, description: ts.description }))}
               onChange={(newItems) => {
                 setTargetSegments(newItems.map(item => ({ name: item.title, description: item.description })))
               }}
               addButtonLabel="ターゲットを追加"
-              titlePlaceholder="セグメント名（例: 中小企業の経営者）"
-              descriptionPlaceholder="セグメントの説明"
+              titlePlaceholder="ターゲット名（例: 中小企業の経営者）"
+              descriptionPlaceholder="ターゲットの説明"
             />
           </div>
 

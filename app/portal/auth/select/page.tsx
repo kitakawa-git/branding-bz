@@ -207,6 +207,16 @@ function ServiceSelectContent() {
       <p className="mt-8 text-xs text-gray-400">
         今後もツールが追加されます
       </p>
+
+      <button
+        onClick={async () => {
+          await supabase.auth.signOut()
+          router.replace('/portal/auth')
+        }}
+        className="mt-4 text-xs text-gray-400 hover:text-gray-600 transition-colors underline"
+      >
+        ログアウト
+      </button>
     </div>
   )
 }

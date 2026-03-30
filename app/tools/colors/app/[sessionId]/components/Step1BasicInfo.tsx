@@ -162,9 +162,9 @@ export function Step1BasicInfo({ project, onNext, onSaveField }: Step1Props) {
     const newErrors: Record<string, string> = {}
 
     if (!brandName.trim()) {
-      newErrors.brandName = '企業名・ブランド名を入力してください'
+      newErrors.brandName = '企業名またはブランド名を入力してください'
     } else if (brandName.length > 100) {
-      newErrors.brandName = '企業名・ブランド名は100文字以内で入力してください'
+      newErrors.brandName = '企業名またはブランド名は100文字以内で入力してください'
     }
 
     if (!industryCategory) {
@@ -250,16 +250,16 @@ export function Step1BasicInfo({ project, onNext, onSaveField }: Step1Props) {
 
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
         <CardContent className="p-5">
-          {/* 企業名・ブランド名 */}
+          {/* 企業名またはブランド名 */}
           <div className="mb-5">
             <h2 className="text-sm font-bold mb-3">
-              企業名・ブランド名 <span className="text-xs text-red-500 font-normal">*</span>
+              企業名またはブランド名 <span className="text-xs text-red-500 font-normal">*</span>
             </h2>
             <Input
               value={brandName}
               onChange={(e) => setBrandName(e.target.value)}
               onBlur={() => autoSave('brand_name', brandName.trim())}
-              placeholder="例: branding.bz"
+              placeholder="例: 株式会社○○ / ブランド名"
               maxLength={100}
               className={`h-10 ${errors.brandName ? 'border-red-400' : ''}`}
             />

@@ -9,8 +9,6 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Input } from '@/components/ui/input'
 
-type AuthMode = 'login' | 'signup'
-
 // from パラメータに応じたサブタイトル
 const SUBTITLES: Record<string, string> = {
   colors: 'ブランドカラー定義ツールを利用するにはログインが必要です',
@@ -30,10 +28,8 @@ export default function PortalAuthPage() {
 }
 
 function PortalAuthContent() {
-  const [mode, setMode] = useState<AuthMode>('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
@@ -118,56 +114,6 @@ function PortalAuthContent() {
     }
   }
 
-  // 新規登録
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
-
-    if (password.length < 6) {
-      setError('パスワードは6文字以上で入力してください')
-      setLoading(false)
-      return
-    }
-
-    if (password !== confirmPassword) {
-      setError('パスワードが一致しません')
-      setLoading(false)
-      return
-    }
-
-    try {
-      const { data, error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
-      })
-
-      if (signUpError) {
-        if (signUpError.message.includes('already registered')) {
-          setError('このメールアドレスは既に登録されています。ログインしてください。')
-        } else {
-          setError(signUpError.message)
-        }
-        return
-      }
-
-      if (data.user) {
-        // メール確認が必要な場合
-        if (data.session === null) {
-          setError('')
-          setMode('login')
-          alert('確認メールを送信しました。メールを確認してからログインしてください。')
-          return
-        }
-        redirectAfterAuth(data.user.id)
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'アカウント作成中にエラーが発生しました')
-    } finally {
-      setLoading(false)
-    }
-  }
-
   // セッションチェック中
   if (checkingSession) {
     return (
@@ -216,7 +162,7 @@ function PortalAuthContent() {
               style={{ height: '32px', width: 'auto' }}
             />
             <p className="m-0 text-sm text-gray-500">
-              {mode === 'login' ? subtitle : 'アカウントを作成'}
+              {subtitle}
             </p>
           </div>
 
@@ -252,7 +198,7 @@ function PortalAuthContent() {
             </div>
           </div>
 
-          <form onSubmit={mode === 'login' ? handleLogin : handleSignup}>
+          <form onSubmit={handleLogin}>
             <div className="mb-5">
               <h2 className="mb-1.5 text-sm font-bold text-gray-700">メールアドレス</h2>
               <Input
@@ -278,21 +224,6 @@ function PortalAuthContent() {
               />
             </div>
 
-            {mode === 'signup' && (
-              <div className="mb-5">
-                <h2 className="mb-1.5 text-sm font-bold text-gray-700">パスワード（確認）</h2>
-                <Input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="パスワードを再入力"
-                  required
-                  minLength={6}
-                  className="h-10 bg-white/60 border-white/80 focus-visible:ring-gray-400"
-                />
-              </div>
-            )}
-
             <button
               type="submit"
               disabled={loading}
@@ -305,35 +236,20 @@ function PortalAuthContent() {
                 boxShadow: '0px 8px 24px 0 rgba(0, 0, 0, 0.2), inset 0px 1px 0px 0px rgba(255, 255, 255, 0.15)',
               }}
             >
-              {loading
-                ? (mode === 'login' ? 'ログイン中...' : 'アカウント作成中...')
-                : (mode === 'login' ? 'ログイン' : 'アカウントを作成')
-              }
+              {loading ? 'ログイン中...' : 'ログイン'}
             </button>
           </form>
 
           <p className="mb-0 mt-6 text-center text-xs">
-            {mode === 'login' ? (
-              <span className="text-gray-500">
-                アカウントをお持ちでない方は{' '}
-                <button
-                  onClick={() => { setMode('signup'); setError('') }}
-                  className="font-bold text-blue-600 underline-offset-2 hover:underline bg-transparent border-0 cursor-pointer"
-                >
-                  新規登録
-                </button>
-              </span>
-            ) : (
-              <span className="text-gray-500">
-                アカウントをお持ちの方は{' '}
-                <button
-                  onClick={() => { setMode('login'); setError('') }}
-                  className="font-bold text-blue-600 underline-offset-2 hover:underline bg-transparent border-0 cursor-pointer"
-                >
-                  ログイン
-                </button>
-              </span>
-            )}
+            <span className="text-gray-500">
+              アカウントをお持ちでない方は{' '}
+              <button
+                onClick={() => router.push('/signup')}
+                className="font-bold text-blue-600 underline-offset-2 hover:underline bg-transparent border-0 cursor-pointer"
+              >
+                新規登録
+              </button>
+            </span>
           </p>
 
           <p className="mb-0 mt-3 text-center text-xs text-gray-500">

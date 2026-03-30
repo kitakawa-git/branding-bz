@@ -294,6 +294,12 @@ background: [
 - /typecheck で型チェックを実行
 - /commit で日本語コミットメッセージを作成（pushはしない）
 
+### セッション開始時
+- `../BRD-PROJECT-STATUS.md` を読んで現在のフェーズ・残タスク・課題を把握してから作業開始
+
 ### セッション終了時
+- `/sync-status` を実行して BRD-PROJECT-STATUS.md を更新する（必須）
+  - パス: `../BRD-PROJECT-STATUS.md`
+  - 残タスク・完了済み機能・技術メモを更新
 - 実装中に発見したハマりポイントや解決策をCLAUDE.mdまたはMEMORY.mdに記録
 - 特にSupabase RLS、認証パターン、共通コンポーネントの使い方

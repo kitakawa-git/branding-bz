@@ -312,9 +312,9 @@ export default function CompanyPage() {
               />
             </div>
 
-            {/* 企業名・ブランド名 */}
+            {/* 企業名またはブランド名 */}
             <div className="mb-5">
-              <h2 className="text-sm font-bold mb-3">企業名・ブランド名</h2>
+              <h2 className="text-sm font-bold mb-3">企業名またはブランド名</h2>
               <Input
                 type="text"
                 value={company.name}

@@ -110,6 +110,17 @@ export async function POST(request: NextRequest) {
 
     console.log('[Signup] ステップ3完了: 企業作成成功 id=', company.id)
 
+    // ステップ3.5: email_domain を設定（ドメイン認証用）
+    const domain = email.split('@')[1]?.toLowerCase()
+    const FREE_DOMAINS = ['gmail.com','googlemail.com','yahoo.co.jp','yahoo.com','ymail.com','outlook.com','outlook.jp','hotmail.com','hotmail.co.jp','live.com','live.jp','msn.com','icloud.com','me.com','mac.com','aol.com','protonmail.com','proton.me','zoho.com','mail.com','gmx.com']
+    if (domain && !FREE_DOMAINS.includes(domain)) {
+      await supabaseAdmin
+        .from('companies')
+        .update({ email_domain: domain })
+        .eq('id', company.id)
+      console.log('[Signup] email_domain設定:', domain)
+    }
+
     // ステップ4: admin_usersに紐づけ
     console.log('[Signup] ステップ4: admin_users紐づけ中...')
     const { error: adminInsertError } = await supabaseAdmin
