@@ -23,6 +23,21 @@ const SYSTEM_PROMPT = `あなたはブランドマーケティングの専門家
   ]
 }`
 
+// 構造化データをプロンプト用テキストに変換
+function formatBusinessDescriptions(basicInfo: Record<string, unknown>): string {
+  const descs = basicInfo.business_descriptions as Array<{ title: string; description: string }> | undefined
+  if (descs?.length) {
+    return descs
+      .filter(b => b.title?.trim())
+      .map(b => b.description ? `${b.title}: ${b.description}` : b.title)
+      .join('、')
+  }
+  if (basicInfo.products && typeof basicInfo.products === 'string') {
+    return basicInfo.products as string
+  }
+  return ''
+}
+
 export async function POST(request: NextRequest) {
   console.log('[SuggestJourney] ===== API呼び出し開始 =====')
 
@@ -38,7 +53,9 @@ export async function POST(request: NextRequest) {
     parts.push('## 企業情報')
     if (basic_info.company_name) parts.push(`- 企業名: ${basic_info.company_name}`)
     if (basic_info.industry_category) parts.push(`- 業種: ${basic_info.industry_category}`)
-    if (basic_info.products) parts.push(`- 事業内容: ${basic_info.products}`)
+
+    const bizText = formatBusinessDescriptions(basic_info)
+    if (bizText) parts.push(`- 事業内容: ${bizText}`)
 
     parts.push('')
     parts.push('## ペルソナ')

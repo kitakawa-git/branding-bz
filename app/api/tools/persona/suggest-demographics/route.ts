@@ -24,6 +24,37 @@ const SYSTEM_PROMPT = `あなたはブランドマーケティングの専門家
   "quote": "この人が言いそうな一言（キャッチフレーズ的に）"
 }`
 
+// 構造化データをプロンプト用テキストに変換
+function formatBusinessDescriptions(basicInfo: Record<string, unknown>): string {
+  const descs = basicInfo.business_descriptions as Array<{ title: string; description: string }> | undefined
+  if (descs?.length) {
+    return descs
+      .filter(b => b.title?.trim())
+      .map(b => b.description ? `${b.title}: ${b.description}` : b.title)
+      .join('\n  ')
+  }
+  // 旧形式フォールバック
+  if (basicInfo.products && typeof basicInfo.products === 'string') {
+    return basicInfo.products as string
+  }
+  return ''
+}
+
+function formatTargetSegments(basicInfo: Record<string, unknown>): string {
+  const segs = basicInfo.target_segments as Array<{ name: string; description: string }> | undefined
+  if (segs?.length) {
+    return segs
+      .filter(ts => ts.name?.trim())
+      .map(ts => ts.description ? `${ts.name}: ${ts.description}` : ts.name)
+      .join('\n  ')
+  }
+  // 旧形式フォールバック
+  if (basicInfo.target_description && typeof basicInfo.target_description === 'string') {
+    return basicInfo.target_description as string
+  }
+  return ''
+}
+
 export async function POST(request: NextRequest) {
   console.log('[SuggestDemographics] ===== API呼び出し開始 =====')
 
@@ -42,8 +73,12 @@ export async function POST(request: NextRequest) {
       const sub = basic_info.industry_subcategory ? `（${basic_info.industry_subcategory}）` : ''
       parts.push(`- 業種: ${basic_info.industry_category}${sub}`)
     }
-    if (basic_info.products) parts.push(`- 事業内容: ${basic_info.products}`)
-    if (basic_info.target_description) parts.push(`- ターゲット概要: ${basic_info.target_description}`)
+
+    const bizText = formatBusinessDescriptions(basic_info)
+    if (bizText) parts.push(`- 事業内容:\n  ${bizText}`)
+
+    const targetText = formatTargetSegments(basic_info)
+    if (targetText) parts.push(`- ターゲット:\n  ${targetText}`)
 
     parts.push('')
     parts.push('上記の情報をもとに、リアルで具体的なペルソナのデモグラフィック情報をJSON形式で提案してください。')

@@ -55,7 +55,7 @@ id (uuid), company_id (FK→companies), name, position, department, bio, photo_u
 - 共通コンポーネント化よりもインライン実装を優先
 
 ## コマンド
-- `npm run dev` — 開発サーバー起動（port 3000）
+- `npm run dev` — 開発サーバー起動（port 3004）
 - `npx tsc --noEmit` — 型チェック
 - `npx next build` — プロダクションビルド
 

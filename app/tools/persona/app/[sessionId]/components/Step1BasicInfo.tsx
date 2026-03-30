@@ -1,21 +1,35 @@
 'use client'
 
 // Step 1: 基本情報フォーム（企業情報＋ターゲット概要）
+// STP・カラー定義ツールと同じ構造化データ（business_descriptions / target_segments）を使用
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { IndustrySelect } from '@/components/shared/IndustrySelect'
+import { TitleDescriptionList } from '@/components/shared/TitleDescriptionList'
 import { supabase } from '@/lib/supabase'
 import { ArrowRight } from 'lucide-react'
+
+interface BusinessDescription {
+  title: string
+  description: string
+}
+
+interface TargetSegment {
+  name: string
+  description: string
+}
 
 interface BasicInfo {
   company_name: string
   industry_category: string
   industry_subcategory: string
-  products: string
-  target_description: string
+  business_descriptions: BusinessDescription[]
+  target_segments: TargetSegment[]
+  // 旧フィールド（後方互換）
+  products?: string
+  target_description?: string
 }
 
 interface Step1Props {
@@ -24,16 +38,50 @@ interface Step1Props {
   onSaveField: (data: BasicInfo) => Promise<void>
 }
 
+// 旧 products テキストを構造化データに変換
+function migrateProducts(basicInfo: BasicInfo): BusinessDescription[] {
+  if (basicInfo.business_descriptions?.length > 0) {
+    return basicInfo.business_descriptions
+  }
+  if (basicInfo.products && basicInfo.products.trim()) {
+    return [{ title: basicInfo.products.trim(), description: '' }]
+  }
+  return []
+}
+
+// 旧 target_description テキストを構造化データに変換
+function migrateTargetSegments(basicInfo: BasicInfo): TargetSegment[] {
+  if (basicInfo.target_segments?.length > 0) {
+    return basicInfo.target_segments
+  }
+  if (basicInfo.target_description && basicInfo.target_description.trim()) {
+    return [{ name: basicInfo.target_description.trim(), description: '' }]
+  }
+  return []
+}
+
 export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
   const [companyName, setCompanyName] = useState(basicInfo.company_name || '')
   const [industryCategory, setIndustryCategory] = useState(basicInfo.industry_category || '')
   const [industrySubcategory, setIndustrySubcategory] = useState(basicInfo.industry_subcategory || '')
-  const [products, setProducts] = useState(basicInfo.products || '')
-  const [targetDescription, setTargetDescription] = useState(basicInfo.target_description || '')
+  const [businessDescriptions, setBusinessDescriptions] = useState<BusinessDescription[]>(
+    migrateProducts(basicInfo)
+  )
+  const [targetSegments, setTargetSegments] = useState<TargetSegment[]>(
+    migrateTargetSegments(basicInfo)
+  )
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const userIdRef = useRef<string | null>(null)
+
+  // ユーザーID取得（companies同期用）
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      userIdRef.current = user?.id || null
+    })
+  }, [])
 
   // プリフィル: branding.bz本体のデータがあれば取得
   useEffect(() => {
@@ -58,19 +106,11 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
             setIndustrySubcategory(d.industry_subcategory)
           }
         }
-        if (d.business_descriptions?.length > 0 && (isCompany || !products)) {
-          const text = d.business_descriptions
-            .filter((b: { title: string }) => b.title?.trim())
-            .map((b: { title: string; description: string }) => b.description ? `${b.title}: ${b.description}` : b.title)
-            .join('\n')
-          setProducts(text)
+        if (d.business_descriptions?.length > 0 && (isCompany || businessDescriptions.length === 0)) {
+          setBusinessDescriptions(d.business_descriptions)
         }
-        if (d.target_segments?.length > 0 && (isCompany || !targetDescription)) {
-          const text = d.target_segments
-            .filter((ts: { name: string }) => ts.name?.trim())
-            .map((ts: { name: string; description: string }) => ts.description ? `${ts.name}: ${ts.description}` : ts.name)
-            .join('\n')
-          setTargetDescription(text)
+        if (d.target_segments?.length > 0 && (isCompany || targetSegments.length === 0)) {
+          setTargetSegments(d.target_segments)
         }
       } catch {
         // プリフィル失敗は無視
@@ -83,30 +123,52 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
     company_name: companyName.trim(),
     industry_category: industryCategory,
     industry_subcategory: industrySubcategory,
-    products: products.trim(),
-    target_description: targetDescription.trim(),
-  }), [companyName, industryCategory, industrySubcategory, products, targetDescription])
+    business_descriptions: businessDescriptions.filter(b => b.title.trim()),
+    target_segments: targetSegments.filter(ts => ts.name.trim()),
+  }), [companyName, industryCategory, industrySubcategory, businessDescriptions, targetSegments])
 
-  // 1秒デバウンスのオートセーブ
+  // 本体（companies）へリアルタイム同期（fire and forget）
+  const syncToCompany = useCallback((data: BasicInfo) => {
+    const userId = userIdRef.current
+    if (!userId) return
+    fetch('/api/tools/shared-profile', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId,
+        company_name: data.company_name,
+        industry_category: data.industry_category,
+        industry_subcategory: data.industry_subcategory,
+        business_descriptions: data.business_descriptions,
+        target_segments: data.target_segments,
+      }),
+    }).catch(() => {})
+  }, [])
+
+  // 1秒デバウンスのオートセーブ（セッション + companies同期）
   const triggerAutoSave = useCallback(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(() => {
-      onSaveField(getCurrentData())
+      const data = getCurrentData()
+      onSaveField(data)
+      syncToCompany(data)
     }, 1000)
-  }, [getCurrentData, onSaveField])
+  }, [getCurrentData, onSaveField, syncToCompany])
 
   useEffect(() => {
-    const hasData = companyName || industryCategory || products || targetDescription
+    const hasData = companyName || industryCategory || businessDescriptions.length > 0 || targetSegments.length > 0
     if (hasData) triggerAutoSave()
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
-  }, [companyName, industryCategory, industrySubcategory, products, targetDescription]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [companyName, industryCategory, industrySubcategory, businessDescriptions, targetSegments]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {}
     if (!companyName.trim()) newErrors.companyName = '企業名・ブランド名を入力してください'
     if (!industryCategory) newErrors.industryCategory = '業種を選択してください'
-    if (!products.trim()) newErrors.products = '事業内容を入力してください'
-    if (!targetDescription.trim()) newErrors.targetDescription = 'ターゲット概要を入力してください'
+    const validDescriptions = businessDescriptions.filter(b => b.title.trim())
+    if (validDescriptions.length === 0) newErrors.businessDescriptions = '事業内容を1つ以上入力してください'
+    const validSegments = targetSegments.filter(ts => ts.name.trim())
+    if (validSegments.length === 0) newErrors.targetSegments = 'ターゲットを1つ以上入力してください'
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -115,11 +177,17 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
     if (!validate()) return
     setSaving(true)
     if (debounceRef.current) clearTimeout(debounceRef.current)
-    const success = await onNext(getCurrentData())
+    const data = getCurrentData()
+    syncToCompany(data)
+    const success = await onNext(data)
     if (!success) setSaving(false)
   }
 
-  const isValid = companyName.trim() && industryCategory && products.trim() && targetDescription.trim()
+  const isValid =
+    companyName.trim() !== '' &&
+    industryCategory !== '' &&
+    businessDescriptions.some(b => b.title.trim() !== '') &&
+    targetSegments.some(ts => ts.name.trim() !== '')
 
   return (
     <div>
@@ -156,40 +224,34 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
             {errors.industryCategory && <p className="mt-1 text-xs text-red-500">{errors.industryCategory}</p>}
           </div>
 
-          {/* 事業内容 */}
+          {/* 事業内容（構造化入力） */}
           <div className="mb-5">
-            <h2 className="text-sm font-bold mb-3">
-              事業内容 <span className="text-xs text-red-500 font-normal">*</span>
-            </h2>
-            <Textarea
-              value={products}
-              onChange={(e) => setProducts(e.target.value)}
-              placeholder="例: 中小企業向けブランディングコンサルティング、Web制作、CI/VI設計"
-              rows={3}
-              className={errors.products ? 'border-red-400' : ''}
+            <TitleDescriptionList
+              label="事業内容"
+              items={businessDescriptions}
+              onChange={setBusinessDescriptions}
+              addButtonLabel="事業内容を追加"
+              titlePlaceholder="事業タイトル（例: ブランディングコンサルティング）"
+              descriptionPlaceholder="事業の説明（例: 中小企業向けのブランド戦略策定・CI/VI設計）"
+              required
+              error={errors.businessDescriptions}
             />
-            <p className="text-[13px] text-muted-foreground mt-1.5">
-              主な商品・サービスを簡潔に記述してください
-            </p>
-            {errors.products && <p className="mt-1 text-xs text-red-500">{errors.products}</p>}
           </div>
 
-          {/* ターゲット概要 */}
+          {/* ターゲット（構造化入力） */}
           <div className="mb-5">
-            <h2 className="text-sm font-bold mb-3">
-              ターゲット概要 <span className="text-xs text-red-500 font-normal">*</span>
-            </h2>
-            <Textarea
-              value={targetDescription}
-              onChange={(e) => setTargetDescription(e.target.value)}
-              placeholder="例: 従業員30〜100名の中小企業の経営者・マーケティング担当者。自社ブランドの確立に課題を感じている。"
-              rows={3}
-              className={errors.targetDescription ? 'border-red-400' : ''}
+            <TitleDescriptionList
+              label="ターゲット"
+              items={targetSegments.map(ts => ({ title: ts.name, description: ts.description }))}
+              onChange={(newItems) => {
+                setTargetSegments(newItems.map(item => ({ name: item.title, description: item.description })))
+              }}
+              addButtonLabel="ターゲットを追加"
+              titlePlaceholder="セグメント名（例: 中小企業の経営者）"
+              descriptionPlaceholder="セグメントの説明（例: 従業員30〜100名、自社ブランド確立に課題）"
+              required
+              error={errors.targetSegments}
             />
-            <p className="text-[13px] text-muted-foreground mt-1.5">
-              ペルソナの元となるターゲット層の概要を記述してください。AIがこの情報をもとにペルソナを提案します。
-            </p>
-            {errors.targetDescription && <p className="mt-1 text-xs text-red-500">{errors.targetDescription}</p>}
           </div>
         </CardContent>
       </Card>
