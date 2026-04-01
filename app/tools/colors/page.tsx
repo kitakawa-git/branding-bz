@@ -87,6 +87,29 @@ const STEPS = [
 export default function ColorsLandingPage() {
   return (
     <div className="min-h-screen bg-white">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'SoftwareApplication',
+            name: 'ブランドカラー定義ツール',
+            applicationCategory: 'DesignApplication',
+            operatingSystem: 'Web',
+            offers: {
+              '@type': 'Offer',
+              price: '0',
+              priceCurrency: 'JPY',
+            },
+            description: 'AIがブランドのパーソナリティや業種に合わせてプロ品質のカラーパレットを提案。WCAG準拠チェック、PDF・CSS出力に対応。',
+            provider: {
+              '@type': 'Organization',
+              name: 'branding.bz',
+              url: 'https://branding.bz',
+            },
+          }),
+        }}
+      />
       <Header />
 
       {/* ヒーロー */}

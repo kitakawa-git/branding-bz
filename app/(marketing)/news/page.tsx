@@ -7,6 +7,9 @@ import { NEWS_CATEGORY_LABELS } from '@/lib/types/news'
 export const metadata = {
   title: 'ニュース | branding.bz',
   description: 'branding.bz の最新ニュース・プレスリリース・サービスアップデート情報',
+  alternates: {
+    canonical: '/news',
+  },
 }
 
 // カテゴリバッジの色分け

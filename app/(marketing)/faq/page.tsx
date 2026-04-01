@@ -9,8 +9,11 @@ import {
 } from '@/components/ui/accordion'
 
 export const metadata: Metadata = {
-  title: 'よくある質問',
-  description: 'branding.bzに関するよくある質問と回答。料金・機能・導入方法について。',
+  title: 'よくある質問 | AIブランディングSaaS',
+  description: 'branding.bz に関するよくある質問と回答。料金プラン・機能・ブランドスコア・スマート名刺・導入方法について。AIブランディングSaaSの疑問を解決します。',
+  alternates: {
+    canonical: '/faq',
+  },
 }
 
 const faqCategories = [
@@ -99,6 +102,26 @@ const faqCategories = [
 export default function FAQPage() {
   return (
     <>
+      {/* FAQ構造化データ */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'FAQPage',
+            mainEntity: faqCategories.flatMap((cat) =>
+              cat.items.map((item) => ({
+                '@type': 'Question',
+                name: item.q,
+                acceptedAnswer: {
+                  '@type': 'Answer',
+                  text: item.a,
+                },
+              }))
+            ),
+          }),
+        }}
+      />
       {/* ヒーロー */}
       <section className="px-6 pt-[120px] pb-16 md:pt-[120px] md:pb-24 text-center">
         <div className="mx-auto max-w-4xl">

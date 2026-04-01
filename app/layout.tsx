@@ -19,6 +19,21 @@ export const metadata: Metadata = {
     default: 'branding.bz',
   },
   description: 'AIで、ブランディングを加速させる。構築・浸透・発信をひとつのプラットフォームで。',
+  metadataBase: new URL('https://branding.bz'),
+  openGraph: {
+    type: 'website',
+    locale: 'ja_JP',
+    siteName: 'branding.bz',
+  },
+  twitter: {
+    card: 'summary_large_image',
+  },
+  alternates: {
+    canonical: '/',
+  },
+  verification: {
+    google: 'NEqXR7GF6lYCsSorWgxXoVdN3f8rZc1RU-31ex7BnyI',
+  },
 };
 
 export default function RootLayout({

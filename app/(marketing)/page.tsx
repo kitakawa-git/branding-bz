@@ -12,6 +12,10 @@ export const metadata: Metadata = {
     title: 'branding.bz — AIで、ブランディングを加速させる。',
     description: '社員が体現し、顧客に届く。ブランドの構築・浸透・発信をひとつのプラットフォームで。',
     siteName: 'branding.bz',
+    url: 'https://branding.bz',
+  },
+  alternates: {
+    canonical: '/',
   },
 }
 
@@ -299,7 +303,6 @@ function FeaturesSection() {
                       width={600}
                       height={338}
                       className="w-full h-full object-cover"
-                      unoptimized
                     />
                   </div>
                 </div>
@@ -390,6 +393,38 @@ function CTASection() {
 export default function MarketingPage() {
   return (
     <>
+      {/* 構造化データ */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify([
+            {
+              '@context': 'https://schema.org',
+              '@type': 'Organization',
+              name: 'branding.bz',
+              url: 'https://branding.bz',
+              logo: 'https://branding.bz/logo.svg',
+              description: 'AIで、ブランディングを加速させる。構築・浸透・発信をひとつのプラットフォームで。',
+              founder: {
+                '@type': 'Person',
+                name: '北川巧',
+              },
+              parentOrganization: {
+                '@type': 'Organization',
+                name: 'ID INC.',
+                url: 'https://include.bz',
+              },
+            },
+            {
+              '@context': 'https://schema.org',
+              '@type': 'WebSite',
+              name: 'branding.bz',
+              url: 'https://branding.bz',
+              description: 'AIで、ブランディングを加速させる。中小企業のブランド構築・浸透・発信を一貫支援するSaaS。',
+            },
+          ]),
+        }}
+      />
       {/* パララックス背景画像（ビューポートに固定） */}
       <div className="fixed inset-0 z-0">
         <Image
@@ -398,7 +433,6 @@ export default function MarketingPage() {
           fill
           className="object-cover"
           priority
-          unoptimized
         />
       </div>
 

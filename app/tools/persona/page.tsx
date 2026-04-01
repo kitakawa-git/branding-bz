@@ -65,6 +65,29 @@ const HIGHLIGHTS = [
 export default function PersonaLandingPage() {
   return (
     <div className="min-h-screen bg-white">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'SoftwareApplication',
+            name: 'ペルソナビルダー',
+            applicationCategory: 'BusinessApplication',
+            operatingSystem: 'Web',
+            offers: {
+              '@type': 'Offer',
+              price: '0',
+              priceCurrency: 'JPY',
+            },
+            description: 'AIがターゲット顧客のペルソナを自動生成。名前・年齢・職業・行動パターン・インサイトまで具体化。',
+            provider: {
+              '@type': 'Organization',
+              name: 'branding.bz',
+              url: 'https://branding.bz',
+            },
+          }),
+        }}
+      />
       <Header />
 
       {/* ヒーロー */}
