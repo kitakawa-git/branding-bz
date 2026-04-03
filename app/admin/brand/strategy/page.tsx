@@ -17,7 +17,8 @@ import { Label } from '@/components/ui/label'
 import { Slider } from '@/components/ui/slider'
 import { PositioningMap } from '@/components/PositioningMap'
 import { Plus, Trash2 } from 'lucide-react'
-import { TitleDescriptionList } from '@/components/shared/TitleDescriptionList'
+import { Checkbox } from '@/components/ui/checkbox'
+
 import type { PositioningMapData, PositioningMapItem, PositioningMapSize } from '@/lib/types/positioning-map'
 
 type PersonaItem = {
@@ -34,9 +35,25 @@ type ActionGuideline = {
   description: string
 }
 
-type TargetSegment = {
+type TargetingState = {
+  main_target: string
+  target_description: string
+  sub_targets: string[]
+  buying_factors: string[]
+  strengths: string
+}
+
+type SegmentItem = {
   name: string
   description: string
+  size_hint?: string
+  selected?: boolean
+}
+
+type SegmentVariable = {
+  name: string
+  reason?: string
+  segments: SegmentItem[]
 }
 
 const emptyPersona = (): PersonaItem => ({
@@ -72,26 +89,37 @@ const DEFAULT_COLORS = [
   '#EC4899', '#06B6D4', '#F97316', '#6366F1', '#14B8A6',
 ]
 
+const emptyTargeting = (): TargetingState => ({
+  main_target: '',
+  target_description: '',
+  sub_targets: [],
+  buying_factors: [],
+  strengths: '',
+})
+
 type StrategyCache = {
-  targetSegments: TargetSegment[]
+  targeting: TargetingState
   personas: PersonaItem[]
   positioningMapData: PositioningMapData | null
   actionGuidelines: ActionGuideline[]
   portalSubtitle: string
   portalSubtitlesData: PortalSubtitles | null
+  segmentVariables: SegmentVariable[]
 }
 
 export default function BrandStrategyPage() {
   const { companyId } = useAuth()
   const cacheKey = `admin-brand-strategy-${companyId}`
   const cached = companyId ? getPageCache<StrategyCache>(cacheKey) : null
-  const [targetSegments, setTargetSegments] = useState<TargetSegment[]>(cached?.targetSegments ?? [])
+  const [targeting, setTargeting] = useState<TargetingState>(cached?.targeting ?? emptyTargeting())
   const [personas, setPersonas] = useState<PersonaItem[]>(cached?.personas ?? [])
   const [positioningMapData, setPositioningMapData] = useState<PositioningMapData | null>(cached?.positioningMapData ?? null)
   const [actionGuidelines, setActionGuidelines] = useState<ActionGuideline[]>(cached?.actionGuidelines ?? [])
+  const [segmentVariables, setSegmentVariables] = useState<SegmentVariable[]>(cached?.segmentVariables ?? [])
   const [loading, setLoading] = useState(!cached)
   const [fetchError, setFetchError] = useState('')
   const [saving, setSaving] = useState(false)
+  const [buyingFactorInput, setBuyingFactorInput] = useState('')
   const [portalSubtitle, setPortalSubtitle] = useState(cached?.portalSubtitle ?? '')
   const [portalSubtitlesData, setPortalSubtitlesData] = useState<PortalSubtitles | null>(cached?.portalSubtitlesData ?? null)
 
@@ -113,7 +141,7 @@ export default function BrandStrategyPage() {
       try {
         const { data: cd } = await supabase
           .from('companies')
-          .select('portal_subtitles, target_segments')
+          .select('portal_subtitles')
           .eq('id', companyId)
           .single()
         companyData = cd as Record<string, unknown> | null
@@ -127,12 +155,6 @@ export default function BrandStrategyPage() {
       } catch {
         // 取得失敗は無視
       }
-
-      // target_segments 構造化データ: companies.target_segments 優先
-      const rawTs = (companyData?.target_segments as TargetSegment[]) || []
-      const companyTargetSegments = rawTs
-        .filter(ts => ts && ts.name)
-        .map(ts => ({ name: ts.name || '', description: ts.description || '' }))
 
       if (data && data.length > 0) {
         const first = data[0] as Record<string, unknown>
@@ -148,31 +170,43 @@ export default function BrandStrategyPage() {
           pain_points: (d.pain_points as string[]) || [],
         }))
 
-        // ターゲットセグメント: companies.target_segments → brand_personas.target テキストのフォールバック
-        let parsedTargetSegments: TargetSegment[]
-        if (companyTargetSegments.length > 0) {
-          parsedTargetSegments = companyTargetSegments
-        } else if (parsedTargetText) {
-          parsedTargetSegments = [{ name: 'ターゲット', description: parsedTargetText }]
-        } else {
-          parsedTargetSegments = []
+        // セグメンテーション＋ターゲティングデータ
+        const segData = first.segmentation_data as {
+          variables?: SegmentVariable[]
+          targeting?: {
+            main_target?: string
+            target_description?: string
+            sub_targets?: string[]
+            buying_factors?: string[]
+            strengths?: string
+            evaluations?: unknown[]
+          }
+        } | null
+        const parsedSegVariables = (segData?.variables as SegmentVariable[]) || []
+
+        // ターゲティング: segmentation_data.targeting → brand_personas.target のフォールバック
+        const parsedTargeting: TargetingState = {
+          main_target: segData?.targeting?.main_target || '',
+          target_description: segData?.targeting?.target_description || parsedTargetText || '',
+          sub_targets: (segData?.targeting?.sub_targets as string[]) || [],
+          buying_factors: (segData?.targeting?.buying_factors as string[]) || [],
+          strengths: (segData?.targeting?.strengths as string) || '',
         }
 
-        setTargetSegments(parsedTargetSegments)
+        setTargeting(parsedTargeting)
         setPositioningMapData(parsedMapData)
         setActionGuidelines(parsedActionGuidelines)
         setPersonas(parsedPersonas)
+        setSegmentVariables(parsedSegVariables)
         setPageCache<StrategyCache>(cacheKey, {
-          targetSegments: parsedTargetSegments,
+          targeting: parsedTargeting,
           personas: parsedPersonas,
           positioningMapData: parsedMapData,
           actionGuidelines: parsedActionGuidelines,
           portalSubtitle: fetchedSubtitle,
           portalSubtitlesData: fetchedSubtitlesData,
+          segmentVariables: parsedSegVariables,
         })
-      } else if (companyTargetSegments.length > 0) {
-        // brand_personas レコードなしでも companies のデータがあれば表示
-        setTargetSegments(companyTargetSegments)
       }
     } catch (err) {
       console.error('[BrandStrategy] データ取得エラー:', err)
@@ -323,6 +357,53 @@ export default function BrandStrategyPage() {
     })
   }
 
+  // セグメンテーション操作
+  const addSegmentVariable = () => {
+    setSegmentVariables([...segmentVariables, { name: '', segments: [{ name: '', description: '', selected: false }] }])
+  }
+
+  const removeSegmentVariable = (varIndex: number) => {
+    setSegmentVariables(segmentVariables.filter((_, i) => i !== varIndex))
+  }
+
+  const updateSegmentVariableName = (varIndex: number, value: string) => {
+    const updated = [...segmentVariables]
+    updated[varIndex] = { ...updated[varIndex], name: value }
+    setSegmentVariables(updated)
+  }
+
+  const updateSegmentVariableReason = (varIndex: number, value: string) => {
+    const updated = [...segmentVariables]
+    updated[varIndex] = { ...updated[varIndex], reason: value }
+    setSegmentVariables(updated)
+  }
+
+  const addSegmentItem = (varIndex: number) => {
+    const updated = [...segmentVariables]
+    updated[varIndex] = {
+      ...updated[varIndex],
+      segments: [...updated[varIndex].segments, { name: '', description: '', selected: false }],
+    }
+    setSegmentVariables(updated)
+  }
+
+  const removeSegmentItem = (varIndex: number, segIndex: number) => {
+    const updated = [...segmentVariables]
+    updated[varIndex] = {
+      ...updated[varIndex],
+      segments: updated[varIndex].segments.filter((_, i) => i !== segIndex),
+    }
+    setSegmentVariables(updated)
+  }
+
+  const updateSegmentItem = (varIndex: number, segIndex: number, field: keyof SegmentItem, value: string | boolean) => {
+    const updated = [...segmentVariables]
+    const segments = [...updated[varIndex].segments]
+    segments[segIndex] = { ...segments[segIndex], [field]: value }
+    updated[varIndex] = { ...updated[varIndex], segments }
+    setSegmentVariables(updated)
+  }
+
   // 保存処理
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -347,16 +428,43 @@ export default function BrandStrategyPage() {
       g.title.trim() !== '' || g.description.trim() !== ''
     )
 
-    // ターゲットセグメントをクリーンアップ＋テキスト生成（brand_personas.target 用）
-    const validSegments = targetSegments
-      .filter(ts => ts.name.trim())
-      .map(ts => ({ name: ts.name.trim(), description: ts.description?.trim() || '' }))
-    const targetText = validSegments
-      .map(ts => {
-        const desc = ts.description ? `：${ts.description}` : ''
-        return `・${ts.name}${desc}`
-      })
-      .join('\n')
+    // ターゲティングデータをクリーンアップ
+    const cleanedTargeting = {
+      main_target: targeting.main_target.trim(),
+      target_description: targeting.target_description.trim(),
+      sub_targets: targeting.sub_targets.filter(s => s.trim()).map(s => s.trim()),
+      buying_factors: targeting.buying_factors.filter(f => f.trim()),
+      strengths: targeting.strengths.trim(),
+    }
+    // brand_personas.target 互換テキスト
+    const targetText = cleanedTargeting.target_description || cleanedTargeting.main_target || ''
+
+    // セグメンテーション変数をクリーンアップ
+    const cleanedSegVariables = segmentVariables
+      .filter(v => v.name.trim() || v.segments.some(s => s.name.trim()))
+      .map(v => ({
+        name: v.name.trim(),
+        reason: v.reason?.trim() || undefined,
+        segments: v.segments
+          .filter(s => s.name.trim())
+          .map(s => ({
+            name: s.name.trim(),
+            description: s.description?.trim() || '',
+            size_hint: s.size_hint?.trim() || undefined,
+            selected: s.selected ?? false,
+          })),
+      }))
+
+    // segmentation_data をビルド（variables + targeting をマージ）
+    const buildSegmentationData = (): Record<string, unknown> | null => {
+      const hasVars = cleanedSegVariables.length > 0
+      const hasTargeting = cleanedTargeting.main_target || cleanedTargeting.target_description || cleanedTargeting.sub_targets.length > 0
+      if (!hasVars && !hasTargeting) return null
+      const result: Record<string, unknown> = {}
+      if (hasVars) result.variables = cleanedSegVariables
+      if (hasTargeting) result.targeting = cleanedTargeting
+      return result
+    }
 
     try {
       // 1. 既存を全削除
@@ -388,6 +496,7 @@ export default function BrandStrategyPage() {
           positioning_map_url: null,
           positioning_map_data: i === 0 ? (positioningMapData || null) : null,
           action_guidelines: i === 0 ? (cleanedGuidelines.length > 0 ? cleanedGuidelines : null) : null,
+          segmentation_data: i === 0 ? buildSegmentationData() : null,
         }))
 
         const insRes = await fetch(`${supabaseUrl}/rest/v1/brand_personas`, {
@@ -401,7 +510,9 @@ export default function BrandStrategyPage() {
         }
       } else {
         // ペルソナがなくてもtarget等を保存するためダミーレコードを作成
-        if (targetText || positioningMapData || cleanedGuidelines.length > 0) {
+        const segDataToSave = buildSegmentationData()
+        const hasData = targetText || positioningMapData || cleanedGuidelines.length > 0 || segDataToSave
+        if (hasData) {
           const insertData = [{
             company_id: companyId,
             name: '',
@@ -410,6 +521,7 @@ export default function BrandStrategyPage() {
             positioning_map_url: null,
             positioning_map_data: positioningMapData || null,
             action_guidelines: cleanedGuidelines.length > 0 ? cleanedGuidelines : null,
+            segmentation_data: segDataToSave,
           }]
 
           const insRes = await fetch(`${supabaseUrl}/rest/v1/brand_personas`, {
@@ -424,7 +536,22 @@ export default function BrandStrategyPage() {
         }
       }
 
-      // ポータルサブタイトル + ターゲットセグメント保存（companies テーブル）
+      // 3. shared-profile PATCH でSTPデータ＋ポジショニングを保存
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        await fetch('/api/tools/shared-profile', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: user.id,
+            segmentation_data: buildSegmentationData(),
+            positioning_map_data: positioningMapData || null,
+            persona_target: targetText || null,
+          }),
+        })
+      }
+
+      // ポータルサブタイトル保存（companies テーブル）
       const updatedSubtitles = { ...(portalSubtitlesData || {}) }
       if (portalSubtitle.trim()) {
         updatedSubtitles.strategy = portalSubtitle.trim()
@@ -436,14 +563,14 @@ export default function BrandStrategyPage() {
         headers: { ...headers, 'Prefer': 'return=minimal' },
         body: JSON.stringify({
           portal_subtitles: Object.keys(updatedSubtitles).length > 0 ? updatedSubtitles : null,
-          target_segments: validSegments.length > 0 ? validSegments : null,
         }),
       })
       setPortalSubtitlesData(updatedSubtitles)
 
       setPersonas(cleanedPersonas)
       setActionGuidelines(cleanedGuidelines)
-      setTargetSegments(validSegments)
+      setTargeting(cleanedTargeting)
+      setSegmentVariables(cleanedSegVariables)
       toast.success('保存しました')
     } catch (err) {
       console.error('[BrandStrategy Save] エラー:', err)
@@ -525,19 +652,236 @@ export default function BrandStrategyPage() {
       </div>
 
       <form id="strategy-form" onSubmit={handleSubmit} className="space-y-6">
-        {/* Card 1: ターゲット＋ペルソナ */}
+        {/* Card 0: セグメンテーション */}
+        <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+          <CardContent className="p-5">
+            <h2 className="text-sm font-bold mb-1">S — セグメンテーション</h2>
+            <p className="text-xs text-muted-foreground mb-4">
+              市場を分割するための変数とセグメントを定義します
+            </p>
+
+            {segmentVariables.map((variable, varIndex) => (
+              <div key={varIndex} className="border border-border rounded-lg p-4 mb-3 bg-background">
+                <div className="flex justify-between items-center mb-3">
+                  <span className="text-[13px] font-bold text-muted-foreground">
+                    セグメント変数 {varIndex + 1}
+                  </span>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => removeSegmentVariable(varIndex)}
+                    className="size-9 shrink-0 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+                  >
+                    <Trash2 size={14} />
+                  </Button>
+                </div>
+
+                <div className="mb-3">
+                  <Label className="text-xs text-muted-foreground mb-1 block">変数名</Label>
+                  <Input
+                    type="text"
+                    value={variable.name}
+                    onChange={(e) => updateSegmentVariableName(varIndex, e.target.value)}
+                    placeholder="例: 企業規模・組織成熟度"
+                    className="h-10"
+                  />
+                </div>
+
+                <div className="mb-4">
+                  <Label className="text-xs text-muted-foreground mb-1 block">選定理由（任意）</Label>
+                  <AutoResizeTextarea
+                    value={variable.reason || ''}
+                    onChange={(e) => updateSegmentVariableReason(varIndex, e.target.value)}
+                    placeholder="この変数を選んだ理由"
+                    className="min-h-[60px]"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-xs text-muted-foreground block">セグメント一覧</Label>
+                  {variable.segments.map((seg, segIndex) => (
+                    <div key={segIndex} className="flex items-start gap-2">
+                      <div className="pt-2.5">
+                        <Checkbox
+                          checked={seg.selected ?? false}
+                          onCheckedChange={(checked) => updateSegmentItem(varIndex, segIndex, 'selected', !!checked)}
+                        />
+                      </div>
+                      <div className="flex-1 space-y-1.5">
+                        <Input
+                          type="text"
+                          value={seg.name}
+                          onChange={(e) => updateSegmentItem(varIndex, segIndex, 'name', e.target.value)}
+                          placeholder="セグメント名"
+                          className="h-9 text-sm"
+                        />
+                        <Input
+                          type="text"
+                          value={seg.description}
+                          onChange={(e) => updateSegmentItem(varIndex, segIndex, 'description', e.target.value)}
+                          placeholder="説明"
+                          className="h-9 text-sm"
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => removeSegmentItem(varIndex, segIndex)}
+                        className="size-9 shrink-0 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive mt-0.5"
+                      >
+                        <Trash2 size={14} />
+                      </Button>
+                    </div>
+                  ))}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => addSegmentItem(varIndex)}
+                    className="py-1.5 px-3 text-xs"
+                  >
+                    <Plus size={16} />セグメント追加
+                  </Button>
+                </div>
+              </div>
+            ))}
+
+            <Button
+              type="button"
+              variant="outline"
+              onClick={addSegmentVariable}
+              className="py-2 px-4 text-[13px]"
+            >
+              <Plus size={16} />セグメント変数を追加
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Card 1: ターゲティング＋ペルソナ */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-5 space-y-5">
-            <TitleDescriptionList
-              label="ターゲット"
-              items={targetSegments.map(ts => ({ title: ts.name, description: ts.description }))}
-              onChange={(newItems) => {
-                setTargetSegments(newItems.map(item => ({ name: item.title, description: item.description })))
-              }}
-              addButtonLabel="ターゲットを追加"
-              titlePlaceholder="セグメント名（例: 中小企業の経営者）"
-              descriptionPlaceholder="セグメントの説明"
-            />
+            <div>
+              <h2 className="text-sm font-bold mb-1">T — ターゲティング</h2>
+              <p className="text-xs text-muted-foreground mb-4">
+                ターゲットとするセグメントを設定します
+              </p>
+
+              {/* メインターゲット */}
+              <div className="border border-border rounded-lg p-4 mb-3 bg-background">
+                <span className="text-[13px] font-bold text-muted-foreground block mb-3">メインターゲット</span>
+                <div className="mb-3">
+                  <Label className="text-xs text-muted-foreground mb-1 block">セグメント名</Label>
+                  <Input
+                    type="text"
+                    value={targeting.main_target}
+                    onChange={(e) => setTargeting({ ...targeting, main_target: e.target.value })}
+                    placeholder="例: 成長期・中堅企業"
+                    className="h-10"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-1 block">説明</Label>
+                  <AutoResizeTextarea
+                    value={targeting.target_description}
+                    onChange={(e) => setTargeting({ ...targeting, target_description: e.target.value })}
+                    placeholder="ターゲットの特徴や詳細"
+                    className="min-h-[80px]"
+                  />
+                </div>
+              </div>
+
+              {/* サブターゲット */}
+              <div className="border border-border rounded-lg p-4 mb-3 bg-background">
+                <span className="text-[13px] font-bold text-muted-foreground block mb-3">サブターゲット</span>
+                {targeting.sub_targets.map((sub, i) => (
+                  <div key={i} className="flex gap-2 mb-2">
+                    <Input
+                      type="text"
+                      value={sub}
+                      onChange={(e) => {
+                        const updated = [...targeting.sub_targets]
+                        updated[i] = e.target.value
+                        setTargeting({ ...targeting, sub_targets: updated })
+                      }}
+                      placeholder={`サブターゲット ${i + 1}`}
+                      className="h-10 flex-1"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => {
+                        setTargeting({ ...targeting, sub_targets: targeting.sub_targets.filter((_, idx) => idx !== i) })
+                      }}
+                      className="size-9 shrink-0 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+                    >
+                      <Trash2 size={14} />
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setTargeting({ ...targeting, sub_targets: [...targeting.sub_targets, ''] })}
+                  className="py-1.5 px-3 text-xs"
+                >
+                  <Plus size={16} />サブターゲット追加
+                </Button>
+              </div>
+
+              {/* 購買決定要因 */}
+              <div className="border border-border rounded-lg p-4 mb-3 bg-background">
+                <span className="text-[13px] font-bold text-muted-foreground block mb-3">購買決定要因</span>
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {targeting.buying_factors.map((factor, i) => (
+                    <span
+                      key={i}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 border border-blue-200 rounded-full text-xs text-blue-700"
+                    >
+                      {factor}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setTargeting({ ...targeting, buying_factors: targeting.buying_factors.filter((_, idx) => idx !== i) })
+                        }}
+                        className="hover:text-blue-900"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+                <Input
+                  type="text"
+                  value={buyingFactorInput}
+                  onChange={(e) => setBuyingFactorInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if ((e.key === 'Enter' || e.key === ',') && buyingFactorInput.trim()) {
+                      e.preventDefault()
+                      const val = buyingFactorInput.replace(/,/g, '').trim()
+                      if (val && !targeting.buying_factors.includes(val)) {
+                        setTargeting({ ...targeting, buying_factors: [...targeting.buying_factors, val] })
+                      }
+                      setBuyingFactorInput('')
+                    }
+                  }}
+                  placeholder="Enterまたはカンマで追加"
+                  className="h-10"
+                />
+              </div>
+
+              {/* 自社の強み */}
+              <div className="border border-border rounded-lg p-4 bg-background">
+                <span className="text-[13px] font-bold text-muted-foreground block mb-3">自社の強み</span>
+                <AutoResizeTextarea
+                  value={targeting.strengths}
+                  onChange={(e) => setTargeting({ ...targeting, strengths: e.target.value })}
+                  placeholder="このターゲットに対する自社の強みや差別化ポイント"
+                  className="min-h-[80px]"
+                />
+              </div>
+            </div>
 
             <div>
               <h2 className="text-sm font-bold mb-3">ペルソナ</h2>

@@ -8,18 +8,13 @@ import { usePortalAuth } from '../components/PortalAuthProvider'
 import { getSubtitle } from '@/lib/portal-subtitles'
 import { useBrandFonts } from '@/hooks/useBrandFonts'
 import { BrandFontLoader } from '@/components/BrandFontLoader'
-import { getCssFontFamily } from '@/lib/brand-fonts'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
 import { BrandPageTracker } from '@/components/analytics/BrandPageTracker'
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import { PositioningMap } from '@/components/PositioningMap'
 import type { PositioningMapData } from '@/lib/types/positioning-map'
+import { SegmentationDisplay, TargetingDisplay, PositioningDisplay } from '@/components/shared/stp'
+import { Users, Rocket } from 'lucide-react'
 
 type Persona = {
   name: string
@@ -38,13 +33,41 @@ type ActionGuideline = {
 export default function PortalStrategyPage() {
   const { companyId, portalSubtitles } = usePortalAuth()
   const brandFonts = useBrandFonts(companyId)
-  const secondaryStyle = brandFonts ? { fontFamily: getCssFontFamily(brandFonts.secondary_font) } : undefined
+
+  type SegmentationVariable = {
+    name: string
+    reason?: string
+    segments: Array<{
+      name: string
+      description: string
+      size_hint?: string
+      selected?: boolean
+    }>
+  }
+
+  type TargetingData = {
+    main_target?: string
+    sub_targets?: string[]
+    target_description?: string
+    evaluations?: Array<{
+      segment_name: string
+      attractiveness: number
+      competitiveness: number
+      priority: string
+    }>
+  }
+
+  type SegmentationData = {
+    mode?: string
+    variables: SegmentationVariable[]
+    targeting?: TargetingData
+  }
 
   type StrategyCache = {
     target: string
     personas: Persona[]
-    positioningMapUrl: string
     positioningMapData: PositioningMapData | null
+    segmentationData: SegmentationData | null
     actionGuidelines: ActionGuideline[]
   }
   const cacheKey = `portal-strategy-${companyId}`
@@ -52,11 +75,10 @@ export default function PortalStrategyPage() {
 
   const [target, setTarget] = useState(cached?.target ?? '')
   const [personas, setPersonas] = useState<Persona[]>(cached?.personas ?? [])
-  const [positioningMapUrl, setPositioningMapUrl] = useState(cached?.positioningMapUrl ?? '')
   const [positioningMapData, setPositioningMapData] = useState<PositioningMapData | null>(cached?.positioningMapData ?? null)
+  const [segmentationData, setSegmentationData] = useState<SegmentationData | null>(cached?.segmentationData ?? null)
   const [actionGuidelines, setActionGuidelines] = useState<ActionGuideline[]>(cached?.actionGuidelines ?? [])
   const [loading, setLoading] = useState(!cached)
-  const [modalOpen, setModalOpen] = useState(false)
 
   useEffect(() => {
     if (!companyId) return
@@ -65,15 +87,15 @@ export default function PortalStrategyPage() {
     fetchWithRetry(() =>
       supabase
         .from('brand_personas')
-        .select('name, age_range, occupation, description, needs, pain_points, target, positioning_map_url, positioning_map_data, action_guidelines, sort_order')
+        .select('name, age_range, occupation, description, needs, pain_points, target, positioning_map_data, segmentation_data, action_guidelines, sort_order')
         .eq('company_id', companyId)
         .order('sort_order')
     ).then(({ data }) => {
       if (data && Array.isArray(data) && data.length > 0) {
         const first = data[0] as Record<string, unknown>
         setTarget((first.target as string) || '')
-        setPositioningMapUrl((first.positioning_map_url as string) || '')
         setPositioningMapData((first.positioning_map_data as PositioningMapData) || null)
+        setSegmentationData((first.segmentation_data as SegmentationData) || null)
         setActionGuidelines((first.action_guidelines as ActionGuideline[]) || [])
 
         setPersonas(data.map((d: unknown) => {
@@ -90,8 +112,8 @@ export default function PortalStrategyPage() {
 
         setPageCache(cacheKey, {
           target: (first.target as string) || '',
-          positioningMapUrl: (first.positioning_map_url as string) || '',
           positioningMapData: (first.positioning_map_data as PositioningMapData) || null,
+          segmentationData: (first.segmentation_data as SegmentationData) || null,
           actionGuidelines: (first.action_guidelines as ActionGuideline[]) || [],
           personas: data.map((d: unknown) => {
             const rec = d as Record<string, unknown>
@@ -159,7 +181,7 @@ export default function PortalStrategyPage() {
     </div>
   )
 
-  const hasContent = target || personas.some(p => p.name) || positioningMapData || positioningMapUrl || actionGuidelines.length > 0
+  const hasContent = target || personas.some(p => p.name) || positioningMapData || segmentationData || actionGuidelines.length > 0
   if (!hasContent) return <div className="text-center py-16 text-muted-foreground text-[15px]">まだ登録されていません</div>
 
   const validPersonas = personas.filter(p => p.name)
@@ -176,66 +198,81 @@ export default function PortalStrategyPage() {
         </p>
       </div>
 
-      {/* Card 1: ターゲット＋ペルソナ */}
-      {(target || validPersonas.length > 0) && (
+      {/* S — セグメンテーション */}
+      {segmentationData && segmentationData.variables && segmentationData.variables.length > 0 && (
         <section>
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-            <CardContent className="p-5 space-y-4">
-              {target && (
-                <div>
-                  <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">ターゲット</h2>
-                  <p className="text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0" style={secondaryStyle}>{target}</p>
-                </div>
+            <CardContent className="p-5">
+              <SegmentationDisplay
+                variables={segmentationData.variables}
+              />
+            </CardContent>
+          </Card>
+        </section>
+      )}
+
+      {/* T — ターゲティング＋ペルソナ */}
+      {((segmentationData?.targeting?.main_target || target) || validPersonas.length > 0) && (
+        <section>
+          <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+            <CardContent className="p-5 space-y-5">
+              {(segmentationData?.targeting?.main_target || target) && (
+                <TargetingDisplay
+                  mainTarget={segmentationData?.targeting?.main_target || target}
+                  targetDescription={segmentationData?.targeting?.target_description}
+                  evaluations={segmentationData?.targeting?.evaluations}
+                  subTargets={segmentationData?.targeting?.sub_targets}
+                />
               )}
               {validPersonas.length > 0 && (
                 <div>
-                  <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">ペルソナ</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {validPersonas.map((persona, i) => (
-                  <div key={i} className="rounded-lg border border-border bg-background p-5">
-                  <div className="mb-3">
-                    <p className="text-base font-bold text-foreground mb-0.5 m-0">
-                      {persona.name}
-                    </p>
-                    <p className="text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0">
-                      {[persona.age_range, persona.occupation].filter(Boolean).join(' / ')}
-                    </p>
+                  <div className="mb-3 flex items-center gap-2">
+                    <Users className="h-5 w-5 text-blue-600" />
+                    <h3 className="text-base font-bold text-gray-900">ペルソナ</h3>
                   </div>
-
-                  {persona.description && (
-                    <p className="text-sm text-muted-foreground leading-relaxed mb-4 m-0">
-                      {persona.description}
-                    </p>
-                  )}
-
-                  {persona.needs.length > 0 && (
-                    <div className="mb-3">
-                      <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2 m-0">ニーズ</p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {persona.needs.map((need, ni) => (
-                          <span key={ni} className="inline-block px-2.5 py-1 bg-blue-50 border border-blue-200 rounded-full text-xs text-blue-700">
-                            {need}
-                          </span>
-                        ))}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {validPersonas.map((persona, i) => (
+                      <div key={i} className="rounded-lg border border-border bg-background p-5">
+                        <div className="mb-3">
+                          <p className="text-base font-bold text-foreground mb-0.5 m-0">
+                            {persona.name}
+                          </p>
+                          <p className="text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0">
+                            {[persona.age_range, persona.occupation].filter(Boolean).join(' / ')}
+                          </p>
+                        </div>
+                        {persona.description && (
+                          <p className="text-sm text-muted-foreground leading-relaxed mb-4 m-0">
+                            {persona.description}
+                          </p>
+                        )}
+                        {persona.needs.length > 0 && (
+                          <div className="mb-3">
+                            <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2 m-0">ニーズ</p>
+                            <div className="flex flex-wrap gap-1.5">
+                              {persona.needs.map((need, ni) => (
+                                <span key={ni} className="inline-block px-2.5 py-1 bg-blue-50 border border-blue-200 rounded-full text-xs text-blue-700">
+                                  {need}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {persona.pain_points.length > 0 && (
+                          <div>
+                            <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2 m-0">課題</p>
+                            <div className="flex flex-wrap gap-1.5">
+                              {persona.pain_points.map((point, pi) => (
+                                <span key={pi} className="inline-block px-2.5 py-1 bg-red-50 border border-red-200 rounded-full text-xs text-red-600">
+                                  {point}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  )}
-
-                  {persona.pain_points.length > 0 && (
-                    <div>
-                      <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2 m-0">課題</p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {persona.pain_points.map((point, pi) => (
-                          <span key={pi} className="inline-block px-2.5 py-1 bg-red-50 border border-red-200 rounded-full text-xs text-red-600">
-                            {point}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                    ))}
                   </div>
-                ))}
-              </div>
                 </div>
               )}
             </CardContent>
@@ -243,47 +280,28 @@ export default function PortalStrategyPage() {
         </section>
       )}
 
-      {/* Card 2: ポジショニングマップ */}
-      {(positioningMapData || positioningMapUrl) && (
+      {/* P — ポジショニング */}
+      {positioningMapData && (
         <section>
-          <Card className="bg-[hsl(0_0%_97%)] border shadow-none overflow-hidden">
+          <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
             <CardContent className="p-5">
-              <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">ポジショニングマップ</h2>
-              {positioningMapData ? (
-                <PositioningMap data={positioningMapData} />
-              ) : positioningMapUrl ? (
-                <img
-                  src={positioningMapUrl}
-                  alt="ポジショニングマップ"
-                  onClick={() => setModalOpen(true)}
-                  className="w-full max-h-[400px] object-contain rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
-                />
-              ) : null}
+              <PositioningDisplay
+                data={positioningMapData}
+              />
             </CardContent>
           </Card>
-
-          {/* 画像拡大ダイアログ（旧画像形式の場合のみ） */}
-          {!positioningMapData && positioningMapUrl && (
-            <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-              <DialogContent className="max-w-[90vw] max-h-[90vh] p-2 bg-transparent border-none shadow-none">
-                <DialogTitle className="sr-only">ポジショニングマップ拡大表示</DialogTitle>
-                <img
-                  src={positioningMapUrl}
-                  alt="ポジショニングマップ 拡大表示"
-                  className="max-w-full max-h-[85vh] object-contain rounded-lg mx-auto"
-                />
-              </DialogContent>
-            </Dialog>
-          )}
         </section>
       )}
 
-      {/* Card 3: 行動指針 */}
+      {/* 行動指針 */}
       {actionGuidelines.length > 0 && (
         <section>
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
             <CardContent className="p-5">
-              <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">行動指針</h2>
+              <div className="mb-3 flex items-center gap-2">
+                <Rocket className="h-5 w-5 text-blue-600" />
+                <h3 className="text-base font-bold text-gray-900">行動指針</h3>
+              </div>
               <div className="space-y-2">
                 {actionGuidelines.map((g, i) => (
                   <div key={i} className="rounded-lg border border-border bg-background border-l-2 border-l-blue-600 p-4 flex gap-3">

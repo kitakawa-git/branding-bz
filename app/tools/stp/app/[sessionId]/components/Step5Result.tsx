@@ -1,12 +1,12 @@
 'use client'
 
 // Step 5: 確認・出力（STP分析結果プレビュー + PDF出力 + branding.bz連携）
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { PositioningMap } from '@/components/PositioningMap'
 import type { PositioningMapData } from '@/lib/types/positioning-map'
+import { SegmentationDisplay, TargetingDisplay, PositioningDisplay } from '@/components/shared/stp'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import {
@@ -23,9 +23,6 @@ import {
   ArrowLeft,
   Download,
   Link as LinkIcon,
-  LayoutGrid,
-  Target,
-  MapPin,
   RotateCcw,
   Loader2,
 } from 'lucide-react'
@@ -100,16 +97,6 @@ interface Step5Props {
   onBack: () => void
 }
 
-// ★表示ヘルパー
-function Stars({ count }: { count: number }) {
-  return (
-    <span className="text-xs">
-      {'★'.repeat(count)}
-      <span className="text-gray-300">{'★'.repeat(5 - count)}</span>
-    </span>
-  )
-}
-
 // STPデータ → PositioningMapData 変換
 function toMapData(positioning: PositioningData): PositioningMapData {
   return {
@@ -123,18 +110,6 @@ function toMapData(positioning: PositioningData): PositioningMapData {
       size: item.is_self ? ('lg' as const) : ('md' as const),
     })),
   }
-}
-
-// ツールチップバッジ
-function SegmentBadge({ name, description }: { name: string; description: string }) {
-  return (
-    <span
-      className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700"
-      title={description}
-    >
-      {name}
-    </span>
-  )
 }
 
 export function Step5Result({
@@ -182,22 +157,6 @@ export function Step5Result({
 
     checkAdminStatus()
   }, [])
-
-  // メインターゲット評価データ
-  const mainEval = useMemo(
-    () => targeting.evaluations.find((e) => e.segment_name === targeting.main_target),
-    [targeting]
-  )
-
-  // サブターゲット評価データ
-  const subEvals = useMemo(
-    () =>
-      targeting.sub_targets.map((name) => ({
-        name,
-        eval: targeting.evaluations.find((e) => e.segment_name === name),
-      })),
-    [targeting]
-  )
 
   // PDF出力
   const handlePdfExport = useCallback(async () => {
@@ -346,135 +305,25 @@ export function Step5Result({
           </p>
 
           {/* ===== S — セグメンテーション ===== */}
-          <div className="mb-5 rounded-lg border border-gray-200 bg-white p-5">
-        <div className="mb-4 flex items-center gap-2">
-          <LayoutGrid className="h-5 w-5 text-blue-600" />
-          <h3 className="text-base font-bold text-gray-900">
-            S — セグメンテーション
-          </h3>
-        </div>
-
-        <div className="space-y-4">
-          {(segmentation.variables || []).map((variable, vi) => {
-            const selectedSegments = variable.segments.filter((s) => s.selected)
-            if (selectedSegments.length === 0) return null
-            return (
-              <div key={vi}>
-                <p className="mb-2 text-sm font-bold text-gray-700">
-                  {variable.name}
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {selectedSegments.map((seg, si) => (
-                    <SegmentBadge
-                      key={si}
-                      name={seg.name}
-                      description={seg.description}
-                    />
-                  ))}
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      </div>
+          <SegmentationDisplay
+            variables={segmentation.variables || []}
+            className="mb-5 rounded-lg border border-gray-200 bg-white p-5"
+          />
 
           {/* ===== T — ターゲティング ===== */}
-          <div className="mb-5 rounded-lg border border-gray-200 bg-white p-5">
-        <div className="mb-4 flex items-center gap-2">
-          <Target className="h-5 w-5 text-blue-600" />
-          <h3 className="text-base font-bold text-gray-900">
-            T — ターゲティング
-          </h3>
-        </div>
-
-        {/* メインターゲット */}
-        <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
-          <p className="mb-1 text-xs font-bold text-blue-600">メインターゲット</p>
-          <p className="text-sm font-bold text-gray-900">
-            {targeting.main_target || '未選択'}
-          </p>
-          {targeting.target_description && (
-            <p className="mt-1 text-sm text-gray-600 leading-relaxed">
-              {targeting.target_description}
-            </p>
-          )}
-          {mainEval && (
-            <div className="mt-2 flex items-center gap-4 text-xs text-gray-600">
-              <span>
-                市場の魅力度: <Stars count={mainEval.attractiveness} />
-              </span>
-              <span>
-                自社の競争力: <Stars count={mainEval.competitiveness} />
-              </span>
-            </div>
-          )}
-        </div>
-
-        {/* サブターゲット */}
-        {subEvals.length > 0 ? (
-          <div className="space-y-2">
-            {subEvals.map((sub, i) => (
-              <div
-                key={i}
-                className="rounded-lg border border-gray-200 bg-gray-50 p-3"
-              >
-                <p className="mb-0.5 text-xs font-bold text-gray-500">
-                  サブターゲット {i + 1}
-                </p>
-                <p className="text-sm font-bold text-gray-700">{sub.name}</p>
-                {sub.eval && (
-                  <div className="mt-1 flex items-center gap-4 text-xs text-gray-500">
-                    <span>
-                      魅力度: <Stars count={sub.eval.attractiveness} />
-                    </span>
-                    <span>
-                      競争力: <Stars count={sub.eval.competitiveness} />
-                    </span>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
-            <p className="text-sm text-gray-400">サブターゲット: なし</p>
-          </div>
-        )}
-
-      </div>
+          <TargetingDisplay
+            mainTarget={targeting.main_target}
+            targetDescription={targeting.target_description}
+            evaluations={targeting.evaluations}
+            subTargets={targeting.sub_targets}
+            className="mb-5 rounded-lg border border-gray-200 bg-white p-5"
+          />
 
           {/* ===== P — ポジショニング ===== */}
-          <div className="mb-5 rounded-lg border border-gray-200 bg-white p-5">
-        <div className="mb-4 flex items-center gap-2">
-          <MapPin className="h-5 w-5 text-blue-600" />
-          <h3 className="text-base font-bold text-gray-900">
-            P — ポジショニング
-          </h3>
-        </div>
-
-        {/* マップ */}
-        <div className="rounded-lg border bg-white p-3">
-          <PositioningMap data={toMapData(positioning)} />
-        </div>
-
-        {/* 凡例 */}
-        <div className="mt-3 flex flex-wrap gap-3">
-          {(positioning.items || []).map((item, i) => (
-            <div key={i} className="flex items-center gap-1.5">
-              <div
-                className="h-3 w-3 rounded-full"
-                style={{ backgroundColor: item.color }}
-              />
-              <span className="text-xs text-gray-700">
-                {item.name}
-                {item.is_self && (
-                  <span className="ml-1 text-blue-600">（自社）</span>
-                )}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
+          <PositioningDisplay
+            data={toMapData(positioning)}
+            className="mb-5 rounded-lg border border-gray-200 bg-white p-5"
+          />
 
           {/* ===== アクションボタン ===== */}
           <div className="space-y-3 rounded-lg border border-gray-200 bg-white p-5">

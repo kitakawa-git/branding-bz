@@ -1,8 +1,9 @@
 // 共通プロフィールAPI — カラーツール・STPツール共通
-// GET:  本体(companies) or 過去セッションから基本情報をプリフィル
-// PATCH: セッション完了時に本体(companies)へ書き戻し
+// GET:  本体(companies + brand_personas) or 過去セッションから基本情報をプリフィル
+// PATCH: セッション完了時に本体(companies + brand_personas)へ書き戻し
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { readBrandPersonasSTP, updateBrandPersonasSTP, type STPUpdateData } from '@/lib/brand-personas-stp'
 
 // brand_stage の値を正規化（廃止された値を有効な値に変換）
 function normalizeBrandStage(stage: string | null | undefined): string {
@@ -42,14 +43,8 @@ export async function GET(request: NextRequest) {
         .eq('company_id', adminUser.company_id)
         .maybeSingle()
 
-      // 4. brand_personas からターゲット情報を取得
-      const { data: persona } = await supabaseAdmin
-        .from('brand_personas')
-        .select('target')
-        .eq('company_id', adminUser.company_id)
-        .order('sort_order', { ascending: true })
-        .limit(1)
-        .maybeSingle()
+      // 4. brand_personas から STP データを取得
+      const personaStp = await readBrandPersonasSTP(supabaseAdmin, adminUser.company_id)
 
       if (company) {
         // business_content 配列（構造化データ）
@@ -67,9 +62,9 @@ export async function GET(request: NextRequest) {
             name: ts.name || '',
             description: ts.description || '',
           }))
-        } else if (persona?.target && typeof persona.target === 'string' && persona.target.trim()) {
+        } else if (personaStp?.persona_target && personaStp.persona_target.trim()) {
           // 後方互換: テキスト全体を1つのセグメントとして返す
-          targetSegments = [{ name: 'ターゲット', description: persona.target.trim() }]
+          targetSegments = [{ name: 'ターゲット', description: personaStp.persona_target.trim() }]
         } else {
           targetSegments = []
         }
@@ -85,8 +80,13 @@ export async function GET(request: NextRequest) {
             // STPツール向け追加フィールド
             competitors: extractCompetitors(company.competitors || []),
             business_descriptions: businessDescriptions,
-            target_customers: persona?.target || '',
+            target_customers: personaStp?.persona_target || '',
             target_segments: targetSegments,
+            // STPデータ（brand_personas）
+            segmentation_data: personaStp?.segmentation_data || null,
+            positioning_map_data: personaStp?.positioning_map_data || null,
+            persona_name: personaStp?.persona_name || '',
+            persona_target: personaStp?.persona_target || '',
           },
         })
       }
@@ -130,12 +130,17 @@ export async function GET(request: NextRequest) {
 }
 
 // PATCH /api/tools/shared-profile
-// body: { userId, company_name?, industry_category?, industry_subcategory?, brand_stage?, competitor_colors?, competitors?, business_descriptions?, target_segments? }
+// body: { userId, company_name?, industry_category?, ..., segmentation_data?, positioning_map_data?, persona_name?, persona_target? }
 export async function PATCH(request: NextRequest) {
   try {
     const supabaseAdmin = getSupabaseAdmin()
     const body = await request.json()
-    const { userId, company_name, industry_category, industry_subcategory, brand_stage, competitor_colors, competitors, business_descriptions, target_segments } = body
+    const {
+      userId, company_name, industry_category, industry_subcategory,
+      brand_stage, competitor_colors, competitors, business_descriptions, target_segments,
+      // STPデータ（brand_personas テーブル）
+      segmentation_data, positioning_map_data, persona_name, persona_target,
+    } = body
 
     if (!userId) {
       return NextResponse.json({ error: 'userId が必要です' }, { status: 400 })
@@ -245,7 +250,11 @@ export async function PATCH(request: NextRequest) {
       }
     }
 
-    // brand_personas.target にもターゲット情報をテキスト整形して書き込み
+    // brand_personas への書き込み（共通関数経由）
+    const stpUpdate: STPUpdateData = {}
+    let hasSTPUpdate = false
+
+    // target_segments → brand_personas.target にテキスト整形して書き込み
     if (target_segments !== undefined && Array.isArray(target_segments)) {
       const validSegments = target_segments.filter(
         (ts: { name: string; description: string }) => ts.name?.trim()
@@ -256,29 +265,32 @@ export async function PATCH(request: NextRequest) {
           return `・${ts.name.trim()}${desc}`
         })
         .join('\n')
+      stpUpdate.persona_target = targetText || null
+      hasSTPUpdate = true
+    }
 
-      const { data: existingPersona } = await supabaseAdmin
-        .from('brand_personas')
-        .select('id')
-        .eq('company_id', adminUser.company_id)
-        .order('sort_order', { ascending: true })
-        .limit(1)
-        .maybeSingle()
+    // STPデータの直接書き込み
+    if (segmentation_data !== undefined) {
+      stpUpdate.segmentation_data = segmentation_data
+      hasSTPUpdate = true
+    }
+    if (positioning_map_data !== undefined) {
+      stpUpdate.positioning_map_data = positioning_map_data
+      hasSTPUpdate = true
+    }
+    if (persona_name !== undefined) {
+      stpUpdate.persona_name = persona_name
+      hasSTPUpdate = true
+    }
+    if (persona_target !== undefined) {
+      stpUpdate.persona_target = persona_target
+      hasSTPUpdate = true
+    }
 
-      if (existingPersona) {
-        await supabaseAdmin
-          .from('brand_personas')
-          .update({ target: targetText || null })
-          .eq('id', existingPersona.id)
-      } else if (targetText) {
-        await supabaseAdmin
-          .from('brand_personas')
-          .insert({
-            company_id: adminUser.company_id,
-            name: '',
-            sort_order: 0,
-            target: targetText,
-          })
+    if (hasSTPUpdate) {
+      const result = await updateBrandPersonasSTP(supabaseAdmin, adminUser.company_id, stpUpdate)
+      if (!result.success) {
+        console.error('[SharedProfile PATCH] brand_personas更新エラー:', result.error)
       }
     }
 
