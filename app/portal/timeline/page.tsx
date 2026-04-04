@@ -206,7 +206,8 @@ export default function PortalTimelinePage() {
       const postIds = postsData.map((p: Record<string, unknown>) => p.id as string)
 
       // サブクエリを並列実行（1つ失敗しても他は続行）
-      const [membersResult, likeCountsResult, userLikesResult, commentCountsResult] = await Promise.allSettled([
+      // いいねは1クエリで全件取得し、カウント＋ユーザー判定をクライアント側で処理
+      const [membersResult, allLikesResult, commentCountsResult] = await Promise.allSettled([
         supabase
           .from('members')
           .select('auth_id, display_name, profile:profiles(name, photo_url, position)')
@@ -214,12 +215,7 @@ export default function PortalTimelinePage() {
           .eq('company_id', companyId),
         supabase
           .from('timeline_likes')
-          .select('post_id')
-          .in('post_id', postIds),
-        supabase
-          .from('timeline_likes')
-          .select('post_id')
-          .eq('user_id', user.id)
+          .select('post_id, user_id')
           .in('post_id', postIds),
         supabase
           .from('timeline_comments')
@@ -245,20 +241,17 @@ export default function PortalTimelinePage() {
         }
       }
 
-      // いいね数
+      // いいね数 + ユーザーのいいね（1クエリから両方を構築）
       const likeCountMap = new Map<string, number>()
-      if (likeCountsResult.status === 'fulfilled' && likeCountsResult.value.data) {
-        for (const l of likeCountsResult.value.data) {
-          const pid = (l as Record<string, unknown>).post_id as string
-          likeCountMap.set(pid, (likeCountMap.get(pid) || 0) + 1)
-        }
-      }
-
-      // ユーザーのいいね
       const userLikeSet = new Set<string>()
-      if (userLikesResult.status === 'fulfilled' && userLikesResult.value.data) {
-        for (const l of userLikesResult.value.data) {
-          userLikeSet.add((l as Record<string, unknown>).post_id as string)
+      if (allLikesResult.status === 'fulfilled' && allLikesResult.value.data) {
+        for (const l of allLikesResult.value.data) {
+          const rec = l as Record<string, unknown>
+          const pid = rec.post_id as string
+          likeCountMap.set(pid, (likeCountMap.get(pid) || 0) + 1)
+          if (rec.user_id === user.id) {
+            userLikeSet.add(pid)
+          }
         }
       }
 

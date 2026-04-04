@@ -429,7 +429,7 @@ export default function MarketingPage() {
       <div className="fixed inset-0 z-0">
         <Image
           src="/marketing/images/hero-bg.jpg"
-          alt=""
+          alt="branding.bz ヒーロー背景"
           fill
           className="object-cover"
           priority

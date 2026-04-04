@@ -9,5 +9,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     lock: async <R>(_name: string, _acquireTimeout: number, fn: () => Promise<R>): Promise<R> => await fn(),
     storageKey: 'branding-bz-auth',
     flowType: 'implicit',
+    autoRefreshToken: true,
+    persistSession: true,
   },
 })

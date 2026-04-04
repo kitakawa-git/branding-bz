@@ -305,7 +305,8 @@ export default function PortalTopPage() {
     const fetchAll = async () => {
       try {
         // === Group 1: base queries (parallel) ===
-        const [missionRes, allUserPostsRes, userRecent3Res, companyRecent3Res, announcementsRes, kpiGoalsRes, goalPeriodRes, goalPeriodsRes] =
+        // ユーザー投稿は1回で取得し、統計用と表示用に分けて使う
+        const [missionRes, allUserPostsRes, companyRecent3Res, announcementsRes, kpiGoalsRes, goalPeriodRes, goalPeriodsRes] =
           await Promise.allSettled([
             supabase
               .from('brand_guidelines')
@@ -314,17 +315,10 @@ export default function PortalTopPage() {
               .single(),
             supabase
               .from('timeline_posts')
-              .select('id, category, created_at')
-              .eq('company_id', companyId)
-              .eq('user_id', user.id)
-              .order('created_at', { ascending: false }),
-            supabase
-              .from('timeline_posts')
               .select('id, content, category, created_at, is_anonymous')
               .eq('company_id', companyId)
               .eq('user_id', user.id)
-              .order('created_at', { ascending: false })
-              .limit(3),
+              .order('created_at', { ascending: false }),
             supabase
               .from('timeline_posts')
               .select('id, user_id, content, category, created_at, is_anonymous')
@@ -366,14 +360,14 @@ export default function PortalTopPage() {
           setMission(missionData.mission)
         }
 
-        const allUserPosts: UserPostRaw[] =
+        const allUserPostsFull =
           allUserPostsRes.status === 'fulfilled'
-            ? (allUserPostsRes.value.data || []) as UserPostRaw[]
+            ? (allUserPostsRes.value.data || [])
             : []
-        const myRecentData =
-          userRecent3Res.status === 'fulfilled'
-            ? userRecent3Res.value.data || []
-            : []
+        // 統計用（id, category, created_at のみ使用）
+        const allUserPosts: UserPostRaw[] = allUserPostsFull as UserPostRaw[]
+        // 表示用（先頭3件を再利用）
+        const myRecentData = allUserPostsFull.slice(0, 3)
         const companyRecentData =
           companyRecent3Res.status === 'fulfilled'
             ? companyRecent3Res.value.data || []

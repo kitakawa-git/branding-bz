@@ -209,6 +209,44 @@ export function PortalAuthProvider({ children }: { children: React.ReactNode }) 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // タブ復帰時・定期的にセッションを確認し、期限切れなら再認証に誘導
+  useEffect(() => {
+    if (isPublicPath) return
+
+    const checkSession = async () => {
+      const { data: { session }, error } = await supabase.auth.getSession()
+      if (error || !session) {
+        // セッション期限切れ → リフレッシュを試みる
+        const { data: refreshResult, error: refreshError } = await supabase.auth.refreshSession()
+        if (refreshError || !refreshResult.session) {
+          console.warn('[PortalAuth] セッション復旧失敗、再ログインへ')
+          clearPageCache()
+          setUser(null)
+          setCompanyId(null)
+          setMember(null)
+          router.replace('/portal/auth')
+        }
+      }
+    }
+
+    // タブがアクティブに戻ったときにセッション確認
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        checkSession()
+      }
+    }
+
+    // 5分ごとにセッション確認（バックグラウンドでの期限切れ対策）
+    const intervalId = setInterval(checkSession, 5 * 60 * 1000)
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      clearInterval(intervalId)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPublicPath])
+
   const signOut = async () => {
     clearPageCache()
     await supabase.auth.signOut()

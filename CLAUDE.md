@@ -303,3 +303,22 @@ background: [
   - 残タスク・完了済み機能・技術メモを更新
 - 実装中に発見したハマりポイントや解決策をCLAUDE.mdまたはMEMORY.mdに記録
 - 特にSupabase RLS、認証パターン、共通コンポーネントの使い方
+
+## Git運用ルール
+
+### ブランチ運用（必須）
+- mainブランチに直接コミット・pushしない
+- 作業開始時は必ず最新のmainからfeatureブランチを作成する
+- ブランチ名: feature/作業内容（例: feature/header-update）
+- 完了後は push → プルリクエスト作成 → mainにマージ
+
+### 作業の流れ
+1. git pull origin main（最新を取得）
+2. git checkout -b feature/○○（ブランチ作成）
+3. 作業・コミット
+4. git push → プルリクエスト作成
+5. マージ後、ローカルのmainを git pull で更新
+
+### コミットメッセージ
+- 日本語OK
+- 何をしたかが一目でわかるように書く

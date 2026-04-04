@@ -29,7 +29,7 @@ const PERSONA_CARDS = [
 
 const STEPS = [
   { icon: '1', title: '基本情報入力', description: '企業情報とターゲットの選択' },
-  { icon: '2', title: 'デモグラフィック', description: 'AIがペルソナの属性を提案' },
+  { icon: '2', title: 'ペルソナ構築', description: 'AIがペルソナの属性を提案' },
   { icon: '3', title: 'ゴール・課題', description: '目標や悩み、購買行動を深掘り' },
   { icon: '4', title: 'ジャーニーマップ', description: 'AIが5段階のカスタマージャーニーを生成' },
   { icon: '5', title: '確認・出力', description: 'ペルソナシートとジャーニーマップをPDF出力' },

@@ -20,6 +20,9 @@ interface PersonaSessionData {
   basic_info: any
   target_info: any
   demographics: any
+  candidates: any
+  selected_candidate_ids: any
+  personas: any
   goals: any
   journey_map: any
   completed: boolean
@@ -39,7 +42,7 @@ interface PersonaSession {
 
 const STEP_DEFINITIONS = [
   { label: '基本情報' },
-  { label: 'デモグラフィック' },
+  { label: 'ペルソナ構築' },
   { label: 'ゴール・課題' },
   { label: 'ジャーニーマップ' },
   { label: '確認・出力' },
@@ -175,17 +178,29 @@ export default function PersonaSessionPage() {
       )}
       {currentStep === 2 && (
         <Step2Demographics
-          demographics={sd.demographics || {}}
+          step2Data={{
+            candidates: sd.candidates || [],
+            selected_candidate_ids: sd.selected_candidate_ids || [],
+            personas: sd.personas || [],
+          }}
           basicInfo={sd.basic_info || {}}
-          onNext={(data) => saveAndAdvance(3, { demographics: data })}
+          onNext={(data) => saveAndAdvance(3, {
+            candidates: data.candidates,
+            selected_candidate_ids: data.selected_candidate_ids,
+            personas: data.personas,
+          })}
           onBack={() => saveAndAdvance(1)}
-          onSaveField={(data) => saveField({ demographics: data })}
+          onSaveField={(data) => saveField({
+            candidates: data.candidates,
+            selected_candidate_ids: data.selected_candidate_ids,
+            personas: data.personas,
+          })}
         />
       )}
       {currentStep === 3 && (
         <Step3Goals
           goals={sd.goals || {}}
-          demographics={sd.demographics || {}}
+          personas={sd.personas || []}
           basicInfo={sd.basic_info || {}}
           onNext={(data) => saveAndAdvance(4, { goals: data })}
           onBack={() => saveAndAdvance(2)}
@@ -196,7 +211,7 @@ export default function PersonaSessionPage() {
         <Step4Journey
           journey={sd.journey_map || {}}
           basicInfo={sd.basic_info || {}}
-          demographics={sd.demographics || {}}
+          personas={sd.personas || []}
           goals={sd.goals || {}}
           onNext={(data) => saveAndAdvance(5, { journey_map: data })}
           onBack={() => saveAndAdvance(3)}
@@ -207,7 +222,7 @@ export default function PersonaSessionPage() {
         <Step5Result
           sessionId={sessionId}
           basicInfo={sd.basic_info || {}}
-          demographics={sd.demographics || {}}
+          personas={sd.personas || []}
           goals={sd.goals || {}}
           journey={sd.journey_map || {}}
           companyId={session.company_id}
