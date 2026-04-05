@@ -7,6 +7,13 @@ const SYSTEM_PROMPT = `あなたはブランドマーケティングの専門家
 
 5段階: 認知 → 興味 → 検討 → 購入 → 継続
 
+## 重要な指示
+- 感情の推移（emotion_score）は、このペルソナ固有の性格・課題・意思決定パターンに基づいて設定すること
+- 例: 慎重な性格のペルソナは「検討」段階で不安が強く感情がネガティブに振れる
+- 例: 積極的な性格のペルソナは「認知」段階から感情がポジティブに振れやすい
+- 他のペルソナと同じ感情パターンにならないよう、必ずペルソナの個性を反映すること
+- emotion_score は -5 〜 +5 の整数で、ステージごとに異なる値を設定すること
+
 出力JSONスキーマ:
 {
   "stages": [
@@ -16,7 +23,7 @@ const SYSTEM_PROMPT = `あなたはブランドマーケティングの専門家
       "actions": ["行動1", "行動2", "行動3"],
       "touchpoints": ["タッチポイント1", "タッチポイント2"],
       "emotions": "感情の状態（1文）",
-      "emotion_score": 数値（-2〜2、-2=非常にネガティブ、2=非常にポジティブ）,
+      "emotion_score": 数値（-5〜+5の整数。ペルソナの性格に基づき設定）,
       "pain_points": ["この段階での課題1", "この段階での課題2"],
       "opportunities": ["ブランドが提供できる価値1", "ブランドが提供できる価値2"]
     }
@@ -62,7 +69,11 @@ export async function POST(request: NextRequest) {
     if (demographics.persona_name) parts.push(`- 名前: ${demographics.persona_name}（${demographics.age}歳・${demographics.gender}）`)
     if (demographics.occupation) parts.push(`- 職業: ${demographics.occupation}`)
     if (demographics.company_role) parts.push(`- 役職: ${demographics.company_role}`)
+    if (demographics.personality) parts.push(`- 性格: ${demographics.personality}`)
+    if (demographics.values) parts.push(`- 価値観: ${demographics.values}`)
+    if (demographics.challenges) parts.push(`- 課題・悩み: ${demographics.challenges}`)
     if (demographics.media_channels?.length) parts.push(`- 情報収集: ${demographics.media_channels.join('、')}`)
+    if (demographics.info_sources) parts.push(`- 情報収集: ${demographics.info_sources}`)
 
     if (goals) {
       parts.push('')

@@ -1,14 +1,13 @@
 'use client'
 
-// Step 3: ゴール・課題（AI深掘り＋編集）— 複数ペルソナ対応
+// Step 3: ゴール・課題（AI深掘り＋編集）— 複数ペルソナ対応・縦一覧表示
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { ArrowLeft, ArrowRight, WandSparkles, Plus, X } from 'lucide-react'
+import { ArrowLeft, ArrowRight, WandSparkles, Plus, X, Check } from 'lucide-react'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -71,7 +70,6 @@ const EMPTY_GOALS: GoalsEntry = {
 // ペルソナIDからgoalsを取得するヘルパー
 function getGoalsForPersona(goals: GoalsData, personaId: string, isSingle: boolean): GoalsEntry {
   if (isSingle) {
-    // 単一ペルソナの場合、goalsデータをそのまま使う
     return { ...EMPTY_GOALS, ...goals }
   }
   return { ...EMPTY_GOALS, ...(goals[personaId] || {}) }
@@ -81,7 +79,6 @@ export function Step3Goals({ goals, personas, basicInfo, onNext, onBack, onSaveF
   const isSingle = personas.length <= 1
   const firstPersona = personas[0] || { candidate_id: '_default', name: 'ペルソナ' }
 
-  // 各ペルソナのgoalsをstate管理
   const [goalsMap, setGoalsMap] = useState<Record<string, GoalsEntry>>(() => {
     const map: Record<string, GoalsEntry> = {}
     for (const p of personas) {
@@ -92,10 +89,10 @@ export function Step3Goals({ goals, personas, basicInfo, onNext, onBack, onSaveF
     }
     return map
   })
-  const [activeTab, setActiveTab] = useState(firstPersona.candidate_id)
-  const [aiLoading, setAiLoading] = useState<string | null>(null) // 読み込み中のペルソナID
+  const [aiLoading, setAiLoading] = useState<string | null>(null)
   const [aiError, setAiError] = useState('')
   const [saving, setSaving] = useState(false)
+  const [selectedForRegenerate, setSelectedForRegenerate] = useState<Set<string>>(new Set())
   const [confirmOpen, setConfirmOpen] = useState(false)
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -127,7 +124,6 @@ export function Step3Goals({ goals, personas, basicInfo, onNext, onBack, onSaveF
     setAiError('')
     try {
       const persona = personas.find(p => p.candidate_id === personaId)
-      // demographics互換データを構築
       const demographics = persona ? {
         persona_name: persona.name,
         age: persona.age,
@@ -178,10 +174,20 @@ export function Step3Goals({ goals, personas, basicInfo, onNext, onBack, onSaveF
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
   }, [])
 
-  const handleRegenerate = () => {
-    const current = goalsMap[activeTab]
+  // 選択中ペルソナの再提案（複数対応）
+  const handleRegenSelected = async () => {
+    const ids = Array.from(selectedForRegenerate)
+    for (const id of ids) {
+      await fetchAISuggestion(id)
+    }
+    setSelectedForRegenerate(new Set())
+  }
+
+  // 単一ペルソナの再提案
+  const handleRegenSingle = () => {
+    const current = goalsMap[firstPersona.candidate_id]
     if (current?.primary_goals?.length > 0) { setConfirmOpen(true); return }
-    fetchAISuggestion(activeTab)
+    fetchAISuggestion(firstPersona.candidate_id)
   }
 
   const handleNext = async () => {
@@ -191,9 +197,24 @@ export function Step3Goals({ goals, personas, basicInfo, onNext, onBack, onSaveF
     if (!success) setSaving(false)
   }
 
-  const currentGoals = goalsMap[activeTab] || EMPTY_GOALS
-  const isValid = currentGoals.primary_goals?.some(g => g.trim()) || currentGoals.challenges?.some(c => c.trim())
-  const isLoading = aiLoading === activeTab
+  // 再提案選択トグル
+  const toggleRegenSelect = (candidateId: string) => {
+    setSelectedForRegenerate(prev => {
+      const next = new Set(prev)
+      if (next.has(candidateId)) { next.delete(candidateId) } else { next.add(candidateId) }
+      return next
+    })
+  }
+  const selectAllForRegen = () => setSelectedForRegenerate(new Set(personas.map(p => p.candidate_id)))
+  const deselectAllForRegen = () => setSelectedForRegenerate(new Set())
+
+  const regenCount = selectedForRegenerate.size
+
+  // バリデーション: いずれかのペルソナにゴールか課題がある
+  const isValid = personas.some(p => {
+    const g = goalsMap[p.candidate_id] || EMPTY_GOALS
+    return g.primary_goals?.some(v => v.trim()) || g.challenges?.some(v => v.trim())
+  })
 
   const renderGoalsForm = (personaId: string) => {
     const data = goalsMap[personaId] || EMPTY_GOALS
@@ -216,7 +237,6 @@ export function Step3Goals({ goals, personas, basicInfo, onNext, onBack, onSaveF
       )
     }
 
-    // リスト操作
     const addItem = (key: keyof GoalsEntry) => {
       const arr = data[key]
       if (Array.isArray(arr)) updateGoalsField(personaId, key, [...arr, ''])
@@ -235,27 +255,25 @@ export function Step3Goals({ goals, personas, basicInfo, onNext, onBack, onSaveF
     }
 
     return (
-      <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-        <CardContent className="p-5 space-y-6">
-          <ListSection label="主な目標" items={data.primary_goals} fieldKey="primary_goals" placeholder="例: 自社ブランドの認知度を高めたい" onAdd={addItem} onRemove={removeItem} onUpdate={updateItem} />
-          <ListSection label="課題・悩み" items={data.challenges} fieldKey="challenges" placeholder="例: ブランディングの知識が不足している" onAdd={addItem} onRemove={removeItem} onUpdate={updateItem} />
-          <ListSection label="ペインポイント" items={data.pain_points} fieldKey="pain_points" placeholder="例: 予算が限られている" onAdd={addItem} onRemove={removeItem} onUpdate={updateItem} />
-          <div>
-            <label className="text-sm font-bold text-gray-700 mb-2 block">購買の動機</label>
-            <Textarea value={data.buying_motivation} onChange={e => updateGoalsField(personaId, 'buying_motivation', e.target.value)} placeholder="何がきっかけで商品・サービスを検討するか" rows={2} className="text-sm" />
-          </div>
-          <ListSection label="購買の障壁" items={data.buying_barriers} fieldKey="buying_barriers" placeholder="例: 費用対効果が見えにくい" onAdd={addItem} onRemove={removeItem} onUpdate={updateItem} />
-          <ListSection label="意思決定の要因" items={data.decision_factors} fieldKey="decision_factors" placeholder="例: 実績・事例の豊富さ" onAdd={addItem} onRemove={removeItem} onUpdate={updateItem} />
-          <div>
-            <label className="text-sm font-bold text-gray-700 mb-2 block">ブランドへの期待</label>
-            <Textarea value={data.brand_expectations} onChange={e => updateGoalsField(personaId, 'brand_expectations', e.target.value)} placeholder="このブランドにどんな価値を期待するか" rows={2} className="text-sm" />
-          </div>
-          <div>
-            <label className="text-sm font-bold text-gray-700 mb-2 block">成功の定義</label>
-            <Textarea value={data.success_definition} onChange={e => updateGoalsField(personaId, 'success_definition', e.target.value)} placeholder="この人にとっての「成功」とは" rows={2} className="text-sm" />
-          </div>
-        </CardContent>
-      </Card>
+      <div className="space-y-6">
+        <ListSection label="主な目標" items={data.primary_goals} fieldKey="primary_goals" placeholder="例: 自社ブランドの認知度を高めたい" onAdd={addItem} onRemove={removeItem} onUpdate={updateItem} />
+        <ListSection label="課題・悩み" items={data.challenges} fieldKey="challenges" placeholder="例: ブランディングの知識が不足している" onAdd={addItem} onRemove={removeItem} onUpdate={updateItem} />
+        <ListSection label="ペインポイント" items={data.pain_points} fieldKey="pain_points" placeholder="例: 予算が限られている" onAdd={addItem} onRemove={removeItem} onUpdate={updateItem} />
+        <div>
+          <label className="text-sm font-bold text-gray-700 mb-2 block">購買の動機</label>
+          <Textarea value={data.buying_motivation} onChange={e => updateGoalsField(personaId, 'buying_motivation', e.target.value)} placeholder="何がきっかけで商品・サービスを検討するか" rows={2} className="text-sm" />
+        </div>
+        <ListSection label="購買の障壁" items={data.buying_barriers} fieldKey="buying_barriers" placeholder="例: 費用対効果が見えにくい" onAdd={addItem} onRemove={removeItem} onUpdate={updateItem} />
+        <ListSection label="意思決定の要因" items={data.decision_factors} fieldKey="decision_factors" placeholder="例: 実績・事例の豊富さ" onAdd={addItem} onRemove={removeItem} onUpdate={updateItem} />
+        <div>
+          <label className="text-sm font-bold text-gray-700 mb-2 block">ブランドへの期待</label>
+          <Textarea value={data.brand_expectations} onChange={e => updateGoalsField(personaId, 'brand_expectations', e.target.value)} placeholder="このブランドにどんな価値を期待するか" rows={2} className="text-sm" />
+        </div>
+        <div>
+          <label className="text-sm font-bold text-gray-700 mb-2 block">成功の定義</label>
+          <Textarea value={data.success_definition} onChange={e => updateGoalsField(personaId, 'success_definition', e.target.value)} placeholder="この人にとっての「成功」とは" rows={2} className="text-sm" />
+        </div>
+      </div>
     )
   }
 
@@ -265,67 +283,179 @@ export function Step3Goals({ goals, personas, basicInfo, onNext, onBack, onSaveF
       <p className="mb-5 text-[13px] text-muted-foreground">
         {isSingle
           ? `${firstPersona.name}が抱える目標・課題・購買行動を定義します`
-          : 'ペルソナごとの目標・課題・購買行動を定義します'}
+          : 'ペルソナごとの目標・課題・購買行動を定義します。ヘッダーをクリックして選択し、AIに再提案できます。'}
       </p>
 
-      {!isLoading && (
-        <div className="flex justify-start mb-3">
-          <Button variant="outline" size="sm" onClick={handleRegenerate} className="gap-1.5 text-xs">
-            <WandSparkles className="h-3.5 w-3.5" />
-            {currentGoals.primary_goals?.length > 0 ? 'AIに再提案してもらう' : 'AIに提案してもらう'}
-          </Button>
-        </div>
-      )}
+      {/* 単一ペルソナの場合: 既存UIそのまま */}
+      {isSingle ? (
+        <>
+          {aiLoading !== firstPersona.candidate_id && (
+            <div className="flex justify-start mb-3">
+              <Button variant="outline" size="sm" onClick={handleRegenSingle} className="gap-1.5 text-xs">
+                <WandSparkles className="h-3.5 w-3.5" />
+                {(goalsMap[firstPersona.candidate_id]?.primary_goals?.length > 0) ? 'AIに再提案してもらう' : 'AIに提案してもらう'}
+              </Button>
+            </div>
+          )}
 
-      {aiError && (
-        <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600 mb-4">
-          {aiError}
-          <button onClick={() => fetchAISuggestion(activeTab)} className="ml-2 font-medium underline hover:no-underline">再試行</button>
-        </div>
-      )}
+          {aiError && (
+            <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600 mb-4">
+              {aiError}
+              <button onClick={() => fetchAISuggestion(firstPersona.candidate_id)} className="ml-2 font-medium underline hover:no-underline">再試行</button>
+            </div>
+          )}
 
-      {!isSingle && personas.length > 1 ? (
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-4">
-            {personas.map(p => (
-              <TabsTrigger key={p.candidate_id} value={p.candidate_id}>
-                {p.name}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-          {personas.map(p => (
-            <TabsContent key={p.candidate_id} value={p.candidate_id}>
-              {renderGoalsForm(p.candidate_id)}
-            </TabsContent>
-          ))}
-        </Tabs>
+          <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+            <CardContent className="p-5">
+              {renderGoalsForm(firstPersona.candidate_id)}
+            </CardContent>
+          </Card>
+
+          {/* フッター */}
+          <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 bg-background/80 backdrop-blur border-t border-border px-6 py-3 flex items-center justify-between">
+            <Button variant="outline" onClick={onBack} className="gap-1">
+              <ArrowLeft className="h-4 w-4" /> 戻る
+            </Button>
+            <div className="flex items-center gap-2">
+              {aiLoading !== firstPersona.candidate_id && (
+                <Button variant="outline" onClick={handleRegenSingle} className="gap-1.5">
+                  <WandSparkles className="h-3.5 w-3.5" /> AIに再提案してもらう
+                </Button>
+              )}
+              <Button onClick={handleNext} disabled={saving || !isValid} className="gap-1">
+                {saving ? '保存中...' : 'ジャーニーマップへ'}
+                {!saving && <ArrowRight className="h-4 w-4" />}
+              </Button>
+            </div>
+          </div>
+
+          <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>確認</AlertDialogTitle>
+                <AlertDialogDescription>現在の内容が上書きされます。よろしいですか？</AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>キャンセル</AlertDialogCancel>
+                <AlertDialogAction onClick={() => fetchAISuggestion(firstPersona.candidate_id)}>OK</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </>
       ) : (
-        renderGoalsForm(firstPersona.candidate_id)
+        <>
+          {/* 複数ペルソナ: 左上ボタン + 全選択/全解除 */}
+          <div className="flex items-center justify-between mb-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => { if (regenCount > 0) setConfirmOpen(true) }}
+              disabled={regenCount === 0}
+              className="gap-1.5 text-xs"
+            >
+              <WandSparkles className="h-3.5 w-3.5" />
+              {regenCount > 0 ? `AIに再提案してもらう（${regenCount}人）` : 'AIに再提案してもらう'}
+            </Button>
+            <div className="flex gap-1">
+              <Button variant="ghost" size="sm" onClick={selectAllForRegen} className="text-xs h-7 px-2">全選択</Button>
+              <Button variant="ghost" size="sm" onClick={deselectAllForRegen} className="text-xs h-7 px-2">全解除</Button>
+            </div>
+          </div>
+
+          {aiError && (
+            <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600 mb-4">
+              {aiError}
+            </div>
+          )}
+
+          {/* 縦一覧カード */}
+          <div className="flex flex-col gap-6">
+            {personas.map(p => {
+              const isRegenSelected = selectedForRegenerate.has(p.candidate_id)
+              return (
+                <div
+                  key={p.candidate_id}
+                  className={`rounded-xl transition-all ${
+                    isRegenSelected
+                      ? 'border-2 border-blue-500 bg-blue-50/30'
+                      : 'border border-gray-200 bg-[hsl(0_0%_97%)]'
+                  }`}
+                >
+                  {/* クリック可能なヘッダー */}
+                  <button
+                    type="button"
+                    onClick={() => toggleRegenSelect(p.candidate_id)}
+                    className="relative w-full p-5 text-left cursor-pointer"
+                  >
+                    {isRegenSelected && (
+                      <div className="absolute top-4 right-4 flex h-6 w-6 items-center justify-center rounded-full bg-blue-500">
+                        <Check className="h-3.5 w-3.5 text-white" />
+                      </div>
+                    )}
+                    <p className="text-lg font-bold text-foreground mb-0.5">
+                      {p.name}（{p.age}歳・{p.gender}）
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {p.occupation} {p.title}
+                    </p>
+                  </button>
+
+                  {/* フォーム部分 */}
+                  <div className="border-t border-gray-200 px-5 pb-5 pt-4">
+                    {renderGoalsForm(p.candidate_id)}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* フッター */}
+          <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 bg-background/80 backdrop-blur border-t border-border px-6 py-3 flex items-center justify-between">
+            <Button variant="outline" onClick={onBack} className="gap-1">
+              <ArrowLeft className="h-4 w-4" /> 戻る
+            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={() => { if (regenCount > 0) setConfirmOpen(true) }}
+                disabled={regenCount === 0}
+                className="gap-1.5"
+              >
+                <WandSparkles className="h-3.5 w-3.5" />
+                {regenCount > 0 ? `AIに再提案してもらう（${regenCount}人）` : 'AIに再提案してもらう'}
+              </Button>
+              <Button onClick={handleNext} disabled={saving || !isValid} className="gap-1">
+                {saving ? '保存中...' : 'ジャーニーマップへ'}
+                {!saving && <ArrowRight className="h-4 w-4" />}
+              </Button>
+            </div>
+          </div>
+
+          {/* 再提案の確認ダイアログ */}
+          <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>ゴール・課題を再提案</AlertDialogTitle>
+                <AlertDialogDescription asChild>
+                  <div>
+                    <p className="mb-2">選択中の{regenCount}人のゴール・課題をAIが再提案します。編集内容は上書きされます。よろしいですか？</p>
+                    <ul className="list-none space-y-1">
+                      {Array.from(selectedForRegenerate).map(id => {
+                        const pe = personas.find(pp => pp.candidate_id === id)
+                        return pe ? <li key={id} className="text-sm">・{pe.name}</li> : null
+                      })}
+                    </ul>
+                  </div>
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>キャンセル</AlertDialogCancel>
+                <AlertDialogAction onClick={handleRegenSelected}>OK</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </>
       )}
-
-      {/* フッターナビゲーション */}
-      <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 bg-background/80 backdrop-blur border-t border-border px-6 py-3 flex items-center justify-between">
-        <Button variant="outline" onClick={onBack} className="gap-1">
-          <ArrowLeft className="h-4 w-4" /> 戻る
-        </Button>
-        <Button onClick={handleNext} disabled={saving || !isValid} className="gap-1">
-          {saving ? '保存中...' : 'ジャーニーマップへ'}
-          {!saving && <ArrowRight className="h-4 w-4" />}
-        </Button>
-      </div>
-
-      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>確認</AlertDialogTitle>
-            <AlertDialogDescription>現在の内容が上書きされます。よろしいですか？</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>キャンセル</AlertDialogCancel>
-            <AlertDialogAction onClick={() => fetchAISuggestion(activeTab)}>OK</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   )
 }

@@ -1,0 +1,16 @@
+{
+  "name": "branding.bz",
+  "short_name": "branding.bz",
+  "description": "AIで、ブランディングを加速させる。構築・浸透・発信をひとつのプラットフォームで。",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#111827",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "any",
+      "type": "image/x-icon"
+    }
+  ]
+}

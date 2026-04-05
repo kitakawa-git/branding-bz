@@ -25,6 +25,7 @@ interface PersonaSessionData {
   personas: any
   goals: any
   journey_map: any
+  journey_map_stale: boolean
   completed: boolean
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
@@ -188,6 +189,7 @@ export default function PersonaSessionPage() {
             candidates: data.candidates,
             selected_candidate_ids: data.selected_candidate_ids,
             personas: data.personas,
+            journey_map_stale: true,
           })}
           onBack={() => saveAndAdvance(1)}
           onSaveField={(data) => saveField({
@@ -202,7 +204,7 @@ export default function PersonaSessionPage() {
           goals={sd.goals || {}}
           personas={sd.personas || []}
           basicInfo={sd.basic_info || {}}
-          onNext={(data) => saveAndAdvance(4, { goals: data })}
+          onNext={(data) => saveAndAdvance(4, { goals: data, journey_map_stale: true })}
           onBack={() => saveAndAdvance(2)}
           onSaveField={(data) => saveField({ goals: data })}
         />
@@ -210,12 +212,14 @@ export default function PersonaSessionPage() {
       {currentStep === 4 && (
         <Step4Journey
           journey={sd.journey_map || {}}
+          journeyStale={sd.journey_map_stale || false}
           basicInfo={sd.basic_info || {}}
           personas={sd.personas || []}
           goals={sd.goals || {}}
-          onNext={(data) => saveAndAdvance(5, { journey_map: data })}
+          onNext={(data) => saveAndAdvance(5, { journey_map: data, journey_map_stale: false })}
           onBack={() => saveAndAdvance(3)}
           onSaveField={(data) => saveField({ journey_map: data })}
+          onClearStale={() => saveField({ journey_map_stale: false })}
         />
       )}
       {currentStep === 5 && (

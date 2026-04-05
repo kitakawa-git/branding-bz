@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import type { PositioningMapData } from '@/lib/types/positioning-map'
 import { SegmentationDisplay, TargetingDisplay, PositioningDisplay } from '@/components/shared/stp'
+import { ToolExportActions } from '@/components/shared/ToolExportActions'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import {
@@ -19,13 +20,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import {
-  ArrowLeft,
-  Download,
-  Link as LinkIcon,
-  RotateCcw,
-  Loader2,
-} from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 
 // 型定義
 interface SegmentSource {
@@ -326,57 +321,17 @@ export function Step5Result({
           />
 
           {/* ===== アクションボタン ===== */}
-          <div className="space-y-3 rounded-lg border border-gray-200 bg-white p-5">
-        <div className="flex flex-col gap-3 sm:flex-row">
-          {/* PDF出力 */}
-          <Button
-            onClick={handlePdfExport}
-            disabled={pdfLoading}
-            className="flex-1 gap-2"
-          >
-            {pdfLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Download className="h-4 w-4" />
-            )}
-            {pdfLoading ? 'PDF生成中...' : 'PDF出力'}
-          </Button>
-
-          {/* branding.bz連携 */}
           {!checkingAdmin && (
-            <Button
-              onClick={handleConnectClick}
-              disabled={connectLoading}
-              variant={isAdminUser ? 'default' : 'outline'}
-              className="flex-1 gap-2"
-            >
-              {connectLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <LinkIcon className="h-4 w-4" />
-              )}
-              {connectLoading
-                ? '連携中...'
-                : isAdminUser
-                  ? 'branding.bz に連携'
-                  : 'branding.bz にログインして連携'}
-            </Button>
+            <ToolExportActions
+              onExportPdf={handlePdfExport}
+              onConnect={handleConnectClick}
+              onReset={() => setRestartConfirmOpen(true)}
+              isExporting={pdfLoading}
+              isConnecting={connectLoading}
+              connectLabel={isAdminUser ? 'branding.bz に連携' : 'branding.bz にログインして連携'}
+              connectVariant={isAdminUser ? 'default' : 'outline'}
+            />
           )}
-        </div>
-
-            {/* 最初からやり直す */}
-            <div className="text-center">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setRestartConfirmOpen(true)}
-                className="text-xs text-gray-500"
-              >
-                <RotateCcw className="h-3 w-3 mr-1" />
-                最初からやり直す
-              </Button>
-            </div>
-          </div>
         </CardContent>
       </Card>
 

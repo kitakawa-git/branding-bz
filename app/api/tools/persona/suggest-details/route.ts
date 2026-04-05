@@ -12,6 +12,9 @@ const SYSTEM_PROMPT = `あなたはブランディングの専門家です。
 - リアリティのある具体的な内容にすること
 - 日本の生活環境・文化に沿った内容にすること
 - personality, values, daily_routine, challenges は2〜3文で具体的に
+- キャッチコピーやキーワードが空の候補（ユーザーが手動追加したもの）がある場合は、catchcopy と keywords も生成すること
+  - catchcopy: この人物を一言で表すキャッチコピー
+  - keywords: この人物の特徴を表すキーワード3つ
 
 回答はJSON配列のみで、前後に説明文やマークダウンのコードブロックを含めないでください。
 
@@ -19,6 +22,8 @@ const SYSTEM_PROMPT = `あなたはブランディングの専門家です。
 [
   {
     "candidate_id": "候補のID",
+    "catchcopy": "（空の場合のみ生成。既にある場合はそのまま返す）",
+    "keywords": ["（空の場合のみ生成）"],
     "income": "550万円",
     "location": "東京都世田谷区",
     "family": "夫と2人暮らし",
@@ -65,6 +70,7 @@ interface Candidate {
   title: string
   catchcopy: string
   keywords: string[]
+  source?: 'ai' | 'custom'
 }
 
 export async function POST(request: NextRequest) {
@@ -90,8 +96,12 @@ export async function POST(request: NextRequest) {
       parts.push(`### ${c.name}（${c.age}歳・${c.gender}）`)
       parts.push(`- ID: ${c.id}`)
       parts.push(`- 職業: ${c.occupation} ${c.title}`)
-      parts.push(`- キャッチコピー: ${c.catchcopy}`)
-      parts.push(`- キーワード: ${c.keywords.join(', ')}`)
+      if (c.source === 'custom') {
+        parts.push(`- ※ユーザーが手動追加したペルソナです。catchcopy と keywords を新たに生成してください。`)
+      } else {
+        parts.push(`- キャッチコピー: ${c.catchcopy}`)
+        parts.push(`- キーワード: ${c.keywords.join(', ')}`)
+      }
       parts.push('')
     }
     parts.push('上記の各候補に対して、詳細属性をJSON配列で作成してください。候補の順序を維持してください。')
@@ -130,8 +140,8 @@ export async function POST(request: NextRequest) {
         gender: c.gender,
         occupation: c.occupation,
         title: c.title,
-        catchcopy: c.catchcopy,
-        keywords: c.keywords,
+        catchcopy: c.catchcopy || (detail.catchcopy as string) || '',
+        keywords: c.keywords?.length ? c.keywords : (detail.keywords as string[]) || [],
         income: (detail.income as string) || '',
         location: (detail.location as string) || '',
         family: (detail.family as string) || '',
