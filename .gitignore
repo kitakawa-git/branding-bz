@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# RLS Step 1 branch検証専用（本番適用禁止）
+supabase/migrations/00000000000000_baseline_from_production.sql
