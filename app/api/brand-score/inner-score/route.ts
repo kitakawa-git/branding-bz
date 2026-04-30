@@ -1,13 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
 // インナースコア算出API
 // GET /api/brand-score/inner-score?company_id=xxx&survey_id=yyy
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-)
 
 // ランク判定
 function getRank(score: number | null): string {
@@ -59,6 +54,8 @@ export async function GET(request: NextRequest) {
     if (!companyId) {
       return NextResponse.json({ error: 'company_id は必須です' }, { status: 400 })
     }
+
+    const supabase = getSupabaseAdmin()
 
     // 1. 対象サーベイを特定
     let survey: { id: string; title: string; status: string; total_members: number } | null = null

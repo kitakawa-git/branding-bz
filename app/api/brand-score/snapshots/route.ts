@@ -2,15 +2,8 @@
 // GET  /api/brand-score/snapshots?company_id=xxx → スナップショット一覧（時系列グラフ用）
 // POST /api/brand-score/snapshots → スコア集計して INSERT
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { calculateSnapshot } from '@/lib/brand-score/calculate-snapshot'
-
-function getSupabase() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  if (!url || !key) throw new Error('Supabase設定が不足しています')
-  return createClient(url, key)
-}
 
 // GET: スナップショット一覧を返す（snapshot_date昇順）
 export async function GET(request: NextRequest) {
@@ -22,7 +15,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'company_id は必須です' }, { status: 400 })
     }
 
-    const supabase = getSupabase()
+    const supabase = getSupabaseAdmin()
 
     const { data, error } = await supabase
       .from('brand_score_snapshots')
@@ -59,7 +52,7 @@ export async function POST(request: NextRequest) {
 
     const period = period_days && period_days > 0 && period_days <= 365 ? period_days : 30
 
-    const supabase = getSupabase()
+    const supabase = getSupabaseAdmin()
 
     // 1. 企業の存在確認
     const { data: company, error: companyErr } = await supabase

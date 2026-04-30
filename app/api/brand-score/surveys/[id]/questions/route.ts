@@ -2,14 +2,7 @@
 // GET  /api/brand-score/surveys/[id]/questions
 // POST /api/brand-score/surveys/[id]/questions
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-function getSupabase() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  if (!supabaseUrl || !supabaseAnonKey) return null
-  return createClient(supabaseUrl, supabaseAnonKey)
-}
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
 type RouteContext = { params: Promise<{ id: string }> }
 
@@ -55,10 +48,7 @@ export async function GET(_request: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params
 
-    const supabase = getSupabase()
-    if (!supabase) {
-      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
-    }
+    const supabase = getSupabaseAdmin()
 
     const { data: questions, error } = await supabase
       .from('brand_survey_questions')
@@ -92,10 +82,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'action is required' }, { status: 400 })
     }
 
-    const supabase = getSupabase()
-    if (!supabase) {
-      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
-    }
+    const supabase = getSupabaseAdmin()
 
     // ── insert_templates ──
     if (action === 'insert_templates') {

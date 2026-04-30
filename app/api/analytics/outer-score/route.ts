@@ -2,7 +2,7 @@
 // GET /api/analytics/outer-score?company_id=xxx&period=30
 // 指定企業の外部ブランド浸透度スコアを算出して返す
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
 // --- 線形マッピングヘルパー ---
 // value=0→0, value=midValue→50, value>=maxValue→100, 間は線形補間
@@ -48,14 +48,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'period must be 1-365' }, { status: 400 })
     }
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-    if (!supabaseUrl || !supabaseKey) {
-      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseKey)
+    const supabase = getSupabaseAdmin()
 
     // 集計期間の起点
     const cutoff = new Date()

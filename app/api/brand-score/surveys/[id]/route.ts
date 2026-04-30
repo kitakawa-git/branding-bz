@@ -3,14 +3,7 @@
 // PATCH  /api/brand-score/surveys/[id]
 // DELETE /api/brand-score/surveys/[id]
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-function getSupabase() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  if (!supabaseUrl || !supabaseAnonKey) return null
-  return createClient(supabaseUrl, supabaseAnonKey)
-}
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
 type RouteContext = { params: Promise<{ id: string }> }
 
@@ -23,10 +16,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'Survey ID is required' }, { status: 400 })
     }
 
-    const supabase = getSupabase()
-    if (!supabase) {
-      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
-    }
+    const supabase = getSupabaseAdmin()
 
     // サーベイ取得
     const { data: survey, error: surveyError } = await supabase
@@ -96,10 +86,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'Survey ID is required' }, { status: 400 })
     }
 
-    const supabase = getSupabase()
-    if (!supabase) {
-      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
-    }
+    const supabase = getSupabaseAdmin()
 
     // 現在のサーベイを取得（company_id が必要）
     const { data: currentSurvey, error: fetchError } = await supabase
@@ -215,10 +202,7 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'Survey ID is required' }, { status: 400 })
     }
 
-    const supabase = getSupabase()
-    if (!supabase) {
-      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
-    }
+    const supabase = getSupabaseAdmin()
 
     // 現在のサーベイを取得してステータス確認
     const { data: survey, error: fetchError } = await supabase

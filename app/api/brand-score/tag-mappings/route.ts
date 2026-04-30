@@ -3,12 +3,7 @@
 // PUT  /api/brand-score/tag-mappings
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-)
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
 // 全8タグ
 const ALL_TAGS = [
@@ -34,6 +29,8 @@ export async function GET(request: NextRequest) {
         { status: 400 },
       )
     }
+
+    const supabase = getSupabaseAdmin()
 
     const { data, error } = await supabase
       .from('brand_personality_tag_mappings')
@@ -98,6 +95,8 @@ export async function PUT(request: NextRequest) {
         { status: 400 },
       )
     }
+
+    const supabase = getSupabaseAdmin()
 
     // UPSERT用データ構築
     const rows = mappings.map((m: { tag: string; is_expected: boolean }) => ({

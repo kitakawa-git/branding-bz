@@ -3,13 +3,8 @@
 // Claude APIで企業のブランドデータから期待タグを提案
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { callClaude } from '@/lib/claude-api'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-)
 
 const ALL_TAGS = [
   '信頼感',
@@ -23,7 +18,7 @@ const ALL_TAGS = [
 ] as const
 
 const SYSTEM_PROMPT = `あなたはブランディングの専門家です。
-企業のブランドデータ（企業名、スローガン、MVV、ブランドストーリー、トーン・オブ・ボイス）を分析し、
+企業のブランドデータ（企業名、スローガン、ミッション、ビジョン、バリュー、ブランドストーリー、トーン・オブ・ボイス）を分析し、
 その企業が外部から持たれるべき「期待される印象」のタグを提案してください。
 
 以下の8つの印象タグから、この企業にふさわしいものを3〜4個選んでください:
@@ -54,12 +49,19 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const supabase = getSupabaseAdmin()
+
     // ブランドデータを取得（AI設問生成APIと同様のパターン）
-    const [companyResult, personalityResult] = await Promise.allSettled([
+    const [companyResult, guidelinesResult, personalityResult] = await Promise.allSettled([
       supabase
         .from('companies')
-        .select('name, slogan, mvv, brand_story')
+        .select('name, slogan')
         .eq('id', companyId)
+        .single(),
+      supabase
+        .from('brand_guidelines')
+        .select('mission, vision, values, brand_story')
+        .eq('company_id', companyId)
         .single(),
       supabase
         .from('brand_personalities')
@@ -70,6 +72,7 @@ export async function POST(request: NextRequest) {
     ])
 
     const company = companyResult.status === 'fulfilled' ? companyResult.value.data : null
+    const guidelines = guidelinesResult.status === 'fulfilled' ? guidelinesResult.value.data : null
     const personality = personalityResult.status === 'fulfilled' ? personalityResult.value.data : null
 
     if (!company) {
@@ -80,20 +83,31 @@ export async function POST(request: NextRequest) {
     }
 
     // ブランドデータが十分かチェック
-    const hasData = company.name || company.slogan || company.mvv || company.brand_story
+    const hasData = company.name || company.slogan || guidelines?.brand_story || guidelines?.mission || guidelines?.vision
     if (!hasData) {
       return NextResponse.json(
-        { error: 'ブランドデータが不足しています。企業名・スローガン・MVVなどを先に設定してください。' },
+        { error: 'ブランドデータが不足しています。企業名・スローガン・ミッション・ビジョンなどを先に設定してください。' },
         { status: 400 },
       )
     }
+
+    // valuesをテキスト化（jsonb配列の場合があるため）
+    const valuesText = guidelines?.values
+      ? (Array.isArray(guidelines.values)
+          ? guidelines.values.map((v: { title?: string; description?: string } | string) =>
+              typeof v === 'string' ? v : v.title || JSON.stringify(v)
+            ).join('、')
+          : String(guidelines.values))
+      : '未設定'
 
     // ユーザーメッセージ構築
     const brandData = {
       企業名: company.name || '未設定',
       スローガン: company.slogan || '未設定',
-      MVV: company.mvv || '未設定',
-      ブランドストーリー: company.brand_story || '未設定',
+      ミッション: guidelines?.mission || '未設定',
+      ビジョン: guidelines?.vision || '未設定',
+      バリュー: valuesText,
+      ブランドストーリー: guidelines?.brand_story || '未設定',
       トーンオブボイス: personality?.tone_of_voice || '未設定',
     }
 

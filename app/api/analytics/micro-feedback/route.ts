@@ -3,12 +3,7 @@
 // 名刺閲覧者が印象タグを選択して送信
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-)
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
 // 許可する印象タグ（8個のみ）
 const ALLOWED_TAGS = [
@@ -51,6 +46,8 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       )
     }
+
+    const supabase = getSupabaseAdmin()
 
     // IP・User-Agent をヘッダーから取得
     const forwarded = request.headers.get('x-forwarded-for')

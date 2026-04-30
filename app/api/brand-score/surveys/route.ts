@@ -2,14 +2,7 @@
 // GET  /api/brand-score/surveys?company_id=xxx
 // POST /api/brand-score/surveys
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-function getSupabase() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  if (!supabaseUrl || !supabaseAnonKey) return null
-  return createClient(supabaseUrl, supabaseAnonKey)
-}
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
 // GET: サーベイ一覧（回答率付き）
 export async function GET(request: NextRequest) {
@@ -21,10 +14,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'company_id is required' }, { status: 400 })
     }
 
-    const supabase = getSupabase()
-    if (!supabase) {
-      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
-    }
+    const supabase = getSupabaseAdmin()
 
     // サーベイ一覧取得
     const { data: surveys, error: surveysError } = await supabase
@@ -90,10 +80,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'companyId is required' }, { status: 400 })
     }
 
-    const supabase = getSupabase()
-    if (!supabase) {
-      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
-    }
+    const supabase = getSupabaseAdmin()
 
     // タイトル自動生成: 既存タイトルから最大回数を抽出して +1
     let surveyTitle = title
