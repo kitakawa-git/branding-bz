@@ -1,14 +1,7 @@
 // 設問並び順一括更新API
 // PATCH /api/brand-score/surveys/[id]/questions/reorder
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-function getSupabase() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  if (!supabaseUrl || !supabaseAnonKey) return null
-  return createClient(supabaseUrl, supabaseAnonKey)
-}
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
 type RouteContext = { params: Promise<{ id: string }> }
 
@@ -23,10 +16,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'orders array is required' }, { status: 400 })
     }
 
-    const supabase = getSupabase()
-    if (!supabase) {
-      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
-    }
+    const supabase = getSupabaseAdmin()
 
     // サーベイのステータス確認
     const { data: survey, error: surveyError } = await supabase

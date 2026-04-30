@@ -2,15 +2,8 @@
 // POST /api/brand-score/surveys/[id]/generate-questions
 // Claude APIを呼び出し、企業のブランドデータに基づいたカスタム設問を生成
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { callClaude } from '@/lib/claude-api'
-
-function getSupabase() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  if (!supabaseUrl || !supabaseAnonKey) return null
-  return createClient(supabaseUrl, supabaseAnonKey)
-}
 
 type RouteContext = { params: Promise<{ id: string }> }
 
@@ -19,8 +12,6 @@ interface BrandData {
   company?: {
     name?: string
     slogan?: string
-    mvv?: string
-    brand_story?: string
   }
   guidelines?: {
     business_content?: unknown
@@ -28,6 +19,7 @@ interface BrandData {
     vision?: string
     values?: unknown
     traits?: unknown
+    brand_story?: string
   }
   personas?: {
     target?: string
@@ -73,8 +65,7 @@ function hasSufficientData(data: BrandData): boolean {
   const checks = [
     data.company?.name,
     data.company?.slogan,
-    data.company?.mvv,
-    data.company?.brand_story,
+    data.guidelines?.brand_story,
     data.guidelines?.mission,
     data.guidelines?.vision,
     data.guidelines?.business_content,
@@ -101,10 +92,7 @@ export async function POST(_request: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params
 
-    const supabase = getSupabase()
-    if (!supabase) {
-      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
-    }
+    const supabase = getSupabaseAdmin()
 
     // 1. サーベイからcompany_idを取得
     const { data: survey, error: surveyError } = await supabase
@@ -135,13 +123,13 @@ export async function POST(_request: NextRequest, context: RouteContext) {
       // companies
       supabase
         .from('companies')
-        .select('name, slogan, mvv, brand_story')
+        .select('name, slogan')
         .eq('id', companyId)
         .single(),
       // brand_guidelines
       supabase
         .from('brand_guidelines')
-        .select('business_content, mission, vision, values, traits')
+        .select('business_content, mission, vision, values, traits, brand_story')
         .eq('company_id', companyId)
         .single(),
       // brand_personas（複数行の可能性）

@@ -1,14 +1,7 @@
 // 匿名回答送信API
 // POST /api/brand-score/surveys/[id]/respond
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-function getSupabase() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  if (!supabaseUrl || !supabaseAnonKey) return null
-  return createClient(supabaseUrl, supabaseAnonKey)
-}
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
 type RouteContext = { params: Promise<{ id: string }> }
 
@@ -55,15 +48,13 @@ export async function POST(request: NextRequest, context: RouteContext) {
       }
     }
 
-    const supabase = getSupabase()
-    if (!supabase) {
-      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
-    }
+    const supabase = getSupabaseAdmin()
 
-    // 1. サーベイ取得・ステータス確認
+    // 1. サーベイ取得・ステータス確認・期限切れチェック
+    //    service_role 化により RLS バイパスのため、認可は本ルート内で完結する
     const { data: survey, error: surveyError } = await supabase
       .from('brand_surveys')
-      .select('id, status')
+      .select('id, status, ends_at')
       .eq('id', surveyId)
       .single()
 
@@ -79,6 +70,14 @@ export async function POST(request: NextRequest, context: RouteContext) {
     if (survey.status !== 'active') {
       return NextResponse.json(
         { error: 'このサーベイは現在回答を受け付けていません' },
+        { status: 400 }
+      )
+    }
+
+    // ends_at が過去ならば期限切れとして拒否
+    if (survey.ends_at && new Date(survey.ends_at).getTime() < Date.now()) {
+      return NextResponse.json(
+        { error: 'このサーベイの回答期限を過ぎています' },
         { status: 400 }
       )
     }
