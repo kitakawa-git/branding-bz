@@ -198,9 +198,7 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!companyId) return
 
-    // companyId 確定後にキャッシュがあればそれを反映してローディング解除
-    // （初回レンダリング時は companyId=null でキャッシュ取得をスキップしているため、
-    //   ここで再評価しないと loading=true のまま固まる）
+    // companyId 確定後にキャッシュがあればそれを反映
     const cachedNow = getPageCache<DashboardCache>(cacheKey)
     if (cachedNow) {
       setRawPosts(cachedNow.posts)
@@ -211,6 +209,11 @@ export default function DashboardPage() {
       setLoading(false)
       return
     }
+
+    // companyId が定まった時点で即座に画面表示
+    // データ未取得は各セクションが「データなし」表示を出す
+    // バックグラウンドで fetchDashboard 実行（SWRパターン）
+    setLoading(false)
 
     const fetchDashboard = async () => {
       try {

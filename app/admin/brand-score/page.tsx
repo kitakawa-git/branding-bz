@@ -349,8 +349,7 @@ export default function BrandScoreDashboard() {
   useEffect(() => {
     if (!companyId) return
 
-    // companyId 確定後にキャッシュがあればそれを反映して即時表示
-    // バックグラウンドで最新データ再取得（SWRパターン）
+    // companyId 確定後にキャッシュがあればそれを反映
     const cachedNow = getPageCache<BrandScoreCache>(cacheKey)
     if (cachedNow) {
       setInnerScore(cachedNow.innerScore)
@@ -361,9 +360,11 @@ export default function BrandScoreDashboard() {
       setPrevSnapshot(cachedNow.prevSnapshot)
       setSnapshots(cachedNow.snapshots)
       setImpressionScore(cachedNow.impressionScore)
-      setLoading(false)
     }
 
+    // companyId が定まった時点で即座に画面表示（データ未取得は各カードの「データなし」が出る）
+    // バックグラウンドで fetchAll を実行して順次更新（SWRパターン）
+    setLoading(false)
     fetchAll()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [companyId, period])
