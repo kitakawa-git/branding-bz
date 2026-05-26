@@ -2,8 +2,19 @@
 // GET  /api/members/join-requests — pendingメンバー一覧取得
 // POST /api/members/join-requests — 承認 or 拒否
 import { NextRequest, NextResponse } from 'next/server'
+import { Resend } from 'resend'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { supabase } from '@/lib/supabase'
+
+// HTMLエスケープ（XSS対策）
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
 
 // 管理者の company_id を取得
 async function getAdminCompanyId(req: NextRequest): Promise<string | null> {
@@ -96,6 +107,42 @@ export async function POST(request: NextRequest) {
       }
 
       console.log('[JoinRequests] 承認:', member.display_name, member.email)
+
+      // 申請者本人へ承認完了メール通知（失敗しても承認自体は成功扱い）
+      const resendApiKey = process.env.RESEND_API_KEY
+      if (resendApiKey && member.email) {
+        try {
+          const { data: company } = await supabaseAdmin
+            .from('companies')
+            .select('name')
+            .eq('id', companyId)
+            .single()
+
+          const companyName = company?.name || ''
+          const loginUrl = 'https://branding.bz/admin/login'
+          const resend = new Resend(resendApiKey)
+          await resend.emails.send({
+            from: 'branding.bz <noreply@branding.bz>',
+            to: member.email,
+            subject: `【branding.bz】${companyName} への参加が承認されました`,
+            html: `
+              <h2>参加リクエストが承認されました</h2>
+              <p>${escapeHtml(member.display_name || '')} 様</p>
+              <p>${escapeHtml(companyName)} への参加リクエストが承認されました。<br/>下のボタンからログインして、branding.bz をご利用ください。</p>
+              <p style="margin-top:24px;">
+                <a href="${loginUrl}" style="display:inline-block;padding:10px 20px;background:#000;color:#fff;text-decoration:none;border-radius:9999px;font-weight:bold;">ログインする</a>
+              </p>
+              <p style="color:#666;font-size:12px;margin-top:16px;">${loginUrl}</p>
+              <hr style="margin-top:32px;border:none;border-top:1px solid #eee;" />
+              <p style="color:#999;font-size:12px;">このメールは branding.bz の参加リクエスト承認時に自動送信されています。</p>
+            `,
+          })
+          console.log('[JoinRequests] 承認通知メール送信:', member.email)
+        } catch (emailError) {
+          console.error('[JoinRequests] 承認通知メール送信エラー:', emailError)
+        }
+      }
+
       return NextResponse.json({
         success: true,
         action: 'approved',
