@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { usePathname } from 'next/navigation'
-import { useAuth } from '../components/AuthProvider'
+import { useAuth } from '../components/AdminDataProvider'
 import { supabase } from '@/lib/supabase'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
 import Link from 'next/link'

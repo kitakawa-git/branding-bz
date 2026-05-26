@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { usePortalAuth } from './PortalAuthProvider'
+import { usePortalAuth } from './PortalDataProvider'
 import { Button } from '@/components/ui/button'
 import { ClipboardList } from 'lucide-react'
 

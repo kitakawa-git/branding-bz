@@ -3,7 +3,7 @@
 // shadcn/ui Sidebar ベースの管理画面サイドバー（floating）
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useAuth } from './AuthProvider'
+import { useAuth } from './AdminDataProvider'
 import {
   Sidebar,
   SidebarContent,

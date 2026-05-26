@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { fetchWithRetry } from '@/lib/supabase-fetch'
-import { usePortalAuth } from '../components/PortalAuthProvider'
+import { usePortalAuth } from '../components/PortalDataProvider'
 import { getSubtitle } from '@/lib/portal-subtitles'
 import { parseFontsFromDB, getCssFontFamily, getFontRoleLabel, getGoogleFontsUrl, FONT_PREVIEW_TEXT, type BrandFonts } from '@/lib/brand-fonts'
 import { Card, CardContent } from '@/components/ui/card'

@@ -3,7 +3,7 @@
 // マイプロフィール編集ページ
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
-import { usePortalAuth } from '../components/PortalAuthProvider'
+import { usePortalAuth } from '../components/PortalDataProvider'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'

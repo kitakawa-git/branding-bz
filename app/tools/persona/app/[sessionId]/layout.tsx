@@ -1,7 +1,7 @@
 'use client'
 
-// ペルソナセッションページレイアウト: UnifiedAuthProvider + PersonaHeader
-import { UnifiedAuthProvider, useUnifiedAuth } from '@/components/providers/UnifiedAuthProvider'
+// ペルソナセッションページレイアウト: AppAuthProvider + PersonaHeader
+import { AppAuthProvider, useAppAuth } from '@/components/providers/AppAuthProvider'
 import { PersonaHeader } from '../../components/PersonaHeader'
 import Footer from '@/components/Footer'
 
@@ -11,14 +11,14 @@ export default function PersonaSessionLayout({
   children: React.ReactNode
 }) {
   return (
-    <UnifiedAuthProvider redirectTo="/portal/auth?from=persona">
+    <AppAuthProvider redirectOnSignOutTo="/tools/persona">
       <PersonaSessionLayoutInner>{children}</PersonaSessionLayoutInner>
-    </UnifiedAuthProvider>
+    </AppAuthProvider>
   )
 }
 
 function PersonaSessionLayoutInner({ children }: { children: React.ReactNode }) {
-  const { signOut } = useUnifiedAuth()
+  const { signOut } = useAppAuth()
 
   return (
     <div className="flex min-h-screen flex-col bg-background">

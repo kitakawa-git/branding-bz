@@ -4,7 +4,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { usePortalAuth } from '../../components/PortalAuthProvider'
+import { usePortalAuth } from '../../components/PortalDataProvider'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'

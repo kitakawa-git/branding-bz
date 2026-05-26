@@ -5,7 +5,8 @@ import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
-import { PortalAuthProvider, usePortalAuth } from './components/PortalAuthProvider'
+import { AppAuthProvider } from '@/components/providers/AppAuthProvider'
+import { PortalDataProvider, usePortalData } from './components/PortalDataProvider'
 import { PortalDynamicTitle } from './components/PortalDynamicTitle'
 import { PortalSidebar } from './components/PortalSidebar'
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar'
@@ -17,7 +18,7 @@ const publicPaths = ['/portal/login', '/portal/register', '/portal/auth']
 
 function PortalLayoutInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
-  const { user, companyId } = usePortalAuth()
+  const { user, companyId } = usePortalData()
   const [unreadCount, setUnreadCount] = useState(0)
   const isPublic = publicPaths.some(p => pathname.startsWith(p))
 
@@ -89,10 +90,12 @@ function PortalLayoutInner({ children }: { children: React.ReactNode }) {
 
 export default function PortalLayoutClient({ children }: { children: React.ReactNode }) {
   return (
-    <PortalAuthProvider>
-      <PortalLayoutInner>
-        {children}
-      </PortalLayoutInner>
-    </PortalAuthProvider>
+    <AppAuthProvider redirectOnSignOutTo="/portal/auth">
+      <PortalDataProvider>
+        <PortalLayoutInner>
+          {children}
+        </PortalLayoutInner>
+      </PortalDataProvider>
+    </AppAuthProvider>
   )
 }

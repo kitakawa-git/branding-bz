@@ -3,7 +3,7 @@
 // CIマニュアル出力ページ
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
-import { useAuth } from '../components/AuthProvider'
+import { useAuth } from '../components/AdminDataProvider'
 import { fetchCIManualData, resolveImages } from '@/lib/ci-manual/data-fetcher'
 import { downloadDataURLAsFile } from '@/lib/qr-download'
 import { Card, CardContent } from '@/components/ui/card'

@@ -1,7 +1,7 @@
 'use client'
 
-// 統一OAuth コールバックページ（implicit flow: クライアントサイド処理）
-// Supabase が hash fragment でトークンを返すので、onAuthStateChange で検知する
+// ポータル OAuth コールバックページ
+// implicit flow のトークン → cookie 化 → getUser() で確定 → 遷移
 import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -25,48 +25,40 @@ function PortalAuthCallbackContent() {
   const [error, setError] = useState('')
 
   useEffect(() => {
+    let cancelled = false
     const from = searchParams.get('from')
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        if (event === 'SIGNED_IN' && session) {
-          subscription.unsubscribe()
-          // from がある場合は選択ページへ、ない場合はポータルダッシュボードへ
-          if (from) {
-            router.replace(`/portal/auth/select?from=${from}`)
-          } else {
-            router.replace('/portal')
-          }
-        }
-      }
-    )
+    ;(async () => {
+      try {
+        const { data, error: getUserError } = await supabase.auth.getUser()
+        if (cancelled) return
 
-    // すでにセッションがある場合（ページリロード時など）
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
+        if (getUserError || !data.user) {
+          setError('認証に失敗しました')
+          setTimeout(() => {
+            const errorUrl = from
+              ? `/portal/auth?from=${from}&error=auth_failed`
+              : '/portal/auth?error=auth_failed'
+            router.replace(errorUrl)
+          }, 1500)
+          return
+        }
+
         if (from) {
           router.replace(`/portal/auth/select?from=${from}`)
         } else {
           router.replace('/portal')
         }
+      } catch (err) {
+        if (!cancelled) {
+          console.error('[PortalCallback] エラー:', err)
+          setError('認証中にエラーが発生しました')
+        }
       }
-    })
-
-    // 10秒タイムアウト
-    const timeout = setTimeout(() => {
-      subscription.unsubscribe()
-      setError('認証に失敗しました')
-      setTimeout(() => {
-        const errorUrl = from
-          ? `/portal/auth?from=${from}&error=auth_failed`
-          : '/portal/auth?error=auth_failed'
-        router.replace(errorUrl)
-      }, 1500)
-    }, 10000)
+    })()
 
     return () => {
-      subscription.unsubscribe()
-      clearTimeout(timeout)
+      cancelled = true
     }
   }, [router, searchParams])
 

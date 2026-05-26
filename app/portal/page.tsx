@@ -4,7 +4,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
-import { usePortalAuth } from './components/PortalAuthProvider'
+import { usePortalAuth } from './components/PortalDataProvider'
 import { SurveyBanner } from './components/SurveyBanner'
 import { getRelativeTime } from '@/lib/time-utils'
 import { PieChart, Pie, Cell } from 'recharts'

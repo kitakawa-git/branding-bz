@@ -4,7 +4,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { supabase } from '@/lib/supabase'
 import { fetchWithRetry } from '@/lib/supabase-fetch'
-import { usePortalAuth } from '../components/PortalAuthProvider'
+import { usePortalAuth } from '../components/PortalDataProvider'
 import { getSubtitle } from '@/lib/portal-subtitles'
 import { useBrandFonts } from '@/hooks/useBrandFonts'
 import { BrandFontLoader } from '@/components/BrandFontLoader'

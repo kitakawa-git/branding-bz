@@ -1,7 +1,7 @@
 'use client'
 
-// セッションページレイアウト: UnifiedAuthProvider + ToolsHeader
-import { UnifiedAuthProvider, useUnifiedAuth } from '@/components/providers/UnifiedAuthProvider'
+// セッションページレイアウト: AppAuthProvider + ToolsHeader
+import { AppAuthProvider, useAppAuth } from '@/components/providers/AppAuthProvider'
 import { ToolsHeader } from '../../components/ToolsHeader'
 import Footer from '@/components/Footer'
 
@@ -11,14 +11,14 @@ export default function SessionLayout({
   children: React.ReactNode
 }) {
   return (
-    <UnifiedAuthProvider redirectTo="/portal/auth?from=colors">
+    <AppAuthProvider redirectOnSignOutTo="/tools/colors">
       <SessionLayoutInner>{children}</SessionLayoutInner>
-    </UnifiedAuthProvider>
+    </AppAuthProvider>
   )
 }
 
 function SessionLayoutInner({ children }: { children: React.ReactNode }) {
-  const { signOut } = useUnifiedAuth()
+  const { signOut } = useAppAuth()
 
   return (
     <div className="flex min-h-screen flex-col bg-background">

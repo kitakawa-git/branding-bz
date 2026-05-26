@@ -4,7 +4,7 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { fetchWithRetry } from '@/lib/supabase-fetch'
-import { usePortalAuth } from '../components/PortalAuthProvider'
+import { usePortalAuth } from '../components/PortalDataProvider'
 import { getRelativeTime } from '@/lib/time-utils'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'

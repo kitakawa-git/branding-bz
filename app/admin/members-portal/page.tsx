@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
-import { useAuth } from '../components/AuthProvider'
+import { useAuth } from '../components/AdminDataProvider'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getPageCache, setPageCache } from '@/lib/page-cache'

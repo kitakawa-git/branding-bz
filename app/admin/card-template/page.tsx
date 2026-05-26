@@ -3,7 +3,7 @@
 // スマート名刺ページ: 印象タグ設定 + QRコード出力を統合
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
-import { useAuth } from '../components/AuthProvider'
+import { useAuth } from '../components/AdminDataProvider'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'

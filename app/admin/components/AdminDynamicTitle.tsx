@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
-import { useAuth } from './AuthProvider'
+import { useAuth } from './AdminDataProvider'
 import { supabase } from '@/lib/supabase'
 
 const titleMap: Record<string, string> = {

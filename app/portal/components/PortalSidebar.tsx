@@ -4,7 +4,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { usePortalAuth } from './PortalAuthProvider'
+import { usePortalAuth } from './PortalDataProvider'
 import { CardPreviewDialog } from './CardPreviewDialog'
 import {
   Sidebar,

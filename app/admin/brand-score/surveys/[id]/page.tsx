@@ -4,7 +4,7 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { useAuth } from '../../../components/AuthProvider'
+import { useAuth } from '../../../components/AdminDataProvider'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'

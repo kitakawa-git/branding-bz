@@ -2,10 +2,10 @@
 
 // スーパー管理画面ヘッダー
 import Link from 'next/link'
-import { useSuperAdmin } from './SuperAdminProvider'
+import { useAdminData } from '@/app/admin/components/AdminDataProvider'
 
 export function SuperAdminHeader() {
-  const { user, signOut } = useSuperAdmin()
+  const { user, signOut } = useAdminData()
 
   return (
     <header className="h-[60px] bg-white border-b border-gray-200 flex items-center justify-between px-6">

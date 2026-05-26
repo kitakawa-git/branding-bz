@@ -3,7 +3,7 @@
 // 全社員 目標・KPI管理ページ（管理画面）— ゴール期間設定 + 期間切り替え + 1人1目標 閲覧専用一覧
 import { useEffect, useState, useMemo, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
-import { useAuth } from '../components/AuthProvider'
+import { useAuth } from '../components/AdminDataProvider'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'

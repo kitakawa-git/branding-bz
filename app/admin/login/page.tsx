@@ -54,50 +54,24 @@ function LoginContent() {
     setError('')
 
     try {
-      console.log('[Login] ステップ1: 認証開始 email=', email)
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      const { error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
       if (authError) {
-        console.error('[Login] ステップ1失敗: 認証エラー:', authError.message)
         setError('メールアドレスまたはパスワードが正しくありません')
         return
       }
 
-      console.log('[Login] ステップ1完了: 認証成功 userId=', authData.user.id)
-
-      // is_superadmin 判定だけに必要なカラムを最小取得（高速化）
-      const { data: adminUser, error: adminError } = await supabase
-        .from('admin_users')
-        .select('is_superadmin')
-        .eq('auth_id', authData.user.id)
-        .single()
-
-      if (adminError || !adminUser) {
-        const errorMsg = adminError
-          ? `管理者データ取得エラー: ${adminError.message}（RLSが有効の場合 sql/002_disable_rls.sql を実行してください）`
-          : 'このアカウントは管理者として登録されていません。admin_usersテーブルにデータがあるか確認してください。'
-        console.error('[Login] ステップ2失敗:', errorMsg)
-        setError(errorMsg)
-        await supabase.auth.signOut({ scope: 'local' })
-        return
-      }
-
-      if (adminUser.is_superadmin === true) {
-        setIsSuperAdmin(true)
-        setLoggedIn(true)
-        return
-      }
-
-      // 通常管理者は即リダイレクト（AuthProvider が後続の admin_users / members を並列取得する）
+      // is_superadmin 判定は AdminDataProvider が遷移先で取得する。
+      // ここでは即リダイレクトのみ行い、二重取得を避ける。
+      // スーパー管理者の遷移先選択は AdminDataProvider 経由（または個別ガードページ）で行う。
       router.replace('/admin/members')
     } catch (err) {
       console.error('[Login] 予期しないエラー:', err)
       setError(`ログイン処理中にエラーが発生しました: ${err instanceof Error ? err.message : String(err)}`)
     } finally {
-      console.log('[Login] finally: setLoading(false)')
       setLoading(false)
     }
   }

@@ -1,6 +1,8 @@
-// 管理画面レイアウト（AuthProviderでラップ）
+// 管理画面レイアウト
+// AppAuthProvider（セッション層） + AdminDataProvider（アプリ固有データ層）の2層構造
 import type { Metadata } from 'next'
-import { AuthProvider } from './components/AuthProvider'
+import { AppAuthProvider } from '@/components/providers/AppAuthProvider'
+import { AdminDataProvider } from './components/AdminDataProvider'
 
 export const metadata: Metadata = {
   title: {
@@ -10,5 +12,9 @@ export const metadata: Metadata = {
 }
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  return <AuthProvider>{children}</AuthProvider>
+  return (
+    <AppAuthProvider redirectOnSignOutTo="/admin/login">
+      <AdminDataProvider>{children}</AdminDataProvider>
+    </AppAuthProvider>
+  )
 }

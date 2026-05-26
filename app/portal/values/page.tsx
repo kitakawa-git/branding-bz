@@ -3,7 +3,7 @@
 // 提供価値 閲覧ページ
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { usePortalAuth } from '../components/PortalAuthProvider'
+import { usePortalAuth } from '../components/PortalDataProvider'
 import { getSubtitle } from '@/lib/portal-subtitles'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'

@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { fetchWithRetry } from '@/lib/supabase-fetch'
-import { useAuth } from '../../components/AuthProvider'
+import { useAuth } from '../../components/AdminDataProvider'
 import { colors } from '../../components/AdminStyles'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'

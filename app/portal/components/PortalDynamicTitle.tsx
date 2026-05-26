@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react'
 import { usePathname } from 'next/navigation'
-import { usePortalAuth } from './PortalAuthProvider'
+import { usePortalAuth } from './PortalDataProvider'
 
 const titleMap: Record<string, string> = {
   '/portal': 'ダッシュボード',

@@ -44,6 +44,8 @@ export default function Header() {
 
   // 認証状態の監視（軽量：getSession のみ。admin/member 判定はクリック時に行う）
   useEffect(() => {
+    // Hydration mismatch 回避のため意図的にマウント後に true 化する
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true)
     supabase.auth.getSession().then(({ data }) => {
       setIsLoggedIn(!!data.session)

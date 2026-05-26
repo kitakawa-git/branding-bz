@@ -4,7 +4,7 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { usePortalAuth } from '../components/PortalAuthProvider'
+import { usePortalAuth } from '../components/PortalDataProvider'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'

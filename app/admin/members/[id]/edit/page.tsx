@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { useAuth } from '../../../components/AuthProvider'
+import { useAuth } from '../../../components/AdminDataProvider'
 import { MemberForm } from '../../../components/MemberForm'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
