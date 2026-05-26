@@ -237,10 +237,33 @@ export function PortalAuthProvider({ children }: { children: React.ReactNode }) 
       }
     )
 
+    // === 3) タブ復帰時にセッションを再検証 ===
+    const handleVisibility = async () => {
+      if (document.visibilityState !== 'visible') return
+      try {
+        const { data } = await supabase.auth.getSession()
+        const currentUser = data.session?.user ?? null
+        if (!currentUser) {
+          __portalAuthInitialized = false
+          setUser(null)
+          setCompanyId(null)
+          setMember(null)
+          if (!isPublicPath) router.replace('/portal/auth')
+        } else if (!memberRef.current) {
+          setUser(currentUser)
+          await fetchMember(currentUser.id)
+        }
+      } catch (err) {
+        console.error('[PortalAuth] visibilitychange セッション確認エラー:', err)
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+
     return () => {
       cancelled = true
       clearTimeout(timeoutId)
       subscription.unsubscribe()
+      document.removeEventListener('visibilitychange', handleVisibility)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])

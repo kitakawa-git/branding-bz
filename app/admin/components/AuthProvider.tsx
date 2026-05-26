@@ -214,10 +214,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     )
 
+    // === 3) タブ復帰時にセッションを再検証 ===
+    // ブラウザがバックグラウンド中に setTimeout が抑制されると自動リフレッシュがスキップされる
+    // ためトークンが期限切れになることがある。アクティブに戻った時に明示的に確認する。
+    const handleVisibility = async () => {
+      if (document.visibilityState !== 'visible') return
+      try {
+        const { data } = await supabase.auth.getSession()
+        const currentUser = data.session?.user ?? null
+        if (!currentUser) {
+          // セッション失効 → ログイン画面へ
+          __authInitialized = false
+          setUser(null)
+          setCompanyId(null)
+          if (!isLoginPage) router.replace('/admin/login')
+        } else if (!companyIdRef.current) {
+          // セッションはあるがデータ未取得 → 再取得
+          setUser(currentUser)
+          await fetchAdminUser(currentUser.id)
+        }
+      } catch (err) {
+        console.error('[AuthProvider] visibilitychange セッション確認エラー:', err)
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+
     return () => {
       cancelled = true
       clearTimeout(timeoutId)
       subscription.unsubscribe()
+      document.removeEventListener('visibilitychange', handleVisibility)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
