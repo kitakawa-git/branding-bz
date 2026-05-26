@@ -11,6 +11,9 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { ShieldAlert } from 'lucide-react'
 
+// PortalAuthProvider が再マウントされた時、すでに認証済みなら即時 loading=false で開始
+let __portalAuthInitialized = false
+
 type MemberInfo = {
   id: string
   display_name: string
@@ -64,7 +67,8 @@ export function PortalAuthProvider({ children }: { children: React.ReactNode }) 
   const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null)
   const [profileSlug, setProfileSlug] = useState<string | null>(null)
   const [isAdmin, setIsAdmin] = useState(false)
-  const [loading, setLoading] = useState(true)
+  // 既に認証済みなら再マウント時に loading=false で開始
+  const [loading, setLoading] = useState(!__portalAuthInitialized)
   const router = useRouter()
   const pathname = usePathname()
 
@@ -190,7 +194,10 @@ export function PortalAuthProvider({ children }: { children: React.ReactNode }) 
 
         setUser(currentUser)
         await fetchMember(currentUser.id)
-        if (!cancelled) setLoading(false)
+        if (!cancelled) {
+          __portalAuthInitialized = true
+          setLoading(false)
+        }
       } catch (err) {
         if (cancelled) return
         console.error('[PortalAuth] getSession 失敗:', err)
@@ -220,6 +227,7 @@ export function PortalAuthProvider({ children }: { children: React.ReactNode }) 
           setUser(currentUser)
           await fetchMember(currentUser.id)
         } else if (event === 'SIGNED_OUT') {
+          __portalAuthInitialized = false
           setUser(null)
           setCompanyId(null)
           setMember(null)
@@ -238,6 +246,7 @@ export function PortalAuthProvider({ children }: { children: React.ReactNode }) 
   }, [])
 
   const signOut = async () => {
+    __portalAuthInitialized = false
     clearPageCache()
     await supabase.auth.signOut()
     setCompanyId(null)

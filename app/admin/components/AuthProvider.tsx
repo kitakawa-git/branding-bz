@@ -12,6 +12,10 @@ import { AdminHeader } from './AdminHeader'
 import { AdminDynamicTitle } from './AdminDynamicTitle'
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 
+// AuthProvider が再マウントされた時、すでに認証済みなら即時 loading=false で開始する
+// （タブ存続中はセッション復元済みとみなす）
+let __authInitialized = false
+
 type AuthContextType = {
   user: User | null
   companyId: string | null
@@ -47,7 +51,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isSuperAdmin, setIsSuperAdmin] = useState(false)
   const [profileName, setProfileName] = useState<string | null>(null)
   const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
+  // 既に一度認証済みの場合（モジュール内フラグ）は false で開始 → 再マウント時のチラつき防止
+  const [loading, setLoading] = useState(!__authInitialized)
   const [adminError, setAdminError] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
@@ -160,7 +165,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         setUser(currentUser)
         await fetchAdminUser(currentUser.id)
-        if (!cancelled) setLoading(false)
+        if (!cancelled) {
+          __authInitialized = true
+          setLoading(false)
+        }
       } catch (err) {
         if (cancelled) return
         console.error('[AuthProvider] getSession 失敗:', err)
@@ -192,6 +200,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(currentUser)
           await fetchAdminUser(currentUser.id)
         } else if (event === 'SIGNED_OUT') {
+          __authInitialized = false
           setUser(null)
           setCompanyId(null)
           setRole(null)
@@ -217,6 +226,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // 先にローカル状態をクリアして即時リダイレクト
     // （supabase.auth.signOut() のサーバーrevokeがブロックすると
     //   ボタン無反応に見えるため、先にUIを進める）
+    __authInitialized = false
     clearPageCache()
     setUser(null)
     setCompanyId(null)
