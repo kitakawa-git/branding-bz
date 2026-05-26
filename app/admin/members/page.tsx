@@ -38,6 +38,7 @@ type MemberWithProfile = {
   display_name: string
   email: string
   is_active: boolean
+  status: string | null
   created_at: string
   profile_id: string | null
   profile: {
@@ -130,7 +131,7 @@ export default function MembersPage() {
         Promise.race([
           supabase
             .from('members')
-            .select('id, auth_id, display_name, email, is_active, created_at, profile:profiles(id, name, slug, card_enabled, photo_url)')
+            .select('id, auth_id, display_name, email, is_active, status, created_at, profile:profiles(id, name, slug, card_enabled, photo_url)')
             .eq('company_id', companyId)
             .order('created_at', { ascending: false }),
           new Promise<never>((_, reject) =>
@@ -147,10 +148,13 @@ export default function MembersPage() {
       if (membersResult.error) throw new Error(membersResult.error.message)
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const membersData = (membersResult.data ?? []).map((m: any) => {
-        const profile = Array.isArray(m.profile) ? m.profile[0] : m.profile
-        return { ...m, profile: profile || null } as MemberWithProfile
-      })
+      const membersData = (membersResult.data ?? [])
+        .map((m: any) => {
+          const profile = Array.isArray(m.profile) ? m.profile[0] : m.profile
+          return { ...m, profile: profile || null } as MemberWithProfile
+        })
+        // 参加リクエスト中（pending）のメンバーは別セクションで表示するので一覧から除外
+        .filter((m: MemberWithProfile) => m.status !== 'pending')
       const linksData = (linksResult.data ?? []) as InviteLink[]
 
       setMembers(membersData)
