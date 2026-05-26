@@ -122,12 +122,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const companyIdRef = useRef(companyId)
   useEffect(() => { companyIdRef.current = companyId }, [companyId])
 
-  // onAuthStateChange を唯一の認証ソースとして使用（Supabase推奨パターン）
+  // 認証ソース：
+  //   1) マウント直後に getSession で localStorage から即座にセッション復元
+  //      → onAuthStateChange の INITIAL_SESSION を待たないため「読み込み中」が一瞬で終わる
+  //   2) onAuthStateChange は SIGNED_IN/OUT/TOKEN_REFRESHED の状態変化監視のみ
   useEffect(() => {
     const isLoginPage = pathname === '/admin/login'
+    let cancelled = false
 
-    // 10秒経っても INITIAL_SESSION が来なければ強制リダイレクト
+    // フォールバック：getSession が10秒で帰ってこない異常事態への保険
     const timeoutId = setTimeout(() => {
+      if (cancelled) return
       console.warn('[AuthProvider] 10秒タイムアウト: ログインページへリダイレクト')
       setLoading(false)
       if (!isLoginPage) {
@@ -135,34 +140,58 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }, 10000)
 
+    // === 1) getSession で即時セッション確認 ===
+    ;(async () => {
+      try {
+        const { data } = await supabase.auth.getSession()
+        if (cancelled) return
+        clearTimeout(timeoutId)
+
+        const currentUser = data.session?.user ?? null
+
+        if (!currentUser) {
+          setUser(null)
+          setLoading(false)
+          if (!isLoginPage) {
+            router.replace('/admin/login')
+          }
+          return
+        }
+
+        setUser(currentUser)
+        await fetchAdminUser(currentUser.id)
+        if (!cancelled) setLoading(false)
+      } catch (err) {
+        if (cancelled) return
+        console.error('[AuthProvider] getSession 失敗:', err)
+        clearTimeout(timeoutId)
+        setLoading(false)
+        if (!isLoginPage) {
+          router.replace('/admin/login')
+        }
+      }
+    })()
+
+    // === 2) onAuthStateChange で状態変化を監視（INITIAL_SESSION は無視） ===
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('[AuthProvider] onAuthStateChange:', event, session?.user?.email)
 
-        if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          clearTimeout(timeoutId)
+        // INITIAL_SESSION は getSession 側で処理済みなのでスキップ
+        if (event === 'INITIAL_SESSION') return
+
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
           const currentUser = session?.user ?? null
+          if (!currentUser) return
 
-          if (!currentUser) {
-            setUser(null)
-            setLoading(false)
-            if (!isLoginPage) {
-              router.replace('/admin/login')
-            }
-            return
-          }
-
-          setUser(currentUser)
-
-          // TOKEN_REFRESHED: データ既取得済みなら再取得スキップ（スケルトン回避）
+          // TOKEN_REFRESHED: データ既取得済みなら再取得スキップ
           if (event === 'TOKEN_REFRESHED' && companyIdRef.current) {
             return
           }
 
+          setUser(currentUser)
           await fetchAdminUser(currentUser.id)
-          setLoading(false)
         } else if (event === 'SIGNED_OUT') {
-          clearTimeout(timeoutId)
           setUser(null)
           setCompanyId(null)
           setRole(null)
@@ -177,6 +206,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     )
 
     return () => {
+      cancelled = true
       clearTimeout(timeoutId)
       subscription.unsubscribe()
     }

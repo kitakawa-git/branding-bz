@@ -154,10 +154,15 @@ export function PortalAuthProvider({ children }: { children: React.ReactNode }) 
   const memberRef = useRef(member)
   useEffect(() => { memberRef.current = member }, [member])
 
-  // onAuthStateChange を唯一の認証ソースとして使用（Supabase推奨パターン）
+  // 認証ソース：
+  //   1) マウント直後に getSession で localStorage から即座にセッション復元
+  //      → onAuthStateChange の INITIAL_SESSION を待たないため「読み込み中」が一瞬で終わる
+  //   2) onAuthStateChange は SIGNED_IN/OUT/TOKEN_REFRESHED の状態変化監視のみ
   useEffect(() => {
-    // 10秒経っても INITIAL_SESSION が来なければ強制リダイレクト
+    let cancelled = false
+
     const timeoutId = setTimeout(() => {
+      if (cancelled) return
       console.warn('[PortalAuth] 10秒タイムアウト')
       setLoading(false)
       if (!isPublicPath) {
@@ -165,34 +170,56 @@ export function PortalAuthProvider({ children }: { children: React.ReactNode }) 
       }
     }, 10000)
 
+    // === 1) getSession で即時セッション確認 ===
+    ;(async () => {
+      try {
+        const { data } = await supabase.auth.getSession()
+        if (cancelled) return
+        clearTimeout(timeoutId)
+
+        const currentUser = data.session?.user ?? null
+
+        if (!currentUser) {
+          setUser(null)
+          setLoading(false)
+          if (!isPublicPath) {
+            router.replace('/portal/auth')
+          }
+          return
+        }
+
+        setUser(currentUser)
+        await fetchMember(currentUser.id)
+        if (!cancelled) setLoading(false)
+      } catch (err) {
+        if (cancelled) return
+        console.error('[PortalAuth] getSession 失敗:', err)
+        clearTimeout(timeoutId)
+        setLoading(false)
+        if (!isPublicPath) {
+          router.replace('/portal/auth')
+        }
+      }
+    })()
+
+    // === 2) onAuthStateChange で状態変化のみ監視（INITIAL_SESSION は無視） ===
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('[PortalAuth] onAuthStateChange:', event, session?.user?.email)
 
-        if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          clearTimeout(timeoutId)
+        if (event === 'INITIAL_SESSION') return
+
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
           const currentUser = session?.user ?? null
+          if (!currentUser) return
 
-          if (!currentUser) {
-            setUser(null)
-            setLoading(false)
-            if (!isPublicPath) {
-              router.replace('/portal/auth')
-            }
-            return
-          }
-
-          setUser(currentUser)
-
-          // TOKEN_REFRESHED: データ既取得済みなら再取得スキップ（スケルトン回避）
           if (event === 'TOKEN_REFRESHED' && memberRef.current) {
             return
           }
 
+          setUser(currentUser)
           await fetchMember(currentUser.id)
-          setLoading(false)
         } else if (event === 'SIGNED_OUT') {
-          clearTimeout(timeoutId)
           setUser(null)
           setCompanyId(null)
           setMember(null)
@@ -203,6 +230,7 @@ export function PortalAuthProvider({ children }: { children: React.ReactNode }) 
     )
 
     return () => {
+      cancelled = true
       clearTimeout(timeoutId)
       subscription.unsubscribe()
     }
