@@ -2,7 +2,9 @@
 
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Menu, X, ChevronDown, Palette, Target, UserCircle } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,6 +37,40 @@ export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [toolsOpen, setToolsOpen] = useState(false)
   const [isOverDark, setIsOverDark] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const router = useRouter()
+
+  // 認証状態の監視（軽量：getSession のみ。admin/member 判定はクリック時に行う）
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setIsLoggedIn(!!data.session)
+    })
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsLoggedIn(!!session)
+    })
+    return () => subscription.unsubscribe()
+  }, [])
+
+  // 「マイページ」クリック時：admin_users にレコードがあれば管理画面、なければポータルへ
+  const handleMyPageClick = async (e: React.MouseEvent) => {
+    e.preventDefault()
+    setMenuOpen(false)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      router.push('/portal/auth')
+      return
+    }
+    const { data: admin } = await supabase
+      .from('admin_users')
+      .select('is_superadmin')
+      .eq('auth_id', user.id)
+      .maybeSingle()
+    if (admin) {
+      router.push(admin.is_superadmin ? '/superadmin/companies' : '/admin/dashboard')
+    } else {
+      router.push('/portal')
+    }
+  }
 
   useEffect(() => {
     const handleScroll = () => {
@@ -138,9 +174,10 @@ export default function Header() {
               </Link>
             ))}
 
-            <Link href="/portal/auth" className="ml-3">
+            {isLoggedIn ? (
               <button
-                className={`relative h-8 px-4 rounded-full text-sm font-semibold overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-lg ${isOverDark ? 'text-white' : 'text-gray-900'}`}
+                onClick={handleMyPageClick}
+                className={`ml-3 relative h-8 px-4 rounded-full text-sm font-semibold overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-lg ${isOverDark ? 'text-white' : 'text-gray-900'}`}
                 style={{
                   background: isOverDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255, 255, 255, 0.25)',
                   backdropFilter: 'blur(12px) saturate(120%)',
@@ -151,9 +188,26 @@ export default function Header() {
                     : '0px 4px 12px 0 rgba(12, 74, 110, 0.08), inset 0px 1px 0px 0px rgba(255, 255, 255, 0.3)',
                 }}
               >
-                <span className="relative z-10">ログイン</span>
+                <span className="relative z-10">マイページ</span>
               </button>
-            </Link>
+            ) : (
+              <Link href="/portal/auth" className="ml-3">
+                <button
+                  className={`relative h-8 px-4 rounded-full text-sm font-semibold overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-lg ${isOverDark ? 'text-white' : 'text-gray-900'}`}
+                  style={{
+                    background: isOverDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255, 255, 255, 0.25)',
+                    backdropFilter: 'blur(12px) saturate(120%)',
+                    WebkitBackdropFilter: 'blur(12px) saturate(120%)',
+                    border: `1px solid ${isOverDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.4)'}`,
+                    boxShadow: isOverDark
+                      ? '0px 4px 12px 0 rgba(0, 0, 0, 0.3), inset 0px 1px 0px 0px rgba(255, 255, 255, 0.1)'
+                      : '0px 4px 12px 0 rgba(12, 74, 110, 0.08), inset 0px 1px 0px 0px rgba(255, 255, 255, 0.3)',
+                  }}
+                >
+                  <span className="relative z-10">ログイン</span>
+                </button>
+              </Link>
+            )}
           </nav>
 
           {/* モバイルハンバーガー */}
@@ -218,20 +272,31 @@ export default function Header() {
                 className="my-2 mx-3"
                 style={{ height: '1px', background: 'rgba(0,0,0,0.06)' }}
               />
-              <Link
-                href="/portal/auth"
-                className="block px-3 py-2.5 text-base font-semibold text-gray-900 rounded-xl hover:bg-white/60 transition-colors"
-                onClick={() => setMenuOpen(false)}
-              >
-                ログイン
-              </Link>
-              <Link
-                href="/admin/login"
-                className="block px-3 py-2 text-sm text-gray-400 rounded-xl hover:bg-white/40 transition-colors"
-                onClick={() => setMenuOpen(false)}
-              >
-                管理者ログイン
-              </Link>
+              {isLoggedIn ? (
+                <button
+                  onClick={handleMyPageClick}
+                  className="block w-full text-left px-3 py-2.5 text-base font-semibold text-gray-900 rounded-xl hover:bg-white/60 transition-colors"
+                >
+                  マイページ
+                </button>
+              ) : (
+                <>
+                  <Link
+                    href="/portal/auth"
+                    className="block px-3 py-2.5 text-base font-semibold text-gray-900 rounded-xl hover:bg-white/60 transition-colors"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    ログイン
+                  </Link>
+                  <Link
+                    href="/admin/login"
+                    className="block px-3 py-2 text-sm text-gray-400 rounded-xl hover:bg-white/40 transition-colors"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    管理者ログイン
+                  </Link>
+                </>
+              )}
             </nav>
           </>
         )}
