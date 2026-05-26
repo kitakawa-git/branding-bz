@@ -314,23 +314,25 @@ export default function MembersPage() {
       const { data: { session } } = await supabase.auth.getSession()
       const token = session?.access_token || ''
 
-      const res = await fetch(`${supabaseUrl}/rest/v1/members?id=eq.${memberId}`, {
+      // Service Role で members / profiles / auth.users と関連投稿をまとめて削除
+      const res = await fetch(`/api/members/${memberId}`, {
         method: 'DELETE',
         headers: {
-          'Content-Type': 'application/json',
-          'apikey': anonKey,
           'Authorization': `Bearer ${token}`,
-          'Prefer': 'return=minimal',
         },
       })
 
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        throw new Error(body.error || `HTTP ${res.status}`)
+      }
 
       setMembers(prev => prev.filter(m => m.id !== memberId))
       toast.success('アカウントを削除しました')
     } catch (err) {
       console.error('削除エラー:', err)
-      toast.error('アカウントの削除に失敗しました')
+      const msg = err instanceof Error ? err.message : String(err)
+      toast.error(`アカウントの削除に失敗しました: ${msg}`)
     }
   }
 

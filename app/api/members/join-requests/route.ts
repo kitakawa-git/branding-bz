@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
             .single()
 
           const companyName = company?.name || ''
-          const loginUrl = 'https://branding.bz/admin/login'
+          const loginUrl = 'https://branding.bz/portal/auth'
           const resend = new Resend(resendApiKey)
           await resend.emails.send({
             from: 'branding.bz <noreply@branding.bz>',

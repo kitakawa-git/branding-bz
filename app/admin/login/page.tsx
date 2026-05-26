@@ -68,17 +68,12 @@ function LoginContent() {
 
       console.log('[Login] ステップ1完了: 認証成功 userId=', authData.user.id)
 
-      console.log('[Login] ステップ2: admin_users検索中...')
+      // is_superadmin 判定だけに必要なカラムを最小取得（高速化）
       const { data: adminUser, error: adminError } = await supabase
         .from('admin_users')
-        .select('*')
+        .select('is_superadmin')
         .eq('auth_id', authData.user.id)
         .single()
-
-      console.log('[Login] ステップ2結果:', {
-        adminUser: adminUser ? { company_id: adminUser.company_id, role: adminUser.role, is_superadmin: adminUser.is_superadmin } : null,
-        adminError: adminError?.message,
-      })
 
       if (adminError || !adminUser) {
         const errorMsg = adminError
@@ -86,21 +81,17 @@ function LoginContent() {
           : 'このアカウントは管理者として登録されていません。admin_usersテーブルにデータがあるか確認してください。'
         console.error('[Login] ステップ2失敗:', errorMsg)
         setError(errorMsg)
-        await supabase.auth.signOut()
+        await supabase.auth.signOut({ scope: 'local' })
         return
       }
 
-      const superAdmin = adminUser.is_superadmin === true
-      console.log('[Login] ステップ3: is_superadmin=', superAdmin)
-
-      if (superAdmin) {
-        console.log('[Login] ステップ3: スーパー管理者 → 遷移先選択画面を表示')
+      if (adminUser.is_superadmin === true) {
         setIsSuperAdmin(true)
         setLoggedIn(true)
         return
       }
 
-      console.log('[Login] ステップ4: 通常管理者 → /admin/members にリダイレクト (companyId:', adminUser.company_id, ')')
+      // 通常管理者は即リダイレクト（AuthProvider が後続の admin_users / members を並列取得する）
       router.replace('/admin/members')
     } catch (err) {
       console.error('[Login] 予期しないエラー:', err)

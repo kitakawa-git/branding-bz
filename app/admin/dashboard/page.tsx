@@ -197,7 +197,20 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!companyId) return
-    if (getPageCache<DashboardCache>(cacheKey)) return
+
+    // companyId 確定後にキャッシュがあればそれを反映してローディング解除
+    // （初回レンダリング時は companyId=null でキャッシュ取得をスキップしているため、
+    //   ここで再評価しないと loading=true のまま固まる）
+    const cachedNow = getPageCache<DashboardCache>(cacheKey)
+    if (cachedNow) {
+      setRawPosts(cachedNow.posts)
+      setRawLikes(cachedNow.likes)
+      setRawComments(cachedNow.comments)
+      setRawMembers(cachedNow.members)
+      setActionGuidelineCategories(cachedNow.actionGuidelineCategories)
+      setLoading(false)
+      return
+    }
 
     const fetchDashboard = async () => {
       try {

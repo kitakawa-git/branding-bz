@@ -54,17 +54,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchAdminUser = async (authId: string) => {
     try {
-      console.log('[AuthProvider] ステップ1: admin_users検索中... authId:', authId)
-      const { data, error } = await supabase
-        .from('admin_users')
-        .select('*')
-        .eq('auth_id', authId)
-        .single()
+      // admin_users と members(profile込み) を並列取得（authId だけで両方クエリ可能）
+      // 必要カラムだけ select して転送量削減
+      const [adminRes, memberRes] = await Promise.all([
+        supabase
+          .from('admin_users')
+          .select('company_id, role, is_superadmin')
+          .eq('auth_id', authId)
+          .single(),
+        supabase
+          .from('members')
+          .select('display_name, profile:profiles(name, photo_url)')
+          .eq('auth_id', authId)
+          .maybeSingle(),
+      ])
 
-      console.log('[AuthProvider] ステップ2: admin_users結果:', {
-        data: data ? { company_id: data.company_id, role: data.role, is_superadmin: data.is_superadmin } : null,
-        error: error?.message,
-      })
+      const { data, error } = adminRes
 
       if (error || !data) {
         console.warn('[AuthProvider] admin_user見つからず:', error?.message || '該当レコードなし')
@@ -75,44 +80,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return false
       }
 
-      console.log('[AuthProvider] ステップ3: companyId=', data.company_id, 'role=', data.role, 'isSuperAdmin=', data.is_superadmin)
       setCompanyId(data.company_id)
       setRole(data.role)
       setIsSuperAdmin(data.is_superadmin === true)
       setAdminError(false)
 
-      // ステップ4: 企業情報を取得
-      try {
-        const { data: companyData } = await supabase
-          .from('companies')
-          .select('name, logo_url')
-          .eq('id', data.company_id)
-          .single()
-        if (companyData) {
-          setCompanyName(companyData.name || null)
-          setCompanyLogoUrl(companyData.logo_url || null)
-        }
-      } catch {
-        // 企業情報取得失敗は無視
+      // メンバー情報の反映（profile はネスト取得済み）
+      if (!memberRes.error && memberRes.data) {
+        const profileRaw = memberRes.data.profile as { name: string; photo_url: string } | { name: string; photo_url: string }[] | null
+        const profile = Array.isArray(profileRaw) ? profileRaw[0] ?? null : profileRaw
+        setProfileName(profile?.name || memberRes.data.display_name || null)
+        setProfilePhotoUrl(profile?.photo_url || null)
       }
 
-      // ステップ5: members → profiles からプロフィール情報を取得
-      try {
-        const { data: memberData } = await supabase
-          .from('members')
-          .select('display_name, profile:profiles(name, photo_url)')
-          .eq('auth_id', authId)
-          .single()
-
-        if (memberData) {
-          const profileRaw = memberData.profile as { name: string; photo_url: string } | { name: string; photo_url: string }[] | null
-          const profile = Array.isArray(profileRaw) ? profileRaw[0] ?? null : profileRaw
-          setProfileName(profile?.name || memberData.display_name || null)
-          setProfilePhotoUrl(profile?.photo_url || null)
-        }
-      } catch {
-        // プロフィール取得失敗は無視（表示に影響するだけ）
-      }
+      // 企業情報は admin_users 確定後に取得（company_id 依存）
+      // ただしUIブロックしないようバックグラウンドで実行（await しない）
+      supabase
+        .from('companies')
+        .select('name, logo_url')
+        .eq('id', data.company_id)
+        .single()
+        .then(({ data: companyData }) => {
+          if (companyData) {
+            setCompanyName(companyData.name || null)
+            setCompanyLogoUrl(companyData.logo_url || null)
+          }
+        })
 
       return true
     } catch (err) {
@@ -191,8 +184,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const signOut = async () => {
+    // 先にローカル状態をクリアして即時リダイレクト
+    // （supabase.auth.signOut() のサーバーrevokeがブロックすると
+    //   ボタン無反応に見えるため、先にUIを進める）
     clearPageCache()
-    await supabase.auth.signOut()
+    setUser(null)
     setCompanyId(null)
     setCompanyName(null)
     setCompanyLogoUrl(null)
@@ -201,7 +197,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setProfileName(null)
     setProfilePhotoUrl(null)
     setAdminError(false)
-    router.push('/admin/login')
+    router.replace('/admin/login')
+
+    // scope: 'local' でローカルストレージのトークンのみ削除（サーバーrevokeしない＝高速）
+    // ネットワーク不調・タブ多重時のLockManager待ちを回避
+    try {
+      await supabase.auth.signOut({ scope: 'local' })
+    } catch (err) {
+      console.error('[AuthProvider] signOut error:', err)
+    }
   }
 
   const contextValue = { user, companyId, companyName, companyLogoUrl, role, isSuperAdmin, profileName, profilePhotoUrl, loading, signOut }

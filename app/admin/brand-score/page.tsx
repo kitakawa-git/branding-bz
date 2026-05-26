@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '../components/AuthProvider'
 import { supabase } from '@/lib/supabase'
+import { getPageCache, setPageCache } from '@/lib/page-cache'
 import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -176,6 +177,18 @@ const dashboardTabs = [
   { label: 'スマート名刺', href: '/admin/analytics' },
 ]
 
+// ── キャッシュ型 ──
+type BrandScoreCache = {
+  innerScore: InnerScoreData | null
+  outerScore: OuterScoreData | null
+  tagMappings: TagMapping[]
+  tagCounts: TagCount[]
+  totalFbCount: number
+  prevSnapshot: Snapshot | null
+  snapshots: Snapshot[]
+  impressionScore: number | null
+}
+
 // ── メインコンポーネント ──
 
 export default function BrandScoreDashboard() {
@@ -183,74 +196,90 @@ export default function BrandScoreDashboard() {
   const pathname = usePathname()
 
   const [period, setPeriod] = useState<string>('30')
-  const [loading, setLoading] = useState(true)
 
-  const [innerScore, setInnerScore] = useState<InnerScoreData | null>(null)
-  const [outerScore, setOuterScore] = useState<OuterScoreData | null>(null)
-  const [tagMappings, setTagMappings] = useState<TagMapping[]>([])
-  const [tagCounts, setTagCounts] = useState<TagCount[]>([])
-  const [totalFbCount, setTotalFbCount] = useState(0)
-  const [prevSnapshot, setPrevSnapshot] = useState<Snapshot | null>(null)
-  const [snapshots, setSnapshots] = useState<Snapshot[]>([])
+  // キャッシュキーは companyId + period 単位（period切替で別データ）
+  const cacheKey = `brand-score-${companyId}-${period}`
+  const cached = companyId ? getPageCache<BrandScoreCache>(cacheKey) : null
+
+  const [loading, setLoading] = useState(!cached)
+
+  const [innerScore, setInnerScore] = useState<InnerScoreData | null>(cached?.innerScore ?? null)
+  const [outerScore, setOuterScore] = useState<OuterScoreData | null>(cached?.outerScore ?? null)
+  const [tagMappings, setTagMappings] = useState<TagMapping[]>(cached?.tagMappings ?? [])
+  const [tagCounts, setTagCounts] = useState<TagCount[]>(cached?.tagCounts ?? [])
+  const [totalFbCount, setTotalFbCount] = useState(cached?.totalFbCount ?? 0)
+  const [prevSnapshot, setPrevSnapshot] = useState<Snapshot | null>(cached?.prevSnapshot ?? null)
+  const [snapshots, setSnapshots] = useState<Snapshot[]>(cached?.snapshots ?? [])
 
   // スナップショット手動保存
   const [isSaving, setIsSaving] = useState(false)
 
   // 印象一致度
-  const [impressionScore, setImpressionScore] = useState<number | null>(null)
+  const [impressionScore, setImpressionScore] = useState<number | null>(cached?.impressionScore ?? null)
 
-  // データ取得
+  // データ取得（段階的レンダリング：各fetchが終わり次第stateに反映）
   const fetchAll = useCallback(async () => {
     if (!companyId) return
-    setLoading(true)
 
-    try {
-      // 3 API + Supabase直接クエリを並列
-      const periodDays = parseInt(period)
-      const sinceDate = new Date(Date.now() - periodDays * 24 * 60 * 60 * 1000).toISOString()
+    const periodDays = parseInt(period)
+    const sinceDate = new Date(Date.now() - periodDays * 24 * 60 * 60 * 1000).toISOString()
 
-      const [innerRes, outerRes, tagRes, fbRes, snapRes, snapshotsRes] = await Promise.allSettled([
-        fetch(`/api/brand-score/inner-score?company_id=${companyId}`),
-        fetch(`/api/analytics/outer-score?company_id=${companyId}&period=${period}`),
-        fetch(`/api/brand-score/tag-mappings?company_id=${companyId}`),
-        supabase
-          .from('brand_micro_feedbacks')
-          .select('tags')
-          .eq('company_id', companyId)
-          .gte('created_at', sinceDate),
-        supabase
-          .from('brand_score_snapshots')
-          .select('total_score, inner_score, outer_score, rank, snapshot_date')
-          .eq('company_id', companyId)
-          .order('snapshot_date', { ascending: false })
-          .limit(1),
-        fetch(`/api/brand-score/snapshots?company_id=${companyId}`),
-      ])
+    // 各fetchの結果をキャッシュ用に集約するためのrefオブジェクト
+    const collected: BrandScoreCache = {
+      innerScore: null,
+      outerScore: null,
+      tagMappings: [],
+      tagCounts: [],
+      totalFbCount: 0,
+      prevSnapshot: null,
+      snapshots: [],
+      impressionScore: null,
+    }
 
-      // インナースコア
-      if (innerRes.status === 'fulfilled' && innerRes.value.ok) {
-        const data = await innerRes.value.json()
-        if (data.scores) setInnerScore(data)
-      }
+    // 各リクエストを独立して投げ、完了次第stateに反映
+    const innerPromise = fetch(`/api/brand-score/inner-score?company_id=${companyId}`)
+      .then(async (res) => {
+        if (!res.ok) return
+        const data = await res.json()
+        if (data.scores) {
+          setInnerScore(data)
+          collected.innerScore = data
+        }
+      })
+      .catch(() => {})
 
-      // アウタースコア
-      if (outerRes.status === 'fulfilled' && outerRes.value.ok) {
-        const data = await outerRes.value.json()
-        if (data.outer_score !== undefined) setOuterScore(data)
-      }
+    const outerPromise = fetch(`/api/analytics/outer-score?company_id=${companyId}&period=${period}`)
+      .then(async (res) => {
+        if (!res.ok) return
+        const data = await res.json()
+        if (data.outer_score !== undefined) {
+          setOuterScore(data)
+          collected.outerScore = data
+        }
+      })
+      .catch(() => {})
 
-      // タグマッピング
-      if (tagRes.status === 'fulfilled' && tagRes.value.ok) {
-        const data = await tagRes.value.json()
-        setTagMappings(data.mappings || [])
-      }
+    const tagPromise = fetch(`/api/brand-score/tag-mappings?company_id=${companyId}`)
+      .then(async (res) => {
+        if (!res.ok) return
+        const data = await res.json()
+        const mappings = data.mappings || []
+        setTagMappings(mappings)
+        collected.tagMappings = mappings
+      })
+      .catch(() => {})
 
-      // マイクロFB集計
-      if (fbRes.status === 'fulfilled' && !fbRes.value.error) {
-        const rows = fbRes.value.data || []
+    const fbPromise = supabase
+      .from('brand_micro_feedbacks')
+      .select('tags')
+      .eq('company_id', companyId)
+      .gte('created_at', sinceDate)
+      .then(({ data, error }) => {
+        if (error) return
+        const rows = data || []
         setTotalFbCount(rows.length)
+        collected.totalFbCount = rows.length
 
-        // タグ別カウント
         const countMap = new Map<string, number>()
         ALL_TAGS.forEach(t => countMap.set(t, 0))
         for (const row of rows) {
@@ -267,41 +296,74 @@ export default function BrandScoreDashboard() {
           rate: rows.length > 0 ? Math.round(((countMap.get(tag) || 0) / rows.length) * 1000) / 10 : 0,
         })).sort((a, b) => b.rate - a.rate)
         setTagCounts(counts)
+        collected.tagCounts = counts
+      })
 
-        // 印象一致度算出（30件以上必要）
-        if (rows.length >= 30) {
-          const expectedTags = (tagMappings.length > 0 ? tagMappings : []).filter(m => m.is_expected).map(m => m.tag)
-          if (expectedTags.length > 0) {
-            // 選択率TOP3に入っている期待タグの割合
-            const top3Tags = counts.slice(0, 3).map(c => c.tag)
-            const matchCount = expectedTags.filter(t => top3Tags.includes(t)).length
-            const score = Math.round((matchCount / expectedTags.length) * 100)
-            setImpressionScore(score)
-          }
-        } else {
-          setImpressionScore(null)
-        }
-      }
+    const prevSnapPromise = supabase
+      .from('brand_score_snapshots')
+      .select('total_score, inner_score, outer_score, rank, snapshot_date')
+      .eq('company_id', companyId)
+      .order('snapshot_date', { ascending: false })
+      .limit(1)
+      .then(({ data, error }) => {
+        if (error) return
+        const rows = data || []
+        const snap = rows.length > 0 ? rows[0] : null
+        setPrevSnapshot(snap)
+        collected.prevSnapshot = snap
+      })
 
-      // 前回スナップショット
-      if (snapRes.status === 'fulfilled' && !snapRes.value.error) {
-        const rows = snapRes.value.data || []
-        setPrevSnapshot(rows.length > 0 ? rows[0] : null)
-      }
+    const snapshotsPromise = fetch(`/api/brand-score/snapshots?company_id=${companyId}`)
+      .then(async (res) => {
+        if (!res.ok) return
+        const data = await res.json()
+        const list = data.snapshots || []
+        setSnapshots(list)
+        collected.snapshots = list
+      })
+      .catch(() => {})
 
-      // スナップショット一覧（時系列グラフ用）
-      if (snapshotsRes.status === 'fulfilled' && snapshotsRes.value.ok) {
-        const data = await snapshotsRes.value.json()
-        setSnapshots(data.snapshots || [])
-      }
-    } catch (err) {
-      console.error('[BrandScore] データ取得エラー:', err)
-    } finally {
+    // 最初に最低限の表示を出したいデータが揃ったらloading解除
+    // （inner + outer + prevSnapshot があれば総合カードが描画可能）
+    Promise.all([innerPromise, outerPromise, prevSnapPromise]).then(() => {
       setLoading(false)
+    })
+
+    // 全部終わったらキャッシュ保存
+    await Promise.allSettled([innerPromise, outerPromise, tagPromise, fbPromise, prevSnapPromise, snapshotsPromise])
+
+    // 印象一致度の最終算出（tagMappings と tagCounts と totalFbCount が揃ってから）
+    if (collected.totalFbCount >= 30) {
+      const expectedTags = collected.tagMappings.filter(m => m.is_expected).map(m => m.tag)
+      if (expectedTags.length > 0) {
+        const top3Tags = collected.tagCounts.slice(0, 3).map(c => c.tag)
+        const matchCount = expectedTags.filter(t => top3Tags.includes(t)).length
+        collected.impressionScore = Math.round((matchCount / expectedTags.length) * 100)
+      }
     }
-  }, [companyId, period, tagMappings])
+
+    setLoading(false)
+    setPageCache<BrandScoreCache>(cacheKey, collected)
+  }, [companyId, period, cacheKey])
 
   useEffect(() => {
+    if (!companyId) return
+
+    // companyId 確定後にキャッシュがあればそれを反映して即時表示
+    // バックグラウンドで最新データ再取得（SWRパターン）
+    const cachedNow = getPageCache<BrandScoreCache>(cacheKey)
+    if (cachedNow) {
+      setInnerScore(cachedNow.innerScore)
+      setOuterScore(cachedNow.outerScore)
+      setTagMappings(cachedNow.tagMappings)
+      setTagCounts(cachedNow.tagCounts)
+      setTotalFbCount(cachedNow.totalFbCount)
+      setPrevSnapshot(cachedNow.prevSnapshot)
+      setSnapshots(cachedNow.snapshots)
+      setImpressionScore(cachedNow.impressionScore)
+      setLoading(false)
+    }
+
     fetchAll()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [companyId, period])
