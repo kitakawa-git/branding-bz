@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
+import { fetchWithRetry } from '@/lib/supabase-fetch'
 import { useAuth } from '../components/AuthProvider'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -122,64 +123,51 @@ export default function MembersPage() {
   // ============================================
   // Fetch
   // ============================================
-  const fetchData = async (retryCount = 0) => {
+  const fetchData = async () => {
     if (!companyId) return
-    if (retryCount === 0) {
-      setLoading(true)
-      setFetchError('')
-    }
+    setLoading(true)
+    setFetchError('')
 
-    const MAX_RETRIES = 2
-
-    try {
-      const [membersResult, linksResult] = await Promise.all([
-        Promise.race([
-          supabase
-            .from('members')
-            .select('id, auth_id, display_name, email, is_active, status, created_at, profile:profiles(id, name, slug, card_enabled, photo_url)')
-            .eq('company_id', companyId)
-            .order('created_at', { ascending: false }),
-          new Promise<never>((_, reject) =>
-            setTimeout(() => reject(new Error('timeout')), 15000)
-          ),
-        ]),
+    // fetchWithRetry: タイムアウト6秒 + リトライ1回（setTimeout リーク防止＋短縮）
+    const [membersRes, linksRes] = await Promise.all([
+      fetchWithRetry(() =>
+        supabase
+          .from('members')
+          .select('id, auth_id, display_name, email, is_active, status, created_at, profile:profiles(id, name, slug, card_enabled, photo_url)')
+          .eq('company_id', companyId)
+          .order('created_at', { ascending: false })
+      ),
+      fetchWithRetry(() =>
         supabase
           .from('invite_links')
           .select('*')
           .eq('company_id', companyId)
-          .order('created_at', { ascending: false }),
-      ])
+          .order('created_at', { ascending: false })
+      ),
+    ])
 
-      if (membersResult.error) throw new Error(membersResult.error.message)
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const membersData = (membersResult.data ?? [])
-        .map((m: any) => {
-          const profile = Array.isArray(m.profile) ? m.profile[0] : m.profile
-          return { ...m, profile: profile || null } as MemberWithProfile
-        })
-        // 参加リクエスト中（pending）のメンバーは別セクションで表示するので一覧から除外
-        .filter((m: MemberWithProfile) => m.status !== 'pending')
-      const linksData = (linksResult.data ?? []) as InviteLink[]
-
-      setMembers(membersData)
-      setInviteLinks(linksData)
-      setPageCache(cacheKey, { members: membersData, inviteLinks: linksData })
-    } catch (err) {
-      console.error(`[Members] データ取得エラー (試行${retryCount + 1}/${MAX_RETRIES + 1}):`, err)
-
-      if (retryCount < MAX_RETRIES) {
-        await new Promise(r => setTimeout(r, 1000 * (retryCount + 1)))
-        return fetchData(retryCount + 1)
-      }
-
-      const msg = err instanceof Error && err.message === 'timeout'
-        ? 'データの取得がタイムアウトしました。再読み込みをお試しください。'
-        : 'データの取得に失敗しました'
-      setFetchError(msg)
-    } finally {
+    if (membersRes.error) {
+      console.error('[Members] データ取得エラー:', membersRes.error)
+      setFetchError(membersRes.error)
       setLoading(false)
+      return
     }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const membersData = ((membersRes.data ?? []) as any[])
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .map((m: any) => {
+        const profile = Array.isArray(m.profile) ? m.profile[0] : m.profile
+        return { ...m, profile: profile || null } as MemberWithProfile
+      })
+      // 参加リクエスト中（pending）のメンバーは別セクションで表示するので一覧から除外
+      .filter((m: MemberWithProfile) => m.status !== 'pending')
+    const linksData = (linksRes.data ?? []) as InviteLink[]
+
+    setMembers(membersData)
+    setInviteLinks(linksData)
+    setPageCache(cacheKey, { members: membersData, inviteLinks: linksData })
+    setLoading(false)
   }
 
   useEffect(() => {
@@ -730,7 +718,7 @@ export default function MembersPage() {
           {fetchError ? (
             <div className="text-center p-10">
               <p className="text-red-600 text-sm mb-3">{fetchError}</p>
-              <Button variant="outline" size="sm" onClick={() => fetchData(0)}>再読み込み</Button>
+              <Button variant="outline" size="sm" onClick={() => fetchData()}>再読み込み</Button>
             </div>
           ) : members.length === 0 ? (
             <p className="text-muted-foreground text-center p-10">アカウントが登録されていません</p>

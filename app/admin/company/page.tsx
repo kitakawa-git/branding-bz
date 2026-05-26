@@ -6,6 +6,7 @@
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
+import { fetchWithRetry } from '@/lib/supabase-fetch'
 import { useAuth } from '../components/AuthProvider'
 import { ImageUpload } from '../components/ImageUpload'
 import { IndustrySelect } from '@/components/shared/IndustrySelect'
@@ -59,58 +60,45 @@ export default function CompanyPage() {
   const [fetchError, setFetchError] = useState('')
   const [saving, setSaving] = useState(false)
 
-  const fetchCompany = async (retryCount = 0) => {
+  const fetchCompany = async () => {
     if (!companyId) return
-    if (retryCount === 0) {
-      setLoading(true)
-      setFetchError('')
+    setLoading(true)
+    setFetchError('')
+
+    // fetchWithRetry: タイムアウト6秒 + リトライ1回（setTimeout のリーク防止＋短縮版）
+    const { data, error } = await fetchWithRetry(() =>
+      supabase
+        .from('companies')
+        .select('id, name, logo_url, website_url, industry_category, industry_subcategory, brand_stage, competitors, target_segments')
+        .eq('id', companyId)
+        .single()
+    )
+
+    if (error) {
+      console.error('[Company] データ取得エラー:', error)
+      setFetchError(error)
+    } else if (data) {
+      const row = data as {
+        id: string; name: string | null; logo_url: string | null; website_url: string | null
+        industry_category: string | null; industry_subcategory: string | null; brand_stage: string | null
+        competitors: Competitor[] | null; target_segments: TargetSegment[] | null
+      }
+      const companyData: Company = {
+        id: row.id,
+        name: row.name || '',
+        logo_url: row.logo_url || '',
+        website_url: row.website_url || '',
+        industry_category: row.industry_category || '',
+        industry_subcategory: row.industry_subcategory || '',
+        brand_stage: row.brand_stage || '',
+        competitors: row.competitors || [],
+        target_segments: row.target_segments || [],
+      }
+      setCompany(companyData)
+      setPageCache(cacheKey, companyData)
     }
 
-    const MAX_RETRIES = 2
-
-    try {
-      const result = await Promise.race([
-        supabase
-          .from('companies')
-          .select('id, name, logo_url, website_url, industry_category, industry_subcategory, brand_stage, competitors, target_segments')
-          .eq('id', companyId)
-          .single(),
-        new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('timeout')), 15000)
-        ),
-      ])
-
-      if (result.error) throw new Error(result.error.message)
-      if (result.data) {
-        const companyData: Company = {
-          id: result.data.id,
-          name: result.data.name || '',
-          logo_url: result.data.logo_url || '',
-          website_url: result.data.website_url || '',
-          industry_category: result.data.industry_category || '',
-          industry_subcategory: result.data.industry_subcategory || '',
-          brand_stage: result.data.brand_stage || '',
-          competitors: (result.data.competitors as Competitor[]) || [],
-          target_segments: (result.data.target_segments as TargetSegment[]) || [],
-        }
-        setCompany(companyData)
-        setPageCache(cacheKey, companyData)
-      }
-    } catch (err) {
-      console.error(`[Company] データ取得エラー (試行${retryCount + 1}/${MAX_RETRIES + 1}):`, err)
-
-      if (retryCount < MAX_RETRIES) {
-        await new Promise(r => setTimeout(r, 1000 * (retryCount + 1)))
-        return fetchCompany(retryCount + 1)
-      }
-
-      const msg = err instanceof Error && err.message === 'timeout'
-        ? 'データの取得がタイムアウトしました。再読み込みをお試しください。'
-        : 'データの取得に失敗しました'
-      setFetchError(msg)
-    } finally {
-      setLoading(false)
-    }
+    setLoading(false)
   }
 
   useEffect(() => {
@@ -277,7 +265,7 @@ export default function CompanyPage() {
     return (
       <div className="text-center p-10">
         <p className="text-red-600 text-sm mb-3">{fetchError}</p>
-        <Button variant="outline" onClick={() => fetchCompany(0)} className="py-2 px-4 text-[13px]">
+        <Button variant="outline" onClick={() => fetchCompany()} className="py-2 px-4 text-[13px]">
           再読み込み
         </Button>
       </div>

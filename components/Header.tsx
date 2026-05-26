@@ -38,10 +38,13 @@ export default function Header() {
   const [toolsOpen, setToolsOpen] = useState(false)
   const [isOverDark, setIsOverDark] = useState(false)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
+  // SSR と CSR の hydration ミスマッチ回避：マウント後にだけ isLoggedIn を反映
+  const [mounted, setMounted] = useState(false)
   const router = useRouter()
 
   // 認証状態の監視（軽量：getSession のみ。admin/member 判定はクリック時に行う）
   useEffect(() => {
+    setMounted(true)
     supabase.auth.getSession().then(({ data }) => {
       setIsLoggedIn(!!data.session)
     })
@@ -174,7 +177,7 @@ export default function Header() {
               </Link>
             ))}
 
-            {isLoggedIn ? (
+            {mounted && isLoggedIn ? (
               <button
                 onClick={handleMyPageClick}
                 className={`ml-3 relative h-8 px-4 rounded-full text-sm font-semibold overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-lg ${isOverDark ? 'text-white' : 'text-gray-900'}`}
@@ -272,7 +275,7 @@ export default function Header() {
                 className="my-2 mx-3"
                 style={{ height: '1px', background: 'rgba(0,0,0,0.06)' }}
               />
-              {isLoggedIn ? (
+              {mounted && isLoggedIn ? (
                 <button
                   onClick={handleMyPageClick}
                   className="block w-full text-left px-3 py-2.5 text-base font-semibold text-gray-900 rounded-xl hover:bg-white/60 transition-colors"
