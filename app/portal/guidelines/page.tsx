@@ -5,7 +5,6 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { fetchWithRetry } from '@/lib/supabase-fetch'
 import { usePortalAuth } from '../components/PortalDataProvider'
-import { getSubtitle } from '@/lib/portal-subtitles'
 import { useBrandFonts } from '@/hooks/useBrandFonts'
 import { BrandFontLoader } from '@/components/BrandFontLoader'
 import { getCssFontFamily } from '@/lib/brand-fonts'
@@ -57,7 +56,7 @@ function getYouTubeEmbedUrl(url: string): string | null {
 }
 
 export default function PortalGuidelinesPage() {
-  const { companyId, portalSubtitles } = usePortalAuth()
+  const { companyId } = usePortalAuth()
   const brandFonts = useBrandFonts(companyId)
   const primaryStyle = brandFonts ? { fontFamily: getCssFontFamily(brandFonts.primary_font) } : undefined
   const secondaryStyle = brandFonts ? { fontFamily: getCssFontFamily(brandFonts.secondary_font) } : undefined
@@ -174,12 +173,6 @@ export default function PortalGuidelinesPage() {
     <BrandFontLoader fonts={brandFonts} />
     {companyId && <BrandPageTracker companyId={companyId} pageType="guidelines" />}
     <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
-      <div>
-        <p className="text-sm text-muted-foreground">
-          {getSubtitle(portalSubtitles, 'guidelines')}
-        </p>
-      </div>
-
       {/* 1. スローガン＋コンセプトビジュアル＋ブランド動画＋メッセージ */}
       {(data.slogan || data.concept_visual_url || data.brand_video_url || data.brand_statement) && (
         <section>

@@ -8,7 +8,6 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '../../../components/AdminDataProvider'
 import { MultiImageUpload, ImagePreviews, ImageUploadButton } from '../../../components/MultiImageUpload'
 import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
@@ -21,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Check } from 'lucide-react'
 import Link from 'next/link'
 
 const CATEGORIES = ['重要', 'イベント', '更新', 'その他']
@@ -225,15 +224,20 @@ export default function AnnouncementEditPage() {
       </form>
 
       {/* 固定保存バー */}
-      <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 bg-background/80 backdrop-blur border-t border-border px-6 py-3 flex justify-end">
-        <Button
+      {/* FabBar との重なりを防ぐスペーサー */}
+      <div className="h-24" />
+
+      {/* 保存 FAB（右下固定・include-bz node の FabButton と同装飾） */}
+      <div className="fixed bottom-8 right-8 z-50 flex items-center gap-3">
+        <button
           type="submit"
           form="announcement-form"
           disabled={saving}
-          className={`${saving ? 'opacity-60' : ''}`}
+          className="flex items-center justify-center gap-1 h-12 px-5 rounded-full hover:scale-105 transition-transform cursor-pointer text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 bg-foreground text-background shadow-lg"
         >
-          {saving ? '保存中...' : '保存する'}
-        </Button>
+          <Check size={16} />
+          {saving ? '保存中...' : '保存'}
+        </button>
       </div>
     </div>
   )

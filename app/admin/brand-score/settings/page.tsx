@@ -230,12 +230,17 @@ export default function BrandScoreSettingsPage() {
         </p>
       )}
 
-      {/* 保存ボタン */}
+      {/* 保存 FAB（右下固定・include-bz node の FabButton と同装飾） */}
       {!loading && (
-        <div className="sticky bottom-0 -mx-5 -mb-6 mt-2 bg-background/80 backdrop-blur border-t border-border px-5 py-3 flex justify-end">
-          <Button onClick={handleSave} disabled={saving}>
-            {saving ? '保存中...' : '保存する'}
-          </Button>
+        <div className="fixed bottom-8 right-8 z-50 flex items-center gap-3">
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="flex items-center justify-center gap-1 h-12 px-5 rounded-full hover:scale-105 transition-transform cursor-pointer text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 bg-foreground text-background shadow-lg"
+          >
+            <Check size={16} />
+            {saving ? '保存中...' : '保存'}
+          </button>
         </div>
       )}
 

@@ -7,7 +7,6 @@ import { useAuth } from '../components/AdminDataProvider'
 import { fetchCIManualData, resolveImages } from '@/lib/ci-manual/data-fetcher'
 import { downloadDataURLAsFile } from '@/lib/qr-download'
 import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -134,11 +133,12 @@ export default function CIManualPage() {
 
   return (
     <div>
-      <div className="flex justify-end items-center mb-6">
-        <Button
+      {/* PDFダウンロード FAB（右下固定・include-bz node の FabButton と同装飾） */}
+      <div className="fixed bottom-8 right-8 z-50 flex items-center gap-3">
+        <button
           onClick={handleGenerate}
           disabled={generating || contentSectionCount === 0}
-          className={generating || contentSectionCount === 0 ? 'opacity-60' : ''}
+          className="flex items-center justify-center gap-1 h-12 px-5 rounded-full hover:scale-105 transition-transform cursor-pointer text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 bg-foreground text-background shadow-lg"
         >
           {generating ? (
             <>
@@ -151,7 +151,7 @@ export default function CIManualPage() {
               PDFをダウンロード
             </>
           )}
-        </Button>
+        </button>
       </div>
 
       {/* セクション選択 */}
@@ -197,6 +197,9 @@ export default function CIManualPage() {
           少なくとも1つのコンテンツセクションを選択してください
         </p>
       )}
+
+      {/* FabBar との重なりを防ぐスペーサー */}
+      <div className="h-24" />
     </div>
   )
 }

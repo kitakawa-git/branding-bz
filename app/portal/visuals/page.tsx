@@ -5,7 +5,6 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { fetchWithRetry } from '@/lib/supabase-fetch'
 import { usePortalAuth } from '../components/PortalDataProvider'
-import { getSubtitle } from '@/lib/portal-subtitles'
 import { parseFontsFromDB, getCssFontFamily, getFontRoleLabel, getGoogleFontsUrl, FONT_PREVIEW_TEXT, type BrandFonts } from '@/lib/brand-fonts'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -53,7 +52,7 @@ type Visuals = {
 }
 
 export default function PortalVisualsPage() {
-  const { companyId, portalSubtitles } = usePortalAuth()
+  const { companyId } = usePortalAuth()
   const cacheKey = `portal-visuals-${companyId}`
   const cached = companyId ? getPageCache<Visuals>(cacheKey) : null
   const [data, setData] = useState<Visuals | null>(cached)
@@ -212,11 +211,6 @@ export default function PortalVisualsPage() {
     <>
     {companyId && <BrandPageTracker companyId={companyId} pageType="visuals" />}
     <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
-      <div>
-        <p className="text-sm text-muted-foreground">
-          {getSubtitle(portalSubtitles, 'visuals')}
-        </p>
-      </div>
 
       {/* 1. ロゴコンセプト＆ロゴガイドライン */}
       {(data.logo_concept || validSections.length > 0) && (

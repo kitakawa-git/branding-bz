@@ -4,7 +4,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { usePortalAuth } from '../components/PortalDataProvider'
-import { getSubtitle } from '@/lib/portal-subtitles'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
@@ -15,7 +14,7 @@ type ValueItem = {
 }
 
 export default function PortalValuesPage() {
-  const { companyId, portalSubtitles } = usePortalAuth()
+  const { companyId } = usePortalAuth()
   const cacheKey = `portal-values-${companyId}`
   const cached = companyId ? getPageCache<ValueItem[]>(cacheKey) : null
   const [values, setValues] = useState<ValueItem[]>(cached ?? [])
@@ -68,11 +67,6 @@ export default function PortalValuesPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
-      <div>
-        <p className="text-sm text-muted-foreground">
-          {getSubtitle(portalSubtitles, 'values')}
-        </p>
-      </div>
 
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
         <CardContent className="p-5 space-y-3">

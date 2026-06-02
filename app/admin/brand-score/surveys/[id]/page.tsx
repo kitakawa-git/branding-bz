@@ -74,6 +74,7 @@ import {
   GripVertical,
   BarChart3,
   AlertCircle,
+  Check,
 } from 'lucide-react'
 
 // 型定義
@@ -1225,16 +1226,17 @@ export default function SurveyDetailPage() {
         </div>
       )}
 
-      {/* ── 5. 固定保存バー（draft時のみ） ── */}
+      {/* ── 5. 保存 FAB（draft時のみ・include-bz node の FabButton と同装飾） ── */}
       {isDraft && (
-        <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 bg-background/80 backdrop-blur border-t border-border px-6 py-3 flex justify-end">
-          <Button
+        <div className="fixed bottom-8 right-8 z-50 flex items-center gap-3">
+          <button
             onClick={handleSave}
             disabled={saving}
-            className={`${saving ? 'opacity-60' : ''}`}
+            className="flex items-center justify-center gap-1 h-12 px-5 rounded-full hover:scale-105 transition-transform cursor-pointer text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 bg-foreground text-background shadow-lg"
           >
-            {saving ? '保存中...' : '保存する'}
-          </Button>
+            <Check size={16} />
+            {saving ? '保存中...' : '保存'}
+          </button>
         </div>
       )}
     </div>

@@ -5,7 +5,6 @@ import { useEffect, useState, useMemo } from 'react'
 import { supabase } from '@/lib/supabase'
 import { fetchWithRetry } from '@/lib/supabase-fetch'
 import { usePortalAuth } from '../components/PortalDataProvider'
-import { getSubtitle } from '@/lib/portal-subtitles'
 import { useBrandFonts } from '@/hooks/useBrandFonts'
 import { BrandFontLoader } from '@/components/BrandFontLoader'
 import { getCssFontFamily } from '@/lib/brand-fonts'
@@ -30,7 +29,7 @@ type Term = {
 type VerbalCache = { personality: Personality | null; terms: Term[] }
 
 export default function PortalVerbalIdentityPage() {
-  const { companyId, portalSubtitles } = usePortalAuth()
+  const { companyId } = usePortalAuth()
   const brandFonts = useBrandFonts(companyId)
   const secondaryStyle = brandFonts ? { fontFamily: getCssFontFamily(brandFonts.secondary_font) } : undefined
   const cacheKey = `portal-verbal-${companyId}`
@@ -159,11 +158,6 @@ export default function PortalVerbalIdentityPage() {
     <BrandFontLoader fonts={brandFonts} />
     {companyId && <BrandPageTracker companyId={companyId} pageType="verbal" />}
     <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
-      <div>
-        <p className="text-sm text-muted-foreground">
-          {getSubtitle(portalSubtitles, 'verbal')}
-        </p>
-      </div>
 
       {/* 1. トーン・オブ・ボイス */}
       {hasTone && (

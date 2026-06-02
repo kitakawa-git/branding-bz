@@ -5,7 +5,6 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { fetchWithRetry } from '@/lib/supabase-fetch'
 import { usePortalAuth } from '../components/PortalDataProvider'
-import { getSubtitle } from '@/lib/portal-subtitles'
 import { useBrandFonts } from '@/hooks/useBrandFonts'
 import { BrandFontLoader } from '@/components/BrandFontLoader'
 import { getCssFontFamily } from '@/lib/brand-fonts'
@@ -36,7 +35,7 @@ type ActionGuideline = {
 }
 
 export default function PortalStrategyPage() {
-  const { companyId, portalSubtitles } = usePortalAuth()
+  const { companyId } = usePortalAuth()
   const brandFonts = useBrandFonts(companyId)
   const secondaryStyle = brandFonts ? { fontFamily: getCssFontFamily(brandFonts.secondary_font) } : undefined
 
@@ -169,11 +168,6 @@ export default function PortalStrategyPage() {
     <BrandFontLoader fonts={brandFonts} />
     {companyId && <BrandPageTracker companyId={companyId} pageType="strategy" />}
     <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
-      <div>
-        <p className="text-sm text-muted-foreground">
-          {getSubtitle(portalSubtitles, 'strategy')}
-        </p>
-      </div>
 
       {/* Card 1: ターゲット＋ペルソナ */}
       {(target || validPersonas.length > 0) && (
