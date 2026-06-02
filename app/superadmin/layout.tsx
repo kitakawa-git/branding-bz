@@ -12,7 +12,8 @@ export default function SuperAdminLayout({
 }) {
   return (
     <AppAuthProvider redirectOnSignOutTo="/admin/login">
-      <AdminDataProvider>
+      {/* chrome=false: 通常管理画面のサイドバーを描画させず、SuperAdminShell 独自のシェルだけを使う */}
+      <AdminDataProvider chrome={false}>
         <SuperAdminShell>{children}</SuperAdminShell>
       </AdminDataProvider>
     </AppAuthProvider>

@@ -216,11 +216,11 @@ export default function SignupPage() {
         <div className="relative z-10 p-10">
           {/* タイトル */}
           <div className="text-center mb-6">
-            <Link href="/" className="no-underline">
+            {/* ロゴクリックでトップページへ遷移（相対パス＝現在のドメインのトップ） */}
+            <Link href="/" className="inline-block mb-3 no-underline transition-opacity hover:opacity-80">
               <img
                 src="/logo.svg"
                 alt="branding.bz"
-                className="mx-auto mb-3"
                 style={{ height: '32px', width: 'auto' }}
               />
             </Link>

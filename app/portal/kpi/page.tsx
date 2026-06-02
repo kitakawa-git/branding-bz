@@ -5,6 +5,7 @@ import { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { usePortalAuth } from '../components/PortalDataProvider'
+import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -180,7 +181,10 @@ function getPeriodTitle(period: GoalPeriod | null): string {
 // ============================================
 
 export default function KpiPage() {
-  const { companyId, user } = usePortalAuth()
+  const { companyId, user, company } = usePortalAuth()
+
+  // 機能トグル: KPIが無効なら案内のみ表示（リダイレクトはしない）
+  const kpiEnabled = isFeatureEnabled(company, 'kpi_enabled')
   const searchParams = useSearchParams()
   const router = useRouter()
   const setupTriggered = useRef(false)
@@ -585,6 +589,23 @@ export default function KpiPage() {
   }
 
   // ============================================
+  // 機能トグルがオフ: 内容は表示せず、案内のみ（URL直打ち時に状況が分かるように）
+  // ============================================
+  if (!kpiEnabled) {
+    return (
+      <div className="max-w-4xl mx-auto px-5 pt-4 pb-6">
+        <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+          <CardContent className="py-16 text-center">
+            <p className="text-muted-foreground text-[15px] m-0">
+              この機能は現在ご利用いただけません
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  // ============================================
   // Loading skeleton
   // ============================================
   if (loading) {
@@ -606,8 +627,7 @@ export default function KpiPage() {
     return (
       <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">目標・KPI</h1>
-          <p className="text-sm text-muted-foreground mt-1">個人目標の設定とKPI管理</p>
+          <p className="text-sm text-muted-foreground">個人目標の設定とKPI管理</p>
         </div>
 
         {goalPeriod && (
@@ -662,8 +682,7 @@ export default function KpiPage() {
   return (
     <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">目標・KPI</h1>
-        <p className="text-sm text-muted-foreground mt-1">個人目標の設定とKPI管理</p>
+        <p className="text-sm text-muted-foreground">個人目標の設定とKPI管理</p>
       </div>
 
       {/* ゴール期間 + 目標表示 */}

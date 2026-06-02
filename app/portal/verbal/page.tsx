@@ -160,7 +160,6 @@ export default function PortalVerbalIdentityPage() {
     {companyId && <BrandPageTracker companyId={companyId} pageType="verbal" />}
     <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground mb-1">バーバルアイデンティティ</h1>
         <p className="text-sm text-muted-foreground">
           {getSubtitle(portalSubtitles, 'verbal')}
         </p>

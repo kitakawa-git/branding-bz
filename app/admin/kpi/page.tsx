@@ -2,8 +2,10 @@
 
 // 全社員 目標・KPI管理ページ（管理画面）— ゴール期間設定 + 期間切り替え + 1人1目標 閲覧専用一覧
 import { useEffect, useState, useMemo, useCallback } from 'react'
+import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '../components/AdminDataProvider'
+import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -155,7 +157,11 @@ function addOneDayStr(dateStr: string): string {
 // ============================================
 
 export default function AdminKpiPage() {
-  const { companyId } = useAuth()
+  const { companyId, company } = useAuth()
+
+  // 機能トグル: KPIが無効なら案内のみ表示（リダイレクトはしない）
+  const kpiEnabled = isFeatureEnabled(company, 'kpi_enabled')
+
   const cacheKey = `admin-kpi-${companyId}`
   const cached = companyId ? getPageCache<AdminKpiCache>(cacheKey) : null
 
@@ -560,6 +566,27 @@ export default function AdminKpiPage() {
   // ============================================
   // Render
   // ============================================
+  // 機能トグルがオフ: 内容は表示せず、案内のみ（設定ページから再オン可能）
+  if (!kpiEnabled) {
+    return (
+      <div>
+        <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+          <CardContent className="py-16 text-center">
+            <p className="text-muted-foreground text-[15px] m-0 mb-4">
+              この機能は現在オフになっています。設定ページから再度オンにできます。
+            </p>
+            <Link
+              href="/admin/settings"
+              className="text-sm font-semibold text-blue-600 hover:underline no-underline"
+            >
+              設定ページを開く
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
   if (loading) {
     return (
       <div>
@@ -572,8 +599,6 @@ export default function AdminKpiPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-foreground mb-6">目標・KPI管理</h1>
-
       {/* ===== 承認待ちバナー ===== */}
       {pendingPeriod && isPeriodExpired && (
         <Card className="bg-amber-50 border-amber-200 shadow-none mb-6">

@@ -169,8 +169,6 @@ export default function MembersPortalPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-foreground mb-6">アカウント作成</h1>
-
       {/* 招待リンク */}
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-6">
         <CardContent className="p-5">
@@ -184,7 +182,8 @@ export default function MembersPortalPage() {
           </Button>
 
           {inviteLinks.length > 0 && (
-            <table className="w-full border-collapse text-sm">
+            <div className="overflow-x-auto">
+            <table className="w-full min-w-[520px] border-collapse text-sm">
               <thead>
                 <tr>
                   <th className="text-left px-4 py-3 bg-muted text-muted-foreground font-semibold border-b border-border text-xs">リンク</th>
@@ -219,6 +218,7 @@ export default function MembersPortalPage() {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </CardContent>
       </Card>

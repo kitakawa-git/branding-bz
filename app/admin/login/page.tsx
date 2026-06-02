@@ -169,12 +169,14 @@ function LoginContent() {
 
         <div className="relative">
           <div className="text-center mb-8">
-            <img
-              src="/logo.svg"
-              alt="branding.bz"
-              className="mx-auto mb-3"
-              style={{ height: '32px', width: 'auto', filter: 'brightness(0) invert(1)' }}
-            />
+            {/* ロゴクリックでトップページへ遷移（相対パス＝現在のドメインのトップ） */}
+            <a href="/" className="inline-block mb-3 transition-opacity hover:opacity-80">
+              <img
+                src="/logo.svg"
+                alt="branding.bz"
+                style={{ height: '32px', width: 'auto', filter: 'brightness(0) invert(1)' }}
+              />
+            </a>
             <p className="text-sm text-white/50 m-0">
               管理画面にログイン
             </p>

@@ -147,12 +147,11 @@ export default function AnnouncementEditPage() {
       <div className="mb-6">
         <Link
           href="/admin/announcements"
-          className="text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1 no-underline mb-3"
+          className="text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1 no-underline"
         >
           <ArrowLeft size={14} />
           お知らせ管理に戻る
         </Link>
-        <h1 className="text-2xl font-bold text-foreground">お知らせ編集</h1>
       </div>
 
       <form id="announcement-form" onSubmit={handleSubmit}>

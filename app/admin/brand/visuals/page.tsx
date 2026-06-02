@@ -27,7 +27,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { DEFAULT_SUBTITLES, type PortalSubtitles } from '@/lib/portal-subtitles'
 import { FONT_PREVIEW_TEXT, DEFAULT_FONT_ID, DEFAULT_FONT_ROLE, getCssFontFamily, getGoogleFontsUrl, parseFontsFromDB, type BrandFonts, type FontSource } from '@/lib/brand-fonts'
 import { GoogleFontPicker } from '@/components/GoogleFontPicker'
-import { GripVertical, Plus, Trash2 } from 'lucide-react'
+import { GripVertical, Plus, Trash2, Check } from 'lucide-react'
 import {
   DndContext,
   closestCenter,
@@ -791,9 +791,7 @@ export default function BrandVisualsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-foreground mb-2">
-        ビジュアルアイデンティティ
-      </h1>
+      {/* タイトルはヘッダーのパンくずに移動 */}
       <div className="mb-6">
         <Input
           type="text"
@@ -1289,15 +1287,20 @@ export default function BrandVisualsPage() {
       </form>
 
       {/* 固定保存バー */}
-      <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 bg-background/80 backdrop-blur border-t border-border px-6 py-3 flex justify-end">
-        <Button
+      {/* FabBar との重なりを防ぐスペーサー */}
+      <div className="h-24" />
+
+      {/* 保存 FAB（右下固定・include-bz node の FabButton と同装飾） */}
+      <div className="fixed bottom-8 right-8 z-50 flex items-center gap-3">
+        <button
           type="submit"
           form="visuals-form"
           disabled={saving}
-          className={`${saving ? 'opacity-60' : ''}`}
+          className="flex items-center justify-center gap-1 h-12 px-5 rounded-full hover:scale-105 transition-transform cursor-pointer text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 bg-foreground text-background shadow-lg"
         >
-          {saving ? '保存中...' : '保存する'}
-        </Button>
+          <Check size={16} />
+          {saving ? '保存中...' : '保存'}
+        </button>
       </div>
     </div>
   )

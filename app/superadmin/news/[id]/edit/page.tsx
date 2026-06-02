@@ -53,9 +53,7 @@ export default function EditNewsPage() {
 
   return (
     <div>
-      <h2 className="text-xl font-bold text-foreground mb-6">
-        ニュース編集
-      </h2>
+      {/* タイトルはヘッダーのパンくずに移動 */}
       <NewsForm initialData={item} />
     </div>
   )

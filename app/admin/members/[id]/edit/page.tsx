@@ -63,7 +63,6 @@ export default function EditMemberPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-foreground mb-6">アカウント編集</h1>
       <MemberForm
         initialData={{
           id: profile.id,

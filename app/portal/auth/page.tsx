@@ -155,12 +155,14 @@ function PortalAuthContent() {
 
         <div className="relative z-10 p-10">
           <div className="mb-8 text-center">
-            <img
-              src="/logo.svg"
-              alt="branding.bz"
-              className="mx-auto mb-3"
-              style={{ height: '32px', width: 'auto' }}
-            />
+            {/* ロゴクリックでトップページへ遷移（相対パス＝現在のドメインのトップ） */}
+            <a href="/" className="inline-block mb-3 transition-opacity hover:opacity-80">
+              <img
+                src="/logo.svg"
+                alt="branding.bz"
+                style={{ height: '32px', width: 'auto' }}
+              />
+            </a>
             <p className="m-0 text-sm text-gray-500">
               {subtitle}
             </p>

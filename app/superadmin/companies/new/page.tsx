@@ -133,10 +133,7 @@ export default function NewCompanyPage() {
         </Link>
       </div>
 
-      <h2 className="text-xl font-bold text-foreground mb-6">
-        新規企業を登録
-      </h2>
-
+      {/* タイトルはヘッダーのパンくずに移動 */}
       <Card className="bg-muted/50 border shadow-none max-w-[600px]">
         <CardContent className="p-6">
           {/* 成功メッセージ */}

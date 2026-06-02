@@ -74,11 +74,8 @@ export default function SuperAdminNewsPage() {
 
   return (
     <div>
-      {/* ヘッダー */}
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold text-foreground">
-          ニュース管理
-        </h2>
+      {/* ヘッダー（タイトルはパンくずに移動） */}
+      <div className="flex justify-end items-center mb-6">
         <Button asChild className="bg-[#1e3a5f] hover:bg-[#2a4a6f]">
           <Link href="/superadmin/news/new">
             <Plus size={16} className="inline" /> 新規作成

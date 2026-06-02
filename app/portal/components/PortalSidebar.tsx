@@ -5,6 +5,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { usePortalAuth } from './PortalDataProvider'
+import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
 import { CardPreviewDialog } from './CardPreviewDialog'
 import {
   Sidebar,
@@ -89,8 +90,18 @@ function NavGroup({ label, items, pathname }: { label: string; items: NavItem[];
 
 export function PortalSidebar() {
   const pathname = usePathname()
-  const { member, companyName, companyLogoUrl, slogan, profileName, profilePhotoUrl, profileSlug, isAdmin, signOut } = usePortalAuth()
+  const { member, companyName, companyLogoUrl, company, slogan, profileName, profilePhotoUrl, profileSlug, isAdmin, signOut } = usePortalAuth()
   const [cardPreviewOpen, setCardPreviewOpen] = useState(false)
+
+  // 機能トグル: 無効な機能のメニュー項目を非表示にする
+  const timelineEnabled = isFeatureEnabled(company, 'timeline_enabled')
+  const kpiEnabled = isFeatureEnabled(company, 'kpi_enabled')
+  const cardEnabled = isFeatureEnabled(company, 'card_enabled')
+  const visibleEngagementItems = engagementItems.filter((item) => {
+    if (item.href === '/portal/timeline') return timelineEnabled
+    if (item.href === '/portal/kpi') return kpiEnabled
+    return true
+  })
 
   const brandInitial = companyName?.slice(0, 1) || 'B'
 
@@ -131,7 +142,7 @@ export function PortalSidebar() {
           <SidebarGroup>
             <SidebarGroupContent>
               <SidebarMenu>
-                {engagementItems.map((item) => {
+                {visibleEngagementItems.map((item) => {
                   const Icon = item.icon
                   return (
                     <SidebarMenuItem key={item.href}>
@@ -188,10 +199,12 @@ export function PortalSidebar() {
                       マイプロフィール
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setCardPreviewOpen(true)} className="h-10 px-3 gap-2 text-base font-medium rounded-md">
-                    <CreditCard className="size-4" />
-                    名刺プレビュー
-                  </DropdownMenuItem>
+                  {cardEnabled && (
+                    <DropdownMenuItem onClick={() => setCardPreviewOpen(true)} className="h-10 px-3 gap-2 text-base font-medium rounded-md">
+                      <CreditCard className="size-4" />
+                      名刺プレビュー
+                    </DropdownMenuItem>
+                  )}
                   {isAdmin && (
                     <DropdownMenuItem asChild className="h-10 px-3 gap-2 text-base font-medium rounded-md">
                       <Link href="/admin" className="no-underline">

@@ -7,28 +7,47 @@ import { createContext, useContext, useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import type { User } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
+import { FEATURE_TOGGLE_COLUMNS } from '@/lib/constants/feature-toggles'
 import { useAppAuth } from '@/components/providers/AppAuthProvider'
 import { AppSidebar } from './AppSidebar'
 import { AdminHeader } from './AdminHeader'
 import { AdminDynamicTitle } from './AdminDynamicTitle'
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 
+// companies レコード（少なくとも機能トグルのカラムを含む）
+type CompanyRecord = Record<string, unknown>
+
 type AdminDataContextValue = {
   user: User | null
   companyId: string | null
   companyName: string | null
   companyLogoUrl: string | null
+  company: CompanyRecord | null
   role: string | null
   isSuperAdmin: boolean
   profileName: string | null
   profilePhotoUrl: string | null
   loading: boolean
   signOut: () => Promise<void>
+  // 機能トグル等を更新した直後にコンテキスト上の company を即時反映するための setter
+  updateCompany: (partial: CompanyRecord) => void
 }
 
 const AdminDataContext = createContext<AdminDataContextValue | null>(null)
 
-export function AdminDataProvider({ children }: { children: React.ReactNode }) {
+// 機能トグルカラムを含めた companies の select 文字列
+const COMPANY_SELECT = ['name', 'logo_url', ...FEATURE_TOGGLE_COLUMNS].join(', ')
+
+// chrome=false の場合は通常管理画面のサイドバー・ヘッダーを描画せず、
+// 認証/データのコンテキストと children だけを提供する（スーパー管理画面など、
+// 独自のシェルを持つ画面で二重サイドバーになるのを防ぐ）。
+export function AdminDataProvider({
+  children,
+  chrome = true,
+}: {
+  children: React.ReactNode
+  chrome?: boolean
+}) {
   const { user, loading: authLoading, signOut } = useAppAuth()
   const router = useRouter()
   const pathname = usePathname()
@@ -36,6 +55,7 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
   const [companyId, setCompanyId] = useState<string | null>(null)
   const [companyName, setCompanyName] = useState<string | null>(null)
   const [companyLogoUrl, setCompanyLogoUrl] = useState<string | null>(null)
+  const [company, setCompany] = useState<CompanyRecord | null>(null)
   const [role, setRole] = useState<string | null>(null)
   const [isSuperAdmin, setIsSuperAdmin] = useState(false)
   const [profileName, setProfileName] = useState<string | null>(null)
@@ -105,15 +125,18 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
         }
 
         // 企業情報はバックグラウンドで取得（UIブロックしない）
+        // 機能トグル（timeline_enabled 等）も含めて取得し、company レコードとして公開する
         supabase
           .from('companies')
-          .select('name, logo_url')
+          .select(COMPANY_SELECT)
           .eq('id', adminData.company_id)
           .maybeSingle()
           .then(({ data: companyData }) => {
             if (cancelled || !companyData) return
-            setCompanyName(companyData.name || null)
-            setCompanyLogoUrl(companyData.logo_url || null)
+            const rec = companyData as unknown as CompanyRecord
+            setCompany({ ...rec, id: adminData.company_id })
+            setCompanyName((rec.name as string) || null)
+            setCompanyLogoUrl((rec.logo_url as string) || null)
           })
       } catch (err) {
         if (!cancelled) {
@@ -130,17 +153,24 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user, authLoading, router, isLoginPage])
 
+  // 機能トグル更新後に画面へ即時反映するための setter
+  const updateCompany = (partial: CompanyRecord) => {
+    setCompany((prev) => ({ ...(prev ?? {}), ...partial }))
+  }
+
   const contextValue: AdminDataContextValue = {
     user,
     companyId,
     companyName,
     companyLogoUrl,
+    company,
     role,
     isSuperAdmin,
     profileName,
     profilePhotoUrl,
     loading: authLoading || loading,
     signOut,
+    updateCompany,
   }
 
   // ログインページではそのまま表示（サイドバー・ヘッダーなし）
@@ -190,6 +220,16 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
             </button>
           </div>
         </div>
+      </AdminDataContext.Provider>
+    )
+  }
+
+  // chrome=false: 独自シェルを持つ画面（スーパー管理画面など）。
+  // 通常管理画面のサイドバー・ヘッダーは描画せず children をそのまま返す。
+  if (!chrome) {
+    return (
+      <AdminDataContext.Provider value={contextValue}>
+        {children}
       </AdminDataContext.Provider>
     )
   }

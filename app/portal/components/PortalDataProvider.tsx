@@ -8,6 +8,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import type { User } from '@supabase/supabase-js'
 import type { PortalSubtitles } from '@/lib/portal-subtitles'
 import { supabase } from '@/lib/supabase'
+import { FEATURE_TOGGLE_COLUMNS } from '@/lib/constants/feature-toggles'
 import { useAppAuth } from '@/components/providers/AppAuthProvider'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -19,11 +20,15 @@ type MemberInfo = {
   email: string
 }
 
+// companies レコード（少なくとも機能トグルのカラムを含む）
+type CompanyRecord = Record<string, unknown>
+
 type PortalDataContextValue = {
   user: User | null
   companyId: string | null
   companyName: string | null
   companyLogoUrl: string | null
+  company: CompanyRecord | null
   portalSubtitles: PortalSubtitles | null
   slogan: string | null
   member: MemberInfo | null
@@ -37,6 +42,9 @@ type PortalDataContextValue = {
 
 const PortalDataContext = createContext<PortalDataContextValue | null>(null)
 
+// 機能トグルカラムを含めた companies の select 文字列
+const COMPANY_SELECT = ['name', 'logo_url', 'portal_subtitles', ...FEATURE_TOGGLE_COLUMNS].join(', ')
+
 // 認証不要のパス
 const publicPaths = ['/portal/login', '/portal/register', '/portal/auth']
 
@@ -48,6 +56,7 @@ export function PortalDataProvider({ children }: { children: React.ReactNode }) 
   const [companyId, setCompanyId] = useState<string | null>(null)
   const [companyName, setCompanyName] = useState<string | null>(null)
   const [companyLogoUrl, setCompanyLogoUrl] = useState<string | null>(null)
+  const [company, setCompany] = useState<CompanyRecord | null>(null)
   const [portalSubtitles, setPortalSubtitles] = useState<PortalSubtitles | null>(null)
   const [slogan, setSlogan] = useState<string | null>(null)
   const [member, setMember] = useState<MemberInfo | null>(null)
@@ -121,7 +130,7 @@ export function PortalDataProvider({ children }: { children: React.ReactNode }) 
         const [companyRes, guidelinesRes] = await Promise.all([
           supabase
             .from('companies')
-            .select('name, logo_url, portal_subtitles')
+            .select(COMPANY_SELECT)
             .eq('id', memberData.company_id)
             .maybeSingle(),
           supabase
@@ -134,9 +143,11 @@ export function PortalDataProvider({ children }: { children: React.ReactNode }) 
         if (cancelled) return
 
         if (companyRes.data) {
-          setCompanyName(companyRes.data.name || null)
-          setCompanyLogoUrl(companyRes.data.logo_url || null)
-          setPortalSubtitles((companyRes.data.portal_subtitles as PortalSubtitles) || null)
+          const rec = companyRes.data as unknown as CompanyRecord
+          setCompany({ ...rec, id: memberData.company_id })
+          setCompanyName((rec.name as string) || null)
+          setCompanyLogoUrl((rec.logo_url as string) || null)
+          setPortalSubtitles((rec.portal_subtitles as PortalSubtitles) || null)
         }
         if (guidelinesRes.data) {
           setSlogan(guidelinesRes.data.slogan || null)
@@ -160,6 +171,7 @@ export function PortalDataProvider({ children }: { children: React.ReactNode }) 
     companyId,
     companyName,
     companyLogoUrl,
+    company,
     portalSubtitles,
     slogan,
     member,

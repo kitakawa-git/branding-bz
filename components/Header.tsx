@@ -2,7 +2,6 @@
 
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { Menu, X, ChevronDown, Palette, Target, UserCircle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import {
@@ -40,12 +39,10 @@ export default function Header() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   // SSR と CSR の hydration ミスマッチ回避：マウント後にだけ isLoggedIn を反映
   const [mounted, setMounted] = useState(false)
-  const router = useRouter()
 
-  // 認証状態の監視（軽量：getSession のみ。admin/member 判定はクリック時に行う）
+  // 認証状態の監視（軽量：表示切替のためのみ。遷移先判定は /mypage のサーバー側で実施）
   useEffect(() => {
     // Hydration mismatch 回避のため意図的にマウント後に true 化する
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true)
     supabase.auth.getSession().then(({ data }) => {
       setIsLoggedIn(!!data.session)
@@ -55,27 +52,6 @@ export default function Header() {
     })
     return () => subscription.unsubscribe()
   }, [])
-
-  // 「マイページ」クリック時：admin_users にレコードがあれば管理画面、なければポータルへ
-  const handleMyPageClick = async (e: React.MouseEvent) => {
-    e.preventDefault()
-    setMenuOpen(false)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      router.push('/portal/auth')
-      return
-    }
-    const { data: admin } = await supabase
-      .from('admin_users')
-      .select('is_superadmin')
-      .eq('auth_id', user.id)
-      .maybeSingle()
-    if (admin) {
-      router.push(admin.is_superadmin ? '/superadmin/companies' : '/admin/dashboard')
-    } else {
-      router.push('/portal')
-    }
-  }
 
   useEffect(() => {
     const handleScroll = () => {
@@ -179,10 +155,10 @@ export default function Header() {
               </Link>
             ))}
 
-            {mounted && isLoggedIn ? (
+            {/* マイページ/ログインともに Link 1本に統一（マイページはサーバー側ルート /mypage が振り分け） */}
+            <Link href={mounted && isLoggedIn ? '/mypage' : '/portal/auth'} className="ml-3">
               <button
-                onClick={handleMyPageClick}
-                className={`ml-3 relative h-8 px-4 rounded-full text-sm font-semibold overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-lg ${isOverDark ? 'text-white' : 'text-gray-900'}`}
+                className={`relative h-8 px-4 rounded-full text-sm font-semibold overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-lg ${isOverDark ? 'text-white' : 'text-gray-900'}`}
                 style={{
                   background: isOverDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255, 255, 255, 0.25)',
                   backdropFilter: 'blur(12px) saturate(120%)',
@@ -193,26 +169,9 @@ export default function Header() {
                     : '0px 4px 12px 0 rgba(12, 74, 110, 0.08), inset 0px 1px 0px 0px rgba(255, 255, 255, 0.3)',
                 }}
               >
-                <span className="relative z-10">マイページ</span>
+                <span className="relative z-10">{mounted && isLoggedIn ? 'マイページ' : 'ログイン'}</span>
               </button>
-            ) : (
-              <Link href="/portal/auth" className="ml-3">
-                <button
-                  className={`relative h-8 px-4 rounded-full text-sm font-semibold overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-lg ${isOverDark ? 'text-white' : 'text-gray-900'}`}
-                  style={{
-                    background: isOverDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255, 255, 255, 0.25)',
-                    backdropFilter: 'blur(12px) saturate(120%)',
-                    WebkitBackdropFilter: 'blur(12px) saturate(120%)',
-                    border: `1px solid ${isOverDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.4)'}`,
-                    boxShadow: isOverDark
-                      ? '0px 4px 12px 0 rgba(0, 0, 0, 0.3), inset 0px 1px 0px 0px rgba(255, 255, 255, 0.1)'
-                      : '0px 4px 12px 0 rgba(12, 74, 110, 0.08), inset 0px 1px 0px 0px rgba(255, 255, 255, 0.3)',
-                  }}
-                >
-                  <span className="relative z-10">ログイン</span>
-                </button>
-              </Link>
-            )}
+            </Link>
           </nav>
 
           {/* モバイルハンバーガー */}
@@ -278,12 +237,13 @@ export default function Header() {
                 style={{ height: '1px', background: 'rgba(0,0,0,0.06)' }}
               />
               {mounted && isLoggedIn ? (
-                <button
-                  onClick={handleMyPageClick}
-                  className="block w-full text-left px-3 py-2.5 text-base font-semibold text-gray-900 rounded-xl hover:bg-white/60 transition-colors"
+                <Link
+                  href="/mypage"
+                  className="block px-3 py-2.5 text-base font-semibold text-gray-900 rounded-xl hover:bg-white/60 transition-colors"
+                  onClick={() => setMenuOpen(false)}
                 >
                   マイページ
-                </button>
+                </Link>
               ) : (
                 <>
                   <Link

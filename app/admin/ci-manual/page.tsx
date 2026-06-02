@@ -120,7 +120,6 @@ export default function CIManualPage() {
   if (loading) {
     return (
       <div>
-        <h1 className="text-2xl font-bold text-foreground mb-6">CIマニュアル出力</h1>
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-6 space-y-4">
             <Skeleton className="h-5 w-48" />
@@ -135,8 +134,7 @@ export default function CIManualPage() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-foreground">CIマニュアル出力</h1>
+      <div className="flex justify-end items-center mb-6">
         <Button
           onClick={handleGenerate}
           disabled={generating || contentSectionCount === 0}

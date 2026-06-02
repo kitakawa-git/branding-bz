@@ -4,6 +4,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuth } from './AdminDataProvider'
+import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
 import {
   Sidebar,
   SidebarContent,
@@ -42,6 +43,7 @@ import {
   Bell,
   Printer,
   BarChart3,
+  Settings,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -71,7 +73,16 @@ const brandItems: NavItem[] = [
 
 export function AppSidebar() {
   const pathname = usePathname()
-  const { user, companyName, companyLogoUrl, isSuperAdmin, profileName, profilePhotoUrl, signOut } = useAuth()
+  const { user, companyName, companyLogoUrl, company, isSuperAdmin, profileName, profilePhotoUrl, signOut } = useAuth()
+
+  // 機能トグル: 無効な機能のメニュー項目を非表示にする
+  const kpiEnabled = isFeatureEnabled(company, 'kpi_enabled')
+  const cardEnabled = isFeatureEnabled(company, 'card_enabled')
+  const visibleNavItems = navItems.filter((item) => {
+    if (item.href === '/admin/kpi') return kpiEnabled
+    if (item.href === '/admin/card-template') return cardEnabled
+    return true
+  })
 
   const brandInitial = companyName?.slice(0, 1) || 'B'
   const initials = profileName
@@ -108,7 +119,7 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navItems.map((item) => {
+              {visibleNavItems.map((item) => {
                 const Icon = item.icon
                 const isActive =
                   item.href === '/admin/dashboard'
@@ -147,6 +158,22 @@ export function AppSidebar() {
                   </SidebarMenuItem>
                 )
               })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* 設定（トップレベル・最下部） */}
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname.startsWith('/admin/settings')}>
+                  <Link href="/admin/settings">
+                    <Settings size={18} />
+                    <span>設定</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

@@ -21,6 +21,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
 import { Button } from '@/components/ui/button'
 import { Check, Pencil, Eye, EyeOff, Trash2, Link2, ChevronDown, ChevronUp, Plus, UserPlus, CheckCircle2, XCircle } from 'lucide-react'
@@ -115,6 +122,7 @@ export default function MembersPage() {
   const [cleaningUp, setCleaningUp] = useState(false)
 
   // アカウント作成フォーム
+  const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [newEmail, setNewEmail] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [newDisplayName, setNewDisplayName] = useState('')
@@ -436,6 +444,7 @@ export default function MembersPage() {
       if (!res.ok) throw new Error(result.error || '作成に失敗')
       toast.success('アカウントを作成しました')
       setNewEmail(''); setNewPassword(''); setNewDisplayName('')
+      setCreateDialogOpen(false)
       // メンバー一覧を再取得
       await fetchData()
     } catch (err) {
@@ -491,38 +500,53 @@ export default function MembersPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-foreground mb-6">アカウント管理</h1>
 
-      {/* ===== アカウント作成フォーム ===== */}
-      <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-6">
-        <CardContent className="p-5">
-          <h3 className="text-sm font-bold text-foreground mb-2">アカウント作成</h3>
-          <p className="text-xs text-muted-foreground mb-4 m-0">名刺プロフィールも同時に作成されます</p>
+      {/* ===== アカウント作成 FAB（右下固定） ===== */}
+      <div className="fixed bottom-8 right-8 z-50 flex items-center gap-3">
+        <button
+          onClick={() => setCreateDialogOpen(true)}
+          className="flex items-center justify-center gap-1 h-12 px-5 rounded-full hover:scale-105 transition-transform cursor-pointer text-sm font-bold bg-foreground text-background shadow-lg"
+        >
+          <Plus size={16} />
+          アカウントを追加
+        </button>
+      </div>
 
-          <form onSubmit={handleCreateMember}>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-2">
-              <div>
-                <label className="text-xs font-bold mb-1.5 block">メールアドレス</label>
-                <Input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="member@example.com" required className="h-9" />
-              </div>
-              <div>
-                <label className="text-xs font-bold mb-1.5 block">パスワード</label>
-                <div className="flex gap-2">
-                  <Input type="text" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="8文字以上" required minLength={8} className="h-9 flex-1" />
-                  <Button type="button" variant="outline" size="sm" className="h-9 text-xs shrink-0" onClick={() => setNewPassword(generatePassword())}>自動生成</Button>
-                </div>
-              </div>
-              <div>
-                <label className="text-xs font-bold mb-1.5 block">名前</label>
-                <Input type="text" value={newDisplayName} onChange={(e) => setNewDisplayName(e.target.value)} placeholder="山田太郎" required className="h-9" />
+      {/* ===== アカウント作成モーダル ===== */}
+      <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+        <DialogContent className="sm:max-w-[560px]">
+          <DialogHeader>
+            <DialogTitle>アカウント作成</DialogTitle>
+            <DialogDescription>名刺プロフィールも同時に作成されます</DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleCreateMember} className="space-y-4">
+            <div>
+              <label className="text-xs font-bold mb-1.5 block">メールアドレス</label>
+              <Input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="member@example.com" required className="h-9" />
+            </div>
+            <div>
+              <label className="text-xs font-bold mb-1.5 block">パスワード</label>
+              <div className="flex gap-2">
+                <Input type="text" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="8文字以上" required minLength={8} className="h-9 flex-1" />
+                <Button type="button" variant="outline" size="sm" className="h-9 text-xs shrink-0" onClick={() => setNewPassword(generatePassword())}>自動生成</Button>
               </div>
             </div>
-            <Button type="submit" disabled={creating} variant="outline" className="py-2 px-4 text-[13px]">
-              {creating ? '作成中...' : <><Plus size={16} />アカウントを追加</>}
-            </Button>
+            <div>
+              <label className="text-xs font-bold mb-1.5 block">名前</label>
+              <Input type="text" value={newDisplayName} onChange={(e) => setNewDisplayName(e.target.value)} placeholder="山田太郎" required className="h-9" />
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="outline" onClick={() => setCreateDialogOpen(false)}>
+                キャンセル
+              </Button>
+              <Button type="submit" disabled={creating}>
+                {creating ? '作成中...' : <><Plus size={16} />アカウントを追加</>}
+              </Button>
+            </div>
           </form>
-        </CardContent>
-      </Card>
+        </DialogContent>
+      </Dialog>
 
       {/* ===== 招待リンク ===== */}
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-6">
@@ -547,7 +571,8 @@ export default function MembersPage() {
                 </Button>
 
                 {inviteLinks.length > 0 && (
-                  <table className="w-full border-collapse text-sm">
+                  <div className="overflow-x-auto">
+                  <table className="w-full min-w-[520px] border-collapse text-sm">
                     <thead>
                       <tr>
                         <th className="text-left px-4 py-2 bg-muted text-muted-foreground font-semibold border-b border-border text-xs">リンク</th>
@@ -582,6 +607,7 @@ export default function MembersPage() {
                       ))}
                     </tbody>
                   </table>
+                  </div>
                 )}
                 {inviteLinks.length === 0 && (
                   <p className="text-xs text-muted-foreground">招待リンクはまだありません</p>
@@ -723,7 +749,8 @@ export default function MembersPage() {
           ) : members.length === 0 ? (
             <p className="text-muted-foreground text-center p-10">アカウントが登録されていません</p>
           ) : (
-            <table className="w-full">
+            <div className="overflow-x-auto">
+            <table className="w-full min-w-[640px]">
               <thead>
                 <tr className="border-b text-left text-xs text-muted-foreground">
                   <th className="px-4 py-3 font-medium">名前</th>
@@ -852,6 +879,7 @@ export default function MembersPage() {
                 })}
               </tbody>
             </table>
+            </div>
           )}
         </CardContent>
       </Card>

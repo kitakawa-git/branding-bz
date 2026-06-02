@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, PieChart, Pie, Cell } from 'recharts'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '../components/AdminDataProvider'
+import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
@@ -179,8 +180,19 @@ const dashboardTabs = [
 ]
 
 export default function DashboardPage() {
-  const { companyId } = useAuth()
+  const { companyId, company } = useAuth()
   const pathname = usePathname()
+
+  // 機能トグル: 無効な機能のタブを非表示にする
+  // 「タイムライン投稿」→ /admin/dashboard、「スマート名刺」→ /admin/analytics
+  const timelineEnabled = isFeatureEnabled(company, 'timeline_enabled')
+  const cardEnabled = isFeatureEnabled(company, 'card_enabled')
+  const visibleTabs = dashboardTabs.filter((tab) => {
+    if (tab.href === '/admin/dashboard') return timelineEnabled
+    if (tab.href === '/admin/analytics') return cardEnabled
+    return true
+  })
+
   const cacheKey = `dashboard-v2-${companyId}`
   const cached = companyId ? getPageCache<DashboardCache>(cacheKey) : null
   const [loading, setLoading] = useState(!cached)
@@ -497,7 +509,7 @@ export default function DashboardPage() {
   return (
     <div>
       <div className="flex gap-6 border-b mb-6">
-        {dashboardTabs.map(tab => (
+        {visibleTabs.map(tab => (
           <Link
             key={tab.href}
             href={tab.href}

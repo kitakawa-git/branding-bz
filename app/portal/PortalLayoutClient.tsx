@@ -11,6 +11,14 @@ import { PortalDynamicTitle } from './components/PortalDynamicTitle'
 import { PortalSidebar } from './components/PortalSidebar'
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar'
 import { Separator } from '@/components/ui/separator'
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb'
+import { resolvePortalCrumb } from '@/lib/portal-breadcrumb'
 import { Bell } from 'lucide-react'
 
 // 認証不要のパス
@@ -21,6 +29,7 @@ function PortalLayoutInner({ children }: { children: React.ReactNode }) {
   const { user, companyId } = usePortalData()
   const [unreadCount, setUnreadCount] = useState(0)
   const isPublic = publicPaths.some(p => pathname.startsWith(p))
+  const crumb = resolvePortalCrumb(pathname)
 
   useEffect(() => {
     if (!companyId || !user?.id) return
@@ -58,6 +67,25 @@ function PortalLayoutInner({ children }: { children: React.ReactNode }) {
               orientation="vertical"
               className="mr-2 data-[orientation=vertical]:h-4"
             />
+            {crumb && (
+              <Breadcrumb>
+                <BreadcrumbList>
+                  {crumb.section && (
+                    <>
+                      <BreadcrumbItem>
+                        <span className="text-muted-foreground">{crumb.section}</span>
+                      </BreadcrumbItem>
+                      <BreadcrumbSeparator />
+                    </>
+                  )}
+                  <BreadcrumbItem>
+                    <BreadcrumbPage className="text-base font-bold">
+                      {crumb.title}
+                    </BreadcrumbPage>
+                  </BreadcrumbItem>
+                </BreadcrumbList>
+              </Breadcrumb>
+            )}
             {/* 右端にお知らせベルアイコン */}
             <div className="ml-auto">
               <Link

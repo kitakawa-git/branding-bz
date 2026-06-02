@@ -128,8 +128,6 @@ export default function PortalAnnouncementsPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-5 pt-4 pb-8">
-      <h1 className="text-2xl font-bold text-foreground mb-6">お知らせ</h1>
-
       {/* カテゴリフィルタ */}
       <div className="flex gap-2 mb-6 flex-wrap">
         {CATEGORIES.map(cat => (

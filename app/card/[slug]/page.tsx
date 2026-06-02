@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
 import { Mail, Phone, ExternalLink } from 'lucide-react'
+import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
 
 type Props = {
   params: Promise<{ slug: string }>
@@ -28,7 +29,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const supabase = createClient(supabaseUrl, supabaseKey)
   const { data: profile } = await supabase
     .from('profiles')
-    .select('name, companies(name, logo_url)')
+    .select('name, companies(name, logo_url, card_enabled)')
     .eq('slug', slug)
     .eq('card_enabled', true)
     .single()
@@ -37,6 +38,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const companies = profile.companies as any
+  // 機能トグル: 会社のスマート名刺が無効なら、タブタイトルに氏名を出さない
+  if (!isFeatureEnabled(companies, 'card_enabled')) return { title: 'branding.bz' }
   const companyName = companies?.name as string | undefined
   const companyLogoUrl = companies?.logo_url as string | undefined
   return {
@@ -131,6 +134,23 @@ export default async function CardPage({ params }: Props) {
 
   const company = profile.companies
   const companyId = profile.company_id
+
+  // 機能トグル【門番ガード】: 会社のスマート名刺が無効なら、名刺の中身は一切表示せず
+  // 「非公開」案内のみを表示する。slug・プロフィールは保持し、再オンで自動復活する。
+  if (!isFeatureEnabled(company as Record<string, unknown> | null, 'card_enabled')) {
+    return (
+      <div className="min-h-screen bg-white font-sans flex items-center justify-center p-6">
+        <div className="text-center max-w-sm">
+          <h1 className="text-lg font-bold text-gray-900 mb-2">
+            このページは現在公開されていません
+          </h1>
+          <p className="text-sm text-gray-500 m-0">
+            時間をおいて再度お試しください。
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   // ブランドデータをブランドテーブルから取得
   const [guidelinesRes, visualsRes] = await Promise.all([

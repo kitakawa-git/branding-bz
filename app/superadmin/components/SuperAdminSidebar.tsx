@@ -1,9 +1,39 @@
 'use client'
 
-// スーパー管理画面サイドバー（紺色: 通常管理画面と区別）
+// スーパー管理画面サイドバー（shadcn/ui Sidebar ベース・管理画面と統一）
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Building2, Newspaper, MessageSquare, ArrowLeft, type LucideIcon } from 'lucide-react'
+import { useAdminData } from '@/app/admin/components/AdminDataProvider'
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from '@/components/ui/sidebar'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import {
+  Building2,
+  Newspaper,
+  MessageSquare,
+  ShieldCheck,
+  ArrowLeftRight,
+  LogOut,
+  CircleUser,
+  ChevronsUpDown,
+  type LucideIcon,
+} from 'lucide-react'
 
 type NavItem = { href: string; label: string; icon: LucideIcon }
 
@@ -15,52 +45,104 @@ const navItems: NavItem[] = [
 
 export function SuperAdminSidebar() {
   const pathname = usePathname()
+  const { user, profileName, profilePhotoUrl, signOut } = useAdminData()
+
+  const initials = profileName
+    ? profileName.slice(0, 1)
+    : user?.email?.slice(0, 1)?.toUpperCase() || '?'
 
   return (
-    <aside className="w-[240px] bg-[#1e3a5f] min-h-screen py-6 fixed left-0 top-0">
-      {/* ロゴ・タイトル */}
-      <div className="px-5 mb-8">
-        <Link href="/superadmin" className="no-underline">
-          <h1 className="text-white text-lg m-0 font-bold">
-            branding.bz
-          </h1>
-        </Link>
-        <div className="inline-block mt-1.5 py-0.5 px-2 bg-amber-500 text-[#1e3a5f] text-[10px] font-bold rounded tracking-wide">
-          SUPER ADMIN
-        </div>
-      </div>
+    <Sidebar variant="floating">
+      {/* ヘッダー: ロゴ + スーパー管理 */}
+      <SidebarHeader>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton size="lg" asChild>
+              <Link href="/superadmin">
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground overflow-hidden">
+                  <ShieldCheck className="size-4" />
+                </div>
+                <div className="flex flex-col gap-0.5 leading-none">
+                  <span className="font-semibold">branding.bz</span>
+                  <span className="text-xs">スーパー管理</span>
+                </div>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarHeader>
 
-      {/* ナビゲーションリンク */}
-      <nav>
-        {navItems.map((item) => {
-          const isActive = pathname.startsWith(item.href)
-          const Icon = item.icon
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex items-center gap-2.5 py-3 px-5 no-underline text-sm transition-colors duration-150 ${
-                isActive
-                  ? 'text-white bg-[#2a4a6f]'
-                  : 'text-[#94b8d9] bg-transparent'
-              }`}
-            >
-              <Icon size={18} />
-              {item.label}
-            </Link>
-          )
-        })}
-      </nav>
+      <SidebarContent>
+        {/* メインナビゲーション */}
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {navItems.map((item) => {
+                const Icon = item.icon
+                const isActive = pathname.startsWith(item.href)
+                return (
+                  <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton asChild isActive={isActive}>
+                      <Link href={item.href}>
+                        <Icon size={18} />
+                        <span>{item.label}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
 
-      {/* 通常管理画面へのリンク */}
-      <div className="px-5 pt-6 border-t border-[#2a4a6f] mt-6">
-        <Link
-          href="/admin"
-          className="block py-2.5 text-[#94b8d9] no-underline text-[13px]"
-        >
-          <ArrowLeft size={14} className="inline" /> 通常管理画面へ
-        </Link>
-      </div>
-    </aside>
+      {/* ユーザーメニュー（フッター固定） */}
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SidebarMenuButton size="lg" className="data-[state=open]:bg-sidebar-accent">
+                  <Avatar className="size-8 shrink-0">
+                    {profilePhotoUrl && <AvatarImage src={profilePhotoUrl} alt={profileName || ''} />}
+                    <AvatarFallback className="bg-sidebar-accent text-sidebar-accent-foreground text-xs">
+                      {profilePhotoUrl ? initials : <CircleUser className="size-4" />}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0 leading-tight">
+                    <span className="block truncate text-sm font-semibold">
+                      {profileName || user?.email}
+                    </span>
+                    {profileName && (
+                      <span className="block truncate text-xs opacity-70">
+                        {user?.email}
+                      </span>
+                    )}
+                  </div>
+                  <ChevronsUpDown className="ml-auto size-4 shrink-0 opacity-50" />
+                </SidebarMenuButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                side="top"
+                align="start"
+                className="w-[--radix-dropdown-menu-trigger-width] min-w-56"
+              >
+                <DropdownMenuItem asChild>
+                  <Link href="/admin" className="no-underline">
+                    <ArrowLeftRight className="mr-2 size-4" />
+                    通常管理画面へ
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={signOut}>
+                  <LogOut className="mr-2 size-4" />
+                  ログアウト
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+    </Sidebar>
   )
 }

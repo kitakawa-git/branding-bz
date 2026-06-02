@@ -5,8 +5,9 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { Card, CardContent } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
-import { Building2, Plus } from 'lucide-react'
+import { Building2, Plus, ArrowRight } from 'lucide-react'
 
 type CompanyWithCount = {
   id: string
@@ -74,96 +75,127 @@ export default function CompaniesPage() {
     fetchCompanies()
   }, [])
 
+  // ============================================
+  // Render
+  // ============================================
+
   if (loading) {
     return (
-      <p className="text-muted-foreground text-center p-10">
-        読み込み中...
-      </p>
+      <div>
+        <div className="flex justify-between items-center mb-6">
+          <Skeleton className="h-8 w-32" />
+          <Skeleton className="h-9 w-36" />
+        </div>
+        <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+          <CardContent className="p-0">
+            <div className="p-4">
+              <div className="flex bg-muted px-4 py-3 gap-4 border-b border-border rounded-t-md">
+                {[1, 2, 3, 4, 5, 6].map(i => (
+                  <Skeleton key={i} className="h-4 w-20" />
+                ))}
+              </div>
+              {[1, 2, 3, 4, 5].map(i => (
+                <div key={i} className="flex px-4 py-3 gap-4 border-b border-border items-center">
+                  <Skeleton className="h-9 w-32" />
+                  <Skeleton className="h-4 w-40" />
+                  <Skeleton className="h-4 w-12" />
+                  <Skeleton className="h-4 w-12" />
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-4 w-12" />
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     )
   }
 
   return (
     <div>
-      {/* ヘッダー */}
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold text-foreground">
-          企業一覧
-        </h2>
-        <Button asChild className="bg-[#1e3a5f] hover:bg-[#2a4a6f]">
+      {/* ===== ヘッダー（タイトルはパンくずに移動） ===== */}
+      <div className="flex justify-end items-center mb-6">
+        <Button asChild variant="outline" className="py-2 px-4 text-[13px]">
           <Link href="/superadmin/companies/new">
-            <Plus size={16} className="inline" /> 新規企業を登録
+            <Plus size={16} />
+            新規企業を登録
           </Link>
         </Button>
       </div>
 
-      {/* テーブル */}
-      <Card className="bg-muted/50 border shadow-none">
-        <CardContent className="p-6">
+      {/* ===== 企業一覧テーブル ===== */}
+      <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+        <CardContent className="p-0">
           {companies.length === 0 ? (
-            <p className="text-muted-foreground text-center p-10">
-              企業データがありません
-            </p>
+            <p className="text-muted-foreground text-center p-10">企業データがありません</p>
           ) : (
-            <table className="w-full border-collapse text-sm">
-              <thead>
-                <tr>
-                  <th className="text-left px-4 py-3 bg-muted text-muted-foreground font-semibold border-b border-border text-xs">企業名</th>
-                  <th className="text-left px-4 py-3 bg-muted text-muted-foreground font-semibold border-b border-border text-xs">スローガン</th>
-                  <th className="text-left px-4 py-3 bg-muted text-muted-foreground font-semibold border-b border-border text-xs text-center">従業員数</th>
-                  <th className="text-left px-4 py-3 bg-muted text-muted-foreground font-semibold border-b border-border text-xs text-center">管理者</th>
-                  <th className="text-left px-4 py-3 bg-muted text-muted-foreground font-semibold border-b border-border text-xs">作成日</th>
-                  <th className="text-left px-4 py-3 bg-muted text-muted-foreground font-semibold border-b border-border text-xs"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {companies.map((company) => (
-                  <tr key={company.id}>
-                    <td className="px-4 py-3 border-b border-border text-foreground">
-                      <div className="flex items-center gap-2.5">
-                        {company.logo_url ? (
-                          <img
-                            src={company.logo_url}
-                            alt=""
-                            className="w-8 h-8 rounded-md object-cover"
-                          />
-                        ) : (
-                          <div className="w-8 h-8 rounded-md bg-gray-200 flex items-center justify-center">
-                            <Building2 size={16} className="text-gray-400" />
-                          </div>
-                        )}
-                        <span className="font-semibold">{company.name}</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 border-b border-border text-muted-foreground text-[13px]">
-                      {company.slogan || '—'}
-                    </td>
-                    <td className="px-4 py-3 border-b border-border text-foreground text-center">
-                      {company.member_count}名
-                    </td>
-                    <td className="px-4 py-3 border-b border-border text-foreground text-center">
-                      {company.admin_count}名
-                    </td>
-                    <td className="px-4 py-3 border-b border-border text-muted-foreground text-[13px]">
-                      {new Date(company.created_at).toLocaleDateString('ja-JP')}
-                    </td>
-                    <td className="px-4 py-3 border-b border-border text-foreground">
-                      <Link
-                        href={`/superadmin/companies/${company.id}`}
-                        className="text-blue-600 no-underline text-sm font-semibold"
-                      >
-                        詳細
-                      </Link>
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[640px]">
+                <thead>
+                  <tr className="border-b text-left text-xs text-muted-foreground">
+                    <th className="px-4 py-3 font-medium">企業名</th>
+                    <th className="px-4 py-3 font-medium">スローガン</th>
+                    <th className="px-4 py-3 font-medium text-center">従業員数</th>
+                    <th className="px-4 py-3 font-medium text-center">管理者</th>
+                    <th className="px-4 py-3 font-medium">作成日</th>
+                    <th className="px-4 py-3 font-medium">操作</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {companies.map((company) => (
+                    <tr
+                      key={company.id}
+                      className="border-b last:border-b-0 hover:bg-muted/30 transition-colors"
+                    >
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          {company.logo_url ? (
+                            <img
+                              src={company.logo_url}
+                              alt=""
+                              className="size-9 rounded-md object-cover shrink-0"
+                            />
+                          ) : (
+                            <div className="size-9 rounded-md bg-muted flex items-center justify-center shrink-0">
+                              <Building2 size={16} className="text-muted-foreground" />
+                            </div>
+                          )}
+                          <span className="text-sm font-bold text-foreground">{company.name}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-xs text-muted-foreground">{company.slogan || '—'}</span>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <span className="text-xs text-foreground">{company.member_count}名</span>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <span className="text-xs text-foreground">{company.admin_count}名</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(company.created_at).toLocaleDateString('ja-JP')}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <Button variant="ghost" size="sm" className="h-8 text-xs gap-1 text-blue-600 hover:text-blue-700" asChild>
+                          <Link href={`/superadmin/companies/${company.id}`}>
+                            詳細
+                            <ArrowRight size={14} />
+                          </Link>
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </CardContent>
       </Card>
 
       {/* 統計サマリー */}
-      <div className="mt-4 text-[13px] text-muted-foreground text-right">
+      <div className="mt-4 text-xs text-muted-foreground text-right">
         全{companies.length}社
       </div>
     </div>

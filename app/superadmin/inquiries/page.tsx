@@ -75,11 +75,7 @@ export default function InquiriesPage() {
 
   return (
     <div>
-      {/* ヘッダー */}
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold text-foreground">お問い合わせ</h2>
-      </div>
-
+      {/* タイトルはヘッダーのパンくずに移動 */}
       {/* テーブル */}
       <Card className="bg-muted/50 border shadow-none">
         <CardContent className="p-6">

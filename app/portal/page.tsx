@@ -5,6 +5,7 @@ import { useEffect, useState, useMemo } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { usePortalAuth } from './components/PortalDataProvider'
+import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
 import { SurveyBanner } from './components/SurveyBanner'
 import { getRelativeTime } from '@/lib/time-utils'
 import { PieChart, Pie, Cell } from 'recharts'
@@ -204,7 +205,12 @@ type DashboardCache = {
 }
 
 export default function PortalTopPage() {
-  const { companyId, user, member, slogan } = usePortalAuth()
+  const { companyId, user, member, slogan, company } = usePortalAuth()
+
+  // 機能トグル: タイムラインが無効なら投稿関連ウィジェットを非表示にする
+  const timelineEnabled = isFeatureEnabled(company, 'timeline_enabled')
+  // 機能トグル: KPIが無効なら目標・KPI関連のバナー／カードを非表示にする
+  const kpiEnabled = isFeatureEnabled(company, 'kpi_enabled')
   const cacheKey = `portal-dashboard-${companyId}-${user?.id}`
   const cached = companyId && user?.id ? getPageCache<DashboardCache>(cacheKey) : null
   const [loading, setLoading] = useState(!cached)
@@ -745,8 +751,8 @@ export default function PortalTopPage() {
         </Card>
       )}
 
-      {/* ===== 2.5. KPIバナー / サマリー ===== */}
-      {!hasGoals && showGoalBanner && (
+      {/* ===== 2.5. KPIバナー / サマリー（KPI無効時は非表示） ===== */}
+      {kpiEnabled && !hasGoals && showGoalBanner && (
         <Link href="/portal/kpi?setup=true" className="no-underline block mb-8">
           <div className="rounded-full bg-[#F41189] px-6 py-4 flex items-center justify-between hover:opacity-90 transition-opacity">
             <p className="text-white text-base font-semibold m-0">
@@ -756,7 +762,7 @@ export default function PortalTopPage() {
           </div>
         </Link>
       )}
-      {hasGoals && (() => {
+      {kpiEnabled && hasGoals && (() => {
         const STATUS_LABELS: Record<string, string> = { not_started: '未着手', in_progress: '進行中', completed: '達成' }
         const STATUS_COLORS: Record<string, string> = { not_started: 'bg-gray-100 text-gray-600', in_progress: 'bg-blue-100 text-blue-700', completed: 'bg-green-100 text-green-700' }
         let totalWeight = 0, weightedSum = 0
@@ -803,8 +809,8 @@ export default function PortalTopPage() {
         )
       })()}
 
-      {/* ===== 3. 自己評価バナー ===== */}
-      {showReviewBanner && kpiGoals.length > 0 && (
+      {/* ===== 3. 自己評価バナー（KPI無効時は非表示） ===== */}
+      {kpiEnabled && showReviewBanner && kpiGoals.length > 0 && (
         <button type="button" onClick={openReviewDialog} className="w-full mb-8 cursor-pointer border-0 p-0 bg-transparent">
           <div className="rounded-full bg-[#47C95C] px-6 py-4 flex items-center justify-between hover:opacity-90 transition-opacity">
             <p className="text-white text-base font-semibold m-0">
@@ -815,8 +821,8 @@ export default function PortalTopPage() {
         </button>
       )}
 
-      {/* ===== 4. あなたのブランドコミット ===== */}
-      {personalStats && (() => {
+      {/* ===== 4. あなたのブランドコミット（タイムライン由来。無効時は非表示） ===== */}
+      {timelineEnabled && personalStats && (() => {
         const catWithData = filteredStats.categoryDistribution.filter(d => d.count > 0)
         const totalCatCount = catWithData.reduce((sum, d) => sum + d.count, 0)
 
@@ -1000,7 +1006,8 @@ export default function PortalTopPage() {
         )
       })()}
 
-      {/* ===== 5. 投稿カード（2カラム） ===== */}
+      {/* ===== 5. 投稿カード（2カラム・タイムライン由来。無効時は非表示） ===== */}
+      {timelineEnabled && (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* 左: あなたの投稿 */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
@@ -1052,6 +1059,7 @@ export default function PortalTopPage() {
           </CardContent>
         </Card>
       </div>
+      )}
 
       {/* ===== 自己評価ダイアログ ===== */}
       <Dialog open={reviewOpen} onOpenChange={setReviewOpen}>

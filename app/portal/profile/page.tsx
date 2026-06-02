@@ -311,8 +311,6 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-2xl mx-auto px-5 pt-4 pb-10">
-      <h1 className="text-2xl font-bold text-foreground mb-6">マイプロフィール</h1>
-
       {/* ===== A. カバー写真 + プロフィール写真 ===== */}
       <div className="mb-8">
         {/* カバー写真 */}

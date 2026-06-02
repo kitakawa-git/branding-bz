@@ -171,14 +171,15 @@ export default function AnnouncementsListPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-foreground">お知らせ管理</h1>
-        <Button asChild>
-          <Link href="/admin/announcements/new">
-            <Plus size={16} />
-            新規作成
-          </Link>
-        </Button>
+      {/* 新規作成 FAB（右下固定・include-bz の FabButton と同装飾） */}
+      <div className="fixed bottom-8 right-8 z-50 flex items-center gap-3">
+        <Link
+          href="/admin/announcements/new"
+          className="flex items-center justify-center gap-1 h-12 px-5 rounded-full hover:scale-105 transition-transform cursor-pointer text-sm font-bold no-underline bg-foreground text-background shadow-lg"
+        >
+          <Plus size={16} />
+          新規作成
+        </Link>
       </div>
 
       {announcements.length === 0 ? (
@@ -190,7 +191,8 @@ export default function AnnouncementsListPage() {
       ) : (
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-0">
-            <table className="w-full">
+            <div className="overflow-x-auto">
+            <table className="w-full min-w-[680px]">
               <thead>
                 <tr className="border-b text-left text-xs text-muted-foreground">
                   <th className="px-4 py-3 font-medium">タイトル</th>
@@ -279,6 +281,7 @@ export default function AnnouncementsListPage() {
                 })}
               </tbody>
             </table>
+            </div>
           </CardContent>
         </Card>
       )}

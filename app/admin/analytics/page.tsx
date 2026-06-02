@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '../components/AdminDataProvider'
+import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
@@ -65,8 +66,11 @@ const dashboardTabs = [
 ]
 
 export default function AnalyticsPage() {
-  const { companyId } = useAuth()
+  const { companyId, company } = useAuth()
   const pathname = usePathname()
+
+  // 機能トグル: スマート名刺が無効なら案内のみ表示（名刺閲覧解析を非表示）
+  const cardEnabled = isFeatureEnabled(company, 'card_enabled')
   const cacheKey = `analytics-${companyId}`
   const cached = companyId ? getPageCache<AnalyticsCache>(cacheKey) : null
   const [loading, setLoading] = useState(!cached)
@@ -186,6 +190,27 @@ export default function AnalyticsPage() {
 
     fetchAnalytics()
   }, [companyId, cacheKey])
+
+  // 機能トグルがオフ: 名刺閲覧解析は表示せず、案内のみ（設定ページから再オン可能）
+  if (!cardEnabled) {
+    return (
+      <div>
+        <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+          <CardContent className="py-16 text-center">
+            <p className="text-muted-foreground text-[15px] m-0 mb-4">
+              この機能は現在オフになっています。設定ページから再度オンにできます。
+            </p>
+            <Link
+              href="/admin/settings"
+              className="text-sm font-semibold text-blue-600 hover:underline no-underline"
+            >
+              設定ページを開く
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   if (loading) {
     return (
@@ -400,7 +425,8 @@ export default function AnalyticsPage() {
                 まだアクセスデータがありません
               </p>
             ) : (
-              <table className="w-full border-collapse text-[13px]">
+              <div className="overflow-x-auto">
+              <table className="w-full min-w-[480px] border-collapse text-[13px]">
                 <thead>
                   <tr>
                     <th className="text-left px-4 py-3 bg-muted text-muted-foreground font-semibold border-b border-border text-xs">日時</th>
@@ -429,6 +455,7 @@ export default function AnalyticsPage() {
                   })}
                 </tbody>
               </table>
+              </div>
             )}
           </CardContent>
         </Card>

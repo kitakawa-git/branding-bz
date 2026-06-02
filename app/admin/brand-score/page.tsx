@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '../components/AdminDataProvider'
+import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
 import { supabase } from '@/lib/supabase'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
 import Link from 'next/link'
@@ -192,8 +193,14 @@ type BrandScoreCache = {
 // ── メインコンポーネント ──
 
 export default function BrandScoreDashboard() {
-  const { companyId } = useAuth()
+  const { companyId, company } = useAuth()
   const pathname = usePathname()
+
+  // 機能トグル: スマート名刺が無効なら「スマート名刺」タブ（→ /admin/analytics）を非表示にする
+  const cardEnabled = isFeatureEnabled(company, 'card_enabled')
+  const visibleTabs = dashboardTabs.filter(
+    (tab) => tab.href !== '/admin/analytics' || cardEnabled
+  )
 
   const [period, setPeriod] = useState<string>('30')
 
@@ -437,7 +444,7 @@ export default function BrandScoreDashboard() {
     return (
       <div>
         <div className="flex gap-6 border-b mb-6">
-          {dashboardTabs.map(tab => (
+          {visibleTabs.map(tab => (
             <Link
               key={tab.href}
               href={tab.href}
@@ -470,7 +477,7 @@ export default function BrandScoreDashboard() {
     return (
       <div>
         <div className="flex gap-6 border-b mb-6">
-          {dashboardTabs.map(tab => (
+          {visibleTabs.map(tab => (
             <Link
               key={tab.href}
               href={tab.href}
@@ -515,7 +522,7 @@ export default function BrandScoreDashboard() {
     <div>
       {/* ── タブバー ── */}
       <div className="flex gap-6 border-b mb-6">
-        {dashboardTabs.map(tab => (
+        {visibleTabs.map(tab => (
           <Link
             key={tab.href}
             href={tab.href}
