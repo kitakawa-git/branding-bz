@@ -17,7 +17,7 @@ import {
   DialogContent,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { LayoutGrid, Columns3 } from 'lucide-react'
+import { LayoutGrid, Columns3, X } from 'lucide-react'
 import Masonry from 'react-masonry-css'
 
 type LogoItem = { url: string; caption: string; added_index?: number }
@@ -464,14 +464,25 @@ export default function PortalVisualsPage() {
 
       {/* 画像拡大ダイアログ */}
       <Dialog open={!!modalImage} onOpenChange={(open) => { if (!open) setModalImage(null) }}>
-        <DialogContent className="max-w-[90vw] max-h-[90vh] p-2 bg-transparent border-none shadow-none">
+        <DialogContent className="max-w-[90vw] max-h-[90vh] p-0 bg-transparent border-none shadow-none [&>button]:hidden">
           <DialogTitle className="sr-only">画像拡大表示</DialogTitle>
           {modalImage && (
-            <img
-              src={modalImage}
-              alt="拡大表示"
-              className="max-w-full max-h-[85vh] object-contain rounded-lg mx-auto"
-            />
+            <div className="relative w-fit mx-auto">
+              <img
+                src={modalImage}
+                alt="拡大表示"
+                className="block max-w-[90vw] max-h-[85vh] object-contain rounded-lg"
+              />
+              {/* 画像の右上角に固定した閉じるボタン（既定の DialogContent クローズボタンは [&>button]:hidden で非表示） */}
+              <button
+                type="button"
+                onClick={() => setModalImage(null)}
+                aria-label="閉じる"
+                className="absolute right-2 top-2 z-10 flex items-center justify-center size-8 rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
           )}
         </DialogContent>
       </Dialog>

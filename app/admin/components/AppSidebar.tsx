@@ -44,6 +44,7 @@ import {
   Bell,
   Printer,
   BarChart3,
+  ClipboardCheck,
   GraduationCap,
   Settings,
   type LucideIcon,
@@ -63,6 +64,7 @@ const navItems: NavItem[] = [
   { href: '/admin/kpi', label: '目標・KPI管理', icon: Milestone },
   { href: '/admin/announcements', label: 'お知らせ管理', icon: Bell },
   { href: '/admin/brand-score/surveys', label: 'サーベイ管理', icon: BarChart3 },
+  { href: '/admin/brand-score/quizzes', label: '理解度テスト', icon: ClipboardCheck },
   { href: '/admin/learning', label: 'ラーニング', icon: GraduationCap },
 ]
 
@@ -164,22 +166,6 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* 設定（トップレベル・最下部） */}
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname.startsWith('/admin/settings')}>
-                  <Link href="/admin/settings">
-                    <Settings size={18} />
-                    <span>設定</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
       </SidebarContent>
 
       {/* ユーザーメニュー（フッター固定） */}
@@ -224,6 +210,12 @@ export function AppSidebar() {
                     <DropdownMenuSeparator />
                   </>
                 )}
+                <DropdownMenuItem asChild>
+                  <Link href="/admin/settings" className="no-underline">
+                    <Settings className="mr-2 size-4" />
+                    設定
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href="/portal" className="no-underline">
                     <ArrowLeftRight className="mr-2 size-4" />
