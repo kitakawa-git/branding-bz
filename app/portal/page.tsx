@@ -57,7 +57,7 @@ const BRAND_QUADRANTS = [
   {
     perspective: '考え方',
     noun: 'ブランド方針',
-    items: 'MVV・バリュー・提供価値・行動指針・沿革・事業内容',
+    items: 'MVV・バリュー・提供価値・行動指針・ストーリー',
     href: '/portal/guidelines',
     icon: Compass,
     tone: 'purple' as const,
