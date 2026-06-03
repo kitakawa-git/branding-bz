@@ -29,6 +29,9 @@ type Persona = {
   pain_points: string[]
 }
 
+// 主なターゲット（管理画面で編集する companies.target_segments）
+type TargetSegment = { name: string; description: string }
+
 export default function PortalStrategyPage() {
   const { companyId } = usePortalAuth()
   const brandFonts = useBrandFonts(companyId)
@@ -36,6 +39,7 @@ export default function PortalStrategyPage() {
 
   type StrategyCache = {
     target: string
+    targetSegments: TargetSegment[]
     personas: Persona[]
     positioningMapUrl: string
     positioningMapData: PositioningMapData | null
@@ -44,6 +48,7 @@ export default function PortalStrategyPage() {
   const cached = companyId ? getPageCache<StrategyCache>(cacheKey) : null
 
   const [target, setTarget] = useState(cached?.target ?? '')
+  const [targetSegments, setTargetSegments] = useState<TargetSegment[]>(cached?.targetSegments ?? [])
   const [personas, setPersonas] = useState<Persona[]>(cached?.personas ?? [])
   const [positioningMapUrl, setPositioningMapUrl] = useState(cached?.positioningMapUrl ?? '')
   const [positioningMapData, setPositioningMapData] = useState<PositioningMapData | null>(cached?.positioningMapData ?? null)
@@ -54,48 +59,59 @@ export default function PortalStrategyPage() {
     if (!companyId) return
     if (getPageCache<StrategyCache>(cacheKey)) return
 
-    fetchWithRetry(() =>
-      supabase
-        .from('brand_personas')
-        .select('name, age_range, occupation, description, needs, pain_points, target, positioning_map_url, positioning_map_data, sort_order')
-        .eq('company_id', companyId)
-        .order('sort_order')
-    ).then(({ data }) => {
+    Promise.all([
+      fetchWithRetry(() =>
+        supabase
+          .from('brand_personas')
+          .select('name, age_range, occupation, description, needs, pain_points, target, positioning_map_url, positioning_map_data, sort_order')
+          .eq('company_id', companyId)
+          .order('sort_order')
+      ),
+      // 主なターゲット（管理画面 ブランド戦略で編集する構造化リスト）
+      fetchWithRetry(() =>
+        supabase.from('companies').select('target_segments').eq('id', companyId).maybeSingle()
+      ),
+    ]).then(([personasRes, companyRes]) => {
+      const data = personasRes.data as Record<string, unknown>[] | null
+      const companyData = companyRes.data as Record<string, unknown> | null
+
+      // ターゲット: companies.target_segments（管理画面入力）を優先。なければ brand_personas.target テキスト
+      const rawSegments = (companyData?.target_segments as TargetSegment[]) || []
+      const parsedSegments: TargetSegment[] = rawSegments
+        .filter(s => s && s.name)
+        .map(s => ({ name: s.name || '', description: s.description || '' }))
+      setTargetSegments(parsedSegments)
+
+      let parsedTarget = ''
+      let parsedPersonas: Persona[] = []
+      let parsedMapUrl = ''
+      let parsedMapData: PositioningMapData | null = null
       if (data && Array.isArray(data) && data.length > 0) {
-        const first = data[0] as Record<string, unknown>
-        setTarget((first.target as string) || '')
-        setPositioningMapUrl((first.positioning_map_url as string) || '')
-        setPositioningMapData((first.positioning_map_data as PositioningMapData) || null)
-
-        setPersonas(data.map((d: unknown) => {
-          const rec = d as Record<string, unknown>
-          return {
-            name: (rec.name as string) || '',
-            age_range: (rec.age_range as string) || null,
-            occupation: (rec.occupation as string) || null,
-            description: (rec.description as string) || null,
-            needs: (rec.needs as string[]) || [],
-            pain_points: (rec.pain_points as string[]) || [],
-          }
+        const first = data[0]
+        parsedTarget = (first.target as string) || ''
+        parsedMapUrl = (first.positioning_map_url as string) || ''
+        parsedMapData = (first.positioning_map_data as PositioningMapData) || null
+        parsedPersonas = data.map((rec) => ({
+          name: (rec.name as string) || '',
+          age_range: (rec.age_range as string) || null,
+          occupation: (rec.occupation as string) || null,
+          description: (rec.description as string) || null,
+          needs: (rec.needs as string[]) || [],
+          pain_points: (rec.pain_points as string[]) || [],
         }))
-
-        setPageCache(cacheKey, {
-          target: (first.target as string) || '',
-          positioningMapUrl: (first.positioning_map_url as string) || '',
-          positioningMapData: (first.positioning_map_data as PositioningMapData) || null,
-          personas: data.map((d: unknown) => {
-            const rec = d as Record<string, unknown>
-            return {
-              name: (rec.name as string) || '',
-              age_range: (rec.age_range as string) || null,
-              occupation: (rec.occupation as string) || null,
-              description: (rec.description as string) || null,
-              needs: (rec.needs as string[]) || [],
-              pain_points: (rec.pain_points as string[]) || [],
-            }
-          }),
-        })
       }
+      setTarget(parsedTarget)
+      setPositioningMapUrl(parsedMapUrl)
+      setPositioningMapData(parsedMapData)
+      setPersonas(parsedPersonas)
+
+      setPageCache(cacheKey, {
+        target: parsedTarget,
+        targetSegments: parsedSegments,
+        positioningMapUrl: parsedMapUrl,
+        positioningMapData: parsedMapData,
+        personas: parsedPersonas,
+      })
       setLoading(false)
     })
   }, [companyId, cacheKey])
@@ -149,7 +165,8 @@ export default function PortalStrategyPage() {
     </div>
   )
 
-  const hasContent = target || personas.some(p => p.name) || positioningMapData || positioningMapUrl
+  const hasTarget = targetSegments.length > 0 || !!target
+  const hasContent = hasTarget || personas.some(p => p.name) || positioningMapData || positioningMapUrl
   if (!hasContent) return <div className="text-center py-16 text-muted-foreground text-[15px]">まだ登録されていません</div>
 
   const validPersonas = personas.filter(p => p.name)
@@ -161,14 +178,32 @@ export default function PortalStrategyPage() {
     <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
 
       {/* Card 1: ターゲット＋ペルソナ */}
-      {(target || validPersonas.length > 0) && (
+      {(hasTarget || validPersonas.length > 0) && (
         <section>
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
             <CardContent className="p-5 space-y-6">
-              {target && (
+              {hasTarget && (
                 <div>
                   <h2 className="text-xs font-bold text-foreground mb-3 tracking-wide">ターゲット</h2>
-                  <p className="text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0" style={secondaryStyle}>{target}</p>
+                  {/* 概要文（プロセス文） */}
+                  {target && (
+                    <p className="text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0 mb-3" style={secondaryStyle}>{target}</p>
+                  )}
+                  {/* 主なターゲット（セグメント一覧） */}
+                  {targetSegments.length > 0 && (
+                    <div className="space-y-3">
+                      {targetSegments.map((seg, i) => (
+                        <div key={i} className="relative overflow-hidden rounded-lg border border-border bg-background p-4 pl-5">
+                          {/* 左端の青バー（「私たちの『らしさ』」カード同装飾） */}
+                          <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-600" />
+                          <p className="text-sm font-bold text-foreground m-0">{seg.name}</p>
+                          {seg.description && (
+                            <p className="text-sm text-foreground/70 leading-[1.8] whitespace-pre-wrap mt-1 m-0" style={secondaryStyle}>{seg.description}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
               {validPersonas.length > 0 && (

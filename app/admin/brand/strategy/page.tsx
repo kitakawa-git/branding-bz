@@ -65,6 +65,7 @@ const DEFAULT_COLORS = [
 ]
 
 type StrategyCache = {
+  targetOverview: string
   targetSegments: TargetSegment[]
   personas: PersonaItem[]
   positioningMapData: PositioningMapData | null
@@ -76,6 +77,7 @@ export default function BrandStrategyPage() {
   const { companyId } = useAuth()
   const cacheKey = `admin-brand-strategy-${companyId}`
   const cached = companyId ? getPageCache<StrategyCache>(cacheKey) : null
+  const [targetOverview, setTargetOverview] = useState<string>(cached?.targetOverview ?? '')
   const [targetSegments, setTargetSegments] = useState<TargetSegment[]>(cached?.targetSegments ?? [])
   const [personas, setPersonas] = useState<PersonaItem[]>(cached?.personas ?? [])
   const [positioningMapData, setPositioningMapData] = useState<PositioningMapData | null>(cached?.positioningMapData ?? null)
@@ -126,7 +128,8 @@ export default function BrandStrategyPage() {
 
       if (data && data.length > 0) {
         const first = data[0] as Record<string, unknown>
-        const parsedTargetText = (first.target as string) || ''
+        // ターゲット概要（プロセス文）: brand_personas[0].target
+        const parsedTargetOverview = (first.target as string) || ''
         const parsedMapData = (first.positioning_map_data as PositioningMapData) || null
         const parsedPersonas = data.map((d: Record<string, unknown>) => ({
           name: (d.name as string) || '',
@@ -137,21 +140,14 @@ export default function BrandStrategyPage() {
           pain_points: (d.pain_points as string[]) || [],
         }))
 
-        // ターゲットセグメント: companies.target_segments → brand_personas.target テキストのフォールバック
-        let parsedTargetSegments: TargetSegment[]
-        if (companyTargetSegments.length > 0) {
-          parsedTargetSegments = companyTargetSegments
-        } else if (parsedTargetText) {
-          parsedTargetSegments = [{ name: 'ターゲット', description: parsedTargetText }]
-        } else {
-          parsedTargetSegments = []
-        }
-
-        setTargetSegments(parsedTargetSegments)
+        // 主なターゲット: companies.target_segments（概要文とは別管理）
+        setTargetOverview(parsedTargetOverview)
+        setTargetSegments(companyTargetSegments)
         setPositioningMapData(parsedMapData)
         setPersonas(parsedPersonas)
         setPageCache<StrategyCache>(cacheKey, {
-          targetSegments: parsedTargetSegments,
+          targetOverview: parsedTargetOverview,
+          targetSegments: companyTargetSegments,
           personas: parsedPersonas,
           positioningMapData: parsedMapData,
           portalSubtitle: fetchedSubtitle,
@@ -313,16 +309,12 @@ export default function BrandStrategyPage() {
       'Prefer': 'return=minimal',
     }
 
-    // ターゲットセグメントをクリーンアップ＋テキスト生成（brand_personas.target 用）
+    // 主なターゲット（companies.target_segments 用）をクリーンアップ
     const validSegments = targetSegments
       .filter(ts => ts.name.trim())
       .map(ts => ({ name: ts.name.trim(), description: ts.description?.trim() || '' }))
-    const targetText = validSegments
-      .map(ts => {
-        const desc = ts.description ? `：${ts.description}` : ''
-        return `・${ts.name}${desc}`
-      })
-      .join('\n')
+    // ターゲット概要（プロセス文）は brand_personas[0].target にそのまま保存
+    const overviewText = targetOverview.trim()
 
     try {
       // 1. 既存を全削除
@@ -350,7 +342,7 @@ export default function BrandStrategyPage() {
           needs: p.needs.filter(n => n.trim() !== ''),
           pain_points: p.pain_points.filter(pp => pp.trim() !== ''),
           sort_order: i,
-          target: i === 0 ? (targetText || null) : null,
+          target: i === 0 ? (overviewText || null) : null,
           positioning_map_url: null,
           positioning_map_data: i === 0 ? (positioningMapData || null) : null,
         }))
@@ -365,13 +357,13 @@ export default function BrandStrategyPage() {
           throw new Error(`挿入エラー: HTTP ${insRes.status}: ${body}`)
         }
       } else {
-        // ペルソナがなくてもtarget等を保存するためダミーレコードを作成
-        if (targetText || positioningMapData) {
+        // ペルソナがなくてもtarget概要等を保存するためダミーレコードを作成
+        if (overviewText || positioningMapData) {
           const insertData = [{
             company_id: companyId,
             name: '',
             sort_order: 0,
-            target: targetText || null,
+            target: overviewText || null,
             positioning_map_url: null,
             positioning_map_data: positioningMapData || null,
           }]
@@ -407,6 +399,15 @@ export default function BrandStrategyPage() {
 
       setPersonas(cleanedPersonas)
       setTargetSegments(validSegments)
+      // 保存内容でページキャッシュを更新（他ページ往復で消える問題の防止）
+      setPageCache<StrategyCache>(cacheKey, {
+        targetOverview: overviewText,
+        targetSegments: validSegments,
+        personas: cleanedPersonas,
+        positioningMapData,
+        portalSubtitle: portalSubtitle.trim(),
+        portalSubtitlesData: updatedSubtitles,
+      })
       toast.success('保存しました')
     } catch (err) {
       console.error('[BrandStrategy Save] エラー:', err)
@@ -477,8 +478,19 @@ export default function BrandStrategyPage() {
         {/* Card 1: ターゲット＋ペルソナ */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-5 space-y-5">
+            {/* ターゲット概要（プロセス文）。ポータルでは主なターゲットの上に表示 */}
+            <div>
+              <h2 className="text-xs font-bold mb-3">ターゲット概要</h2>
+              <AutoResizeTextarea
+                value={targetOverview}
+                onChange={(e) => setTargetOverview(e.target.value)}
+                placeholder="ターゲット全体の考え方・方針の概要文（任意）"
+                className="min-h-[90px]"
+              />
+            </div>
+
             <TitleDescriptionList
-              label="ターゲット"
+              label="主なターゲット"
               items={targetSegments.map(ts => ({ title: ts.name, description: ts.description }))}
               onChange={(newItems) => {
                 setTargetSegments(newItems.map(item => ({ name: item.title, description: item.description })))

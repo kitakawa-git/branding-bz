@@ -71,7 +71,7 @@ export default function PortalLearningPage() {
   if (loading) {
     return (
       <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {[1, 2, 3, 4].map((i) => (
             <Skeleton key={i} className="h-48 w-full rounded-xl" />
           ))}
@@ -123,7 +123,7 @@ export default function PortalLearningPage() {
       )}
 
       {/* 動画グリッド */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {filtered.map((video) => (
           <Link
             key={video.id}

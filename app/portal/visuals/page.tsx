@@ -53,6 +53,38 @@ type Visuals = {
   color_palette: ColorPalette | null
 }
 
+// 画像カード（クリックで拡大＋キャプション）共通コンポーネント。
+// ロゴガイドライン・ロゴ基本形で共用（完全に同一の見た目）。ロゴが切れないよう object-contain。
+function PortalImageCard({
+  url,
+  caption,
+  onClick,
+  heightClass = 'h-[160px]',
+}: {
+  url: string
+  caption?: string
+  onClick: () => void
+  heightClass?: string
+}) {
+  return (
+    <div className="text-center">
+      <div
+        onClick={onClick}
+        className={`${heightClass} cursor-pointer rounded-lg hover:bg-muted transition-colors overflow-hidden flex items-center justify-center`}
+      >
+        <img
+          src={url}
+          alt={caption || ''}
+          className="max-w-full max-h-full object-contain"
+        />
+      </div>
+      {caption && (
+        <p className="text-xs text-muted-foreground mt-1.5 m-0">{caption}</p>
+      )}
+    </div>
+  )
+}
+
 export default function PortalVisualsPage() {
   const { companyId } = usePortalAuth()
   const cacheKey = `portal-visuals-${companyId}`
@@ -229,19 +261,15 @@ export default function PortalVisualsPage() {
               {data.logo_images.length > 0 && (
                 <div>
                   <h2 className="text-xs font-bold text-foreground mb-3 tracking-wide">ロゴ基本形</h2>
-                  <div className="flex flex-wrap gap-4">
+                  <div className="grid grid-cols-2 gap-4">
                     {data.logo_images.map((img, i) => (
-                      <div key={i} className="w-[220px]">
-                        <div
-                          onClick={() => setModalImage(img.url)}
-                          className="flex items-center justify-center h-[140px] cursor-pointer hover:opacity-80 transition-opacity"
-                        >
-                          <img src={img.url} alt={img.caption || `ロゴ基本形 ${i + 1}`} className="max-w-full max-h-[140px] object-contain" />
-                        </div>
-                        {img.caption && (
-                          <p className="text-xs text-muted-foreground mt-1.5 m-0">{img.caption}</p>
-                        )}
-                      </div>
+                      <PortalImageCard
+                        key={i}
+                        url={img.url}
+                        caption={img.caption}
+                        onClick={() => setModalImage(img.url)}
+                        heightClass="h-[220px]"
+                      />
                     ))}
                   </div>
                 </div>
@@ -272,23 +300,12 @@ export default function PortalVisualsPage() {
                           ? section.items
                           : [...section.items].sort((a, b) => (a.added_index ?? 0) - (b.added_index ?? 0))
                         ).map((item, iIdx) => (
-                          <div key={iIdx} className="text-center">
-                            <div
-                              onClick={() => setModalImage(item.url)}
-                              className="h-[160px] cursor-pointer rounded-lg hover:bg-muted transition-colors overflow-hidden"
-                            >
-                              <img
-                                src={item.url}
-                                alt={item.caption || ''}
-                                className="w-full h-full object-cover rounded-lg"
-                              />
-                            </div>
-                            {item.caption && (
-                              <p className="text-xs text-muted-foreground mt-1.5 m-0">
-                                {item.caption}
-                              </p>
-                            )}
-                          </div>
+                          <PortalImageCard
+                            key={iIdx}
+                            url={item.url}
+                            caption={item.caption || undefined}
+                            onClick={() => setModalImage(item.url)}
+                          />
                         ))}
                       </div>
                     </div>

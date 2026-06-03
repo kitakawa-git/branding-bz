@@ -95,37 +95,30 @@ type VisualsCache = {
   portalSubtitlesData: PortalSubtitles | null
 }
 
-function SortableGuidelineItem({
-  id,
-  img,
-  index,
+// 画像登録カード（サムネイル＋削除確認＋キャプション）共通コンポーネント
+// ロゴ基本形・ロゴガイドライン・ビジュアルガイドラインで共用。
+// dragHandle を渡すと並べ替え用グリップを左上に表示（並べ替え不要な箇所は省略）。
+function CaptionedImageCard({
+  url,
+  caption,
   onCaptionChange,
   onRemove,
+  innerRef,
+  style,
+  dragHandle,
 }: {
-  id: string
-  img: GuidelineImage
-  index: number
-  onCaptionChange: (index: number, caption: string) => void
-  onRemove: (index: number) => void
+  url: string
+  caption: string
+  onCaptionChange: (caption: string) => void
+  onRemove: () => void
+  innerRef?: (node: HTMLElement | null) => void
+  style?: React.CSSProperties
+  dragHandle?: React.ReactNode
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  }
-
   return (
-    <div ref={setNodeRef} style={style} className="border border-border rounded-lg overflow-hidden bg-gray-50 relative">
+    <div ref={innerRef} style={style} className="border border-border rounded-lg overflow-hidden bg-gray-50 relative">
       <div className="p-2 flex items-center justify-center min-h-[100px] bg-gray-100">
-        <button
-          type="button"
-          className="absolute top-1 left-1 p-1 rounded hover:bg-gray-200 cursor-grab active:cursor-grabbing text-muted-foreground z-10"
-          {...attributes}
-          {...listeners}
-        >
-          <GripVertical size={16} />
-        </button>
+        {dragHandle}
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button
@@ -144,26 +137,69 @@ function SortableGuidelineItem({
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>キャンセル</AlertDialogCancel>
-              <AlertDialogAction onClick={() => onRemove(index)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">削除する</AlertDialogAction>
+              <AlertDialogAction onClick={onRemove} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">削除する</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-        <img
-          src={img.url}
-          alt={img.caption || ''}
-          className="max-w-full max-h-[100px] object-contain"
-        />
+        <img src={url} alt={caption || ''} className="max-w-full max-h-[100px] object-contain" />
       </div>
       <div className="p-2">
         <Input
           type="text"
-          value={img.caption}
-          onChange={(e) => onCaptionChange(index, e.target.value)}
+          value={caption}
+          onChange={(e) => onCaptionChange(e.target.value)}
           placeholder="キャプション"
           className="text-xs py-1.5 px-2"
         />
       </div>
     </div>
+  )
+}
+
+// 並べ替え用グリップ（共通）。attributes/listeners は dnd-kit useSortable の戻り値をそのまま渡す
+function DragHandle({ attributes, listeners }: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  attributes: any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  listeners: any
+}) {
+  return (
+    <button
+      type="button"
+      className="absolute top-1 left-1 p-1 rounded hover:bg-gray-200 cursor-grab active:cursor-grabbing text-muted-foreground z-10"
+      {...attributes}
+      {...listeners}
+    >
+      <GripVertical size={16} />
+    </button>
+  )
+}
+
+function SortableGuidelineItem({
+  id,
+  img,
+  index,
+  onCaptionChange,
+  onRemove,
+}: {
+  id: string
+  img: GuidelineImage
+  index: number
+  onCaptionChange: (index: number, caption: string) => void
+  onRemove: (index: number) => void
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
+  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }
+  return (
+    <CaptionedImageCard
+      innerRef={setNodeRef}
+      style={style}
+      url={img.url}
+      caption={img.caption}
+      onCaptionChange={(c) => onCaptionChange(index, c)}
+      onRemove={() => onRemove(index)}
+      dragHandle={<DragHandle attributes={attributes} listeners={listeners} />}
+    />
   )
 }
 
@@ -183,61 +219,17 @@ function SortableLogoItem({
   onRemove: (sIdx: number, iIdx: number) => void
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  }
-
+  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }
   return (
-    <div ref={setNodeRef} style={style} className="border border-border rounded-lg overflow-hidden bg-gray-50 relative">
-      <div className="p-2 flex items-center justify-center min-h-[100px] bg-gray-100">
-        <button
-          type="button"
-          className="absolute top-1 left-1 p-1 rounded hover:bg-gray-200 cursor-grab active:cursor-grabbing text-muted-foreground z-10"
-          {...attributes}
-          {...listeners}
-        >
-          <GripVertical size={16} />
-        </button>
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="absolute top-1 right-1 size-7 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive bg-background/80 z-10"
-            >
-              <Trash2 size={12} />
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>画像を削除しますか？</AlertDialogTitle>
-              <AlertDialogDescription>この画像を削除します。この操作は保存後に確定されます。</AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>キャンセル</AlertDialogCancel>
-              <AlertDialogAction onClick={() => onRemove(sIdx, iIdx)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">削除する</AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-        <img
-          src={item.url}
-          alt={item.caption || ''}
-          className="max-w-full max-h-[100px] object-contain"
-        />
-      </div>
-      <div className="p-2">
-        <Input
-          type="text"
-          value={item.caption}
-          onChange={(e) => onCaptionChange(sIdx, iIdx, e.target.value)}
-          placeholder="キャプション"
-          className="text-xs py-1.5 px-2"
-        />
-      </div>
-    </div>
+    <CaptionedImageCard
+      innerRef={setNodeRef}
+      style={style}
+      url={item.url}
+      caption={item.caption}
+      onCaptionChange={(c) => onCaptionChange(sIdx, iIdx, c)}
+      onRemove={() => onRemove(sIdx, iIdx)}
+      dragHandle={<DragHandle attributes={attributes} listeners={listeners} />}
+    />
   )
 }
 
@@ -864,26 +856,11 @@ export default function BrandVisualsPage() {
                 <div className="flex flex-wrap gap-3 mb-3">
                   {visuals.logo_images.map((img, i) => (
                     <div key={i} className="w-[180px]">
-                      <div className="relative">
-                        <div className="border border-border rounded-lg overflow-hidden bg-gray-100 p-3 flex items-center justify-center w-[180px] h-[120px]">
-                          <img src={img.url} alt={img.caption || `ロゴ基本形 ${i + 1}`} className="max-w-full max-h-full object-contain" />
-                        </div>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          onClick={() => removeLogoImage(i)}
-                          className="absolute top-1 right-1 size-7 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive bg-background/80"
-                        >
-                          <Trash2 size={12} />
-                        </Button>
-                      </div>
-                      <Input
-                        type="text"
-                        value={img.caption}
-                        onChange={(e) => updateLogoImageCaption(i, e.target.value)}
-                        placeholder="キャプション（例：横組み）"
-                        className="h-9 mt-2 text-sm"
+                      <CaptionedImageCard
+                        url={img.url}
+                        caption={img.caption}
+                        onCaptionChange={(c) => updateLogoImageCaption(i, c)}
+                        onRemove={() => removeLogoImage(i)}
                       />
                     </div>
                   ))}
