@@ -2,7 +2,7 @@
 
 // YouTube IFrame Player API で再生イベントを捕捉し、視聴進捗を記録するプレイヤー。
 // - セッション開始: 最初の PLAYING で POST /api/learning/views → view_id 保持
-// - 進捗送信: PLAYING 中は 15秒ごとに PATCH（間引き）。PAUSED/ENDED で即送信
+// - 進捗送信: PLAYING 中は 30秒ごとに PATCH（間引き／Disk IO削減）。PAUSED/ENDED で即送信
 // - 離脱時: visibilitychange(hidden) / beforeunload で keepalive 付き PATCH
 // - 完了判定: progress >= 90% もしくは ENDED で completed=true
 // - duration 確定: 初回 getDuration() を進捗 PATCH に同梱（動画側 duration 未設定時のみ確定）
@@ -40,7 +40,7 @@ function loadYouTubeApi(): Promise<any> {
   return apiPromise
 }
 
-const PROGRESS_INTERVAL_MS = 15000
+const PROGRESS_INTERVAL_MS = 30000
 
 type Props = {
   // YouTube の動画ID（11桁）

@@ -1,0 +1,44 @@
+-- Disk IO / CPU 削減 A-②: RLS の auth.uid()/jwt()/role() を (select ...) でラップ
+-- 「行ごと再評価」→「クエリ1回評価」に最適化。Supabase advisor: auth_rls_initplan（約41件）への対応。
+-- ★ アクセス制御のロジックは一切変えない（同じ条件を1回だけ評価する形に書き換えるだけ）。
+alter policy "ログインユーザーは自分のレコードを閲覧可能" on public.admin_users using (((select auth.uid()) = auth_id));
+alter policy announcement_likes_delete on public.announcement_likes using ((user_id = (select auth.uid())));
+alter policy announcement_likes_insert on public.announcement_likes with check ((user_id = (select auth.uid())));
+alter policy announcement_likes_select on public.announcement_likes using ((company_id IN ( SELECT members.company_id FROM members WHERE (members.auth_id = (select auth.uid())))));
+alter policy announcement_reads_insert on public.announcement_reads with check ((user_id = (select auth.uid())));
+alter policy announcement_reads_select on public.announcement_reads using (((company_id IN ( SELECT members.company_id FROM members WHERE (members.auth_id = (select auth.uid())))) AND ((user_id = (select auth.uid())) OR (EXISTS ( SELECT 1 FROM admin_users WHERE ((admin_users.auth_id = (select auth.uid())) AND (admin_users.company_id = announcement_reads.company_id)))))));
+alter policy announcements_delete on public.announcements using ((EXISTS ( SELECT 1 FROM admin_users WHERE ((admin_users.auth_id = (select auth.uid())) AND (admin_users.company_id = announcements.company_id)))));
+alter policy announcements_insert on public.announcements with check ((EXISTS ( SELECT 1 FROM admin_users WHERE ((admin_users.auth_id = (select auth.uid())) AND (admin_users.company_id = announcements.company_id)))));
+alter policy announcements_select on public.announcements using (((company_id IN ( SELECT members.company_id FROM members WHERE (members.auth_id = (select auth.uid())))) AND ((is_published = true) OR (EXISTS ( SELECT 1 FROM admin_users WHERE ((admin_users.auth_id = (select auth.uid())) AND (admin_users.company_id = announcements.company_id)))))));
+alter policy announcements_update on public.announcements using ((EXISTS ( SELECT 1 FROM admin_users WHERE ((admin_users.auth_id = (select auth.uid())) AND (admin_users.company_id = announcements.company_id)))));
+alter policy brand_guidelines_admin_insert on public.brand_guidelines with check ((company_id IN ( SELECT admin_users.company_id FROM admin_users WHERE (admin_users.auth_id = (select auth.uid())))));
+alter policy brand_guidelines_admin_update on public.brand_guidelines using ((company_id IN ( SELECT admin_users.company_id FROM admin_users WHERE (admin_users.auth_id = (select auth.uid())))));
+alter policy brand_guidelines_select on public.brand_guidelines using ((company_id IN ( SELECT admin_users.company_id FROM admin_users WHERE (admin_users.auth_id = (select auth.uid())) UNION SELECT members.company_id FROM members WHERE (members.auth_id = (select auth.uid())))));
+alter policy brand_personalities_admin_insert on public.brand_personalities with check ((company_id IN ( SELECT admin_users.company_id FROM admin_users WHERE (admin_users.auth_id = (select auth.uid())))));
+alter policy brand_personalities_admin_update on public.brand_personalities using ((company_id IN ( SELECT admin_users.company_id FROM admin_users WHERE (admin_users.auth_id = (select auth.uid())))));
+alter policy brand_personalities_select on public.brand_personalities using ((company_id IN ( SELECT admin_users.company_id FROM admin_users WHERE (admin_users.auth_id = (select auth.uid())) UNION SELECT members.company_id FROM members WHERE (members.auth_id = (select auth.uid())))));
+alter policy brand_personas_admin_all on public.brand_personas using ((company_id IN ( SELECT admin_users.company_id FROM admin_users WHERE (admin_users.auth_id = (select auth.uid())))));
+alter policy brand_personas_select on public.brand_personas using ((company_id IN ( SELECT admin_users.company_id FROM admin_users WHERE (admin_users.auth_id = (select auth.uid())) UNION SELECT members.company_id FROM members WHERE (members.auth_id = (select auth.uid())))));
+alter policy brand_terms_admin_all on public.brand_terms using ((company_id IN ( SELECT admin_users.company_id FROM admin_users WHERE (admin_users.auth_id = (select auth.uid())))));
+alter policy brand_terms_select on public.brand_terms using ((company_id IN ( SELECT admin_users.company_id FROM admin_users WHERE (admin_users.auth_id = (select auth.uid())) UNION SELECT members.company_id FROM members WHERE (members.auth_id = (select auth.uid())))));
+alter policy brand_visuals_admin_insert on public.brand_visuals with check ((company_id IN ( SELECT admin_users.company_id FROM admin_users WHERE (admin_users.auth_id = (select auth.uid())))));
+alter policy brand_visuals_admin_update on public.brand_visuals using ((company_id IN ( SELECT admin_users.company_id FROM admin_users WHERE (admin_users.auth_id = (select auth.uid())))));
+alter policy brand_visuals_select on public.brand_visuals using ((company_id IN ( SELECT admin_users.company_id FROM admin_users WHERE (admin_users.auth_id = (select auth.uid())) UNION SELECT members.company_id FROM members WHERE (members.auth_id = (select auth.uid())))));
+alter policy "Only super admins can update inquiries" on public.contact_inquiries using ((EXISTS ( SELECT 1 FROM admin_users WHERE ((admin_users.auth_id = (select auth.uid())) AND (admin_users.is_superadmin = true)))));
+alter policy "Only super admins can view inquiries" on public.contact_inquiries using ((EXISTS ( SELECT 1 FROM admin_users WHERE ((admin_users.auth_id = (select auth.uid())) AND (admin_users.is_superadmin = true)))));
+alter policy invite_links_admin_all on public.invite_links using ((company_id IN ( SELECT admin_users.company_id FROM admin_users WHERE (admin_users.auth_id = (select auth.uid())))));
+alter policy members_admin_delete on public.members using ((company_id IN ( SELECT admin_users.company_id FROM admin_users WHERE (admin_users.auth_id = (select auth.uid())))));
+alter policy members_admin_insert on public.members with check ((company_id IN ( SELECT admin_users.company_id FROM admin_users WHERE (admin_users.auth_id = (select auth.uid())))));
+alter policy members_admin_select on public.members using ((company_id IN ( SELECT admin_users.company_id FROM admin_users WHERE (admin_users.auth_id = (select auth.uid())))));
+alter policy members_admin_update on public.members using ((company_id IN ( SELECT admin_users.company_id FROM admin_users WHERE (admin_users.auth_id = (select auth.uid())))));
+alter policy members_select_own on public.members using (((select auth.uid()) = auth_id));
+alter policy personal_goals_delete on public.personal_goals using ((user_id = (select auth.uid())));
+alter policy personal_goals_insert on public.personal_goals with check ((user_id = (select auth.uid())));
+alter policy personal_goals_select on public.personal_goals using (((user_id = (select auth.uid())) OR (EXISTS ( SELECT 1 FROM admin_users WHERE ((admin_users.auth_id = (select auth.uid())) AND (admin_users.company_id = personal_goals.company_id))))));
+alter policy personal_goals_update on public.personal_goals using ((user_id = (select auth.uid())));
+alter policy timeline_comments_delete on public.timeline_comments using ((user_id = (select auth.uid())));
+alter policy timeline_comments_insert on public.timeline_comments with check ((user_id = (select auth.uid())));
+alter policy timeline_likes_insert on public.timeline_likes with check ((user_id = (select auth.uid())));
+alter policy timeline_posts_delete on public.timeline_posts using ((user_id = (select auth.uid())));
+alter policy timeline_posts_insert on public.timeline_posts with check ((user_id = (select auth.uid())));
+alter policy timeline_posts_update on public.timeline_posts using ((user_id = (select auth.uid()))) with check ((user_id = (select auth.uid())));
