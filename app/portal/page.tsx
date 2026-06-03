@@ -938,7 +938,7 @@ export default function PortalTopPage() {
           <div className="mb-3">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xs font-bold text-foreground tracking-wide m-0">
-                あなたのブランドコミット
+                あなたのタイムライン分析
               </h2>
               <div className="flex gap-1">
                 {periodOptions.map(opt => (

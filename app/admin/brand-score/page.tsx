@@ -174,7 +174,7 @@ const ALL_TAGS = [
 
 const dashboardTabs = [
   { label: 'スコア', href: '/admin/brand-score' },
-  { label: 'タイムライン投稿', href: '/admin/dashboard' },
+  { label: 'タイムライン分析', href: '/admin/dashboard' },
   { label: 'スマート名刺', href: '/admin/analytics' },
 ]
 

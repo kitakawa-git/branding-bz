@@ -175,7 +175,7 @@ function resolveProfile(member: MemberRow): { name: string; photoUrl: string | n
 
 const dashboardTabs = [
   { label: 'スコア', href: '/admin/brand-score' },
-  { label: 'タイムライン投稿', href: '/admin/dashboard' },
+  { label: 'タイムライン分析', href: '/admin/dashboard' },
   { label: 'スマート名刺', href: '/admin/analytics' },
 ]
 
@@ -184,7 +184,7 @@ export default function DashboardPage() {
   const pathname = usePathname()
 
   // 機能トグル: 無効な機能のタブを非表示にする
-  // 「タイムライン投稿」→ /admin/dashboard、「スマート名刺」→ /admin/analytics
+  // 「タイムライン分析」→ /admin/dashboard、「スマート名刺」→ /admin/analytics
   const timelineEnabled = isFeatureEnabled(company, 'timeline_enabled')
   const cardEnabled = isFeatureEnabled(company, 'card_enabled')
   const visibleTabs = dashboardTabs.filter((tab) => {
