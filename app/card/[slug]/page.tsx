@@ -190,6 +190,12 @@ export default async function CardPage({ params }: Props) {
   const vision = guidelines?.vision || ''
   const brandStory = guidelines?.brand_story || ''
 
+  // カバー写真: 個人のカバー写真があれば優先、なければ企業のコンセプトビジュアル（先頭画像）を適用
+  const conceptVisualCover = (Array.isArray(guidelines?.concept_visuals) && guidelines.concept_visuals.length > 0)
+    ? (guidelines.concept_visuals[0] as string)
+    : (guidelines?.concept_visual_url as string | undefined) || ''
+  const coverImageUrl = profile.cover_image_url || conceptVisualCover
+
   // ミッション表示用テキスト
   const missionText = mission || ''
 
@@ -253,13 +259,14 @@ export default async function CardPage({ params }: Props) {
       `}</style>
 
       {/* 1. ヘッダー（カバー写真・プロフィール写真・名前・役職） */}
-      {profile.cover_image_url ? (
+      {/* カバー写真は「個人のカバー → 企業コンセプトビジュアル」の順で適用 */}
+      {coverImageUrl ? (
         <>
           {/* カバー写真あり: 画像ヘッダー */}
           <div className="relative">
             <div className="h-[160px] sm:h-[200px] overflow-hidden">
               <img
-                src={profile.cover_image_url}
+                src={coverImageUrl}
                 alt=""
                 className="w-full h-full object-cover"
               />
@@ -474,10 +481,11 @@ export default async function CardPage({ params }: Props) {
               {businessContents.map((item, i) => (
                 <Card
                   key={i}
-                  className="bg-muted/50 border shadow-none border-l-2 rounded-lg"
-                  style={{ borderLeftColor: accentColor }}
+                  className="relative overflow-hidden bg-muted/50 border shadow-none rounded-lg"
                 >
-                  <CardContent className="p-4 flex gap-3">
+                  {/* 左端のバー（ポータル事業内容と同装飾：w-1・全高・角丸クリップ）。色はブランドアクセント */}
+                  <div className="absolute left-0 top-0 bottom-0 w-1" style={{ backgroundColor: accentColor }} />
+                  <CardContent className="p-4 pl-5 flex gap-3">
                     <span className="text-xs font-mono text-muted-foreground tabular-nums pt-0.5">
                       {String(i + 1).padStart(2, '0')}
                     </span>
