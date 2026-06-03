@@ -13,6 +13,7 @@ const breadcrumbMap: Record<string, AdminCrumb> = {
   '/admin/analytics': { title: 'スマート名刺分析' },
   '/admin/brand-score': { title: 'ブランドスコア' },
   '/admin/brand-score/surveys': { title: 'サーベイ管理' },
+  '/admin/brand-score/quizzes': { title: '理解度テスト' },
   '/admin/company': { title: 'ブランド基本情報' },
   '/admin/members': { title: 'アカウント管理' },
   '/admin/members-portal': { title: 'アカウント作成' },
