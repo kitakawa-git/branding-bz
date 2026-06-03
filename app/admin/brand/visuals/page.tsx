@@ -24,7 +24,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { AutoResizeTextarea } from '@/components/ui/auto-resize-textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { DEFAULT_SUBTITLES, type PortalSubtitles } from '@/lib/portal-subtitles'
+import { type PortalSubtitles } from '@/lib/portal-subtitles'
 import { FONT_PREVIEW_TEXT, DEFAULT_FONT_ID, DEFAULT_FONT_ROLE, getCssFontFamily, getGoogleFontsUrl, parseFontsFromDB, type BrandFonts, type FontSource } from '@/lib/brand-fonts'
 import { GoogleFontPicker } from '@/components/GoogleFontPicker'
 import { GripVertical, Plus, Trash2, Check } from 'lucide-react'
@@ -793,18 +793,6 @@ export default function BrandVisualsPage() {
 
   return (
     <div>
-      {/* タイトルはヘッダーのパンくずに移動 */}
-      <div className="mb-6">
-        <Input
-          type="text"
-          value={portalSubtitle}
-          onChange={(e) => setPortalSubtitle(e.target.value)}
-          placeholder={DEFAULT_SUBTITLES.visuals}
-          className="h-9 text-sm"
-        />
-        <p className="text-[11px] text-muted-foreground mt-1">ポータルに表示されるサブタイトル（空欄でデフォルト表示）</p>
-      </div>
-
       <form id="visuals-form" onSubmit={handleSubmit} className="space-y-8">
         {/* カード1: ロゴコンセプト＆ロゴガイドライン */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">

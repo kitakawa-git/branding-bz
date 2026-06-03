@@ -197,7 +197,8 @@ export async function fetchCIManualData(companyId: string): Promise<CIManualData
   const firstPersona = personasData[0]
   const target = (firstPersona as Record<string, unknown>)?.target as string | null ?? null
   const positioningMapData = (firstPersona as Record<string, unknown>)?.positioning_map_data as PositioningMapData | null ?? null
-  const actionGuidelines = ((firstPersona as Record<string, unknown>)?.action_guidelines as ActionGuideline[]) || []
+  // 行動指針は brand_guidelines.action_guidelines へ移設済み（旧: brand_personas 先頭行）
+  const actionGuidelines = ((gl as Record<string, unknown> | null)?.action_guidelines as ActionGuideline[]) || []
 
   const personas: PersonaItem[] = personasData.map((p: Record<string, unknown>) => ({
     name: (p.name as string) || '',

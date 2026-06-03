@@ -2,7 +2,7 @@
 import { Page, View, Text } from '@react-pdf/renderer'
 import type { ThemeStyles } from '../pdf-styles'
 import type { CIManualData } from '../types'
-import { splitBrandCopy } from '../../brand-mvv'
+import { splitBrandCopy, resolveTraitCopy } from '../../brand-mvv'
 
 function SubSection({ title, children, styles }: { title: string; children: React.ReactNode; styles: ThemeStyles }) {
   return (
@@ -113,19 +113,23 @@ export function GuidelinesSection({ data, styles, brandColor }: { data: CIManual
       {/* 特性 */}
       {gl.traits.length > 0 && (
         <SubSection title="ブランドパーソナリティ" styles={styles}>
-          {gl.traits.map((t, i) => (
+          {gl.traits.map((t, i) => {
+            const { copy, description } = resolveTraitCopy(t)
+            return (
             <View key={i} wrap={false} style={{ marginBottom: 8 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2 }}>
                 <Text style={{ fontSize: 9, fontWeight: 700, color: '#333333' }}>{t.name}</Text>
-                <Text style={{ fontSize: 9, color: '#666666' }}>{t.score}/10</Text>
+                <Text style={{ fontSize: 9, color: '#666666' }}>{t.score}/5</Text>
               </View>
               {/* スコアバー */}
               <View style={{ height: 6, backgroundColor: '#e8e8e8', borderRadius: 3 }}>
-                <View style={{ height: 6, width: `${t.score * 10}%`, backgroundColor: brandColor, borderRadius: 3 }} />
+                <View style={{ height: 6, width: `${t.score * 20}%`, backgroundColor: brandColor, borderRadius: 3 }} />
               </View>
-              {t.description && <Text style={{ fontSize: 8, color: '#888888', marginTop: 2 }}>{t.description}</Text>}
+              {copy ? <Text style={{ fontSize: 8.5, fontWeight: 700, color: '#444444', marginTop: 2 }}>{copy}</Text> : null}
+              {description ? <Text style={{ fontSize: 8, color: '#888888', marginTop: 1 }}>{description}</Text> : null}
             </View>
-          ))}
+            )
+          })}
         </SubSection>
       )}
 

@@ -2,6 +2,7 @@
 import { Page, View, Text } from '@react-pdf/renderer'
 import type { ThemeStyles } from '../pdf-styles'
 import type { CIManualData } from '../types'
+import { splitToneOfVoice } from '../../brand-mvv'
 
 export function VerbalSection({ data, styles, brandColor }: { data: CIManualData; styles: ThemeStyles; brandColor: string }) {
   const verbal = data.verbal
@@ -25,13 +26,17 @@ export function VerbalSection({ data, styles, brandColor }: { data: CIManualData
 
       <Text style={styles.sectionTitle}>バーバル</Text>
 
-      {/* トーンオブボイス */}
-      {verbal.tone_of_voice && (
+      {/* トーンオブボイス（コピー＋説明文） */}
+      {verbal.tone_of_voice && (() => {
+        const { copy, body } = splitToneOfVoice(verbal.tone_of_voice)
+        return (
         <View style={{ marginBottom: 20 }}>
           <Text style={styles.subSectionTitle}>トーンオブボイス</Text>
-          <Text style={styles.bodyText}>{verbal.tone_of_voice}</Text>
+          {copy ? <Text style={{ fontSize: 12, fontWeight: 700, color: '#333333', marginBottom: 4 }}>{copy}</Text> : null}
+          {body ? <Text style={styles.bodyText}>{body}</Text> : null}
         </View>
-      )}
+        )
+      })()}
 
       {/* 用語ルール */}
       {verbal.terms.length > 0 && (

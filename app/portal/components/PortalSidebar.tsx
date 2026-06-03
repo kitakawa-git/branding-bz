@@ -83,7 +83,7 @@ function RashisaGroup({ pathname }: { pathname: string }) {
             </SidebarMenuButton>
           </SidebarMenuItem>
 
-          {/* 2. 感じられ方（ブランドパーソナリティ：人格・トーン＆マナー） */}
+          {/* 2. 感じられ方（ブランドパーソナリティ：人格・トーンオブボイス） */}
           <SidebarMenuItem>
             <SidebarMenuButton asChild isActive={pathname.startsWith('/portal/personality')}>
               <Link href="/portal/personality">

@@ -640,7 +640,7 @@ export default function MembersPage() {
                 <div className="flex gap-2 items-start">
                   <Input
                     type="email"
-                    placeholder="ueda@example.com"
+                    placeholder="member@example.com"
                     value={cleanupEmail}
                     onChange={(e) => setCleanupEmail(e.target.value)}
                     className="max-w-xs"

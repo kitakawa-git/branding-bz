@@ -65,7 +65,7 @@ const BRAND_QUADRANTS = [
   {
     perspective: '感じられ方',
     noun: 'ブランドパーソナリティ',
-    items: 'ブランドの人格・トーン＆マナー',
+    items: 'ブランドの人格・キャラクター',
     href: '/portal/personality',
     icon: Smile,
     tone: 'purple' as const,
@@ -73,7 +73,7 @@ const BRAND_QUADRANTS = [
   {
     perspective: '見え方・聞こえ方',
     noun: 'ブランド表現',
-    items: 'ビジュアルアイデンティティ・バーバルアイデンティティ（用語ルール含む）',
+    items: 'ビジュアルアイデンティティ・バーバルアイデンティティ（トーンオブボイス・用語ルール含む）',
     href: '/portal/visuals',
     icon: Eye,
     tone: 'green' as const,

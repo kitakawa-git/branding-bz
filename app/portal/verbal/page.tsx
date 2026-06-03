@@ -1,17 +1,18 @@
 'use client'
 
-// バーバルアイデンティティ 閲覧ページ（用語ルール・バーバルの言語表現）
-// パーソナリティ（トーン＆マナー）は /portal/personality へ移管済み
+// バーバルアイデンティティ 閲覧ページ（トーンオブボイス・用語ルール）
 import { useEffect, useState, useMemo } from 'react'
 import { supabase } from '@/lib/supabase'
 import { fetchWithRetry } from '@/lib/supabase-fetch'
 import { usePortalAuth } from '../components/PortalDataProvider'
 import { useBrandFonts } from '@/hooks/useBrandFonts'
 import { BrandFontLoader } from '@/components/BrandFontLoader'
+import { getCssFontFamily } from '@/lib/brand-fonts'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
 import { BrandPageTracker } from '@/components/analytics/BrandPageTracker'
+import { splitToneOfVoice } from '@/lib/brand-mvv'
 import { Input } from '@/components/ui/input'
 import { Search } from 'lucide-react'
 
@@ -22,15 +23,17 @@ type Term = {
   category: string | null
 }
 
-type VerbalCache = { terms: Term[] }
+type VerbalCache = { terms: Term[]; toneOfVoice: string | null }
 
 export default function PortalVerbalIdentityPage() {
   const { companyId } = usePortalAuth()
   const brandFonts = useBrandFonts(companyId)
+  const secondaryStyle = brandFonts ? { fontFamily: getCssFontFamily(brandFonts.secondary_font) } : undefined
   const cacheKey = `portal-verbal-${companyId}`
   const cached = companyId ? getPageCache<VerbalCache>(cacheKey) : null
 
   const [terms, setTerms] = useState<Term[]>(cached?.terms ?? [])
+  const [toneOfVoice, setToneOfVoice] = useState<string | null>(cached?.toneOfVoice ?? null)
   const [loading, setLoading] = useState(!cached)
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState<string>('')
@@ -39,9 +42,15 @@ export default function PortalVerbalIdentityPage() {
     if (!companyId) return
     if (getPageCache<VerbalCache>(cacheKey)) return
 
-    fetchWithRetry(() =>
-      supabase.from('brand_terms').select('preferred_term, avoided_term, context, category, sort_order').eq('company_id', companyId).order('sort_order')
-    ).then((tRes) => {
+    Promise.all([
+      fetchWithRetry(() =>
+        supabase.from('brand_terms').select('preferred_term, avoided_term, context, category, sort_order').eq('company_id', companyId).order('sort_order')
+      ),
+      // トーンオブボイス: brand_personalities.tone_of_voice
+      fetchWithRetry(() =>
+        supabase.from('brand_personalities').select('tone_of_voice').eq('company_id', companyId).maybeSingle()
+      ),
+    ]).then(([tRes, pRes]) => {
       let parsedTerms: Term[] = []
       if (tRes.data && Array.isArray(tRes.data)) {
         parsedTerms = tRes.data.map((d: unknown) => {
@@ -55,7 +64,10 @@ export default function PortalVerbalIdentityPage() {
         })
         setTerms(parsedTerms)
       }
-      setPageCache(cacheKey, { terms: parsedTerms })
+      const p = pRes.data as Record<string, unknown> | null
+      const tone = (p?.tone_of_voice as string) || null
+      setToneOfVoice(tone)
+      setPageCache(cacheKey, { terms: parsedTerms, toneOfVoice: tone })
       setLoading(false)
     })
   }, [companyId, cacheKey])
@@ -123,8 +135,9 @@ export default function PortalVerbalIdentityPage() {
   )
 
   const hasTerms = terms.length > 0
+  const hasTone = !!toneOfVoice
 
-  if (!hasTerms) {
+  if (!hasTerms && !hasTone) {
     return <div className="text-center py-16 text-muted-foreground text-[15px]">まだ登録されていません</div>
   }
 
@@ -133,6 +146,26 @@ export default function PortalVerbalIdentityPage() {
     <BrandFontLoader fonts={brandFonts} />
     {companyId && <BrandPageTracker companyId={companyId} pageType="verbal" />}
     <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
+
+      {/* トーンオブボイス（brand_personalities.tone_of_voice） */}
+      {hasTone && (
+        <section>
+          <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+            <CardContent className="p-5">
+              <h2 className="text-xs font-bold text-foreground mb-3 tracking-wide">トーンオブボイス</h2>
+              {(() => {
+                const { copy, body } = splitToneOfVoice(toneOfVoice)
+                return (
+                  <>
+                    {copy && <p className="text-base font-bold text-foreground mb-1 m-0" style={secondaryStyle}>{copy}</p>}
+                    {body && <p className="text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0" style={secondaryStyle}>{body}</p>}
+                  </>
+                )
+              })()}
+            </CardContent>
+          </Card>
+        </section>
+      )}
 
       {/* 用語ルール */}
       {hasTerms && (

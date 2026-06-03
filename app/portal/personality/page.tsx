@@ -1,18 +1,19 @@
 'use client'
 
 // ブランドパーソナリティ 閲覧ページ（感じられ方｜ブランドパーソナリティ）
-// 表示項目: 人格（brand_guidelines.traits のレーダーチャート＋リスト）＋ トーン＆マナー（brand_personalities.tone_of_voice）
+// 表示項目: 人格（brand_guidelines.traits のレーダーチャート＋リスト）
+// ※ トーンオブボイスは /portal/verbal（バーバル）へ移管済み
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { fetchWithRetry } from '@/lib/supabase-fetch'
 import { usePortalAuth } from '../components/PortalDataProvider'
 import { useBrandFonts } from '@/hooks/useBrandFonts'
 import { BrandFontLoader } from '@/components/BrandFontLoader'
-import { getCssFontFamily } from '@/lib/brand-fonts'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
 import { BrandPageTracker } from '@/components/analytics/BrandPageTracker'
+import { resolveTraitCopy } from '@/lib/brand-mvv'
 import {
   RadarChart,
   PolarGrid,
@@ -27,18 +28,17 @@ import {
   ChartTooltipContent,
 } from '@/components/ui/chart'
 
-type TraitItem = { name: string; score: number; description: string; added_index?: number }
+type TraitItem = { name: string; score: number; copy?: string; description: string; added_index?: number }
 
 type Personality = {
   traits: TraitItem[]
   traits_sort: 'registered' | 'custom'
-  tone_of_voice: string | null
+  summary: string | null
 }
 
 export default function PortalPersonalityPage() {
   const { companyId } = usePortalAuth()
   const brandFonts = useBrandFonts(companyId)
-  const secondaryStyle = brandFonts ? { fontFamily: getCssFontFamily(brandFonts.secondary_font) } : undefined
   const cacheKey = `portal-personality-${companyId}`
   const cached = companyId ? getPageCache<Personality>(cacheKey) : null
   const [data, setData] = useState<Personality | null>(cached)
@@ -48,30 +48,19 @@ export default function PortalPersonalityPage() {
     if (!companyId) return
     if (getPageCache<Personality>(cacheKey)) return
 
-    Promise.all([
-      // 人格: brand_guidelines.traits
-      fetchWithRetry(() =>
-        supabase
-          .from('brand_guidelines')
-          .select('traits, traits_sort')
-          .eq('company_id', companyId)
-          .maybeSingle()
-      ),
-      // トーン＆マナー: brand_personalities.tone_of_voice
-      fetchWithRetry(() =>
-        supabase
-          .from('brand_personalities')
-          .select('tone_of_voice')
-          .eq('company_id', companyId)
-          .maybeSingle()
-      ),
-    ]).then(([gRes, pRes]) => {
+    // 人格: brand_guidelines.traits
+    fetchWithRetry(() =>
+      supabase
+        .from('brand_guidelines')
+        .select('traits, traits_sort, personality_summary')
+        .eq('company_id', companyId)
+        .maybeSingle()
+    ).then((gRes) => {
       const g = gRes.data as Record<string, unknown> | null
-      const p = pRes.data as Record<string, unknown> | null
       const parsed: Personality = {
         traits: (g?.traits as TraitItem[]) || [],
         traits_sort: (g?.traits_sort as 'registered' | 'custom') || 'registered',
-        tone_of_voice: (p?.tone_of_voice as string) || null,
+        summary: (g?.personality_summary as string) || null,
       }
       setData(parsed)
       setPageCache(cacheKey, parsed)
@@ -100,12 +89,6 @@ export default function PortalPersonalityPage() {
           ))}
         </CardContent>
       </Card>
-      <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-        <CardContent className="p-5 space-y-3">
-          <Skeleton className="h-4 w-36" />
-          <Skeleton className="h-20 w-full" />
-        </CardContent>
-      </Card>
     </div>
   )
 
@@ -124,9 +107,8 @@ export default function PortalPersonalityPage() {
   } satisfies ChartConfig
 
   const hasTraits = filteredTraits.length > 0
-  const hasTone = !!data.tone_of_voice
 
-  if (!hasTraits && !hasTone) {
+  if (!hasTraits && !data.summary) {
     return <div className="text-center py-16 text-muted-foreground text-[15px]">まだ登録されていません</div>
   }
 
@@ -136,8 +118,8 @@ export default function PortalPersonalityPage() {
     {companyId && <BrandPageTracker companyId={companyId} pageType="personality" />}
     <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
 
-      {/* 1. 人格（ブランドパーソナリティ：レーダーチャート＋リスト） */}
-      {hasTraits && (
+      {/* 1. 人格（ブランドパーソナリティ：レーダーチャート＋概要＋リスト） */}
+      {(hasTraits || data.summary) && (
         <section>
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
             <CardContent className="p-5">
@@ -153,7 +135,7 @@ export default function PortalPersonalityPage() {
                       />
                       <PolarGrid />
                       <PolarAngleAxis dataKey="name" tick={{ fontSize: 12 }} />
-                      <PolarRadiusAxis angle={90} domain={[0, 10]} tick={{ fontSize: 10 }} tickCount={6} />
+                      <PolarRadiusAxis angle={90} domain={[0, 5]} tick={{ fontSize: 10 }} tickCount={6} />
                       <Radar
                         dataKey="score"
                         fill="var(--color-score)"
@@ -167,16 +149,30 @@ export default function PortalPersonalityPage() {
                 </div>
               )}
 
+              {/* パーソナリティ概要（brand_guidelines.personality_summary） */}
+              {data.summary && (
+                <p className="text-sm text-foreground/80 leading-[1.9] whitespace-pre-wrap mb-6 m-0">
+                  {data.summary}
+                </p>
+              )}
+
               <div className="space-y-2">
-                {filteredTraits.map((trait, i) => (
+                {filteredTraits.map((trait, i) => {
+                  const { copy, description } = resolveTraitCopy(trait)
+                  return (
                   <div key={i} className="rounded-lg border border-border bg-background p-4 flex items-center gap-4">
                     <div className="flex-1">
-                      <p className="text-base font-bold text-foreground mb-0.5 m-0">
+                      <p className="text-xs font-bold text-foreground mb-0.5 m-0">
                         {trait.name}
                       </p>
-                      {trait.description && (
-                        <p className="text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0">
-                          {trait.description}
+                      {copy && (
+                        <p className="text-base font-semibold text-foreground mt-0.5 m-0">
+                          {copy}
+                        </p>
+                      )}
+                      {description && (
+                        <p className="text-sm text-foreground/70 leading-[1.8] whitespace-pre-wrap mt-1 m-0">
+                          {description}
                         </p>
                       )}
                     </div>
@@ -184,23 +180,12 @@ export default function PortalPersonalityPage() {
                       <div className="w-11 h-11 rounded-full bg-blue-600 text-white flex items-center justify-center text-base font-bold">
                         {trait.score}
                       </div>
-                      <div className="text-[10px] text-muted-foreground mt-1">/10</div>
+                      <div className="text-[10px] text-muted-foreground mt-1">/5</div>
                     </div>
                   </div>
-                ))}
+                  )
+                })}
               </div>
-            </CardContent>
-          </Card>
-        </section>
-      )}
-
-      {/* 2. トーン＆マナー（brand_personalities.tone_of_voice） */}
-      {hasTone && (
-        <section>
-          <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-            <CardContent className="p-5">
-              <h2 className="text-xs font-bold text-foreground mb-3 tracking-wide">トーン＆マナー</h2>
-              <p className="text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0" style={secondaryStyle}>{data.tone_of_voice}</p>
             </CardContent>
           </Card>
         </section>

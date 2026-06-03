@@ -66,10 +66,10 @@ const navItems: NavItem[] = [
 
 const brandItems: NavItem[] = [
   { href: '/admin/brand/guidelines', label: 'ブランド方針', icon: Compass },
-  { href: '/admin/brand/strategy', label: 'ブランド戦略', icon: Map },
   { href: '/admin/brand/personality', label: 'ブランドパーソナリティ', icon: Smile },
   { href: '/admin/brand/visuals', label: 'ビジュアル', icon: Palette },
   { href: '/admin/brand/verbal', label: 'バーバル', icon: MessageSquare },
+  { href: '/admin/brand/strategy', label: 'ブランド戦略', icon: Map },
   { href: '/admin/ci-manual', label: 'CIマニュアル出力', icon: Printer },
 ]
 

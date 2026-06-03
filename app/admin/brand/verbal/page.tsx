@@ -1,7 +1,8 @@
 'use client'
 
-// バーバルアイデンティティ 編集ページ（用語ルール）
-// ※ パーソナリティ（トーンオブボイス）は /admin/brand/personality に分離済み
+// バーバルアイデンティティ 編集ページ（トーンオブボイス＋用語ルール）
+// - トーンオブボイス: brand_personalities.tone_of_voice
+// - 用語ルール: brand_terms
 import { useEffect, useState, useMemo } from 'react'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
@@ -12,9 +13,17 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { DEFAULT_SUBTITLES, type PortalSubtitles } from '@/lib/portal-subtitles'
+import { AutoResizeTextarea } from '@/components/ui/auto-resize-textarea'
+import { type PortalSubtitles } from '@/lib/portal-subtitles'
+import { splitToneOfVoice, combineBrandCopy } from '@/lib/brand-mvv'
 import { Plus, Trash2, Check } from 'lucide-react'
 import { Fab, FabButton } from '@/components/ui/fab'
+
+type Personality = {
+  // トーンオブボイスは「コピー＋説明文」を分けて編集（保存時に空行区切りで結合し tone_of_voice 列へ）
+  tone_copy: string
+  tone_body: string
+}
 
 type TermItem = {
   preferred_term: string
@@ -24,6 +33,8 @@ type TermItem = {
 }
 
 type VerbalCache = {
+  personalityId: string | null
+  personality: Personality
   terms: TermItem[]
   portalSubtitle: string
   portalSubtitlesData: PortalSubtitles | null
@@ -33,6 +44,8 @@ export default function VerbalIdentityPage() {
   const { companyId } = useAuth()
   const cacheKey = `admin-brand-verbal-${companyId}`
   const cached = companyId ? getPageCache<VerbalCache>(cacheKey) : null
+  const [personalityId, setPersonalityId] = useState<string | null>(cached?.personalityId ?? null)
+  const [personality, setPersonality] = useState<Personality>(cached?.personality ?? { tone_copy: '', tone_body: '' })
   const [terms, setTerms] = useState<TermItem[]>(cached?.terms ?? [])
   const [loading, setLoading] = useState(!cached)
   const [fetchError, setFetchError] = useState('')
@@ -46,13 +59,18 @@ export default function VerbalIdentityPage() {
     setFetchError('')
 
     try {
-      const termsRes = await fetchWithRetry(() =>
-        supabase.from('brand_terms').select('*').eq('company_id', companyId).order('sort_order')
-      )
+      const [personalityRes, termsRes] = await Promise.all([
+        // 新規企業は行が未作成のため maybeSingle（0件でもエラーにせず空フォーム表示）
+        fetchWithRetry(() => supabase.from('brand_personalities').select('*').eq('company_id', companyId).maybeSingle()),
+        fetchWithRetry(() => supabase.from('brand_terms').select('*').eq('company_id', companyId).order('sort_order')),
+      ])
+      if (personalityRes.error) throw new Error(personalityRes.error)
       if (termsRes.error) throw new Error(termsRes.error)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const personalityData = personalityRes.data as Record<string, any> | null
       const termsData = termsRes.data as Record<string, unknown>[] | null
 
-      // ポータルサブタイトル取得
+      // ポータルサブタイトル取得（入力UIは廃止。既存値の保持のため取得は継続）
       let fetchedSubtitle = ''
       let fetchedSubtitlesData: PortalSubtitles | null = null
       try {
@@ -72,6 +90,16 @@ export default function VerbalIdentityPage() {
         // サブタイトル取得失敗は無視
       }
 
+      let parsedPersonalityId: string | null = null
+      let parsedPersonality: Personality = { tone_copy: '', tone_body: '' }
+      if (personalityData) {
+        parsedPersonalityId = personalityData.id
+        const tone = splitToneOfVoice(personalityData.tone_of_voice as string)
+        parsedPersonality = { tone_copy: tone.copy, tone_body: tone.body }
+        setPersonalityId(parsedPersonalityId)
+        setPersonality(parsedPersonality)
+      }
+
       let parsedTerms: TermItem[] = []
       if (termsData && termsData.length > 0) {
         parsedTerms = termsData.map((d: Record<string, unknown>) => ({
@@ -84,6 +112,8 @@ export default function VerbalIdentityPage() {
       }
 
       setPageCache(cacheKey, {
+        personalityId: parsedPersonalityId,
+        personality: parsedPersonality,
         terms: parsedTerms,
         portalSubtitle: fetchedSubtitle,
         portalSubtitlesData: fetchedSubtitlesData,
@@ -103,8 +133,11 @@ export default function VerbalIdentityPage() {
     fetchData()
   }, [companyId, cacheKey])
 
+  const updateTone = (field: 'tone_copy' | 'tone_body', value: string) => {
+    setPersonality(prev => ({ ...prev, [field]: value }))
+  }
+
   // --- 用語ルール操作 ---
-  // --- カテゴリ候補 ---
   const existingCategories = useMemo(() => {
     const cats = terms.map(t => t.category).filter(c => c.trim() !== '')
     return [...new Set(cats)]
@@ -156,6 +189,38 @@ export default function VerbalIdentityPage() {
     }
   }
 
+  const supabaseInsert = async (table: string, data: Record<string, unknown>, token: string): Promise<{ ok: boolean; error?: string; data?: Record<string, unknown> }> => {
+    const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/${table}`
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 10000)
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
+          'Authorization': `Bearer ${token}`,
+          'Prefer': 'return=representation',
+        },
+        body: JSON.stringify(data),
+        signal: controller.signal,
+      })
+      clearTimeout(timeoutId)
+      if (!res.ok) {
+        const body = await res.text()
+        return { ok: false, error: `HTTP ${res.status}: ${body}` }
+      }
+      const result = await res.json()
+      return { ok: true, data: result[0] }
+    } catch (err) {
+      clearTimeout(timeoutId)
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        return { ok: false, error: 'タイムアウト（10秒）' }
+      }
+      return { ok: false, error: err instanceof Error ? err.message : '不明なエラー' }
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!companyId) return
@@ -167,7 +232,26 @@ export default function VerbalIdentityPage() {
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
       const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 
-      // --- 用語ルール保存（全削除→全INSERT） ---
+      // --- 1. トーンオブボイス保存（brand_personalities） ---
+      const personalityData: Record<string, unknown> = {
+        company_id: companyId,
+        tone_of_voice: combineBrandCopy(personality.tone_copy, personality.tone_body) || null,
+        communication_style: null,
+      }
+      let pResult: { ok: boolean; error?: string; data?: Record<string, unknown> }
+      if (personalityId) {
+        pResult = await supabasePatch('brand_personalities', personalityId, personalityData, token)
+      } else {
+        pResult = await supabaseInsert('brand_personalities', personalityData, token)
+        if (pResult.ok && pResult.data) {
+          setPersonalityId(pResult.data.id as string)
+        }
+      }
+      if (!pResult.ok) {
+        throw new Error('トーン保存エラー: ' + pResult.error)
+      }
+
+      // --- 2. 用語ルール保存（全削除→全INSERT） ---
       const headers = {
         'Content-Type': 'application/json',
         'apikey': anonKey,
@@ -207,7 +291,7 @@ export default function VerbalIdentityPage() {
       }
       setTerms(cleanedTerms)
 
-      // ポータルサブタイトル保存
+      // ポータルサブタイトルは入力UIを廃止。既存値はそのまま保持（再書き込みで温存）
       const updatedSubtitles = { ...(portalSubtitlesData || {}) }
       if (portalSubtitle.trim()) {
         updatedSubtitles.verbal = portalSubtitle.trim()
@@ -233,7 +317,7 @@ export default function VerbalIdentityPage() {
       <div>
         <Skeleton className="h-8 w-56 mb-2" />
         <Skeleton className="h-9 w-full mb-6" />
-        <div className="space-y-8">
+        <div className="space-y-6">
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
             <CardContent className="p-5 space-y-3">
               <Skeleton className="h-4 w-36" />
@@ -269,20 +353,35 @@ export default function VerbalIdentityPage() {
 
   return (
     <div>
-      {/* タイトルはヘッダーのパンくずに移動 */}
-      <div className="mb-6">
-        <Input
-          type="text"
-          value={portalSubtitle}
-          onChange={(e) => setPortalSubtitle(e.target.value)}
-          placeholder={DEFAULT_SUBTITLES.verbal}
-          className="h-9 text-sm"
-        />
-        <p className="text-[11px] text-muted-foreground mt-1">ポータルに表示されるサブタイトル（空欄でデフォルト表示）</p>
-      </div>
+      {/* タイトルはヘッダーのパンくずに移管 */}
+      <form id="verbal-form" onSubmit={handleSubmit} className="space-y-6">
+        {/* カード1: トーンオブボイス */}
+        <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+          <CardContent className="p-5">
+            <h2 className="text-xs font-bold mb-3">トーンオブボイス</h2>
+            <div className="space-y-2">
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">コピー（キャッチコピー・任意）</label>
+                <Input
+                  value={personality.tone_copy}
+                  onChange={(e) => updateTone('tone_copy', e.target.value)}
+                  placeholder="例：誠実に、まっすぐ伝える。"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">説明文</label>
+                <AutoResizeTextarea
+                  value={personality.tone_body}
+                  onChange={(e) => updateTone('tone_body', e.target.value)}
+                  placeholder="フォーマルだが親しみやすい、専門用語は最小限に..."
+                  className="min-h-[100px]"
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-      <form id="verbal-form" onSubmit={handleSubmit} className="space-y-8">
-        {/* 用語ルール */}
+        {/* カード2: 用語ルール */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-5">
             <h2 className="text-xs font-bold mb-2">用語ルール</h2>
@@ -363,11 +462,10 @@ export default function VerbalIdentityPage() {
 
       </form>
 
-      {/* 固定保存バー */}
       {/* FabBar との重なりを防ぐスペーサー */}
       <div className="h-24" />
 
-      {/* 保存 FAB（右下固定・include-bz node の FabButton と同装飾） */}
+      {/* 保存 FAB（右下固定） */}
       <Fab>
         <FabButton type="submit" form="verbal-form" disabled={saving} icon={<Check size={16} />}>
           {saving ? '保存中...' : '保存'}

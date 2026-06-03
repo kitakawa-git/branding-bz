@@ -1,6 +1,7 @@
 'use client'
 
-// ブランド戦略 編集ページ（ターゲット・ペルソナ・ポジショニングマップ・行動指針）
+// ブランド戦略 編集ページ（ターゲット・ペルソナ・ポジショニングマップ）
+// ※ 行動指針(action_guidelines) は /admin/brand/guidelines（ブランド方針）へ移設済み
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
@@ -12,7 +13,7 @@ import { getPageCache, setPageCache } from '@/lib/page-cache'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { AutoResizeTextarea } from '@/components/ui/auto-resize-textarea'
-import { DEFAULT_SUBTITLES, type PortalSubtitles } from '@/lib/portal-subtitles'
+import { type PortalSubtitles } from '@/lib/portal-subtitles'
 import { Label } from '@/components/ui/label'
 import { Slider } from '@/components/ui/slider'
 import { PositioningMap } from '@/components/PositioningMap'
@@ -30,11 +31,6 @@ type PersonaItem = {
   pain_points: string[]
 }
 
-type ActionGuideline = {
-  title: string
-  description: string
-}
-
 type TargetSegment = {
   name: string
   description: string
@@ -47,11 +43,6 @@ const emptyPersona = (): PersonaItem => ({
   description: '',
   needs: [],
   pain_points: [],
-})
-
-const emptyGuideline = (): ActionGuideline => ({
-  title: '',
-  description: '',
 })
 
 const emptyMapData = (): PositioningMapData => ({
@@ -77,7 +68,6 @@ type StrategyCache = {
   targetSegments: TargetSegment[]
   personas: PersonaItem[]
   positioningMapData: PositioningMapData | null
-  actionGuidelines: ActionGuideline[]
   portalSubtitle: string
   portalSubtitlesData: PortalSubtitles | null
 }
@@ -89,7 +79,6 @@ export default function BrandStrategyPage() {
   const [targetSegments, setTargetSegments] = useState<TargetSegment[]>(cached?.targetSegments ?? [])
   const [personas, setPersonas] = useState<PersonaItem[]>(cached?.personas ?? [])
   const [positioningMapData, setPositioningMapData] = useState<PositioningMapData | null>(cached?.positioningMapData ?? null)
-  const [actionGuidelines, setActionGuidelines] = useState<ActionGuideline[]>(cached?.actionGuidelines ?? [])
   const [loading, setLoading] = useState(!cached)
   const [fetchError, setFetchError] = useState('')
   const [saving, setSaving] = useState(false)
@@ -139,7 +128,6 @@ export default function BrandStrategyPage() {
         const first = data[0] as Record<string, unknown>
         const parsedTargetText = (first.target as string) || ''
         const parsedMapData = (first.positioning_map_data as PositioningMapData) || null
-        const parsedActionGuidelines = (first.action_guidelines as ActionGuideline[]) || []
         const parsedPersonas = data.map((d: Record<string, unknown>) => ({
           name: (d.name as string) || '',
           age_range: (d.age_range as string) || '',
@@ -161,13 +149,11 @@ export default function BrandStrategyPage() {
 
         setTargetSegments(parsedTargetSegments)
         setPositioningMapData(parsedMapData)
-        setActionGuidelines(parsedActionGuidelines)
         setPersonas(parsedPersonas)
         setPageCache<StrategyCache>(cacheKey, {
           targetSegments: parsedTargetSegments,
           personas: parsedPersonas,
           positioningMapData: parsedMapData,
-          actionGuidelines: parsedActionGuidelines,
           portalSubtitle: fetchedSubtitle,
           portalSubtitlesData: fetchedSubtitlesData,
         })
@@ -260,22 +246,6 @@ export default function BrandStrategyPage() {
     setPersonas(updated)
   }
 
-  // 行動指針の操作
-  const addGuideline = () => {
-    if (actionGuidelines.length >= 10) return
-    setActionGuidelines([...actionGuidelines, emptyGuideline()])
-  }
-
-  const updateGuideline = (index: number, field: keyof ActionGuideline, value: string) => {
-    const updated = [...actionGuidelines]
-    updated[index] = { ...updated[index], [field]: value }
-    setActionGuidelines(updated)
-  }
-
-  const removeGuideline = (index: number) => {
-    setActionGuidelines(actionGuidelines.filter((_, i) => i !== index))
-  }
-
   // ポジショニングマップ操作
   const initializeMap = () => {
     setPositioningMapData(emptyMapData())
@@ -343,11 +313,6 @@ export default function BrandStrategyPage() {
       'Prefer': 'return=minimal',
     }
 
-    // 行動指針をクリーンアップ
-    const cleanedGuidelines = actionGuidelines.filter(g =>
-      g.title.trim() !== '' || g.description.trim() !== ''
-    )
-
     // ターゲットセグメントをクリーンアップ＋テキスト生成（brand_personas.target 用）
     const validSegments = targetSegments
       .filter(ts => ts.name.trim())
@@ -388,7 +353,6 @@ export default function BrandStrategyPage() {
           target: i === 0 ? (targetText || null) : null,
           positioning_map_url: null,
           positioning_map_data: i === 0 ? (positioningMapData || null) : null,
-          action_guidelines: i === 0 ? (cleanedGuidelines.length > 0 ? cleanedGuidelines : null) : null,
         }))
 
         const insRes = await fetch(`${supabaseUrl}/rest/v1/brand_personas`, {
@@ -402,7 +366,7 @@ export default function BrandStrategyPage() {
         }
       } else {
         // ペルソナがなくてもtarget等を保存するためダミーレコードを作成
-        if (targetText || positioningMapData || cleanedGuidelines.length > 0) {
+        if (targetText || positioningMapData) {
           const insertData = [{
             company_id: companyId,
             name: '',
@@ -410,7 +374,6 @@ export default function BrandStrategyPage() {
             target: targetText || null,
             positioning_map_url: null,
             positioning_map_data: positioningMapData || null,
-            action_guidelines: cleanedGuidelines.length > 0 ? cleanedGuidelines : null,
           }]
 
           const insRes = await fetch(`${supabaseUrl}/rest/v1/brand_personas`, {
@@ -443,7 +406,6 @@ export default function BrandStrategyPage() {
       setPortalSubtitlesData(updatedSubtitles)
 
       setPersonas(cleanedPersonas)
-      setActionGuidelines(cleanedGuidelines)
       setTargetSegments(validSegments)
       toast.success('保存しました')
     } catch (err) {
@@ -511,18 +473,6 @@ export default function BrandStrategyPage() {
 
   return (
     <div>
-      {/* タイトルはヘッダーのパンくずに移動 */}
-      <div className="mb-6">
-        <Input
-          type="text"
-          value={portalSubtitle}
-          onChange={(e) => setPortalSubtitle(e.target.value)}
-          placeholder={DEFAULT_SUBTITLES.strategy}
-          className="h-9 text-sm"
-        />
-        <p className="text-[11px] text-muted-foreground mt-1">ポータルに表示されるサブタイトル（空欄でデフォルト表示）</p>
-      </div>
-
       <form id="strategy-form" onSubmit={handleSubmit} className="space-y-6">
         {/* Card 1: ターゲット＋ペルソナ */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
@@ -884,52 +834,6 @@ export default function BrandStrategyPage() {
                   マップを作成
                 </Button>
               </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Card 3: 行動指針 */}
-        <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-          <CardContent className="p-5">
-            <h2 className="text-xs font-bold mb-3">行動指針</h2>
-
-            {actionGuidelines.map((guideline, index) => (
-              <div key={index} className="flex gap-2 mb-2 items-start">
-                <Input
-                  type="text"
-                  value={guideline.title}
-                  onChange={(e) => updateGuideline(index, 'title', e.target.value)}
-                  placeholder="タイトル（例: 顧客第一）"
-                  className="h-10 flex-[0_0_200px]"
-                />
-                <Input
-                  type="text"
-                  value={guideline.description}
-                  onChange={(e) => updateGuideline(index, 'description', e.target.value)}
-                  placeholder="説明（例: 常に顧客の視点で考える）"
-                  className="h-10 flex-1"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  onClick={() => removeGuideline(index)}
-                  className="size-9 shrink-0 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
-                >
-                  <Trash2 size={14} />
-                </Button>
-              </div>
-            ))}
-
-            {actionGuidelines.length < 10 && (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={addGuideline}
-                className="py-1.5 px-3 text-xs"
-              >
-                <Plus size={16} />行動指針を追加
-              </Button>
             )}
           </CardContent>
         </Card>

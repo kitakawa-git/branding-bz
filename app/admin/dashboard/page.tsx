@@ -249,22 +249,21 @@ export default function DashboardPage() {
             .eq('company_id', companyId)
             .eq('is_active', true),
           supabase
-            .from('brand_personas')
+            .from('brand_guidelines')
             .select('action_guidelines')
             .eq('company_id', companyId)
-            .order('sort_order')
-            .limit(1),
+            .maybeSingle(),
         ])
 
         const posts: PostRow[] = postsRes.status === 'fulfilled' ? postsRes.value.data || [] : []
         const likes: LikeRow[] = likesRes.status === 'fulfilled' ? likesRes.value.data || [] : []
         const comments: CommentRow[] = commentsRes.status === 'fulfilled' ? commentsRes.value.data || [] : []
         const members: MemberRow[] = membersRes.status === 'fulfilled' ? membersRes.value.data || [] : []
-        const personasData = personasRes.status === 'fulfilled' ? personasRes.value.data : null
+        const guidelinesData = personasRes.status === 'fulfilled' ? personasRes.value.data : null
 
         const categories: string[] = []
-        if (personasData && personasData.length > 0) {
-          const guidelines = personasData[0].action_guidelines as { title: string }[] | null
+        if (guidelinesData) {
+          const guidelines = (guidelinesData as { action_guidelines?: { title: string }[] }).action_guidelines || null
           if (guidelines) guidelines.forEach(g => categories.push(g.title))
         }
 

@@ -34,3 +34,26 @@ export function combineBrandCopy(copy: string | null | undefined, body: string |
   if (c && b) return `${c}\n\n${b}`
   return c || b
 }
+
+// ブランドパーソナリティ特性の copy/description を表示・編集用に正規化する。
+// 新データは copy フィールドをそのまま使う。
+// 旧データ（copy 未設定で description が「コピー\n説明文」の単一改行区切り）は最初の改行で2分割する。
+export function resolveTraitCopy(trait: { copy?: string | null; description?: string | null }): { copy: string; description: string } {
+  const copy = (trait.copy ?? '').trim()
+  const desc = trait.description ?? ''
+  if (copy) return { copy, description: desc.trim() }
+  const nl = desc.indexOf('\n')
+  if (nl === -1) return { copy: '', description: desc.trim() }
+  return { copy: desc.slice(0, nl).trim(), description: desc.slice(nl + 1).trim() }
+}
+
+// トーンオブボイス用: 「コピー（任意）＋説明文」に分割。
+// 空行（\n\n）があれば前=コピー・後=説明文。無ければ全体を説明文として扱う（コピー無し）。
+// ※ splitBrandCopy（空行なし→コピー）とは逆。トーンは説明文が主体のため。
+export function splitToneOfVoice(text: string | null | undefined): { copy: string; body: string } {
+  const raw = (text ?? '').trim()
+  if (!raw) return { copy: '', body: '' }
+  const m = raw.match(/\n\s*\n/)
+  if (!m || m.index === undefined) return { copy: '', body: raw }
+  return { copy: raw.slice(0, m.index).trim(), body: raw.slice(m.index + m[0].length).trim() }
+}

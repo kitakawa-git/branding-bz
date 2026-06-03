@@ -13,7 +13,7 @@ import { getPageCache, setPageCache } from '@/lib/page-cache'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { AutoResizeTextarea } from '@/components/ui/auto-resize-textarea'
-import { DEFAULT_SUBTITLES, type PortalSubtitles } from '@/lib/portal-subtitles'
+import { type PortalSubtitles } from '@/lib/portal-subtitles'
 import { splitBrandCopy, combineBrandCopy } from '@/lib/brand-mvv'
 import { TitleDescriptionList } from '@/components/shared/TitleDescriptionList'
 import { GripVertical, Plus, Trash2, Check } from 'lucide-react'
@@ -38,7 +38,7 @@ import { CSS } from '@dnd-kit/utilities'
 type ValueItem = { name: string; description: string; added_index: number }
 type HistoryItem = { year: string; event: string }
 type BusinessItem = { title: string; description: string; added_index: number }
-type TraitItem = { name: string; score: number; description: string; added_index: number }
+type ActionGuideline = { title: string; description: string }
 
 type Guidelines = {
   slogan: string
@@ -58,8 +58,8 @@ type Guidelines = {
   history: HistoryItem[]
   business_content: BusinessItem[]
   business_content_sort: 'registered' | 'custom'
-  traits: TraitItem[]
-  traits_sort: 'registered' | 'custom'
+  // 行動指針（旧 ブランド戦略 から移設。brand_guidelines.action_guidelines）
+  action_guidelines: ActionGuideline[]
 }
 
 type GuidelinesCache = {
@@ -116,28 +116,6 @@ function SortableConceptVisual({
   )
 }
 
-function SortableTraitItem({
-  id, trait, index, onUpdate, onRemove,
-}: {
-  id: string; trait: TraitItem; index: number
-  onUpdate: (index: number, field: keyof TraitItem, value: string | number) => void
-  onRemove: (index: number) => void
-}) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
-  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }
-  return (
-    <div ref={setNodeRef} style={style} className="flex gap-2 mb-2 items-center">
-      <button type="button" className="p-1 rounded hover:bg-gray-200 cursor-grab active:cursor-grabbing text-muted-foreground shrink-0" {...attributes} {...listeners}>
-        <GripVertical size={16} />
-      </button>
-      <Input type="text" value={trait.name} onChange={(e) => onUpdate(index, 'name', e.target.value)} placeholder="特性名" className="h-10 flex-1" />
-      <Input type="number" min={1} max={10} value={trait.score} onChange={(e) => onUpdate(index, 'score', parseInt(e.target.value) || 5)} className="h-10 w-[70px] text-center" />
-      <Input type="text" value={trait.description} onChange={(e) => onUpdate(index, 'description', e.target.value)} placeholder="この特性の説明" className="h-10 flex-[2]" />
-      <Button type="button" variant="outline" size="icon" onClick={() => onRemove(index)} className="size-9 shrink-0 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"><Trash2 size={14} /></Button>
-    </div>
-  )
-}
-
 function SortableBusinessItem({
   id, item, index, onUpdate, onRemove,
 }: {
@@ -186,8 +164,7 @@ export default function BrandGuidelinesPage() {
     history: [],
     business_content: [],
     business_content_sort: 'registered',
-    traits: [],
-    traits_sort: 'registered',
+    action_guidelines: [],
   })
   const [loading, setLoading] = useState(!cached)
   const [fetchError, setFetchError] = useState('')
@@ -258,11 +235,7 @@ export default function BrandGuidelinesPage() {
             added_index: b.added_index ?? i,
           })),
           business_content_sort: (result.business_content_sort as 'registered' | 'custom') || 'registered',
-          traits: ((result.traits as { name: string; score: number; description: string; added_index?: number }[]) || []).map((t, i) => ({
-            ...t,
-            added_index: t.added_index ?? i,
-          })),
-          traits_sort: (result.traits_sort as 'registered' | 'custom') || 'registered',
+          action_guidelines: ((result.action_guidelines as ActionGuideline[]) || []).filter(a => a),
         }
         setGuidelinesId(parsedId)
         setGuidelines(parsedGuidelines)
@@ -335,19 +308,18 @@ export default function BrandGuidelinesPage() {
     handleChange('business_content', guidelines.business_content.filter((_, i) => i !== index))
   }
 
-  // --- ブランド特性 ---
-  const addTrait = () => {
-    if (guidelines.traits.length >= 5) return
-    const maxIndex = guidelines.traits.reduce((max, t) => Math.max(max, t.added_index), -1)
-    handleChange('traits', [...guidelines.traits, { name: '', score: 5, description: '', added_index: maxIndex + 1 }])
+  // --- 行動指針 ---
+  const addGuideline = () => {
+    if (guidelines.action_guidelines.length >= 10) return
+    handleChange('action_guidelines', [...guidelines.action_guidelines, { title: '', description: '' }])
   }
-  const updateTrait = (index: number, field: keyof TraitItem, value: string | number) => {
-    const updated = [...guidelines.traits]
+  const updateGuideline = (index: number, field: keyof ActionGuideline, value: string) => {
+    const updated = [...guidelines.action_guidelines]
     updated[index] = { ...updated[index], [field]: value }
-    handleChange('traits', updated)
+    handleChange('action_guidelines', updated)
   }
-  const removeTrait = (index: number) => {
-    handleChange('traits', guidelines.traits.filter((_, i) => i !== index))
+  const removeGuideline = (index: number) => {
+    handleChange('action_guidelines', guidelines.action_guidelines.filter((_, i) => i !== index))
   }
 
   // --- ドラッグ&ドロップ ---
@@ -373,15 +345,6 @@ export default function BrandGuidelinesPage() {
     }
   }
 
-  const handleTraitsDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event
-    if (!over || active.id === over.id) return
-    const oldIndex = guidelines.traits.findIndex((_, i) => `trait-${i}` === active.id)
-    const newIndex = guidelines.traits.findIndex((_, i) => `trait-${i}` === over.id)
-    if (oldIndex !== -1 && newIndex !== -1) {
-      handleChange('traits', arrayMove(guidelines.traits, oldIndex, newIndex))
-    }
-  }
 
   // --- コンセプトビジュアル（複数・スライドショー用） ---
   const handleConceptVisualUpload = async (file: File) => {
@@ -508,7 +471,7 @@ export default function BrandGuidelinesPage() {
       const cleanedValues = guidelines.values.filter(v => v.name.trim() !== '')
       const cleanedHistory = guidelines.history.filter(h => h.year.trim() !== '' || h.event.trim() !== '')
       const cleanedBusiness = guidelines.business_content.filter(b => b.title.trim() !== '')
-      const cleanedTraits = guidelines.traits.filter(t => t.name.trim() !== '')
+      const cleanedGuidelines = guidelines.action_guidelines.filter(g => g.title.trim() !== '' || g.description.trim() !== '')
 
       const saveData: Record<string, unknown> = {
         company_id: companyId,
@@ -527,8 +490,7 @@ export default function BrandGuidelinesPage() {
         history: cleanedHistory.length > 0 ? cleanedHistory : [],
         business_content: cleanedBusiness.length > 0 ? cleanedBusiness : [],
         business_content_sort: guidelines.business_content_sort,
-        traits: cleanedTraits.length > 0 ? cleanedTraits : [],
-        traits_sort: guidelines.traits_sort,
+        action_guidelines: cleanedGuidelines.length > 0 ? cleanedGuidelines : [],
       }
 
       let result: { ok: boolean; error?: string; data?: Record<string, unknown> }
@@ -559,7 +521,7 @@ export default function BrandGuidelinesPage() {
         handleChange('values', cleanedValues)
         handleChange('history', cleanedHistory)
         handleChange('business_content', cleanedBusiness)
-        handleChange('traits', cleanedTraits)
+        handleChange('action_guidelines', cleanedGuidelines)
         if (guidelines.brand_video_url) {
           handleChange('brand_video_url', normalizeUrl(guidelines.brand_video_url))
         }
@@ -616,18 +578,6 @@ export default function BrandGuidelinesPage() {
 
   return (
     <div>
-      {/* タイトルはヘッダーのパンくずに移動 */}
-      <div className="mb-6">
-        <Input
-          type="text"
-          value={portalSubtitle}
-          onChange={(e) => setPortalSubtitle(e.target.value)}
-          placeholder={DEFAULT_SUBTITLES.guidelines}
-          className="h-9 text-sm"
-        />
-        <p className="text-[11px] text-muted-foreground mt-1">ポータルに表示されるサブタイトル（空欄でデフォルト表示）</p>
-      </div>
-
       <form id="guidelines-form" onSubmit={handleSubmit} className="space-y-6">
         {/* Card 1: スローガン＋コンセプトビジュアル＋ブランド動画＋メッセージ */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
@@ -725,7 +675,7 @@ export default function BrandGuidelinesPage() {
                   <Input
                     value={guidelines.mission_copy}
                     onChange={(e) => handleChange('mission_copy', e.target.value)}
-                    placeholder="例：感謝と挑戦の精神で、品質向上を追求する。"
+                    placeholder="例：まっすぐな仕事で、地域の信頼に応える。"
                   />
                 </div>
                 <div>
@@ -748,7 +698,7 @@ export default function BrandGuidelinesPage() {
                   <Input
                     value={guidelines.vision_copy}
                     onChange={(e) => handleChange('vision_copy', e.target.value)}
-                    placeholder="例：人と社会を、明るく、クリアに、カラフルに。"
+                    placeholder="例：誰もが挑戦できる社会をつくる。"
                   />
                 </div>
                 <div>
@@ -911,59 +861,42 @@ export default function BrandGuidelinesPage() {
           </CardContent>
         </Card>
 
-        {/* Card 4: ブランドパーソナリティ */}
+        {/* Card 4: 行動指針（旧 ブランド戦略 から移設） */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-5">
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-xs font-bold">ブランドパーソナリティ（最大5つ）</h2>
-                {guidelines.traits.length > 1 && (
-                  <div className="flex rounded-lg border border-border overflow-hidden">
-                    <button type="button" onClick={() => handleChange('traits_sort', 'registered')}
-                      className={`px-3 py-1 text-xs font-medium transition-colors ${guidelines.traits_sort === 'registered' ? 'bg-foreground text-background' : 'bg-background text-muted-foreground hover:bg-muted'}`}>
-                      登録順
-                    </button>
-                    <button type="button" onClick={() => handleChange('traits_sort', 'custom')}
-                      className={`px-3 py-1 text-xs font-medium transition-colors ${guidelines.traits_sort === 'custom' ? 'bg-foreground text-background' : 'bg-background text-muted-foreground hover:bg-muted'}`}>
-                      カスタム
-                    </button>
-                  </div>
-                )}
-              </div>
-              <p className="text-xs text-muted-foreground mb-2">
-                ブランドの性格を表す特性とスコア（1〜10）を設定します
-              </p>
-              {guidelines.traits_sort === 'custom' ? (
-                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleTraitsDragEnd}>
-                  <SortableContext items={guidelines.traits.map((_, i) => `trait-${i}`)} strategy={verticalListSortingStrategy}>
-                    {guidelines.traits.map((trait, index) => (
-                      <SortableTraitItem key={`trait-${index}`} id={`trait-${index}`} trait={trait} index={index} onUpdate={updateTrait} onRemove={removeTrait} />
-                    ))}
-                  </SortableContext>
-                </DndContext>
-              ) : (
-                <>
-                  {[...guidelines.traits]
-                    .sort((a, b) => (a.added_index ?? 0) - (b.added_index ?? 0))
-                    .map((trait) => {
-                      const realIndex = guidelines.traits.indexOf(trait)
-                      return (
-                        <div key={realIndex} className="flex gap-2 mb-2 items-center">
-                          <Input type="text" value={trait.name} onChange={(e) => updateTrait(realIndex, 'name', e.target.value)} placeholder="特性名" className="h-10 flex-1" />
-                          <Input type="number" min={1} max={10} value={trait.score} onChange={(e) => updateTrait(realIndex, 'score', parseInt(e.target.value) || 5)} className="h-10 w-[70px] text-center" />
-                          <Input type="text" value={trait.description} onChange={(e) => updateTrait(realIndex, 'description', e.target.value)} placeholder="この特性の説明" className="h-10 flex-[2]" />
-                          <Button type="button" variant="outline" size="icon" onClick={() => removeTrait(realIndex)} className="size-9 shrink-0 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"><Trash2 size={14} /></Button>
-                        </div>
-                      )
-                    })}
-                </>
-              )}
-              {guidelines.traits.length < 5 && (
-                <Button type="button" variant="outline" onClick={addTrait} className="py-2 px-4 text-[13px]">
-                  <Plus size={16} />特性を追加
+            <h2 className="text-xs font-bold mb-3">行動指針</h2>
+            {guidelines.action_guidelines.map((guideline, index) => (
+              <div key={index} className="flex gap-2 mb-2 items-start">
+                <Input
+                  type="text"
+                  value={guideline.title}
+                  onChange={(e) => updateGuideline(index, 'title', e.target.value)}
+                  placeholder="タイトル（例: 顧客第一）"
+                  className="h-10 flex-[0_0_200px]"
+                />
+                <Input
+                  type="text"
+                  value={guideline.description}
+                  onChange={(e) => updateGuideline(index, 'description', e.target.value)}
+                  placeholder="説明（例: 常に顧客の視点で考える）"
+                  className="h-10 flex-1"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => removeGuideline(index)}
+                  className="size-9 shrink-0 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+                >
+                  <Trash2 size={14} />
                 </Button>
-              )}
-            </div>
+              </div>
+            ))}
+            {guidelines.action_guidelines.length < 10 && (
+              <Button type="button" variant="outline" onClick={addGuideline} className="py-1.5 px-3 text-xs">
+                <Plus size={16} />行動指針を追加
+              </Button>
+            )}
           </CardContent>
         </Card>
 

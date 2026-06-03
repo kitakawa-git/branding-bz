@@ -3,7 +3,7 @@
 export type ValueItem = { name: string; description: string; added_index: number }
 export type HistoryItem = { year: string; event: string }
 export type BusinessItem = { title: string; description: string; added_index: number }
-export type TraitItem = { name: string; score: number; description: string; added_index: number }
+export type TraitItem = { name: string; score: number; copy?: string; description: string; added_index: number }
 
 export type ColorItem = { name: string; hex: string }
 export type ColorPalette = {

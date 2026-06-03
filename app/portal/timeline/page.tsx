@@ -162,16 +162,14 @@ export default function PortalTimelinePage() {
     if (cached) return // キャッシュ済みならスキップ
     fetchWithRetry(() =>
       supabase
-        .from('brand_personas')
+        .from('brand_guidelines')
         .select('action_guidelines')
         .eq('company_id', companyId)
-        .order('sort_order')
-        .limit(1)
+        .maybeSingle()
     ).then(({ data }) => {
       let cats = ['未分類']
-      if (data && Array.isArray(data) && data.length > 0) {
-        const first = data[0] as Record<string, unknown>
-        const guidelines = (first.action_guidelines as ActionGuideline[]) || []
+      if (data) {
+        const guidelines = ((data as Record<string, unknown>).action_guidelines as ActionGuideline[]) || []
         const titles = guidelines.map(g => g.title).filter(Boolean)
         if (titles.length > 0) cats = titles
       }

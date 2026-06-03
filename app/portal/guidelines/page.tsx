@@ -4,7 +4,7 @@
 // 表示項目: MVV / バリュー / 提供価値 / 行動指針 / 沿革 / 事業内容
 // - MVV・バリュー・沿革・事業内容: brand_guidelines
 // - 提供価値: brand_values テーブル（旧 /portal/values を統合）＋ companies.provided_values
-// - 行動指針: brand_personas.action_guidelines（旧 /portal/strategy から移動）
+// - 行動指針: brand_guidelines.action_guidelines
 import { useEffect, useState, type CSSProperties } from 'react'
 import { supabase } from '@/lib/supabase'
 import { fetchWithRetry } from '@/lib/supabase-fetch'
@@ -99,7 +99,7 @@ export default function PortalGuidelinesPage() {
       fetchWithRetry(() =>
         supabase
           .from('brand_guidelines')
-          .select('slogan, concept_visual_url, concept_visuals, brand_video_url, brand_statement, mission, vision, values, values_sort, brand_story, history, business_content, business_content_sort')
+          .select('slogan, concept_visual_url, concept_visuals, brand_video_url, brand_statement, mission, vision, values, values_sort, brand_story, history, business_content, business_content_sort, action_guidelines')
           .eq('company_id', companyId)
           .single()
       ),
@@ -119,15 +119,7 @@ export default function PortalGuidelinesPage() {
           .eq('id', companyId)
           .single()
       ),
-      // 行動指針: brand_personas.action_guidelines（先頭ペルソナ行に格納）
-      fetchWithRetry(() =>
-        supabase
-          .from('brand_personas')
-          .select('action_guidelines, sort_order')
-          .eq('company_id', companyId)
-          .order('sort_order')
-      ),
-    ]).then(([gRes, bvRes, cRes, paRes]) => {
+    ]).then(([gRes, bvRes, cRes]) => {
       const g = gRes.data as Record<string, unknown> | null
 
       // 提供価値の統合（brand_values → companies.provided_values の順）
@@ -145,12 +137,8 @@ export default function PortalGuidelinesPage() {
         }
       }
 
-      // 行動指針（先頭ペルソナ行）
-      let actionGuidelines: ActionGuideline[] = []
-      if (paRes.data && Array.isArray(paRes.data) && paRes.data.length > 0) {
-        const first = paRes.data[0] as Record<string, unknown>
-        actionGuidelines = ((first.action_guidelines as ActionGuideline[]) || []).filter(a => a && a.title)
-      }
+      // 行動指針（brand_guidelines.action_guidelines）
+      const actionGuidelines: ActionGuideline[] = ((g?.action_guidelines as ActionGuideline[]) || []).filter(a => a && a.title)
 
       // brand_guidelines 行が無く、提供価値・行動指針もゼロなら未登録扱い
       if (!g && providedValues.length === 0 && actionGuidelines.length === 0) {
@@ -375,7 +363,7 @@ export default function PortalGuidelinesPage() {
         </section>
       )}
 
-      {/* 4. 行動指針（brand_personas.action_guidelines。空なら非表示） */}
+      {/* 4. 行動指針（brand_guidelines.action_guidelines。空なら非表示） */}
       {data.action_guidelines.length > 0 && (
         <section>
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
