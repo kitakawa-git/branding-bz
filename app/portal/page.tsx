@@ -818,12 +818,12 @@ export default function PortalTopPage() {
             私たちの「らしさ」
           </h2>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 auto-rows-fr">
           {BRAND_QUADRANTS.map((q) => {
             const Icon = q.icon
             const tone = QUADRANT_TONES[q.tone]
             return (
-              <Link key={q.href} href={q.href} className="no-underline block">
+              <Link key={q.href} href={q.href} className="no-underline block h-full">
                 <Card className="relative h-full bg-[hsl(0_0%_97%)] border shadow-none hover:shadow-sm transition-shadow overflow-hidden">
                   <div className={`absolute left-0 top-0 bottom-0 w-1 ${tone.bar}`} />
                   <CardContent className="p-4 pl-5 flex items-start gap-3">
