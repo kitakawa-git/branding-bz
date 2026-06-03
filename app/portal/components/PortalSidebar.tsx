@@ -45,6 +45,7 @@ import {
   Smile,
   Eye,
   ChevronRight,
+  GraduationCap,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -59,6 +60,7 @@ const engagementItems: NavItem[] = [
   { href: '/portal', label: 'ダッシュボード', icon: LayoutDashboard },
   { href: '/portal/timeline', label: 'タイムライン', icon: MessageSquareHeart },
   { href: '/portal/kpi', label: '目標・KPI', icon: Milestone },
+  { href: '/portal/learning', label: 'ラーニング', icon: GraduationCap },
 ]
 
 // 「私たちの『らしさ』」グループ（内部→外部の視点ワード構成）

@@ -9,6 +9,7 @@ const titleMap: Record<string, string> = {
   '/portal/timeline': 'タイムライン',
   '/portal/announcements': 'お知らせ',
   '/portal/kpi': '目標・KPI',
+  '/portal/learning': 'ラーニング',
   '/portal/guidelines': 'ブランド方針',
   '/portal/personality': 'ブランドパーソナリティ',
   '/portal/strategy': 'ブランド戦略',

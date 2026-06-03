@@ -18,6 +18,7 @@ const titleMap: Record<string, string> = {
   '/admin/announcements': 'お知らせ管理',
   '/admin/kpi': '目標管理',
   '/admin/ci-manual': 'CIマニュアル出力',
+  '/admin/learning': 'ラーニング',
 }
 
 export function AdminDynamicTitle() {

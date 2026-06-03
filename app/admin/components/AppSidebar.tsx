@@ -44,6 +44,7 @@ import {
   Bell,
   Printer,
   BarChart3,
+  GraduationCap,
   Settings,
   type LucideIcon,
 } from 'lucide-react'
@@ -62,6 +63,7 @@ const navItems: NavItem[] = [
   { href: '/admin/kpi', label: '目標・KPI管理', icon: Milestone },
   { href: '/admin/announcements', label: 'お知らせ管理', icon: Bell },
   { href: '/admin/brand-score/surveys', label: 'サーベイ管理', icon: BarChart3 },
+  { href: '/admin/learning', label: 'ラーニング', icon: GraduationCap },
 ]
 
 const brandItems: NavItem[] = [
