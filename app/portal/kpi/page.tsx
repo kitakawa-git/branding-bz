@@ -613,11 +613,21 @@ export default function KpiPage() {
   if (loading) {
     return (
       <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-4 w-64" />
-        <Card className="bg-[hsl(0_0%_97%)] border shadow-none"><CardContent className="p-5"><Skeleton className="h-4 w-56 mb-3" /></CardContent></Card>
-        <Card className="bg-[hsl(0_0%_97%)] border shadow-none"><CardContent className="p-5"><Skeleton className="h-4 w-32 mb-3" /><Skeleton className="h-3 w-full mb-4" /></CardContent></Card>
-        {[1, 2].map(i => <Card key={i} className="bg-[hsl(0_0%_97%)] border shadow-none"><CardContent className="p-5"><Skeleton className="h-5 w-48 mb-2" /><Skeleton className="h-2 w-full" /></CardContent></Card>)}
+        {/* 期間情報 */}
+        <Card className="bg-[hsl(0_0%_97%)] border shadow-none"><CardContent className="p-4 flex items-center gap-2"><Skeleton className="size-4 rounded" /><Skeleton className="h-4 w-56" /></CardContent></Card>
+        {/* 目標＋総合進捗 */}
+        <Card className="bg-[hsl(0_0%_97%)] border shadow-none"><CardContent className="p-5 space-y-3">
+          <Skeleton className="h-5 w-2/3" />
+          <Skeleton className="h-2 w-full rounded-full" />
+          <div className="flex gap-2">{[1, 2, 3].map(i => <Skeleton key={i} className="h-5 w-16 rounded-full" />)}</div>
+        </CardContent></Card>
+        {/* KPI個別カード */}
+        {[1, 2, 3].map(i => (
+          <Card key={i} className="bg-[hsl(0_0%_97%)] border shadow-none"><CardContent className="p-4 space-y-2">
+            <div className="flex items-center justify-between"><Skeleton className="h-5 w-40" /><Skeleton className="h-5 w-12" /></div>
+            <Skeleton className="h-2 w-full rounded-full" />
+          </CardContent></Card>
+        ))}
       </div>
     )
   }

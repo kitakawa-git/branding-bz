@@ -136,7 +136,6 @@ export default function MembersPortalPage() {
   if (loading) {
     return (
       <div>
-        <Skeleton className="h-8 w-40 mb-6" />
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-6">
           <CardContent className="p-5 space-y-3">
             <Skeleton className="h-4 w-24" />

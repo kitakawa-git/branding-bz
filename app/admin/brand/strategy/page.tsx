@@ -419,44 +419,36 @@ export default function BrandStrategyPage() {
 
   if (loading) {
     return (
-      <div>
-        <Skeleton className="h-8 w-36 mb-2" />
-        <Skeleton className="h-9 w-full mb-6" />
-        <div className="space-y-6">
-          <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-            <CardContent className="p-5 space-y-4">
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-20 w-full rounded-md" />
-              <Skeleton className="h-4 w-20" />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {[1, 2].map(i => (
-                  <div key={i} className="border border-border rounded-lg p-4 space-y-3">
-                    <Skeleton className="h-10 w-full rounded-md" />
-                    <Skeleton className="h-10 w-full rounded-md" />
-                    <Skeleton className="h-16 w-full rounded-md" />
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-            <CardContent className="p-5 space-y-4">
-              <Skeleton className="h-4 w-40" />
-              <Skeleton className="h-64 w-full rounded-lg" />
-            </CardContent>
-          </Card>
-          <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-            <CardContent className="p-5 space-y-3">
-              <Skeleton className="h-4 w-24" />
-              {[1, 2, 3].map(i => (
-                <div key={i} className="flex gap-3">
+      <div className="space-y-6">
+        {/* Card 1: ターゲット概要＋主なターゲット＋ペルソナ */}
+        <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+          <CardContent className="p-5 space-y-5">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-20 w-full rounded-md" />
+            <Skeleton className="h-4 w-24" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {[1, 2].map(i => (
+                <div key={i} className="border border-border rounded-lg p-4 space-y-3 bg-background">
                   <Skeleton className="h-10 w-full rounded-md" />
-                  <Skeleton className="h-10 w-full rounded-md" />
+                  <Skeleton className="h-16 w-full rounded-md" />
                 </div>
               ))}
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+            <Skeleton className="h-4 w-20" />
+            <div className="border border-border rounded-lg p-4 space-y-3 bg-background">
+              <Skeleton className="h-10 w-full rounded-md" />
+              <Skeleton className="h-10 w-full rounded-md" />
+              <Skeleton className="h-16 w-full rounded-md" />
+            </div>
+          </CardContent>
+        </Card>
+        {/* Card 2: ポジショニングマップ */}
+        <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+          <CardContent className="p-5 space-y-4">
+            <Skeleton className="h-4 w-40" />
+            <Skeleton className="h-64 w-full rounded-lg" />
+          </CardContent>
+        </Card>
       </div>
     )
   }

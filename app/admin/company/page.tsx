@@ -241,21 +241,20 @@ export default function CompanyPage() {
   if (loading) {
     return (
       <div>
-        <Skeleton className="h-8 w-44 mb-6" />
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-          <CardContent className="p-5 space-y-6">
+          <CardContent className="p-5 space-y-5">
+            {/* ロゴ */}
             <div>
               <Skeleton className="h-4 w-16 mb-2" />
               <Skeleton className="h-24 w-24 rounded-lg" />
             </div>
-            <div>
-              <Skeleton className="h-4 w-16 mb-2" />
-              <Skeleton className="h-10 w-full rounded-md" />
-            </div>
-            <div>
-              <Skeleton className="h-4 w-28 mb-2" />
-              <Skeleton className="h-10 w-full rounded-md" />
-            </div>
+            {/* 企業名／業種／ブランドステージ／ウェブサイトURL／競合 */}
+            {[1, 2, 3, 4, 5].map(i => (
+              <div key={i}>
+                <Skeleton className="h-4 w-28 mb-2" />
+                <Skeleton className="h-10 w-full rounded-md" />
+              </div>
+            ))}
           </CardContent>
         </Card>
       </div>

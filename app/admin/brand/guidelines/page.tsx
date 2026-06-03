@@ -538,31 +538,61 @@ export default function BrandGuidelinesPage() {
 
   if (loading) {
     return (
-      <div>
-        <Skeleton className="h-8 w-36 mb-2" />
-        <Skeleton className="h-9 w-full mb-6" />
-        <div className="space-y-6">
-          <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-            <CardContent className="p-5 space-y-4">
-              <Skeleton className="h-4 w-28" />
-              <Skeleton className="h-10 w-full rounded-md" />
-              <Skeleton className="h-4 w-36" />
-              <Skeleton className="h-32 w-full rounded-lg" />
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-20 w-full rounded-md" />
-            </CardContent>
-          </Card>
-          <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-            <CardContent className="p-5 space-y-4">
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-10 w-full rounded-md" />
-              <Skeleton className="h-4 w-20" />
-              <Skeleton className="h-10 w-full rounded-md" />
-              <Skeleton className="h-4 w-20" />
-              <Skeleton className="h-24 w-full rounded-md" />
-            </CardContent>
-          </Card>
-        </div>
+      <div className="space-y-6">
+        {/* スローガン＋コンセプトビジュアル＋動画＋メッセージ */}
+        <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+          <CardContent className="p-5 space-y-4">
+            <Skeleton className="h-4 w-28" />
+            <Skeleton className="h-10 w-full rounded-md" />
+            <Skeleton className="h-4 w-36" />
+            <Skeleton className="h-32 w-full rounded-lg" />
+            <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-10 w-full rounded-md" />
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-20 w-full rounded-md" />
+          </CardContent>
+        </Card>
+        {/* ミッション＋ビジョン＋バリュー（コピー欄＋説明欄＋値リスト） */}
+        <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+          <CardContent className="p-5 space-y-4">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-10 w-full rounded-md" />
+            <Skeleton className="h-16 w-full rounded-md" />
+            <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-10 w-full rounded-md" />
+            <Skeleton className="h-16 w-full rounded-md" />
+            <Skeleton className="h-4 w-28" />
+            {[1, 2].map(i => (
+              <div key={i} className="flex gap-2 items-start">
+                <Skeleton className="h-10 flex-1 rounded-md" />
+                <Skeleton className="h-10 flex-[2] rounded-md" />
+                <Skeleton className="size-9 rounded-md" />
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+        {/* ブランドストーリー＋沿革＋事業内容 */}
+        <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+          <CardContent className="p-5 space-y-4">
+            <Skeleton className="h-4 w-36" />
+            <Skeleton className="h-24 w-full rounded-md" />
+            <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-10 w-full rounded-md" />
+          </CardContent>
+        </Card>
+        {/* 行動指針 */}
+        <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+          <CardContent className="p-5 space-y-3">
+            <Skeleton className="h-4 w-24" />
+            {[1, 2].map(i => (
+              <div key={i} className="flex gap-2 items-start">
+                <Skeleton className="h-10 flex-1 rounded-md" />
+                <Skeleton className="h-10 flex-[2] rounded-md" />
+                <Skeleton className="size-9 rounded-md" />
+              </div>
+            ))}
+          </CardContent>
+        </Card>
       </div>
     )
   }

@@ -173,38 +173,53 @@ export default function PortalGuidelinesPage() {
 
   if (loading) return (
     <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
-      <div>
-        <Skeleton className="h-8 w-40" />
-        <Skeleton className="h-4 w-64 mt-2" />
-      </div>
+      {/* スローガン＋コンセプトビジュアル＋動画＋メッセージ */}
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
         <CardContent className="p-5 space-y-4">
           <Skeleton className="h-4 w-24" />
           <Skeleton className="h-6 w-3/4" />
-          <Skeleton className="h-4 w-32" />
           <Skeleton className="h-48 w-full rounded-lg" />
+          <Skeleton className="h-4 w-20" />
+          <Skeleton className="h-4 w-full" />
         </CardContent>
       </Card>
+      {/* ミッション＋ビジョン＋バリュー（バリューは2列） */}
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-        <CardContent className="p-5 space-y-4">
-          <Skeleton className="h-4 w-28" />
-          <Skeleton className="h-6 w-2/3" />
-          <Skeleton className="h-4 w-24" />
-          <Skeleton className="h-6 w-1/2" />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {[1, 2].map(i => (
-              <div key={i} className="rounded-lg border border-border bg-background p-5">
-                <Skeleton className="h-5 w-32 mb-2" />
-                <Skeleton className="h-4 w-full" />
-              </div>
-            ))}
+        <CardContent className="p-5 space-y-6">
+          <div className="space-y-2"><Skeleton className="h-4 w-28" /><Skeleton className="h-7 w-2/3" /><Skeleton className="h-4 w-full" /></div>
+          <div className="space-y-2"><Skeleton className="h-4 w-24" /><Skeleton className="h-7 w-1/2" /><Skeleton className="h-4 w-full" /></div>
+          <div>
+            <Skeleton className="h-4 w-20 mb-3" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} className="rounded-lg border border-border bg-background p-5">
+                  <Skeleton className="h-5 w-32 mb-2" />
+                  <Skeleton className="h-4 w-full" />
+                </div>
+              ))}
+            </div>
           </div>
         </CardContent>
       </Card>
+      {/* 提供価値 / 行動指針（番号付きリスト） */}
+      <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+        <CardContent className="p-5 space-y-3">
+          <Skeleton className="h-4 w-24" />
+          {[1, 2, 3].map(i => (
+            <div key={i} className="rounded-lg border border-border bg-background p-4 flex items-start gap-4">
+              <Skeleton className="size-9 rounded-full shrink-0" />
+              <div className="flex-1 space-y-2"><Skeleton className="h-4 w-32" /><Skeleton className="h-3 w-full" /></div>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+      {/* ブランドストーリー＋沿革＋事業内容 */}
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
         <CardContent className="p-5 space-y-4">
           <Skeleton className="h-4 w-36" />
           <Skeleton className="h-20 w-full" />
+          <Skeleton className="h-4 w-24" />
+          <div className="space-y-2">{[1, 2, 3].map(i => <Skeleton key={i} className="h-4 w-full" />)}</div>
         </CardContent>
       </Card>
     </div>

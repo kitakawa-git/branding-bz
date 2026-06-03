@@ -270,19 +270,33 @@ export default function BrandPersonalityPage() {
 
   if (loading) {
     return (
-      <div>
-        <Skeleton className="h-8 w-56 mb-2" />
-        <Skeleton className="h-9 w-full mb-6" />
-        <div className="space-y-6">
-          <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-            <CardContent className="p-5 space-y-3">
-              <Skeleton className="h-4 w-40" />
-              {[1, 2, 3].map(i => (
-                <Skeleton key={i} className="h-10 w-full rounded-md" />
-              ))}
-            </CardContent>
-          </Card>
-        </div>
+      <div className="space-y-6">
+        {/* パーソナリティ概要 */}
+        <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+          <CardContent className="p-5 space-y-3">
+            <Skeleton className="h-4 w-40" />
+            <Skeleton className="h-3 w-2/3" />
+            <Skeleton className="h-[90px] w-full rounded-md" />
+          </CardContent>
+        </Card>
+        {/* 特性（カテゴリー/コピー/説明文の縦積みカード × 3） */}
+        <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+          <CardContent className="p-5 space-y-3">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-3 w-2/3" />
+            {[1, 2, 3].map(i => (
+              <div key={i} className="rounded-lg border border-border bg-background p-3 space-y-2">
+                <div className="flex gap-2 items-center">
+                  <Skeleton className="h-10 flex-1 rounded-md" />
+                  <Skeleton className="h-10 w-16 rounded-md" />
+                  <Skeleton className="size-9 rounded-md" />
+                </div>
+                <Skeleton className="h-10 w-full rounded-md" />
+                <Skeleton className="h-16 w-full rounded-md" />
+              </div>
+            ))}
+          </CardContent>
+        </Card>
       </div>
     )
   }

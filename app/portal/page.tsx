@@ -678,24 +678,46 @@ export default function PortalTopPage() {
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto px-5 py-10 space-y-6">
-        <Skeleton className="h-8 w-48 mx-auto" />
-        <Skeleton className="h-32 w-full rounded-xl" />
-        <Skeleton className="h-14 w-full rounded-xl" />
-        <div className="grid grid-cols-3 gap-3">
-          {[1, 2, 3].map((i) => (
-            <Card key={i} className="bg-[hsl(0_0%_97%)] border shadow-none">
-              <CardContent className="p-4 flex flex-col items-center">
-                <Skeleton className="h-4 w-8 mb-2" />
-                <Skeleton className="h-8 w-12 mb-1" />
-                <Skeleton className="h-3 w-16" />
-              </CardContent>
-            </Card>
-          ))}
+      <div className="max-w-4xl mx-auto px-5 py-10 space-y-8">
+        {/* スローガン＋ようこそ（中央） */}
+        <div className="text-center space-y-2">
+          <Skeleton className="h-10 w-72 max-w-full mx-auto" />
+          <Skeleton className="h-4 w-40 mx-auto" />
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Skeleton className="h-40 w-full rounded-xl" />
-          <Skeleton className="h-40 w-full rounded-xl" />
+        {/* ミッションカード */}
+        <Skeleton className="h-44 w-full rounded-xl" />
+        {/* 私たちの「らしさ」4象限カード（実体と同じ 2列グリッド） */}
+        <div className="space-y-3">
+          <Skeleton className="h-4 w-40" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {[1, 2, 3, 4].map((i) => (
+              <Card key={i} className="bg-[hsl(0_0%_97%)] border shadow-none">
+                <CardContent className="p-4 pl-5 flex items-start gap-3">
+                  <Skeleton className="size-10 rounded-xl shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-5 w-32" />
+                    <Skeleton className="h-3 w-full" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+        {/* KPIバナー（ピル型） */}
+        <Skeleton className="h-14 w-full rounded-full" />
+        {/* あなたのタイムライン分析（見出し＋統計カード3枚） */}
+        <div className="space-y-3">
+          <Skeleton className="h-4 w-40" />
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {[1, 2, 3].map((i) => (
+              <Card key={i} className="bg-[hsl(0_0%_97%)] border shadow-none">
+                <CardContent className="p-4 flex flex-col gap-2">
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-8 w-12" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
       </div>
     )

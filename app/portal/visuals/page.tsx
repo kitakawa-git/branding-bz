@@ -141,9 +141,10 @@ export default function PortalVisualsPage() {
 
   if (loading) return (
     <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
-      <div>
-        <Skeleton className="h-8 w-56" />
-        <Skeleton className="h-4 w-64 mt-2" />
+      {/* 見え方/聞こえ方 切替タブ */}
+      <div className="flex gap-1 border-b border-border">
+        <Skeleton className="h-9 w-24" />
+        <Skeleton className="h-9 w-24" />
       </div>
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
         <CardContent className="p-5 space-y-4">
@@ -178,6 +179,17 @@ export default function PortalVisualsPage() {
           <Skeleton className="h-4 w-20" />
           <Skeleton className="h-6 w-48" />
           <Skeleton className="h-6 w-40" />
+        </CardContent>
+      </Card>
+      {/* ビジュアルガイドライン（画像グリッド） */}
+      <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+        <CardContent className="p-5 space-y-4">
+          <Skeleton className="h-4 w-40" />
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {[1, 2, 3].map(i => (
+              <Skeleton key={i} className="h-32 w-full rounded-lg" />
+            ))}
+          </div>
         </CardContent>
       </Card>
     </div>

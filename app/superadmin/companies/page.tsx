@@ -85,21 +85,19 @@ export default function CompaniesPage() {
   if (loading) {
     return (
       <div>
-        <div className="flex justify-between items-center mb-6">
-          <Skeleton className="h-8 w-32" />
-          <Skeleton className="h-9 w-36" />
-        </div>
+        {/* 企業一覧テーブル（新規登録は右下FAB。ヘッダーボタン無し） */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-0">
-            <div className="p-4">
-              <div className="flex bg-muted px-4 py-3 gap-4 border-b border-border rounded-t-md">
+            <div className="overflow-x-auto p-4">
+              {/* ヘッダー行: 企業名/スローガン/従業員数/管理者/作成日/操作 */}
+              <div className="flex px-4 py-3 gap-4 border-b border-border">
                 {[1, 2, 3, 4, 5, 6].map(i => (
                   <Skeleton key={i} className="h-4 w-20" />
                 ))}
               </div>
               {[1, 2, 3, 4, 5].map(i => (
                 <div key={i} className="flex px-4 py-3 gap-4 border-b border-border items-center">
-                  <Skeleton className="h-9 w-32" />
+                  <Skeleton className="h-4 w-28" />
                   <Skeleton className="h-4 w-40" />
                   <Skeleton className="h-4 w-12" />
                   <Skeleton className="h-4 w-12" />

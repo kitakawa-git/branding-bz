@@ -118,10 +118,7 @@ export default function PortalStrategyPage() {
 
   if (loading) return (
     <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
-      <div>
-        <Skeleton className="h-8 w-40" />
-        <Skeleton className="h-4 w-64 mt-2" />
-      </div>
+      {/* ターゲット概要＋主なターゲット＋ペルソナ（2列） */}
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
         <CardContent className="p-5 space-y-4">
           <Skeleton className="h-4 w-28" />
@@ -142,24 +139,11 @@ export default function PortalStrategyPage() {
           </div>
         </CardContent>
       </Card>
+      {/* ポジショニングマップ */}
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
         <CardContent className="p-5">
           <Skeleton className="h-4 w-40" />
           <Skeleton className="h-64 w-full mt-3 rounded-lg" />
-        </CardContent>
-      </Card>
-      <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-        <CardContent className="p-5 space-y-2">
-          <Skeleton className="h-4 w-24" />
-          {[1, 2, 3].map(i => (
-            <div key={i} className="rounded-lg border border-border bg-background border-l-2 border-l-blue-600 p-4 flex gap-3">
-              <Skeleton className="h-4 w-6" />
-              <div className="flex-1">
-                <Skeleton className="h-4 w-40" />
-                <Skeleton className="h-3 w-full mt-1" />
-              </div>
-            </div>
-          ))}
         </CardContent>
       </Card>
     </div>
