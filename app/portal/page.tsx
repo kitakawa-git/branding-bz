@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase'
 import { usePortalAuth } from './components/PortalDataProvider'
 import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
 import { SurveyBanner } from './components/SurveyBanner'
+import { QuizBanner } from './components/QuizBanner'
 import { getRelativeTime } from '@/lib/time-utils'
 import { splitBrandCopy } from '@/lib/brand-mvv'
 import { PieChart, Pie, Cell } from 'recharts'
@@ -753,6 +754,11 @@ export default function PortalTopPage() {
       {/* ===== 1.3. 未回答サーベイバナー ===== */}
       <div className="mb-6">
         <SurveyBanner />
+      </div>
+
+      {/* ===== 1.4. 未受験 理解度テストバナー ===== */}
+      <div className="mb-6">
+        <QuizBanner />
       </div>
 
       {/* ===== 1.5. 最新のお知らせ ===== */}

@@ -4,7 +4,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { callClaude } from '@/lib/claude-api'
 
 export async function POST(request: NextRequest) {
-  console.log('[SuggestTargetDetail] ===== API呼び出し開始 =====')
 
   try {
     const body = await request.json()
@@ -141,7 +140,6 @@ ${competitorsNote}`
 
     const userMessage = parts.join('\n')
 
-    console.log('[SuggestTargetDetail] Claude API呼び出し中...')
     const response = await callClaude({
       system: SYSTEM_PROMPT,
       userMessage,
@@ -177,7 +175,6 @@ ${competitorsNote}`
       )
     }
 
-    console.log('[SuggestTargetDetail] ===== 提案完了 ===== buying_factors=', parsed.buying_factors.length, 'competitors_analysis=', parsed.competitors_analysis?.length || 0)
     return NextResponse.json(parsed)
   } catch (err) {
     console.error('[SuggestTargetDetail] エラー:', err)

@@ -17,7 +17,6 @@ function escapeHtml(str: string): string {
 }
 
 export async function POST(request: NextRequest) {
-  console.log('[SignupJoin] ===== 既存企業参加登録 開始 =====')
 
   try {
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -57,7 +56,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '指定された企業が見つかりません' }, { status: 400 })
     }
 
-    console.log('[SignupJoin] 参加先企業:', company.name, company.id)
 
     // ステップ1: Auth user作成
     const { data: authData, error: createUserError } = await supabaseAdmin.auth.admin.createUser({
@@ -73,7 +71,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: msg }, { status: 400 })
     }
 
-    console.log('[SignupJoin] Auth user作成完了:', authData.user.id)
 
     // ステップ2: profiles作成
     const slug = generateRandomSlug()
@@ -102,7 +99,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log('[SignupJoin] プロフィール作成完了:', profile.id)
 
     // ステップ3: members作成（status='pending' で承認待ち）
     const { error: memberError } = await supabaseAdmin
@@ -127,7 +123,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log('[SignupJoin] ===== 参加リクエスト作成完了 =====')
 
     // 管理者へメール通知（失敗してもリクエスト作成は成功扱い）
     const resendApiKey = process.env.RESEND_API_KEY
@@ -169,7 +164,6 @@ export async function POST(request: NextRequest) {
               <p style="color:#666;font-size:12px;margin-top:16px;">${approvalUrl}</p>
             `,
           })
-          console.log('[SignupJoin] 管理者メール通知送信:', adminEmails.length, '件')
         } else {
           console.warn('[SignupJoin] 通知先の管理者メールが見つかりませんでした')
         }

@@ -18,7 +18,6 @@ const DEFAULT_SESSION_DATA = {
 const FREE_LIMIT = 3
 
 export async function POST(request: NextRequest) {
-  console.log('[PersonaSessions] ===== API呼び出し開始 =====')
 
   try {
     const supabaseAdmin = getSupabaseAdmin()
@@ -29,7 +28,6 @@ export async function POST(request: NextRequest) {
 
     // 新規ユーザー作成フロー
     if (isNewUser && email && password) {
-      console.log('[PersonaSessions] ステップ1: 新規ユーザー作成中... email=', email)
 
       const { data: authData, error: createError } = await supabaseAdmin.auth.admin.createUser({
         email,
@@ -46,7 +44,6 @@ export async function POST(request: NextRequest) {
       }
 
       authId = authData.user.id
-      console.log('[PersonaSessions] ステップ1完了: Auth user作成成功 id=', authId)
     }
 
     if (!authId) {
@@ -89,7 +86,6 @@ export async function POST(request: NextRequest) {
     }
 
     // 進行中のセッションがあればそれを返す
-    console.log('[PersonaSessions] ステップ2: 既存セッション検索中...')
     const { data: existingSession } = await supabaseAdmin
       .from('mini_app_sessions')
       .select('id, current_step, session_data')
@@ -101,7 +97,6 @@ export async function POST(request: NextRequest) {
       .maybeSingle()
 
     if (existingSession) {
-      console.log('[PersonaSessions] ステップ2: 既存セッション発見 id=', existingSession.id)
       return NextResponse.json({
         sessionId: existingSession.id,
         currentStep: existingSession.current_step,
@@ -120,11 +115,9 @@ export async function POST(request: NextRequest) {
 
     if (adminUser) {
       companyId = adminUser.company_id
-      console.log('[PersonaSessions] branding.bz本体アカウント検出: company_id=', companyId)
     }
 
     // 新規セッション作成
-    console.log('[PersonaSessions] ステップ3: 新規セッション作成中...')
     const { data: session, error: sessionError } = await supabaseAdmin
       .from('mini_app_sessions')
       .insert({
@@ -146,7 +139,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log('[PersonaSessions] ===== 全ステップ完了 ===== sessionId=', session.id)
 
     return NextResponse.json({
       sessionId: session.id,

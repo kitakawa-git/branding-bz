@@ -5,7 +5,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
 export async function POST(request: NextRequest) {
-  console.log('[Persona Connect] ===== 連携開始 =====')
 
   try {
     const supabaseAdmin = getSupabaseAdmin()
@@ -121,7 +120,6 @@ export async function POST(request: NextRequest) {
       console.error('[Persona Connect] セッション更新エラー:', completeError)
     }
 
-    console.log('[Persona Connect] ===== 連携完了 =====')
     return NextResponse.json({ success: true })
   } catch (err) {
     console.error('[Persona Connect] エラー:', err)

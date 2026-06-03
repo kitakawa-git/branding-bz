@@ -48,7 +48,6 @@ export async function PATCH(
     const body = await request.json()
     const { step, sessionData, status } = body
 
-    console.log('[PersonaSessions PATCH] sessionId=', sessionId, 'step=', step)
 
     const updateData: Record<string, unknown> = {}
 

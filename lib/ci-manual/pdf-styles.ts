@@ -1,8 +1,7 @@
 // CIマニュアル PDF 共有スタイル
 import { StyleSheet } from '@react-pdf/renderer'
 
-// A4サイズ（ポイント単位）
-export const A4 = { width: 595.28, height: 841.89 }
+// ページ余白（ポイント単位）
 export const MARGIN = { top: 56, right: 42, bottom: 56, left: 42 }
 
 export function createThemeStyles(brandColor?: string) {

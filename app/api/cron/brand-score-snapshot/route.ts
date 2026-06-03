@@ -51,7 +51,6 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    console.log(`[Cron] ${schedules.length} 社のスナップショットを処理開始`)
 
     const results: { company_id: string; success: boolean; error?: string }[] = []
 
@@ -110,7 +109,6 @@ export async function GET(request: NextRequest) {
         }
 
         results.push({ company_id: schedule.company_id, success: true })
-        console.log(`[Cron] ${schedule.company_id} 完了 (score: ${snapshot.total_score}, rank: ${snapshot.rank})`)
       } catch (err) {
         const msg = err instanceof Error ? err.message : 'Unknown error'
         console.error(`[Cron] ${schedule.company_id} 処理エラー:`, msg)
@@ -121,7 +119,6 @@ export async function GET(request: NextRequest) {
     const successCount = results.filter(r => r.success).length
     const failCount = results.filter(r => !r.success).length
 
-    console.log(`[Cron] 完了: 成功=${successCount}, 失敗=${failCount}`)
 
     return NextResponse.json({
       message: `${successCount}社のスナップショットを保存しました`,

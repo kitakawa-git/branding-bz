@@ -56,7 +56,6 @@ CI（コーポレートアイデンティティ）策定の実務経験が豊富
 }`
 
 export async function POST(request: NextRequest) {
-  console.log('[ColorGenerate] ===== API呼び出し開始 =====')
 
   try {
     const supabaseAdmin = getSupabaseAdmin()
@@ -105,7 +104,6 @@ export async function POST(request: NextRequest) {
     // ユーザープロンプト構築
     const userPrompt = buildUserPrompt(project)
 
-    console.log('[ColorGenerate] Claude API呼び出し中...')
     const response = await callClaude({
       system: SYSTEM_PROMPT,
       userMessage: userPrompt,
@@ -149,7 +147,6 @@ export async function POST(request: NextRequest) {
       console.error('[ColorGenerate] DB更新エラー:', updateError.message)
     }
 
-    console.log('[ColorGenerate] ===== 生成完了 =====')
     return NextResponse.json({ proposals })
   } catch (err) {
     console.error('[ColorGenerate] エラー:', err)

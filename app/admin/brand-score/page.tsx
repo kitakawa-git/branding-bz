@@ -58,6 +58,7 @@ import {
   Eye,
   MessageSquare,
   ClipboardList,
+  ClipboardCheck,
   CreditCard,
   Check,
   Minus,
@@ -95,6 +96,33 @@ interface OuterScoreData {
   rank: string
 }
 
+interface GapItem {
+  empathy: number
+  knowledge: number
+  gap: number
+  direction: 'empathy_leads' | 'knowledge_leads' | 'balanced_high' | 'balanced_low' | 'balanced'
+  interpretation: string
+  action: string
+}
+
+interface KnowledgeGapData {
+  quiz: {
+    id: string
+    title: string
+    status: string
+    overall: number | null
+    why: number | null
+    how: number | null
+    attempt_count: number
+    total_members: number
+    response_rate: number
+    insufficient: boolean
+  } | null
+  survey: { id: string; title: string; status: string; why: number | null; how: number | null } | null
+  gap: { why: GapItem | null; how: GapItem | null } | null
+  reason: 'no_quiz' | 'no_survey' | 'insufficient' | null
+}
+
 interface TagMapping {
   tag: string
   is_expected: boolean
@@ -130,6 +158,15 @@ function getScoreProgressColor(score: number | null): string {
   if (score >= 60) return '[&>div]:bg-blue-500'
   if (score >= 40) return '[&>div]:bg-yellow-500'
   return '[&>div]:bg-red-500'
+}
+
+// ギャップ解釈バッジの色（direction 別）
+function getGapBadgeClass(direction: string): string {
+  if (direction === 'balanced_high') return 'bg-green-100 text-green-700 border-green-200'
+  if (direction === 'balanced_low') return 'bg-red-100 text-red-700 border-red-200'
+  if (direction === 'empathy_leads' || direction === 'knowledge_leads')
+    return 'bg-amber-100 text-amber-700 border-amber-200'
+  return 'bg-gray-100 text-gray-600 border-gray-200'
 }
 
 function getHeatmapBg(score: number | null): string {
@@ -188,6 +225,7 @@ type BrandScoreCache = {
   prevSnapshot: Snapshot | null
   snapshots: Snapshot[]
   impressionScore: number | null
+  knowledgeGap: KnowledgeGapData | null
 }
 
 // ── メインコンポーネント ──
@@ -223,6 +261,7 @@ export default function BrandScoreDashboard() {
 
   // 印象一致度
   const [impressionScore, setImpressionScore] = useState<number | null>(cached?.impressionScore ?? null)
+  const [knowledgeGap, setKnowledgeGap] = useState<KnowledgeGapData | null>(cached?.knowledgeGap ?? null)
 
   // データ取得（段階的レンダリング：各fetchが終わり次第stateに反映）
   const fetchAll = useCallback(async () => {
@@ -241,6 +280,7 @@ export default function BrandScoreDashboard() {
       prevSnapshot: null,
       snapshots: [],
       impressionScore: null,
+      knowledgeGap: null,
     }
 
     // 各リクエストを独立して投げ、完了次第stateに反映
@@ -330,6 +370,16 @@ export default function BrandScoreDashboard() {
       })
       .catch(() => {})
 
+    // 理解度（知識）× 共感 ギャップ分析（admin セッションで company 確定）
+    const knowledgeGapPromise = fetch(`/api/brand-score/knowledge-gap`)
+      .then(async (res) => {
+        if (!res.ok) return
+        const data = await res.json()
+        setKnowledgeGap(data)
+        collected.knowledgeGap = data
+      })
+      .catch(() => {})
+
     // 最初に最低限の表示を出したいデータが揃ったらloading解除
     // （inner + outer + prevSnapshot があれば総合カードが描画可能）
     Promise.all([innerPromise, outerPromise, prevSnapPromise]).then(() => {
@@ -337,7 +387,7 @@ export default function BrandScoreDashboard() {
     })
 
     // 全部終わったらキャッシュ保存
-    await Promise.allSettled([innerPromise, outerPromise, tagPromise, fbPromise, prevSnapPromise, snapshotsPromise])
+    await Promise.allSettled([innerPromise, outerPromise, tagPromise, fbPromise, prevSnapPromise, snapshotsPromise, knowledgeGapPromise])
 
     // 印象一致度の最終算出（tagMappings と tagCounts と totalFbCount が揃ってから）
     if (collected.totalFbCount >= 30) {
@@ -847,6 +897,175 @@ export default function BrandScoreDashboard() {
                     名刺を管理 <ArrowRight size={12} />
                   </Link>
                 </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* ── 3.5. 理解度（知識）× 共感ギャップ ── */}
+      <div className="grid md:grid-cols-2 gap-4 mb-6">
+        {/* 左: 理解度（知識） */}
+        <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                <ClipboardCheck size={14} />
+                理解度（知識）
+              </h2>
+            </div>
+
+            {knowledgeGap?.quiz ? (
+              knowledgeGap.quiz.insufficient ? (
+                <div className="text-center py-6">
+                  <p className="text-sm text-muted-foreground mb-1">集計中</p>
+                  <p className="text-xs text-muted-foreground/70 mb-4">
+                    回答数が少ないため非表示（匿名性確保）
+                  </p>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground px-1 mb-3">
+                    <span>受験率</span>
+                    <span>
+                      {knowledgeGap.quiz.attempt_count}人 / {knowledgeGap.quiz.total_members}人（
+                      {knowledgeGap.quiz.response_rate}%）
+                    </span>
+                  </div>
+                  <Link
+                    href="/admin/brand-score/quizzes"
+                    className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline"
+                  >
+                    理解度テスト管理 <ArrowRight size={12} />
+                  </Link>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="text-center mb-2">
+                    <span className={`text-3xl font-bold ${getScoreColor(knowledgeGap.quiz.overall)}`}>
+                      {knowledgeGap.quiz.overall !== null ? knowledgeGap.quiz.overall.toFixed(1) : '-'}
+                    </span>
+                    <span className="text-sm text-muted-foreground ml-1">%</span>
+                  </div>
+
+                  {[
+                    { label: '理念（WHY）', value: knowledgeGap.quiz.why },
+                    { label: '戦略・ルール（HOW）', value: knowledgeGap.quiz.how },
+                  ].map((item) => (
+                    <div key={item.label}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs text-muted-foreground">{item.label}</span>
+                        <span className={`text-sm font-bold ${getScoreColor(item.value)}`}>
+                          {item.value !== null ? item.value.toFixed(1) : '-'}
+                        </span>
+                      </div>
+                      <Progress value={item.value ?? 0} className={`h-1.5 ${getScoreProgressColor(item.value)}`} />
+                    </div>
+                  ))}
+
+                  <div className="pt-2 border-t">
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>受験率</span>
+                      <span>
+                        {knowledgeGap.quiz.attempt_count}人 / {knowledgeGap.quiz.total_members}人（
+                        {knowledgeGap.quiz.response_rate}%）
+                      </span>
+                    </div>
+                  </div>
+
+                  <Link
+                    href="/admin/brand-score/quizzes"
+                    className="flex items-center gap-1 text-xs text-blue-600 hover:underline"
+                  >
+                    理解度テスト管理 <ArrowRight size={12} />
+                  </Link>
+                </div>
+              )
+            ) : (
+              <div className="text-center py-6">
+                <ClipboardCheck size={32} className="mx-auto mb-2 text-muted-foreground/30" />
+                <p className="text-sm text-muted-foreground mb-3">
+                  理解度テストを実施するとスコアが表示されます
+                </p>
+                <Button asChild size="sm" variant="outline">
+                  <Link href="/admin/brand-score/quizzes">
+                    テストを作成 <ArrowRight size={12} />
+                  </Link>
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* 右: 共感 × 知識 ギャップ */}
+        <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                <TrendingUp size={14} />
+                共感 × 知識 ギャップ
+              </h2>
+            </div>
+
+            {knowledgeGap?.gap ? (
+              <div className="space-y-5">
+                {(
+                  [
+                    { key: 'why' as const, label: 'WHY（理念）' },
+                    { key: 'how' as const, label: 'HOW（戦略・ルール）' },
+                  ]
+                ).map(({ key, label }) => {
+                  const item = knowledgeGap.gap![key]
+                  if (!item) {
+                    return (
+                      <div key={key}>
+                        <p className="text-xs font-semibold text-foreground mb-1">{label}</p>
+                        <p className="text-xs text-muted-foreground">データが揃っていません</p>
+                      </div>
+                    )
+                  }
+                  return (
+                    <div key={key}>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-xs font-semibold text-foreground">{label}</span>
+                        <Badge variant="outline" className={`text-[10px] ${getGapBadgeClass(item.direction)}`}>
+                          {item.interpretation}
+                        </Badge>
+                      </div>
+                      <div className="space-y-1.5">
+                        <div>
+                          <div className="flex items-center justify-between text-[11px] mb-0.5">
+                            <span className="text-blue-600">共感（サーベイ）</span>
+                            <span className="font-semibold">{item.empathy.toFixed(1)}</span>
+                          </div>
+                          <Progress value={item.empathy} className="h-1.5 [&>div]:bg-blue-500" />
+                        </div>
+                        <div>
+                          <div className="flex items-center justify-between text-[11px] mb-0.5">
+                            <span className="text-purple-600">知識（テスト）</span>
+                            <span className="font-semibold">{item.knowledge.toFixed(1)}</span>
+                          </div>
+                          <Progress value={item.knowledge} className="h-1.5 [&>div]:bg-purple-500" />
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground mt-1.5">
+                        差 {item.gap > 0 ? '+' : ''}
+                        {item.gap.toFixed(1)} ・ {item.action}
+                      </p>
+                    </div>
+                  )
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-6">
+                <TrendingUp size={32} className="mx-auto mb-2 text-muted-foreground/30" />
+                <p className="text-sm text-muted-foreground">
+                  {knowledgeGap?.reason === 'no_quiz' &&
+                    '理解度テストを実施すると、共感とのギャップが見えます'}
+                  {knowledgeGap?.reason === 'no_survey' &&
+                    'サーベイを実施すると、知識とのギャップが見えます'}
+                  {knowledgeGap?.reason === 'insufficient' &&
+                    '受験数が少ないため集計中（回答が増えるとギャップを表示）'}
+                  {!knowledgeGap?.reason &&
+                    'サーベイとテストの両方を実施すると、共感×知識のギャップが見えます'}
+                </p>
               </div>
             )}
           </CardContent>

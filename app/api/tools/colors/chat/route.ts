@@ -37,7 +37,6 @@ const SYSTEM_PROMPT = `あなたはID INC.のシニアブランドコンサル�
 - neutralsはlightとdarkの両方を含む`
 
 export async function POST(request: NextRequest) {
-  console.log('[ColorChat] ===== チャットAPI呼び出し =====')
 
   try {
     const supabaseAdmin = getSupabaseAdmin()

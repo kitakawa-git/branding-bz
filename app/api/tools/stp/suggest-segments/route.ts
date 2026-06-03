@@ -25,7 +25,6 @@ const SYSTEM_PROMPT = `あなたはブランドマーケティングの専門家
 }`
 
 export async function POST(request: NextRequest) {
-  console.log('[SuggestSegments] ===== API呼び出し開始 =====')
 
   try {
     const body = await request.json()
@@ -106,7 +105,6 @@ export async function POST(request: NextRequest) {
 
     const userMessage = parts.join('\n')
 
-    console.log('[SuggestSegments] Claude API呼び出し中...')
     const response = await callClaude({
       system: SYSTEM_PROMPT,
       userMessage,
@@ -138,7 +136,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log('[SuggestSegments] ===== 提案完了 ===== variables=', parsed.variables.length)
     return NextResponse.json({ variables: parsed.variables })
   } catch (err) {
     console.error('[SuggestSegments] エラー:', err)

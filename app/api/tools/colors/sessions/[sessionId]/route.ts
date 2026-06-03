@@ -61,7 +61,6 @@ export async function PATCH(
     const body = await request.json()
     const { step, data, status } = body
 
-    console.log('[ColorSessions PATCH] sessionId=', sessionId, 'step=', step)
 
     // プロジェクト更新
     if (data && Object.keys(data).length > 0) {
