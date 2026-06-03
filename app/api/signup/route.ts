@@ -148,7 +148,7 @@ export async function POST(request: NextRequest) {
     // ステップ5: profilesにプロフィール作成
     console.log('[Signup] ステップ5: プロフィール作成中...')
     const slug = generateRandomSlug()
-    const { error: profileError } = await supabaseAdmin
+    const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
       .insert({
         name: userName,
@@ -161,6 +161,8 @@ export async function POST(request: NextRequest) {
         phone: '',
         photo_url: '',
       })
+      .select('id')
+      .single()
 
     if (profileError) {
       console.error('[Signup] ステップ5失敗: プロフィール作成エラー:', profileError.message)
@@ -176,6 +178,34 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('[Signup] ステップ5完了: プロフィール作成成功 slug=', slug)
+
+    // ステップ6: membersに紐づけ（ポータルのアクセス権限はこのレコードで判定される）
+    console.log('[Signup] ステップ6: members紐づけ中...')
+    const { error: memberInsertError } = await supabaseAdmin
+      .from('members')
+      .insert({
+        auth_id: authData.user.id,
+        company_id: company.id,
+        display_name: userName,
+        email,
+        profile_id: profile.id,
+      })
+
+    if (memberInsertError) {
+      console.error('[Signup] ステップ6失敗: members紐づけエラー:', memberInsertError.message)
+      // ロールバック: profiles + admin_user + 企業 + Auth user削除
+      console.log('[Signup] ロールバック: profiles + admin_user + 企業 + Auth user削除中...')
+      await supabaseAdmin.from('profiles').delete().eq('id', profile.id)
+      await supabaseAdmin.from('admin_users').delete().eq('auth_id', authData.user.id)
+      await supabaseAdmin.from('companies').delete().eq('id', company.id)
+      await supabaseAdmin.auth.admin.deleteUser(authData.user.id)
+      return NextResponse.json(
+        { error: `メンバー紐づけエラー: ${memberInsertError.message}` },
+        { status: 400 }
+      )
+    }
+
+    console.log('[Signup] ステップ6完了: members紐づけ成功')
     console.log('[Signup] ===== 全ステップ完了 ===== company_id=', company.id, 'auth_id=', authData.user.id)
 
     return NextResponse.json({

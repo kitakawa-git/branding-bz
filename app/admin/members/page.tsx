@@ -31,6 +31,7 @@ import {
 import { getPageCache, setPageCache } from '@/lib/page-cache'
 import { Button } from '@/components/ui/button'
 import { Check, Pencil, Eye, EyeOff, Trash2, Link2, ChevronDown, ChevronUp, Plus, UserPlus, CheckCircle2, XCircle } from 'lucide-react'
+import { Fab, FabButton } from '@/components/ui/fab'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
@@ -502,15 +503,11 @@ export default function MembersPage() {
     <div>
 
       {/* ===== アカウント作成 FAB（右下固定） ===== */}
-      <div className="fixed bottom-8 right-8 z-50 flex items-center gap-3">
-        <button
-          onClick={() => setCreateDialogOpen(true)}
-          className="flex items-center justify-center gap-1 h-12 px-5 rounded-full hover:scale-105 transition-transform cursor-pointer text-sm font-bold bg-foreground text-background shadow-lg"
-        >
-          <Plus size={16} />
+      <Fab>
+        <FabButton onClick={() => setCreateDialogOpen(true)} icon={<Plus size={16} />}>
           アカウントを追加
-        </button>
-      </div>
+        </FabButton>
+      </Fab>
 
       {/* ===== アカウント作成モーダル ===== */}
       <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>

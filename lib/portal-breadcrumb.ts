@@ -4,7 +4,8 @@
 
 export type PortalCrumb = {
   section?: string // サイドバーのグループ名（リンクなしの薄字）
-  title: string // 現在ページ名
+  perspective?: string // 視点ワード（主見出し）。指定時は「視点ワード ｜ title」の二段表記で表示
+  title: string // 現在ページ名（名詞）
 }
 
 const breadcrumbMap: Record<string, PortalCrumb> = {
@@ -15,11 +16,12 @@ const breadcrumbMap: Record<string, PortalCrumb> = {
   // 浸透セクション
   '/portal/timeline': { section: '浸透', title: 'Good Job タイムライン' },
   '/portal/kpi': { section: '浸透', title: '目標・KPI' },
-  // ブランド基盤セクション
-  '/portal/guidelines': { section: 'ブランド基盤', title: 'ブランド方針' },
-  '/portal/strategy': { section: 'ブランド基盤', title: 'ブランド戦略' },
-  '/portal/visuals': { section: 'ブランド基盤', title: 'ビジュアルアイデンティティ' },
-  '/portal/verbal': { section: 'ブランド基盤', title: 'バーバルアイデンティティ' },
+  // 私たちの「らしさ」セクション（視点ワード｜名詞 の二段表記）
+  '/portal/guidelines': { section: '私たちの「らしさ」', perspective: '考え方', title: 'ブランド方針' },
+  '/portal/personality': { section: '私たちの「らしさ」', perspective: '感じられ方', title: 'ブランドパーソナリティ' },
+  '/portal/strategy': { section: '私たちの「らしさ」', perspective: '接し方', title: 'ブランド戦略' },
+  '/portal/visuals': { section: '私たちの「らしさ」', perspective: '見え方', title: 'ビジュアルアイデンティティ' },
+  '/portal/verbal': { section: '私たちの「らしさ」', perspective: '聞こえ方', title: 'バーバルアイデンティティ' },
 }
 
 export function resolvePortalCrumb(pathname: string): PortalCrumb | null {

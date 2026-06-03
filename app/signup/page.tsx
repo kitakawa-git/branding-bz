@@ -271,15 +271,15 @@ export default function SignupPage() {
             {step === 1 && (
               <>
                 <div className="mb-5">
-                  <h2 className="mb-1.5 text-sm font-bold text-gray-700">メールアドレス <span className="text-red-500">*</span></h2>
+                  <h2 className="mb-1.5 text-xs font-bold text-gray-700">メールアドレス <span className="text-red-500">*</span></h2>
                   <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="admin@example.com" required className="h-10 bg-white/60 border-white/80 focus-visible:ring-gray-400" />
                 </div>
                 <div className="mb-5">
-                  <h2 className="mb-1.5 text-sm font-bold text-gray-700">パスワード <span className="text-red-500">*</span></h2>
+                  <h2 className="mb-1.5 text-xs font-bold text-gray-700">パスワード <span className="text-red-500">*</span></h2>
                   <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="6文字以上" required minLength={6} className="h-10 bg-white/60 border-white/80 focus-visible:ring-gray-400" />
                 </div>
                 <div className="mb-5">
-                  <h2 className="mb-1.5 text-sm font-bold text-gray-700">パスワード（確認） <span className="text-red-500">*</span></h2>
+                  <h2 className="mb-1.5 text-xs font-bold text-gray-700">パスワード（確認） <span className="text-red-500">*</span></h2>
                   <Input type="password" value={passwordConfirm} onChange={(e) => setPasswordConfirm(e.target.value)} placeholder="パスワードを再入力" required minLength={6} className="h-10 bg-white/60 border-white/80 focus-visible:ring-gray-400" />
                 </div>
                 <button
@@ -373,7 +373,7 @@ export default function SignupPage() {
             {step === 2 && (
               <>
                 <div className="mb-5">
-                  <h2 className="mb-1.5 text-sm font-bold text-gray-700">企業名またはブランド名 <span className="text-red-500">*</span></h2>
+                  <h2 className="mb-1.5 text-xs font-bold text-gray-700">企業名またはブランド名 <span className="text-red-500">*</span></h2>
                   <Input type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="株式会社○○ / ブランド名" required className="h-10 bg-white/60 border-white/80 focus-visible:ring-gray-400" />
                   <p className="text-xs text-gray-400 mt-1.5 m-0">後から管理画面で詳細情報を追加できます</p>
                 </div>
@@ -418,15 +418,15 @@ export default function SignupPage() {
                   </div>
                 )}
                 <div className="mb-5">
-                  <h2 className="mb-1.5 text-sm font-bold text-gray-700">氏名 <span className="text-red-500">*</span></h2>
+                  <h2 className="mb-1.5 text-xs font-bold text-gray-700">氏名 <span className="text-red-500">*</span></h2>
                   <Input type="text" value={userName} onChange={(e) => setUserName(e.target.value)} placeholder="山田太郎" required className="h-10 bg-white/60 border-white/80 focus-visible:ring-gray-400" />
                 </div>
                 <div className="mb-5">
-                  <h2 className="mb-1.5 text-sm font-bold text-gray-700">役職</h2>
+                  <h2 className="mb-1.5 text-xs font-bold text-gray-700">役職</h2>
                   <Input type="text" value={position} onChange={(e) => setPosition(e.target.value)} placeholder="代表取締役（任意）" className="h-10 bg-white/60 border-white/80 focus-visible:ring-gray-400" />
                 </div>
                 <div className="mb-5">
-                  <h2 className="mb-1.5 text-sm font-bold text-gray-700">部署</h2>
+                  <h2 className="mb-1.5 text-xs font-bold text-gray-700">部署</h2>
                   <Input type="text" value={department} onChange={(e) => setDepartment(e.target.value)} placeholder="経営企画部（任意）" className="h-10 bg-white/60 border-white/80 focus-visible:ring-gray-400" />
                 </div>
                 <div className="flex gap-3">

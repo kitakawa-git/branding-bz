@@ -1,23 +1,19 @@
 'use client'
 
-// バーバルアイデンティティ 閲覧ページ（トーンオブボイス・用語ルール）
+// バーバルアイデンティティ 閲覧ページ（用語ルール・バーバルの言語表現）
+// パーソナリティ（トーン＆マナー）は /portal/personality へ移管済み
 import { useEffect, useState, useMemo } from 'react'
 import { supabase } from '@/lib/supabase'
 import { fetchWithRetry } from '@/lib/supabase-fetch'
 import { usePortalAuth } from '../components/PortalDataProvider'
 import { useBrandFonts } from '@/hooks/useBrandFonts'
 import { BrandFontLoader } from '@/components/BrandFontLoader'
-import { getCssFontFamily } from '@/lib/brand-fonts'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
 import { BrandPageTracker } from '@/components/analytics/BrandPageTracker'
 import { Input } from '@/components/ui/input'
 import { Search } from 'lucide-react'
-
-type Personality = {
-  tone_of_voice: string | null
-}
 
 type Term = {
   preferred_term: string
@@ -26,16 +22,14 @@ type Term = {
   category: string | null
 }
 
-type VerbalCache = { personality: Personality | null; terms: Term[] }
+type VerbalCache = { terms: Term[] }
 
 export default function PortalVerbalIdentityPage() {
   const { companyId } = usePortalAuth()
   const brandFonts = useBrandFonts(companyId)
-  const secondaryStyle = brandFonts ? { fontFamily: getCssFontFamily(brandFonts.secondary_font) } : undefined
   const cacheKey = `portal-verbal-${companyId}`
   const cached = companyId ? getPageCache<VerbalCache>(cacheKey) : null
 
-  const [personality, setPersonality] = useState<Personality | null>(cached?.personality ?? null)
   const [terms, setTerms] = useState<Term[]>(cached?.terms ?? [])
   const [loading, setLoading] = useState(!cached)
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
@@ -45,22 +39,10 @@ export default function PortalVerbalIdentityPage() {
     if (!companyId) return
     if (getPageCache<VerbalCache>(cacheKey)) return
 
-    Promise.all([
-      fetchWithRetry(() =>
-        supabase.from('brand_personalities').select('tone_of_voice').eq('company_id', companyId).single()
-      ),
-      fetchWithRetry(() =>
-        supabase.from('brand_terms').select('preferred_term, avoided_term, context, category, sort_order').eq('company_id', companyId).order('sort_order')
-      ),
-    ]).then(([pRes, tRes]) => {
-      let parsedPersonality: Personality | null = null
+    fetchWithRetry(() =>
+      supabase.from('brand_terms').select('preferred_term, avoided_term, context, category, sort_order').eq('company_id', companyId).order('sort_order')
+    ).then((tRes) => {
       let parsedTerms: Term[] = []
-
-      if (pRes.data) {
-        const rec = pRes.data as Record<string, unknown>
-        parsedPersonality = { tone_of_voice: (rec.tone_of_voice as string) || null }
-        setPersonality(parsedPersonality)
-      }
       if (tRes.data && Array.isArray(tRes.data)) {
         parsedTerms = tRes.data.map((d: unknown) => {
           const rec = d as Record<string, unknown>
@@ -73,7 +55,7 @@ export default function PortalVerbalIdentityPage() {
         })
         setTerms(parsedTerms)
       }
-      setPageCache(cacheKey, { personality: parsedPersonality, terms: parsedTerms })
+      setPageCache(cacheKey, { terms: parsedTerms })
       setLoading(false)
     })
   }, [companyId, cacheKey])
@@ -114,12 +96,6 @@ export default function PortalVerbalIdentityPage() {
         <Skeleton className="h-8 w-56" />
         <Skeleton className="h-4 w-64 mt-2" />
       </div>
-      <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-        <CardContent className="p-5">
-          <Skeleton className="h-4 w-36" />
-          <Skeleton className="h-24 w-full mt-3" />
-        </CardContent>
-      </Card>
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none overflow-hidden">
         <CardContent className="p-5 pb-0">
           <Skeleton className="h-4 w-24 mb-3" />
@@ -146,10 +122,9 @@ export default function PortalVerbalIdentityPage() {
     </div>
   )
 
-  const hasTone = personality?.tone_of_voice
   const hasTerms = terms.length > 0
 
-  if (!hasTone && !hasTerms) {
+  if (!hasTerms) {
     return <div className="text-center py-16 text-muted-foreground text-[15px]">まだ登録されていません</div>
   }
 
@@ -159,24 +134,12 @@ export default function PortalVerbalIdentityPage() {
     {companyId && <BrandPageTracker companyId={companyId} pageType="verbal" />}
     <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
 
-      {/* 1. トーン・オブ・ボイス */}
-      {hasTone && (
-        <section>
-          <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-            <CardContent className="p-5">
-              <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">トーン・オブ・ボイス</h2>
-              <p className="text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0" style={secondaryStyle}>{personality!.tone_of_voice}</p>
-            </CardContent>
-          </Card>
-        </section>
-      )}
-
-      {/* 2. 用語ルール */}
+      {/* 用語ルール */}
       {hasTerms && (
         <section>
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none overflow-hidden">
             <CardContent className="p-5 pb-0">
-              <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">用語ルール</h2>
+              <h2 className="text-xs font-bold text-foreground mb-3 tracking-wide">用語ルール</h2>
 
               {/* 絞り込み＋検索 */}
               {(hasCategories || terms.length > 5) && (

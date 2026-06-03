@@ -199,7 +199,7 @@ export function Step5Export({
           {/* 出力オプション */}
           {confirmed && (
             <div className="mt-5 space-y-3">
-              <h2 className="text-sm font-bold mb-3">出力・連携</h2>
+              <h2 className="text-xs font-bold mb-3">出力・連携</h2>
               <div className="grid gap-3 sm:grid-cols-3">
                 {/* PDF */}
                 <button

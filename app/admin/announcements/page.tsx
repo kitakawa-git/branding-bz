@@ -23,6 +23,8 @@ import {
 } from '@/components/ui/alert-dialog'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
 import { Plus, Pencil, BarChart3, Trash2 } from 'lucide-react'
+import { Fab, FabButton } from '@/components/ui/fab'
+import { AnnouncementCreateDialog } from './AnnouncementCreateDialog'
 
 const CATEGORY_COLORS: Record<string, string> = {
   '重要': 'bg-red-100 text-red-700',
@@ -53,6 +55,7 @@ export default function AnnouncementsListPage() {
   const [totalMembers, setTotalMembers] = useState(cached?.totalMembers ?? 0)
   const [loading, setLoading] = useState(!cached)
   const [deleting, setDeleting] = useState<string | null>(null)
+  const [createOpen, setCreateOpen] = useState(false)
 
   const fetchData = async () => {
     if (!companyId) return
@@ -171,16 +174,21 @@ export default function AnnouncementsListPage() {
 
   return (
     <div>
-      {/* 新規作成 FAB（右下固定・include-bz の FabButton と同装飾） */}
-      <div className="fixed bottom-8 right-8 z-50 flex items-center gap-3">
-        <Link
-          href="/admin/announcements/new"
-          className="flex items-center justify-center gap-1 h-12 px-5 rounded-full hover:scale-105 transition-transform cursor-pointer text-sm font-bold no-underline bg-foreground text-background shadow-lg"
-        >
-          <Plus size={16} />
+      {/* 新規作成 FAB（右下固定・クリックでモーダル展開） */}
+      <Fab>
+        <FabButton onClick={() => setCreateOpen(true)} icon={<Plus size={16} />}>
           新規作成
-        </Link>
-      </div>
+        </FabButton>
+      </Fab>
+
+      {/* お知らせ作成モーダル */}
+      <AnnouncementCreateDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        companyId={companyId}
+        userId={user?.id}
+        onCreated={fetchData}
+      />
 
       {announcements.length === 0 ? (
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">

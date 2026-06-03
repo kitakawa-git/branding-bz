@@ -5,7 +5,7 @@
 import { useEffect, useRef } from 'react'
 import { trackBrandPageView } from '@/lib/analytics/track'
 
-type PageType = 'guidelines' | 'strategy' | 'visuals' | 'verbal'
+type PageType = 'guidelines' | 'strategy' | 'visuals' | 'verbal' | 'personality'
 
 export function BrandPageTracker({
   companyId,

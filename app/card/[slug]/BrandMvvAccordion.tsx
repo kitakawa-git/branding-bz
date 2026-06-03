@@ -4,6 +4,7 @@
 import { useState, useRef, useCallback } from 'react'
 import { trackCardEvent } from '@/lib/analytics/track'
 import { ChevronDown } from 'lucide-react'
+import { splitBrandCopy } from '@/lib/brand-mvv'
 
 interface ValueItem {
   name: string
@@ -87,20 +88,33 @@ export function BrandMvvAccordion({
         }}
       >
         <div className="pt-3 space-y-4">
-          {/* ビジョン */}
-          {hasVision && (
-            <div>
-              <span className="text-xs font-bold text-muted-foreground tracking-wider uppercase">
-                Vision
-              </span>
-              <p
-                className="text-[13px] text-foreground/70 leading-[1.8] whitespace-pre-line m-0 mt-1"
-                style={{ fontFamily: secondaryFontFamily }}
-              >
-                {vision}
-              </p>
-            </div>
-          )}
+          {/* ビジョン（コピー＋説明文を分離） */}
+          {hasVision && (() => {
+            const { copy, body } = splitBrandCopy(vision)
+            return (
+              <div>
+                <span className="text-xs font-bold text-muted-foreground tracking-wider uppercase">
+                  Vision
+                </span>
+                {copy && (
+                  <p
+                    className="text-base font-bold text-foreground leading-[1.8] whitespace-pre-line m-0 mt-1"
+                    style={{ fontFamily: secondaryFontFamily }}
+                  >
+                    {copy}
+                  </p>
+                )}
+                {body && (
+                  <p
+                    className="text-[13px] text-foreground/70 leading-[1.8] whitespace-pre-line m-0 mt-1"
+                    style={{ fontFamily: secondaryFontFamily }}
+                  >
+                    {body}
+                  </p>
+                )}
+              </div>
+            )
+          })()}
 
           {/* バリュー */}
           {hasValues && (
@@ -123,7 +137,7 @@ export function BrandMvvAccordion({
                       </span>
                       {v.description && (
                         <p
-                          className="text-xs text-muted-foreground leading-relaxed mt-0.5 m-0"
+                          className="text-xs text-muted-foreground leading-relaxed mt-0.5 m-0 whitespace-pre-line"
                           style={{ fontFamily: secondaryFontFamily }}
                         >
                           {v.description}

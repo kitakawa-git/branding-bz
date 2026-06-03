@@ -133,7 +133,7 @@ export function OuterScoreSection({ companyId }: { companyId: string }) {
     return (
       <section className="mb-6">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-bold text-foreground tracking-wide m-0">
+          <h2 className="text-xs font-bold text-foreground tracking-wide m-0">
             アウターブランドスコア
           </h2>
           <Select value={period} onValueChange={handlePeriodChange}>
@@ -198,7 +198,7 @@ export function OuterScoreSection({ companyId }: { companyId: string }) {
   return (
     <section className="mb-6">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-sm font-bold text-foreground tracking-wide m-0">
+        <h2 className="text-xs font-bold text-foreground tracking-wide m-0">
           アウターブランドスコア
         </h2>
         <Select value={period} onValueChange={handlePeriodChange}>

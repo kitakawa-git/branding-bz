@@ -9,9 +9,7 @@ export type SuperAdminCrumb = {
 
 const breadcrumbMap: Record<string, SuperAdminCrumb> = {
   '/superadmin/companies': { title: '企業一覧' },
-  '/superadmin/companies/new': { section: '企業一覧', title: '新規企業を登録' },
   '/superadmin/news': { title: 'ニュース管理' },
-  '/superadmin/news/new': { section: 'ニュース管理', title: 'ニュース新規作成' },
   '/superadmin/inquiries': { title: 'お問い合わせ' },
 }
 

@@ -6,10 +6,10 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Check } from 'lucide-react'
+import { Fab, FabButton } from '@/components/ui/fab'
 
 type Company = {
   id: string
@@ -313,13 +313,15 @@ export default function CompanyDetailPage() {
               />
             </div>
 
-            <Button
-              type="submit"
-              disabled={saving}
-              className={`bg-[#1e3a5f] hover:bg-[#2a4a6f] ${saving ? 'opacity-60' : ''}`}
-            >
-              {saving ? '保存中...' : '保存する'}
-            </Button>
+            {/* FabBar との重なりを防ぐスペーサー */}
+            <div className="h-16" />
+
+            {/* 保存 FAB（右下固定・include-bz node の FabButton と同装飾） */}
+            <Fab>
+              <FabButton type="submit" disabled={saving} icon={<Check size={16} />}>
+                {saving ? '保存中...' : '保存'}
+              </FabButton>
+            </Fab>
           </form>
         </CardContent>
       </Card>

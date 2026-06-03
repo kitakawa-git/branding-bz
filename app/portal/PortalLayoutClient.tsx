@@ -80,7 +80,14 @@ function PortalLayoutInner({ children }: { children: React.ReactNode }) {
                   )}
                   <BreadcrumbItem>
                     <BreadcrumbPage className="text-base font-bold">
-                      {crumb.title}
+                      {crumb.perspective ? (
+                        <span className="flex items-baseline gap-1.5">
+                          <span>{crumb.perspective}</span>
+                          <span className="text-sm font-normal text-muted-foreground">｜{crumb.title}</span>
+                        </span>
+                      ) : (
+                        crumb.title
+                      )}
                     </BreadcrumbPage>
                   </BreadcrumbItem>
                 </BreadcrumbList>

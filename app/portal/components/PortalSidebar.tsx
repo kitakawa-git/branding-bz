@@ -18,6 +18,9 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
 } from '@/components/ui/sidebar'
 import {
   DropdownMenu,
@@ -28,7 +31,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
   Compass,
-  Map,
+  Target,
   Palette,
   MessageSquare,
   MessageSquareHeart,
@@ -39,6 +42,9 @@ import {
   LogOut,
   ChevronsUpDown,
   ArrowLeftRight,
+  Smile,
+  Eye,
+  ChevronRight,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -48,14 +54,6 @@ type NavItem = {
   icon: LucideIcon
 }
 
-// ブランド基盤グループ
-const brandItems: NavItem[] = [
-  { href: '/portal/guidelines', label: 'ブランド方針', icon: Compass },
-  { href: '/portal/strategy', label: 'ブランド戦略', icon: Map },
-  { href: '/portal/visuals', label: 'ビジュアル', icon: Palette },
-  { href: '/portal/verbal', label: 'バーバル', icon: MessageSquare },
-]
-
 // 浸透グループ
 const engagementItems: NavItem[] = [
   { href: '/portal', label: 'ダッシュボード', icon: LayoutDashboard },
@@ -63,25 +61,80 @@ const engagementItems: NavItem[] = [
   { href: '/portal/kpi', label: '目標・KPI', icon: Milestone },
 ]
 
-function NavGroup({ label, items, pathname }: { label: string; items: NavItem[]; pathname: string }) {
+// 「私たちの『らしさ』」グループ（内部→外部の視点ワード構成）
+// バリュー(values)は「考え方」、用語(terms)は「バーバル」配下に内包（独立メニューにはしない／ルートは生存）
+function RashisaGroup({ pathname }: { pathname: string }) {
+  // 「見え方・聞こえ方」は展開式。子ルート（visuals/verbal）にいるときは初期展開
+  const [open, setOpen] = useState(
+    pathname.startsWith('/portal/visuals') || pathname.startsWith('/portal/verbal')
+  )
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>{label}</SidebarGroupLabel>
+      <SidebarGroupLabel>私たちの「らしさ」</SidebarGroupLabel>
       <SidebarGroupContent>
         <SidebarMenu>
-          {items.map((item) => {
-            const Icon = item.icon
-            return (
-              <SidebarMenuItem key={item.href}>
-                <SidebarMenuButton asChild isActive={item.href === '/portal' ? pathname === '/portal' : pathname.startsWith(item.href)}>
-                  <Link href={item.href}>
-                    <Icon size={18} />
-                    <span>{item.label}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            )
-          })}
+          {/* 1. 考え方（バリューを内包） */}
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild isActive={pathname.startsWith('/portal/guidelines')}>
+              <Link href="/portal/guidelines">
+                <Compass size={18} />
+                <span>考え方</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+
+          {/* 2. 感じられ方（ブランドパーソナリティ：人格・トーン＆マナー） */}
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild isActive={pathname.startsWith('/portal/personality')}>
+              <Link href="/portal/personality">
+                <Smile size={18} />
+                <span>感じられ方</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+
+          {/* 3. 見え方・聞こえ方（展開式：ビジュアル／バーバル） */}
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              onClick={() => setOpen((v) => !v)}
+              isActive={pathname.startsWith('/portal/visuals') || pathname.startsWith('/portal/verbal')}
+            >
+              <Eye size={18} />
+              <span>見え方・聞こえ方</span>
+              <ChevronRight size={16} className={`ml-auto transition-transform ${open ? 'rotate-90' : ''}`} />
+            </SidebarMenuButton>
+            {open && (
+              <SidebarMenuSub>
+                <SidebarMenuSubItem>
+                  <SidebarMenuSubButton asChild isActive={pathname.startsWith('/portal/visuals')}>
+                    <Link href="/portal/visuals">
+                      <Palette size={16} />
+                      <span>ビジュアル</span>
+                    </Link>
+                  </SidebarMenuSubButton>
+                </SidebarMenuSubItem>
+                <SidebarMenuSubItem>
+                  {/* 用語(terms)はバーバル配下に内包 */}
+                  <SidebarMenuSubButton asChild isActive={pathname.startsWith('/portal/verbal')}>
+                    <Link href="/portal/verbal">
+                      <MessageSquare size={16} />
+                      <span>バーバル</span>
+                    </Link>
+                  </SidebarMenuSubButton>
+                </SidebarMenuSubItem>
+              </SidebarMenuSub>
+            )}
+          </SidebarMenuItem>
+
+          {/* 4. 接し方（ブランド戦略） */}
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild isActive={pathname.startsWith('/portal/strategy')}>
+              <Link href="/portal/strategy">
+                <Target size={18} />
+                <span>接し方</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
         </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>
@@ -103,8 +156,6 @@ export function PortalSidebar() {
     return true
   })
 
-  const brandInitial = companyName?.slice(0, 1) || 'B'
-
   const profileInitial = profileName
     ? profileName.slice(0, 1)
     : member?.display_name?.slice(0, 1) || '?'
@@ -120,13 +171,12 @@ export function PortalSidebar() {
             <SidebarMenuItem>
               <SidebarMenuButton size="lg" asChild>
                 <Link href="/portal">
-                  <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground overflow-hidden">
-                    {companyLogoUrl ? (
+                  {/* ロゴ未登録時はアイコン枠を表示しない（フォールバックの頭文字も出さない） */}
+                  {companyLogoUrl && (
+                    <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground overflow-hidden">
                       <img src={companyLogoUrl} alt={companyName || ''} className="size-full object-cover" />
-                    ) : (
-                      <span className="text-sm font-bold">{brandInitial}</span>
-                    )}
-                  </div>
+                    </div>
+                  )}
                   <div className={`flex flex-col leading-none ${slogan ? 'gap-0.5' : 'justify-center'}`}>
                     <span className="font-semibold">{companyName || 'branding.bz'}</span>
                     {slogan && <span className="text-xs text-sidebar-foreground/70">{slogan}</span>}
@@ -158,7 +208,7 @@ export function PortalSidebar() {
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
-          <NavGroup label="ブランド基盤" items={brandItems} pathname={pathname} />
+          <RashisaGroup pathname={pathname} />
 
         </SidebarContent>
 

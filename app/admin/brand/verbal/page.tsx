@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input'
 import { AutoResizeTextarea } from '@/components/ui/auto-resize-textarea'
 import { DEFAULT_SUBTITLES, type PortalSubtitles } from '@/lib/portal-subtitles'
 import { Plus, Trash2, Check } from 'lucide-react'
+import { Fab, FabButton } from '@/components/ui/fab'
 
 type Personality = {
   tone_of_voice: string
@@ -56,7 +57,8 @@ export default function VerbalIdentityPage() {
 
     try {
       const [personalityRes, termsRes] = await Promise.all([
-        fetchWithRetry(() => supabase.from('brand_personalities').select('*').eq('company_id', companyId).single()),
+        // 新規企業は行が未作成のため maybeSingle（0件でもエラーにせず空フォーム表示）
+        fetchWithRetry(() => supabase.from('brand_personalities').select('*').eq('company_id', companyId).maybeSingle()),
         fetchWithRetry(() => supabase.from('brand_terms').select('*').eq('company_id', companyId).order('sort_order')),
       ])
       if (personalityRes.error) throw new Error(personalityRes.error)
@@ -368,7 +370,7 @@ export default function VerbalIdentityPage() {
         {/* カード1: トーンオブボイス */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-5">
-            <h2 className="text-sm font-bold mb-3">トーンオブボイス</h2>
+            <h2 className="text-xs font-bold mb-3">トーンオブボイス</h2>
             <AutoResizeTextarea
               value={personality.tone_of_voice}
               onChange={(e) => handleChange('tone_of_voice', e.target.value)}
@@ -381,7 +383,7 @@ export default function VerbalIdentityPage() {
         {/* カード2: 用語ルール */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-5">
-            <h2 className="text-sm font-bold mb-2">用語ルール</h2>
+            <h2 className="text-xs font-bold mb-2">用語ルール</h2>
             <p className="text-xs text-muted-foreground mb-4">
               ブランドで使用する推奨用語と避けるべき用語を設定します
             </p>
@@ -464,17 +466,11 @@ export default function VerbalIdentityPage() {
       <div className="h-24" />
 
       {/* 保存 FAB（右下固定・include-bz node の FabButton と同装飾） */}
-      <div className="fixed bottom-8 right-8 z-50 flex items-center gap-3">
-        <button
-          type="submit"
-          form="verbal-form"
-          disabled={saving}
-          className="flex items-center justify-center gap-1 h-12 px-5 rounded-full hover:scale-105 transition-transform cursor-pointer text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 bg-foreground text-background shadow-lg"
-        >
-          <Check size={16} />
+      <Fab>
+        <FabButton type="submit" form="verbal-form" disabled={saving} icon={<Check size={16} />}>
           {saving ? '保存中...' : '保存'}
-        </button>
-      </div>
+        </FabButton>
+      </Fab>
     </div>
   )
 }

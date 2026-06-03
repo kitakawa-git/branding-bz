@@ -145,7 +145,7 @@ export function SnapshotScheduleCard({ companyId }: SnapshotScheduleCardProps) {
       <CardContent className="p-5">
         {/* ヘッダー: タイトル + トグル */}
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-bold text-foreground flex items-center gap-1.5">
+          <h2 className="text-xs font-bold text-foreground flex items-center gap-1.5">
             <Calendar size={14} />
             自動記録設定
           </h2>

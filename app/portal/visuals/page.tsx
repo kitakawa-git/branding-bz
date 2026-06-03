@@ -216,17 +216,17 @@ export default function PortalVisualsPage() {
       {(data.logo_concept || validSections.length > 0) && (
         <section>
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-            <CardContent className="p-5 space-y-4">
+            <CardContent className="p-5 space-y-6">
               {data.logo_concept && (
                 <div>
-                  <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">ロゴコンセプト</h2>
+                  <h2 className="text-xs font-bold text-foreground mb-3 tracking-wide">ロゴコンセプト</h2>
                   <p className="text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0">{data.logo_concept}</p>
                 </div>
               )}
 
               {validSections.length > 0 && (
                 <div>
-                  <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">ロゴガイドライン</h2>
+                  <h2 className="text-xs font-bold text-foreground mb-3 tracking-wide">ロゴガイドライン</h2>
                   {validSections.map((section, sIdx) => (
                     <div key={sIdx}>
                       {sIdx > 0 && <Separator className="my-5" />}
@@ -275,7 +275,7 @@ export default function PortalVisualsPage() {
         <section>
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
             <CardContent className="p-5">
-              <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">ブランドカラー</h2>
+              <h2 className="text-xs font-bold text-foreground mb-3 tracking-wide">ブランドカラー</h2>
 
               {visibleCategories.map((cat, catIdx) => (
                 <div key={cat.key}>
@@ -304,7 +304,7 @@ export default function PortalVisualsPage() {
           <link rel="stylesheet" href={getGoogleFontsUrl(data.fonts)} />
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
             <CardContent className="p-5">
-              <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">フォント</h2>
+              <h2 className="text-xs font-bold text-foreground mb-3 tracking-wide">フォント</h2>
 
               <div className="mb-4">
                 <p className="text-xs font-bold text-muted-foreground/60 mb-3 m-0">プライマリフォント（見出し・タイトル用）</p>
@@ -343,7 +343,7 @@ export default function PortalVisualsPage() {
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
             <CardContent className="p-5">
               <div className="flex items-center justify-between mb-3">
-                <h2 className="text-sm font-bold text-foreground tracking-wide">ビジュアルガイドライン</h2>
+                <h2 className="text-xs font-bold text-foreground tracking-wide">ビジュアルガイドライン</h2>
                 {data.visual_guidelines_images.length > 0 && (
                   <div className="flex gap-1">
                     <button

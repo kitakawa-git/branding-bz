@@ -172,11 +172,11 @@ export function Step2ImageInput({ project, onNext, onBack }: Step2Props) {
           {/* 共通の追加質問 */}
           {showAdditional && (
             <div className="mt-5 space-y-5 rounded-lg border border-gray-200 bg-white p-4">
-              <h2 className="text-sm font-bold mb-3">追加の質問（任意）</h2>
+              <h2 className="text-xs font-bold mb-3">追加の質問（任意）</h2>
 
               {/* 避けたい色 */}
               <div>
-                <h2 className="text-sm font-bold mb-3">
+                <h2 className="text-xs font-bold mb-3">
                   避けたい色はありますか？
                 </h2>
                 <div className="space-y-2">
@@ -212,7 +212,7 @@ export function Step2ImageInput({ project, onNext, onBack }: Step2Props) {
 
               {/* 参考ブランド */}
               <div>
-                <h2 className="text-sm font-bold mb-3">
+                <h2 className="text-xs font-bold mb-3">
                   参考にしたいブランドがあれば教えてください
                 </h2>
                 <div className="space-y-2">

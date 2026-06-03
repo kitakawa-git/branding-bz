@@ -8,8 +8,9 @@ import { toast } from 'sonner'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
+import { Check, X } from 'lucide-react'
+import { Fab, FabButton } from '@/components/ui/fab'
 import { Textarea } from '@/components/ui/textarea'
 import { AutoResizeTextarea } from '@/components/ui/auto-resize-textarea'
 import {
@@ -24,11 +25,18 @@ import { NEWS_CATEGORY_LABELS } from '@/lib/types/news'
 
 interface NewsFormProps {
   initialData?: NewsItem
+  /**
+   * 保存成功後の挙動カスタマイズ。
+   * モーダル利用時は { onSuccess, onCancel } を渡して router.push を抑止する。
+   */
+  onSuccess?: () => void
+  onCancel?: () => void
 }
 
-export default function NewsForm({ initialData }: NewsFormProps) {
+export default function NewsForm({ initialData, onSuccess, onCancel }: NewsFormProps) {
   const router = useRouter()
   const isEditing = !!initialData
+  const isModal = !!onSuccess
 
   const [title, setTitle] = useState(initialData?.title || '')
   const [slug, setSlug] = useState(initialData?.slug || `news-${Date.now()}`)
@@ -91,7 +99,12 @@ export default function NewsForm({ initialData }: NewsFormProps) {
         toast.success('ニュースを作成しました')
       }
 
-      router.push('/superadmin/news')
+      // モーダル利用時はコールバック・通常は一覧へ遷移
+      if (onSuccess) {
+        onSuccess()
+      } else {
+        router.push('/superadmin/news')
+      }
     } catch (err) {
       console.error('[NewsForm] 保存エラー:', err)
       toast.error(err instanceof Error ? err.message : '保存に失敗しました')
@@ -191,23 +204,42 @@ export default function NewsForm({ initialData }: NewsFormProps) {
             </Label>
           </div>
 
-          {/* 保存ボタン */}
-          <div className="flex gap-3 pt-2">
-            <Button
-              type="submit"
-              disabled={saving}
-              className="bg-[#1e3a5f] hover:bg-[#2a4a6f]"
-            >
-              {saving ? '保存中...' : isEditing ? '更新する' : '作成する'}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => router.push('/superadmin/news')}
-            >
-              キャンセル
-            </Button>
-          </div>
+          {/* モーダル時は Dialog フッターに合わせて通常配置、通常時は FAB（右下固定） */}
+          {isModal ? (
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={onCancel ?? (() => router.push('/superadmin/news'))}
+                disabled={saving}
+                className="flex items-center justify-center h-10 px-5 rounded-full hover:scale-105 transition-transform cursor-pointer text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 bg-white text-foreground border border-gray-300 shadow-sm"
+              >
+                キャンセル
+              </button>
+              <button
+                type="submit"
+                disabled={saving}
+                className="flex items-center justify-center gap-1 h-10 px-5 rounded-full hover:scale-105 transition-transform cursor-pointer text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 bg-foreground text-background shadow-sm"
+              >
+                <Check size={16} />
+                {saving ? '保存中...' : isEditing ? '更新' : '作成'}
+              </button>
+            </div>
+          ) : (
+            <>
+              {/* FabBar との重なりを防ぐスペーサー */}
+              <div className="h-16" />
+
+              {/* キャンセル＋保存 FAB（右下固定・include-bz node の FabButton と同装飾） */}
+              <Fab>
+                <FabButton variant="secondary" onClick={() => router.push('/superadmin/news')} disabled={saving} icon={<X size={16} />}>
+                  キャンセル
+                </FabButton>
+                <FabButton type="submit" disabled={saving} icon={<Check size={16} />}>
+                  {saving ? '保存中...' : isEditing ? '更新' : '作成'}
+                </FabButton>
+              </Fab>
+            </>
+          )}
         </form>
       </CardContent>
     </Card>

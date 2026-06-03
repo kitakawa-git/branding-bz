@@ -390,7 +390,7 @@ export default function ProfilePage() {
       {/* ===== B. 基本情報 ===== */}
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-6">
         <CardContent className="p-5 space-y-5">
-          <h2 className="text-sm font-bold text-foreground">基本情報</h2>
+          <h2 className="text-xs font-bold text-foreground">基本情報</h2>
 
           <div>
             <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">名前</label>
@@ -470,7 +470,7 @@ export default function ProfilePage() {
       {/* ===== C. SNSリンク ===== */}
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-6">
         <CardContent className="p-5 space-y-5">
-          <h2 className="text-sm font-bold text-foreground">SNSリンク</h2>
+          <h2 className="text-xs font-bold text-foreground">SNSリンク</h2>
 
           <div>
             <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">X (Twitter)</label>
@@ -533,7 +533,7 @@ export default function ProfilePage() {
             onClick={() => setShowPasswordChange(!showPasswordChange)}
             className="flex items-center justify-between w-full border-0 bg-transparent cursor-pointer p-0"
           >
-            <h2 className="text-sm font-bold text-foreground m-0">パスワード変更</h2>
+            <h2 className="text-xs font-bold text-foreground m-0">パスワード変更</h2>
             {showPasswordChange ? (
               <ChevronUp size={18} className="text-muted-foreground" />
             ) : (

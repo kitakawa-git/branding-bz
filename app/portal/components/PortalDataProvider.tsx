@@ -83,6 +83,8 @@ export function PortalDataProvider({ children }: { children: React.ReactNode }) 
 
     ;(async () => {
       setLoading(true)
+      // 企業を跨いだ再取得で前企業の値が残らないよう、企業依存の表示値をリセット
+      setSlogan(null)
       try {
         // member 取得と admin_users 取得を並列化
         const [memberRes, adminRes] = await Promise.all([
@@ -149,9 +151,9 @@ export function PortalDataProvider({ children }: { children: React.ReactNode }) 
           setCompanyLogoUrl((rec.logo_url as string) || null)
           setPortalSubtitles((rec.portal_subtitles as PortalSubtitles) || null)
         }
-        if (guidelinesRes.data) {
-          setSlogan(guidelinesRes.data.slogan || null)
-        }
+        // brand_guidelines 行が無い企業でも必ず反映する。
+        // 条件付きにすると行が無いとき setSlogan が呼ばれず、前企業の slogan が残る（別企業の値が漏れる）
+        setSlogan(guidelinesRes.data?.slogan || null)
       } catch (err) {
         if (!cancelled) {
           console.error('[PortalDataProvider] データ取得エラー:', err)

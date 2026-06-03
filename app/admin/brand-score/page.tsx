@@ -632,7 +632,7 @@ export default function BrandScoreDashboard() {
       {/* ── 2.5. スコア推移グラフ ── */}
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-6">
         <CardContent className="p-5">
-          <h2 className="text-sm font-bold text-foreground mb-4 flex items-center gap-1.5">
+          <h2 className="text-xs font-bold text-foreground mb-4 flex items-center gap-1.5">
             <TrendingUp size={14} />
             スコア推移
           </h2>
@@ -714,7 +714,7 @@ export default function BrandScoreDashboard() {
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-5">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-bold text-foreground flex items-center gap-1.5">
+              <h2 className="text-xs font-bold text-foreground flex items-center gap-1.5">
                 <Users size={14} />
                 インナースコア
               </h2>
@@ -786,7 +786,7 @@ export default function BrandScoreDashboard() {
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-5">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-bold text-foreground flex items-center gap-1.5">
+              <h2 className="text-xs font-bold text-foreground flex items-center gap-1.5">
                 <Eye size={14} />
                 アウタースコア
               </h2>
@@ -857,7 +857,7 @@ export default function BrandScoreDashboard() {
       {hasMicroFb && (
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-6">
           <CardContent className="p-5">
-            <h2 className="text-sm font-bold text-foreground mb-1 flex items-center gap-1.5">
+            <h2 className="text-xs font-bold text-foreground mb-1 flex items-center gap-1.5">
               <MessageSquare size={14} />
               印象タグ分布
             </h2>
@@ -914,7 +914,7 @@ export default function BrandScoreDashboard() {
       {hasMicroFb && hasTagMappings && (
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-6">
           <CardContent className="p-5">
-            <h2 className="text-sm font-bold text-foreground mb-4 flex items-center gap-1.5">
+            <h2 className="text-xs font-bold text-foreground mb-4 flex items-center gap-1.5">
               <AlertTriangle size={14} />
               ギャップ分析
             </h2>
@@ -999,7 +999,7 @@ export default function BrandScoreDashboard() {
       {hasInner && innerScore!.by_department.length > 0 && (
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-6">
           <CardContent className="p-5">
-            <h2 className="text-sm font-bold text-foreground mb-4">部署別スコア</h2>
+            <h2 className="text-xs font-bold text-foreground mb-4">部署別スコア</h2>
             <div className="rounded-md border overflow-hidden">
               <Table>
                 <TableHeader>

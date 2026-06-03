@@ -8,6 +8,7 @@ import { usePortalAuth } from './components/PortalDataProvider'
 import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
 import { SurveyBanner } from './components/SurveyBanner'
 import { getRelativeTime } from '@/lib/time-utils'
+import { splitBrandCopy } from '@/lib/brand-mvv'
 import { PieChart, Pie, Cell } from 'recharts'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -33,6 +34,9 @@ import {
   Users,
   Bell,
   Target,
+  Compass,
+  Smile,
+  Eye,
 } from 'lucide-react'
 
 // ============================================
@@ -47,6 +51,48 @@ const CATEGORY_COLORS = [
   '#F41189',
   '#47C95C',
 ]
+
+// 私たちの「らしさ」4象限概観カード（内部=紫 → 外部=緑 の順）
+const BRAND_QUADRANTS = [
+  {
+    perspective: '考え方',
+    noun: 'ブランド方針',
+    items: 'MVV・バリュー・提供価値・行動指針・沿革・事業内容',
+    href: '/portal/guidelines',
+    icon: Compass,
+    tone: 'purple' as const,
+  },
+  {
+    perspective: '感じられ方',
+    noun: 'ブランドパーソナリティ',
+    items: 'ブランドの人格・トーン＆マナー',
+    href: '/portal/personality',
+    icon: Smile,
+    tone: 'purple' as const,
+  },
+  {
+    perspective: '見え方・聞こえ方',
+    noun: 'ブランド表現',
+    items: 'ビジュアルアイデンティティ・バーバルアイデンティティ（用語ルール含む）',
+    href: '/portal/visuals',
+    icon: Eye,
+    tone: 'green' as const,
+  },
+  {
+    perspective: '接し方',
+    noun: 'ブランド戦略',
+    items: '顧客ターゲット・ペルソナ・ポジショニング',
+    href: '/portal/strategy',
+    icon: Target,
+    tone: 'green' as const,
+  },
+]
+
+// 内部=紫系 / 外部=緑系（既存のポータル配色に馴染ませる）
+const QUADRANT_TONES = {
+  purple: { bar: 'bg-violet-500', tile: 'bg-violet-100 text-violet-700' },
+  green: { bar: 'bg-emerald-500', tile: 'bg-emerald-100 text-emerald-700' },
+}
 
 // ============================================
 // Types
@@ -666,12 +712,15 @@ export default function PortalTopPage() {
     }, {})
 
   return (
-    <div className="max-w-4xl mx-auto px-5 pb-10">
+    <div className="max-w-4xl mx-auto px-5 pt-6 pb-10">
       {/* ===== 1. スローガン ===== */}
       <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold text-foreground">
-          {slogan || 'ダッシュボード'}
-        </h1>
+        {/* スローガン未設定（ブランク）のときは見出しを非表示にする */}
+        {slogan && (
+          <h1 className="text-4xl font-bold text-foreground">
+            {slogan}
+          </h1>
+        )}
         {member && (
           <p className="text-sm text-muted-foreground m-0 mt-1">
             ようこそ、{member.display_name} さん
@@ -690,7 +739,7 @@ export default function PortalTopPage() {
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Bell size={18} className="text-foreground" />
-              <h2 className="text-sm font-bold text-foreground tracking-wide m-0">
+              <h2 className="text-xs font-bold text-foreground tracking-wide m-0">
                 最新のお知らせ
               </h2>
             </div>
@@ -736,20 +785,72 @@ export default function PortalTopPage() {
               href="/portal/guidelines"
               className="no-underline flex items-center justify-between mb-3"
             >
-              <h2 className="text-sm font-bold text-foreground tracking-wide m-0">
+              <h2 className="text-xs font-bold text-foreground tracking-wide m-0">
                 私たちのミッション
               </h2>
               <ArrowRight size={16} className="text-muted-foreground" />
             </Link>
-            <p className="text-2xl font-bold text-foreground mb-4 m-0 leading-relaxed">
-              {mission}
-            </p>
-            <p className="text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0">
-              デザインにおいてもブランディングにおいても日々の積み重ねと寄り添う気持ちが大切です。仕事の中での発見を綴り、一日一投稿を心がけましょう！
-            </p>
+            {(() => {
+              const { copy, body } = splitBrandCopy(mission)
+              return (
+                <>
+                  {copy && (
+                    <p className="text-2xl font-bold text-foreground m-0 leading-relaxed">
+                      {copy}
+                    </p>
+                  )}
+                  {body && (
+                    <p className="text-sm text-foreground/80 leading-[1.8] whitespace-pre-line mt-4 m-0">
+                      {body}
+                    </p>
+                  )}
+                </>
+              )
+            })()}
           </CardContent>
         </Card>
       )}
+
+      {/* ===== 2.7. 私たちの「らしさ」4象限概観カード ===== */}
+      <div className="mb-8">
+        <div className="flex items-center gap-2 mb-3">
+          <h2 className="text-xs font-bold text-foreground tracking-wide m-0">
+            私たちの「らしさ」
+          </h2>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {BRAND_QUADRANTS.map((q) => {
+            const Icon = q.icon
+            const tone = QUADRANT_TONES[q.tone]
+            return (
+              <Link key={q.href} href={q.href} className="no-underline block">
+                <Card className="relative h-full bg-[hsl(0_0%_97%)] border shadow-none hover:shadow-sm transition-shadow overflow-hidden">
+                  <div className={`absolute left-0 top-0 bottom-0 w-1 ${tone.bar}`} />
+                  <CardContent className="p-4 pl-5 flex items-start gap-3">
+                    <div className={`shrink-0 size-10 rounded-xl flex items-center justify-center ${tone.tile}`}>
+                      <Icon size={20} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-baseline gap-1.5 flex-wrap">
+                        <span className="text-lg font-bold text-foreground leading-tight">
+                          {q.perspective}
+                        </span>
+                        <span className="text-xs font-normal text-muted-foreground">
+                          ｜{q.noun}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground leading-relaxed mt-1 m-0">
+                        {q.items}
+                      </p>
+                    </div>
+                    <ArrowRight size={16} className="text-muted-foreground shrink-0 mt-1" />
+                  </CardContent>
+                </Card>
+              </Link>
+            )
+          })}
+        </div>
+      </div>
 
       {/* ===== 2.5. KPIバナー / サマリー（KPI無効時は非表示） ===== */}
       {kpiEnabled && !hasGoals && showGoalBanner && (
@@ -775,7 +876,7 @@ export default function PortalTopPage() {
             <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-3">
-                  <h2 className="text-sm font-bold text-foreground tracking-wide m-0">
+                  <h2 className="text-xs font-bold text-foreground tracking-wide m-0">
                     あなたの目標・KPI
                   </h2>
                   <Link href="/portal/kpi" className="text-xs text-muted-foreground hover:text-foreground no-underline flex items-center gap-0.5">
@@ -836,7 +937,7 @@ export default function PortalTopPage() {
         return (
           <div className="mb-3">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-bold text-foreground tracking-wide m-0">
+              <h2 className="text-xs font-bold text-foreground tracking-wide m-0">
                 あなたのブランドコミット
               </h2>
               <div className="flex gap-1">

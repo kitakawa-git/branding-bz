@@ -1,40 +1,34 @@
 'use client'
 
-// ブランド方針 閲覧ページ
-import { useEffect, useState } from 'react'
+// ブランド方針 閲覧ページ（考え方｜ブランド方針）
+// 表示項目: MVV / バリュー / 提供価値 / 行動指針 / 沿革 / 事業内容
+// - MVV・バリュー・沿革・事業内容: brand_guidelines
+// - 提供価値: brand_values テーブル（旧 /portal/values を統合）＋ companies.provided_values
+// - 行動指針: brand_personas.action_guidelines（旧 /portal/strategy から移動）
+import { useEffect, useState, type CSSProperties } from 'react'
 import { supabase } from '@/lib/supabase'
 import { fetchWithRetry } from '@/lib/supabase-fetch'
 import { usePortalAuth } from '../components/PortalDataProvider'
 import { useBrandFonts } from '@/hooks/useBrandFonts'
 import { BrandFontLoader } from '@/components/BrandFontLoader'
 import { getCssFontFamily } from '@/lib/brand-fonts'
+import { splitBrandCopy } from '@/lib/brand-mvv'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
 import { BrandPageTracker } from '@/components/analytics/BrandPageTracker'
-import { Separator } from '@/components/ui/separator'
-import {
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  Radar,
-} from 'recharts'
-import {
-  type ChartConfig,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from '@/components/ui/chart'
+import { ConceptVisualSlideshow } from './ConceptVisualSlideshow'
 
 type ValueItem = { name: string; description: string; added_index?: number }
 type HistoryItem = { year: string; event: string }
 type BusinessItem = { title: string; description: string; added_index?: number }
-type TraitItem = { name: string; score: number; description: string; added_index?: number }
+type ProvidedValueItem = { title: string; description: string | null }
+type ActionGuideline = { title: string; description: string }
 
 type Guidelines = {
   slogan: string | null
-  concept_visual_url: string | null
+  // 複数コンセプトビジュアル（スライドショー）。レガシー concept_visual_url からのフォールバックあり。
+  concept_visuals: string[]
   brand_video_url: string | null
   brand_statement: string | null
   mission: string | null
@@ -45,14 +39,46 @@ type Guidelines = {
   history: HistoryItem[]
   business_content: BusinessItem[]
   business_content_sort: 'registered' | 'custom'
-  traits: TraitItem[]
-  traits_sort: 'registered' | 'custom'
+  // 統合表示分（brand_guidelines 以外のテーブル由来）
+  provided_values: ProvidedValueItem[]
+  action_guidelines: ActionGuideline[]
 }
 
 // YouTube URL をembedに変換
 function getYouTubeEmbedUrl(url: string): string | null {
   const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&?\s]+)/)
   return match ? `https://www.youtube.com/embed/${match[1]}` : null
+}
+
+// 長文を指定文字数で折りたたみ、「もっと見る」で全文表示する
+function ExpandableText({
+  text,
+  limit = 300,
+  className,
+  style,
+}: {
+  text: string
+  limit?: number
+  className?: string
+  style?: CSSProperties
+}) {
+  const [expanded, setExpanded] = useState(false)
+  const isLong = text.length > limit
+  const shown = !isLong || expanded ? text : text.slice(0, limit).trimEnd() + '…'
+  return (
+    <div>
+      <p className={className} style={style}>{shown}</p>
+      {isLong && (
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          className="mt-2 text-xs font-bold text-blue-600 hover:text-blue-700 cursor-pointer bg-transparent border-0 p-0"
+        >
+          {expanded ? '閉じる' : 'もっと見る'}
+        </button>
+      )}
+    </div>
+  )
 }
 
 export default function PortalGuidelinesPage() {
@@ -69,34 +95,90 @@ export default function PortalGuidelinesPage() {
     if (!companyId) return
     if (getPageCache<Guidelines>(cacheKey)) return
 
-    fetchWithRetry(() =>
-      supabase
-        .from('brand_guidelines')
-        .select('slogan, concept_visual_url, brand_video_url, brand_statement, mission, vision, values, values_sort, brand_story, history, business_content, business_content_sort, traits, traits_sort')
-        .eq('company_id', companyId)
-        .single()
-    ).then(({ data: d }) => {
-      if (d) {
-        const rec = d as Record<string, unknown>
-        const parsed: Guidelines = {
-          slogan: (rec.slogan as string) || null,
-          concept_visual_url: (rec.concept_visual_url as string) || null,
-          brand_video_url: (rec.brand_video_url as string) || null,
-          brand_statement: (rec.brand_statement as string) || null,
-          mission: (rec.mission as string) || null,
-          vision: (rec.vision as string) || null,
-          values: (rec.values as ValueItem[]) || [],
-          values_sort: (rec.values_sort as 'registered' | 'custom') || 'registered',
-          brand_story: (rec.brand_story as string) || null,
-          history: (rec.history as HistoryItem[]) || [],
-          business_content: (rec.business_content as BusinessItem[]) || [],
-          business_content_sort: (rec.business_content_sort as 'registered' | 'custom') || 'registered',
-          traits: (rec.traits as TraitItem[]) || [],
-          traits_sort: (rec.traits_sort as 'registered' | 'custom') || 'registered',
+    Promise.all([
+      fetchWithRetry(() =>
+        supabase
+          .from('brand_guidelines')
+          .select('slogan, concept_visual_url, concept_visuals, brand_video_url, brand_statement, mission, vision, values, values_sort, brand_story, history, business_content, business_content_sort')
+          .eq('company_id', companyId)
+          .single()
+      ),
+      // 提供価値: brand_values テーブル（admin「提供価値」編集／旧 /portal/values）
+      fetchWithRetry(() =>
+        supabase
+          .from('brand_values')
+          .select('title, description, sort_order')
+          .eq('company_id', companyId)
+          .order('sort_order')
+      ),
+      // 提供価値: companies.provided_values（レガシー text[]）
+      fetchWithRetry(() =>
+        supabase
+          .from('companies')
+          .select('provided_values')
+          .eq('id', companyId)
+          .single()
+      ),
+      // 行動指針: brand_personas.action_guidelines（先頭ペルソナ行に格納）
+      fetchWithRetry(() =>
+        supabase
+          .from('brand_personas')
+          .select('action_guidelines, sort_order')
+          .eq('company_id', companyId)
+          .order('sort_order')
+      ),
+    ]).then(([gRes, bvRes, cRes, paRes]) => {
+      const g = gRes.data as Record<string, unknown> | null
+
+      // 提供価値の統合（brand_values → companies.provided_values の順）
+      const providedValues: ProvidedValueItem[] = []
+      if (bvRes.data && Array.isArray(bvRes.data)) {
+        for (const d of bvRes.data as Record<string, unknown>[]) {
+          const title = (d.title as string) || ''
+          if (title.trim()) providedValues.push({ title, description: (d.description as string) || null })
         }
-        setData(parsed)
-        setPageCache(cacheKey, parsed)
       }
+      const legacyProvided = (cRes.data as { provided_values?: string[] } | null)?.provided_values
+      if (Array.isArray(legacyProvided)) {
+        for (const v of legacyProvided) {
+          if (typeof v === 'string' && v.trim()) providedValues.push({ title: v, description: null })
+        }
+      }
+
+      // 行動指針（先頭ペルソナ行）
+      let actionGuidelines: ActionGuideline[] = []
+      if (paRes.data && Array.isArray(paRes.data) && paRes.data.length > 0) {
+        const first = paRes.data[0] as Record<string, unknown>
+        actionGuidelines = ((first.action_guidelines as ActionGuideline[]) || []).filter(a => a && a.title)
+      }
+
+      // brand_guidelines 行が無く、提供価値・行動指針もゼロなら未登録扱い
+      if (!g && providedValues.length === 0 && actionGuidelines.length === 0) {
+        setLoading(false)
+        return
+      }
+
+      const parsed: Guidelines = {
+        slogan: (g?.slogan as string) || null,
+        // 新カラム concept_visuals を優先。空ならレガシー concept_visual_url を1枚として扱う
+        concept_visuals: (Array.isArray(g?.concept_visuals) && (g?.concept_visuals as string[]).length > 0)
+          ? (g?.concept_visuals as string[])
+          : (g?.concept_visual_url ? [g.concept_visual_url as string] : []),
+        brand_video_url: (g?.brand_video_url as string) || null,
+        brand_statement: (g?.brand_statement as string) || null,
+        mission: (g?.mission as string) || null,
+        vision: (g?.vision as string) || null,
+        values: (g?.values as ValueItem[]) || [],
+        values_sort: (g?.values_sort as 'registered' | 'custom') || 'registered',
+        brand_story: (g?.brand_story as string) || null,
+        history: (g?.history as HistoryItem[]) || [],
+        business_content: (g?.business_content as BusinessItem[]) || [],
+        business_content_sort: (g?.business_content_sort as 'registered' | 'custom') || 'registered',
+        provided_values: providedValues,
+        action_guidelines: actionGuidelines,
+      }
+      setData(parsed)
+      setPageCache(cacheKey, parsed)
       setLoading(false)
     })
   }, [companyId, cacheKey])
@@ -141,18 +223,6 @@ export default function PortalGuidelinesPage() {
   )
   if (!data) return <div className="text-center py-16 text-muted-foreground text-[15px]">まだ登録されていません</div>
 
-  // フィルター: 入力済みの特性のみ（ソート対応）
-  const filteredTraits = data.traits_sort === 'custom'
-    ? data.traits.filter(t => t.name && !t.name.match(/^特性\s?\d+$/))
-    : [...data.traits].filter(t => t.name && !t.name.match(/^特性\s?\d+$/)).sort((a, b) => (a.added_index ?? 0) - (b.added_index ?? 0))
-  const chartData = filteredTraits.map(t => ({ name: t.name, score: t.score }))
-  const radarConfig = {
-    score: {
-      label: 'スコア',
-      color: 'hsl(217, 91%, 60%)',
-    },
-  } satisfies ChartConfig
-
   // フィルター: 入力済みのバリューのみ（ソート対応）
   const filteredValues = data.values_sort === 'custom'
     ? data.values.filter(v => v.name)
@@ -174,29 +244,25 @@ export default function PortalGuidelinesPage() {
     {companyId && <BrandPageTracker companyId={companyId} pageType="guidelines" />}
     <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
       {/* 1. スローガン＋コンセプトビジュアル＋ブランド動画＋メッセージ */}
-      {(data.slogan || data.concept_visual_url || data.brand_video_url || data.brand_statement) && (
+      {(data.slogan || data.concept_visuals.length > 0 || data.brand_video_url || data.brand_statement) && (
         <section>
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none overflow-hidden">
-            <CardContent className="p-5 space-y-4">
+            <CardContent className="p-5 space-y-6">
               {data.slogan && (
                 <div>
-                  <h2 className="text-sm font-bold text-foreground mb-2 tracking-wide">スローガン</h2>
+                  <h2 className="text-xs font-bold text-foreground mb-2 tracking-wide">スローガン</h2>
                   <p className="text-3xl font-bold text-foreground m-0" style={primaryStyle}>{data.slogan}</p>
                 </div>
               )}
-              {data.concept_visual_url && (
+              {data.concept_visuals.length > 0 && (
                 <div>
-                  <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">コンセプトビジュアル</h2>
-                  <img
-                    src={data.concept_visual_url}
-                    alt="コンセプトビジュアル"
-                    className="w-full h-auto object-contain rounded-lg"
-                  />
+                  <h2 className="text-xs font-bold text-foreground mb-3 tracking-wide">コンセプトビジュアル</h2>
+                  <ConceptVisualSlideshow images={data.concept_visuals} />
                 </div>
               )}
               {data.brand_video_url && (
                 <div>
-                  <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">ブランド動画</h2>
+                  <h2 className="text-xs font-bold text-foreground mb-3 tracking-wide">ブランド動画</h2>
                   {embedUrl ? (
                     <div className="relative pb-[56.25%] h-0">
                       <iframe
@@ -221,7 +287,7 @@ export default function PortalGuidelinesPage() {
               )}
               {data.brand_statement && (
                 <div>
-                  <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">メッセージ</h2>
+                  <h2 className="text-xs font-bold text-foreground mb-3 tracking-wide">メッセージ</h2>
                   <p className="text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0" style={secondaryStyle}>{data.brand_statement}</p>
                 </div>
               )}
@@ -230,26 +296,34 @@ export default function PortalGuidelinesPage() {
         </section>
       )}
 
-      {/* 5. ミッション＋ビジョン＋バリュー */}
+      {/* 2. ミッション＋ビジョン＋バリュー */}
       {(data.mission || data.vision || filteredValues.length > 0) && (
         <section>
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-            <CardContent className="p-5 space-y-4">
-              {data.mission && (
-                <div>
-                  <h2 className="text-sm font-bold text-foreground mb-2 tracking-wide">ミッション</h2>
-                  <p className="text-2xl font-bold text-foreground m-0" style={primaryStyle}>{data.mission}</p>
-                </div>
-              )}
-              {data.vision && (
-                <div>
-                  <h2 className="text-sm font-bold text-foreground mb-2 tracking-wide">ビジョン</h2>
-                  <p className="text-2xl font-bold text-foreground m-0" style={primaryStyle}>{data.vision}</p>
-                </div>
-              )}
+            <CardContent className="p-5 space-y-6">
+              {data.mission && (() => {
+                const { copy, body } = splitBrandCopy(data.mission)
+                return (
+                  <div>
+                    <h2 className="text-xs font-bold text-foreground mb-2 tracking-wide">ミッション</h2>
+                    {copy && <p className="text-2xl font-bold text-foreground m-0" style={primaryStyle}>{copy}</p>}
+                    {body && <p className="text-sm text-foreground/80 leading-[1.8] whitespace-pre-line mt-3 m-0" style={secondaryStyle}>{body}</p>}
+                  </div>
+                )
+              })()}
+              {data.vision && (() => {
+                const { copy, body } = splitBrandCopy(data.vision)
+                return (
+                  <div>
+                    <h2 className="text-xs font-bold text-foreground mb-2 tracking-wide">ビジョン</h2>
+                    {copy && <p className="text-2xl font-bold text-foreground m-0" style={primaryStyle}>{copy}</p>}
+                    {body && <p className="text-sm text-foreground/80 leading-[1.8] whitespace-pre-line mt-3 m-0" style={secondaryStyle}>{body}</p>}
+                  </div>
+                )
+              })()}
               {filteredValues.length > 0 && (
                 <div>
-                  <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">バリュー</h2>
+                  <h2 className="text-xs font-bold text-foreground mb-3 tracking-wide">バリュー</h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {filteredValues.map((v, i) => (
                       <div key={i} className="rounded-lg border border-border bg-background p-5">
@@ -271,42 +345,112 @@ export default function PortalGuidelinesPage() {
         </section>
       )}
 
-      {/* 8. ブランドストーリー＋沿革＋事業内容 */}
+      {/* 3. 提供価値（brand_values ＋ companies.provided_values。空なら非表示） */}
+      {data.provided_values.length > 0 && (
+        <section>
+          <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+            <CardContent className="p-5">
+              <h2 className="text-xs font-bold text-foreground mb-3 tracking-wide">提供価値</h2>
+              <div className="space-y-3">
+                {data.provided_values.map((val, i) => (
+                  <div key={i} className="rounded-lg border border-border bg-background p-4 flex items-start gap-4">
+                    <div className="shrink-0 w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center text-base font-bold">
+                      {i + 1}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-base font-bold text-foreground mb-1" style={primaryStyle}>
+                        {val.title}
+                      </div>
+                      {val.description && (
+                        <div className="text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap" style={secondaryStyle}>
+                          {val.description}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+      )}
+
+      {/* 4. 行動指針（brand_personas.action_guidelines。空なら非表示） */}
+      {data.action_guidelines.length > 0 && (
+        <section>
+          <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+            <CardContent className="p-5">
+              <h2 className="text-xs font-bold text-foreground mb-3 tracking-wide">行動指針</h2>
+              <div className="space-y-2">
+                {data.action_guidelines.map((g, i) => (
+                  <div key={i} className="relative overflow-hidden rounded-lg border border-border bg-background p-4 pl-5 flex gap-3">
+                    {/* 左端の青バー（「私たちの『らしさ』」カードと同装飾：角丸クリップで丸端） */}
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-600" />
+                    <span className="text-xs font-mono text-muted-foreground tabular-nums pt-0.5">
+                      {String(i + 1).padStart(2, '0')}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-base font-semibold text-foreground">{g.title}</span>
+                      {g.description && (
+                        <p className="text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap mt-1 m-0" style={secondaryStyle}>
+                          {g.description}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+      )}
+
+      {/* 5. ブランドストーリー＋沿革＋事業内容 */}
       {(data.brand_story || filteredHistory.length > 0 || filteredBusiness.length > 0) && (
         <section>
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-            <CardContent className="p-5 space-y-4">
+            <CardContent className="p-5 space-y-6">
               {data.brand_story && (
                 <div>
-                  <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">ブランドストーリー</h2>
-                  <p className="text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0" style={secondaryStyle}>{data.brand_story}</p>
+                  <h2 className="text-xs font-bold text-foreground mb-3 tracking-wide">ブランドストーリー</h2>
+                  <ExpandableText
+                    text={data.brand_story}
+                    limit={300}
+                    className="text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0"
+                    style={secondaryStyle}
+                  />
                 </div>
               )}
               {filteredHistory.length > 0 && (
                 <div>
-                  <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">沿革</h2>
-                  {filteredHistory.map((item, i) => (
-                    <div key={i}>
-                      <div className="flex gap-4">
+                  <h2 className="text-xs font-bold text-foreground mb-3 tracking-wide">沿革</h2>
+                  <div className="relative">
+                    {filteredHistory.map((item, i) => (
+                      <div key={i} className="relative flex gap-4 pb-6 last:pb-0">
+                        {/* ドットを繋ぐ縦ライン（最後の項目以外） */}
+                        {i < filteredHistory.length - 1 && (
+                          <span className="absolute left-[3px] top-2 -bottom-1.5 w-px bg-blue-200" />
+                        )}
                         <div className="shrink-0 w-16 text-sm font-bold text-blue-600 relative pl-4">
-                          <div className="absolute left-0 top-1.5 w-2 h-2 rounded-full bg-blue-600" />
+                          <span className="absolute left-0 top-1.5 w-2 h-2 rounded-full bg-blue-600 z-10" />
                           {item.year}
                         </div>
                         <div className="text-sm text-foreground leading-relaxed">
                           {item.event}
                         </div>
                       </div>
-                      {i < filteredHistory.length - 1 && <Separator className="my-4" />}
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               )}
               {filteredBusiness.length > 0 && (
                 <div>
-                  <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">事業内容</h2>
+                  <h2 className="text-xs font-bold text-foreground mb-3 tracking-wide">事業内容</h2>
                   <div className="space-y-2">
                     {filteredBusiness.map((item, i) => (
-                      <div key={i} className="rounded-lg border border-border bg-background border-l-2 border-l-blue-600 p-4 flex gap-3">
+                      <div key={i} className="relative overflow-hidden rounded-lg border border-border bg-background p-4 pl-5 flex gap-3">
+                        {/* 左端の青バー（「私たちの『らしさ』」カードと同装飾：角丸クリップで丸端） */}
+                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-600" />
                         <span className="text-xs font-mono text-muted-foreground tabular-nums pt-0.5">
                           {String(i + 1).padStart(2, '0')}
                         </span>
@@ -323,64 +467,6 @@ export default function PortalGuidelinesPage() {
                   </div>
                 </div>
               )}
-            </CardContent>
-          </Card>
-        </section>
-      )}
-
-      {/* 11. ブランドパーソナリティ（レーダーチャート＋リスト） */}
-      {filteredTraits.length > 0 && (
-        <section>
-          <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-            <CardContent className="p-5">
-              <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">ブランドパーソナリティ</h2>
-
-              {/* レーダーチャート（3つ以上の場合のみ） */}
-              {chartData.length >= 3 && (
-                <div className="w-full max-w-[440px] mx-auto mb-6">
-                  <ChartContainer config={radarConfig} className="aspect-square">
-                    <RadarChart data={chartData} cx="50%" cy="50%" outerRadius="77%">
-                      <ChartTooltip
-                        content={<ChartTooltipContent hideLabel />}
-                      />
-                      <PolarGrid />
-                      <PolarAngleAxis dataKey="name" tick={{ fontSize: 12 }} />
-                      <PolarRadiusAxis angle={90} domain={[0, 10]} tick={{ fontSize: 10 }} tickCount={6} />
-                      <Radar
-                        dataKey="score"
-                        fill="var(--color-score)"
-                        fillOpacity={0.2}
-                        stroke="var(--color-score)"
-                        strokeWidth={2}
-                        dot={{ r: 4, fillOpacity: 1, fill: 'var(--color-score)' }}
-                      />
-                    </RadarChart>
-                  </ChartContainer>
-                </div>
-              )}
-
-              <div className="space-y-2">
-                {filteredTraits.map((trait, i) => (
-                  <div key={i} className="rounded-lg border border-border bg-background p-4 flex items-center gap-4">
-                    <div className="flex-1">
-                      <p className="text-base font-bold text-foreground mb-0.5 m-0">
-                        {trait.name}
-                      </p>
-                      {trait.description && (
-                        <p className="text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0">
-                          {trait.description}
-                        </p>
-                      )}
-                    </div>
-                    <div className="shrink-0 text-center">
-                      <div className="w-11 h-11 rounded-full bg-blue-600 text-white flex items-center justify-center text-base font-bold">
-                        {trait.score}
-                      </div>
-                      <div className="text-[10px] text-muted-foreground mt-1">/10</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
             </CardContent>
           </Card>
         </section>

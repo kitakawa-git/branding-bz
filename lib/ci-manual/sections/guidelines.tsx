@@ -2,6 +2,7 @@
 import { Page, View, Text } from '@react-pdf/renderer'
 import type { ThemeStyles } from '../pdf-styles'
 import type { CIManualData } from '../types'
+import { splitBrandCopy } from '../../brand-mvv'
 
 function SubSection({ title, children, styles }: { title: string; children: React.ReactNode; styles: ThemeStyles }) {
   return (
@@ -13,10 +14,13 @@ function SubSection({ title, children, styles }: { title: string; children: Reac
 }
 
 function MVVBlock({ label, value, styles, brandColor }: { label: string; value: string; styles: ThemeStyles; brandColor: string }) {
+  // コピー（先頭段落）と説明文を分離して表現を分ける
+  const { copy, body } = splitBrandCopy(value)
   return (
     <View wrap={false} style={{ marginBottom: 12 }}>
       <Text style={{ fontSize: 9, fontWeight: 700, color: brandColor, marginBottom: 4 }}>{label}</Text>
-      <Text style={styles.bodyText}>{value}</Text>
+      {copy ? <Text style={{ fontSize: 12, fontWeight: 700, color: '#333333' }}>{copy}</Text> : null}
+      {body ? <Text style={{ fontSize: 9, color: '#666666', lineHeight: 1.5, marginTop: 2 }}>{body}</Text> : null}
     </View>
   )
 }

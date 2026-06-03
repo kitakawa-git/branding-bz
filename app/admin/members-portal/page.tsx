@@ -231,18 +231,18 @@ export default function MembersPortalPage() {
 
           <form onSubmit={handleCreateMember}>
             <div className="mb-5">
-              <h2 className="text-sm font-bold mb-3">メールアドレス</h2>
+              <h2 className="text-xs font-bold mb-3">メールアドレス</h2>
               <Input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="member@example.com" required className="h-10" />
             </div>
             <div className="mb-5">
-              <h2 className="text-sm font-bold mb-3">パスワード</h2>
+              <h2 className="text-xs font-bold mb-3">パスワード</h2>
               <div className="flex gap-2">
                 <Input type="text" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="8文字以上" required minLength={8} className="h-10 flex-1" />
                 <Button type="button" variant="outline" size="sm" onClick={() => setNewPassword(generatePassword())}>自動生成</Button>
               </div>
             </div>
             <div className="mb-5">
-              <h2 className="text-sm font-bold mb-3">名前</h2>
+              <h2 className="text-xs font-bold mb-3">名前</h2>
               <Input type="text" value={newDisplayName} onChange={(e) => setNewDisplayName(e.target.value)} placeholder="山田太郎" required className="h-10" />
             </div>
             <Button type="submit" disabled={creating}>

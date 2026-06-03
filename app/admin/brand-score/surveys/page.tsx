@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
 import { Plus, ClipboardList, CalendarDays, Trash2, Loader2 } from 'lucide-react'
+import { Fab, FabButton } from '@/components/ui/fab'
 
 type Survey = {
   id: string
@@ -216,20 +217,15 @@ export default function SurveysListPage() {
   return (
     <div>
       {/* 新規サーベイ作成 FAB（右下固定・include-bz の FabButton と同装飾） */}
-      <div className="fixed bottom-8 right-8 z-50 flex items-center gap-3">
-        <button
+      <Fab>
+        <FabButton
           onClick={handleCreateClick}
           disabled={creating}
-          className="flex items-center justify-center gap-1 h-12 px-5 rounded-full hover:scale-105 transition-transform cursor-pointer text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 bg-foreground text-background shadow-lg"
+          icon={creating ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
         >
-          {creating ? (
-            <Loader2 size={16} className="animate-spin" />
-          ) : (
-            <Plus size={16} />
-          )}
           {creating ? '作成中...' : '新規サーベイ作成'}
-        </button>
-      </div>
+        </FabButton>
+      </Fab>
 
       {/* draft存在時の確認ダイアログ */}
       <AlertDialog open={draftDialogOpen} onOpenChange={setDraftDialogOpen}>

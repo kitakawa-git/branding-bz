@@ -17,6 +17,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { WandSparkles, Loader2, Check, Settings } from 'lucide-react'
+import { Fab, FabButton } from '@/components/ui/fab'
 
 const ALL_TAGS = [
   '信頼感',
@@ -232,16 +233,11 @@ export default function BrandScoreSettingsPage() {
 
       {/* 保存 FAB（右下固定・include-bz node の FabButton と同装飾） */}
       {!loading && (
-        <div className="fixed bottom-8 right-8 z-50 flex items-center gap-3">
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="flex items-center justify-center gap-1 h-12 px-5 rounded-full hover:scale-105 transition-transform cursor-pointer text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 bg-foreground text-background shadow-lg"
-          >
-            <Check size={16} />
+        <Fab>
+          <FabButton onClick={handleSave} disabled={saving} icon={<Check size={16} />}>
             {saving ? '保存中...' : '保存'}
-          </button>
-        </div>
+          </FabButton>
+        </Fab>
       )}
 
       {/* 上書き確認ダイアログ */}

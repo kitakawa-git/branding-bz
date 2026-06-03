@@ -197,7 +197,7 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
         <CardContent className="p-5">
           {/* 企業名 */}
           <div className="mb-5">
-            <h2 className="text-sm font-bold mb-3">
+            <h2 className="text-xs font-bold mb-3">
               企業名またはブランド名 <span className="text-xs text-red-500 font-normal">*</span>
             </h2>
             <Input
@@ -212,7 +212,7 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
 
           {/* 業種 */}
           <div className="mb-5">
-            <h2 className="text-sm font-bold mb-3">
+            <h2 className="text-xs font-bold mb-3">
               業種 <span className="text-xs text-red-500 font-normal">*</span>
             </h2>
             <IndustrySelect

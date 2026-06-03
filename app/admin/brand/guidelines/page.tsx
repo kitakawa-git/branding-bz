@@ -2,12 +2,11 @@
 
 // ブランド方針 編集ページ
 // スローガン・コンセプトビジュアル・動画・メッセージ・MVV・ストーリー・沿革・事業内容・特性
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 import { fetchWithRetry } from '@/lib/supabase-fetch'
 import { useAuth } from '../../components/AdminDataProvider'
-import { ImageUpload } from '../../components/ImageUpload'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
@@ -15,8 +14,10 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { AutoResizeTextarea } from '@/components/ui/auto-resize-textarea'
 import { DEFAULT_SUBTITLES, type PortalSubtitles } from '@/lib/portal-subtitles'
+import { splitBrandCopy, combineBrandCopy } from '@/lib/brand-mvv'
 import { TitleDescriptionList } from '@/components/shared/TitleDescriptionList'
 import { GripVertical, Plus, Trash2, Check } from 'lucide-react'
+import { Fab, FabButton } from '@/components/ui/fab'
 import {
   DndContext,
   closestCenter,
@@ -28,6 +29,7 @@ import {
 import {
   SortableContext,
   verticalListSortingStrategy,
+  rectSortingStrategy,
   useSortable,
   arrayMove,
 } from '@dnd-kit/sortable'
@@ -40,11 +42,16 @@ type TraitItem = { name: string; score: number; description: string; added_index
 
 type Guidelines = {
   slogan: string
-  concept_visual_url: string
+  // 複数コンセプトビジュアル（スライドショー用）。順序＝表示順。
+  concept_visuals: string[]
   brand_video_url: string
   brand_statement: string
-  mission: string
-  vision: string
+  // ミッション/ビジョンは「コピー（先頭段落）」と「説明文」を分けて編集する。
+  // 保存時に combineBrandCopy で1テキスト（空行区切り）に結合し mission/vision カラムへ。
+  mission_copy: string
+  mission_body: string
+  vision_copy: string
+  vision_body: string
   values: ValueItem[]
   values_sort: 'registered' | 'custom'
   brand_story: string
@@ -77,8 +84,34 @@ function SortableValueItem({
         <GripVertical size={16} />
       </button>
       <Input type="text" value={value.name} onChange={(e) => onUpdate(index, 'name', e.target.value)} placeholder={`バリュー名 ${index + 1}`} className="h-10 flex-1" />
-      <Input type="text" value={value.description} onChange={(e) => onUpdate(index, 'description', e.target.value)} placeholder="説明" className="h-10 flex-[2]" />
+      {/* 説明は改行可（複数行入力）。Enterで改行、内容に応じて高さが伸びる */}
+      <AutoResizeTextarea value={value.description} onChange={(e) => onUpdate(index, 'description', e.target.value)} placeholder="説明（改行可）" className="flex-[2] min-h-10" />
       <Button type="button" variant="outline" size="icon" onClick={() => onRemove(index)} className="size-9 shrink-0 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"><Trash2 size={14} /></Button>
+    </div>
+  )
+}
+
+function SortableConceptVisual({
+  id, url, index, onRemove,
+}: {
+  id: string; url: string; index: number
+  onRemove: (index: number) => void
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
+  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }
+  return (
+    <div ref={setNodeRef} style={style} className="border border-border rounded-lg overflow-hidden bg-gray-50 relative">
+      <div className="p-2 flex items-center justify-center min-h-[120px] bg-gray-100">
+        <button type="button" className="absolute top-1 left-1 p-1 rounded hover:bg-gray-200 cursor-grab active:cursor-grabbing text-muted-foreground z-10" {...attributes} {...listeners}>
+          <GripVertical size={16} />
+        </button>
+        <Button type="button" variant="outline" size="icon" onClick={() => onRemove(index)} className="absolute top-1 right-1 size-7 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive bg-background/80 z-10">
+          <Trash2 size={12} />
+        </Button>
+        {/* 表示順バッジ（スライドの順番） */}
+        <span className="absolute bottom-1 left-1 text-[10px] font-mono text-white bg-black/50 rounded px-1.5 py-0.5 z-10">{index + 1}</span>
+        <img src={url} alt="" className="max-w-full max-h-[140px] object-contain" />
+      </div>
     </div>
   )
 }
@@ -140,11 +173,13 @@ export default function BrandGuidelinesPage() {
   const [guidelinesId, setGuidelinesId] = useState<string | null>(cached?.guidelinesId ?? null)
   const [guidelines, setGuidelines] = useState<Guidelines>(cached?.guidelines ?? {
     slogan: '',
-    concept_visual_url: '',
+    concept_visuals: [],
     brand_video_url: '',
     brand_statement: '',
-    mission: '',
-    vision: '',
+    mission_copy: '',
+    mission_body: '',
+    vision_copy: '',
+    vision_body: '',
     values: [],
     values_sort: 'registered',
     brand_story: '',
@@ -159,6 +194,8 @@ export default function BrandGuidelinesPage() {
   const [saving, setSaving] = useState(false)
   const [portalSubtitle, setPortalSubtitle] = useState(cached?.portalSubtitle ?? '')
   const [portalSubtitlesData, setPortalSubtitlesData] = useState<PortalSubtitles | null>(cached?.portalSubtitlesData ?? null)
+  const [uploadingConcept, setUploadingConcept] = useState(false)
+  const conceptFileRef = useRef<HTMLInputElement | null>(null)
 
   const fetchGuidelines = async () => {
     if (!companyId) return
@@ -167,7 +204,8 @@ export default function BrandGuidelinesPage() {
 
     try {
       const { data, error: fetchErr } = await fetchWithRetry(() =>
-        supabase.from('brand_guidelines').select('*').eq('company_id', companyId).single()
+        // 新規企業は brand_guidelines 行が未作成のため maybeSingle（0件でもエラーにせず空フォーム表示）
+        supabase.from('brand_guidelines').select('*').eq('company_id', companyId).maybeSingle()
       )
       if (fetchErr) throw new Error(fetchErr)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -197,11 +235,17 @@ export default function BrandGuidelinesPage() {
         const parsedId = result.id as string
         const parsedGuidelines: Guidelines = {
           slogan: result.slogan || '',
-          concept_visual_url: result.concept_visual_url || '',
+          // 新カラム concept_visuals を優先。空ならレガシー concept_visual_url を1枚として取り込む
+          concept_visuals: (Array.isArray(result.concept_visuals) && result.concept_visuals.length > 0)
+            ? (result.concept_visuals as string[])
+            : (result.concept_visual_url ? [result.concept_visual_url as string] : []),
           brand_video_url: result.brand_video_url || '',
           brand_statement: result.brand_statement || '',
-          mission: result.mission || '',
-          vision: result.vision || '',
+          // 既存の連結テキストをコピー/説明文に分割してフォームへ
+          mission_copy: splitBrandCopy(result.mission as string).copy,
+          mission_body: splitBrandCopy(result.mission as string).body,
+          vision_copy: splitBrandCopy(result.vision as string).copy,
+          vision_body: splitBrandCopy(result.vision as string).body,
           values: ((result.values as { name: string; description: string; added_index?: number }[]) || []).map((v, i) => ({
             ...v,
             added_index: v.added_index ?? i,
@@ -339,6 +383,46 @@ export default function BrandGuidelinesPage() {
     }
   }
 
+  // --- コンセプトビジュアル（複数・スライドショー用） ---
+  const handleConceptVisualUpload = async (file: File) => {
+    if (!companyId) return
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('ファイルサイズは5MB以下にしてください')
+      return
+    }
+    setUploadingConcept(true)
+    try {
+      const ext = file.name.split('.').pop()
+      const fileName = `${companyId}/concept-visuals/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+      const { error } = await supabase.storage.from('brand-assets').upload(fileName, file, { upsert: true })
+      if (error) {
+        toast.error('アップロードに失敗しました: ' + error.message)
+        return
+      }
+      const { data: { publicUrl } } = supabase.storage.from('brand-assets').getPublicUrl(fileName)
+      setGuidelines(prev => ({ ...prev, concept_visuals: [...prev.concept_visuals, publicUrl] }))
+    } catch {
+      toast.error('アップロード中にエラーが発生しました')
+    } finally {
+      setUploadingConcept(false)
+    }
+  }
+
+  const removeConceptVisual = (index: number) => {
+    setGuidelines(prev => ({ ...prev, concept_visuals: prev.concept_visuals.filter((_, i) => i !== index) }))
+  }
+
+  const handleConceptDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    setGuidelines(prev => {
+      const oldIndex = prev.concept_visuals.findIndex((_, i) => `concept-${i}` === active.id)
+      const newIndex = prev.concept_visuals.findIndex((_, i) => `concept-${i}` === over.id)
+      if (oldIndex === -1 || newIndex === -1) return prev
+      return { ...prev, concept_visuals: arrayMove(prev.concept_visuals, oldIndex, newIndex) }
+    })
+  }
+
   // URL正規化
   const normalizeUrl = (url: string): string => {
     const trimmed = url.trim()
@@ -429,11 +513,14 @@ export default function BrandGuidelinesPage() {
       const saveData: Record<string, unknown> = {
         company_id: companyId,
         slogan: guidelines.slogan || null,
-        concept_visual_url: guidelines.concept_visual_url || null,
+        concept_visuals: guidelines.concept_visuals,
+        // レガシー/CIマニュアル表紙互換: 先頭画像を単一URLカラムにも保存
+        concept_visual_url: guidelines.concept_visuals[0] || null,
         brand_video_url: guidelines.brand_video_url ? normalizeUrl(guidelines.brand_video_url) : null,
         brand_statement: guidelines.brand_statement || null,
-        mission: guidelines.mission || null,
-        vision: guidelines.vision || null,
+        // コピー＋説明文を空行区切りの1テキストに結合して保存
+        mission: combineBrandCopy(guidelines.mission_copy, guidelines.mission_body) || null,
+        vision: combineBrandCopy(guidelines.vision_copy, guidelines.vision_body) || null,
         values: cleanedValues.length > 0 ? cleanedValues : [],
         values_sort: guidelines.values_sort,
         brand_story: guidelines.brand_story || null,
@@ -544,9 +631,9 @@ export default function BrandGuidelinesPage() {
       <form id="guidelines-form" onSubmit={handleSubmit} className="space-y-6">
         {/* Card 1: スローガン＋コンセプトビジュアル＋ブランド動画＋メッセージ */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-          <CardContent className="p-5 space-y-5">
+          <CardContent className="p-5 space-y-6">
             <div>
-              <h2 className="text-sm font-bold mb-3">スローガン</h2>
+              <h2 className="text-xs font-bold mb-3">スローガン</h2>
               <Input
                 type="text"
                 value={guidelines.slogan}
@@ -557,17 +644,55 @@ export default function BrandGuidelinesPage() {
             </div>
 
             <div>
-              <h2 className="text-sm font-bold mb-3">コンセプトビジュアル</h2>
-              <ImageUpload
-                bucket="avatars"
-                folder="concept-visuals"
-                currentUrl={guidelines.concept_visual_url}
-                onUpload={(url) => handleChange('concept_visual_url', url)}
-              />
+              <h2 className="text-xs font-bold mb-3">コンセプトビジュアル</h2>
+              <p className="text-xs text-muted-foreground mb-3">複数枚登録すると、ポータルでスライドショーとして表示されます（最大10枚・ドラッグで順序変更）</p>
+
+              {guidelines.concept_visuals.length > 0 && (
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleConceptDragEnd}>
+                  <SortableContext items={guidelines.concept_visuals.map((_, i) => `concept-${i}`)} strategy={rectSortingStrategy}>
+                    <div className="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-3 mb-3">
+                      {guidelines.concept_visuals.map((url, idx) => (
+                        <SortableConceptVisual
+                          key={`concept-${idx}`}
+                          id={`concept-${idx}`}
+                          url={url}
+                          index={idx}
+                          onRemove={removeConceptVisual}
+                        />
+                      ))}
+                    </div>
+                  </SortableContext>
+                </DndContext>
+              )}
+
+              {guidelines.concept_visuals.length < 10 && (
+                <div>
+                  <input
+                    ref={conceptFileRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (file) handleConceptVisualUpload(file)
+                      e.target.value = ''
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={uploadingConcept}
+                    onClick={() => conceptFileRef.current?.click()}
+                    className="py-2 px-4 text-[13px]"
+                  >
+                    {uploadingConcept ? 'アップロード中...' : <><Plus size={16} />画像を追加</>}
+                  </Button>
+                </div>
+              )}
             </div>
 
             <div>
-              <h2 className="text-sm font-bold mb-3">ブランド動画URL</h2>
+              <h2 className="text-xs font-bold mb-3">ブランド動画URL</h2>
               <Input
                 type="text"
                 value={guidelines.brand_video_url}
@@ -578,7 +703,7 @@ export default function BrandGuidelinesPage() {
             </div>
 
             <div>
-              <h2 className="text-sm font-bold mb-3">メッセージ</h2>
+              <h2 className="text-xs font-bold mb-3">メッセージ</h2>
               <AutoResizeTextarea
                 value={guidelines.brand_statement}
                 onChange={(e) => handleChange('brand_statement', e.target.value)}
@@ -591,30 +716,56 @@ export default function BrandGuidelinesPage() {
 
         {/* Card 2: ミッション＋ビジョン＋バリュー */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-          <CardContent className="p-5 space-y-5">
+          <CardContent className="p-5 space-y-6">
             <div>
-              <h2 className="text-sm font-bold mb-3">ミッション</h2>
-              <AutoResizeTextarea
-                value={guidelines.mission}
-                onChange={(e) => handleChange('mission', e.target.value)}
-                placeholder="私たちの使命は..."
-                className="min-h-[100px]"
-              />
+              <h2 className="text-xs font-bold mb-3">ミッション</h2>
+              <div className="space-y-2">
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">コピー（キャッチコピー）</label>
+                  <Input
+                    value={guidelines.mission_copy}
+                    onChange={(e) => handleChange('mission_copy', e.target.value)}
+                    placeholder="例：感謝と挑戦の精神で、品質向上を追求する。"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">説明文</label>
+                  <AutoResizeTextarea
+                    value={guidelines.mission_body}
+                    onChange={(e) => handleChange('mission_body', e.target.value)}
+                    placeholder="コピーを補足する説明文（改行可）"
+                    className="min-h-[100px]"
+                  />
+                </div>
+              </div>
             </div>
 
             <div>
-              <h2 className="text-sm font-bold mb-3">ビジョン</h2>
-              <AutoResizeTextarea
-                value={guidelines.vision}
-                onChange={(e) => handleChange('vision', e.target.value)}
-                placeholder="私たちが目指す未来は..."
-                className="min-h-[100px]"
-              />
+              <h2 className="text-xs font-bold mb-3">ビジョン</h2>
+              <div className="space-y-2">
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">コピー（キャッチコピー）</label>
+                  <Input
+                    value={guidelines.vision_copy}
+                    onChange={(e) => handleChange('vision_copy', e.target.value)}
+                    placeholder="例：人と社会を、明るく、クリアに、カラフルに。"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">説明文</label>
+                  <AutoResizeTextarea
+                    value={guidelines.vision_body}
+                    onChange={(e) => handleChange('vision_body', e.target.value)}
+                    placeholder="コピーを補足する説明文（改行可）"
+                    className="min-h-[100px]"
+                  />
+                </div>
+              </div>
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-3">
-                <h2 className="text-sm font-bold">バリュー（最大10個）</h2>
+                <h2 className="text-xs font-bold">バリュー（最大10個）</h2>
                 {guidelines.values.length > 1 && (
                   <div className="flex rounded-lg border border-border overflow-hidden">
                     <button type="button" onClick={() => handleChange('values_sort', 'registered')}
@@ -648,7 +799,8 @@ export default function BrandGuidelinesPage() {
                       return (
                         <div key={realIndex} className="flex gap-2 mb-2 items-start">
                           <Input type="text" value={value.name} onChange={(e) => updateValue(realIndex, 'name', e.target.value)} placeholder={`バリュー名 ${realIndex + 1}`} className="h-10 flex-1" />
-                          <Input type="text" value={value.description} onChange={(e) => updateValue(realIndex, 'description', e.target.value)} placeholder="説明" className="h-10 flex-[2]" />
+                          {/* 説明は改行可（複数行入力）。Enterで改行、内容に応じて高さが伸びる */}
+                          <AutoResizeTextarea value={value.description} onChange={(e) => updateValue(realIndex, 'description', e.target.value)} placeholder="説明（改行可）" className="flex-[2] min-h-10" />
                           <Button type="button" variant="outline" size="icon" onClick={() => removeValue(realIndex)} className="size-9 shrink-0 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"><Trash2 size={14} /></Button>
                         </div>
                       )
@@ -666,9 +818,9 @@ export default function BrandGuidelinesPage() {
 
         {/* Card 3: ブランドストーリー＋沿革＋事業内容 */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-          <CardContent className="p-5 space-y-5">
+          <CardContent className="p-5 space-y-6">
             <div>
-              <h2 className="text-sm font-bold mb-3">ブランドストーリー</h2>
+              <h2 className="text-xs font-bold mb-3">ブランドストーリー</h2>
               <AutoResizeTextarea
                 value={guidelines.brand_story}
                 onChange={(e) => handleChange('brand_story', e.target.value)}
@@ -678,7 +830,7 @@ export default function BrandGuidelinesPage() {
             </div>
 
             <div>
-              <h2 className="text-sm font-bold mb-3">沿革</h2>
+              <h2 className="text-xs font-bold mb-3">沿革</h2>
               <p className="text-xs text-muted-foreground mb-2">
                 企業の歩みを年と出来事で記録します
               </p>
@@ -710,7 +862,7 @@ export default function BrandGuidelinesPage() {
 
             <div>
               <div className="flex items-center justify-between mb-3">
-                <h2 className="text-sm font-bold">事業内容</h2>
+                <h2 className="text-xs font-bold">事業内容</h2>
                 {guidelines.business_content.length > 1 && (
                   <div className="flex rounded-lg border border-border overflow-hidden">
                     <button type="button" onClick={() => handleChange('business_content_sort', 'registered')}
@@ -764,7 +916,7 @@ export default function BrandGuidelinesPage() {
           <CardContent className="p-5">
             <div>
               <div className="flex items-center justify-between mb-3">
-                <h2 className="text-sm font-bold">ブランドパーソナリティ（最大5つ）</h2>
+                <h2 className="text-xs font-bold">ブランドパーソナリティ（最大5つ）</h2>
                 {guidelines.traits.length > 1 && (
                   <div className="flex rounded-lg border border-border overflow-hidden">
                     <button type="button" onClick={() => handleChange('traits_sort', 'registered')}
@@ -822,17 +974,11 @@ export default function BrandGuidelinesPage() {
       <div className="h-24" />
 
       {/* 保存 FAB（右下固定・include-bz node の FabButton と同装飾） */}
-      <div className="fixed bottom-8 right-8 z-50 flex items-center gap-3">
-        <button
-          type="submit"
-          form="guidelines-form"
-          disabled={saving}
-          className="flex items-center justify-center gap-1 h-12 px-5 rounded-full hover:scale-105 transition-transform cursor-pointer text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 bg-foreground text-background shadow-lg"
-        >
-          <Check size={16} />
+      <Fab>
+        <FabButton type="submit" form="guidelines-form" disabled={saving} icon={<Check size={16} />}>
           {saving ? '保存中...' : '保存'}
-        </button>
-      </div>
+        </FabButton>
+      </Fab>
     </div>
   )
 }

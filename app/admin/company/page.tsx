@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
 import { Plus, Trash2, Check } from 'lucide-react'
+import { Fab, FabButton } from '@/components/ui/fab'
 
 // 競合企業の型
 interface Competitor {
@@ -287,7 +288,7 @@ export default function CompanyPage() {
           <CardContent className="p-5">
             {/* ロゴ */}
             <div className="mb-5">
-              <h2 className="text-sm font-bold mb-3">ロゴ</h2>
+              <h2 className="text-xs font-bold mb-3">ロゴ</h2>
               <ImageUpload
                 bucket="avatars"
                 folder="logos"
@@ -298,7 +299,7 @@ export default function CompanyPage() {
 
             {/* 企業名またはブランド名 */}
             <div className="mb-5">
-              <h2 className="text-sm font-bold mb-3">企業名またはブランド名</h2>
+              <h2 className="text-xs font-bold mb-3">企業名またはブランド名</h2>
               <Input
                 type="text"
                 value={company.name}
@@ -313,7 +314,7 @@ export default function CompanyPage() {
 
             {/* 業種 */}
             <div className="mb-5">
-              <h2 className="text-sm font-bold mb-3">業種</h2>
+              <h2 className="text-xs font-bold mb-3">業種</h2>
               <IndustrySelect
                 category={company.industry_category}
                 subcategory={company.industry_subcategory}
@@ -324,7 +325,7 @@ export default function CompanyPage() {
 
             {/* ブランドステージ */}
             <div className="mb-5">
-              <h2 className="text-sm font-bold mb-3">ブランドステージ</h2>
+              <h2 className="text-xs font-bold mb-3">ブランドステージ</h2>
               <Select
                 value={company.brand_stage || ''}
                 onValueChange={(val) => handleChange('brand_stage', val)}
@@ -344,7 +345,7 @@ export default function CompanyPage() {
 
             {/* WebサイトURL */}
             <div className="mb-5">
-              <h2 className="text-sm font-bold mb-3">ウェブサイトURL</h2>
+              <h2 className="text-xs font-bold mb-3">ウェブサイトURL</h2>
               <Input
                 type="text"
                 value={company.website_url}
@@ -356,7 +357,7 @@ export default function CompanyPage() {
 
             {/* 競合企業・サービス */}
             <div className="mb-5">
-              <h2 className="text-sm font-bold mb-3">競合企業・サービス</h2>
+              <h2 className="text-xs font-bold mb-3">競合企業・サービス</h2>
               {company.competitors.length > 0 && (
                 <div className="space-y-3 mb-3">
                   {company.competitors.map((comp, index) => (
@@ -436,17 +437,11 @@ export default function CompanyPage() {
       <div className="h-24" />
 
       {/* 保存 FAB（右下固定・include-bz node の FabButton と同装飾） */}
-      <div className="fixed bottom-8 right-8 z-50 flex items-center gap-3">
-        <button
-          type="submit"
-          form="company-form"
-          disabled={saving}
-          className="flex items-center justify-center gap-1 h-12 px-5 rounded-full hover:scale-105 transition-transform cursor-pointer text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 bg-foreground text-background shadow-lg"
-        >
-          <Check size={16} />
+      <Fab>
+        <FabButton type="submit" form="company-form" disabled={saving} icon={<Check size={16} />}>
           {saving ? '保存中...' : '保存'}
-        </button>
-      </div>
+        </FabButton>
+      </Fab>
     </div>
   )
 }

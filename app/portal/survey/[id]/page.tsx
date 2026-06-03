@@ -351,7 +351,7 @@ export default function SurveyRespondPage() {
       {/* 回答者属性 */}
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-6">
         <CardContent className="p-5">
-          <h2 className="text-sm font-bold text-foreground mb-4">回答者情報</h2>
+          <h2 className="text-xs font-bold text-foreground mb-4">回答者情報</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">

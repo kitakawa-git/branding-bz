@@ -232,7 +232,7 @@ export default function AnnouncementDetailPage() {
       {/* 既読状況 */}
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
         <CardContent className="p-5">
-          <h2 className="text-sm font-bold mb-3">既読状況</h2>
+          <h2 className="text-xs font-bold mb-3">既読状況</h2>
 
           <div className="flex items-center gap-3 mb-4">
             <Progress value={readRate} className="flex-1 h-2" />

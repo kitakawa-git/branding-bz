@@ -605,7 +605,7 @@ export default function AdminKpiPage() {
           <CardContent className="p-5">
             <div className="flex items-center gap-2 mb-3">
               <Clock size={16} className="text-amber-600" />
-              <h2 className="text-sm font-bold text-amber-900">期間終了 — 新しい期間の承認</h2>
+              <h2 className="text-xs font-bold text-amber-900">期間終了 — 新しい期間の承認</h2>
             </div>
             <p className="text-sm text-amber-800 mb-4 m-0">
               前期（{formatDate(currentPeriodRecord!.start_date)}〜{formatDate(currentPeriodRecord!.end_date)}）が終了しました。新しい期間を確認して開始してください。
@@ -644,7 +644,7 @@ export default function AdminKpiPage() {
         <CardContent className="p-5">
           <div className="flex items-center gap-2 mb-4">
             <CalendarDays size={16} className="text-muted-foreground" />
-            <h2 className="text-sm font-bold">ゴール期間設定</h2>
+            <h2 className="text-xs font-bold">ゴール期間設定</h2>
             {isPeriodExpired && (
               <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-red-100 text-red-700 ml-2">期間終了</Badge>
             )}
@@ -825,7 +825,7 @@ export default function AdminKpiPage() {
         <div className="mt-10">
           <div className="flex items-center gap-2 mb-4">
             <Archive size={16} className="text-muted-foreground" />
-            <h2 className="text-sm font-bold text-foreground">過去の期間</h2>
+            <h2 className="text-xs font-bold text-foreground">過去の期間</h2>
           </div>
           <div className="space-y-3">
             {archivedPeriods.map(ap => {

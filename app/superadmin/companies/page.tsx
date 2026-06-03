@@ -1,13 +1,15 @@
 'use client'
 
 // スーパー管理画面: 企業一覧ページ
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { Building2, Plus, ArrowRight } from 'lucide-react'
+import { Fab, FabButton } from '@/components/ui/fab'
+import { CompanyCreateDialog } from './CompanyCreateDialog'
 
 type CompanyWithCount = {
   id: string
@@ -22,58 +24,59 @@ type CompanyWithCount = {
 export default function CompaniesPage() {
   const [companies, setCompanies] = useState<CompanyWithCount[]>([])
   const [loading, setLoading] = useState(true)
+  const [createOpen, setCreateOpen] = useState(false)
+
+  const fetchCompanies = useCallback(async () => {
+    try {
+      // 全企業を取得
+      const { data: companiesData, error } = await supabase
+        .from('companies')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        console.error('[SuperAdmin] 企業一覧取得エラー:', error.message)
+        setLoading(false)
+        return
+      }
+
+      // 各企業の社員数と管理者数を取得
+      const companiesWithCounts = await Promise.all(
+        (companiesData || []).map(async (company) => {
+          // 社員数
+          const { count: memberCount } = await supabase
+            .from('profiles')
+            .select('*', { count: 'exact', head: true })
+            .eq('company_id', company.id)
+
+          // 管理者数
+          const { count: adminCount } = await supabase
+            .from('admin_users')
+            .select('*', { count: 'exact', head: true })
+            .eq('company_id', company.id)
+
+          return {
+            id: company.id,
+            name: company.name || '（名前なし）',
+            logo_url: company.logo_url,
+            slogan: company.slogan,
+            created_at: company.created_at,
+            member_count: memberCount || 0,
+            admin_count: adminCount || 0,
+          }
+        })
+      )
+
+      setCompanies(companiesWithCounts)
+    } catch (err) {
+      console.error('[SuperAdmin] 企業一覧取得例外:', err)
+    }
+    setLoading(false)
+  }, [])
 
   useEffect(() => {
-    const fetchCompanies = async () => {
-      try {
-        // 全企業を取得
-        const { data: companiesData, error } = await supabase
-          .from('companies')
-          .select('*')
-          .order('created_at', { ascending: false })
-
-        if (error) {
-          console.error('[SuperAdmin] 企業一覧取得エラー:', error.message)
-          setLoading(false)
-          return
-        }
-
-        // 各企業の社員数と管理者数を取得
-        const companiesWithCounts = await Promise.all(
-          (companiesData || []).map(async (company) => {
-            // 社員数
-            const { count: memberCount } = await supabase
-              .from('profiles')
-              .select('*', { count: 'exact', head: true })
-              .eq('company_id', company.id)
-
-            // 管理者数
-            const { count: adminCount } = await supabase
-              .from('admin_users')
-              .select('*', { count: 'exact', head: true })
-              .eq('company_id', company.id)
-
-            return {
-              id: company.id,
-              name: company.name || '（名前なし）',
-              logo_url: company.logo_url,
-              slogan: company.slogan,
-              created_at: company.created_at,
-              member_count: memberCount || 0,
-              admin_count: adminCount || 0,
-            }
-          })
-        )
-
-        setCompanies(companiesWithCounts)
-      } catch (err) {
-        console.error('[SuperAdmin] 企業一覧取得例外:', err)
-      }
-      setLoading(false)
-    }
-
     fetchCompanies()
-  }, [])
+  }, [fetchCompanies])
 
   // ============================================
   // Render
@@ -113,15 +116,19 @@ export default function CompaniesPage() {
 
   return (
     <div>
-      {/* ===== ヘッダー（タイトルはパンくずに移動） ===== */}
-      <div className="flex justify-end items-center mb-6">
-        <Button asChild variant="outline" className="py-2 px-4 text-[13px]">
-          <Link href="/superadmin/companies/new">
-            <Plus size={16} />
-            新規企業を登録
-          </Link>
-        </Button>
-      </div>
+      {/* 新規企業登録 FAB（右下固定・include-bz node の FabButton と同装飾） */}
+      <Fab>
+        <FabButton onClick={() => setCreateOpen(true)} icon={<Plus size={16} />}>
+          新規企業を登録
+        </FabButton>
+      </Fab>
+
+      {/* 企業登録モーダル */}
+      <CompanyCreateDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        onCreated={fetchCompanies}
+      />
 
       {/* ===== 企業一覧テーブル ===== */}
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">

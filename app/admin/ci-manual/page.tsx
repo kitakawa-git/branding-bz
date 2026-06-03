@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Progress } from '@/components/ui/progress'
 import { FileDown, Loader2 } from 'lucide-react'
+import { Fab, FabButton } from '@/components/ui/fab'
 import type { CIManualData, SelectedSections } from '@/lib/ci-manual/types'
 
 type SectionConfig = {
@@ -134,25 +135,15 @@ export default function CIManualPage() {
   return (
     <div>
       {/* PDFダウンロード FAB（右下固定・include-bz node の FabButton と同装飾） */}
-      <div className="fixed bottom-8 right-8 z-50 flex items-center gap-3">
-        <button
+      <Fab>
+        <FabButton
           onClick={handleGenerate}
           disabled={generating || contentSectionCount === 0}
-          className="flex items-center justify-center gap-1 h-12 px-5 rounded-full hover:scale-105 transition-transform cursor-pointer text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 bg-foreground text-background shadow-lg"
+          icon={generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
         >
-          {generating ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              PDF生成中...
-            </>
-          ) : (
-            <>
-              <FileDown className="h-4 w-4" />
-              PDFをダウンロード
-            </>
-          )}
-        </button>
-      </div>
+          {generating ? 'PDF生成中...' : 'PDFをダウンロード'}
+        </FabButton>
+      </Fab>
 
       {/* セクション選択 */}
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-6">

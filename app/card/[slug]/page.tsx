@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import QRCode from 'qrcode'
 import { generateHighResQRDataURL, getQRFilename } from '@/lib/qr-download'
 import { parseFontsFromDB, getCssFontFamily, getGoogleFontsUrl } from '@/lib/brand-fonts'
+import { splitBrandCopy } from '@/lib/brand-mvv'
 import { CardViewTracker } from './CardViewTracker'
 import { VCardButton } from './VCardButton'
 import { CardEventWrapper } from './CardEventWrapper'
@@ -424,17 +425,27 @@ export default async function CardPage({ params }: Props) {
             {(missionText || vision || brandValues.length > 0) && (
               <CardContent className="pt-4">
                 <Separator className="mb-4" />
-                {/* ミッション（常時表示） */}
-                {missionText && (
-                  <div>
-                    <span className="text-xs font-bold text-muted-foreground tracking-wider uppercase">
-                      Mission
-                    </span>
-                    <p className="text-base font-bold text-foreground leading-[1.8] m-0 mt-1 whitespace-pre-line" style={{ fontFamily: secondaryFontFamily }}>
-                      {missionText}
-                    </p>
-                  </div>
-                )}
+                {/* ミッション（常時表示・コピー＋説明文を分離） */}
+                {missionText && (() => {
+                  const { copy, body } = splitBrandCopy(missionText)
+                  return (
+                    <div>
+                      <span className="text-xs font-bold text-muted-foreground tracking-wider uppercase">
+                        Mission
+                      </span>
+                      {copy && (
+                        <p className="text-base font-bold text-foreground leading-[1.8] m-0 mt-1 whitespace-pre-line" style={{ fontFamily: secondaryFontFamily }}>
+                          {copy}
+                        </p>
+                      )}
+                      {body && (
+                        <p className="text-[13px] text-foreground/70 leading-[1.8] m-0 mt-1 whitespace-pre-line" style={{ fontFamily: secondaryFontFamily }}>
+                          {body}
+                        </p>
+                      )}
+                    </div>
+                  )
+                })()}
                 {/* ビジョン・バリュー（アコーディオン）+ ページ閲覧行動トラッキング */}
                 <CardBrandSection
                   vision={vision}

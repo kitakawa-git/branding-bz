@@ -28,6 +28,7 @@ import {
   Dialog,
   DialogContent,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog'
 import {
   DropdownMenu,
@@ -47,6 +48,7 @@ import {
   UserRound,
   Search,
 } from 'lucide-react'
+import { Fab, FabButton } from '@/components/ui/fab'
 import { toast } from 'sonner'
 
 // ============================================
@@ -127,6 +129,8 @@ export default function PortalTimelinePage() {
   const [formImages, setFormImages] = useState<File[]>([])
   const [formImagePreviews, setFormImagePreviews] = useState<string[]>([])
   const [posting, setPosting] = useState(false)
+  // 投稿フォーム（モーダル）の開閉
+  const [composerOpen, setComposerOpen] = useState(false)
 
   // Edit mode
   const [editingPostId, setEditingPostId] = useState<string | null>(null)
@@ -453,8 +457,9 @@ export default function PortalTimelinePage() {
         toast.success('投稿しました')
       }
 
-      // Reset form
+      // Reset form & close modal
       resetForm()
+      setComposerOpen(false)
       // Refresh posts
       await fetchPosts()
     } catch (err) {
@@ -488,8 +493,8 @@ export default function PortalTimelinePage() {
     setEditExistingImages(post.images || [])
     setFormImages([])
     setFormImagePreviews([])
-    // Scroll to top
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    // 編集も同じ投稿モーダルを開く
+    setComposerOpen(true)
   }
 
   // ============================================
@@ -795,17 +800,24 @@ export default function PortalTimelinePage() {
 
   return (
     <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
-      <div>
-        <p className="text-sm text-muted-foreground">
-          行動指針に基づく取り組みを共有し、互いに称賛しましょう
-        </p>
-      </div>
+      {/* ============================================ */}
+      {/* Post Form (右下FAB + モーダル) */}
+      {/* ============================================ */}
+      {/* 右下のFABボタン: クリックで投稿モーダルを開く */}
+      <Fab>
+        <FabButton onClick={() => { resetForm(); setComposerOpen(true) }} icon={<Pencil size={16} />}>
+          投稿する
+        </FabButton>
+      </Fab>
 
-      {/* ============================================ */}
-      {/* Post Form */}
-      {/* ============================================ */}
-      <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-        <CardContent className="p-5 space-y-4">
+      {/* 投稿モーダル */}
+      <Dialog open={composerOpen} onOpenChange={(o) => { if (!o) resetForm(); setComposerOpen(o) }}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogTitle>{editingPostId ? '投稿を編集' : '投稿する'}</DialogTitle>
+          <DialogDescription>
+            行動指針に基づく取り組みを共有し、互いに称賛しましょう
+          </DialogDescription>
+          <div className="space-y-4">
           <div className="flex items-center gap-3 mb-1">
             <Avatar className="size-9 shrink-0">
               {!formAnonymous && profilePhotoUrl && (
@@ -933,13 +945,14 @@ export default function PortalTimelinePage() {
 
             {/* Cancel edit */}
             {editingPostId && (
-              <Button variant="outline" size="sm" onClick={resetForm}>
+              <Button variant="outline" size="sm" onClick={() => { resetForm(); setComposerOpen(false) }}>
                 キャンセル
               </Button>
             )}
           </div>
-        </CardContent>
-      </Card>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* ============================================ */}
       {/* Category Filter */}

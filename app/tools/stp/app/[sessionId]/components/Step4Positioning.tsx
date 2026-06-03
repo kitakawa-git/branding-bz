@@ -289,7 +289,7 @@ export function Step4Positioning({
           <div className="space-y-5">
             {/* 軸設定 */}
             <div className="rounded-lg border border-gray-200 bg-white p-4">
-              <h2 className="text-sm font-bold mb-3">軸の設定</h2>
+              <h2 className="text-xs font-bold mb-3">軸の設定</h2>
 
               {/* X軸 */}
               <div className="mb-3">
@@ -340,7 +340,7 @@ export function Step4Positioning({
 
             {/* 要素リスト */}
             <div className="space-y-3">
-              <h2 className="text-sm font-bold mb-3">要素の配置</h2>
+              <h2 className="text-xs font-bold mb-3">要素の配置</h2>
 
               {items.map((item, index) => (
                 <div key={index} className="rounded-lg border border-gray-200 bg-white p-4">
@@ -431,7 +431,7 @@ export function Step4Positioning({
 
           {/* 右: マッププレビュー */}
           <div className="lg:sticky lg:top-20">
-            <h2 className="text-sm font-bold mb-3">プレビュー</h2>
+            <h2 className="text-xs font-bold mb-3">プレビュー</h2>
             <div className="rounded-lg border border-gray-200 bg-white p-3" style={{ minHeight: 300 }}>
               <PositioningMap data={toMapData(getCurrentData())} />
             </div>

@@ -340,7 +340,7 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
         <CardContent className="p-5">
           {/* 企業名またはブランド名 */}
           <div className="mb-5">
-            <h2 className="text-sm font-bold mb-3">
+            <h2 className="text-xs font-bold mb-3">
               企業名またはブランド名 <span className="text-xs text-red-500 font-normal">*</span>
             </h2>
             <Input
@@ -360,7 +360,7 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
 
           {/* 業種 */}
           <div className="mb-5">
-            <h2 className="text-sm font-bold mb-3">
+            <h2 className="text-xs font-bold mb-3">
               業種 <span className="text-xs text-red-500 font-normal">*</span>
             </h2>
             <IndustrySelect
@@ -397,7 +397,7 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
 
           {/* ターゲット（構造化入力） */}
           <div className="mb-5">
-            <h2 className="text-sm font-bold mb-1.5">
+            <h2 className="text-xs font-bold mb-1.5">
               ターゲット <span className="text-xs text-gray-400 font-normal">（任意）</span>
             </h2>
             <p className="text-[13px] text-muted-foreground mb-3">
@@ -417,7 +417,7 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
 
           {/* 競合企業・サービス */}
           <div className="mb-5">
-            <h2 className="text-sm font-bold mb-1.5">
+            <h2 className="text-xs font-bold mb-1.5">
               競合企業・サービス <span className="text-xs text-gray-400 font-normal">（任意）</span>
             </h2>
             <p className="text-[13px] text-muted-foreground mb-3">

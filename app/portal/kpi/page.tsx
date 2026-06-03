@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase'
 import { usePortalAuth } from '../components/PortalDataProvider'
 import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
+import { splitBrandCopy } from '@/lib/brand-mvv'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -41,6 +42,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { DatePicker } from '@/components/date-picker'
 import { Milestone, Plus, Pencil, Trash2, AlertCircle, CalendarDays, X, ChevronDown, ChevronUp, Archive } from 'lucide-react'
+import { Fab, FabButton } from '@/components/ui/fab'
 import { toast } from 'sonner'
 
 // ============================================
@@ -626,9 +628,6 @@ export default function KpiPage() {
   if (!goal) {
     return (
       <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
-        <div>
-          <p className="text-sm text-muted-foreground">個人目標の設定とKPI管理</p>
-        </div>
 
         {goalPeriod && (
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
@@ -648,14 +647,9 @@ export default function KpiPage() {
             <Milestone size={48} className="mx-auto text-muted-foreground mb-4" />
             <h2 className="text-lg font-bold text-foreground mb-2">目標がまだ設定されていません</h2>
             {(goalPeriod?.show_goal_banner !== false) ? (
-              <>
-                <p className="text-sm text-muted-foreground mb-6">
-                  ブランドにどう貢献するかを宣言し、具体的なKPIを設定しましょう。
-                </p>
-                <Button size="lg" onClick={() => openSetupDialog(false)}>
-                  目標とKPIを設定する
-                </Button>
-              </>
+              <p className="text-sm text-muted-foreground">
+                ブランドにどう貢献するかを宣言し、具体的なKPIを設定しましょう。
+              </p>
             ) : (
               <p className="text-sm text-muted-foreground">
                 目標設定期間外です。管理者にお問い合わせください。
@@ -669,6 +663,15 @@ export default function KpiPage() {
 
         {renderGoalDialog()}
         {renderKpiSetupDialog()}
+
+        {/* 右下FAB: 目標とKPIを設定する（設定期間内のみ表示） */}
+        {(goalPeriod?.show_goal_banner !== false) && (
+          <Fab>
+            <FabButton onClick={() => openSetupDialog(false)} icon={<Plus size={16} />}>
+              目標とKPIを設定する
+            </FabButton>
+          </Fab>
+        )}
       </div>
     )
   }
@@ -681,9 +684,6 @@ export default function KpiPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
-      <div>
-        <p className="text-sm text-muted-foreground">個人目標の設定とKPI管理</p>
-      </div>
 
       {/* ゴール期間 + 目標表示 */}
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
@@ -720,7 +720,7 @@ export default function KpiPage() {
           {kpis.length > 0 && (
             <>
               <div className="flex items-center justify-between mb-3">
-                <h2 className="text-sm font-bold">KPI 総合進捗率</h2>
+                <h2 className="text-xs font-bold">KPI 総合進捗率</h2>
                 <span className="text-2xl font-bold text-foreground">{weightedProgress}%</span>
               </div>
               <Progress value={weightedProgress} className="h-3 mb-4" animate />
@@ -924,7 +924,7 @@ export default function KpiPage() {
       <div className="mt-4">
         <div className="flex items-center gap-2 mb-3">
           <Archive size={16} className="text-muted-foreground" />
-          <h2 className="text-sm font-bold text-foreground">過去の目標・KPI</h2>
+          <h2 className="text-xs font-bold text-foreground">過去の目標・KPI</h2>
         </div>
         <div className="space-y-2">
           {archivedPeriods.map(ap => {
@@ -1017,12 +1017,16 @@ export default function KpiPage() {
 
             {(missionText || valuesData.length > 0) && (
               <div className="bg-muted/50 rounded-lg p-4 space-y-4">
-                {missionText && (
-                  <div>
-                    <Label className="text-[10px] text-muted-foreground uppercase tracking-wider">私たちのミッション</Label>
-                    <p className="text-sm font-semibold text-foreground mt-1 m-0 leading-relaxed">{missionText}</p>
-                  </div>
-                )}
+                {missionText && (() => {
+                  const { copy, body } = splitBrandCopy(missionText)
+                  return (
+                    <div>
+                      <Label className="text-[10px] text-muted-foreground uppercase tracking-wider">私たちのミッション</Label>
+                      {copy && <p className="text-sm font-semibold text-foreground mt-1 m-0 leading-relaxed">{copy}</p>}
+                      {body && <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-line mt-1 m-0">{body}</p>}
+                    </div>
+                  )
+                })()}
                 {valuesData.length > 0 && (
                   <div>
                     <Label className="text-[10px] text-muted-foreground uppercase tracking-wider">私たちのバリュー</Label>
@@ -1030,7 +1034,7 @@ export default function KpiPage() {
                       {valuesData.map((v, i) => (
                         <div key={i} className="bg-background rounded-md p-2.5 border">
                           <p className="text-xs font-bold text-foreground m-0">{v.name}</p>
-                          {v.description && <p className="text-[11px] text-muted-foreground mt-0.5 m-0">{v.description}</p>}
+                          {v.description && <p className="text-[11px] text-muted-foreground mt-0.5 m-0 whitespace-pre-line">{v.description}</p>}
                         </div>
                       ))}
                     </div>

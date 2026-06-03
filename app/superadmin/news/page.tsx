@@ -2,15 +2,16 @@
 
 // スーパー管理画面: ニュース一覧ページ
 import { useEffect, useState } from 'react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Plus, Pencil, Trash2 } from 'lucide-react'
+import { Fab, FabButton } from '@/components/ui/fab'
 import type { NewsItem, NewsCategory } from '@/lib/types/news'
 import { NEWS_CATEGORY_LABELS } from '@/lib/types/news'
+import { NewsCreateDialog } from './NewsCreateDialog'
 
 // カテゴリバッジの色分け
 const CATEGORY_STYLES: Record<NewsCategory, string> = {
@@ -23,6 +24,7 @@ const CATEGORY_STYLES: Record<NewsCategory, string> = {
 export default function SuperAdminNewsPage() {
   const [news, setNews] = useState<NewsItem[]>([])
   const [loading, setLoading] = useState(true)
+  const [createOpen, setCreateOpen] = useState(false)
   const router = useRouter()
 
   const fetchNews = async () => {
@@ -74,14 +76,19 @@ export default function SuperAdminNewsPage() {
 
   return (
     <div>
-      {/* ヘッダー（タイトルはパンくずに移動） */}
-      <div className="flex justify-end items-center mb-6">
-        <Button asChild className="bg-[#1e3a5f] hover:bg-[#2a4a6f]">
-          <Link href="/superadmin/news/new">
-            <Plus size={16} className="inline" /> 新規作成
-          </Link>
-        </Button>
-      </div>
+      {/* 新規作成 FAB（右下固定・include-bz node の FabButton と同装飾） */}
+      <Fab>
+        <FabButton onClick={() => setCreateOpen(true)} icon={<Plus size={16} />}>
+          新規作成
+        </FabButton>
+      </Fab>
+
+      {/* ニュース作成モーダル */}
+      <NewsCreateDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        onCreated={fetchNews}
+      />
 
       {/* テーブル */}
       <Card className="bg-muted/50 border shadow-none">

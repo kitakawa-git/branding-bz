@@ -17,6 +17,7 @@ import { Label } from '@/components/ui/label'
 import { Slider } from '@/components/ui/slider'
 import { PositioningMap } from '@/components/PositioningMap'
 import { Plus, Trash2, Check } from 'lucide-react'
+import { Fab, FabButton } from '@/components/ui/fab'
 import { TitleDescriptionList } from '@/components/shared/TitleDescriptionList'
 import type { PositioningMapData, PositioningMapItem, PositioningMapSize } from '@/lib/types/positioning-map'
 
@@ -538,7 +539,7 @@ export default function BrandStrategyPage() {
             />
 
             <div>
-              <h2 className="text-sm font-bold mb-3">ペルソナ</h2>
+              <h2 className="text-xs font-bold mb-3">ペルソナ</h2>
               <p className="text-xs text-muted-foreground mb-4">
                 ターゲット顧客のペルソナを設定します（最大5件）
               </p>
@@ -561,7 +562,7 @@ export default function BrandStrategyPage() {
                   </div>
 
                   <div className="mb-5">
-                    <h2 className="text-sm font-bold mb-3">ペルソナ名称</h2>
+                    <h2 className="text-xs font-bold mb-3">ペルソナ名称</h2>
                     <Input
                       type="text"
                       value={persona.name}
@@ -573,7 +574,7 @@ export default function BrandStrategyPage() {
 
                   <div className="flex gap-3">
                     <div className="mb-5 flex-1">
-                      <h2 className="text-sm font-bold mb-3">年齢層</h2>
+                      <h2 className="text-xs font-bold mb-3">年齢層</h2>
                       <Input
                         type="text"
                         value={persona.age_range}
@@ -583,7 +584,7 @@ export default function BrandStrategyPage() {
                       />
                     </div>
                     <div className="mb-5 flex-1">
-                      <h2 className="text-sm font-bold mb-3">職業</h2>
+                      <h2 className="text-xs font-bold mb-3">職業</h2>
                       <Input
                         type="text"
                         value={persona.occupation}
@@ -595,7 +596,7 @@ export default function BrandStrategyPage() {
                   </div>
 
                   <div className="mb-5">
-                    <h2 className="text-sm font-bold mb-3">説明</h2>
+                    <h2 className="text-xs font-bold mb-3">説明</h2>
                     <AutoResizeTextarea
                       value={persona.description}
                       onChange={(e) => updatePersona(index, 'description', e.target.value)}
@@ -605,7 +606,7 @@ export default function BrandStrategyPage() {
                   </div>
 
                   <div className="mb-5">
-                    <h2 className="text-sm font-bold mb-3">ニーズ</h2>
+                    <h2 className="text-xs font-bold mb-3">ニーズ</h2>
                     {persona.needs.map((need, needIndex) => (
                       <div key={needIndex} className="flex gap-2 mb-2">
                         <Input
@@ -637,7 +638,7 @@ export default function BrandStrategyPage() {
                   </div>
 
                   <div>
-                    <h2 className="text-sm font-bold mb-3">課題・ペインポイント</h2>
+                    <h2 className="text-xs font-bold mb-3">課題・ペインポイント</h2>
                     {persona.pain_points.map((point, pointIndex) => (
                       <div key={pointIndex} className="flex gap-2 mb-2">
                         <Input
@@ -687,7 +688,7 @@ export default function BrandStrategyPage() {
         {/* Card 2: ポジショニングマップ */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-5">
-            <h2 className="text-sm font-bold mb-3">ポジショニングマップ</h2>
+            <h2 className="text-xs font-bold mb-3">ポジショニングマップ</h2>
 
             {positioningMapData ? (
               <div className="space-y-5">
@@ -890,7 +891,7 @@ export default function BrandStrategyPage() {
         {/* Card 3: 行動指針 */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-5">
-            <h2 className="text-sm font-bold mb-3">行動指針</h2>
+            <h2 className="text-xs font-bold mb-3">行動指針</h2>
 
             {actionGuidelines.map((guideline, index) => (
               <div key={index} className="flex gap-2 mb-2 items-start">
@@ -940,17 +941,11 @@ export default function BrandStrategyPage() {
       <div className="h-24" />
 
       {/* 保存 FAB（右下固定・include-bz node の FabButton と同装飾） */}
-      <div className="fixed bottom-8 right-8 z-50 flex items-center gap-3">
-        <button
-          type="submit"
-          form="strategy-form"
-          disabled={saving}
-          className="flex items-center justify-center gap-1 h-12 px-5 rounded-full hover:scale-105 transition-transform cursor-pointer text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 bg-foreground text-background shadow-lg"
-        >
-          <Check size={16} />
+      <Fab>
+        <FabButton type="submit" form="strategy-form" disabled={saving} icon={<Check size={16} />}>
           {saving ? '保存中...' : '保存'}
-        </button>
-      </div>
+        </FabButton>
+      </Fab>
     </div>
   )
 }

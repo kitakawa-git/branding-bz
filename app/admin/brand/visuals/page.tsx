@@ -28,6 +28,7 @@ import { DEFAULT_SUBTITLES, type PortalSubtitles } from '@/lib/portal-subtitles'
 import { FONT_PREVIEW_TEXT, DEFAULT_FONT_ID, DEFAULT_FONT_ROLE, getCssFontFamily, getGoogleFontsUrl, parseFontsFromDB, type BrandFonts, type FontSource } from '@/lib/brand-fonts'
 import { GoogleFontPicker } from '@/components/GoogleFontPicker'
 import { GripVertical, Plus, Trash2, Check } from 'lucide-react'
+import { Fab, FabButton } from '@/components/ui/fab'
 import {
   DndContext,
   closestCenter,
@@ -296,7 +297,8 @@ export default function BrandVisualsPage() {
 
     try {
       const { data, error: fetchErr } = await fetchWithRetry(() =>
-        supabase.from('brand_visuals').select('*').eq('company_id', companyId).single()
+        // 新規企業は brand_visuals 行が未作成のため maybeSingle（0件でもエラーにせず空フォーム表示）
+        supabase.from('brand_visuals').select('*').eq('company_id', companyId).maybeSingle()
       )
       if (fetchErr) throw new Error(fetchErr)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -809,7 +811,7 @@ export default function BrandVisualsPage() {
           <CardContent className="p-5">
             {/* ロゴコンセプト */}
             <div className="mb-5">
-              <h2 className="text-sm font-bold mb-3">ロゴコンセプト</h2>
+              <h2 className="text-xs font-bold mb-3">ロゴコンセプト</h2>
               <AutoResizeTextarea
                 value={visuals.logo_concept}
                 onChange={(e) => handleChange('logo_concept', e.target.value)}
@@ -820,7 +822,7 @@ export default function BrandVisualsPage() {
 
             {/* ロゴガイドライン */}
             <div>
-              <h2 className="text-sm font-bold mb-3">ロゴガイドライン</h2>
+              <h2 className="text-xs font-bold mb-3">ロゴガイドライン</h2>
 
               {/* 表示順設定 */}
               {visuals.logo_sections.some(s => s.items.length > 0) && (
@@ -997,7 +999,7 @@ export default function BrandVisualsPage() {
         {/* カード2: ブランドカラー */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-5">
-            <h2 className="text-sm font-bold mb-5">ブランドカラー</h2>
+            <h2 className="text-xs font-bold mb-5">ブランドカラー</h2>
 
             {COLOR_CATEGORIES.map((cat, catIdx) => (
               <div key={cat.key} className={catIdx < COLOR_CATEGORIES.length - 1 ? 'mb-6' : ''}>
@@ -1074,7 +1076,7 @@ export default function BrandVisualsPage() {
             {/* Google Fonts CDN 読み込み */}
             {/* eslint-disable-next-line @next/next/no-page-custom-font */}
             <link rel="stylesheet" href={getGoogleFontsUrl(visuals.fonts)} />
-            <h2 className="text-sm font-bold mb-5">フォント</h2>
+            <h2 className="text-xs font-bold mb-5">フォント</h2>
 
             {/* プライマリフォント */}
             <div className="mb-6">
@@ -1157,7 +1159,7 @@ export default function BrandVisualsPage() {
         {/* カード4: ビジュアルガイドライン */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-5">
-            <h2 className="text-sm font-bold mb-3">ビジュアルガイドライン</h2>
+            <h2 className="text-xs font-bold mb-3">ビジュアルガイドライン</h2>
             <AutoResizeTextarea
               value={visuals.visual_guidelines}
               onChange={(e) => handleChange('visual_guidelines', e.target.value)}
@@ -1291,17 +1293,11 @@ export default function BrandVisualsPage() {
       <div className="h-24" />
 
       {/* 保存 FAB（右下固定・include-bz node の FabButton と同装飾） */}
-      <div className="fixed bottom-8 right-8 z-50 flex items-center gap-3">
-        <button
-          type="submit"
-          form="visuals-form"
-          disabled={saving}
-          className="flex items-center justify-center gap-1 h-12 px-5 rounded-full hover:scale-105 transition-transform cursor-pointer text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 bg-foreground text-background shadow-lg"
-        >
-          <Check size={16} />
+      <Fab>
+        <FabButton type="submit" form="visuals-form" disabled={saving} icon={<Check size={16} />}>
           {saving ? '保存中...' : '保存'}
-        </button>
-      </div>
+        </FabButton>
+      </Fab>
     </div>
   )
 }

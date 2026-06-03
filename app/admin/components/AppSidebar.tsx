@@ -84,7 +84,6 @@ export function AppSidebar() {
     return true
   })
 
-  const brandInitial = companyName?.slice(0, 1) || 'B'
   const initials = profileName
     ? profileName.slice(0, 1)
     : user?.email?.slice(0, 1)?.toUpperCase() || '?'
@@ -97,13 +96,12 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <Link href="/admin">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground overflow-hidden">
-                  {companyLogoUrl ? (
+                {/* ロゴ未登録時はアイコン枠を表示しない（フォールバックの頭文字も出さない） */}
+                {companyLogoUrl && (
+                  <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground overflow-hidden">
                     <img src={companyLogoUrl} alt={companyName || ''} className="size-full object-cover" />
-                  ) : (
-                    <span className="text-sm font-bold">{brandInitial}</span>
-                  )}
-                </div>
+                  </div>
+                )}
                 <div className="flex flex-col gap-0.5 leading-none">
                   <span className="font-semibold">{companyName || 'branding.bz'}</span>
                   <span className="text-xs">管理画面</span>

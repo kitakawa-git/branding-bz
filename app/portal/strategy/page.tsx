@@ -29,11 +29,6 @@ type Persona = {
   pain_points: string[]
 }
 
-type ActionGuideline = {
-  title: string
-  description: string
-}
-
 export default function PortalStrategyPage() {
   const { companyId } = usePortalAuth()
   const brandFonts = useBrandFonts(companyId)
@@ -44,7 +39,6 @@ export default function PortalStrategyPage() {
     personas: Persona[]
     positioningMapUrl: string
     positioningMapData: PositioningMapData | null
-    actionGuidelines: ActionGuideline[]
   }
   const cacheKey = `portal-strategy-${companyId}`
   const cached = companyId ? getPageCache<StrategyCache>(cacheKey) : null
@@ -53,7 +47,6 @@ export default function PortalStrategyPage() {
   const [personas, setPersonas] = useState<Persona[]>(cached?.personas ?? [])
   const [positioningMapUrl, setPositioningMapUrl] = useState(cached?.positioningMapUrl ?? '')
   const [positioningMapData, setPositioningMapData] = useState<PositioningMapData | null>(cached?.positioningMapData ?? null)
-  const [actionGuidelines, setActionGuidelines] = useState<ActionGuideline[]>(cached?.actionGuidelines ?? [])
   const [loading, setLoading] = useState(!cached)
   const [modalOpen, setModalOpen] = useState(false)
 
@@ -64,7 +57,7 @@ export default function PortalStrategyPage() {
     fetchWithRetry(() =>
       supabase
         .from('brand_personas')
-        .select('name, age_range, occupation, description, needs, pain_points, target, positioning_map_url, positioning_map_data, action_guidelines, sort_order')
+        .select('name, age_range, occupation, description, needs, pain_points, target, positioning_map_url, positioning_map_data, sort_order')
         .eq('company_id', companyId)
         .order('sort_order')
     ).then(({ data }) => {
@@ -73,7 +66,6 @@ export default function PortalStrategyPage() {
         setTarget((first.target as string) || '')
         setPositioningMapUrl((first.positioning_map_url as string) || '')
         setPositioningMapData((first.positioning_map_data as PositioningMapData) || null)
-        setActionGuidelines((first.action_guidelines as ActionGuideline[]) || [])
 
         setPersonas(data.map((d: unknown) => {
           const rec = d as Record<string, unknown>
@@ -91,7 +83,6 @@ export default function PortalStrategyPage() {
           target: (first.target as string) || '',
           positioningMapUrl: (first.positioning_map_url as string) || '',
           positioningMapData: (first.positioning_map_data as PositioningMapData) || null,
-          actionGuidelines: (first.action_guidelines as ActionGuideline[]) || [],
           personas: data.map((d: unknown) => {
             const rec = d as Record<string, unknown>
             return {
@@ -158,7 +149,7 @@ export default function PortalStrategyPage() {
     </div>
   )
 
-  const hasContent = target || personas.some(p => p.name) || positioningMapData || positioningMapUrl || actionGuidelines.length > 0
+  const hasContent = target || personas.some(p => p.name) || positioningMapData || positioningMapUrl
   if (!hasContent) return <div className="text-center py-16 text-muted-foreground text-[15px]">まだ登録されていません</div>
 
   const validPersonas = personas.filter(p => p.name)
@@ -173,16 +164,16 @@ export default function PortalStrategyPage() {
       {(target || validPersonas.length > 0) && (
         <section>
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-            <CardContent className="p-5 space-y-4">
+            <CardContent className="p-5 space-y-6">
               {target && (
                 <div>
-                  <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">ターゲット</h2>
+                  <h2 className="text-xs font-bold text-foreground mb-3 tracking-wide">ターゲット</h2>
                   <p className="text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0" style={secondaryStyle}>{target}</p>
                 </div>
               )}
               {validPersonas.length > 0 && (
                 <div>
-                  <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">ペルソナ</h2>
+                  <h2 className="text-xs font-bold text-foreground mb-3 tracking-wide">ペルソナ</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {validPersonas.map((persona, i) => (
                   <div key={i} className="rounded-lg border border-border bg-background p-5">
@@ -241,7 +232,7 @@ export default function PortalStrategyPage() {
         <section>
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none overflow-hidden">
             <CardContent className="p-5">
-              <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">ポジショニングマップ</h2>
+              <h2 className="text-xs font-bold text-foreground mb-3 tracking-wide">ポジショニングマップ</h2>
               {positioningMapData ? (
                 <PositioningMap data={positioningMapData} />
               ) : positioningMapUrl ? (
@@ -268,34 +259,6 @@ export default function PortalStrategyPage() {
               </DialogContent>
             </Dialog>
           )}
-        </section>
-      )}
-
-      {/* Card 3: 行動指針 */}
-      {actionGuidelines.length > 0 && (
-        <section>
-          <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-            <CardContent className="p-5">
-              <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">行動指針</h2>
-              <div className="space-y-2">
-                {actionGuidelines.map((g, i) => (
-                  <div key={i} className="rounded-lg border border-border bg-background border-l-2 border-l-blue-600 p-4 flex gap-3">
-                    <span className="text-xs font-mono text-muted-foreground tabular-nums pt-0.5">
-                      {String(i + 1).padStart(2, '0')}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <span className="text-base font-semibold text-foreground">{g.title}</span>
-                      {g.description && (
-                        <p className="text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap mt-1 m-0">
-                          {g.description}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
         </section>
       )}
     </div>

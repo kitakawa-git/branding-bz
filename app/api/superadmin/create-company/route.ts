@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { generateRandomSlug } from '@/lib/generate-slug'
 
 export async function POST(request: NextRequest) {
   console.log('[CreateCompany] ===== API呼び出し開始 =====')
@@ -88,12 +89,11 @@ export async function POST(request: NextRequest) {
     // ステップ3: リクエストBody取得
     console.log('[CreateCompany] ステップ3: リクエストBody解析中...')
     const body = await request.json()
+    // ブランド情報（スローガン/MVV/カラー）は作成時には受け取らない。
+    // 表示に使われるのは brand_guidelines / brand_visuals 側のため、
+    // 作成後に管理画面「ブランド方針」「ビジュアル」で入力してもらう運用とする。
     const {
       companyName,
-      slogan,
-      mvv,
-      brandColorPrimary,
-      brandColorSecondary,
       websiteUrl,
       adminEmail,
       adminPassword,
@@ -133,10 +133,11 @@ export async function POST(request: NextRequest) {
       .from('companies')
       .insert({
         name: companyName,
-        slogan: slogan || '',
-        mvv: mvv || '',
-        brand_color_primary: brandColorPrimary || '#1a1a1a',
-        brand_color_secondary: brandColorSecondary || '#666666',
+        // ブランド情報は作成時に入力しない。NOT NULL 制約を踏まないよう既定値を入れておく
+        slogan: '',
+        mvv: '',
+        brand_color_primary: '#1a1a1a',
+        brand_color_secondary: '#666666',
         website_url: websiteUrl || '',
       })
       .select()
@@ -178,6 +179,66 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('[CreateCompany] ステップ6完了: admin_users紐づけ成功')
+
+    // 管理者の表示名はメールアドレスのローカル部から仮生成（ログイン後にポータルで変更可能）
+    const ownerName = adminEmail.split('@')[0] || '管理者'
+
+    // ステップ7: profiles にプロフィール作成（名刺用）
+    console.log('[CreateCompany] ステップ7: プロフィール作成中...')
+    const { data: profile, error: profileError } = await supabaseAdmin
+      .from('profiles')
+      .insert({
+        company_id: company.id,
+        name: ownerName,
+        email: adminEmail,
+        slug: generateRandomSlug(),
+        card_enabled: true,
+      })
+      .select('id')
+      .single()
+
+    if (profileError) {
+      console.error('[CreateCompany] ステップ7失敗: プロフィール作成エラー:', profileError.message)
+      // ロールバック: admin_users + 企業 + Auth user削除
+      console.log('[CreateCompany] ロールバック: admin_users + 企業 + Auth user削除中...')
+      await supabaseAdmin.from('admin_users').delete().eq('auth_id', authData.user.id)
+      await supabaseAdmin.from('companies').delete().eq('id', company.id)
+      await supabaseAdmin.auth.admin.deleteUser(authData.user.id)
+      return NextResponse.json(
+        { error: `プロフィール作成エラー: ${profileError.message}` },
+        { status: 400 }
+      )
+    }
+
+    console.log('[CreateCompany] ステップ7完了: プロフィール作成成功 id=', profile.id)
+
+    // ステップ8: members に紐づけ（ポータルのアクセス権限はこのレコードで判定される）
+    console.log('[CreateCompany] ステップ8: members紐づけ中...')
+    const { error: memberInsertError } = await supabaseAdmin
+      .from('members')
+      .insert({
+        auth_id: authData.user.id,
+        company_id: company.id,
+        display_name: ownerName,
+        email: adminEmail,
+        profile_id: profile.id,
+      })
+
+    if (memberInsertError) {
+      console.error('[CreateCompany] ステップ8失敗: members紐づけエラー:', memberInsertError.message)
+      // ロールバック: profiles + admin_users + 企業 + Auth user削除
+      console.log('[CreateCompany] ロールバック: profiles + admin_users + 企業 + Auth user削除中...')
+      await supabaseAdmin.from('profiles').delete().eq('id', profile.id)
+      await supabaseAdmin.from('admin_users').delete().eq('auth_id', authData.user.id)
+      await supabaseAdmin.from('companies').delete().eq('id', company.id)
+      await supabaseAdmin.auth.admin.deleteUser(authData.user.id)
+      return NextResponse.json(
+        { error: `メンバー紐づけエラー: ${memberInsertError.message}` },
+        { status: 400 }
+      )
+    }
+
+    console.log('[CreateCompany] ステップ8完了: members紐づけ成功')
     console.log('[CreateCompany] ===== 全ステップ完了 ===== company_id=', company.id, 'auth_id=', authData.user.id)
 
     return NextResponse.json({

@@ -5,6 +5,7 @@
 // /portal/auth?from=colors — カラーツールLPから
 // /portal/auth?from=stp    — STPツールLPから
 import { Suspense, useState, useEffect } from 'react'
+import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Input } from '@/components/ui/input'
@@ -156,13 +157,13 @@ function PortalAuthContent() {
         <div className="relative z-10 p-10">
           <div className="mb-8 text-center">
             {/* ロゴクリックでトップページへ遷移（相対パス＝現在のドメインのトップ） */}
-            <a href="/" className="inline-block mb-3 transition-opacity hover:opacity-80">
+            <Link href="/" className="inline-block mb-3 transition-opacity hover:opacity-80">
               <img
                 src="/logo.svg"
                 alt="branding.bz"
                 style={{ height: '32px', width: 'auto' }}
               />
-            </a>
+            </Link>
             <p className="m-0 text-sm text-gray-500">
               {subtitle}
             </p>
@@ -202,7 +203,7 @@ function PortalAuthContent() {
 
           <form onSubmit={handleLogin}>
             <div className="mb-5">
-              <h2 className="mb-1.5 text-sm font-bold text-gray-700">メールアドレス</h2>
+              <h2 className="mb-1.5 text-xs font-bold text-gray-700">メールアドレス</h2>
               <Input
                 type="email"
                 value={email}
@@ -214,7 +215,7 @@ function PortalAuthContent() {
             </div>
 
             <div className="mb-5">
-              <h2 className="mb-1.5 text-sm font-bold text-gray-700">パスワード</h2>
+              <h2 className="mb-1.5 text-xs font-bold text-gray-700">パスワード</h2>
               <Input
                 type="password"
                 value={password}

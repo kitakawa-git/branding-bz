@@ -61,7 +61,7 @@ export async function trackCardEvent(params: {
 export async function trackBrandPageView(params: {
   companyId: string
   sourceProfileId?: string
-  pageType: 'guidelines' | 'strategy' | 'visuals' | 'verbal'
+  pageType: 'guidelines' | 'strategy' | 'visuals' | 'verbal' | 'personality'
   sectionsViewed?: string[]
   scrollDepth?: number
   durationSeconds?: number
@@ -92,7 +92,7 @@ export async function trackBrandPageView(params: {
 export function sendBrandPageViewBeacon(params: {
   companyId: string
   sourceProfileId?: string
-  pageType: 'guidelines' | 'strategy' | 'visuals' | 'verbal'
+  pageType: 'guidelines' | 'strategy' | 'visuals' | 'verbal' | 'personality'
   sectionsViewed?: string[]
   scrollDepth?: number
   durationSeconds?: number
