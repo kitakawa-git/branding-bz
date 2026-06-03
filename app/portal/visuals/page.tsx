@@ -10,6 +10,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
 import { BrandPageTracker } from '@/components/analytics/BrandPageTracker'
+import { BrandExpressionTabs } from '../components/BrandExpressionTabs'
 import { Separator } from '@/components/ui/separator'
 import {
   Dialog,
@@ -45,6 +46,7 @@ type Visuals = {
   visual_guidelines: string | null
   visual_guidelines_images: GuidelineImage[]
   visual_guidelines_sort: 'registered' | 'custom'
+  logo_images: { url: string; caption: string }[]
   logo_concept: string | null
   logo_sections: LogoSection[]
   logo_sections_sort: 'registered' | 'custom'
@@ -77,7 +79,7 @@ export default function PortalVisualsPage() {
     fetchWithRetry(() =>
       supabase
         .from('brand_visuals')
-        .select('fonts, visual_guidelines, visual_guidelines_images, visual_guidelines_sort, logo_concept, logo_sections, logo_sections_sort, color_palette')
+        .select('fonts, visual_guidelines, visual_guidelines_images, visual_guidelines_sort, logo_images, logo_concept, logo_sections, logo_sections_sort, color_palette')
         .eq('company_id', companyId)
         .single()
     ).then(({ data: d }) => {
@@ -88,6 +90,11 @@ export default function PortalVisualsPage() {
           visual_guidelines: (rec.visual_guidelines as string) || null,
           visual_guidelines_images: (rec.visual_guidelines_images as GuidelineImage[]) || [],
           visual_guidelines_sort: (rec.visual_guidelines_sort as 'registered' | 'custom') || 'registered',
+          logo_images: ((rec.logo_images as unknown[]) || []).map((item) =>
+            typeof item === 'string'
+              ? { url: item, caption: '' }
+              : { url: ((item as Record<string, unknown>).url as string) || '', caption: ((item as Record<string, unknown>).caption as string) || '' }
+          ),
           logo_concept: (rec.logo_concept as string) || null,
           logo_sections: (rec.logo_sections as LogoSection[]) || [],
           logo_sections_sort: (rec.logo_sections_sort as 'registered' | 'custom') || 'registered',
@@ -211,12 +218,35 @@ export default function PortalVisualsPage() {
     <>
     {companyId && <BrandPageTracker companyId={companyId} pageType="visuals" />}
     <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
+      {/* ビジュアル / バーバル 切替タブ */}
+      <BrandExpressionTabs />
 
-      {/* 1. ロゴコンセプト＆ロゴガイドライン */}
-      {(data.logo_concept || validSections.length > 0) && (
+      {/* 1. ロゴ基本形＆ロゴコンセプト＆ロゴガイドライン */}
+      {(data.logo_images.length > 0 || data.logo_concept || validSections.length > 0) && (
         <section>
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
             <CardContent className="p-5 space-y-6">
+              {data.logo_images.length > 0 && (
+                <div>
+                  <h2 className="text-xs font-bold text-foreground mb-3 tracking-wide">ロゴ基本形</h2>
+                  <div className="flex flex-wrap gap-4">
+                    {data.logo_images.map((img, i) => (
+                      <div key={i} className="w-[220px]">
+                        <div
+                          onClick={() => setModalImage(img.url)}
+                          className="flex items-center justify-center h-[140px] cursor-pointer hover:opacity-80 transition-opacity"
+                        >
+                          <img src={img.url} alt={img.caption || `ロゴ基本形 ${i + 1}`} className="max-w-full max-h-[140px] object-contain" />
+                        </div>
+                        {img.caption && (
+                          <p className="text-xs text-muted-foreground mt-1.5 m-0">{img.caption}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {data.logo_concept && (
                 <div>
                   <h2 className="text-xs font-bold text-foreground mb-3 tracking-wide">ロゴコンセプト</h2>

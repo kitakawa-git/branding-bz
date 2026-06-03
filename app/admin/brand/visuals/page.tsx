@@ -73,12 +73,15 @@ const DEFAULT_PALETTE: ColorPalette = {
 }
 
 type GuidelineImage = { url: string; caption: string; added_index: number }
+type LogoBaseImage = { url: string; caption: string }
 
 type Visuals = {
   fonts: BrandFonts
   visual_guidelines: string
   visual_guidelines_images: GuidelineImage[]
   visual_guidelines_sort: 'registered' | 'custom'
+  // ロゴ基本形画像（複数枚・キャプション付き・ロゴコンセプトの上に表示）
+  logo_images: LogoBaseImage[]
   logo_concept: string
   logo_sections: LogoSection[]
   logo_sections_sort: 'registered' | 'custom'
@@ -248,6 +251,7 @@ export default function BrandVisualsPage() {
     visual_guidelines: '',
     visual_guidelines_images: [],
     visual_guidelines_sort: 'registered',
+    logo_images: [],
     logo_concept: '',
     logo_sections: [],
     logo_sections_sort: 'registered',
@@ -343,6 +347,11 @@ export default function BrandVisualsPage() {
             added_index: img.added_index ?? i,
           })),
           visual_guidelines_sort: (result.visual_guidelines_sort as 'registered' | 'custom') || 'registered',
+          logo_images: ((result.logo_images as unknown[]) || []).map((item) =>
+            typeof item === 'string'
+              ? { url: item, caption: '' }
+              : { url: ((item as Record<string, unknown>).url as string) || '', caption: ((item as Record<string, unknown>).caption as string) || '' }
+          ),
           logo_concept: result.logo_concept || '',
           logo_sections: ((result.logo_sections as { title: string; items: { url: string; caption: string; added_index?: number }[] }[]) || []).map(section => ({
             ...section,
@@ -531,6 +540,47 @@ export default function BrandVisualsPage() {
     })
   }
 
+  // --- ロゴ基本形画像 ---
+  const handleLogoImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !companyId) return
+    setUploadingMap(prev => ({ ...prev, 'logo-base': true }))
+    try {
+      const ext = file.name.split('.').pop()
+      const fileName = `${companyId}/logos/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+      const { error } = await supabase.storage.from('brand-assets').upload(fileName, file, { upsert: true })
+      if (error) {
+        toast.error('アップロードに失敗しました: ' + error.message)
+        return
+      }
+      const { data: { publicUrl } } = supabase.storage.from('brand-assets').getPublicUrl(fileName)
+      setVisuals(prev => ({ ...prev, logo_images: [...prev.logo_images, { url: publicUrl, caption: '' }] }))
+    } catch {
+      toast.error('アップロード中にエラーが発生しました')
+    } finally {
+      setUploadingMap(prev => ({ ...prev, 'logo-base': false }))
+    }
+  }
+
+  const removeLogoImage = async (index: number) => {
+    const url = visuals.logo_images[index]?.url
+    try {
+      const pathMatch = url?.match(/brand-assets\/(.+)$/)
+      if (pathMatch) await supabase.storage.from('brand-assets').remove([pathMatch[1]])
+    } catch {
+      // Storage削除失敗は無視（UIからは消す）
+    }
+    setVisuals(prev => ({ ...prev, logo_images: prev.logo_images.filter((_, i) => i !== index) }))
+  }
+
+  const updateLogoImageCaption = (index: number, caption: string) => {
+    setVisuals(prev => {
+      const images = [...prev.logo_images]
+      images[index] = { ...images[index], caption }
+      return { ...prev, logo_images: images }
+    })
+  }
+
   const updateCaption = (sIdx: number, iIdx: number, caption: string) => {
     setVisuals(prev => {
       const sections = [...prev.logo_sections]
@@ -696,6 +746,7 @@ export default function BrandVisualsPage() {
         visual_guidelines: visuals.visual_guidelines || null,
         visual_guidelines_images: visuals.visual_guidelines_images,
         visual_guidelines_sort: visuals.visual_guidelines_sort,
+        logo_images: visuals.logo_images,
         logo_concept: visuals.logo_concept || null,
         logo_sections: cleanedSections,
         logo_sections_sort: visuals.logo_sections_sort,
@@ -725,6 +776,15 @@ export default function BrandVisualsPage() {
 
       if (result.ok) {
         toast.success('保存しました')
+        // 保存内容でページキャッシュを更新（他ページへ移動→戻ると消える問題の防止）
+        const savedVisuals = { ...visuals, logo_sections: cleanedSections }
+        setVisuals(savedVisuals)
+        setPageCache(cacheKey, {
+          visualsId: (result.data?.id as string) ?? visualsId,
+          visuals: savedVisuals,
+          portalSubtitle: portalSubtitle.trim(),
+          portalSubtitlesData: updatedSubtitles,
+        })
       } else {
         toast.error('保存に失敗しました: ' + result.error)
       }
@@ -794,9 +854,60 @@ export default function BrandVisualsPage() {
   return (
     <div>
       <form id="visuals-form" onSubmit={handleSubmit} className="space-y-8">
-        {/* カード1: ロゴコンセプト＆ロゴガイドライン */}
+        {/* カード1: ロゴ基本形＆ロゴコンセプト＆ロゴガイドライン */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-5">
+            {/* ロゴ基本形（複数枚） */}
+            <div className="mb-5">
+              <h2 className="text-xs font-bold mb-3">ロゴ基本形</h2>
+              {visuals.logo_images.length > 0 && (
+                <div className="flex flex-wrap gap-3 mb-3">
+                  {visuals.logo_images.map((img, i) => (
+                    <div key={i} className="w-[180px]">
+                      <div className="relative">
+                        <div className="border border-border rounded-lg overflow-hidden bg-gray-100 p-3 flex items-center justify-center w-[180px] h-[120px]">
+                          <img src={img.url} alt={img.caption || `ロゴ基本形 ${i + 1}`} className="max-w-full max-h-full object-contain" />
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          onClick={() => removeLogoImage(i)}
+                          className="absolute top-1 right-1 size-7 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive bg-background/80"
+                        >
+                          <Trash2 size={12} />
+                        </Button>
+                      </div>
+                      <Input
+                        type="text"
+                        value={img.caption}
+                        onChange={(e) => updateLogoImageCaption(i, e.target.value)}
+                        placeholder="キャプション（例：横組み）"
+                        className="h-9 mt-2 text-sm"
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+              <input
+                ref={(el) => { fileInputRefs.current['logo-base'] = el }}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleLogoImageUpload}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                disabled={uploadingMap['logo-base']}
+                onClick={() => fileInputRefs.current['logo-base']?.click()}
+                className="py-2 px-4 text-[13px]"
+              >
+                {uploadingMap['logo-base'] ? 'アップロード中...' : <><Plus size={16} />画像を追加</>}
+              </Button>
+              <p className="text-[11px] text-muted-foreground mt-1">ロゴの基本形となる画像（複数登録可・推奨：背景透過PNG）</p>
+            </div>
+
             {/* ロゴコンセプト */}
             <div className="mb-5">
               <h2 className="text-xs font-bold mb-3">ロゴコンセプト</h2>

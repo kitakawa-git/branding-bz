@@ -12,6 +12,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
 import { BrandPageTracker } from '@/components/analytics/BrandPageTracker'
+import { BrandExpressionTabs } from '../components/BrandExpressionTabs'
 import { splitToneOfVoice } from '@/lib/brand-mvv'
 import { Input } from '@/components/ui/input'
 import { Search } from 'lucide-react'
@@ -146,6 +147,8 @@ export default function PortalVerbalIdentityPage() {
     <BrandFontLoader fonts={brandFonts} />
     {companyId && <BrandPageTracker companyId={companyId} pageType="verbal" />}
     <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
+      {/* ビジュアル / バーバル 切替タブ */}
+      <BrandExpressionTabs />
 
       {/* トーンオブボイス（brand_personalities.tone_of_voice） */}
       {hasTone && (

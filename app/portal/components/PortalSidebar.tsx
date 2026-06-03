@@ -18,9 +18,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
 } from '@/components/ui/sidebar'
 import {
   DropdownMenu,
@@ -32,8 +29,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
   Compass,
   Target,
-  Palette,
-  MessageSquare,
   MessageSquareHeart,
   Milestone,
   LayoutDashboard,
@@ -44,7 +39,6 @@ import {
   ArrowLeftRight,
   Smile,
   Eye,
-  ChevronRight,
   GraduationCap,
   type LucideIcon,
 } from 'lucide-react'
@@ -66,10 +60,6 @@ const engagementItems: NavItem[] = [
 // 「私たちの『らしさ』」グループ（内部→外部の視点ワード構成）
 // バリュー(values)は「考え方」、用語(terms)は「バーバル」配下に内包（独立メニューにはしない／ルートは生存）
 function RashisaGroup({ pathname }: { pathname: string }) {
-  // 「見え方・聞こえ方」は展開式。子ルート（visuals/verbal）にいるときは初期展開
-  const [open, setOpen] = useState(
-    pathname.startsWith('/portal/visuals') || pathname.startsWith('/portal/verbal')
-  )
   return (
     <SidebarGroup>
       <SidebarGroupLabel>私たちの「らしさ」</SidebarGroupLabel>
@@ -95,37 +85,14 @@ function RashisaGroup({ pathname }: { pathname: string }) {
             </SidebarMenuButton>
           </SidebarMenuItem>
 
-          {/* 3. 見え方・聞こえ方（展開式：ビジュアル／バーバル） */}
+          {/* 3. 見え方・聞こえ方（ビジュアル/バーバルはページ上部のタブで切替。サブメニューは持たない） */}
           <SidebarMenuItem>
-            <SidebarMenuButton
-              onClick={() => setOpen((v) => !v)}
-              isActive={pathname.startsWith('/portal/visuals') || pathname.startsWith('/portal/verbal')}
-            >
-              <Eye size={18} />
-              <span>見え方・聞こえ方</span>
-              <ChevronRight size={16} className={`ml-auto transition-transform ${open ? 'rotate-90' : ''}`} />
+            <SidebarMenuButton asChild isActive={pathname.startsWith('/portal/visuals') || pathname.startsWith('/portal/verbal')}>
+              <Link href="/portal/visuals">
+                <Eye size={18} />
+                <span>見え方・聞こえ方</span>
+              </Link>
             </SidebarMenuButton>
-            {open && (
-              <SidebarMenuSub>
-                <SidebarMenuSubItem>
-                  <SidebarMenuSubButton asChild isActive={pathname.startsWith('/portal/visuals')}>
-                    <Link href="/portal/visuals">
-                      <Palette size={16} />
-                      <span>ビジュアル</span>
-                    </Link>
-                  </SidebarMenuSubButton>
-                </SidebarMenuSubItem>
-                <SidebarMenuSubItem>
-                  {/* 用語(terms)はバーバル配下に内包 */}
-                  <SidebarMenuSubButton asChild isActive={pathname.startsWith('/portal/verbal')}>
-                    <Link href="/portal/verbal">
-                      <MessageSquare size={16} />
-                      <span>バーバル</span>
-                    </Link>
-                  </SidebarMenuSubButton>
-                </SidebarMenuSubItem>
-              </SidebarMenuSub>
-            )}
           </SidebarMenuItem>
 
           {/* 4. 接し方（ブランド戦略） */}
