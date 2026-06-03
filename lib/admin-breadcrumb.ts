@@ -24,6 +24,7 @@ const breadcrumbMap: Record<string, AdminCrumb> = {
   '/admin/brand/guidelines': { section: 'ブランド基盤', title: 'ブランド方針' },
   '/admin/brand/strategy': { section: 'ブランド基盤', title: 'ブランド戦略' },
   '/admin/brand/visuals': { section: 'ブランド基盤', title: 'ビジュアルアイデンティティ' },
+  '/admin/brand/personality': { section: 'ブランド基盤', title: 'ブランドパーソナリティ' },
   '/admin/brand/verbal': { section: 'ブランド基盤', title: 'バーバルアイデンティティ' },
   '/admin/ci-manual': { section: 'ブランド基盤', title: 'CIマニュアル出力' },
 }

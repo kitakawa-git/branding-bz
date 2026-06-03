@@ -1,6 +1,7 @@
 'use client'
 
-// バーバルアイデンティティ 編集ページ（トーンオブボイス・コミュニケーションスタイル・用語ルール統合）
+// バーバルアイデンティティ 編集ページ（用語ルール）
+// ※ パーソナリティ（トーンオブボイス）は /admin/brand/personality に分離済み
 import { useEffect, useState, useMemo } from 'react'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
@@ -11,14 +12,9 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { AutoResizeTextarea } from '@/components/ui/auto-resize-textarea'
 import { DEFAULT_SUBTITLES, type PortalSubtitles } from '@/lib/portal-subtitles'
 import { Plus, Trash2, Check } from 'lucide-react'
 import { Fab, FabButton } from '@/components/ui/fab'
-
-type Personality = {
-  tone_of_voice: string
-}
 
 type TermItem = {
   preferred_term: string
@@ -28,8 +24,6 @@ type TermItem = {
 }
 
 type VerbalCache = {
-  personalityId: string | null
-  personality: Personality
   terms: TermItem[]
   portalSubtitle: string
   portalSubtitlesData: PortalSubtitles | null
@@ -39,10 +33,6 @@ export default function VerbalIdentityPage() {
   const { companyId } = useAuth()
   const cacheKey = `admin-brand-verbal-${companyId}`
   const cached = companyId ? getPageCache<VerbalCache>(cacheKey) : null
-  const [personalityId, setPersonalityId] = useState<string | null>(cached?.personalityId ?? null)
-  const [personality, setPersonality] = useState<Personality>(cached?.personality ?? {
-    tone_of_voice: '',
-  })
   const [terms, setTerms] = useState<TermItem[]>(cached?.terms ?? [])
   const [loading, setLoading] = useState(!cached)
   const [fetchError, setFetchError] = useState('')
@@ -56,15 +46,10 @@ export default function VerbalIdentityPage() {
     setFetchError('')
 
     try {
-      const [personalityRes, termsRes] = await Promise.all([
-        // 新規企業は行が未作成のため maybeSingle（0件でもエラーにせず空フォーム表示）
-        fetchWithRetry(() => supabase.from('brand_personalities').select('*').eq('company_id', companyId).maybeSingle()),
-        fetchWithRetry(() => supabase.from('brand_terms').select('*').eq('company_id', companyId).order('sort_order')),
-      ])
-      if (personalityRes.error) throw new Error(personalityRes.error)
+      const termsRes = await fetchWithRetry(() =>
+        supabase.from('brand_terms').select('*').eq('company_id', companyId).order('sort_order')
+      )
       if (termsRes.error) throw new Error(termsRes.error)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const personalityData = personalityRes.data as Record<string, any> | null
       const termsData = termsRes.data as Record<string, unknown>[] | null
 
       // ポータルサブタイトル取得
@@ -87,17 +72,6 @@ export default function VerbalIdentityPage() {
         // サブタイトル取得失敗は無視
       }
 
-      let parsedPersonalityId: string | null = null
-      let parsedPersonality: Personality = { tone_of_voice: '' }
-      if (personalityData) {
-        parsedPersonalityId = personalityData.id
-        parsedPersonality = {
-          tone_of_voice: personalityData.tone_of_voice || '',
-        }
-        setPersonalityId(parsedPersonalityId)
-        setPersonality(parsedPersonality)
-      }
-
       let parsedTerms: TermItem[] = []
       if (termsData && termsData.length > 0) {
         parsedTerms = termsData.map((d: Record<string, unknown>) => ({
@@ -110,8 +84,6 @@ export default function VerbalIdentityPage() {
       }
 
       setPageCache(cacheKey, {
-        personalityId: parsedPersonalityId,
-        personality: parsedPersonality,
         terms: parsedTerms,
         portalSubtitle: fetchedSubtitle,
         portalSubtitlesData: fetchedSubtitlesData,
@@ -130,10 +102,6 @@ export default function VerbalIdentityPage() {
     if (getPageCache<VerbalCache>(cacheKey)) return
     fetchData()
   }, [companyId, cacheKey])
-
-  const handleChange = (field: keyof Personality, value: string) => {
-    setPersonality(prev => ({ ...prev, [field]: value }))
-  }
 
   // --- 用語ルール操作 ---
   // --- カテゴリ候補 ---
@@ -188,38 +156,6 @@ export default function VerbalIdentityPage() {
     }
   }
 
-  const supabaseInsert = async (table: string, data: Record<string, unknown>, token: string): Promise<{ ok: boolean; error?: string; data?: Record<string, unknown> }> => {
-    const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/${table}`
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 10000)
-    try {
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
-          'Authorization': `Bearer ${token}`,
-          'Prefer': 'return=representation',
-        },
-        body: JSON.stringify(data),
-        signal: controller.signal,
-      })
-      clearTimeout(timeoutId)
-      if (!res.ok) {
-        const body = await res.text()
-        return { ok: false, error: `HTTP ${res.status}: ${body}` }
-      }
-      const result = await res.json()
-      return { ok: true, data: result[0] }
-    } catch (err) {
-      clearTimeout(timeoutId)
-      if (err instanceof DOMException && err.name === 'AbortError') {
-        return { ok: false, error: 'タイムアウト（10秒）' }
-      }
-      return { ok: false, error: err instanceof Error ? err.message : '不明なエラー' }
-    }
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!companyId) return
@@ -231,28 +167,7 @@ export default function VerbalIdentityPage() {
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
       const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 
-      // --- 1. パーソナリティ保存 ---
-      const personalityData: Record<string, unknown> = {
-        company_id: companyId,
-        tone_of_voice: personality.tone_of_voice || null,
-        communication_style: null,
-      }
-
-      let pResult: { ok: boolean; error?: string; data?: Record<string, unknown> }
-      if (personalityId) {
-        pResult = await supabasePatch('brand_personalities', personalityId, personalityData, token)
-      } else {
-        pResult = await supabaseInsert('brand_personalities', personalityData, token)
-        if (pResult.ok && pResult.data) {
-          setPersonalityId(pResult.data.id as string)
-        }
-      }
-
-      if (!pResult.ok) {
-        throw new Error('パーソナリティ保存エラー: ' + pResult.error)
-      }
-
-      // --- 2. 用語ルール保存（全削除→全INSERT） ---
+      // --- 用語ルール保存（全削除→全INSERT） ---
       const headers = {
         'Content-Type': 'application/json',
         'apikey': anonKey,
@@ -367,20 +282,7 @@ export default function VerbalIdentityPage() {
       </div>
 
       <form id="verbal-form" onSubmit={handleSubmit} className="space-y-8">
-        {/* カード1: トーンオブボイス */}
-        <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-          <CardContent className="p-5">
-            <h2 className="text-xs font-bold mb-3">トーンオブボイス</h2>
-            <AutoResizeTextarea
-              value={personality.tone_of_voice}
-              onChange={(e) => handleChange('tone_of_voice', e.target.value)}
-              placeholder="フォーマルだが親しみやすい、専門用語は最小限に..."
-              className="min-h-[100px]"
-            />
-          </CardContent>
-        </Card>
-
-        {/* カード2: 用語ルール */}
+        {/* 用語ルール */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-5">
             <h2 className="text-xs font-bold mb-2">用語ルール</h2>
