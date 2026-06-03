@@ -4,11 +4,11 @@
 // サイドメニューはサブメニューを持たず、ページ上部のこのタブで表示を切り替える。
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Palette, MessageSquare } from 'lucide-react'
+import { Eye, MessageSquare } from 'lucide-react'
 
 const TABS = [
-  { href: '/portal/visuals', label: 'ビジュアル', icon: Palette },
-  { href: '/portal/verbal', label: 'バーバル', icon: MessageSquare },
+  { href: '/portal/visuals', label: '見え方', icon: Eye },
+  { href: '/portal/verbal', label: '聞こえ方', icon: MessageSquare },
 ]
 
 export function BrandExpressionTabs() {
