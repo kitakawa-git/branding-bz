@@ -860,30 +860,35 @@ export default function QuizDetailPage() {
           <p className="text-xs text-muted-foreground -mt-1">
             ブランドデータ（理念・戦略・用語・カラー等）を正解の根拠に、WHY / HOW の設問を生成します。WHAT（行動）は知識テストに不向きなため生成しません。
           </p>
-          <div className="flex gap-3">
-            <div className="flex-1">
-              <label className="text-sm font-medium mb-1.5 block">WHY（理念）</label>
+          <div className="space-y-2.5">
+            <div className="flex items-center gap-3">
+              <label className="text-sm font-medium flex-1">WHY（理念）</label>
               <input
                 type="number"
                 min={0}
                 max={20}
                 value={genCounts.why}
                 onChange={(e) => setGenCounts((c) => ({ ...c, why: Number(e.target.value) }))}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                className="w-20 rounded-md border border-input bg-background px-3 py-2 text-sm text-right focus:outline-none focus:ring-2 focus:ring-ring"
               />
+              <span className="text-sm text-muted-foreground shrink-0 w-5">問</span>
             </div>
-            <div className="flex-1">
-              <label className="text-sm font-medium mb-1.5 block">HOW（戦略・ルール）</label>
+            <div className="flex items-center gap-3">
+              <label className="text-sm font-medium flex-1">HOW（戦略・ルール）</label>
               <input
                 type="number"
                 min={0}
                 max={20}
                 value={genCounts.how}
                 onChange={(e) => setGenCounts((c) => ({ ...c, how: Number(e.target.value) }))}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                className="w-20 rounded-md border border-input bg-background px-3 py-2 text-sm text-right focus:outline-none focus:ring-2 focus:ring-ring"
               />
+              <span className="text-sm text-muted-foreground shrink-0 w-5">問</span>
             </div>
           </div>
+          <p className="text-xs text-muted-foreground">
+            合計 {(genCounts.why || 0) + (genCounts.how || 0)} 問を生成します（各カテゴリ最大20問。ブランドデータが不足する分は生成されません）
+          </p>
           <DialogFooter>
             <Button variant="outline" onClick={() => setGenOpen(false)}>
               キャンセル
