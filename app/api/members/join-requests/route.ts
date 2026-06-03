@@ -106,7 +106,6 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: `承認に失敗しました: ${updateError.message}` }, { status: 500 })
       }
 
-      console.log('[JoinRequests] 承認:', member.display_name, member.email)
 
       // 申請者本人へ承認完了メール通知（失敗しても承認自体は成功扱い）
       const resendApiKey = process.env.RESEND_API_KEY
@@ -137,7 +136,6 @@ export async function POST(request: NextRequest) {
               <p style="color:#999;font-size:12px;">このメールは branding.bz の参加リクエスト承認時に自動送信されています。</p>
             `,
           })
-          console.log('[JoinRequests] 承認通知メール送信:', member.email)
         } catch (emailError) {
           console.error('[JoinRequests] 承認通知メール送信エラー:', emailError)
         }
@@ -158,7 +156,6 @@ export async function POST(request: NextRequest) {
         await supabaseAdmin.auth.admin.deleteUser(member.auth_id)
       }
 
-      console.log('[JoinRequests] 拒否:', member.display_name, member.email)
       return NextResponse.json({
         success: true,
         action: 'rejected',

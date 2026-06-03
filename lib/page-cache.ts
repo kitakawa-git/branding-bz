@@ -9,7 +9,3 @@ export function getPageCache<T>(key: string): T | null {
 export function setPageCache<T>(key: string, data: T): void {
   cache.set(key, data)
 }
-
-export function clearPageCache(): void {
-  cache.clear()
-}

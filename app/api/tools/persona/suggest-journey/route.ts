@@ -39,7 +39,6 @@ function formatBusinessDescriptions(basicInfo: Record<string, unknown>): string 
 }
 
 export async function POST(request: NextRequest) {
-  console.log('[SuggestJourney] ===== API呼び出し開始 =====')
 
   try {
     const body = await request.json()
@@ -104,7 +103,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log('[SuggestJourney] ===== 提案完了 ===== stages=', parsed.stages.length)
     return NextResponse.json({ journey: parsed })
   } catch (err) {
     console.error('[SuggestJourney] エラー:', err)

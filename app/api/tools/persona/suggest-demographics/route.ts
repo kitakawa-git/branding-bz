@@ -56,7 +56,6 @@ function formatTargetSegments(basicInfo: Record<string, unknown>): string {
 }
 
 export async function POST(request: NextRequest) {
-  console.log('[SuggestDemographics] ===== API呼び出し開始 =====')
 
   try {
     const body = await request.json()
@@ -104,7 +103,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log('[SuggestDemographics] ===== 提案完了 =====')
     return NextResponse.json({ demographics: parsed })
   } catch (err) {
     console.error('[SuggestDemographics] エラー:', err)

@@ -22,7 +22,6 @@ const SYSTEM_PROMPT = `あなたはブランドマーケティングの専門家
 - 各企業の色は互いに異なるものにすること`
 
 export async function POST(request: NextRequest) {
-  console.log('[SuggestPositioning] ===== API呼び出し開始 =====')
 
   try {
     const body = await request.json()
@@ -143,7 +142,6 @@ export async function POST(request: NextRequest) {
 
     const userMessage = parts.join('\n')
 
-    console.log('[SuggestPositioning] Claude API呼び出し中...')
     const response = await callClaude({
       system: SYSTEM_PROMPT,
       userMessage,
@@ -175,7 +173,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log('[SuggestPositioning] ===== 提案完了 ===== items=', parsed.items.length)
     return NextResponse.json(parsed)
   } catch (err) {
     console.error('[SuggestPositioning] エラー:', err)

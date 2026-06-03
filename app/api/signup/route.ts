@@ -6,11 +6,9 @@ import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { generateRandomSlug } from '@/lib/generate-slug'
 
 export async function POST(request: NextRequest) {
-  console.log('[Signup] ===== API呼び出し開始 =====')
 
   try {
     // ステップ0: サービスロールキーの確認
-    console.log('[Signup] ステップ0: SUPABASE_SERVICE_ROLE_KEY確認中...')
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
     if (!serviceRoleKey || serviceRoleKey === 'ここにコピーしたキーを貼る') {
       console.error('[Signup] ステップ0失敗: SUPABASE_SERVICE_ROLE_KEY が未設定')
@@ -19,12 +17,10 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       )
     }
-    console.log('[Signup] ステップ0完了: SERVICE_ROLE_KEY設定済み')
 
     let supabaseAdmin
     try {
       supabaseAdmin = getSupabaseAdmin()
-      console.log('[Signup] supabaseAdmin クライアント作成成功')
     } catch (initErr) {
       console.error('[Signup] supabaseAdmin 初期化エラー:', initErr)
       return NextResponse.json(
@@ -34,7 +30,6 @@ export async function POST(request: NextRequest) {
     }
 
     // ステップ1: リクエストBody取得
-    console.log('[Signup] ステップ1: リクエストBody解析中...')
     const body = await request.json()
     const {
       email,
@@ -45,7 +40,6 @@ export async function POST(request: NextRequest) {
       department,
     } = body
 
-    console.log('[Signup] ステップ1: email=', email, '企業名=', companyName, '氏名=', userName)
 
     // バリデーション
     if (!email || !password || !companyName || !userName) {
@@ -64,7 +58,6 @@ export async function POST(request: NextRequest) {
     }
 
     // ステップ2: Auth user作成
-    console.log('[Signup] ステップ2: Auth user作成中... email=', email)
     const { data: authData, error: createUserError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
@@ -80,10 +73,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: msg }, { status: 400 })
     }
 
-    console.log('[Signup] ステップ2完了: Auth user作成成功 id=', authData.user.id)
 
     // ステップ3: 企業レコード作成
-    console.log('[Signup] ステップ3: 企業レコード作成中...')
     const { data: company, error: companyError } = await supabaseAdmin
       .from('companies')
       .insert({
@@ -100,7 +91,6 @@ export async function POST(request: NextRequest) {
     if (companyError) {
       console.error('[Signup] ステップ3失敗: 企業作成エラー:', companyError.message)
       // ロールバック: Auth user削除
-      console.log('[Signup] ロールバック: Auth user削除中...')
       await supabaseAdmin.auth.admin.deleteUser(authData.user.id)
       return NextResponse.json(
         { error: `企業作成エラー: ${companyError.message}` },
@@ -108,7 +98,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log('[Signup] ステップ3完了: 企業作成成功 id=', company.id)
 
     // ステップ3.5: email_domain を設定（ドメイン認証用）
     const domain = email.split('@')[1]?.toLowerCase()
@@ -118,11 +107,9 @@ export async function POST(request: NextRequest) {
         .from('companies')
         .update({ email_domain: domain })
         .eq('id', company.id)
-      console.log('[Signup] email_domain設定:', domain)
     }
 
     // ステップ4: admin_usersに紐づけ
-    console.log('[Signup] ステップ4: admin_users紐づけ中...')
     const { error: adminInsertError } = await supabaseAdmin
       .from('admin_users')
       .insert({
@@ -134,7 +121,6 @@ export async function POST(request: NextRequest) {
     if (adminInsertError) {
       console.error('[Signup] ステップ4失敗: admin_users紐づけエラー:', adminInsertError.message)
       // ロールバック: 企業 + Auth user削除
-      console.log('[Signup] ロールバック: 企業 + Auth user削除中...')
       await supabaseAdmin.from('companies').delete().eq('id', company.id)
       await supabaseAdmin.auth.admin.deleteUser(authData.user.id)
       return NextResponse.json(
@@ -143,10 +129,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log('[Signup] ステップ4完了: admin_users紐づけ成功')
 
     // ステップ5: profilesにプロフィール作成
-    console.log('[Signup] ステップ5: プロフィール作成中...')
     const slug = generateRandomSlug()
     const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
@@ -167,7 +151,6 @@ export async function POST(request: NextRequest) {
     if (profileError) {
       console.error('[Signup] ステップ5失敗: プロフィール作成エラー:', profileError.message)
       // ロールバック: admin_user + 企業 + Auth user削除
-      console.log('[Signup] ロールバック: admin_user + 企業 + Auth user削除中...')
       await supabaseAdmin.from('admin_users').delete().eq('auth_id', authData.user.id)
       await supabaseAdmin.from('companies').delete().eq('id', company.id)
       await supabaseAdmin.auth.admin.deleteUser(authData.user.id)
@@ -177,10 +160,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log('[Signup] ステップ5完了: プロフィール作成成功 slug=', slug)
 
     // ステップ6: membersに紐づけ（ポータルのアクセス権限はこのレコードで判定される）
-    console.log('[Signup] ステップ6: members紐づけ中...')
     const { error: memberInsertError } = await supabaseAdmin
       .from('members')
       .insert({
@@ -194,7 +175,6 @@ export async function POST(request: NextRequest) {
     if (memberInsertError) {
       console.error('[Signup] ステップ6失敗: members紐づけエラー:', memberInsertError.message)
       // ロールバック: profiles + admin_user + 企業 + Auth user削除
-      console.log('[Signup] ロールバック: profiles + admin_user + 企業 + Auth user削除中...')
       await supabaseAdmin.from('profiles').delete().eq('id', profile.id)
       await supabaseAdmin.from('admin_users').delete().eq('auth_id', authData.user.id)
       await supabaseAdmin.from('companies').delete().eq('id', company.id)
@@ -205,8 +185,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log('[Signup] ステップ6完了: members紐づけ成功')
-    console.log('[Signup] ===== 全ステップ完了 ===== company_id=', company.id, 'auth_id=', authData.user.id)
 
     return NextResponse.json({
       success: true,

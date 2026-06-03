@@ -77,7 +77,6 @@ async function toDataUrl(url: string): Promise<string | null> {
       if (!error && data) {
         const result = await blobToPngDataUrl(data)
         if (result) {
-          console.log('[CI Manual] Supabase download fallback succeeded:', url)
           return result
         }
       }
@@ -121,14 +120,12 @@ export async function resolveImages(
   if (tasks.length === 0) return data
 
   onProgress?.('画像を読み込み中...', 20)
-  console.log(`[CI Manual] Resolving ${tasks.length} images...`)
 
   const results = await Promise.all(tasks.map((t) => toDataUrl(t.url)))
 
   // 結果をログ
   tasks.forEach((t, i) => {
     if (results[i]) {
-      console.log(`[CI Manual] Image OK: ${t.path} (${results[i]!.substring(0, 50)}...)`)
     } else {
       console.warn(`[CI Manual] Image FAILED: ${t.path} → ${t.url}`)
     }
@@ -163,7 +160,6 @@ export async function resolveImages(
   })
 
   const successCount = results.filter(Boolean).length
-  console.log(`[CI Manual] Images resolved: ${successCount}/${tasks.length}`)
   onProgress?.('画像読み込み完了', 35)
   return resolved
 }

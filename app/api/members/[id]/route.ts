@@ -125,7 +125,6 @@ export async function DELETE(
       }
     }
 
-    console.log('[MemberDelete] 削除完了:', member.display_name, memberId)
     return NextResponse.json({ success: true })
   } catch (err) {
     console.error('[MemberDelete] エラー:', err)

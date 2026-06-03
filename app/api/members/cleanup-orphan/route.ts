@@ -99,7 +99,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log('[CleanupOrphan] 孤立 auth.users 削除完了:', email, targetAuthId)
     return NextResponse.json({ success: true, email, authId: targetAuthId })
   } catch (err) {
     console.error('[CleanupOrphan] エラー:', err)
