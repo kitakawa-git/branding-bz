@@ -1,10 +1,10 @@
 'use client'
 
 // ブランド方針 閲覧ページ（考え方｜ブランド方針）
-// 表示項目: MVV / バリュー / 提供価値 / 行動指針 / 沿革 / 事業内容
+// 表示項目: MVV / バリュー / 行動指針 / 沿革 / 事業内容
 // - MVV・バリュー・沿革・事業内容: brand_guidelines
-// - 提供価値: brand_values テーブル（旧 /portal/values を統合）＋ companies.provided_values
 // - 行動指針: brand_guidelines.action_guidelines
+// ※ 提供価値（brand_values＋companies.provided_values）は「接し方｜ブランド戦略」(/portal/strategy) へ移動
 import { useEffect, useState, type CSSProperties } from 'react'
 import { supabase } from '@/lib/supabase'
 import { fetchWithRetry } from '@/lib/supabase-fetch'
@@ -22,7 +22,6 @@ import { ConceptVisualSlideshow } from './ConceptVisualSlideshow'
 type ValueItem = { name: string; description: string; added_index?: number }
 type HistoryItem = { year: string; event: string }
 type BusinessItem = { title: string; description: string; added_index?: number }
-type ProvidedValueItem = { title: string; description: string | null }
 type ActionGuideline = { title: string; description: string }
 
 type Guidelines = {
@@ -40,7 +39,6 @@ type Guidelines = {
   business_content: BusinessItem[]
   business_content_sort: 'registered' | 'custom'
   // 統合表示分（brand_guidelines 以外のテーブル由来）
-  provided_values: ProvidedValueItem[]
   action_guidelines: ActionGuideline[]
 }
 
@@ -103,45 +101,14 @@ export default function PortalGuidelinesPage() {
           .eq('company_id', companyId)
           .single()
       ),
-      // 提供価値: brand_values テーブル（admin「提供価値」編集／旧 /portal/values）
-      fetchWithRetry(() =>
-        supabase
-          .from('brand_values')
-          .select('title, description, sort_order')
-          .eq('company_id', companyId)
-          .order('sort_order')
-      ),
-      // 提供価値: companies.provided_values（レガシー text[]）
-      fetchWithRetry(() =>
-        supabase
-          .from('companies')
-          .select('provided_values')
-          .eq('id', companyId)
-          .single()
-      ),
-    ]).then(([gRes, bvRes, cRes]) => {
+    ]).then(([gRes]) => {
       const g = gRes.data as Record<string, unknown> | null
-
-      // 提供価値の統合（brand_values → companies.provided_values の順）
-      const providedValues: ProvidedValueItem[] = []
-      if (bvRes.data && Array.isArray(bvRes.data)) {
-        for (const d of bvRes.data as Record<string, unknown>[]) {
-          const title = (d.title as string) || ''
-          if (title.trim()) providedValues.push({ title, description: (d.description as string) || null })
-        }
-      }
-      const legacyProvided = (cRes.data as { provided_values?: string[] } | null)?.provided_values
-      if (Array.isArray(legacyProvided)) {
-        for (const v of legacyProvided) {
-          if (typeof v === 'string' && v.trim()) providedValues.push({ title: v, description: null })
-        }
-      }
 
       // 行動指針（brand_guidelines.action_guidelines）
       const actionGuidelines: ActionGuideline[] = ((g?.action_guidelines as ActionGuideline[]) || []).filter(a => a && a.title)
 
-      // brand_guidelines 行が無く、提供価値・行動指針もゼロなら未登録扱い
-      if (!g && providedValues.length === 0 && actionGuidelines.length === 0) {
+      // brand_guidelines 行が無く、行動指針もゼロなら未登録扱い
+      if (!g && actionGuidelines.length === 0) {
         setLoading(false)
         return
       }
@@ -162,7 +129,6 @@ export default function PortalGuidelinesPage() {
         history: (g?.history as HistoryItem[]) || [],
         business_content: (g?.business_content as BusinessItem[]) || [],
         business_content_sort: (g?.business_content_sort as 'registered' | 'custom') || 'registered',
-        provided_values: providedValues,
         action_guidelines: actionGuidelines,
       }
       setData(parsed)
@@ -348,35 +314,7 @@ export default function PortalGuidelinesPage() {
         </section>
       )}
 
-      {/* 3. 提供価値（brand_values ＋ companies.provided_values。空なら非表示） */}
-      {data.provided_values.length > 0 && (
-        <section>
-          <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-            <CardContent className="p-5">
-              <h2 className="text-xs font-bold text-foreground mb-3 tracking-wide">提供価値</h2>
-              <div className="space-y-3">
-                {data.provided_values.map((val, i) => (
-                  <div key={i} className="rounded-lg border border-border bg-background p-4 flex items-start gap-4">
-                    <div className="shrink-0 w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center text-base font-bold">
-                      {i + 1}
-                    </div>
-                    <div className="min-w-0">
-                      <div className="text-base font-bold text-foreground mb-1" style={primaryStyle}>
-                        {val.title}
-                      </div>
-                      {val.description && (
-                        <div className="text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap" style={secondaryStyle}>
-                          {val.description}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </section>
-      )}
+      {/* 提供価値（brand_values＋companies.provided_values）は「接し方｜ブランド戦略」へ移動 */}
 
       {/* 4. 行動指針（brand_guidelines.action_guidelines。空なら非表示） */}
       {data.action_guidelines.length > 0 && (

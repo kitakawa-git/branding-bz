@@ -32,14 +32,19 @@ type Persona = {
 // 主なターゲット（管理画面で編集する companies.target_segments）
 type TargetSegment = { name: string; description: string }
 
+// 提供価値（brand_values テーブル ＋ companies.provided_values レガシー）
+type ProvidedValueItem = { title: string; description: string | null }
+
 export default function PortalStrategyPage() {
   const { companyId } = usePortalAuth()
   const brandFonts = useBrandFonts(companyId)
+  const primaryStyle = brandFonts ? { fontFamily: getCssFontFamily(brandFonts.primary_font) } : undefined
   const secondaryStyle = brandFonts ? { fontFamily: getCssFontFamily(brandFonts.secondary_font) } : undefined
 
   type StrategyCache = {
     target: string
     targetSegments: TargetSegment[]
+    providedValues: ProvidedValueItem[]
     personas: Persona[]
     positioningMapUrl: string
     positioningMapData: PositioningMapData | null
@@ -49,6 +54,7 @@ export default function PortalStrategyPage() {
 
   const [target, setTarget] = useState(cached?.target ?? '')
   const [targetSegments, setTargetSegments] = useState<TargetSegment[]>(cached?.targetSegments ?? [])
+  const [providedValues, setProvidedValues] = useState<ProvidedValueItem[]>(cached?.providedValues ?? [])
   const [personas, setPersonas] = useState<Persona[]>(cached?.personas ?? [])
   const [positioningMapUrl, setPositioningMapUrl] = useState(cached?.positioningMapUrl ?? '')
   const [positioningMapData, setPositioningMapData] = useState<PositioningMapData | null>(cached?.positioningMapData ?? null)
@@ -67,11 +73,19 @@ export default function PortalStrategyPage() {
           .eq('company_id', companyId)
           .order('sort_order')
       ),
-      // 主なターゲット（管理画面 ブランド戦略で編集する構造化リスト）
+      // 主なターゲット（companies.target_segments）＋ 提供価値レガシー（companies.provided_values）
       fetchWithRetry(() =>
-        supabase.from('companies').select('target_segments').eq('id', companyId).maybeSingle()
+        supabase.from('companies').select('target_segments, provided_values').eq('id', companyId).maybeSingle()
       ),
-    ]).then(([personasRes, companyRes]) => {
+      // 提供価値（brand_values テーブル。管理画面 ブランド戦略で編集）
+      fetchWithRetry(() =>
+        supabase
+          .from('brand_values')
+          .select('title, description, sort_order')
+          .eq('company_id', companyId)
+          .order('sort_order')
+      ),
+    ]).then(([personasRes, companyRes, bvRes]) => {
       const data = personasRes.data as Record<string, unknown>[] | null
       const companyData = companyRes.data as Record<string, unknown> | null
 
@@ -81,6 +95,22 @@ export default function PortalStrategyPage() {
         .filter(s => s && s.name)
         .map(s => ({ name: s.name || '', description: s.description || '' }))
       setTargetSegments(parsedSegments)
+
+      // 提供価値の統合（brand_values → companies.provided_values の順）
+      const parsedProvidedValues: ProvidedValueItem[] = []
+      if (bvRes.data && Array.isArray(bvRes.data)) {
+        for (const d of bvRes.data as Record<string, unknown>[]) {
+          const title = (d.title as string) || ''
+          if (title.trim()) parsedProvidedValues.push({ title, description: (d.description as string) || null })
+        }
+      }
+      const legacyProvided = (companyData?.provided_values as string[] | undefined)
+      if (Array.isArray(legacyProvided)) {
+        for (const v of legacyProvided) {
+          if (typeof v === 'string' && v.trim()) parsedProvidedValues.push({ title: v, description: null })
+        }
+      }
+      setProvidedValues(parsedProvidedValues)
 
       let parsedTarget = ''
       let parsedPersonas: Persona[] = []
@@ -108,6 +138,7 @@ export default function PortalStrategyPage() {
       setPageCache(cacheKey, {
         target: parsedTarget,
         targetSegments: parsedSegments,
+        providedValues: parsedProvidedValues,
         positioningMapUrl: parsedMapUrl,
         positioningMapData: parsedMapData,
         personas: parsedPersonas,
@@ -150,7 +181,7 @@ export default function PortalStrategyPage() {
   )
 
   const hasTarget = targetSegments.length > 0 || !!target
-  const hasContent = hasTarget || personas.some(p => p.name) || positioningMapData || positioningMapUrl
+  const hasContent = hasTarget || personas.some(p => p.name) || positioningMapData || positioningMapUrl || providedValues.length > 0
   if (!hasContent) return <div className="text-center py-16 text-muted-foreground text-[15px]">まだ登録されていません</div>
 
   const validPersonas = personas.filter(p => p.name)
@@ -278,6 +309,36 @@ export default function PortalStrategyPage() {
               </DialogContent>
             </Dialog>
           )}
+        </section>
+      )}
+
+      {/* 提供価値（brand_values ＋ companies.provided_values。空なら非表示。「考え方」から移動） */}
+      {providedValues.length > 0 && (
+        <section>
+          <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+            <CardContent className="p-5">
+              <h2 className="text-xs font-bold text-foreground mb-3 tracking-wide">提供価値</h2>
+              <div className="space-y-3">
+                {providedValues.map((val, i) => (
+                  <div key={i} className="rounded-lg border border-border bg-background p-4 flex items-start gap-4">
+                    <div className="shrink-0 w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center text-base font-bold">
+                      {i + 1}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-base font-bold text-foreground mb-1" style={primaryStyle}>
+                        {val.title}
+                      </div>
+                      {val.description && (
+                        <div className="text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap" style={secondaryStyle}>
+                          {val.description}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </section>
       )}
     </div>

@@ -36,6 +36,12 @@ type TargetSegment = {
   description: string
 }
 
+// 提供価値（brand_values テーブル。「考え方」から「接し方」へ移動・統合）
+type ProvidedValueItem = {
+  title: string
+  description: string
+}
+
 const emptyPersona = (): PersonaItem => ({
   name: '',
   age_range: '',
@@ -67,6 +73,7 @@ const DEFAULT_COLORS = [
 type StrategyCache = {
   targetOverview: string
   targetSegments: TargetSegment[]
+  providedValues: ProvidedValueItem[]
   personas: PersonaItem[]
   positioningMapData: PositioningMapData | null
   portalSubtitle: string
@@ -79,6 +86,7 @@ export default function BrandStrategyPage() {
   const cached = companyId ? getPageCache<StrategyCache>(cacheKey) : null
   const [targetOverview, setTargetOverview] = useState<string>(cached?.targetOverview ?? '')
   const [targetSegments, setTargetSegments] = useState<TargetSegment[]>(cached?.targetSegments ?? [])
+  const [providedValues, setProvidedValues] = useState<ProvidedValueItem[]>(cached?.providedValues ?? [])
   const [personas, setPersonas] = useState<PersonaItem[]>(cached?.personas ?? [])
   const [positioningMapData, setPositioningMapData] = useState<PositioningMapData | null>(cached?.positioningMapData ?? null)
   const [loading, setLoading] = useState(!cached)
@@ -97,6 +105,16 @@ export default function BrandStrategyPage() {
         supabase.from('brand_personas').select('*').eq('company_id', companyId).order('sort_order')
       )
       if (fetchErr) throw new Error(fetchErr)
+
+      // 提供価値（brand_values テーブル。「考え方」から移動・統合）
+      const { data: bvData } = await fetchWithRetry(() =>
+        supabase.from('brand_values').select('title, description, sort_order').eq('company_id', companyId).order('sort_order')
+      )
+      const parsedProvidedValues: ProvidedValueItem[] = ((bvData as Record<string, unknown>[]) || []).map((d) => ({
+        title: (d.title as string) || '',
+        description: (d.description as string) || '',
+      }))
+      setProvidedValues(parsedProvidedValues)
 
       // ポータルサブタイトル・ターゲットセグメント取得
       let fetchedSubtitlesData: PortalSubtitles | null = null
@@ -148,6 +166,7 @@ export default function BrandStrategyPage() {
         setPageCache<StrategyCache>(cacheKey, {
           targetOverview: parsedTargetOverview,
           targetSegments: companyTargetSegments,
+          providedValues: parsedProvidedValues,
           personas: parsedPersonas,
           positioningMapData: parsedMapData,
           portalSubtitle: fetchedSubtitle,
@@ -186,6 +205,21 @@ export default function BrandStrategyPage() {
 
   const removePersona = (index: number) => {
     setPersonas(personas.filter((_, i) => i !== index))
+  }
+
+  // 提供価値（brand_values）操作
+  const addProvidedValue = () => {
+    setProvidedValues([...providedValues, { title: '', description: '' }])
+  }
+
+  const updateProvidedValue = (index: number, field: 'title' | 'description', value: string) => {
+    const updated = [...providedValues]
+    updated[index] = { ...updated[index], [field]: value }
+    setProvidedValues(updated)
+  }
+
+  const removeProvidedValue = (index: number) => {
+    setProvidedValues(providedValues.filter((_, i) => i !== index))
   }
 
   // ニーズの操作
@@ -380,6 +414,34 @@ export default function BrandStrategyPage() {
         }
       }
 
+      // 提供価値（brand_values）保存: 全削除→全INSERT（旧 /admin/brand/values の保存ロジックを移植）
+      const cleanedValues = providedValues.filter(v => v.title.trim() !== '')
+      const bvDelRes = await fetch(`${supabaseUrl}/rest/v1/brand_values?company_id=eq.${companyId}`, {
+        method: 'DELETE',
+        headers,
+      })
+      if (!bvDelRes.ok) {
+        const body = await bvDelRes.text()
+        throw new Error(`提供価値の削除エラー: HTTP ${bvDelRes.status}: ${body}`)
+      }
+      if (cleanedValues.length > 0) {
+        const bvInsertData = cleanedValues.map((v, i) => ({
+          company_id: companyId,
+          title: v.title.trim(),
+          description: v.description?.trim() || null,
+          sort_order: i,
+        }))
+        const bvInsRes = await fetch(`${supabaseUrl}/rest/v1/brand_values`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(bvInsertData),
+        })
+        if (!bvInsRes.ok) {
+          const body = await bvInsRes.text()
+          throw new Error(`提供価値の挿入エラー: HTTP ${bvInsRes.status}: ${body}`)
+        }
+      }
+
       // ポータルサブタイトル + ターゲットセグメント保存（companies テーブル）
       const updatedSubtitles = { ...(portalSubtitlesData || {}) }
       if (portalSubtitle.trim()) {
@@ -399,10 +461,12 @@ export default function BrandStrategyPage() {
 
       setPersonas(cleanedPersonas)
       setTargetSegments(validSegments)
+      setProvidedValues(cleanedValues)
       // 保存内容でページキャッシュを更新（他ページ往復で消える問題の防止）
       setPageCache<StrategyCache>(cacheKey, {
         targetOverview: overviewText,
         targetSegments: validSegments,
+        providedValues: cleanedValues,
         personas: cleanedPersonas,
         positioningMapData,
         portalSubtitle: portalSubtitle.trim(),
@@ -839,6 +903,65 @@ export default function BrandStrategyPage() {
                 </Button>
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Card 3: 提供価値（brand_values。「考え方」から移動・統合） */}
+        <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+          <CardContent className="p-5">
+            <h2 className="text-xs font-bold mb-3">提供価値</h2>
+            <p className="text-xs text-muted-foreground mb-4">
+              顧客に提供する価値を設定します（ポータルの「接し方」に表示されます）
+            </p>
+
+            {providedValues.map((value, index) => (
+              <div key={index} className="border border-border rounded-lg p-4 mb-3 bg-background">
+                <div className="flex justify-between items-center mb-3">
+                  <span className="text-[13px] font-bold text-muted-foreground">
+                    提供価値 {index + 1}
+                  </span>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => removeProvidedValue(index)}
+                    className="size-9 shrink-0 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+                  >
+                    <Trash2 size={14} />
+                  </Button>
+                </div>
+
+                <div className="mb-5">
+                  <h2 className="text-xs font-bold mb-3">タイトル</h2>
+                  <Input
+                    type="text"
+                    value={value.title}
+                    onChange={(e) => updateProvidedValue(index, 'title', e.target.value)}
+                    placeholder="提供価値のタイトル"
+                    className="h-10"
+                  />
+                </div>
+
+                <div>
+                  <h2 className="text-xs font-bold mb-3">説明</h2>
+                  <AutoResizeTextarea
+                    value={value.description}
+                    onChange={(e) => updateProvidedValue(index, 'description', e.target.value)}
+                    placeholder="この提供価値の詳細説明"
+                    className="min-h-[80px]"
+                  />
+                </div>
+              </div>
+            ))}
+
+            <Button
+              type="button"
+              variant="outline"
+              onClick={addProvidedValue}
+              className="py-2 px-4 text-[13px]"
+            >
+              <Plus size={16} />提供価値を追加
+            </Button>
           </CardContent>
         </Card>
 

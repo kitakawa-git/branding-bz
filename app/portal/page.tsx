@@ -58,7 +58,7 @@ const BRAND_QUADRANTS = [
   {
     perspective: '考え方',
     noun: 'ブランド方針',
-    items: 'MVV・バリュー・提供価値・行動指針・ストーリー',
+    items: 'MVV・バリュー・行動指針・ストーリー',
     href: '/portal/guidelines',
     icon: Compass,
     tone: 'purple' as const,
@@ -82,7 +82,7 @@ const BRAND_QUADRANTS = [
   {
     perspective: '接し方',
     noun: 'ブランド戦略',
-    items: '顧客ターゲット・ペルソナ・ポジショニング',
+    items: '顧客ターゲット・ペルソナ・ポジショニング・提供価値',
     href: '/portal/strategy',
     icon: Target,
     tone: 'green' as const,
@@ -704,22 +704,24 @@ export default function PortalTopPage() {
             ))}
           </div>
         </div>
-        {/* KPIバナー（ピル型） */}
-        <Skeleton className="h-14 w-full rounded-full" />
-        {/* あなたのタイムライン分析（見出し＋統計カード3枚） */}
-        <div className="space-y-3">
-          <Skeleton className="h-4 w-40" />
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {[1, 2, 3].map((i) => (
-              <Card key={i} className="bg-[hsl(0_0%_97%)] border shadow-none">
-                <CardContent className="p-4 flex flex-col gap-2">
-                  <Skeleton className="h-4 w-20" />
-                  <Skeleton className="h-8 w-12" />
-                </CardContent>
-              </Card>
-            ))}
+        {/* KPIバナー（ピル型）— KPI機能が有効な企業のみ実描画されるためトグルで出し分け */}
+        {kpiEnabled && <Skeleton className="h-14 w-full rounded-full" />}
+        {/* あなたのタイムライン分析（見出し＋統計カード3枚）— タイムライン機能が有効な企業のみ */}
+        {timelineEnabled && (
+          <div className="space-y-3">
+            <Skeleton className="h-4 w-40" />
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {[1, 2, 3].map((i) => (
+                <Card key={i} className="bg-[hsl(0_0%_97%)] border shadow-none">
+                  <CardContent className="p-4 flex flex-col gap-2">
+                    <Skeleton className="h-4 w-20" />
+                    <Skeleton className="h-8 w-12" />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     )
   }

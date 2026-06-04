@@ -19,7 +19,8 @@
 9. [基本情報共通化](#9-基本情報共通化)
 10. [デザインシステム](#10-デザインシステム)
 11. [API一覧](#11-api一覧)
-12. [変更履歴](#12-変更履歴)
+12. [ブランドスコア](#12-ブランドスコア)
+13. [変更履歴](#13-変更履歴)
 
 ---
 
@@ -91,6 +92,8 @@ app/
 │   ├── values/           # ブランドバリュー
 │   ├── terms/            # ブランド用語
 │   ├── card-preview/     # 名刺プレビュー
+│   ├── quiz/[id]/        # 理解度テスト受験
+│   │   └── result/       # 本人結果（スコア・解説＝学習）
 │   └── announcements/    # お知らせ
 ├── admin/                # 管理画面（認証必須）
 │   ├── login/
@@ -102,6 +105,11 @@ app/
 │   ├── announcements/    # お知らせ管理（CRUD）
 │   ├── analytics/        # 名刺閲覧解析
 │   ├── ci-manual/        # CIマニュアルPDF出力
+│   ├── brand-score/      # ブランドスコア（インナー/アウター統合・ギャップ分析）
+│   │   └── quizzes/      # 理解度テスト（一覧・作成）
+│   │       └── [id]/             # 設問エディタ・配信
+│   │           ├── results/      # k匿名集計
+│   │           └── participants/ # 受験状況
 │   └── brand/
 │       ├── guidelines/   # ブランド方針
 │       ├── strategy/     # ブランド戦略
@@ -243,11 +251,23 @@ app/
 | company_id | uuid (FK) | |
 | color_palette | jsonb | `{brand_colors[], secondary_colors[], accent_colors[], utility_colors[]}` |
 
+### ブランド理解度テスト（4テーブル）
+
+サーベイの匿名回答テーブルとは混ぜず、専用4テーブルで分離（記名式＝`profile_id` を持つため）。
+
+| テーブル | 主なカラム |
+|---|---|
+| `brand_quizzes` | company_id / title / status(draft/active/closed/archived) / starts_at / ends_at / total_members / pass_threshold(既定80) / randomize_questions |
+| `brand_quiz_questions` | quiz_id / category(why/how) / question_text / question_type(single_choice/true_false) / options(jsonb) / correct_option_id / explanation / source(template/ai_generated/custom) / sort_order / is_active |
+| `brand_quiz_attempts` | quiz_id / **profile_id（記名）** / company_id / department / role_category / score / why_score / how_score / passed / total_questions / correct_count / **unique(quiz_id, profile_id)** |
+| `brand_quiz_answers` | attempt_id / question_id / selected_option_id / is_correct |
+
 ### マイグレーション
 
 | ファイル | 内容 |
 |---------|------|
 | `supabase/migrations/20260307010338_add_target_segments_to_companies.sql` | `target_segments JSONB DEFAULT '[]'` を `companies` に追加 |
+| `supabase/migrations/20260603000000_create_brand_quiz_tables.sql` | ブランド理解度テスト4テーブル（quizzes/questions/attempts/answers）新設。本番適用済み・RLS `auth_all` |
 
 ---
 
@@ -282,6 +302,7 @@ app/
 | KPIトラッキング | `/portal/kpi` | 完了 |
 | プロフィール編集 | `/portal/profile` | 完了 |
 | 名刺プレビュー | `/portal/card-preview` | 完了 |
+| 理解度テスト受験＋本人結果 | `/portal/quiz/[id]` | 完了 |
 | お知らせ | `/portal/announcements` | 完了 |
 
 ### 管理画面
@@ -302,6 +323,7 @@ app/
 | バリュー | `/admin/brand/values` | 完了 |
 | 用語 | `/admin/brand/terms` | 完了 |
 | CIマニュアルPDF出力 | `/admin/ci-manual` | 完了 |
+| 理解度テスト（作成・AI設問生成・配信・k匿名集計・受験状況） | `/admin/brand-score/quizzes` | 完了 |
 
 ### スーパー管理画面
 
@@ -799,10 +821,42 @@ CLAUDE.md の「デザインシステム（公開ページ共通）」セクシ�
 | `/api/tools/stp/export/pdf` | POST | STP分析PDF生成 |
 | `/api/tools/stp/connect` | POST | 本体連携（`brand_personas` 更新、セッション完了マーク） |
 
+### ブランドスコア — 理解度テスト
+
+| エンドポイント | メソッド | 説明 |
+|---|---|---|
+| `/api/brand-score/quizzes` | GET/POST | クイズ一覧・作成 |
+| `/api/brand-score/quizzes/[id]` | GET/PATCH/DELETE | 取得・更新（配信/ステータス）・削除 |
+| `/api/brand-score/quizzes/[id]/questions` | GET/POST | 設問一覧・追加 |
+| `/api/brand-score/quizzes/[id]/questions/[questionId]` | PATCH/DELETE | 設問編集・削除 |
+| `/api/brand-score/quizzes/[id]/generate-questions` | POST | Claude API: AI設問生成 |
+| `/api/brand-score/quizzes/[id]/attempt` | POST | 受験（記名・採点・保存） |
+| `/api/brand-score/quizzes/[id]/my-attempt` | GET | 本人結果（スコア・解説・全社平均） |
+| `/api/brand-score/quizzes/[id]/results` | GET | 管理者集計（k匿名） |
+| `/api/brand-score/quizzes/[id]/participants` | GET | 受験状況（スコアなし） |
+| `/api/brand-score/quizzes/[id]/take` | GET | 受験用設問（正解・解説を除外） |
+| `/api/brand-score/quizzes/pending` | GET | 未受験 active クイズ（バナー用） |
+| `/api/brand-score/knowledge-gap` | GET | 共感×知識 ギャップ分析 |
+
 ---
 
-## 12. 変更履歴
+## 12. ブランドスコア
+
+#### ブランド理解度テスト（インナー：知識）
+
+サーベイ（共感）・アウター（行動）に加え、**社員の"知識"を正誤問題で測る記名式テスト**。サーベイが自己申告（リッカート）なのに対し、テストは正解のある設問で「実際に知っているか」を測る。**サーベイ＝共感／テスト＝知識／アウター＝体現**の3計測器でブランド浸透を立体化する。Premium専用。
+
+- **設問生成**: Claude API が自社ブランドデータ（companies / brand_guidelines / brand_visuals / brand_personas / brand_personalities / brand_terms）を**正解キー**に、4択・◯×設問を生成（`generate-questions`）。WHY（理念の中身）・HOW（戦略/ルール/カラー/用語）が対象。WHAT（行動）はテスト不向きのため対象外。生成は draft 保存→管理者レビュー→配信。
+- **採点**: 単純正答率。`score = correct/total × 100`、カテゴリ別 `why_score`/`how_score`、`passed = score >= pass_threshold`。
+- **記名式＋k匿名**: 受験は `profile_id` を保存（本人はスコア・弱点・解説を学習）。管理者は**集計のみ**閲覧（部署/役職/設問別は n≥3、`overall`・`company_average_score` も n<3 で抑制）。集計APIに個人行を載せない／受験状況APIにスコアを載せない、で `個人→スコア` のマッピングを遮断。本人確認はセッション（`getMemberContext`/`getAdminContext`）、クライアント `profileId` は不使用。
+- **正解リーク防止**: 受験用 `take` は `correct_option_id`・`explanation` を返さない（提出前に正解が見えない）。
+- **ギャップ分析**: 共感（サーベイ WHY/HOW）vs 知識（テスト WHY/HOW）を対比し、`empathy_leads`（共感先行→周知・教育）/`knowledge_leads`（知識先行→共感醸成）/`balanced_high`（浸透）/`balanced_low`（未浸透）を判定。「好きだけど知らない／知ってるけど冷めてる」を可視化。
+
+---
+
+## 13. 変更履歴
 
 | 日付 | バージョン | 変更内容 |
 |------|-----------|---------|
+| 2026-06-04 | v1.1.0 | **ブランド理解度テスト（インナー：知識）追加。** 記名式クイズで社員の知識を測定。DB4テーブル（brand_quizzes/questions/attempts/answers）、API12本、管理UI（作成・AI設問生成レビュー・配信・k匿名集計・受験状況）、ポータルUI（バナー・受験・本人結果＝学習振り返り）、ダッシュボード統合（理解度カード＋共感×知識ギャップ分析）。採点=単純正答率、k匿名 n≥3（overall/company_average も n<3 抑制）、本人確認はセッション、take は正解・解説を除外。 |
 | 2026-03-09 | v0.8.0 | **STP Step3 ターゲティング大改修:** 競合分析を構造化データ（`competitors_analysis: [{name, traits}]`）に変更。Step1の競合企業から自動カード生成。AI提案を手動ボタン式に変更（確認ダイアログ付き）。「ターゲットの詳細定義」フィールドを廃止（Step2セグメント説明を自動採用）。購買決定要因・自社の強みを必須バリデーション化。 **suggest-target-detail API新設:** 購買決定要因・自社の強み・競合ごとの個別分析を提案。動的スキーマ（競合名を事前指定）。 **suggest-positioning API改修:** 構造化された競合分析データを活用したポジショニング軸提案。 **UI統一:** ラベル統一（競合企業→競合企業・サービス）、削除ボタンスタイル統一（`variant="outline" size="icon"` + destructive系）、ツール画面デザインガイドライン策定。 **Step5/PDF更新:** メインターゲットカード内にセグメント説明を統合表示。 **基本情報共通化:** companies.target_segments カラム追加、shared-profile APIによるツール↔本体の双方向データ同期、競合データREPLACEマージ方式。 **その他:** CIマニュアルPDF出力機能、公開ページのグラスモーフィズムデザインシステム適用。feature-requirements.md を最新状態に全面更新。 |
