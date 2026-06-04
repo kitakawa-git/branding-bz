@@ -122,6 +122,13 @@ function fromLocalInput(local: string): string | null {
   if (!local) return null
   return new Date(local).toISOString()
 }
+// 生成数の入力を 0〜20 にクランプ（サーバー側 normalizeCount と一致させ、
+// 「合計N問」表示と実際の生成数が食い違わないようにする）
+function clampCount(raw: string): number {
+  const n = Math.floor(Number(raw))
+  if (!Number.isFinite(n) || n < 0) return 0
+  return Math.min(n, 20)
+}
 
 // ── 設問の追加・編集ダイアログ ──
 type FormState = {
@@ -868,7 +875,7 @@ export default function QuizDetailPage() {
                 min={0}
                 max={20}
                 value={genCounts.why}
-                onChange={(e) => setGenCounts((c) => ({ ...c, why: Number(e.target.value) }))}
+                onChange={(e) => setGenCounts((c) => ({ ...c, why: clampCount(e.target.value) }))}
                 className="w-20 rounded-md border border-input bg-background px-3 py-2 text-sm text-right focus:outline-none focus:ring-2 focus:ring-ring"
               />
               <span className="text-sm text-muted-foreground shrink-0 w-5">問</span>
@@ -880,7 +887,7 @@ export default function QuizDetailPage() {
                 min={0}
                 max={20}
                 value={genCounts.how}
-                onChange={(e) => setGenCounts((c) => ({ ...c, how: Number(e.target.value) }))}
+                onChange={(e) => setGenCounts((c) => ({ ...c, how: clampCount(e.target.value) }))}
                 className="w-20 rounded-md border border-input bg-background px-3 py-2 text-sm text-right focus:outline-none focus:ring-2 focus:ring-ring"
               />
               <span className="text-sm text-muted-foreground shrink-0 w-5">問</span>

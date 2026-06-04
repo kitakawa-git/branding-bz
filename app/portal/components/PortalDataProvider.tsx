@@ -3,7 +3,7 @@
 // ポータルのアプリ固有データ Provider
 // セッション管理は AppAuthProvider に任せ、members / companies / brand_guidelines / admin_users を取得。
 // 戻り値は旧 usePortalAuth() と互換性を保つ。
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import type { User } from '@supabase/supabase-js'
 import type { PortalSubtitles } from '@/lib/portal-subtitles'
@@ -72,6 +72,18 @@ export function PortalDataProvider({ children }: { children: React.ReactNode }) 
     if (authLoading) return
 
     if (!user) {
+      // ログアウト時に前ユーザー・前企業のデータがコンテキストへ残らないようリセット
+      setCompanyId(null)
+      setCompanyName(null)
+      setCompanyLogoUrl(null)
+      setCompany(null)
+      setPortalSubtitles(null)
+      setSlogan(null)
+      setMember(null)
+      setProfileName(null)
+      setProfilePhotoUrl(null)
+      setProfileSlug(null)
+      setIsAdmin(false)
       setLoading(false)
       if (!isPublicPath) {
         router.replace('/portal/auth')
@@ -83,8 +95,16 @@ export function PortalDataProvider({ children }: { children: React.ReactNode }) 
 
     ;(async () => {
       setLoading(true)
-      // 企業を跨いだ再取得で前企業の値が残らないよう、企業依存の表示値をリセット
+      // 別ユーザー・別企業への切替で前の値が残らないよう、企業/プロフィール依存の表示値をリセット
+      setCompany(null)
+      setCompanyName(null)
+      setCompanyLogoUrl(null)
+      setPortalSubtitles(null)
       setSlogan(null)
+      setProfileName(null)
+      setProfilePhotoUrl(null)
+      setProfileSlug(null)
+      setIsAdmin(false)
       try {
         // member 取得と admin_users 取得を並列化
         const [memberRes, adminRes] = await Promise.all([
@@ -166,24 +186,48 @@ export function PortalDataProvider({ children }: { children: React.ReactNode }) 
     return () => {
       cancelled = true
     }
-  }, [user, authLoading, router, isPublicPath])
+    // user はオブジェクト参照ではなく id で依存。
+    // トークンリフレッシュ／タブ復帰で user オブジェクトが差し替わっても、
+    // 同一ユーザーなら再取得（＝「読み込み中」のちらつき＋無駄なDBアクセス）を起こさない。
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, authLoading, router, isPublicPath])
 
-  const contextValue: PortalDataContextValue = {
-    user,
-    companyId,
-    companyName,
-    companyLogoUrl,
-    company,
-    portalSubtitles,
-    slogan,
-    member,
-    profileName,
-    profilePhotoUrl,
-    profileSlug,
-    isAdmin,
-    loading: authLoading || loading,
-    signOut,
-  }
+  // context value をメモ化（毎レンダーで新オブジェクトを作らない）
+  const contextValue: PortalDataContextValue = useMemo(
+    () => ({
+      user,
+      companyId,
+      companyName,
+      companyLogoUrl,
+      company,
+      portalSubtitles,
+      slogan,
+      member,
+      profileName,
+      profilePhotoUrl,
+      profileSlug,
+      isAdmin,
+      loading: authLoading || loading,
+      signOut,
+    }),
+    [
+      user,
+      companyId,
+      companyName,
+      companyLogoUrl,
+      company,
+      portalSubtitles,
+      slogan,
+      member,
+      profileName,
+      profilePhotoUrl,
+      profileSlug,
+      isAdmin,
+      authLoading,
+      loading,
+      signOut,
+    ]
+  )
 
   // 公開パスではそのまま表示
   if (isPublicPath) {

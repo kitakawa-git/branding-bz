@@ -754,9 +754,12 @@ export default function PortalTimelinePage() {
   if (loading) {
     return (
       <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
-        {/* カテゴリフィルタ＋検索（投稿はFAB＋モーダルのためフォームは出さない） */}
+        {/* カテゴリフィルタ＋検索（投稿はFAB＋モーダルのためフォームは出さない）
+            カテゴリピルは実画面と同じく categories.length > 1 のときだけ出す
+            （既定の単一カテゴリではピルが無いため、ロード時のちらつきを防ぐ） */}
         <div className="flex items-center gap-2 flex-wrap">
-          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-8 w-16 rounded-full" />)}
+          {categories.length > 1 &&
+            [1, 2, 3, 4].map(i => <Skeleton key={i} className="h-8 w-16 rounded-full" />)}
           <Skeleton className="h-9 w-48 ml-auto rounded-md" />
         </div>
         <div className="space-y-4">

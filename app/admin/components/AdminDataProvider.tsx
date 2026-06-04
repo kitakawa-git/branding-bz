@@ -3,7 +3,7 @@
 // 管理画面のアプリ固有データ Provider
 // セッション管理は AppAuthProvider に任せ、ここでは admin_users / members / companies の取得に専念。
 // 戻り値は旧 useAuth() と互換性を保つ（既存ページのコード変更を最小化）。
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import type { User } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
@@ -70,6 +70,16 @@ export function AdminDataProvider({
 
     // 未ログイン → /admin/login へ
     if (!user) {
+      // ログアウト時に前ユーザーのデータがコンテキストへ残らないようリセット
+      setCompanyId(null)
+      setCompanyName(null)
+      setCompanyLogoUrl(null)
+      setCompany(null)
+      setRole(null)
+      setIsSuperAdmin(false)
+      setProfileName(null)
+      setProfilePhotoUrl(null)
+      setAdminError(false)
       setLoading(false)
       if (!isLoginPage) {
         router.replace('/admin/login')
@@ -81,6 +91,16 @@ export function AdminDataProvider({
 
     ;(async () => {
       setLoading(true)
+      // 別ユーザーへ切り替わった際に前ユーザーの企業/プロフィール/権限が残らないようリセット
+      setCompanyId(null)
+      setCompanyName(null)
+      setCompanyLogoUrl(null)
+      setCompany(null)
+      setRole(null)
+      setIsSuperAdmin(false)
+      setProfileName(null)
+      setProfilePhotoUrl(null)
+      setAdminError(false)
       try {
         // admin_users と members(+profile) を並列取得
         const [adminRes, memberRes] = await Promise.all([
@@ -151,27 +171,47 @@ export function AdminDataProvider({
     return () => {
       cancelled = true
     }
-  }, [user, authLoading, router, isLoginPage])
+    // user はオブジェクト参照ではなく id で依存（トークンリフレッシュ／タブ復帰での不要な再取得を防止）
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, authLoading, router, isLoginPage])
 
-  // 機能トグル更新後に画面へ即時反映するための setter
-  const updateCompany = (partial: CompanyRecord) => {
+  // 機能トグル更新後に画面へ即時反映するための setter（参照を安定させる）
+  const updateCompany = useCallback((partial: CompanyRecord) => {
     setCompany((prev) => ({ ...(prev ?? {}), ...partial }))
-  }
+  }, [])
 
-  const contextValue: AdminDataContextValue = {
-    user,
-    companyId,
-    companyName,
-    companyLogoUrl,
-    company,
-    role,
-    isSuperAdmin,
-    profileName,
-    profilePhotoUrl,
-    loading: authLoading || loading,
-    signOut,
-    updateCompany,
-  }
+  // context value をメモ化（毎レンダーで新オブジェクトを作らない）
+  const contextValue: AdminDataContextValue = useMemo(
+    () => ({
+      user,
+      companyId,
+      companyName,
+      companyLogoUrl,
+      company,
+      role,
+      isSuperAdmin,
+      profileName,
+      profilePhotoUrl,
+      loading: authLoading || loading,
+      signOut,
+      updateCompany,
+    }),
+    [
+      user,
+      companyId,
+      companyName,
+      companyLogoUrl,
+      company,
+      role,
+      isSuperAdmin,
+      profileName,
+      profilePhotoUrl,
+      authLoading,
+      loading,
+      signOut,
+      updateCompany,
+    ]
+  )
 
   // ログインページではそのまま表示（サイドバー・ヘッダーなし）
   if (isLoginPage) {

@@ -123,10 +123,9 @@ export async function resolveImages(
 
   const results = await Promise.all(tasks.map((t) => toDataUrl(t.url)))
 
-  // 結果をログ
+  // 変換に失敗した画像を警告ログに出す
   tasks.forEach((t, i) => {
-    if (results[i]) {
-    } else {
+    if (!results[i]) {
       console.warn(`[CI Manual] Image FAILED: ${t.path} → ${t.url}`)
     }
   })
