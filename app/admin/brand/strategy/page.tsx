@@ -17,9 +17,11 @@ import { type PortalSubtitles } from '@/lib/portal-subtitles'
 import { Label } from '@/components/ui/label'
 import { Slider } from '@/components/ui/slider'
 import { PositioningMap } from '@/components/PositioningMap'
-import { Plus, Trash2, Check } from 'lucide-react'
+import { Plus, Trash2, Check, WandSparkles, Loader2 } from 'lucide-react'
 import { Fab, FabButton } from '@/components/ui/fab'
 import { TitleDescriptionList } from '@/components/shared/TitleDescriptionList'
+import { TargetSuggestDialog, type TargetSuggestion } from '@/components/brand/TargetSuggestDialog'
+import { TARGET_SUGGEST_MONTHLY_LIMIT } from '@/lib/constants/ai-limits'
 import type { PositioningMapData, PositioningMapItem, PositioningMapSize } from '@/lib/types/positioning-map'
 
 type PersonaItem = {
@@ -36,7 +38,7 @@ type TargetSegment = {
   description: string
 }
 
-// 提供価値（brand_values テーブル。「考え方」から「接し方」へ移動・統合）
+// 提供価値（value_propositions テーブル。「考え方」から「接し方」へ移動・統合）
 type ProvidedValueItem = {
   title: string
   description: string
@@ -95,6 +97,13 @@ export default function BrandStrategyPage() {
   const [portalSubtitle, setPortalSubtitle] = useState(cached?.portalSubtitle ?? '')
   const [portalSubtitlesData, setPortalSubtitlesData] = useState<PortalSubtitles | null>(cached?.portalSubtitlesData ?? null)
 
+  // AIターゲット提案
+  const [targetSuggesting, setTargetSuggesting] = useState(false)
+  const [targetRemaining, setTargetRemaining] = useState<number | null>(null)
+  const [targetResetsAt, setTargetResetsAt] = useState<string | null>(null)
+  const [targetSuggestOpen, setTargetSuggestOpen] = useState(false)
+  const [targetSuggestions, setTargetSuggestions] = useState<TargetSuggestion[]>([])
+
   const fetchData = async () => {
     if (!companyId) return
     setLoading(true)
@@ -106,9 +115,9 @@ export default function BrandStrategyPage() {
       )
       if (fetchErr) throw new Error(fetchErr)
 
-      // 提供価値（brand_values テーブル。「考え方」から移動・統合）
+      // 提供価値（value_propositions テーブル。「考え方」から移動・統合）
       const { data: bvData } = await fetchWithRetry(() =>
-        supabase.from('brand_values').select('title, description, sort_order').eq('company_id', companyId).order('sort_order')
+        supabase.from('value_propositions').select('title, description, sort_order').eq('company_id', companyId).order('sort_order')
       )
       const parsedProvidedValues: ProvidedValueItem[] = ((bvData as Record<string, unknown>[]) || []).map((d) => ({
         title: (d.title as string) || '',
@@ -191,6 +200,95 @@ export default function BrandStrategyPage() {
     fetchData()
   }, [companyId, cacheKey])
 
+  // AIターゲット提案の今月残り回数を取得（初期表示用）
+  useEffect(() => {
+    if (!companyId) return
+    let cancelled = false
+    fetch('/api/admin/targets/suggest')
+      .then(res => (res.ok ? res.json() : null))
+      .then(data => {
+        if (cancelled || !data) return
+        if (typeof data.remaining === 'number') setTargetRemaining(data.remaining)
+        if (data.resetsAt) setTargetResetsAt(data.resetsAt)
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [companyId])
+
+  // ISO日時（翌月1日00:00 JST）を「○月○日」表記に
+  const formatResetDate = (iso: string | null): string => {
+    if (!iso) return ''
+    const jst = new Date(new Date(iso).getTime() + 9 * 60 * 60 * 1000)
+    return `${jst.getUTCMonth() + 1}月${jst.getUTCDate()}日`
+  }
+
+  // AIでターゲットを提案
+  const handleSuggestTargets = async () => {
+    if (targetSuggesting) return
+    if (targetRemaining !== null && targetRemaining <= 0) {
+      toast.error('今月の利用上限に達しました')
+      return
+    }
+    setTargetSuggesting(true)
+    try {
+      const res = await fetch('/api/admin/targets/suggest', { method: 'POST' })
+      const data = await res.json().catch(() => ({}))
+
+      if (res.status === 429) {
+        setTargetRemaining(0)
+        if (data.resetsAt) setTargetResetsAt(data.resetsAt)
+        toast.error('今月の利用上限に達しました')
+        return
+      }
+      if (!res.ok) {
+        toast.error('ターゲットの提案に失敗しました。時間をおいて再度お試しください')
+        return
+      }
+
+      if (typeof data.remaining === 'number') setTargetRemaining(data.remaining)
+      if (data.resetsAt) setTargetResetsAt(data.resetsAt)
+
+      const list: TargetSuggestion[] = Array.isArray(data.suggestions) ? data.suggestions : []
+      if (list.length === 0) {
+        toast.info('新たなターゲット候補は見つかりませんでした')
+        return
+      }
+      setTargetSuggestions(list)
+      setTargetSuggestOpen(true)
+    } catch (err) {
+      console.error('[BrandStrategy] AIターゲット提案エラー:', err)
+      toast.error('ターゲットの提案に失敗しました。時間をおいて再度お試しください')
+    } finally {
+      setTargetSuggesting(false)
+    }
+  }
+
+  // 選択した候補を target_segments に APPEND（名前重複はスキップ）
+  const addSelectedTargets = (selected: TargetSuggestion[]) => {
+    const existingNames = new Set(targetSegments.map(t => t.name.trim().toLowerCase()).filter(Boolean))
+    const toAdd: TargetSegment[] = []
+    let skipped = 0
+    selected.forEach(s => {
+      const n = s.name.trim().toLowerCase()
+      if (!s.name.trim() || existingNames.has(n)) {
+        skipped++
+        return
+      }
+      existingNames.add(n)
+      toAdd.push({ name: s.name.trim(), description: s.description?.trim() || '' })
+    })
+    if (toAdd.length > 0) setTargetSegments([...targetSegments, ...toAdd])
+    setTargetSuggestOpen(false)
+    const parts: string[] = []
+    if (toAdd.length > 0) parts.push(`${toAdd.length}件を追加しました`)
+    if (skipped > 0) parts.push(`重複${skipped}件をスキップ`)
+    const msg = parts.length > 0 ? parts.join('・') : '追加対象がありませんでした'
+    if (toAdd.length > 0) toast.success(`${msg}（「保存」で確定します）`)
+    else toast.info(msg)
+  }
+
   // ペルソナ操作
   const addPersona = () => {
     if (personas.length >= 5) return
@@ -207,7 +305,7 @@ export default function BrandStrategyPage() {
     setPersonas(personas.filter((_, i) => i !== index))
   }
 
-  // 提供価値（brand_values）操作
+  // 提供価値（value_propositions）操作
   const addProvidedValue = () => {
     setProvidedValues([...providedValues, { title: '', description: '' }])
   }
@@ -414,9 +512,9 @@ export default function BrandStrategyPage() {
         }
       }
 
-      // 提供価値（brand_values）保存: 全削除→全INSERT（旧 /admin/brand/values の保存ロジックを移植）
+      // 提供価値（value_propositions）保存: 全削除→全INSERT（旧 /admin/brand/values の保存ロジックを移植）
       const cleanedValues = providedValues.filter(v => v.title.trim() !== '')
-      const bvDelRes = await fetch(`${supabaseUrl}/rest/v1/brand_values?company_id=eq.${companyId}`, {
+      const bvDelRes = await fetch(`${supabaseUrl}/rest/v1/value_propositions?company_id=eq.${companyId}`, {
         method: 'DELETE',
         headers,
       })
@@ -431,7 +529,7 @@ export default function BrandStrategyPage() {
           description: v.description?.trim() || null,
           sort_order: i,
         }))
-        const bvInsRes = await fetch(`${supabaseUrl}/rest/v1/brand_values`, {
+        const bvInsRes = await fetch(`${supabaseUrl}/rest/v1/value_propositions`, {
           method: 'POST',
           headers,
           body: JSON.stringify(bvInsertData),
@@ -545,16 +643,46 @@ export default function BrandStrategyPage() {
               />
             </div>
 
-            <TitleDescriptionList
-              label="主なターゲット"
-              items={targetSegments.map(ts => ({ title: ts.name, description: ts.description }))}
-              onChange={(newItems) => {
-                setTargetSegments(newItems.map(item => ({ name: item.title, description: item.description })))
-              }}
-              addButtonLabel="ターゲットを追加"
-              titlePlaceholder="セグメント名（例: 中小企業の経営者）"
-              descriptionPlaceholder="セグメントの説明"
-            />
+            <div>
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-sm font-bold text-gray-700">主なターゲット</span>
+                  <span className="text-xs text-gray-400">（任意）</span>
+                </div>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleSuggestTargets}
+                  disabled={targetSuggesting || targetRemaining === 0}
+                  className="text-sm"
+                >
+                  {targetSuggesting ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <WandSparkles size={14} />
+                  )}
+                  {targetSuggesting ? 'AI提案中...' : 'AIで提案'}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mb-2">
+                {targetRemaining === 0
+                  ? `AI提案は今月の利用上限に達しました（${formatResetDate(targetResetsAt)}にリセット）`
+                  : targetRemaining !== null
+                    ? `AIによる提案は月${TARGET_SUGGEST_MONTHLY_LIMIT}回まで・今月あと ${targetRemaining} 回`
+                    : `AIによる提案は月${TARGET_SUGGEST_MONTHLY_LIMIT}回まで`}
+              </p>
+              <TitleDescriptionList
+                label=""
+                items={targetSegments.map(ts => ({ title: ts.name, description: ts.description }))}
+                onChange={(newItems) => {
+                  setTargetSegments(newItems.map(item => ({ name: item.title, description: item.description })))
+                }}
+                addButtonLabel="ターゲットを追加"
+                titlePlaceholder="セグメント名（例: 中小企業の経営者）"
+                descriptionPlaceholder="セグメントの説明"
+              />
+            </div>
 
             <div>
               <h2 className="text-xs font-bold mb-3">ペルソナ</h2>
@@ -906,7 +1034,7 @@ export default function BrandStrategyPage() {
           </CardContent>
         </Card>
 
-        {/* Card 3: 提供価値（brand_values。「考え方」から移動・統合） */}
+        {/* Card 3: 提供価値（value_propositions。「考え方」から移動・統合） */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-5">
             <h2 className="text-xs font-bold mb-3">提供価値</h2>
@@ -977,6 +1105,14 @@ export default function BrandStrategyPage() {
           {saving ? '保存中...' : '保存'}
         </FabButton>
       </Fab>
+
+      {/* AIターゲット提案の候補選択ダイアログ */}
+      <TargetSuggestDialog
+        open={targetSuggestOpen}
+        onOpenChange={setTargetSuggestOpen}
+        suggestions={targetSuggestions}
+        onConfirm={addSelectedTargets}
+      />
     </div>
   )
 }

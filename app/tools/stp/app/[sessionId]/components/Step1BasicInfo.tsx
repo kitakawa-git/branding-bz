@@ -28,7 +28,8 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from '@/components/ui/alert-dialog'
-import { COMPETITOR_SUGGEST_MONTHLY_LIMIT } from '@/lib/constants/ai-limits'
+import { COMPETITOR_SUGGEST_MONTHLY_LIMIT, TARGET_SUGGEST_MONTHLY_LIMIT } from '@/lib/constants/ai-limits'
+import { TargetSuggestDialog, type TargetSuggestion } from '@/components/brand/TargetSuggestDialog'
 
 interface Competitor {
   name: string
@@ -169,6 +170,13 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
   // 削除確認ダイアログ対象の競合インデックス（null=非表示）
   const [competitorToDelete, setCompetitorToDelete] = useState<number | null>(null)
 
+  // AIターゲット提案
+  const [targetSuggesting, setTargetSuggesting] = useState(false)
+  const [targetRemaining, setTargetRemaining] = useState<number | null>(null)
+  const [targetResetsAt, setTargetResetsAt] = useState<string | null>(null)
+  const [targetSuggestOpen, setTargetSuggestOpen] = useState(false)
+  const [targetSuggestions, setTargetSuggestions] = useState<TargetSuggestion[]>([])
+
   // デバウンス用タイマー
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const userIdRef = useRef<string | null>(null)
@@ -265,6 +273,22 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
       .catch(() => {
         /* 残り回数の取得失敗は致命的でないため握りつぶす */
       })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  // AIターゲット提案の今月残り回数を取得（初期表示用）
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/tools/stp/suggest-targets')
+      .then(res => (res.ok ? res.json() : null))
+      .then(data => {
+        if (cancelled || !data) return
+        if (typeof data.remaining === 'number') setTargetRemaining(data.remaining)
+        if (data.resetsAt) setTargetResetsAt(data.resetsAt)
+      })
+      .catch(() => {})
     return () => {
       cancelled = true
     }
@@ -503,6 +527,82 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
     else toast.info(msg)
   }
 
+  // AIでターゲットを提案
+  const handleSuggestTargets = async () => {
+    if (targetSuggesting) return
+    if (targetRemaining !== null && targetRemaining <= 0) {
+      toast.error('今月の利用上限に達しました')
+      return
+    }
+    setTargetSuggesting(true)
+    try {
+      const res = await fetch('/api/tools/stp/suggest-targets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ basic_info: getCurrentData() }),
+      })
+      const data = await res.json().catch(() => ({}))
+
+      if (res.status === 429) {
+        setTargetRemaining(0)
+        if (data.resetsAt) setTargetResetsAt(data.resetsAt)
+        toast.error('今月の利用上限に達しました')
+        return
+      }
+      if (!res.ok) {
+        toast.error('ターゲットの提案に失敗しました。時間をおいて再度お試しください')
+        return
+      }
+
+      if (typeof data.remaining === 'number') setTargetRemaining(data.remaining)
+      if (data.resetsAt) setTargetResetsAt(data.resetsAt)
+
+      const list: TargetSuggestion[] = Array.isArray(data.suggestions) ? data.suggestions : []
+      if (list.length === 0) {
+        toast.info('新たなターゲット候補は見つかりませんでした')
+        return
+      }
+      setTargetSuggestions(list)
+      setTargetSuggestOpen(true)
+    } catch (err) {
+      console.error('[STP] AIターゲット提案エラー:', err)
+      toast.error('ターゲットの提案に失敗しました。時間をおいて再度お試しください')
+    } finally {
+      setTargetSuggesting(false)
+    }
+  }
+
+  // 選択した候補を target_segments に APPEND（名前重複はスキップ・最大10件）
+  const TARGET_MAX = 10
+  const addSelectedTargets = (selected: TargetSuggestion[]) => {
+    const existingNames = new Set(targetSegments.map(t => normName(t.name)).filter(Boolean))
+    const toAdd: TargetSegment[] = []
+    let skipped = 0
+    let capped = 0
+    selected.forEach(s => {
+      const n = normName(s.name)
+      if (!s.name.trim() || existingNames.has(n)) {
+        skipped++
+        return
+      }
+      if (targetSegments.length + toAdd.length >= TARGET_MAX) {
+        capped++
+        return
+      }
+      existingNames.add(n)
+      toAdd.push({ name: s.name.trim(), description: s.description?.trim() || '' })
+    })
+    if (toAdd.length > 0) setTargetSegments([...targetSegments, ...toAdd]) // オートセーブが走る
+    setTargetSuggestOpen(false)
+    const parts: string[] = []
+    if (toAdd.length > 0) parts.push(`${toAdd.length}件を追加しました`)
+    if (skipped > 0) parts.push(`重複${skipped}件をスキップ`)
+    if (capped > 0) parts.push(`上限(${TARGET_MAX}件)超過${capped}件をスキップ`)
+    const msg = parts.length > 0 ? parts.join('・') : '追加対象がありませんでした'
+    if (toAdd.length > 0) toast.success(msg)
+    else toast.info(msg)
+  }
+
   // 必須フィールドが埋まっているかチェック（次へボタンの活性化用）
   const isValid =
     companyName.trim() !== '' &&
@@ -575,11 +675,35 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
 
           {/* ターゲット（構造化入力） */}
           <div className="mb-5">
-            <h2 className="text-xs font-bold mb-1.5">
-              ターゲット <span className="text-xs text-gray-400 font-normal">（任意）</span>
-            </h2>
-            <p className="text-[13px] text-muted-foreground mb-3">
+            <div className="flex items-center justify-between gap-2 mb-1.5">
+              <h2 className="text-xs font-bold">
+                ターゲット <span className="text-xs text-gray-400 font-normal">（任意）</span>
+              </h2>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={handleSuggestTargets}
+                disabled={targetSuggesting || targetRemaining === 0}
+                className="shrink-0 text-sm"
+              >
+                {targetSuggesting ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <WandSparkles size={14} />
+                )}
+                {targetSuggesting ? 'AI提案中...' : 'AIで提案'}
+              </Button>
+            </div>
+            <p className="text-[13px] text-muted-foreground mb-1">
               すでに決めているターゲットがある場合には内容を入力してください。
+            </p>
+            <p className="text-xs text-muted-foreground mb-3">
+              {targetRemaining === 0
+                ? `AI提案は今月の利用上限に達しました（${formatResetDate(targetResetsAt)}にリセット）`
+                : targetRemaining !== null
+                  ? `AIによる提案は月${TARGET_SUGGEST_MONTHLY_LIMIT}回まで・今月あと ${targetRemaining} 回`
+                  : `AIによる提案は月${TARGET_SUGGEST_MONTHLY_LIMIT}回まで`}
             </p>
             <TitleDescriptionList
               label=""
@@ -814,6 +938,14 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* AIターゲット提案の候補選択ダイアログ */}
+      <TargetSuggestDialog
+        open={targetSuggestOpen}
+        onOpenChange={setTargetSuggestOpen}
+        suggestions={targetSuggestions}
+        onConfirm={addSelectedTargets}
+      />
     </div>
   )
 }
