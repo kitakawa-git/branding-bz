@@ -144,6 +144,28 @@ function SortableBusinessItem({
   )
 }
 
+function SortableActionItem({
+  id, item, index, onUpdate, onRemove,
+}: {
+  id: string; item: ActionGuideline; index: number
+  onUpdate: (index: number, field: 'title' | 'description', value: string) => void
+  onRemove: (index: number) => void
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
+  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }
+  return (
+    <div ref={setNodeRef} style={style} className="flex gap-2 mb-2 items-start">
+      <button type="button" className="mt-2.5 p-1 rounded hover:bg-gray-200 cursor-grab active:cursor-grabbing text-muted-foreground shrink-0" {...attributes} {...listeners}>
+        <GripVertical size={16} />
+      </button>
+      <Input type="text" value={item.title} onChange={(e) => onUpdate(index, 'title', e.target.value)} placeholder="タイトル（例: 顧客第一）" className="h-10 flex-[0_0_200px]" />
+      {/* 説明は改行可（複数行入力）。Enterで改行、内容に応じて高さが伸びる */}
+      <AutoResizeTextarea value={item.description} onChange={(e) => onUpdate(index, 'description', e.target.value)} placeholder="説明（改行可）" className="flex-1 min-h-10" />
+      <Button type="button" variant="outline" size="icon" onClick={() => onRemove(index)} className="size-9 shrink-0 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"><Trash2 size={14} /></Button>
+    </div>
+  )
+}
+
 export default function BrandGuidelinesPage() {
   const { companyId } = useAuth()
   const cacheKey = `admin-brand-guidelines-${companyId}`
@@ -342,6 +364,16 @@ export default function BrandGuidelinesPage() {
     const newIndex = guidelines.business_content.findIndex((_, i) => `business-${i}` === over.id)
     if (oldIndex !== -1 && newIndex !== -1) {
       handleChange('business_content', arrayMove(guidelines.business_content, oldIndex, newIndex))
+    }
+  }
+
+  const handleActionDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    const oldIndex = guidelines.action_guidelines.findIndex((_, i) => `action-${i}` === active.id)
+    const newIndex = guidelines.action_guidelines.findIndex((_, i) => `action-${i}` === over.id)
+    if (oldIndex !== -1 && newIndex !== -1) {
+      handleChange('action_guidelines', arrayMove(guidelines.action_guidelines, oldIndex, newIndex))
     }
   }
 
@@ -895,33 +927,13 @@ export default function BrandGuidelinesPage() {
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-5">
             <h2 className="text-xs font-bold mb-3">行動指針</h2>
-            {guidelines.action_guidelines.map((guideline, index) => (
-              <div key={index} className="flex gap-2 mb-2 items-start">
-                <Input
-                  type="text"
-                  value={guideline.title}
-                  onChange={(e) => updateGuideline(index, 'title', e.target.value)}
-                  placeholder="タイトル（例: 顧客第一）"
-                  className="h-10 flex-[0_0_200px]"
-                />
-                <Input
-                  type="text"
-                  value={guideline.description}
-                  onChange={(e) => updateGuideline(index, 'description', e.target.value)}
-                  placeholder="説明（例: 常に顧客の視点で考える）"
-                  className="h-10 flex-1"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  onClick={() => removeGuideline(index)}
-                  className="size-9 shrink-0 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
-                >
-                  <Trash2 size={14} />
-                </Button>
-              </div>
-            ))}
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleActionDragEnd}>
+              <SortableContext items={guidelines.action_guidelines.map((_, i) => `action-${i}`)} strategy={verticalListSortingStrategy}>
+                {guidelines.action_guidelines.map((guideline, index) => (
+                  <SortableActionItem key={`action-${index}`} id={`action-${index}`} item={guideline} index={index} onUpdate={updateGuideline} onRemove={removeGuideline} />
+                ))}
+              </SortableContext>
+            </DndContext>
             {guidelines.action_guidelines.length < 10 && (
               <Button type="button" variant="outline" onClick={addGuideline} className="py-1.5 px-3 text-xs">
                 <Plus size={16} />行動指針を追加

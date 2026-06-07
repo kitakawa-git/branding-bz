@@ -14,7 +14,7 @@ export const INDUSTRY_CATEGORIES: IndustryCategory[] = [
     '食品', '化学・素材', '機械・電機', '自動車', 'その他',
   ]},
   { value: 'service', label: 'サービス業', subcategories: [
-    '飲食', '宿泊・観光', '教育', '美容・健康', 'コンサルティング', 'その他',
+    '飲食', '宿泊・観光', '教育', '美容・健康', 'その他',
   ]},
   { value: 'retail', label: '小売・流通', subcategories: [
     'アパレル', '食品', '家電・雑貨', 'EC専業', 'その他',
@@ -30,6 +30,9 @@ export const INDUSTRY_CATEGORIES: IndustryCategory[] = [
   ]},
   { value: 'construction', label: '建設・不動産', subcategories: [
     '建設', '不動産', '建築設計', 'インテリア', 'その他',
+  ]},
+  { value: 'consulting', label: 'コンサルティング', subcategories: [
+    '経営・戦略', '人事・組織', 'IT・DX', '財務・会計', 'ブランド・マーケティング', 'その他',
   ]},
   { value: 'other', label: 'その他', subcategories: [
     'NPO・公益法人', '行政', '農林水産', '物流', 'その他',

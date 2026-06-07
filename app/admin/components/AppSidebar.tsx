@@ -45,6 +45,7 @@ import {
   Printer,
   BarChart3,
   ClipboardCheck,
+  ListChecks,
   GraduationCap,
   Settings,
   type LucideIcon,
@@ -58,13 +59,13 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   { href: '/admin/dashboard', label: 'ダッシュボード', icon: LayoutDashboard },
-  { href: '/admin/company', label: 'ブランド基本情報', icon: Sparkles },
   { href: '/admin/members', label: 'アカウント管理', icon: Users },
   { href: '/admin/card-template', label: 'スマート名刺', icon: CreditCard },
   { href: '/admin/kpi', label: '目標・KPI管理', icon: Milestone },
   { href: '/admin/announcements', label: 'お知らせ管理', icon: Bell },
   { href: '/admin/brand-score/surveys', label: 'サーベイ管理', icon: BarChart3 },
   { href: '/admin/brand-score/quizzes', label: '理解度テスト', icon: ClipboardCheck },
+  { href: '/admin/brand-score/evaluations', label: '評価軸', icon: ListChecks },
   { href: '/admin/learning', label: 'ラーニング', icon: GraduationCap },
 ]
 
@@ -210,6 +211,12 @@ export function AppSidebar() {
                     <DropdownMenuSeparator />
                   </>
                 )}
+                <DropdownMenuItem asChild>
+                  <Link href="/admin/company" className="no-underline">
+                    <Sparkles className="mr-2 size-4" />
+                    基本情報
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href="/admin/settings" className="no-underline">
                     <Settings className="mr-2 size-4" />

@@ -8,7 +8,7 @@ import { supabase } from '@/lib/supabase'
 const titleMap: Record<string, string> = {
   '/admin/dashboard': 'ダッシュボード',
   '/admin/members': 'アカウント一覧',
-  '/admin/company': 'ブランド基本情報',
+  '/admin/company': '基本情報',
   '/admin/brand/guidelines': 'ブランド方針',
   '/admin/brand/visuals': 'ビジュアル',
   '/admin/brand/verbal': 'バーバル',

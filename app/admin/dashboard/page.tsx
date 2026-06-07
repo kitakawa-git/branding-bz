@@ -183,15 +183,12 @@ export default function DashboardPage() {
   const { companyId, company } = useAuth()
   const pathname = usePathname()
 
-  // 機能トグル: 無効な機能のタブを非表示にする
-  // 「タイムライン分析」→ /admin/dashboard、「スマート名刺」→ /admin/analytics
-  const timelineEnabled = isFeatureEnabled(company, 'timeline_enabled')
+  // 機能トグル: スマート名刺が無効なら「スマート名刺」タブ（→ /admin/analytics）を非表示にする
+  // ※「タイムライン分析」(→ /admin/dashboard) は brand-score 側のタブと揃えて常時表示する
   const cardEnabled = isFeatureEnabled(company, 'card_enabled')
-  const visibleTabs = dashboardTabs.filter((tab) => {
-    if (tab.href === '/admin/dashboard') return timelineEnabled
-    if (tab.href === '/admin/analytics') return cardEnabled
-    return true
-  })
+  const visibleTabs = dashboardTabs.filter(
+    (tab) => tab.href !== '/admin/analytics' || cardEnabled
+  )
 
   const cacheKey = `dashboard-v2-${companyId}`
   const cached = companyId ? getPageCache<DashboardCache>(cacheKey) : null
