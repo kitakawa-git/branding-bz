@@ -27,6 +27,16 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog'
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog'
 import { COMPETITOR_SUGGEST_MONTHLY_LIMIT } from '@/lib/constants/ai-limits'
 
 // AI提案された競合候補の型
@@ -85,6 +95,8 @@ export default function CompanyPage() {
   const [suggestions, setSuggestions] = useState<SuggestedCompetitor[]>([])
   const [selectedIdx, setSelectedIdx] = useState<Set<number>>(new Set())
   const [suggestUnlimited, setSuggestUnlimited] = useState(false)
+  // 削除確認ダイアログ対象の競合インデックス（null=非表示）
+  const [competitorToDelete, setCompetitorToDelete] = useState<number | null>(null)
 
   const fetchCompany = async () => {
     if (!companyId) return
@@ -594,7 +606,7 @@ export default function CompanyPage() {
                         type="button"
                         variant="outline"
                         size="icon"
-                        onClick={() => removeCompetitor(index)}
+                        onClick={() => setCompetitorToDelete(index)}
                         className="size-9 shrink-0 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
                       >
                         <Trash2 size={14} />
@@ -721,6 +733,36 @@ export default function CompanyPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* 競合削除の確認ダイアログ */}
+      <AlertDialog
+        open={competitorToDelete !== null}
+        onOpenChange={(open) => { if (!open) setCompetitorToDelete(null) }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>この競合を削除しますか？</AlertDialogTitle>
+            <AlertDialogDescription>
+              {competitorToDelete !== null && company?.competitors[competitorToDelete]?.name
+                ? `「${company.competitors[competitorToDelete].name}」を削除します。`
+                : 'この競合を削除します。'}
+              この操作は取り消せません（「保存」で確定します）。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>キャンセル</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (competitorToDelete !== null) removeCompetitor(competitorToDelete)
+                setCompetitorToDelete(null)
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              削除する
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

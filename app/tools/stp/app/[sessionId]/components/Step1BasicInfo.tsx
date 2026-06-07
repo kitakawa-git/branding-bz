@@ -18,6 +18,16 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog'
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog'
 import { COMPETITOR_SUGGEST_MONTHLY_LIMIT } from '@/lib/constants/ai-limits'
 
 interface Competitor {
@@ -156,6 +166,8 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
   const [suggestions, setSuggestions] = useState<SuggestedCompetitor[]>([])
   const [selectedIdx, setSelectedIdx] = useState<Set<number>>(new Set())
   const [suggestUnlimited, setSuggestUnlimited] = useState(false)
+  // 削除確認ダイアログ対象の競合インデックス（null=非表示）
+  const [competitorToDelete, setCompetitorToDelete] = useState<number | null>(null)
 
   // デバウンス用タイマー
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -646,7 +658,7 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
                       type="button"
                       variant="outline"
                       size="icon"
-                      onClick={() => removeCompetitor(i)}
+                      onClick={() => setCompetitorToDelete(i)}
                       className="size-9 shrink-0 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
                     >
                       <Trash2 size={14} />
@@ -772,6 +784,36 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* 競合削除の確認ダイアログ */}
+      <AlertDialog
+        open={competitorToDelete !== null}
+        onOpenChange={(open) => { if (!open) setCompetitorToDelete(null) }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>この競合を削除しますか？</AlertDialogTitle>
+            <AlertDialogDescription>
+              {competitorToDelete !== null && competitors[competitorToDelete]?.name
+                ? `「${competitors[competitorToDelete].name}」を削除します。`
+                : 'この競合を削除します。'}
+              この操作は取り消せません。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>キャンセル</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (competitorToDelete !== null) removeCompetitor(competitorToDelete)
+                setCompetitorToDelete(null)
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              削除する
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
