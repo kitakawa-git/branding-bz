@@ -7,7 +7,9 @@ export default function manifest(): MetadataRoute.Manifest {
     name: 'branding.bz',
     short_name: 'branding.bz',
     description: 'AIで、ブランディングを加速させる。構築・浸透・発信をひとつのプラットフォームで。',
-    start_url: '/',
+    // インストール版（PWA）はポータルを起点にする。未ログイン時は /portal が
+    // クライアント側で /portal/auth（ログイン）へリダイレクトする
+    start_url: '/portal',
     scope: '/',
     display: 'standalone',
     background_color: '#ffffff',
