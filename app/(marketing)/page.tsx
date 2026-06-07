@@ -47,7 +47,7 @@ function HeroSection() {
           ブランドの構築・浸透・発信を、ひとつのプラットフォームで。
         </p>
         <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
-          <Link href="/contact">
+          <Link href="/signup">
             <button
               className="relative h-12 w-48 rounded-full text-base font-bold text-white overflow-hidden transition-all hover:scale-105 hover:shadow-2xl"
               style={{

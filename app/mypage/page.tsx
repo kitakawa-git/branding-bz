@@ -20,8 +20,10 @@ export default async function MyPageRouter() {
     .eq('auth_id', user.id)
     .maybeSingle()
 
-  if (admin) {
-    redirect(admin.is_superadmin ? '/superadmin/companies' : '/admin/dashboard')
+  // スーパー管理者のみ専用画面へ。一般管理者・メンバーはポータルに着地させる
+  // （管理者は管理画面へポータルのサイドメニューから遷移可能）
+  if (admin?.is_superadmin) {
+    redirect('/superadmin/companies')
   }
 
   redirect('/portal')
