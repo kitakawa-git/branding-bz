@@ -2,12 +2,37 @@
 // - web_search で実在の競合を検索・提案
 // - 月次利用上限（COMPETITOR_SUGGEST_MONTHLY_LIMIT・JST月初基準）を ai_feature_usage で管理
 // - 同一 feature_key を使うため、競合提案の月次クォータは「1社あたり」で全画面共通
+import { readFileSync } from 'fs'
+import { join } from 'path'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { callClaudeWithWebSearch } from '@/lib/claude-api'
 import { COMPETITOR_SUGGEST_MONTHLY_LIMIT } from '@/lib/constants/ai-limits'
 
 export const COMPETITOR_FEATURE_KEY = 'competitor_suggest'
 const JST_OFFSET_MS = 9 * 60 * 60 * 1000
+// 無制限バイパス時に返す残り回数の表示値（実質無制限の目印）
+const BYPASS_REMAINING = 9999
+
+// テスト用バイパス: ここに含まれる company_id は月次上限を無視する。
+// 環境変数 COMPETITOR_SUGGEST_BYPASS_COMPANY_IDS（カンマ区切りのUUID）で指定。
+// process.env を優先し、空なら .env.local から直接読む（claude-api と同じフォールバック）。
+let _bypassIds: Set<string> | null = null
+function loadBypassFromEnvFile(): string {
+  try {
+    const content = readFileSync(join(process.cwd(), '.env.local'), 'utf-8')
+    const m = content.match(/^COMPETITOR_SUGGEST_BYPASS_COMPANY_IDS=(.+)$/m)
+    return m?.[1]?.trim() || ''
+  } catch {
+    return ''
+  }
+}
+function isLimitBypassed(companyId: string): boolean {
+  if (!_bypassIds) {
+    const raw = process.env.COMPETITOR_SUGGEST_BYPASS_COMPANY_IDS || loadBypassFromEnvFile()
+    _bypassIds = new Set(raw.split(',').map(s => s.trim()).filter(Boolean))
+  }
+  return _bypassIds.has(companyId)
+}
 
 export type CompetitorSuggestion = { name: string; url: string; reason: string }
 export type ExistingCompetitor = { name?: string; url?: string }
@@ -62,9 +87,15 @@ async function countUsage(
 // 残り回数・リセット日時（消費しない）
 export async function getCompetitorRemaining(
   companyId: string,
-): Promise<{ remaining: number; limit: number; resetsAt: string } | { error: true }> {
-  const supabase = getSupabaseAdmin()
+): Promise<{ remaining: number; limit: number; resetsAt: string; unlimited?: boolean } | { error: true }> {
   const { monthStartIso, nextMonthStartIso } = getMonthBoundsJst()
+
+  // バイパス対象（テスト用）は無制限
+  if (isLimitBypassed(companyId)) {
+    return { remaining: BYPASS_REMAINING, limit: BYPASS_REMAINING, resetsAt: nextMonthStartIso, unlimited: true }
+  }
+
+  const supabase = getSupabaseAdmin()
   const { count, error } = await countUsage(supabase, companyId, monthStartIso)
   if (error) return { error: true }
   return {
@@ -153,7 +184,7 @@ function parseAndDedupe(
 export type SuggestResult =
   | { status: 'limit'; resetsAt: string }
   | { status: 'error' }
-  | { status: 'ok'; suggestions: CompetitorSuggestion[]; remaining: number; resetsAt: string }
+  | { status: 'ok'; suggestions: CompetitorSuggestion[]; remaining: number; resetsAt: string; unlimited?: boolean }
 
 // 競合提案の本体。上限チェック → web_search → パース/重複除外 → 成功時のみ利用ログINSERT。
 export async function generateCompetitorSuggestions(params: {
@@ -163,11 +194,17 @@ export async function generateCompetitorSuggestions(params: {
 }): Promise<SuggestResult> {
   const supabase = getSupabaseAdmin()
   const { monthStartIso, nextMonthStartIso } = getMonthBoundsJst()
+  const bypassed = isLimitBypassed(params.companyId)
 
-  const { count: usedCount, error: countError } = await countUsage(supabase, params.companyId, monthStartIso)
-  if (countError) return { status: 'error' }
-  if (usedCount >= COMPETITOR_SUGGEST_MONTHLY_LIMIT) {
-    return { status: 'limit', resetsAt: nextMonthStartIso }
+  // 上限チェック（バイパス対象はスキップ）
+  let usedCount = 0
+  if (!bypassed) {
+    const { count, error: countError } = await countUsage(supabase, params.companyId, monthStartIso)
+    if (countError) return { status: 'error' }
+    if (count >= COMPETITOR_SUGGEST_MONTHLY_LIMIT) {
+      return { status: 'limit', resetsAt: nextMonthStartIso }
+    }
+    usedCount = count
   }
 
   const existingNames = params.existingCompetitors.map(c => (c.name || '').trim()).filter(Boolean)
@@ -189,18 +226,19 @@ export async function generateCompetitorSuggestions(params: {
   const suggestions = parseAndDedupe(response, params.existingCompetitors)
   if (suggestions === null) return { status: 'error' }
 
-  // 成功時のみ利用ログを INSERT（INSERT失敗は致命的でないためログのみ）
+  // 利用ログを INSERT（バイパス時も実コストは発生するため記録する。INSERT失敗は致命的でないためログのみ）
   const { error: insertError } = await supabase.from('ai_feature_usage').insert({
     company_id: params.companyId,
     feature_key: COMPETITOR_FEATURE_KEY,
-    metadata: { count: suggestions.length },
+    metadata: { count: suggestions.length, ...(bypassed ? { bypass: true } : {}) },
   })
   if (insertError) console.error('[competitors] 利用ログINSERTエラー:', insertError)
 
   return {
     status: 'ok',
     suggestions,
-    remaining: Math.max(0, COMPETITOR_SUGGEST_MONTHLY_LIMIT - (usedCount + 1)),
+    remaining: bypassed ? BYPASS_REMAINING : Math.max(0, COMPETITOR_SUGGEST_MONTHLY_LIMIT - (usedCount + 1)),
     resetsAt: nextMonthStartIso,
+    ...(bypassed ? { unlimited: true } : {}),
   }
 }

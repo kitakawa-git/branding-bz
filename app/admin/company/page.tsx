@@ -84,6 +84,7 @@ export default function CompanyPage() {
   const [suggestDialogOpen, setSuggestDialogOpen] = useState(false)
   const [suggestions, setSuggestions] = useState<SuggestedCompetitor[]>([])
   const [selectedIdx, setSelectedIdx] = useState<Set<number>>(new Set())
+  const [suggestUnlimited, setSuggestUnlimited] = useState(false)
 
   const fetchCompany = async () => {
     if (!companyId) return
@@ -142,6 +143,7 @@ export default function CompanyPage() {
         if (cancelled || !data) return
         if (typeof data.remaining === 'number') setSuggestRemaining(data.remaining)
         if (data.resetsAt) setSuggestResetsAt(data.resetsAt)
+        setSuggestUnlimited(data.unlimited === true)
       })
       .catch(() => {
         /* 残り回数の取得失敗は致命的でないため握りつぶす */
@@ -206,7 +208,7 @@ export default function CompanyPage() {
   // AIで競合を提案
   const handleSuggestCompetitors = async () => {
     if (!company || suggesting) return
-    if (suggestRemaining !== null && suggestRemaining <= 0) {
+    if (!suggestUnlimited && suggestRemaining !== null && suggestRemaining <= 0) {
       toast.error('今月の利用上限に達しました')
       return
     }
@@ -228,6 +230,7 @@ export default function CompanyPage() {
 
       if (typeof data.remaining === 'number') setSuggestRemaining(data.remaining)
       if (data.resetsAt) setSuggestResetsAt(data.resetsAt)
+      setSuggestUnlimited(data.unlimited === true)
 
       const list: SuggestedCompetitor[] = Array.isArray(data.suggestions) ? data.suggestions : []
       if (list.length === 0) {
@@ -526,7 +529,7 @@ export default function CompanyPage() {
                   variant="secondary"
                   size="sm"
                   onClick={handleSuggestCompetitors}
-                  disabled={suggesting || suggestRemaining === 0}
+                  disabled={suggesting || (!suggestUnlimited && suggestRemaining === 0)}
                   className="text-sm"
                 >
                   {suggesting ? (
@@ -538,11 +541,13 @@ export default function CompanyPage() {
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground mb-3">
-                {suggestRemaining === 0
-                  ? `今月の利用上限に達しました（${formatResetDate(suggestResetsAt)}にリセット）`
-                  : suggestRemaining !== null
-                    ? `AIによる提案は月${COMPETITOR_SUGGEST_MONTHLY_LIMIT}回まで・今月あと ${suggestRemaining} 回`
-                    : `AIによる提案は月${COMPETITOR_SUGGEST_MONTHLY_LIMIT}回まで`}
+                {suggestUnlimited
+                  ? 'AIによる提案（テストモード・無制限）'
+                  : suggestRemaining === 0
+                    ? `今月の利用上限に達しました（${formatResetDate(suggestResetsAt)}にリセット）`
+                    : suggestRemaining !== null
+                      ? `AIによる提案は月${COMPETITOR_SUGGEST_MONTHLY_LIMIT}回まで・今月あと ${suggestRemaining} 回`
+                      : `AIによる提案は月${COMPETITOR_SUGGEST_MONTHLY_LIMIT}回まで`}
               </p>
               {company.competitors.length > 0 && (
                 <div className="space-y-3 mb-3">

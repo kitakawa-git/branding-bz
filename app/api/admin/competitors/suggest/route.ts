@@ -107,5 +107,6 @@ export async function POST() {
     suggestions: result.suggestions,
     remaining: result.remaining,
     resetsAt: result.resetsAt,
+    unlimited: result.unlimited ?? false,
   })
 }

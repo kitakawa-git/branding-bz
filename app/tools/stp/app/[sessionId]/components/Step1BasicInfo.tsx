@@ -155,6 +155,7 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
   const [suggestDialogOpen, setSuggestDialogOpen] = useState(false)
   const [suggestions, setSuggestions] = useState<SuggestedCompetitor[]>([])
   const [selectedIdx, setSelectedIdx] = useState<Set<number>>(new Set())
+  const [suggestUnlimited, setSuggestUnlimited] = useState(false)
 
   // デバウンス用タイマー
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -247,6 +248,7 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
         if (cancelled || !data) return
         if (typeof data.remaining === 'number') setSuggestRemaining(data.remaining)
         if (data.resetsAt) setSuggestResetsAt(data.resetsAt)
+        setSuggestUnlimited(data.unlimited === true)
       })
       .catch(() => {
         /* 残り回数の取得失敗は致命的でないため握りつぶす */
@@ -388,7 +390,7 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
   // AIで競合を提案
   const handleSuggestCompetitors = async () => {
     if (suggesting) return
-    if (suggestRemaining !== null && suggestRemaining <= 0) {
+    if (!suggestUnlimited && suggestRemaining !== null && suggestRemaining <= 0) {
       toast.error('今月の利用上限に達しました')
       return
     }
@@ -415,6 +417,7 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
 
       if (typeof data.remaining === 'number') setSuggestRemaining(data.remaining)
       if (data.resetsAt) setSuggestResetsAt(data.resetsAt)
+      setSuggestUnlimited(data.unlimited === true)
 
       const list: SuggestedCompetitor[] = Array.isArray(data.suggestions) ? data.suggestions : []
       if (list.length === 0) {
@@ -589,7 +592,7 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
                 variant="secondary"
                 size="sm"
                 onClick={handleSuggestCompetitors}
-                disabled={suggesting || suggestRemaining === 0}
+                disabled={suggesting || (!suggestUnlimited && suggestRemaining === 0)}
                 className="shrink-0 text-sm"
               >
                 {suggesting ? (
@@ -604,11 +607,13 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
               Step 4のポジショニングマップに競合を配置します。企業名に加えてURLやメモを入力すると、AIの分析精度が向上します。
             </p>
             <p className="text-xs text-muted-foreground mb-3">
-              {suggestRemaining === 0
-                ? `AI提案は今月の利用上限に達しました（${formatResetDate(suggestResetsAt)}にリセット）`
-                : suggestRemaining !== null
-                  ? `AIによる提案は月${COMPETITOR_SUGGEST_MONTHLY_LIMIT}回まで・今月あと ${suggestRemaining} 回`
-                  : `AIによる提案は月${COMPETITOR_SUGGEST_MONTHLY_LIMIT}回まで`}
+              {suggestUnlimited
+                ? 'AIによる提案（テストモード・無制限）'
+                : suggestRemaining === 0
+                  ? `AI提案は今月の利用上限に達しました（${formatResetDate(suggestResetsAt)}にリセット）`
+                  : suggestRemaining !== null
+                    ? `AIによる提案は月${COMPETITOR_SUGGEST_MONTHLY_LIMIT}回まで・今月あと ${suggestRemaining} 回`
+                    : `AIによる提案は月${COMPETITOR_SUGGEST_MONTHLY_LIMIT}回まで`}
             </p>
             {competitors.length > 0 && (
               <div className="space-y-3 mb-3">
