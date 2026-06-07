@@ -134,9 +134,9 @@ function LoginContent() {
                 src="/logo.svg"
                 alt="branding.bz"
                 className="mx-auto mb-3"
-                style={{ height: '32px', width: 'auto', filter: 'brightness(0) invert(1)' }}
+                style={{ height: '40px', width: 'auto', filter: 'brightness(0) invert(1)' }}
               />
-              <p className="text-sm text-white/50 m-0">
+              <p className="text-base text-white/50 m-0">
                 ログイン成功 — 遷移先を選択
               </p>
             </div>
@@ -174,10 +174,10 @@ function LoginContent() {
               <img
                 src="/logo.svg"
                 alt="branding.bz"
-                style={{ height: '32px', width: 'auto', filter: 'brightness(0) invert(1)' }}
+                style={{ height: '40px', width: 'auto', filter: 'brightness(0) invert(1)' }}
               />
             </Link>
-            <p className="text-sm text-white/50 m-0">
+            <p className="text-base text-white/50 m-0">
               管理画面にログイン
             </p>
           </div>
@@ -194,9 +194,9 @@ function LoginContent() {
             type="button"
             onClick={handleGoogleLogin}
             disabled={googleLoading || loading}
-            className="flex w-full h-11 items-center justify-center gap-3 rounded-lg border border-gray-300 bg-white font-medium text-gray-700 transition-all hover:bg-gray-50 hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed mb-6"
+            className="flex w-full h-14 items-center justify-center gap-3 rounded-lg border border-gray-300 bg-white text-base font-medium text-gray-700 transition-all hover:bg-gray-50 hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed mb-6"
           >
-            <svg className="h-5 w-5" viewBox="0 0 24 24">
+            <svg className="h-6 w-6" viewBox="0 0 24 24">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
               <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
               <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
@@ -210,14 +210,14 @@ function LoginContent() {
             <div className="absolute inset-0 flex items-center">
               <span className="w-full border-t border-white/10" />
             </div>
-            <div className="relative flex justify-center text-xs uppercase">
+            <div className="relative flex justify-center text-sm uppercase">
               <span className="px-3 text-white/30" style={{ background: 'rgba(15, 15, 26, 0.8)' }}>または</span>
             </div>
           </div>
 
           <form onSubmit={handleLogin}>
             <div className="mb-5">
-              <label className="block text-xs font-semibold mb-2 text-white/60 tracking-wide">
+              <label className="block text-base font-semibold mb-2 text-white/60 tracking-wide">
                 メールアドレス
               </label>
               <Input
@@ -226,13 +226,13 @@ function LoginContent() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="admin@example.com"
                 required
-                className="h-11 rounded-xl text-white placeholder:text-white/30 focus-visible:ring-indigo-500/50 focus-visible:ring-offset-0 focus-visible:border-indigo-400/40"
+                className="h-12 text-base md:text-base rounded-xl text-white placeholder:text-white/30 focus-visible:ring-indigo-500/50 focus-visible:ring-offset-0 focus-visible:border-indigo-400/40"
                 style={glassInput}
               />
             </div>
 
             <div className="mb-6">
-              <label className="block text-xs font-semibold mb-2 text-white/60 tracking-wide">
+              <label className="block text-base font-semibold mb-2 text-white/60 tracking-wide">
                 パスワード
               </label>
               <Input
@@ -241,7 +241,7 @@ function LoginContent() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="パスワードを入力"
                 required
-                className="h-11 rounded-xl text-white placeholder:text-white/30 focus-visible:ring-indigo-500/50 focus-visible:ring-offset-0 focus-visible:border-indigo-400/40"
+                className="h-12 text-base md:text-base rounded-xl text-white placeholder:text-white/30 focus-visible:ring-indigo-500/50 focus-visible:ring-offset-0 focus-visible:border-indigo-400/40"
                 style={glassInput}
               />
             </div>
@@ -249,18 +249,18 @@ function LoginContent() {
             <button
               type="submit"
               disabled={loading}
-              className="relative w-full h-11 rounded-full text-base font-bold text-gray-900 bg-white overflow-hidden transition-all hover:scale-105 hover:shadow-2xl hover:bg-white/90 shadow-lg disabled:opacity-50 disabled:hover:scale-100"
+              className="relative w-full h-14 rounded-full text-lg font-bold text-gray-900 bg-white overflow-hidden transition-all hover:scale-105 hover:shadow-2xl hover:bg-white/90 shadow-lg disabled:opacity-50 disabled:hover:scale-100"
             >
               {loading ? 'ログイン中...' : 'ログイン'}
             </button>
           </form>
 
-          <p className="text-center text-xs mt-6 mb-0">
+          <p className="text-center text-sm mt-6 mb-0">
             <Link href="/portal/auth" className="text-indigo-300/80 no-underline hover:text-indigo-200 hover:underline transition-colors">
               メンバーログインはこちら
             </Link>
           </p>
-          <p className="text-center text-xs text-white/40 mt-3 mb-0">
+          <p className="text-center text-sm text-white/40 mt-3 mb-0">
             アカウントをお持ちでない方は{' '}
             <Link href="/signup" className="text-indigo-300/80 no-underline font-bold hover:text-indigo-200 hover:underline transition-colors">
               こちら
