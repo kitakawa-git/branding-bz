@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
+import { PWAUpdatePrompt } from "@/components/pwa/PWAUpdatePrompt";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -64,6 +65,7 @@ export default function RootLayout({
       >
         {children}
         <Toaster />
+        <PWAUpdatePrompt />
       </body>
     </html>
   );

@@ -112,6 +112,10 @@ id (uuid), company_id (FK→companies), name, position, department, bio, photo_u
 - **【漏洩防止・最重要】** SW本体 `app/sw.ts` で、認証配下（/portal /admin /superadmin /api）は
   `NetworkOnly` を `defaultCache` より**配列の先頭**に置く。順序を逆にすると認証ページが
   キャッシュされ、ログアウト/別ユーザーログイン時に前ユーザー画面が漏洩する。**この順序を必ず保つ。**
+- **`app/sw.ts` の `skipWaiting: false` が正**（更新通知UI `components/pwa/PWAUpdatePrompt.tsx` 有り）。
+  新SWは待機し、sonnerトースト「更新」で制御切替＝作業中の勝手なリロード防止＋ChunkLoadError回避。
+  `next.config.ts` の `register: false` ＋ `@serwist/window` 手動登録で `waiting`/`controlling` を購読する。
+  `skipWaiting:false` 時は SKIP_WAITING を Serwist が自動処理するため、message リスナを手書きしないこと。
 - `public/sw.js` はビルド生成物（gitignore）。コミットしない（Vercelが再生成）。
 - 将来 Next.js が webpack ビルドを廃止、または serwist が Turbopack ネイティブ対応したら、
   configurator モード（`@serwist/cli`・2段ビルド）への移行を検討。

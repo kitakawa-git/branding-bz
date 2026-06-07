@@ -25,7 +25,8 @@ const withSerwist = withSerwistInit({
   disable: process.env.NODE_ENV === "development",
   // オンライン復帰時の強制リロードを抑制（SaaSで予期せぬ再読込を防ぐ）
   reloadOnOnline: false,
-  // register はデフォルト true（登録スクリプトを自動注入）
+  // 自動登録をオフにし、@serwist/window で手動登録する（更新検知=waiting購読のため）
+  register: false,
 });
 
 // next build（NODE_ENV=production）のときだけ serwist を適用する

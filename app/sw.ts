@@ -23,7 +23,11 @@ const authBypass: RuntimeCaching = {
 
 const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
-  skipWaiting: true,
+  // 更新通知UI（PWAUpdatePrompt）でユーザーが「更新」を押すまで新SWを待機させる。
+  // これが ChunkLoadError 対策にもなる（旧タブは更新するまで旧チャンクを供給し続ける）。
+  // 注: skipWaiting:false のとき Serwist は SKIP_WAITING メッセージ受信で自動 skipWaiting() するため、
+  //     message リスナを手書きしないこと（二重実行になる）。
+  skipWaiting: false,
   clientsClaim: true,
   navigationPreload: true,
   // 認証バイパスを先頭に。残りは Next.js 最適化済みの defaultCache
