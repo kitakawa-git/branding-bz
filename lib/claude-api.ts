@@ -56,6 +56,43 @@ export async function callClaude(options: {
 }
 
 /**
+ * Claude API に web_search ツール付きでメッセージを送信（非ストリーミング）
+ * 実在情報の検索が必要な機能（競合提案等）で使用する。SDK初期化・モデルは callClaude と共通。
+ * 戻り値は全テキストブロックを結合した文字列（検索の途中経過テキストも含む）。
+ * web_search 実行失敗や API エラー時は例外を throw する（呼び出し側で 500 扱い）。
+ */
+export async function callClaudeWithWebSearch(options: {
+  system: string
+  userMessage: string
+  maxTokens?: number
+  maxSearchUses?: number
+}): Promise<string> {
+  const client = getClient()
+
+  const message = await client.messages.create({
+    model: 'claude-sonnet-4-20250514',
+    max_tokens: options.maxTokens || 2048,
+    system: options.system,
+    messages: [{ role: 'user', content: options.userMessage }],
+    tools: [
+      {
+        type: 'web_search_20250305',
+        name: 'web_search',
+        max_uses: options.maxSearchUses ?? 5,
+      },
+    ],
+  })
+
+  // テキストブロックのみ結合（server_tool_use / web_search_tool_result ブロックは除外）
+  const textContent = message.content
+    .filter((block): block is Anthropic.TextBlock => block.type === 'text')
+    .map(block => block.text)
+    .join('')
+
+  return textContent
+}
+
+/**
  * Claude API にメッセージを送信（ストリーミング）
  * ReadableStream を返す
  */

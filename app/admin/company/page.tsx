@@ -17,8 +17,24 @@ import { getPageCache, setPageCache } from '@/lib/page-cache'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
-import { Plus, Trash2, Check } from 'lucide-react'
+import { Plus, Trash2, Check, WandSparkles, Loader2, ExternalLink } from 'lucide-react'
 import { Fab, FabButton } from '@/components/ui/fab'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog'
+import { COMPETITOR_SUGGEST_MONTHLY_LIMIT } from '@/lib/constants/ai-limits'
+
+// AI提案された競合候補の型
+interface SuggestedCompetitor {
+  name: string
+  url: string
+  reason: string
+}
 
 // 競合企業の型
 interface Competitor {
@@ -60,6 +76,14 @@ export default function CompanyPage() {
   const [loading, setLoading] = useState(!cached)
   const [fetchError, setFetchError] = useState('')
   const [saving, setSaving] = useState(false)
+
+  // AI競合提案
+  const [suggesting, setSuggesting] = useState(false)
+  const [suggestRemaining, setSuggestRemaining] = useState<number | null>(null)
+  const [suggestResetsAt, setSuggestResetsAt] = useState<string | null>(null)
+  const [suggestDialogOpen, setSuggestDialogOpen] = useState(false)
+  const [suggestions, setSuggestions] = useState<SuggestedCompetitor[]>([])
+  const [selectedIdx, setSelectedIdx] = useState<Set<number>>(new Set())
 
   const fetchCompany = async () => {
     if (!companyId) return
@@ -108,6 +132,25 @@ export default function CompanyPage() {
     fetchCompany()
   }, [companyId, cacheKey])
 
+  // AI競合提案の今月残り回数を取得（初期表示用）
+  useEffect(() => {
+    if (!companyId) return
+    let cancelled = false
+    fetch('/api/admin/competitors/suggest')
+      .then(res => (res.ok ? res.json() : null))
+      .then(data => {
+        if (cancelled || !data) return
+        if (typeof data.remaining === 'number') setSuggestRemaining(data.remaining)
+        if (data.resetsAt) setSuggestResetsAt(data.resetsAt)
+      })
+      .catch(() => {
+        /* 残り回数の取得失敗は致命的でないため握りつぶす */
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [companyId])
+
   const handleChange = (field: keyof Company, value: string | Competitor[] | TargetSegment[]) => {
     setCompany(prev => prev ? { ...prev, [field]: value } : null)
   }
@@ -141,6 +184,126 @@ export default function CompanyPage() {
     if (!company) return
     const updated = company.competitors.filter((_, i) => i !== index)
     handleChange('competitors', updated)
+  }
+
+  // 社名・URLホストの正規化（重複判定用。サーバー側と同一ロジック）
+  const normName = (s: string): string => (s || '').trim().toLowerCase()
+  const normHost = (u: string): string => {
+    let h = (u || '').trim().toLowerCase()
+    if (!h) return ''
+    h = h.replace(/^https?:\/\//, '').replace(/^www\./, '')
+    h = h.split(/[/?#]/)[0]
+    return h.replace(/\/$/, '')
+  }
+
+  // ISO日時（翌月1日00:00 JST）を「○月○日」表記に
+  const formatResetDate = (iso: string | null): string => {
+    if (!iso) return ''
+    const jst = new Date(new Date(iso).getTime() + 9 * 60 * 60 * 1000)
+    return `${jst.getUTCMonth() + 1}月${jst.getUTCDate()}日`
+  }
+
+  // AIで競合を提案
+  const handleSuggestCompetitors = async () => {
+    if (!company || suggesting) return
+    if (suggestRemaining !== null && suggestRemaining <= 0) {
+      toast.error('今月の利用上限に達しました')
+      return
+    }
+    setSuggesting(true)
+    try {
+      const res = await fetch('/api/admin/competitors/suggest', { method: 'POST' })
+      const data = await res.json().catch(() => ({}))
+
+      if (res.status === 429) {
+        setSuggestRemaining(0)
+        if (data.resetsAt) setSuggestResetsAt(data.resetsAt)
+        toast.error('今月の利用上限に達しました')
+        return
+      }
+      if (!res.ok) {
+        toast.error('競合の提案に失敗しました。時間をおいて再度お試しください')
+        return
+      }
+
+      if (typeof data.remaining === 'number') setSuggestRemaining(data.remaining)
+      if (data.resetsAt) setSuggestResetsAt(data.resetsAt)
+
+      const list: SuggestedCompetitor[] = Array.isArray(data.suggestions) ? data.suggestions : []
+      if (list.length === 0) {
+        toast.info('新たな競合候補は見つかりませんでした')
+        return
+      }
+      setSuggestions(list)
+      setSelectedIdx(new Set(list.map((_, i) => i))) // 既定で全選択
+      setSuggestDialogOpen(true)
+    } catch (err) {
+      console.error('[Company] AI競合提案エラー:', err)
+      toast.error('競合の提案に失敗しました。時間をおいて再度お試しください')
+    } finally {
+      setSuggesting(false)
+    }
+  }
+
+  const toggleSuggestion = (index: number) => {
+    setSelectedIdx(prev => {
+      const next = new Set(prev)
+      if (next.has(index)) next.delete(index)
+      else next.add(index)
+      return next
+    })
+  }
+
+  const toggleAllSuggestions = () => {
+    setSelectedIdx(prev =>
+      prev.size === suggestions.length ? new Set() : new Set(suggestions.map((_, i) => i)),
+    )
+  }
+
+  // 選択した候補を competitors に APPEND（既存と重複はスキップ・最大10社）
+  const addSelectedSuggestions = () => {
+    if (!company) return
+    const existing = company.competitors
+    const existingNames = new Set(existing.map(c => normName(c.name)).filter(Boolean))
+    const existingHosts = new Set(existing.map(c => normHost(c.url)).filter(Boolean))
+
+    const toAdd: Competitor[] = []
+    let skipped = 0
+    let capped = 0
+
+    suggestions.forEach((s, i) => {
+      if (!selectedIdx.has(i)) return
+      const n = normName(s.name)
+      const h = normHost(s.url)
+      if (existingNames.has(n) || (h && existingHosts.has(h))) {
+        skipped++
+        return
+      }
+      if (existing.length + toAdd.length >= 10) {
+        capped++
+        return
+      }
+      existingNames.add(n)
+      if (h) existingHosts.add(h)
+      toAdd.push({ name: s.name, url: s.url, notes: s.reason, colors: [] })
+    })
+
+    if (toAdd.length > 0) {
+      handleChange('competitors', [...existing, ...toAdd])
+    }
+
+    setSuggestDialogOpen(false)
+
+    const parts: string[] = []
+    if (toAdd.length > 0) parts.push(`${toAdd.length}社を追加しました`)
+    if (skipped > 0) parts.push(`重複${skipped}社をスキップ`)
+    if (capped > 0) parts.push(`上限(10社)超過${capped}社をスキップ`)
+    const msg = parts.length > 0 ? parts.join('・') : '追加対象がありませんでした'
+    if (toAdd.length > 0) {
+      toast.success(`${msg}（「保存」で確定します）`)
+    } else {
+      toast.info(msg)
+    }
   }
 
   // Supabase REST APIに直接fetchで保存（JSクライアントの認証ハングを回避）
@@ -356,7 +519,31 @@ export default function CompanyPage() {
 
             {/* 競合企業・サービス */}
             <div className="mb-5">
-              <h2 className="text-xs font-bold mb-3">競合企業・サービス</h2>
+              <div className="flex items-center justify-between gap-2 mb-1">
+                <h2 className="text-xs font-bold">競合企業・サービス</h2>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleSuggestCompetitors}
+                  disabled={suggesting || suggestRemaining === 0}
+                  className="text-sm"
+                >
+                  {suggesting ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <WandSparkles size={14} />
+                  )}
+                  {suggesting ? 'AI提案中...' : 'AIで競合を提案'}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mb-3">
+                {suggestRemaining === 0
+                  ? `今月の利用上限に達しました（${formatResetDate(suggestResetsAt)}にリセット）`
+                  : suggestRemaining !== null
+                    ? `AIによる提案は月${COMPETITOR_SUGGEST_MONTHLY_LIMIT}回まで・今月あと ${suggestRemaining} 回`
+                    : `AIによる提案は月${COMPETITOR_SUGGEST_MONTHLY_LIMIT}回まで`}
+              </p>
               {company.competitors.length > 0 && (
                 <div className="space-y-3 mb-3">
                   {company.competitors.map((comp, index) => (
@@ -441,6 +628,94 @@ export default function CompanyPage() {
           {saving ? '保存中...' : '保存'}
         </FabButton>
       </Fab>
+
+      {/* AI競合提案の候補選択ダイアログ */}
+      <Dialog open={suggestDialogOpen} onOpenChange={setSuggestDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>AIによる競合候補</DialogTitle>
+            <DialogDescription>
+              web検索で見つかった実在の競合候補です。追加するものを選択してください。
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">
+              {selectedIdx.size} / {suggestions.length} 件を選択中
+            </span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={toggleAllSuggestions}
+              className="h-7 text-xs"
+            >
+              {selectedIdx.size === suggestions.length ? '全解除' : '全選択'}
+            </Button>
+          </div>
+
+          <div className="max-h-[50vh] space-y-2 overflow-y-auto pr-1">
+            {suggestions.map((s, i) => {
+              const selected = selectedIdx.has(i)
+              return (
+                <div
+                  key={i}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => toggleSuggestion(i)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      toggleSuggestion(i)
+                    }
+                  }}
+                  className={`flex w-full cursor-pointer items-start gap-3 rounded-lg border p-3 text-left transition-colors ${
+                    selected
+                      ? 'border-primary bg-primary/5'
+                      : 'border-gray-200 bg-white hover:bg-gray-50'
+                  }`}
+                >
+                  {/* チェックボックス風インジケータ */}
+                  <span
+                    className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
+                      selected
+                        ? 'border-primary bg-primary text-primary-foreground'
+                        : 'border-gray-300 bg-white'
+                    }`}
+                  >
+                    {selected && <Check size={12} />}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-semibold text-gray-900">{s.name}</div>
+                    {s.url && (
+                      <a
+                        href={s.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="inline-flex items-center gap-1 break-all text-xs text-blue-700 hover:underline"
+                      >
+                        {s.url}
+                        <ExternalLink size={11} className="shrink-0" />
+                      </a>
+                    )}
+                    {s.reason && <p className="mt-1 text-xs text-gray-600">{s.reason}</p>}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setSuggestDialogOpen(false)}>
+              キャンセル
+            </Button>
+            <Button type="button" onClick={addSelectedSuggestions} disabled={selectedIdx.size === 0}>
+              選択した競合を追加（{selectedIdx.size}）
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
