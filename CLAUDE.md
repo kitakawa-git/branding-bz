@@ -19,7 +19,7 @@
 - URL: https://wfabdmfgngjtihhlrrpk.supabase.co
 - 主要テーブル: companies, profiles, admin_users, members, brand_guidelines, brand_surveys, brand_survey_responses, brand_micro_feedbacks, brand_score_snapshots, card_views, card_events, timeline_posts, announcements, goal_kpis, invite_links
 - Storage: avatars, logos, brand-assets, timeline-images
-- RLS: 無効（プロトタイプ段階）
+- RLS: 全テーブル有効（ポリシー内 `auth.uid()` は `(select auth.uid())` でラップ済み・全FKにインデックス済み）。データアクセスは原則 service_role の API Route（`getSupabaseAdmin()`）経由
 ## 現在のDB構造
 ### companies
 id (uuid), name, logo_url, slogan, mvv, brand_color_primary, brand_color_secondary, website_url, created_at
@@ -45,6 +45,16 @@ id (uuid), company_id (FK→companies), name, position, department, bio, photo_u
 - テーブル追加・カラム追加・RLSポリシー変更・RPC関数作成が必要な場合は、コード修正より先にSQLを出力し、ユーザーの実行完了を待つこと
 - Supabase MCP接続が使えない場合は、SQL Editorで手動実行する前提で出力する
 - 既存テーブルの構造が不明な場合は、想定で進めずユーザーに確認すること
+
+### 実機検証ルール（データ汚染防止・最重要）
+- **プレビュー（localhost:3004）は demo-admin1@branding.bz（企業＝株式会社テックブリッジ / `128a1513`）でログイン固定。** 検証はこのデモ企業の範囲だけで行う。
+- **ツール（STP `/tools/stp`・カラー・ペルソナ）のセッション画面は、セッションのbasic_infoを「ログイン中ユーザーの企業」へ自動同期（`syncToCompany` → `/api/tools/shared-profile` PATCH）し、その企業からプリフィルする。** そのため：
+  - **実ユーザー（顧客）のセッションIDを絶対に開かない。** 開くだけでプリフィル／自動保存が走り、セッションとデモ企業の双方が汚染される。
+  - 本体企業レコード・実セッション（`mini_app_sessions`）へ検証目的で書き込まない。
+- 破壊的UI検証（削除等）は**デモ企業1社に限定**し、必要なら使い捨ての新規セッションで行う（汚染がデモに限定されることを承知の上で）。
+- データ確認は read-only を優先し、書き込み前に必ず対象IDを確認する。
+- デモデータの復元基準は `scripts/seed-demo-data.sql`。修復はツール経由でなく**DB直書き**で行う（ツール経由だと再同期で再汚染する）。
+- `companies.industry_category` は `lib/constants/industries.ts` の **`value`（コード: `it_tech`/`consulting` 等）** で保存する。ラベル（「IT・テクノロジー」等）を入れると業種プルダウンが表示されない。
 
 ## コーディング規約
 - 日本語コメント推奨
@@ -84,7 +94,10 @@ id (uuid), company_id (FK→companies), name, position, department, bio, photo_u
 - supabaseクライアントのauth設定にlock:false必須（LockManagerタイムアウト回避）
 
 ### RLS
-- 全テーブルRLS無効（プロトタイプ段階。本番前に要設定）
+- 全テーブルでRLS有効。ポリシー内の `auth.uid()` は `(select auth.uid())` でラップ済み（initplan最適化済み。Supabase advisor の `auth_rls_initplan` 警告は解消。`rls_initplan_remaining=41` は判定regexの大文字小文字違いによる誤検知と確認済み）。全外部キーにインデックス設定済み（`unindexed_fk=0`）。
+- データアクセスは原則 service_role 経由の API Route（`getSupabaseAdmin()`）で行う。一部テーブルはポータルの cookie セッション（authenticated ロール）で直接 SELECT する。
+- **未使用インデックス注意**: Supabase performance advisor に `unused_index` が約29件表示されるが、これはFK全張りの副作用であり正常・無害。本番トラフィックが流れれば使われて seq scan を消すため、削除しないこと（消すと逆効果）。ビデオラーニングで追加した新規4本（`idx_lvv_video` / `idx_lvv_profile_video` / `idx_lvv_company` / `idx_learning_videos_company`）も同じ理由で温存対象。
+- **保留中の任意最適化**: `multiple_permissive_policies`（重複ポリシー統合）約31件。挙動（可視範囲）が変わらないことの検証が必要なため保留。
 
 ### Storage
 - avatars: プロフィール写真

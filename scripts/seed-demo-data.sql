@@ -67,7 +67,7 @@ BEGIN
     website_url, brand_stage, competitors, target_segments
   ) VALUES (
     '株式会社テックブリッジ',
-    'IT・テクノロジー',
+    'it_tech',
     'SaaS',
     'テクノロジーで、人と人をつなぐ。',
     'Mission: デジタルの力で中小企業の成長を支援する / Vision: すべての企業がテクノロジーの恩恵を受けられる世界 / Values: 誠実・挑戦・共創',
@@ -466,7 +466,7 @@ BEGIN
     brand_color_primary, website_url, brand_stage, competitors, target_segments
   ) VALUES (
     '合同会社ナチュラルキッチン',
-    'サービス',
+    'service',
     '飲食',
     '自然の恵みを、食卓に。',
     '地産地消で地域の食文化を守り、未来の食卓を豊かにする',
@@ -720,7 +720,7 @@ BEGIN
     name, industry_category, industry_subcategory, competitors, target_segments
   ) VALUES (
     '株式会社アーバンクラフト',
-    'クリエイティブ',
+    'creative',
     'デザイン',
     '[]'::jsonb,
     '[]'::jsonb
