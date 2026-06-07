@@ -769,7 +769,7 @@ export default function PortalTopPage() {
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Bell size={18} className="text-foreground" />
-              <h2 className="text-xs font-bold text-foreground tracking-wide m-0">
+              <h2 className="text-sm font-bold text-foreground tracking-wide m-0">
                 最新のお知らせ
               </h2>
             </div>
@@ -815,10 +815,10 @@ export default function PortalTopPage() {
               href="/portal/guidelines"
               className="no-underline flex items-center justify-between mb-3"
             >
-              <h2 className="text-xs font-bold text-foreground tracking-wide m-0">
+              <h2 className="text-sm font-bold text-foreground tracking-wide m-0">
                 私たちのミッション
               </h2>
-              <ArrowRight size={16} className="text-muted-foreground" />
+              <ArrowRight size={18} className="text-muted-foreground" />
             </Link>
             {(() => {
               const { copy, body } = splitBrandCopy(mission)
@@ -844,7 +844,7 @@ export default function PortalTopPage() {
       {/* ===== 2.7. 私たちの「らしさ」4象限概観カード ===== */}
       <div className="mb-8">
         <div className="flex items-center gap-2 mb-3">
-          <h2 className="text-xs font-bold text-foreground tracking-wide m-0">
+          <h2 className="text-sm font-bold text-foreground tracking-wide m-0">
             私たちの「らしさ」
           </h2>
         </div>
@@ -857,23 +857,23 @@ export default function PortalTopPage() {
                 <Card className="relative h-full bg-[hsl(0_0%_97%)] border shadow-none hover:shadow-sm transition-shadow overflow-hidden">
                   <div className={`absolute left-0 top-0 bottom-0 w-1 ${tone.bar}`} />
                   <CardContent className="p-4 pl-5 flex items-start gap-3">
-                    <div className={`shrink-0 size-10 rounded-xl flex items-center justify-center ${tone.tile}`}>
-                      <Icon size={20} />
+                    <div className={`shrink-0 size-11 rounded-xl flex items-center justify-center ${tone.tile}`}>
+                      <Icon size={24} />
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-baseline gap-1.5 flex-wrap">
                         <span className="text-lg font-bold text-foreground leading-tight">
                           {q.perspective}
                         </span>
-                        <span className="text-xs font-normal text-muted-foreground">
+                        <span className="text-sm font-normal text-muted-foreground">
                           ｜{q.noun}
                         </span>
                       </div>
-                      <p className="text-xs text-muted-foreground leading-relaxed mt-1 m-0">
+                      <p className="text-sm text-muted-foreground leading-relaxed mt-1 m-0">
                         {q.items}
                       </p>
                     </div>
-                    <ArrowRight size={16} className="text-muted-foreground shrink-0 mt-1" />
+                    <ArrowRight size={18} className="text-muted-foreground shrink-0 mt-1" />
                   </CardContent>
                 </Card>
               </Link>
@@ -906,7 +906,7 @@ export default function PortalTopPage() {
             <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-3">
-                  <h2 className="text-xs font-bold text-foreground tracking-wide m-0">
+                  <h2 className="text-sm font-bold text-foreground tracking-wide m-0">
                     あなたの目標・KPI
                   </h2>
                   <Link href="/portal/kpi" className="text-xs text-muted-foreground hover:text-foreground no-underline flex items-center gap-0.5">
@@ -967,7 +967,7 @@ export default function PortalTopPage() {
         return (
           <div className="mb-3">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xs font-bold text-foreground tracking-wide m-0">
+              <h2 className="text-sm font-bold text-foreground tracking-wide m-0">
                 あなたのタイムライン分析
               </h2>
               <div className="flex gap-1">

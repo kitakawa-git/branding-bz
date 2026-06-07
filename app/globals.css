@@ -163,12 +163,3 @@ body {
   color: hsl(var(--foreground));
   font-family: Arial, Helvetica, sans-serif;
 }
-
-/* モバイル(sm未満)限定のルートフォントサイズ底上げ。
-   PCのコンパクト設計は維持しつつ、rem基準のTailwind値が一律で約6%大きくなる。
-   sm(640px)以上は16pxのまま。 */
-@media (max-width: 639.98px) {
-  html {
-    font-size: 17px;
-  }
-}

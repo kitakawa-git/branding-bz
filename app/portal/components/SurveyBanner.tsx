@@ -80,17 +80,16 @@ export function SurveyBanner() {
         <ClipboardList size={24} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-foreground m-0">
+        <p className="text-base font-semibold text-foreground m-0">
           ブランド浸透度調査にご回答ください
         </p>
-        <p className="text-xs text-muted-foreground m-0 mt-0.5 truncate">
+        <p className="text-sm text-muted-foreground m-0 mt-0.5 truncate">
           {survey.title}
         </p>
       </div>
       <Button
-        size="sm"
         onClick={() => router.push(`/portal/survey/${survey.id}`)}
-        className="shrink-0"
+        className="shrink-0 h-11 px-5"
       >
         回答する
       </Button>

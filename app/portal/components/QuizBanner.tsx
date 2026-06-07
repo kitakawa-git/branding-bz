@@ -44,12 +44,12 @@ export function QuizBanner() {
         <ClipboardCheck size={24} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-foreground m-0">
+        <p className="text-base font-semibold text-foreground m-0">
           ブランド理解度テストにご回答ください
         </p>
-        <p className="text-xs text-muted-foreground m-0 mt-0.5 truncate">{quiz.title}</p>
+        <p className="text-sm text-muted-foreground m-0 mt-0.5 truncate">{quiz.title}</p>
       </div>
-      <Button size="sm" onClick={() => router.push(`/portal/quiz/${quiz.id}`)} className="shrink-0">
+      <Button onClick={() => router.push(`/portal/quiz/${quiz.id}`)} className="shrink-0 h-11 px-5">
         受験する
       </Button>
     </div>
