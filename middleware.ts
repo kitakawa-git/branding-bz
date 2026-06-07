@@ -15,8 +15,9 @@ export const config = {
      * - _next/static (静的ファイル)
      * - _next/image (画像最適化)
      * - favicon.ico
+     * - sw.js / manifest.webmanifest / offline (PWA配信物・SWは認証不要)
      * - 拡張子付きの静的アセット (svg, png, jpg, etc.)
      */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|sw.js|manifest.webmanifest|offline|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
   ],
 }
