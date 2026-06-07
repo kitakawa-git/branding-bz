@@ -14,7 +14,6 @@ const breadcrumbMap: Record<string, AdminCrumb> = {
   '/admin/brand-score': { title: 'ブランドスコア' },
   '/admin/brand-score/surveys': { title: 'サーベイ管理' },
   '/admin/brand-score/quizzes': { title: '理解度テスト' },
-  '/admin/brand-score/evaluations': { title: '評価軸' },
   '/admin/company': { title: '基本情報' },
   '/admin/members': { title: 'アカウント管理' },
   '/admin/members-portal': { title: 'アカウント作成' },

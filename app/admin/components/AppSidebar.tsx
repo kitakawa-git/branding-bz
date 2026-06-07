@@ -45,7 +45,6 @@ import {
   Printer,
   BarChart3,
   ClipboardCheck,
-  ListChecks,
   GraduationCap,
   Settings,
   type LucideIcon,
@@ -65,7 +64,6 @@ const navItems: NavItem[] = [
   { href: '/admin/announcements', label: 'お知らせ管理', icon: Bell },
   { href: '/admin/brand-score/surveys', label: 'サーベイ管理', icon: BarChart3 },
   { href: '/admin/brand-score/quizzes', label: '理解度テスト', icon: ClipboardCheck },
-  { href: '/admin/brand-score/evaluations', label: '評価軸', icon: ListChecks },
   { href: '/admin/learning', label: 'ラーニング', icon: GraduationCap },
 ]
 
