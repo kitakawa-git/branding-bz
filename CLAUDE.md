@@ -102,6 +102,20 @@ id (uuid), company_id (FK→companies), name, position, department, bio, photo_u
 - QRコードは1000x1000px高解像度対応
 - セルフサービス登録時のslugはランダム英数字8文字
 
+## PWA / Service Worker（serwist）
+
+- **本番ビルドは `next build --webpack` 必須。** Next.js 16 デフォルトの Turbopack と
+  `@serwist/next`（webpack設定を注入）が衝突し、`next build`（Turbopack）は落ちる。
+  `package.json` の `build` から `--webpack` を外さないこと。
+- `next.config.ts` は**本番ビルド時のみ** serwist を適用（dev は素のconfig＝Turbopack維持）。
+  このラップ条件分岐を壊さない。
+- **【漏洩防止・最重要】** SW本体 `app/sw.ts` で、認証配下（/portal /admin /superadmin /api）は
+  `NetworkOnly` を `defaultCache` より**配列の先頭**に置く。順序を逆にすると認証ページが
+  キャッシュされ、ログアウト/別ユーザーログイン時に前ユーザー画面が漏洩する。**この順序を必ず保つ。**
+- `public/sw.js` はビルド生成物（gitignore）。コミットしない（Vercelが再生成）。
+- 将来 Next.js が webpack ビルドを廃止、または serwist が Turbopack ネイティブ対応したら、
+  configurator モード（`@serwist/cli`・2段ビルド）への移行を検討。
+
 ## デザインシステム（公開ページ共通）
 新しい画面を作成する際は、以下のトークンとパターンに必ず準拠すること。
 
