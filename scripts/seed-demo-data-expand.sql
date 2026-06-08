@@ -3,8 +3,8 @@
 -- seed-demo-data.sql + seed-demo-data-update.sql 実行後に Supabase SQL Editor で実行
 -- ============================================
 
--- brand_values テーブルが存在しない場合は作成
-CREATE TABLE IF NOT EXISTS brand_values (
+-- value_propositions テーブルが存在しない場合は作成
+CREATE TABLE IF NOT EXISTS value_propositions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
@@ -108,11 +108,11 @@ BEGIN
 
 
   -- ============================================
-  -- Part 2: 提供価値（brand_values テーブル）
+  -- Part 2: 提供価値（value_propositions テーブル）
   -- ============================================
 
   -- 企業1: テックブリッジ
-  INSERT INTO brand_values (company_id, title, description, sort_order) VALUES
+  INSERT INTO value_propositions (company_id, title, description, sort_order) VALUES
     (v_company1_id, '業務効率の劇的改善', '煩雑な手作業をクラウドで自動化。導入企業の平均業務時間を30%削減した実績があります。', 0),
     (v_company1_id, '導入コストの最小化', '中小企業でも無理なく始められる料金体系。初期費用ゼロ、月額制で必要な分だけご利用いただけます。', 1),
     (v_company1_id, '専任サポートによる安心', '導入から運用まで専任のカスタマーサクセスが伴走。ITに不慣れな方でも安心してお使いいただけます。', 2),
@@ -120,7 +120,7 @@ BEGIN
     (v_company1_id, 'スケーラブルなシステム設計', '従業員5名から500名まで、会社の成長に合わせてシームレスに拡張できるシステム設計です。', 4);
 
   -- 企業2: ナチュラルキッチン
-  INSERT INTO brand_values (company_id, title, description, sort_order) VALUES
+  INSERT INTO value_propositions (company_id, title, description, sort_order) VALUES
     (v_company2_id, '安心安全な食材', '川崎市内の契約農家10軒から届く朝採れ野菜。農薬の使用状況まで把握した、顔の見える食材を使用しています。', 0),
     (v_company2_id, '地産地消による鮮度', '収穫から調理まで最短3時間。地元の農家さんとの直接契約だからこそ実現できる、圧倒的な鮮度をお届けします。', 1),
     (v_company2_id, '家庭の温もりある味わい', '化学調味料を一切使わず、素材の味を活かした家庭料理。「おばあちゃんの味」を現代に受け継いでいます。', 2);
@@ -438,8 +438,8 @@ BEGIN
     '[{"title": "自由に発想する", "description": "既成概念にとらわれず、クリエイターの直感を大切にする"}, {"title": "共感でつながる", "description": "クライアントの想いに共感し、同じ目線でものづくりをする"}, {"title": "表現し続ける", "description": "完璧を待たずに発信する。作り続けることが成長につながる"}]'::jsonb
   );
 
-  -- 企業3: brand_values 追加
-  INSERT INTO brand_values (company_id, title, description, sort_order) VALUES
+  -- 企業3: value_propositions 追加
+  INSERT INTO value_propositions (company_id, title, description, sort_order) VALUES
     (v_company3_id, '若い感性×戦略的デザイン', '20-30代クリエイターの斬新なアイデアに、戦略的なブランディング思考を掛け合わせた提案力。', 0),
     (v_company3_id, 'スピードと柔軟性', '大手にはないフットワークの軽さ。要望への素早い対応と柔軟なプラン調整が強みです。', 1);
 

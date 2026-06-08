@@ -35,7 +35,7 @@ DELETE FROM card_events WHERE company_id IN (SELECT id FROM companies WHERE name
 DELETE FROM card_views WHERE profile_id IN (SELECT id FROM profiles WHERE company_id IN (SELECT id FROM companies WHERE name IN ('株式会社テックブリッジ','合同会社ナチュラルキッチン','株式会社アーバンクラフト')));
 
 -- ブランド関連
-DELETE FROM brand_values WHERE company_id IN (SELECT id FROM companies WHERE name IN ('株式会社テックブリッジ','合同会社ナチュラルキッチン','株式会社アーバンクラフト'));
+DELETE FROM value_propositions WHERE company_id IN (SELECT id FROM companies WHERE name IN ('株式会社テックブリッジ','合同会社ナチュラルキッチン','株式会社アーバンクラフト'));
 DELETE FROM brand_terms WHERE company_id IN (SELECT id FROM companies WHERE name IN ('株式会社テックブリッジ','合同会社ナチュラルキッチン','株式会社アーバンクラフト'));
 DELETE FROM brand_personas WHERE company_id IN (SELECT id FROM companies WHERE name IN ('株式会社テックブリッジ','合同会社ナチュラルキッチン','株式会社アーバンクラフト'));
 DELETE FROM brand_personalities WHERE company_id IN (SELECT id FROM companies WHERE name IN ('株式会社テックブリッジ','合同会社ナチュラルキッチン','株式会社アーバンクラフト'));

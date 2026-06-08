@@ -4,7 +4,7 @@
 // 表示項目: MVV / バリュー / 行動指針 / 沿革 / 事業内容
 // - MVV・バリュー・沿革・事業内容: brand_guidelines
 // - 行動指針: brand_guidelines.action_guidelines
-// ※ 提供価値（brand_values＋companies.provided_values）は「接し方｜ブランド戦略」(/portal/strategy) へ移動
+// ※ 提供価値（value_propositions＋companies.provided_values）は「接し方｜ブランド戦略」(/portal/strategy) へ移動
 import { useEffect, useState, type CSSProperties } from 'react'
 import { supabase } from '@/lib/supabase'
 import { fetchWithRetry } from '@/lib/supabase-fetch'
@@ -314,7 +314,7 @@ export default function PortalGuidelinesPage() {
         </section>
       )}
 
-      {/* 提供価値（brand_values＋companies.provided_values）は「接し方｜ブランド戦略」へ移動 */}
+      {/* 提供価値（value_propositions＋companies.provided_values）は「接し方｜ブランド戦略」へ移動 */}
 
       {/* 4. 行動指針（brand_guidelines.action_guidelines。空なら非表示） */}
       {data.action_guidelines.length > 0 && (

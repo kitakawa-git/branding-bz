@@ -25,7 +25,7 @@ export default function PortalValuesPage() {
     if (getPageCache<ValueItem[]>(cacheKey)) return
 
     supabase
-      .from('brand_values')
+      .from('value_propositions')
       .select('*')
       .eq('company_id', companyId)
       .order('sort_order')

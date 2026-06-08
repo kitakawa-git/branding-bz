@@ -97,7 +97,7 @@ ALTER TABLE public.survey_participants DISABLE ROW LEVEL SECURITY;
 
 -- ────────────────────────────────────────────
 -- 3. 分類3 (管理画面専用) のポリシー DROP + RLS DISABLE
---    対象: admin_users, brand_values, brand_surveys,
+--    対象: admin_users, value_propositions, brand_surveys,
 --          brand_survey_questions, brand_personality_tag_mappings,
 --          brand_score_snapshots, mini_app_sessions,
 --          mini_app_conversations, brand_color_projects,
@@ -107,8 +107,8 @@ ALTER TABLE public.survey_participants DISABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "auth_all" ON public.admin_users;
 ALTER TABLE public.admin_users DISABLE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS "auth_all" ON public.brand_values;
-ALTER TABLE public.brand_values DISABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "auth_all" ON public.value_propositions;
+ALTER TABLE public.value_propositions DISABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "auth_all" ON public.brand_surveys;
 ALTER TABLE public.brand_surveys DISABLE ROW LEVEL SECURITY;
@@ -155,7 +155,7 @@ ALTER FUNCTION public.update_updated_at() RESET search_path;
 --   'profiles','companies','news',
 --   'card_events','card_views','brand_page_views','brand_micro_feedbacks',
 --   'brand_survey_responses','survey_participants',
---   'admin_users','brand_values','brand_surveys','brand_survey_questions',
+--   'admin_users','value_propositions','brand_surveys','brand_survey_questions',
 --   'brand_personality_tag_mappings','brand_score_snapshots',
 --   'mini_app_sessions','mini_app_conversations','brand_color_projects',
 --   'goal_kpis','goal_periods'
