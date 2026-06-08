@@ -137,6 +137,7 @@ export async function POST(request: NextRequest) {
       description,
       youtube_url,
       category,
+      theme_id,
       is_published,
       thumbnail_url,
     } = body as Record<string, unknown>
@@ -186,6 +187,7 @@ export async function POST(request: NextRequest) {
         youtube_url: youtube_url.trim(),
         thumbnail_url: finalThumb,
         category: typeof category === 'string' ? category.trim() || null : null,
+        theme_id: typeof theme_id === 'string' && theme_id ? theme_id : null,
         is_published: typeof is_published === 'boolean' ? is_published : false,
         sort_order: nextSortOrder,
         created_by: admin.authId,

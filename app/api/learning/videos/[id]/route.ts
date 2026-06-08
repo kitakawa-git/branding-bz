@@ -71,6 +71,10 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     if ('category' in b) {
       updates.category = typeof b.category === 'string' ? b.category.trim() || null : null
     }
+    if ('theme_id' in b) {
+      // null/空 で未分類に戻す。文字列ならそのテーマへ割り当て
+      updates.theme_id = typeof b.theme_id === 'string' && b.theme_id ? b.theme_id : null
+    }
     if (typeof b.is_published === 'boolean') {
       updates.is_published = b.is_published
     }

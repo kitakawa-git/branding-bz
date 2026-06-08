@@ -1,11 +1,11 @@
 'use client'
 
 // ラーニング動画 作成／編集モーダル
-// YouTube URL 貼り付け → ID抽出 → サムネ・タイトル候補プレビュー → カテゴリ・説明入力 → 保存
-import { useEffect, useState } from 'react'
+// YouTube URL 貼り付け → ID抽出 → サムネ・タイトル候補プレビュー → カテゴリー/テーマ選択・説明入力 → 保存
+import { useEffect, useState, useMemo } from 'react'
 import { toast } from 'sonner'
 import { extractVideoId, getThumbnailUrl } from '@/lib/youtube'
-import type { LearningVideo } from '@/lib/types/learning'
+import type { LearningVideo, LearningCategory, LearningTheme } from '@/lib/types/learning'
 import {
   Dialog,
   DialogContent,
@@ -17,28 +17,56 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Check, Youtube } from 'lucide-react'
+
+// 階層（カテゴリー＋配下テーマ）。structure API の categories をそのまま渡せる
+type CategoryTree = (Pick<LearningCategory, 'id' | 'name'> & {
+  themes: Pick<LearningTheme, 'id' | 'name' | 'category_id'>[]
+})
 
 type Props = {
   open: boolean
   onOpenChange: (open: boolean) => void
   video?: LearningVideo | null // 指定時は編集モード
-  categories: string[] // 既存カテゴリ（サジェスト用）
+  categoriesTree: CategoryTree[] // カテゴリー＞テーマの階層
   onSaved: () => void
 }
 
-export function LearningVideoDialog({ open, onOpenChange, video, categories, onSaved }: Props) {
+const UNASSIGNED = '__none__' // 未分類を表す Select 値
+
+export function LearningVideoDialog({ open, onOpenChange, video, categoriesTree, onSaved }: Props) {
   const isEdit = !!video
 
   const [youtubeUrl, setYoutubeUrl] = useState('')
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-  const [category, setCategory] = useState('')
+  const [categoryId, setCategoryId] = useState<string>(UNASSIGNED)
+  const [themeId, setThemeId] = useState<string>(UNASSIGNED)
   const [isPublished, setIsPublished] = useState(true)
   const [saving, setSaving] = useState(false)
 
   // 動画ID（プレビュー用）
   const videoId = extractVideoId(youtubeUrl)
+
+  // theme_id → 所属 category_id を逆引きするマップ
+  const themeToCategory = useMemo(() => {
+    const m = new Map<string, string>()
+    for (const c of categoriesTree) for (const t of c.themes) m.set(t.id, c.id)
+    return m
+  }, [categoriesTree])
+
+  // 選択中カテゴリー配下のテーマ
+  const themesOfCategory = useMemo(
+    () => categoriesTree.find((c) => c.id === categoryId)?.themes ?? [],
+    [categoriesTree, categoryId]
+  )
 
   // ダイアログを開くたびに初期化（編集なら既存値）
   useEffect(() => {
@@ -47,19 +75,25 @@ export function LearningVideoDialog({ open, onOpenChange, video, categories, onS
       setYoutubeUrl(video.youtube_url || `https://www.youtube.com/watch?v=${video.youtube_video_id}`)
       setTitle(video.title)
       setDescription(video.description || '')
-      setCategory(video.category || '')
       setIsPublished(video.is_published)
+      if (video.theme_id && themeToCategory.has(video.theme_id)) {
+        setCategoryId(themeToCategory.get(video.theme_id)!)
+        setThemeId(video.theme_id)
+      } else {
+        setCategoryId(UNASSIGNED)
+        setThemeId(UNASSIGNED)
+      }
     } else {
       setYoutubeUrl('')
       setTitle('')
       setDescription('')
-      setCategory('')
-      setIsPublished(true) // 登録＝即公開（初期値を公開に）
+      setCategoryId(UNASSIGNED)
+      setThemeId(UNASSIGNED)
+      setIsPublished(true) // 登録＝即公開
     }
-  }, [open, video])
+  }, [open, video, themeToCategory])
 
-  // URL からタイトル候補を取得（best-effort・CORSで失敗しても無視）。
-  // 新規作成時かつタイトル未入力のときのみ自動補完する。
+  // URL からタイトル候補を取得（best-effort・CORSで失敗しても無視）
   useEffect(() => {
     if (isEdit) return
     if (!videoId) return
@@ -81,6 +115,12 @@ export function LearningVideoDialog({ open, onOpenChange, video, categories, onS
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [videoId, isEdit])
 
+  // カテゴリー変更時はテーマをリセット
+  const handleCategoryChange = (v: string) => {
+    setCategoryId(v)
+    setThemeId(UNASSIGNED)
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!youtubeUrl.trim()) {
@@ -98,7 +138,7 @@ export function LearningVideoDialog({ open, onOpenChange, video, categories, onS
         title: title.trim(),
         description: description.trim(),
         youtube_url: youtubeUrl.trim(),
-        category: category.trim(),
+        theme_id: themeId === UNASSIGNED ? null : themeId,
         is_published: isPublished,
       }
       const res = await fetch(
@@ -196,33 +236,60 @@ export function LearningVideoDialog({ open, onOpenChange, video, categories, onS
                 />
               </div>
 
-              {/* カテゴリ + 公開設定 */}
-              <div className="flex flex-wrap items-end gap-4">
-                <div className="space-y-1.5 flex-1 min-w-[180px]">
-                  <Label htmlFor="lv-category" className="text-xs font-semibold text-muted-foreground">
-                    カテゴリ（任意）
-                  </Label>
-                  <Input
-                    id="lv-category"
-                    type="text"
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                    placeholder="例: 理念・行動指針"
-                    className="bg-background"
-                    list="lv-category-suggestions"
-                  />
-                  <datalist id="lv-category-suggestions">
-                    {categories.map((c) => (
-                      <option key={c} value={c} />
-                    ))}
-                  </datalist>
+              {/* カテゴリー → テーマ（2段選択） */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold text-muted-foreground">カテゴリー</Label>
+                  <Select value={categoryId} onValueChange={handleCategoryChange}>
+                    <SelectTrigger className="bg-background">
+                      <SelectValue placeholder="未分類" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={UNASSIGNED}>未分類</SelectItem>
+                      {categoriesTree.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>
+                          {c.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-                <div className="flex items-center gap-2 pb-2">
-                  <Switch id="lv-published" checked={isPublished} onCheckedChange={setIsPublished} />
-                  <Label htmlFor="lv-published" className="text-xs text-muted-foreground cursor-pointer">
-                    {isPublished ? '公開' : '非公開'}
-                  </Label>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold text-muted-foreground">テーマ</Label>
+                  <Select
+                    value={themeId}
+                    onValueChange={setThemeId}
+                    disabled={categoryId === UNASSIGNED || themesOfCategory.length === 0}
+                  >
+                    <SelectTrigger className="bg-background">
+                      <SelectValue
+                        placeholder={
+                          categoryId === UNASSIGNED
+                            ? 'カテゴリーを選択'
+                            : themesOfCategory.length === 0
+                              ? 'テーマ未作成'
+                              : '未選択'
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={UNASSIGNED}>未選択</SelectItem>
+                      {themesOfCategory.map((t) => (
+                        <SelectItem key={t.id} value={t.id}>
+                          {t.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
+              </div>
+
+              {/* 公開設定 */}
+              <div className="flex items-center gap-2">
+                <Switch id="lv-published" checked={isPublished} onCheckedChange={setIsPublished} />
+                <Label htmlFor="lv-published" className="text-xs text-muted-foreground cursor-pointer">
+                  {isPublished ? '公開' : '非公開'}
+                </Label>
               </div>
             </CardContent>
           </Card>

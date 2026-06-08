@@ -9,13 +9,49 @@ export type LearningVideo = {
   youtube_video_id: string
   youtube_url: string | null
   thumbnail_url: string | null
-  category: string | null
+  category: string | null // レガシー（旧テキストカテゴリ。今後は theme_id を使用）
+  theme_id: string | null // 所属テーマ（未分類は null）
   duration_seconds: number | null
   sort_order: number
   is_published: boolean
   created_by: string | null
   created_at: string
   updated_at: string
+}
+
+// learning_categories: カテゴリー（大分類）
+export type LearningCategory = {
+  id: string
+  company_id: string
+  name: string
+  sort_order: number
+  created_at: string
+  updated_at: string
+  themes?: LearningTheme[] // 階層取得時に同梱
+}
+
+// learning_themes: テーマ（学習レベル。カテゴリー配下）
+export type LearningTheme = {
+  id: string
+  company_id: string
+  category_id: string
+  name: string
+  description: string | null
+  sort_order: number
+  created_at: string
+  updated_at: string
+  video_count?: number // テーマ配下動画の自動カウント
+  videos?: LearningVideo[] // 階層取得時に同梱
+}
+
+// 階層構造レスポンス（カテゴリー > テーマ > 動画）
+// ポータル用は各 video に進捗（my_*）が付与される
+export type LearningStructure<V = LearningVideo> = {
+  categories: (Omit<LearningCategory, 'themes'> & {
+    themes: (Omit<LearningTheme, 'videos'> & { video_count: number; videos: V[] })[]
+  })[]
+  // どのテーマにも属さない動画（未分類 / その他）
+  uncategorized: V[]
 }
 
 // learning_video_views: 視聴セッション（1セッション=1行）

@@ -20,7 +20,8 @@
 10. [デザインシステム](#10-デザインシステム)
 11. [API一覧](#11-api一覧)
 12. [ブランドスコア](#12-ブランドスコア)
-13. [変更履歴](#13-変更履歴)
+13. [ビデオラーニング](#13-ビデオラーニング)
+14. [変更履歴](#14-変更履歴)
 
 ---
 
@@ -147,7 +148,7 @@ app/
 
 ### RLS
 
-全テーブルRLS無効（プロトタイプ段階。本番前に要設定）
+全テーブルでRLS有効。ポリシー内の `auth.uid()` は `(select auth.uid())` でラップ済み（initplan最適化済み。Supabase advisor の `auth_rls_initplan` 警告は解消）。全外部キーにインデックス設定済み（`unindexed_fk=0`）。データアクセスは原則 service_role 経由の API Route（`getSupabaseAdmin()`）。一部テーブルはポータルの cookie セッション（authenticated ロール）で直接 SELECT する。新規テーブル（`learning_*` 等）は service_role 専用＝ポリシー0（anon/authenticated 直アクセス不可）。
 
 ---
 
@@ -262,6 +263,46 @@ app/
 | `brand_quiz_attempts` | quiz_id / **profile_id（記名）** / company_id / department / role_category / score / why_score / how_score / passed / total_questions / correct_count / **unique(quiz_id, profile_id)** |
 | `brand_quiz_answers` | attempt_id / question_id / selected_option_id / is_correct |
 
+### learning_videos（ビデオラーニング）
+
+| カラム | 型 | 説明 |
+|--------|------|------|
+| id | uuid (PK) | |
+| company_id | uuid (FK→companies) | |
+| title | text | 動画タイトル |
+| description | text | 説明 |
+| youtube_video_id | text | URLから抽出した動画ID |
+| youtube_url | text | 元URL |
+| thumbnail_url | text | サムネ（未指定時は img.youtube.com から自動生成） |
+| category | text | カテゴリタグ（任意・単一） |
+| duration_seconds | int | 動画尺（初回再生時にPlayer APIで確定） |
+| sort_order | int | 表示順 |
+| is_published | boolean | 公開/非公開 |
+| created_by | uuid | 登録者 |
+| created_at / updated_at | timestamptz | |
+
+**インデックス:** `(company_id, sort_order)`
+
+### learning_video_views（ビデオラーニング 視聴セッション）
+
+1視聴セッション=1行。再生開始でINSERT、進捗はその行をUPDATE。
+
+| カラム | 型 | 説明 |
+|--------|------|------|
+| id | uuid (PK) | |
+| company_id | uuid (FK→companies) | |
+| video_id | uuid (FK→learning_videos) | |
+| profile_id | uuid (FK→profiles) | 視聴者 |
+| watched_seconds | int | このセッションの最大到達秒 |
+| progress_percent | int | 0-100 |
+| completed | boolean | 90%以上で true |
+| started_at | timestamptz | 再生開始 |
+| last_progress_at | timestamptz | 最終進捗更新 |
+| created_at | timestamptz | |
+
+**インデックス:** `(video_id)`, `(profile_id, video_id)`, `(company_id, created_at)`
+**RLS:** 有効・ポリシー0（service_role経由のみ、anon/authenticated直アクセス不可）
+
 ### マイグレーション
 
 | ファイル | 内容 |
@@ -304,6 +345,8 @@ app/
 | 名刺プレビュー | `/portal/card-preview` | 完了 |
 | 理解度テスト受験＋本人結果 | `/portal/quiz/[id]` | 完了 |
 | お知らせ | `/portal/announcements` | 完了 |
+| ビデオラーニング 動画一覧（カテゴリ絞り込み・進捗バッジ） | `/portal/learning` | 完了 |
+| ビデオラーニング 動画視聴（プレイヤー＋進捗記録） | `/portal/learning/[id]` | 完了 |
 
 ### 管理画面
 
@@ -324,6 +367,8 @@ app/
 | 用語 | `/admin/brand/terms` | 完了 |
 | CIマニュアルPDF出力 | `/admin/ci-manual` | 完了 |
 | 理解度テスト（作成・AI設問生成・配信・k匿名集計・受験状況） | `/admin/brand-score/quizzes` | 完了 |
+| ビデオラーニング 動画管理（登録・編集・削除・並び替え・公開切替） | `/admin/learning` | 完了 |
+| ビデオラーニング 視聴分析（動画別・メンバー別） | `/admin/learning`（タブ） | 完了 |
 
 ### スーパー管理画面
 
@@ -838,6 +883,18 @@ CLAUDE.md の「デザインシステム（公開ページ共通）」セクシ�
 | `/api/brand-score/quizzes/pending` | GET | 未受験 active クイズ（バナー用） |
 | `/api/brand-score/knowledge-gap` | GET | 共感×知識 ギャップ分析 |
 
+### ビデオラーニング
+
+| エンドポイント | メソッド | 説明 |
+|--------------|---------|------|
+| `/api/learning/videos` | GET | 一覧（`?published=true`でポータル用＝公開のみ＋自分の進捗、管理用は全件） |
+| `/api/learning/videos` | POST | 動画作成（URLからID抽出・サムネ自動生成・タイトル未入力時oEmbed取得） |
+| `/api/learning/videos/[id]` | GET/PATCH/DELETE | 取得・更新・削除（管理者） |
+| `/api/learning/videos/reorder` | PATCH | 並び替え |
+| `/api/learning/views` | POST | 視聴セッション開始（INSERT）→ view_id返却 |
+| `/api/learning/views/[id]` | PATCH | 進捗更新（巻き戻り防止・本人確認・duration確定を同梱） |
+| `/api/learning/analytics` | GET | 視聴集計（動画別・メンバー別、管理者） |
+
 ---
 
 ## 12. ブランドスコア
@@ -854,9 +911,43 @@ CLAUDE.md の「デザインシステム（公開ページ共通）」セクシ�
 
 ---
 
-## 13. 変更履歴
+## 13. ビデオラーニング
+
+### 概要
+
+管理者が登録したYouTube動画を、ポータルメンバーが視聴できる学習機能。「浸透」レイヤーに位置づけ。視聴状況（誰が・何回・どこまで・完了したか）を管理画面で確認できる。
+
+### 仕様
+
+- 動画構造: フラット一覧＋カテゴリタグで絞り込み（コース化なし）
+- 視聴トラッキング: 進捗％・完了率まで記録
+
+### トラッキング設計
+
+YouTube IFrame Player API で再生イベント（PLAYING / PAUSED / ENDED）を捕捉。視聴セッション=1行（`learning_video_views`）として、再生開始でINSERT、進捗はその行をUPDATE。
+
+- **進捗送信:** 再生中は30秒間引き。一時停止・再生終了・ページ離脱時は即送信（離脱時は `fetch(keepalive:true)`）
+- **完了判定:** `progress_percent >= 90` で `completed=true`（ENDEDでもtrue）
+- **集計:** 視聴回数=セッション行数のCOUNT、視聴履歴=`started_at`、到達度=`MAX(progress_percent)`、完了=`BOOL_OR(completed)`
+
+### 実装上の判断
+
+- **duration確定をメンバーAPIに集約:** 動画尺は `views/[id]` PATCH に同梱し未設定時のみ確定。`videos` のPATCH/DELETEは管理者専用のまま（管理者APIをメンバーに開かない）
+- **進捗の巻き戻り防止:** 既存値より大きい場合のみ更新
+- **DOM置換対策:** `YT.Player()` がDOM要素を置換する挙動による React unmount時の `NotFoundError` を、手動child node方式で回避
+
+### スコープ外（将来）
+
+- プラン制限（Standard以上で開放）── Stripe実装後
+- 視聴必須化・未視聴リマインド
+- ブランドスコア インナー指標（WHAT＝行動一致）との連動
+
+---
+
+## 14. 変更履歴
 
 | 日付 | バージョン | 変更内容 |
 |------|-----------|---------|
+| 2026-06-07 | v1.2.0 | **ビデオラーニング機能追加:** DB2テーブル（learning_videos, learning_video_views）、API7エンドポイント、管理画面（動画管理＋視聴分析）、ポータル（一覧＋視聴プレイヤー）、両サイドバーに「ラーニング」追加。YouTube IFrame Player APIで進捗・完了トラッキング（30秒間引き＋一時停止/終了/離脱時即送信）。 **RLS記述の実態反映（CLAUDE.md / 本書§3）:** 全テーブルRLS有効・`(select auth.uid())` ラップ済み・FK全張りに訂正。 |
 | 2026-06-04 | v1.1.0 | **ブランド理解度テスト（インナー：知識）追加。** 記名式クイズで社員の知識を測定。DB4テーブル（brand_quizzes/questions/attempts/answers）、API12本、管理UI（作成・AI設問生成レビュー・配信・k匿名集計・受験状況）、ポータルUI（バナー・受験・本人結果＝学習振り返り）、ダッシュボード統合（理解度カード＋共感×知識ギャップ分析）。採点=単純正答率、k匿名 n≥3（overall/company_average も n<3 抑制）、本人確認はセッション、take は正解・解説を除外。 |
 | 2026-03-09 | v0.8.0 | **STP Step3 ターゲティング大改修:** 競合分析を構造化データ（`competitors_analysis: [{name, traits}]`）に変更。Step1の競合企業から自動カード生成。AI提案を手動ボタン式に変更（確認ダイアログ付き）。「ターゲットの詳細定義」フィールドを廃止（Step2セグメント説明を自動採用）。購買決定要因・自社の強みを必須バリデーション化。 **suggest-target-detail API新設:** 購買決定要因・自社の強み・競合ごとの個別分析を提案。動的スキーマ（競合名を事前指定）。 **suggest-positioning API改修:** 構造化された競合分析データを活用したポジショニング軸提案。 **UI統一:** ラベル統一（競合企業→競合企業・サービス）、削除ボタンスタイル統一（`variant="outline" size="icon"` + destructive系）、ツール画面デザインガイドライン策定。 **Step5/PDF更新:** メインターゲットカード内にセグメント説明を統合表示。 **基本情報共通化:** companies.target_segments カラム追加、shared-profile APIによるツール↔本体の双方向データ同期、競合データREPLACEマージ方式。 **その他:** CIマニュアルPDF出力機能、公開ページのグラスモーフィズムデザインシステム適用。feature-requirements.md を最新状態に全面更新。 |

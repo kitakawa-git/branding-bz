@@ -1,14 +1,24 @@
 'use client'
 
-// ポータル ラーニング一覧: 公開動画のサムネ一覧。カテゴリ絞り込み＋自分の進捗バッジ。
-import { useEffect, useState, useMemo } from 'react'
+// ポータル ラーニング一覧: カテゴリー > テーマ > 動画 の階層表示。
+// 各テーマに「○本」バッジ、各動画に自分の進捗バッジ。未分類の公開動画は末尾「その他」。
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Button } from '@/components/ui/button'
-import { GraduationCap, PlayCircle, CheckCircle2, Youtube } from 'lucide-react'
+import { GraduationCap, PlayCircle, CheckCircle2, Youtube, FolderOpen } from 'lucide-react'
 import type { LearningVideoWithProgress } from '@/lib/types/learning'
+
+type ThemeNode = {
+  id: string
+  name: string
+  description: string | null
+  video_count: number
+  videos: LearningVideoWithProgress[]
+}
+type CategoryNode = { id: string; name: string; themes: ThemeNode[] }
+type Structure = { categories: CategoryNode[]; uncategorized: LearningVideoWithProgress[] }
 
 function ProgressBadge({ video }: { video: LearningVideoWithProgress }) {
   if (video.my_completed) {
@@ -34,19 +44,44 @@ function ProgressBadge({ video }: { video: LearningVideoWithProgress }) {
   )
 }
 
+function VideoCard({ video }: { video: LearningVideoWithProgress }) {
+  return (
+    <Link key={video.id} href={`/portal/learning/${video.id}`} className="no-underline group">
+      <Card className="bg-[hsl(0_0%_97%)] border shadow-none overflow-hidden transition-all hover:shadow-md hover:scale-[1.01]">
+        <div className="relative aspect-video bg-muted">
+          {video.thumbnail_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={video.thumbnail_url} alt="" className="w-full h-full object-cover" />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+              <Youtube size={28} />
+            </div>
+          )}
+          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20">
+            <PlayCircle size={44} className="text-white" strokeWidth={1.5} />
+          </div>
+        </div>
+        <CardContent className="p-4">
+          <h3 className="text-sm font-bold text-foreground leading-snug m-0 line-clamp-2 mb-1.5">{video.title}</h3>
+          <ProgressBadge video={video} />
+        </CardContent>
+      </Card>
+    </Link>
+  )
+}
+
 export default function PortalLearningPage() {
-  const [videos, setVideos] = useState<LearningVideoWithProgress[]>([])
+  const [structure, setStructure] = useState<Structure | null>(null)
   const [loading, setLoading] = useState(true)
-  const [activeCategory, setActiveCategory] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
     ;(async () => {
       try {
-        const res = await fetch('/api/learning/videos?published=true')
+        const res = await fetch('/api/learning/structure?published=true')
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         const data = await res.json()
-        if (!cancelled) setVideos(data.videos || [])
+        if (!cancelled) setStructure({ categories: data.categories || [], uncategorized: data.uncategorized || [] })
       } catch (err) {
         console.error('[PortalLearning] 取得エラー:', err)
       } finally {
@@ -58,21 +93,12 @@ export default function PortalLearningPage() {
     }
   }, [])
 
-  const categories = useMemo(
-    () => Array.from(new Set(videos.map((v) => v.category).filter((c): c is string => !!c))),
-    [videos]
-  )
-
-  const filtered = useMemo(
-    () => (activeCategory ? videos.filter((v) => v.category === activeCategory) : videos),
-    [videos, activeCategory]
-  )
-
   if (loading) {
     return (
       <div className="max-w-4xl mx-auto px-5 pt-4 pb-10 space-y-6">
+        <Skeleton className="h-5 w-40" />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3, 4].map((i) => (
+          {[1, 2, 3].map((i) => (
             <Skeleton key={i} className="h-48 w-full rounded-xl" />
           ))}
         </div>
@@ -80,7 +106,10 @@ export default function PortalLearningPage() {
     )
   }
 
-  if (videos.length === 0) {
+  const hasContent =
+    structure && (structure.categories.length > 0 || structure.uncategorized.length > 0)
+
+  if (!hasContent) {
     return (
       <div className="max-w-4xl mx-auto px-5 pt-4 pb-10">
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
@@ -96,73 +125,48 @@ export default function PortalLearningPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-5 pt-4 pb-10 space-y-5">
-      {/* カテゴリ絞り込み */}
-      {categories.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          <Button
-            variant={activeCategory === null ? 'default' : 'outline'}
-            size="sm"
-            className="rounded-full h-8"
-            onClick={() => setActiveCategory(null)}
-          >
-            すべて
-          </Button>
-          {categories.map((c) => (
-            <Button
-              key={c}
-              variant={activeCategory === c ? 'default' : 'outline'}
-              size="sm"
-              className="rounded-full h-8"
-              onClick={() => setActiveCategory(c)}
-            >
-              {c}
-            </Button>
-          ))}
-        </div>
-      )}
-
-      {/* 動画グリッド */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filtered.map((video) => (
-          <Link
-            key={video.id}
-            href={`/portal/learning/${video.id}`}
-            className="no-underline group"
-          >
-            <Card className="bg-[hsl(0_0%_97%)] border shadow-none overflow-hidden transition-all hover:shadow-md hover:scale-[1.01]">
-              <div className="relative aspect-video bg-muted">
-                {video.thumbnail_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={video.thumbnail_url} alt="" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-                    <Youtube size={28} />
-                  </div>
-                )}
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20">
-                  <PlayCircle size={44} className="text-white" strokeWidth={1.5} />
-                </div>
+    <div className="max-w-4xl mx-auto px-5 pt-4 pb-10 space-y-8">
+      {/* カテゴリー > テーマ > 動画 */}
+      {structure!.categories.map((cat) => (
+        <section key={cat.id} className="space-y-4">
+          <div className="flex items-center gap-2 border-b pb-2">
+            <FolderOpen size={18} className="text-foreground" />
+            <h2 className="text-base font-bold text-foreground m-0">{cat.name}</h2>
+          </div>
+          {cat.themes.map((theme) => (
+            <div key={theme.id} className="space-y-2">
+              <div className="flex items-baseline gap-2">
+                <h3 className="text-sm font-bold text-foreground m-0">{theme.name}</h3>
+                <span className="text-xs font-semibold text-muted-foreground">{theme.video_count}本</span>
               </div>
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between gap-2 mb-1.5">
-                  <h3 className="text-sm font-bold text-foreground leading-snug m-0 line-clamp-2">
-                    {video.title}
-                  </h3>
-                </div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <ProgressBadge video={video} />
-                  {video.category && (
-                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-blue-50 text-blue-700">
-                      {video.category}
-                    </Badge>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-        ))}
-      </div>
+              {theme.description && (
+                <p className="text-xs text-muted-foreground m-0 leading-relaxed">{theme.description}</p>
+              )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {theme.videos.map((v) => (
+                  <VideoCard key={v.id} video={v} />
+                ))}
+              </div>
+            </div>
+          ))}
+        </section>
+      ))}
+
+      {/* 未分類（その他） */}
+      {structure!.uncategorized.length > 0 && (
+        <section className="space-y-4">
+          <div className="flex items-center gap-2 border-b pb-2">
+            <FolderOpen size={18} className="text-muted-foreground" />
+            <h2 className="text-base font-bold text-muted-foreground m-0">その他</h2>
+            <span className="text-xs font-semibold text-muted-foreground">{structure!.uncategorized.length}本</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {structure!.uncategorized.map((v) => (
+              <VideoCard key={v.id} video={v} />
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   )
 }
