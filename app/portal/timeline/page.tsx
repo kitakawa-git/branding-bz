@@ -765,7 +765,7 @@ export default function PortalTimelinePage() {
         <div className="space-y-4">
           {[1, 2, 3].map(i => (
             <Card key={i} className="bg-[hsl(0_0%_97%)] border shadow-none">
-              <CardContent className="p-5">
+              <CardContent className="p-3 sm:p-5">
                 <div className="flex items-start gap-3 mb-3">
                   <Skeleton className="size-9 rounded-full shrink-0" />
                   <div className="flex-1">
@@ -1144,7 +1144,7 @@ function PostCard({
 
   return (
     <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-      <CardContent className="p-5">
+      <CardContent className="p-3 sm:p-5">
         {/* Header */}
         <div className="flex items-start gap-3 mb-3">
           <Avatar className="size-9 shrink-0">
