@@ -49,7 +49,7 @@ export function QuizBanner() {
         </p>
         <p className="text-sm text-muted-foreground m-0 mt-0.5 truncate">{quiz.title}</p>
       </div>
-      <Button onClick={() => router.push(`/portal/quiz/${quiz.id}`)} className="shrink-0 h-11 px-5">
+      <Button onClick={() => router.push(`/portal/quiz/${quiz.id}`)} className="shrink-0 h-11 px-5 rounded-full">
         受験する
       </Button>
     </div>

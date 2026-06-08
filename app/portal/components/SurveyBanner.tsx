@@ -89,9 +89,9 @@ export function SurveyBanner() {
       </div>
       <Button
         onClick={() => router.push(`/portal/survey/${survey.id}`)}
-        className="shrink-0 h-11 px-5"
+        className="shrink-0 h-11 px-5 rounded-full"
       >
-        回答する
+        回答
       </Button>
     </div>
   )
