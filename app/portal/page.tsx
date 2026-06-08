@@ -747,7 +747,7 @@ export default function PortalTopPage() {
           </h1>
         )}
         {member && (
-          <p className="text-sm text-muted-foreground m-0 mt-1">
+          <p className="text-base sm:text-sm text-muted-foreground m-0 mt-1">
             ようこそ、{member.display_name} さん
           </p>
         )}
