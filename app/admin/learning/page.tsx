@@ -23,7 +23,6 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,7 +38,6 @@ import { Fab, FabButton } from '@/components/ui/fab'
 import { Plus, Pencil, Trash2, GripVertical, Youtube } from 'lucide-react'
 import type { LearningVideo } from '@/lib/types/learning'
 import { LearningVideoDialog } from './LearningVideoDialog'
-import { LearningAnalytics } from './LearningAnalytics'
 
 // 秒数を mm:ss 表記に
 function formatDuration(sec: number | null): string | null {
@@ -274,15 +272,7 @@ export default function AdminLearningPage() {
 
   return (
     <div>
-      <Tabs defaultValue="videos">
-        <TabsList className="mb-4">
-          <TabsTrigger value="videos">動画管理</TabsTrigger>
-          <TabsTrigger value="analytics">視聴分析</TabsTrigger>
-        </TabsList>
-
-        {/* 動画管理タブ */}
-        <TabsContent value="videos">
-          {/* 新規登録 FAB */}
+      {/* 新規登録 FAB */}
           <Fab>
             <FabButton onClick={openCreate} icon={<Plus size={16} />}>
               動画を登録
@@ -331,13 +321,6 @@ export default function AdminLearningPage() {
               </CardContent>
             </Card>
           )}
-        </TabsContent>
-
-        {/* 視聴分析タブ */}
-        <TabsContent value="analytics">
-          <LearningAnalytics />
-        </TabsContent>
-      </Tabs>
 
       {/* 作成／編集モーダル */}
       <LearningVideoDialog

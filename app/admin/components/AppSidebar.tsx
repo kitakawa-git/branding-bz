@@ -47,6 +47,9 @@ import {
   ClipboardCheck,
   GraduationCap,
   Settings,
+  Crosshair,
+  UserRound,
+  Palette,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -58,13 +61,9 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   { href: '/admin/dashboard', label: 'ダッシュボード', icon: LayoutDashboard },
-  { href: '/admin/members', label: 'アカウント管理', icon: Users },
   { href: '/admin/card-template', label: 'スマート名刺', icon: CreditCard },
   { href: '/admin/kpi', label: '目標・KPI管理', icon: Milestone },
   { href: '/admin/announcements', label: 'お知らせ管理', icon: Bell },
-  { href: '/admin/brand-score/surveys', label: 'サーベイ管理', icon: BarChart3 },
-  { href: '/admin/brand-score/quizzes', label: '理解度テスト', icon: ClipboardCheck },
-  { href: '/admin/learning', label: 'ラーニング', icon: GraduationCap },
 ]
 
 const brandItems: NavItem[] = [
@@ -74,6 +73,20 @@ const brandItems: NavItem[] = [
   { href: '/admin/brand/verbal', label: 'バーバル', icon: MessageSquare },
   { href: '/admin/brand/strategy', label: 'ブランド戦略', icon: Map },
   { href: '/admin/ci-manual', label: 'CIマニュアル出力', icon: Printer },
+]
+
+// 構築（ミニアプリ群）: STP分析・ペルソナビルダー・ブランドカラー定義の各ツールのアプリ画面へ
+const buildItems: NavItem[] = [
+  { href: '/tools/stp/app', label: 'STP分析', icon: Crosshair },
+  { href: '/tools/persona/app', label: 'ペルソナビルダー', icon: UserRound },
+  { href: '/tools/colors/app', label: 'ブランドカラー定義', icon: Palette },
+]
+
+// 浸透（branding.bz本体の浸透施策）: サーベイ・理解度テスト・ラーニング
+const penetrationItems: NavItem[] = [
+  { href: '/admin/brand-score/surveys', label: 'サーベイ管理', icon: BarChart3 },
+  { href: '/admin/brand-score/quizzes', label: '理解度テスト', icon: ClipboardCheck },
+  { href: '/admin/learning', label: 'ラーニング', icon: GraduationCap },
 ]
 
 export function AppSidebar() {
@@ -165,6 +178,50 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
+        {/* 構築セクション（ミニアプリ群へのリンク） */}
+        <SidebarGroup>
+          <SidebarGroupLabel>構築</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {buildItems.map((item) => {
+                const Icon = item.icon
+                return (
+                  <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton asChild isActive={pathname.startsWith(item.href)}>
+                      <Link href={item.href}>
+                        <Icon size={18} />
+                        <span>{item.label}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* 浸透セクション（サーベイ・理解度テスト・ラーニング） */}
+        <SidebarGroup>
+          <SidebarGroupLabel>浸透</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {penetrationItems.map((item) => {
+                const Icon = item.icon
+                return (
+                  <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton asChild isActive={pathname.startsWith(item.href)}>
+                      <Link href={item.href}>
+                        <Icon size={18} />
+                        <span>{item.label}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
       </SidebarContent>
 
       {/* ユーザーメニュー（フッター固定） */}
@@ -213,6 +270,12 @@ export function AppSidebar() {
                   <Link href="/admin/company" className="no-underline">
                     <Sparkles className="mr-2 size-4" />
                     基本情報
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/admin/members" className="no-underline">
+                    <Users className="mr-2 size-4" />
+                    アカウント
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>

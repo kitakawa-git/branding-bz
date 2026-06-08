@@ -11,6 +11,7 @@ export type AdminCrumb = {
 const breadcrumbMap: Record<string, AdminCrumb> = {
   '/admin/dashboard': { title: 'ダッシュボード' },
   '/admin/analytics': { title: 'スマート名刺分析' },
+  '/admin/analytics/learning': { title: '視聴分析' },
   '/admin/brand-score': { title: 'ブランドスコア' },
   '/admin/brand-score/surveys': { title: 'サーベイ管理' },
   '/admin/brand-score/quizzes': { title: '理解度テスト' },

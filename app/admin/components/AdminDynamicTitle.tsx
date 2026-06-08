@@ -14,6 +14,7 @@ const titleMap: Record<string, string> = {
   '/admin/brand/verbal': 'バーバル',
   '/admin/brand/strategy': 'ブランド戦略',
   '/admin/analytics': 'アクセス解析',
+  '/admin/analytics/learning': '視聴分析',
   '/admin/card-template': 'QRコード出力',
   '/admin/announcements': 'お知らせ管理',
   '/admin/kpi': '目標管理',

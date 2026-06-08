@@ -213,6 +213,7 @@ const dashboardTabs = [
   { label: 'スコア', href: '/admin/brand-score' },
   { label: 'タイムライン分析', href: '/admin/dashboard' },
   { label: 'スマート名刺', href: '/admin/analytics' },
+  { label: '視聴分析', href: '/admin/analytics/learning' },
 ]
 
 // ── キャッシュ型 ──
