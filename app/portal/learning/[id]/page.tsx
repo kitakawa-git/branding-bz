@@ -94,12 +94,12 @@ export default function PortalLearningWatchPage() {
               <h1 className="text-lg font-bold text-foreground leading-snug m-0">{video.title}</h1>
               {liveCompleted ? (
                 <Badge variant="secondary" className="shrink-0 text-[11px] px-2 py-0.5 bg-green-50 text-green-600 gap-1">
-                  <CheckCircle2 size={12} />
+                  <CheckCircle2 size={14} />
                   完了
                 </Badge>
               ) : liveProgress > 0 ? (
                 <Badge variant="secondary" className="shrink-0 text-[11px] px-2 py-0.5 bg-blue-50 text-blue-700 gap-1">
-                  <PlayCircle size={12} />
+                  <PlayCircle size={14} />
                   {liveProgress}%
                 </Badge>
               ) : null}

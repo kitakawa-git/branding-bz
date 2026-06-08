@@ -190,7 +190,7 @@ export default function PortalAnnouncementsPage() {
 
                       {a.like_count > 0 && (
                         <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
-                          <Heart size={12} className="text-red-500" />
+                          <Heart size={14} className="text-red-500" />
                           {a.like_count}
                         </div>
                       )}

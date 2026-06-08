@@ -191,13 +191,13 @@ function DashboardPostCard({
           <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
             <span className="flex items-center gap-1">
               <Heart
-                size={12}
+                size={14}
                 className={post.like_count > 0 ? 'text-red-500' : ''}
               />
               {post.like_count > 0 && post.like_count}
             </span>
             <span className="flex items-center gap-1">
-              <MessageCircle size={12} />
+              <MessageCircle size={14} />
               {post.comment_count > 0 && post.comment_count}
             </span>
           </div>
@@ -777,7 +777,7 @@ export default function PortalTopPage() {
               href="/portal/announcements"
               className="text-xs text-blue-600 hover:underline flex items-center gap-1 no-underline"
             >
-              すべて見る <ArrowRight size={12} />
+              すべて見る <ArrowRight size={14} />
             </Link>
           </div>
           <div className="space-y-2">
@@ -910,7 +910,7 @@ export default function PortalTopPage() {
                     あなたの目標・KPI
                   </h2>
                   <Link href="/portal/kpi" className="text-xs text-muted-foreground hover:text-foreground no-underline flex items-center gap-0.5">
-                    すべての目標を見る <ArrowRight size={12} />
+                    すべての目標を見る <ArrowRight size={14} />
                   </Link>
                 </div>
                 {goalTitle && (
@@ -1173,7 +1173,7 @@ export default function PortalTopPage() {
                 href="/portal/timeline"
                 className="text-xs text-blue-600 hover:underline flex items-center gap-1 no-underline"
               >
-                すべて見る <ArrowRight size={12} />
+                すべて見る <ArrowRight size={14} />
               </Link>
             </div>
             <div className="space-y-2">

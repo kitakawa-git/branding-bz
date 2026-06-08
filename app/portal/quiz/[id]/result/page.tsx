@@ -211,11 +211,11 @@ export default function QuizResultPage() {
                     </Badge>
                     {a.is_correct ? (
                       <Badge className="text-[10px] px-1.5 py-0 bg-green-100 text-green-700 border-green-200">
-                        <Check size={11} className="mr-0.5" /> 正解
+                        <Check size={14} className="mr-0.5" /> 正解
                       </Badge>
                     ) : (
                       <Badge className="text-[10px] px-1.5 py-0 bg-red-100 text-red-700 border-red-200">
-                        <X size={11} className="mr-0.5" /> 不正解
+                        <X size={14} className="mr-0.5" /> 不正解
                       </Badge>
                     )}
                   </div>
@@ -241,9 +241,9 @@ export default function QuizResultPage() {
                       }`}
                     >
                       {isCorrect ? (
-                        <Check size={13} className="shrink-0 text-green-600" />
+                        <Check size={14} className="shrink-0 text-green-600" />
                       ) : wrongPick ? (
-                        <X size={13} className="shrink-0 text-red-600" />
+                        <X size={14} className="shrink-0 text-red-600" />
                       ) : (
                         <span className="size-[13px] shrink-0" />
                       )}

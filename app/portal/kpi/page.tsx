@@ -702,7 +702,7 @@ export default function KpiPage() {
             <h2 className="text-xl font-bold text-foreground m-0 leading-relaxed">{goal.title}</h2>
             {canEdit && (
               <Button variant="ghost" size="icon" className="size-8 shrink-0" onClick={openGoalEdit}>
-                <Pencil size={14} />
+                <Pencil size={16} />
               </Button>
             )}
           </div>
@@ -780,7 +780,7 @@ export default function KpiPage() {
                       <div className="flex items-center justify-between">
                         {kpi.deadline && (
                           <span className={`text-[11px] flex items-center gap-0.5 ${overdue ? 'text-red-600 font-semibold' : 'text-muted-foreground'}`}>
-                            {overdue && <AlertCircle size={11} />}
+                            {overdue && <AlertCircle size={14} />}
                             期限: {formatDate(kpi.deadline)}
                             {overdue && ' (期限超過)'}
                           </span>
@@ -789,12 +789,12 @@ export default function KpiPage() {
                         {canEdit ? (
                           <div className="flex items-center gap-0.5">
                             <Button variant="ghost" size="icon" className="size-7" onClick={() => openKpiEdit(kpi)}>
-                              <Pencil size={12} />
+                              <Pencil size={16} />
                             </Button>
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <Button variant="ghost" size="icon" className="size-7 text-destructive hover:text-destructive">
-                                  <Trash2 size={12} />
+                                  <Trash2 size={16} />
                                 </Button>
                               </AlertDialogTrigger>
                               <AlertDialogContent>
@@ -811,7 +811,7 @@ export default function KpiPage() {
                           </div>
                         ) : canReview ? (
                           <Button variant="ghost" size="icon" className="size-7" onClick={() => openKpiEdit(kpi)}>
-                            <Pencil size={12} />
+                            <Pencil size={16} />
                           </Button>
                         ) : null}
                       </div>
@@ -1121,7 +1121,7 @@ export default function KpiPage() {
                       <span className="text-[10px] font-bold text-muted-foreground">KPI {idx + 1}</span>
                       {setupKpis.length > 1 && (
                         <button onClick={() => removeSetupKpi(kpi.id)} className="text-muted-foreground hover:text-destructive transition-colors">
-                          <Trash2 size={13} />
+                          <Trash2 size={16} />
                         </button>
                       )}
                     </div>

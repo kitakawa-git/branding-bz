@@ -849,7 +849,7 @@ export default function PortalTimelinePage() {
                     onClick={() => removeExistingImage(i)}
                     className="absolute -top-1.5 -right-1.5 size-5 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center"
                   >
-                    <X className="size-3" />
+                    <X className="size-4" />
                   </button>
                 </div>
               ))}
@@ -865,7 +865,7 @@ export default function PortalTimelinePage() {
                     onClick={() => removeImage(i)}
                     className="absolute -top-1.5 -right-1.5 size-5 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center"
                   >
-                    <X className="size-3" />
+                    <X className="size-4" />
                   </button>
                 </div>
               ))}
