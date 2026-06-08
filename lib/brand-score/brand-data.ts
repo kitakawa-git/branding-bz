@@ -65,13 +65,13 @@ export async function fetchBrandData(
     // companies
     supabase
       .from('companies')
-      .select('name, slogan')
+      .select('name')
       .eq('id', companyId)
       .single(),
-    // brand_guidelines
+    // brand_guidelines（slogan の参照元。companies.slogan は廃止）
     supabase
       .from('brand_guidelines')
-      .select('business_content, mission, vision, values, traits, brand_story')
+      .select('slogan, business_content, mission, vision, values, traits, brand_story')
       .eq('company_id', companyId)
       .single(),
     // brand_personas（複数行の可能性）
@@ -100,7 +100,11 @@ export async function fetchBrandData(
 
   // 各結果を安全に取得（テーブルが存在しない場合もエラーにしない）
   if (companyResult.status === 'fulfilled' && !companyResult.value.error) {
-    brandData.company = companyResult.value.data ?? undefined
+    // slogan は brand_guidelines 側を正とする（companies.slogan は廃止）
+    const gData = guidelinesResult.status === 'fulfilled' && !guidelinesResult.value.error
+      ? (guidelinesResult.value.data as { slogan?: string } | null)
+      : null
+    brandData.company = { ...(companyResult.value.data ?? {}), slogan: gData?.slogan ?? undefined }
   }
   if (guidelinesResult.status === 'fulfilled' && !guidelinesResult.value.error) {
     brandData.guidelines = guidelinesResult.value.data ?? undefined

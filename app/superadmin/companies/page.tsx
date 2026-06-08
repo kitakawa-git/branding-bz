@@ -15,7 +15,6 @@ type CompanyWithCount = {
   id: string
   name: string
   logo_url: string | null
-  slogan: string | null
   created_at: string
   member_count: number
   admin_count: number
@@ -59,7 +58,6 @@ export default function CompaniesPage() {
             id: company.id,
             name: company.name || '（名前なし）',
             logo_url: company.logo_url,
-            slogan: company.slogan,
             created_at: company.created_at,
             member_count: memberCount || 0,
             admin_count: adminCount || 0,
@@ -89,7 +87,7 @@ export default function CompaniesPage() {
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-0">
             <div className="overflow-x-auto p-4">
-              {/* ヘッダー行: 企業名/スローガン/従業員数/管理者/作成日/操作 */}
+              {/* ヘッダー行: 企業名/従業員数/管理者/作成日/操作 */}
               <div className="flex px-4 py-3 gap-4 border-b border-border">
                 {[1, 2, 3, 4, 5, 6].map(i => (
                   <Skeleton key={i} className="h-4 w-20" />
@@ -139,7 +137,6 @@ export default function CompaniesPage() {
                 <thead>
                   <tr className="border-b text-left text-xs text-muted-foreground">
                     <th className="px-4 py-3 font-medium">企業名</th>
-                    <th className="px-4 py-3 font-medium">スローガン</th>
                     <th className="px-4 py-3 font-medium text-center">従業員数</th>
                     <th className="px-4 py-3 font-medium text-center">管理者</th>
                     <th className="px-4 py-3 font-medium">作成日</th>
@@ -167,9 +164,6 @@ export default function CompaniesPage() {
                           )}
                           <span className="text-sm font-bold text-foreground">{company.name}</span>
                         </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="text-xs text-muted-foreground">{company.slogan || '—'}</span>
                       </td>
                       <td className="px-4 py-3 text-center">
                         <span className="text-xs text-foreground">{company.member_count}名</span>

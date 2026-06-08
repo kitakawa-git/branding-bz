@@ -17,8 +17,6 @@ type Company = {
   id: string
   name: string
   logo_url: string | null
-  slogan: string | null
-  mvv: string | null
   brand_color_primary: string | null
   brand_color_secondary: string | null
   website_url: string | null
@@ -58,8 +56,6 @@ export default function CompanyDetailPage() {
 
   // 編集用フォーム
   const [editName, setEditName] = useState('')
-  const [editSlogan, setEditSlogan] = useState('')
-  const [editMvv, setEditMvv] = useState('')
   const [editBrandColorPrimary, setEditBrandColorPrimary] = useState('#1a1a1a')
   const [editBrandColorSecondary, setEditBrandColorSecondary] = useState('#666666')
   const [editWebsiteUrl, setEditWebsiteUrl] = useState('')
@@ -77,8 +73,6 @@ export default function CompanyDetailPage() {
         if (companyData) {
           setCompany(companyData)
           setEditName(companyData.name || '')
-          setEditSlogan(companyData.slogan || '')
-          setEditMvv(companyData.mvv || '')
           setEditBrandColorPrimary(companyData.brand_color_primary || '#1a1a1a')
           setEditBrandColorSecondary(companyData.brand_color_secondary || '#666666')
           setEditWebsiteUrl(companyData.website_url || '')
@@ -159,8 +153,6 @@ export default function CompanyDetailPage() {
       .from('companies')
       .update({
         name: editName,
-        slogan: editSlogan,
-        mvv: editMvv,
         brand_color_primary: editBrandColorPrimary,
         brand_color_secondary: editBrandColorSecondary,
         website_url: editWebsiteUrl,
@@ -251,24 +243,8 @@ export default function CompanyDetailPage() {
               />
             </div>
 
-            <div className="mb-5">
-              <Label className="mb-1.5 font-bold">スローガン</Label>
-              <Input
-                type="text"
-                value={editSlogan}
-                onChange={(e) => setEditSlogan(e.target.value)}
-                className="h-10"
-              />
-            </div>
-
-            <div className="mb-5">
-              <Label className="mb-1.5 font-bold">ミッション・ビジョン・バリュー</Label>
-              <textarea
-                value={editMvv}
-                onChange={(e) => setEditMvv(e.target.value)}
-                className="w-full px-3 py-2.5 bg-white border border-border rounded-lg text-sm outline-none resize-y min-h-[100px] focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-              />
-            </div>
+            {/* スローガン / MVV の編集はブランドガイドライン（/admin/brand/guidelines）へ一本化。
+                companies.slogan / mvv は廃止（表示は brand_guidelines 側を参照）。 */}
 
             <div className="mb-5">
               <Label className="mb-1.5 font-bold">ブランドカラー（プライマリ）</Label>

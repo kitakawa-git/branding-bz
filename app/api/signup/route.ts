@@ -79,8 +79,6 @@ export async function POST(request: NextRequest) {
       .from('companies')
       .insert({
         name: companyName,
-        slogan: '',
-        mvv: '',
         brand_color_primary: '#1a1a1a',
         brand_color_secondary: '#666666',
         website_url: '',

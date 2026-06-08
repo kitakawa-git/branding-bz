@@ -55,12 +55,12 @@ export async function POST(request: NextRequest) {
     const [companyResult, guidelinesResult, personalityResult] = await Promise.allSettled([
       supabase
         .from('companies')
-        .select('name, slogan')
+        .select('name')
         .eq('id', companyId)
         .single(),
       supabase
         .from('brand_guidelines')
-        .select('mission, vision, values, brand_story')
+        .select('slogan, mission, vision, values, brand_story')
         .eq('company_id', companyId)
         .single(),
       supabase
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
     }
 
     // ブランドデータが十分かチェック
-    const hasData = company.name || company.slogan || guidelines?.brand_story || guidelines?.mission || guidelines?.vision
+    const hasData = company.name || guidelines?.slogan || guidelines?.brand_story || guidelines?.mission || guidelines?.vision
     if (!hasData) {
       return NextResponse.json(
         { error: 'ブランドデータが不足しています。企業名・スローガン・ミッション・ビジョンなどを先に設定してください。' },
@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
     // ユーザーメッセージ構築
     const brandData = {
       企業名: company.name || '未設定',
-      スローガン: company.slogan || '未設定',
+      スローガン: guidelines?.slogan || '未設定',
       ミッション: guidelines?.mission || '未設定',
       ビジョン: guidelines?.vision || '未設定',
       バリュー: valuesText,

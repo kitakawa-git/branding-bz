@@ -115,9 +115,7 @@ export async function POST(request: NextRequest) {
       .from('companies')
       .insert({
         name: companyName,
-        // ブランド情報は作成時に入力しない。NOT NULL 制約を踏まないよう既定値を入れておく
-        slogan: '',
-        mvv: '',
+        // ブランド情報は作成時に入力しない（slogan/mvv は brand_guidelines へ一本化し companies からは廃止）
         brand_color_primary: '#1a1a1a',
         brand_color_secondary: '#666666',
         website_url: websiteUrl || '',
