@@ -810,7 +810,7 @@ export default function PortalTopPage() {
       {/* ===== 2. ミッションカード ===== */}
       {mission && (
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-6">
-          <CardContent className="p-5">
+          <CardContent className="p-4 sm:p-5">
             <Link
               href="/portal/guidelines"
               className="no-underline flex items-center justify-between mb-3"
@@ -1023,7 +1023,7 @@ export default function PortalTopPage() {
 
                 {/* 下段: 連続投稿記録 (2列ぶち抜き) */}
                 <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-                  <CardContent className="p-5">
+                  <CardContent className="p-4 sm:p-5">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
                         <Star size={18} className="text-foreground" />
@@ -1058,7 +1058,7 @@ export default function PortalTopPage() {
 
               {/* === 右側: 行動指針別割合 === */}
               <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-                <CardContent className="p-5">
+                <CardContent className="p-4 sm:p-5">
                   <div className="flex items-center gap-2 mb-3">
                     <PieChartIcon size={18} className="text-foreground" />
                     <h3 className="text-sm font-semibold text-foreground m-0">行動指針別割合</h3>
@@ -1142,7 +1142,7 @@ export default function PortalTopPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* 左: あなたの投稿 */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-          <CardContent className="p-5">
+          <CardContent className="p-4 sm:p-5">
             <div className="flex items-center gap-2 mb-4">
               <User size={18} className="text-foreground" />
               <h3 className="text-sm font-semibold text-foreground m-0">あなたの投稿</h3>
@@ -1163,7 +1163,7 @@ export default function PortalTopPage() {
 
         {/* 右: みんなの投稿 */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-          <CardContent className="p-5">
+          <CardContent className="p-4 sm:p-5">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <Users size={18} className="text-foreground" />
