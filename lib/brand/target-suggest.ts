@@ -4,6 +4,7 @@
 // - feature_key='target_suggest' を管理画面・STPで共有 → クォータは「1社あたり」共通
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { callClaude } from '@/lib/claude-api'
+import { getGuardrailsPromptForCompany } from '@/lib/brand/guardrails'
 import { TARGET_SUGGEST_MONTHLY_LIMIT } from '@/lib/constants/ai-limits'
 
 export const TARGET_FEATURE_KEY = 'target_suggest'
@@ -156,9 +157,14 @@ export async function generateTargetSuggestions(params: {
   const existingNames = params.existingTargets.map(t => (t.name || '').trim()).filter(Boolean)
   const userMessage = buildUserMessage(params.brandInfo, existingNames)
 
+  // ブランドガードレール（証拠・表現ルール）を system に注入。company未解決・0件・取得失敗なら従来どおり SYSTEM_PROMPT のまま。
+  // 表現ルールはコピー全般に効くため scope で絞らず全件注入する（severity で block/warn を区別）。
+  const guardrails = await getGuardrailsPromptForCompany(params.companyId)
+  const system = guardrails ? `${SYSTEM_PROMPT}\n\n${guardrails}` : SYSTEM_PROMPT
+
   let response: string
   try {
-    response = await callClaude({ system: SYSTEM_PROMPT, userMessage, maxTokens: 2048 })
+    response = await callClaude({ system, userMessage, maxTokens: 2048 })
   } catch (err) {
     console.error('[targets] Claude エラー:', err)
     return { status: 'error' }

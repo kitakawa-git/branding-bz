@@ -1,0 +1,420 @@
+'use client'
+
+// スーパー管理画面 企業詳細: 「表現ルール」(governance_rules) CRUD セクション
+// - 一覧 / 追加 / 編集 / 削除 / 並び替え（上下）
+// - rule_type / scope / severity はセレクト、ng_example・ok_example は任意
+// - 書き込みは governance_rules_superadmin_all ポリシー（is_superadmin）で許可される前提
+import { useEffect, useState } from 'react'
+import { supabase } from '@/lib/supabase'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { AutoResizeTextarea } from '@/components/ui/auto-resize-textarea'
+import { Plus, Trash2, Pencil, Check, X, ChevronUp, ChevronDown } from 'lucide-react'
+import { toast } from 'sonner'
+import type { ValuePropositionRef } from './ProofPointsSection'
+
+type GovernanceRule = {
+  id: string
+  company_id: string
+  rule_type: string
+  scope: string
+  target_value_proposition_id: string | null
+  rule_text: string
+  ng_example: string | null
+  ok_example: string | null
+  severity: string
+  sort_order: number
+}
+
+type Draft = {
+  rule_type: string
+  scope: string
+  target_value_proposition_id: string
+  rule_text: string
+  ng_example: string
+  ok_example: string
+  severity: string
+}
+
+const RULE_TYPES: { value: string; label: string }[] = [
+  { value: 'banned_word', label: '禁止ワード' },
+  { value: 'discouraged_expression', label: '非推奨表現' },
+  { value: 'tone_rule', label: 'トーンルール' },
+  { value: 'claim_rule', label: '主張ルール' },
+  { value: 'compliance_rule', label: 'コンプラルール' },
+]
+const SCOPES: { value: string; label: string }[] = [
+  { value: 'global', label: '全般' },
+  { value: 'claim', label: '主張' },
+  { value: 'benefit', label: 'ベネフィット' },
+  { value: 'audience', label: '対象顧客' },
+  { value: 'service', label: 'サービス' },
+  { value: 'action_guideline', label: '行動指針' },
+]
+const SEVERITIES: { value: string; label: string; cls: string }[] = [
+  { value: 'block', label: '絶対遵守', cls: 'bg-red-100 text-red-700' },
+  { value: 'warn', label: '原則遵守', cls: 'bg-amber-100 text-amber-800' },
+  { value: 'info', label: '参考', cls: 'bg-gray-100 text-gray-600' },
+]
+
+const labelOf = (list: { value: string; label: string }[], v: string | null) =>
+  list.find((x) => x.value === v)?.label ?? v ?? '—'
+const severityMeta = (v: string) => SEVERITIES.find((s) => s.value === v)
+
+const emptyDraft = (): Draft => ({
+  rule_type: 'banned_word',
+  scope: 'global',
+  target_value_proposition_id: '',
+  rule_text: '',
+  ng_example: '',
+  ok_example: '',
+  severity: 'warn',
+})
+
+const SELECT_CLASS =
+  'h-10 w-full rounded-md border border-border bg-white px-3 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
+
+export default function GovernanceRulesSection({
+  companyId,
+  valuePropositions,
+}: {
+  companyId: string
+  valuePropositions: ValuePropositionRef[]
+}) {
+  const [rows, setRows] = useState<GovernanceRule[]>([])
+  const [loading, setLoading] = useState(true)
+  const [editingId, setEditingId] = useState<string | null>(null) // 'new' または行ID
+  const [draft, setDraft] = useState<Draft>(emptyDraft())
+  const [saving, setSaving] = useState(false)
+
+  const vpTitle = (id: string | null) =>
+    id ? valuePropositions.find((v) => v.id === id)?.title ?? '（削除済みの提供価値）' : null
+
+  const fetchRows = async () => {
+    setLoading(true)
+    const { data, error } = await supabase
+      .from('governance_rules')
+      .select('*')
+      .eq('company_id', companyId)
+      .order('sort_order', { ascending: true })
+      .order('created_at', { ascending: true })
+    if (error) {
+      console.error('[GovernanceRules] 取得エラー:', error)
+      toast.error('表現ルールの取得に失敗しました')
+    } else {
+      setRows((data as GovernanceRule[]) || [])
+    }
+    setLoading(false)
+  }
+
+  useEffect(() => {
+    fetchRows()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [companyId])
+
+  const startAdd = () => {
+    setDraft(emptyDraft())
+    setEditingId('new')
+  }
+
+  const startEdit = (row: GovernanceRule) => {
+    setDraft({
+      rule_type: row.rule_type,
+      scope: row.scope,
+      target_value_proposition_id: row.target_value_proposition_id ?? '',
+      rule_text: row.rule_text ?? '',
+      ng_example: row.ng_example ?? '',
+      ok_example: row.ok_example ?? '',
+      severity: row.severity,
+    })
+    setEditingId(row.id)
+  }
+
+  const cancelEdit = () => {
+    setEditingId(null)
+    setDraft(emptyDraft())
+  }
+
+  const buildPayload = () => ({
+    company_id: companyId,
+    rule_type: draft.rule_type,
+    scope: draft.scope,
+    target_value_proposition_id: draft.target_value_proposition_id || null,
+    rule_text: draft.rule_text.trim(),
+    ng_example: draft.ng_example.trim() || null,
+    ok_example: draft.ok_example.trim() || null,
+    severity: draft.severity,
+  })
+
+  const save = async () => {
+    if (!draft.rule_text.trim()) {
+      toast.error('ルール本文は必須です')
+      return
+    }
+    setSaving(true)
+    try {
+      if (editingId === 'new') {
+        const nextOrder = rows.length > 0 ? Math.max(...rows.map((r) => r.sort_order)) + 1 : 0
+        const { error } = await supabase
+          .from('governance_rules')
+          .insert({ ...buildPayload(), sort_order: nextOrder })
+        if (error) throw error
+        toast.success('追加しました')
+      } else if (editingId) {
+        const { error } = await supabase
+          .from('governance_rules')
+          .update({ ...buildPayload(), updated_at: new Date().toISOString() })
+          .eq('id', editingId)
+        if (error) throw error
+        toast.success('更新しました')
+      }
+      cancelEdit()
+      await fetchRows()
+    } catch (err) {
+      console.error('[GovernanceRules] 保存エラー:', err)
+      toast.error('保存に失敗しました: ' + (err instanceof Error ? err.message : '不明なエラー'))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const remove = async (id: string) => {
+    if (!confirm('この表現ルールを削除しますか？')) return
+    const { error } = await supabase.from('governance_rules').delete().eq('id', id)
+    if (error) {
+      console.error('[GovernanceRules] 削除エラー:', error)
+      toast.error('削除に失敗しました')
+      return
+    }
+    toast.success('削除しました')
+    if (editingId === id) cancelEdit()
+    await fetchRows()
+  }
+
+  const move = async (index: number, dir: -1 | 1) => {
+    const target = rows[index]
+    const swap = rows[index + dir]
+    if (!target || !swap) return
+    const results = await Promise.all([
+      supabase.from('governance_rules').update({ sort_order: swap.sort_order }).eq('id', target.id),
+      supabase.from('governance_rules').update({ sort_order: target.sort_order }).eq('id', swap.id),
+    ])
+    if (results.some((r) => r.error)) {
+      toast.error('並び替えに失敗しました')
+      return
+    }
+    await fetchRows()
+  }
+
+  const renderForm = () => (
+    <div className="border border-blue-200 bg-blue-50/40 rounded-lg p-4 mb-3 space-y-4">
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex-1">
+          <label className="text-xs font-bold text-foreground mb-1.5 block">ルール種別</label>
+          <select
+            className={SELECT_CLASS}
+            value={draft.rule_type}
+            onChange={(e) => setDraft({ ...draft, rule_type: e.target.value })}
+          >
+            {RULE_TYPES.map((s) => (
+              <option key={s.value} value={s.value}>
+                {s.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="flex-1">
+          <label className="text-xs font-bold text-foreground mb-1.5 block">適用範囲（scope）</label>
+          <select
+            className={SELECT_CLASS}
+            value={draft.scope}
+            onChange={(e) => setDraft({ ...draft, scope: e.target.value })}
+          >
+            {SCOPES.map((s) => (
+              <option key={s.value} value={s.value}>
+                {s.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="flex-1">
+          <label className="text-xs font-bold text-foreground mb-1.5 block">重要度</label>
+          <select
+            className={SELECT_CLASS}
+            value={draft.severity}
+            onChange={(e) => setDraft({ ...draft, severity: e.target.value })}
+          >
+            {SEVERITIES.map((s) => (
+              <option key={s.value} value={s.value}>
+                {s.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label className="text-xs font-bold text-foreground mb-1.5 block">
+          紐づく提供価値（任意）
+        </label>
+        <select
+          className={SELECT_CLASS}
+          value={draft.target_value_proposition_id}
+          onChange={(e) => setDraft({ ...draft, target_value_proposition_id: e.target.value })}
+        >
+          <option value="">全般（特定の提供価値に紐づけない）</option>
+          {valuePropositions.map((vp) => (
+            <option key={vp.id} value={vp.id}>
+              {vp.title}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label className="text-xs font-bold text-foreground mb-1.5 block">
+          ルール本文 <span className="text-red-500">*</span>
+        </label>
+        <AutoResizeTextarea
+          value={draft.rule_text}
+          onChange={(e) => setDraft({ ...draft, rule_text: e.target.value })}
+          placeholder="例: 「業界No.1」など根拠のない最上級表現は使わない"
+          className="min-h-[70px]"
+        />
+      </div>
+
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex-1">
+          <label className="text-xs font-bold text-foreground mb-1.5 block">NG例（任意）</label>
+          <AutoResizeTextarea
+            value={draft.ng_example}
+            onChange={(e) => setDraft({ ...draft, ng_example: e.target.value })}
+            placeholder="避けたい表現の例"
+            className="min-h-[50px]"
+          />
+        </div>
+        <div className="flex-1">
+          <label className="text-xs font-bold text-foreground mb-1.5 block">OK例（任意）</label>
+          <AutoResizeTextarea
+            value={draft.ok_example}
+            onChange={(e) => setDraft({ ...draft, ok_example: e.target.value })}
+            placeholder="推奨する言い換えの例"
+            className="min-h-[50px]"
+          />
+        </div>
+      </div>
+
+      <div className="flex gap-2">
+        <Button type="button" onClick={save} disabled={saving} size="sm">
+          <Check size={14} />
+          {saving ? '保存中...' : '保存'}
+        </Button>
+        <Button type="button" variant="outline" onClick={cancelEdit} disabled={saving} size="sm">
+          <X size={14} />
+          キャンセル
+        </Button>
+      </div>
+    </div>
+  )
+
+  return (
+    <div>
+      {loading ? (
+        <p className="text-muted-foreground text-sm">読み込み中...</p>
+      ) : rows.length === 0 && editingId !== 'new' ? (
+        <p className="text-muted-foreground text-sm mb-3">表現ルールが登録されていません</p>
+      ) : (
+        rows.map((row, index) =>
+          editingId === row.id ? (
+            <div key={row.id}>{renderForm()}</div>
+          ) : (
+            <div key={row.id} className="border border-border rounded-lg p-4 mb-3 bg-background">
+              <div className="flex justify-between items-start gap-3">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-1.5 mb-1">
+                    {severityMeta(row.severity) && (
+                      <span
+                        className={`py-0.5 px-2 rounded text-xs font-semibold ${severityMeta(row.severity)!.cls}`}
+                      >
+                        {severityMeta(row.severity)!.label}
+                      </span>
+                    )}
+                    <span className="py-0.5 px-2 bg-gray-100 text-gray-600 rounded text-xs font-semibold">
+                      {labelOf(RULE_TYPES, row.rule_type)}
+                    </span>
+                    <span className="py-0.5 px-2 bg-blue-50 text-blue-700 rounded text-xs font-semibold">
+                      {labelOf(SCOPES, row.scope)}
+                    </span>
+                    {vpTitle(row.target_value_proposition_id) && (
+                      <span className="py-0.5 px-2 bg-blue-100 text-blue-800 rounded text-xs font-semibold">
+                        {vpTitle(row.target_value_proposition_id)}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm font-bold text-foreground whitespace-pre-line break-words">
+                    {row.rule_text}
+                  </p>
+                  {row.ng_example && (
+                    <p className="text-[13px] text-red-600 mt-1 break-words">NG: {row.ng_example}</p>
+                  )}
+                  {row.ok_example && (
+                    <p className="text-[13px] text-green-700 break-words">OK: {row.ok_example}</p>
+                  )}
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => move(index, -1)}
+                    disabled={index === 0}
+                    className="size-8"
+                  >
+                    <ChevronUp size={14} />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => move(index, 1)}
+                    disabled={index === rows.length - 1}
+                    className="size-8"
+                  >
+                    <ChevronDown size={14} />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => startEdit(row)}
+                    className="size-8"
+                  >
+                    <Pencil size={14} />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => remove(row.id)}
+                    className="size-8 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+                  >
+                    <Trash2 size={14} />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )
+        )
+      )}
+
+      {editingId === 'new' && renderForm()}
+
+      {editingId === null && (
+        <Button type="button" variant="outline" onClick={startAdd} className="py-2 px-4 text-[13px]">
+          <Plus size={16} />
+          表現ルールを追加
+        </Button>
+      )}
+    </div>
+  )
+}

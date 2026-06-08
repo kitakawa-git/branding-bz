@@ -10,6 +10,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ArrowLeft, Check } from 'lucide-react'
 import { Fab, FabButton } from '@/components/ui/fab'
+import ProofPointsSection, { type ValuePropositionRef } from './_sections/ProofPointsSection'
+import GovernanceRulesSection from './_sections/GovernanceRulesSection'
 
 type Company = {
   id: string
@@ -47,6 +49,7 @@ export default function CompanyDetailPage() {
   const [company, setCompany] = useState<Company | null>(null)
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [adminUsers, setAdminUsers] = useState<AdminUser[]>([])
+  const [valueProps, setValueProps] = useState<ValuePropositionRef[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
@@ -106,6 +109,14 @@ export default function CompanyDetailPage() {
           auth_email: null, // クライアントサイドではauth.usersにアクセスできないため
         }))
         setAdminUsers(adminsWithEmail)
+
+        // 提供価値（証拠・表現ルールの紐づけ用セレクト）
+        const { data: vpData } = await supabase
+          .from('value_propositions')
+          .select('id, title')
+          .eq('company_id', companyId)
+          .order('sort_order', { ascending: true })
+        setValueProps((vpData as ValuePropositionRef[]) || [])
 
         // アクセス解析サマリー
         if (profilesData && profilesData.length > 0) {
@@ -427,6 +438,28 @@ export default function CompanyDetailPage() {
               </tbody>
             </table>
           )}
+        </CardContent>
+      </Card>
+
+      {/* === 証拠・実績（proof_points）セクション === */}
+      <Card className="bg-muted/50 border shadow-none mt-6">
+        <CardContent className="p-6">
+          <h3 className="text-base font-bold text-foreground mb-1">証拠・実績</h3>
+          <p className="text-xs text-muted-foreground mb-4">
+            提供価値を裏づける証拠・実績・具体例。AIのコピー生成時に根拠として参照され、抽象語への逃げを防ぎます。
+          </p>
+          <ProofPointsSection companyId={companyId} valuePropositions={valueProps} />
+        </CardContent>
+      </Card>
+
+      {/* === 表現ルール（governance_rules）セクション === */}
+      <Card className="bg-muted/50 border shadow-none mt-6">
+        <CardContent className="p-6">
+          <h3 className="text-base font-bold text-foreground mb-1">表現ルール</h3>
+          <p className="text-xs text-muted-foreground mb-4">
+            ブランドの表現ルール・禁則（トーン・主張・コンプラ）。「絶対遵守」はAI生成で必ず守られ、「原則遵守」は原則として守られます。
+          </p>
+          <GovernanceRulesSection companyId={companyId} valuePropositions={valueProps} />
         </CardContent>
       </Card>
     </div>

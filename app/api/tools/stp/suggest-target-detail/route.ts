@@ -2,6 +2,8 @@
 // POST /api/tools/stp/suggest-target-detail
 import { NextRequest, NextResponse } from 'next/server'
 import { callClaude } from '@/lib/claude-api'
+import { getAdminContext } from '@/lib/learning/auth'
+import { getGuardrailsPromptForCompany } from '@/lib/brand/guardrails'
 
 export async function POST(request: NextRequest) {
 
@@ -140,8 +142,15 @@ ${competitorsNote}`
 
     const userMessage = parts.join('\n')
 
+    // ブランドガードレール（証拠・表現ルール）を注入。company未解決・0件なら従来どおり（既存挙動維持）。
+    const guardrailCtx = await getAdminContext()
+    const guardrails = guardrailCtx
+      ? await getGuardrailsPromptForCompany(guardrailCtx.companyId)
+      : ''
+    const system = guardrails ? `${SYSTEM_PROMPT}\n\n${guardrails}` : SYSTEM_PROMPT
+
     const response = await callClaude({
-      system: SYSTEM_PROMPT,
+      system,
       userMessage,
       maxTokens: 1500,
     })

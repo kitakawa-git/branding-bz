@@ -3,6 +3,8 @@
 // Claude APIにセグメンテーション提案をリクエスト
 import { NextRequest, NextResponse } from 'next/server'
 import { callClaude } from '@/lib/claude-api'
+import { getAdminContext } from '@/lib/learning/auth'
+import { getGuardrailsPromptForCompany } from '@/lib/brand/guardrails'
 
 const SYSTEM_PROMPT = `あなたはブランドマーケティングの専門家です。以下の企業情報をもとに、STP分析のセグメンテーション（市場細分化）を提案してください。業種や商品特性に適した切り口（変数）を3〜4つ選び、各切り口について代表的なグループ（セグメント）を2〜4つ提案してください。各グループが商品・サービスを選ぶ際に重視することも記載してください。回答はJSON形式のみで、前後に説明文やマークダウンのコードブロックを含めないでください。
 
@@ -105,8 +107,15 @@ export async function POST(request: NextRequest) {
 
     const userMessage = parts.join('\n')
 
+    // ブランドガードレール（証拠・表現ルール）を注入。company未解決・0件なら従来どおり（既存挙動維持）。
+    const guardrailCtx = await getAdminContext()
+    const guardrails = guardrailCtx
+      ? await getGuardrailsPromptForCompany(guardrailCtx.companyId)
+      : ''
+    const system = guardrails ? `${SYSTEM_PROMPT}\n\n${guardrails}` : SYSTEM_PROMPT
+
     const response = await callClaude({
-      system: SYSTEM_PROMPT,
+      system,
       userMessage,
       maxTokens: 2000,
     })

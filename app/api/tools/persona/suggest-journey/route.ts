@@ -2,6 +2,8 @@
 // POST /api/tools/persona/suggest-journey
 import { NextRequest, NextResponse } from 'next/server'
 import { callClaude } from '@/lib/claude-api'
+import { getAdminContext } from '@/lib/learning/auth'
+import { getGuardrailsPromptForCompany } from '@/lib/brand/guardrails'
 
 const SYSTEM_PROMPT = `あなたはブランドマーケティングの専門家です。以下のペルソナ情報をもとに、5段階のカスタマージャーニーマップを作成してください。回答はJSON形式のみで、前後に説明文やマークダウンのコードブロックを含めないでください。
 
@@ -75,8 +77,15 @@ export async function POST(request: NextRequest) {
     parts.push('')
     parts.push('上記のペルソナの5段階カスタマージャーニーマップをJSON形式で作成してください。')
 
+    // ブランドガードレール（証拠・表現ルール）を注入。company未解決・0件なら従来どおり（既存挙動維持）。
+    const guardrailCtx = await getAdminContext()
+    const guardrails = guardrailCtx
+      ? await getGuardrailsPromptForCompany(guardrailCtx.companyId)
+      : ''
+    const system = guardrails ? `${SYSTEM_PROMPT}\n\n${guardrails}` : SYSTEM_PROMPT
+
     const response = await callClaude({
-      system: SYSTEM_PROMPT,
+      system,
       userMessage: parts.join('\n'),
       maxTokens: 3000,
     })

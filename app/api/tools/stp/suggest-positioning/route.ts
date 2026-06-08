@@ -2,6 +2,8 @@
 // POST /api/tools/stp/suggest-positioning
 import { NextRequest, NextResponse } from 'next/server'
 import { callClaude } from '@/lib/claude-api'
+import { getAdminContext } from '@/lib/learning/auth'
+import { getGuardrailsPromptForCompany } from '@/lib/brand/guardrails'
 
 const SYSTEM_PROMPT = `あなたはブランドマーケティングの専門家です。STP分析のポジショニング（軸の定義と企業の配置）を提案してください。X軸とY軸は、ターゲットの購買決定要因を考慮して、ターゲットに刺さる差別化軸を選んでください。自社の強みが活きるポジションに配置し、競合との差別化が明確になるよう配置してください。回答はJSON形式のみで、前後に説明文やマークダウンのコードブロックを含めないでください。
 
@@ -142,8 +144,15 @@ export async function POST(request: NextRequest) {
 
     const userMessage = parts.join('\n')
 
+    // ブランドガードレール（証拠・表現ルール）を注入。company未解決・0件なら従来どおり（既存挙動維持）。
+    const guardrailCtx = await getAdminContext()
+    const guardrails = guardrailCtx
+      ? await getGuardrailsPromptForCompany(guardrailCtx.companyId)
+      : ''
+    const system = guardrails ? `${SYSTEM_PROMPT}\n\n${guardrails}` : SYSTEM_PROMPT
+
     const response = await callClaude({
-      system: SYSTEM_PROMPT,
+      system,
       userMessage,
       maxTokens: 1500,
     })
