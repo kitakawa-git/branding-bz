@@ -18,6 +18,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from '@/components/ui/sidebar'
 import {
   DropdownMenu,
@@ -59,7 +60,7 @@ const engagementItems: NavItem[] = [
 
 // 「私たちの『らしさ』」グループ（内部→外部の視点ワード構成）
 // バリュー(values)は「考え方」、用語(terms)は「バーバル」配下に内包（独立メニューにはしない／ルートは生存）
-function RashisaGroup({ pathname }: { pathname: string }) {
+function RashisaGroup({ pathname, onNavClick }: { pathname: string; onNavClick: () => void }) {
   return (
     <SidebarGroup>
       <SidebarGroupLabel>私たちの「らしさ」</SidebarGroupLabel>
@@ -68,7 +69,7 @@ function RashisaGroup({ pathname }: { pathname: string }) {
           {/* 1. 考え方（バリューを内包） */}
           <SidebarMenuItem>
             <SidebarMenuButton asChild isActive={pathname.startsWith('/portal/guidelines')}>
-              <Link href="/portal/guidelines">
+              <Link href="/portal/guidelines" onClick={onNavClick}>
                 <Compass size={18} />
                 <span>考え方</span>
               </Link>
@@ -78,7 +79,7 @@ function RashisaGroup({ pathname }: { pathname: string }) {
           {/* 2. 感じられ方（ブランドパーソナリティ：人格・トーンオブボイス） */}
           <SidebarMenuItem>
             <SidebarMenuButton asChild isActive={pathname.startsWith('/portal/personality')}>
-              <Link href="/portal/personality">
+              <Link href="/portal/personality" onClick={onNavClick}>
                 <Smile size={18} />
                 <span>感じられ方</span>
               </Link>
@@ -88,7 +89,7 @@ function RashisaGroup({ pathname }: { pathname: string }) {
           {/* 3. 見え方・聞こえ方（ビジュアル/バーバルはページ上部のタブで切替。サブメニューは持たない） */}
           <SidebarMenuItem>
             <SidebarMenuButton asChild isActive={pathname.startsWith('/portal/visuals') || pathname.startsWith('/portal/verbal')}>
-              <Link href="/portal/visuals">
+              <Link href="/portal/visuals" onClick={onNavClick}>
                 <Eye size={18} />
                 <span>見え方・聞こえ方</span>
               </Link>
@@ -98,7 +99,7 @@ function RashisaGroup({ pathname }: { pathname: string }) {
           {/* 4. 接し方（ブランド戦略） */}
           <SidebarMenuItem>
             <SidebarMenuButton asChild isActive={pathname.startsWith('/portal/strategy')}>
-              <Link href="/portal/strategy">
+              <Link href="/portal/strategy" onClick={onNavClick}>
                 <Target size={18} />
                 <span>接し方</span>
               </Link>
@@ -114,6 +115,9 @@ export function PortalSidebar() {
   const pathname = usePathname()
   const { member, companyName, companyLogoUrl, company, slogan, profileName, profilePhotoUrl, profileSlug, isAdmin, signOut } = usePortalAuth()
   const [cardPreviewOpen, setCardPreviewOpen] = useState(false)
+  // スマホ時は項目タップでサイドバー（モバイルシート）を閉じる
+  const { isMobile, setOpenMobile } = useSidebar()
+  const handleNavClick = () => { if (isMobile) setOpenMobile(false) }
 
   // 機能トグル: 無効な機能のメニュー項目を非表示にする
   const timelineEnabled = isFeatureEnabled(company, 'timeline_enabled')
@@ -139,7 +143,7 @@ export function PortalSidebar() {
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton size="lg" asChild>
-                <Link href="/portal">
+                <Link href="/portal" onClick={handleNavClick}>
                   {/* ロゴ未登録時はアイコン枠を表示しない（フォールバックの頭文字も出さない） */}
                   {companyLogoUrl && (
                     <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground overflow-hidden">
@@ -166,7 +170,7 @@ export function PortalSidebar() {
                   return (
                     <SidebarMenuItem key={item.href}>
                       <SidebarMenuButton asChild isActive={item.href === '/portal' ? pathname === '/portal' : pathname.startsWith(item.href)}>
-                        <Link href={item.href}>
+                        <Link href={item.href} onClick={handleNavClick}>
                           <Icon size={18} />
                           <span>{item.label}</span>
                         </Link>
@@ -177,7 +181,7 @@ export function PortalSidebar() {
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
-          <RashisaGroup pathname={pathname} />
+          <RashisaGroup pathname={pathname} onNavClick={handleNavClick} />
 
         </SidebarContent>
 
@@ -213,20 +217,20 @@ export function PortalSidebar() {
                   className="w-[--radix-dropdown-menu-trigger-width] min-w-56 p-2"
                 >
                   <DropdownMenuItem asChild className="h-10 px-3 gap-2 text-base font-medium rounded-md">
-                    <Link href="/portal/profile" className="no-underline">
+                    <Link href="/portal/profile" className="no-underline" onClick={handleNavClick}>
                       <CircleUser className="size-4" />
                       マイプロフィール
                     </Link>
                   </DropdownMenuItem>
                   {cardEnabled && (
-                    <DropdownMenuItem onClick={() => setCardPreviewOpen(true)} className="h-10 px-3 gap-2 text-base font-medium rounded-md">
+                    <DropdownMenuItem onClick={() => { handleNavClick(); setCardPreviewOpen(true) }} className="h-10 px-3 gap-2 text-base font-medium rounded-md">
                       <CreditCard className="size-4" />
                       名刺プレビュー
                     </DropdownMenuItem>
                   )}
                   {isAdmin && (
                     <DropdownMenuItem asChild className="h-10 px-3 gap-2 text-base font-medium rounded-md">
-                      <Link href="/admin" className="no-underline">
+                      <Link href="/admin" className="no-underline" onClick={handleNavClick}>
                         <ArrowLeftRight className="size-4" />
                         管理画面
                       </Link>
