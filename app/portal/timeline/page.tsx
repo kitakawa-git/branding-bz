@@ -739,7 +739,7 @@ export default function PortalTimelinePage() {
   // 機能トグルがオフ: 内容は表示せず、案内のみ（URL直打ち時に状況が分かるように）
   if (!timelineEnabled) {
     return (
-      <div className="max-w-4xl mx-auto px-5 pt-4 pb-6">
+      <div className="max-w-4xl mx-auto px-5 pt-4 pb-10">
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="py-16 text-center">
             <p className="text-muted-foreground text-[15px] m-0">
@@ -753,7 +753,7 @@ export default function PortalTimelinePage() {
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
+      <div className="max-w-4xl mx-auto px-5 pt-4 pb-10 space-y-6">
         {/* カテゴリフィルタ＋検索（投稿はFAB＋モーダルのためフォームは出さない）
             カテゴリピルは実画面と同じく categories.length > 1 のときだけ出す
             （既定の単一カテゴリではピルが無いため、ロード時のちらつきを防ぐ） */}
@@ -788,7 +788,7 @@ export default function PortalTimelinePage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
+    <div className="max-w-4xl mx-auto px-5 pt-4 pb-10 space-y-6">
       {/* ============================================ */}
       {/* Post Form (右下FAB + モーダル) */}
       {/* ============================================ */}

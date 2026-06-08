@@ -22,7 +22,7 @@ export default function CardPreviewPage() {
   // 機能トグルがオフ: 内容は表示せず、案内のみ（URL直打ち対応・リダイレクトしない）
   if (!cardEnabled) {
     return (
-      <div className="max-w-4xl mx-auto px-5 pt-4 pb-6">
+      <div className="max-w-4xl mx-auto px-5 pt-4 pb-10">
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="py-16 text-center">
             <p className="text-muted-foreground text-[15px] m-0">

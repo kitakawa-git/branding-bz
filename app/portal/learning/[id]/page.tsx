@@ -54,7 +54,7 @@ export default function PortalLearningWatchPage() {
   }, [videoId])
 
   return (
-    <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-4">
+    <div className="max-w-4xl mx-auto px-5 pt-4 pb-10 space-y-4">
       <Link
         href="/portal/learning"
         className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors no-underline"

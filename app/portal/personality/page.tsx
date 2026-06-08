@@ -69,7 +69,7 @@ export default function PortalPersonalityPage() {
   }, [companyId, cacheKey])
 
   if (loading) return (
-    <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
+    <div className="max-w-4xl mx-auto px-5 pt-4 pb-10 space-y-6">
       <div>
         <Skeleton className="h-8 w-56" />
         <Skeleton className="h-4 w-64 mt-2" />
@@ -116,7 +116,7 @@ export default function PortalPersonalityPage() {
     <>
     <BrandFontLoader fonts={brandFonts} />
     {companyId && <BrandPageTracker companyId={companyId} pageType="personality" />}
-    <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
+    <div className="max-w-4xl mx-auto px-5 pt-4 pb-10 space-y-6">
 
       {/* 1. 人格（ブランドパーソナリティ：レーダーチャート＋概要＋リスト） */}
       {(hasTraits || data.summary) && (

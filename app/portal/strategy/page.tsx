@@ -148,7 +148,7 @@ export default function PortalStrategyPage() {
   }, [companyId, cacheKey])
 
   if (loading) return (
-    <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
+    <div className="max-w-4xl mx-auto px-5 pt-4 pb-10 space-y-6">
       {/* ターゲット概要＋主なターゲット＋ペルソナ（2列） */}
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
         <CardContent className="p-5 space-y-4">
@@ -190,7 +190,7 @@ export default function PortalStrategyPage() {
     <>
     <BrandFontLoader fonts={brandFonts} />
     {companyId && <BrandPageTracker companyId={companyId} pageType="strategy" />}
-    <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
+    <div className="max-w-4xl mx-auto px-5 pt-4 pb-10 space-y-6">
 
       {/* Card 1: ターゲット＋ペルソナ */}
       {(hasTarget || validPersonas.length > 0) && (

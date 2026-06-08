@@ -140,7 +140,7 @@ export default function PortalVisualsPage() {
   }, [companyId, cacheKey])
 
   if (loading) return (
-    <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
+    <div className="max-w-4xl mx-auto px-5 pt-4 pb-10 space-y-6">
       {/* 見え方/聞こえ方 切替タブ */}
       <div className="flex gap-1 border-b border-border">
         <Skeleton className="h-9 w-24" />
@@ -261,7 +261,7 @@ export default function PortalVisualsPage() {
   return (
     <>
     {companyId && <BrandPageTracker companyId={companyId} pageType="visuals" />}
-    <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
+    <div className="max-w-4xl mx-auto px-5 pt-4 pb-10 space-y-6">
       {/* ビジュアル / バーバル 切替タブ */}
       <BrandExpressionTabs />
 

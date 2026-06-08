@@ -43,7 +43,7 @@ export default function PortalValuesPage() {
   }, [companyId, cacheKey])
 
   if (loading) return (
-    <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
+    <div className="max-w-4xl mx-auto px-5 pt-4 pb-10 space-y-6">
       <div>
         <Skeleton className="h-8 w-32" />
         <Skeleton className="h-4 w-64 mt-2" />
@@ -66,7 +66,7 @@ export default function PortalValuesPage() {
   if (values.length === 0) return <div className="text-center py-16 text-muted-foreground text-[15px]">まだ登録されていません</div>
 
   return (
-    <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
+    <div className="max-w-4xl mx-auto px-5 pt-4 pb-10 space-y-6">
 
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
         <CardContent className="p-5 space-y-3">

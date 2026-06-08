@@ -104,7 +104,7 @@ export default function PortalVerbalIdentityPage() {
   }, [terms, selectedCategory, searchQuery])
 
   if (loading) return (
-    <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
+    <div className="max-w-4xl mx-auto px-5 pt-4 pb-10 space-y-6">
       <div>
         <Skeleton className="h-8 w-56" />
         <Skeleton className="h-4 w-64 mt-2" />
@@ -146,7 +146,7 @@ export default function PortalVerbalIdentityPage() {
     <>
     <BrandFontLoader fonts={brandFonts} />
     {companyId && <BrandPageTracker companyId={companyId} pageType="verbal" />}
-    <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
+    <div className="max-w-4xl mx-auto px-5 pt-4 pb-10 space-y-6">
       {/* ビジュアル / バーバル 切替タブ */}
       <BrandExpressionTabs />
 

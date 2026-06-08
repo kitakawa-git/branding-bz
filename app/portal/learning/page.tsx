@@ -70,7 +70,7 @@ export default function PortalLearningPage() {
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
+      <div className="max-w-4xl mx-auto px-5 pt-4 pb-10 space-y-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {[1, 2, 3, 4].map((i) => (
             <Skeleton key={i} className="h-48 w-full rounded-xl" />
@@ -82,7 +82,7 @@ export default function PortalLearningPage() {
 
   if (videos.length === 0) {
     return (
-      <div className="max-w-4xl mx-auto px-5 pt-4 pb-6">
+      <div className="max-w-4xl mx-auto px-5 pt-4 pb-10">
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-10 text-center">
             <div className="mb-3 flex justify-center text-muted-foreground">
@@ -96,7 +96,7 @@ export default function PortalLearningPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-5">
+    <div className="max-w-4xl mx-auto px-5 pt-4 pb-10 space-y-5">
       {/* カテゴリ絞り込み */}
       {categories.length > 0 && (
         <div className="flex flex-wrap gap-2">

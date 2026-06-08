@@ -595,7 +595,7 @@ export default function KpiPage() {
   // ============================================
   if (!kpiEnabled) {
     return (
-      <div className="max-w-4xl mx-auto px-5 pt-4 pb-6">
+      <div className="max-w-4xl mx-auto px-5 pt-4 pb-10">
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="py-16 text-center">
             <p className="text-muted-foreground text-[15px] m-0">
@@ -612,7 +612,7 @@ export default function KpiPage() {
   // ============================================
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
+      <div className="max-w-4xl mx-auto px-5 pt-4 pb-10 space-y-6">
         {/* 期間情報 */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none"><CardContent className="p-4 flex items-center gap-2"><Skeleton className="size-4 rounded" /><Skeleton className="h-4 w-56" /></CardContent></Card>
         {/* 目標＋総合進捗 */}
@@ -637,7 +637,7 @@ export default function KpiPage() {
   // ============================================
   if (!goal) {
     return (
-      <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
+      <div className="max-w-4xl mx-auto px-5 pt-4 pb-10 space-y-6">
 
         {goalPeriod && (
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
@@ -693,7 +693,7 @@ export default function KpiPage() {
   const canReview = goalPeriod?.show_review_banner === true
 
   return (
-    <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
+    <div className="max-w-4xl mx-auto px-5 pt-4 pb-10 space-y-6">
 
       {/* ゴール期間 + 目標表示 */}
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">

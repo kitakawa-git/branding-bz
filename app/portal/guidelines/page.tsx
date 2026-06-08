@@ -138,7 +138,7 @@ export default function PortalGuidelinesPage() {
   }, [companyId, cacheKey])
 
   if (loading) return (
-    <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
+    <div className="max-w-4xl mx-auto px-5 pt-4 pb-10 space-y-6">
       {/* スローガン＋コンセプトビジュアル＋動画＋メッセージ */}
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
         <CardContent className="p-5 space-y-4">
@@ -211,7 +211,7 @@ export default function PortalGuidelinesPage() {
     <>
     <BrandFontLoader fonts={brandFonts} />
     {companyId && <BrandPageTracker companyId={companyId} pageType="guidelines" />}
-    <div className="max-w-4xl mx-auto px-5 pt-4 pb-6 space-y-6">
+    <div className="max-w-4xl mx-auto px-5 pt-4 pb-10 space-y-6">
       {/* 1. スローガン＋コンセプトビジュアル＋ブランド動画＋メッセージ */}
       {(data.slogan || data.concept_visuals.length > 0 || data.brand_video_url || data.brand_statement) && (
         <section>
