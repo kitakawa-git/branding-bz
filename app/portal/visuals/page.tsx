@@ -147,7 +147,7 @@ export default function PortalVisualsPage() {
         <Skeleton className="h-9 w-24" />
       </div>
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-        <CardContent className="p-5 space-y-4">
+        <CardContent className="p-4 sm:p-5 space-y-4">
           <Skeleton className="h-4 w-32" />
           <Skeleton className="h-16 w-full" />
           <Skeleton className="h-4 w-36" />
@@ -159,7 +159,7 @@ export default function PortalVisualsPage() {
         </CardContent>
       </Card>
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-        <CardContent className="p-5">
+        <CardContent className="p-4 sm:p-5">
           <Skeleton className="h-4 w-32" />
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mt-3">
             {[1, 2, 3, 4].map(i => (
@@ -175,7 +175,7 @@ export default function PortalVisualsPage() {
         </CardContent>
       </Card>
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-        <CardContent className="p-5 space-y-3">
+        <CardContent className="p-4 sm:p-5 space-y-3">
           <Skeleton className="h-4 w-20" />
           <Skeleton className="h-6 w-48" />
           <Skeleton className="h-6 w-40" />
@@ -183,7 +183,7 @@ export default function PortalVisualsPage() {
       </Card>
       {/* ビジュアルガイドライン（画像グリッド） */}
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-        <CardContent className="p-5 space-y-4">
+        <CardContent className="p-4 sm:p-5 space-y-4">
           <Skeleton className="h-4 w-40" />
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {[1, 2, 3].map(i => (
@@ -269,7 +269,7 @@ export default function PortalVisualsPage() {
       {(data.logo_images.length > 0 || data.logo_concept || validSections.length > 0) && (
         <section>
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-            <CardContent className="p-5 space-y-6">
+            <CardContent className="p-4 sm:p-5 space-y-6">
               {data.logo_images.length > 0 && (
                 <div>
                   <h2 className="text-xs font-bold text-foreground mb-3 tracking-wide">ロゴ基本形</h2>
@@ -333,7 +333,7 @@ export default function PortalVisualsPage() {
       {visibleCategories.length > 0 && (
         <section>
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-            <CardContent className="p-5">
+            <CardContent className="p-4 sm:p-5">
               <h2 className="text-xs font-bold text-foreground mb-3 tracking-wide">ブランドカラー</h2>
 
               {visibleCategories.map((cat, catIdx) => (
@@ -362,7 +362,7 @@ export default function PortalVisualsPage() {
           {/* eslint-disable-next-line @next/next/no-page-custom-font */}
           <link rel="stylesheet" href={getGoogleFontsUrl(data.fonts)} />
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-            <CardContent className="p-5">
+            <CardContent className="p-4 sm:p-5">
               <h2 className="text-xs font-bold text-foreground mb-3 tracking-wide">フォント</h2>
 
               <div className="mb-4">
@@ -400,7 +400,7 @@ export default function PortalVisualsPage() {
       {(data.visual_guidelines || data.visual_guidelines_images.length > 0) && (
         <section>
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-            <CardContent className="p-5">
+            <CardContent className="p-4 sm:p-5">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-xs font-bold text-foreground tracking-wide">ビジュアルガイドライン</h2>
                 {data.visual_guidelines_images.length > 0 && (

@@ -75,7 +75,7 @@ export default function PortalPersonalityPage() {
         <Skeleton className="h-4 w-64 mt-2" />
       </div>
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-        <CardContent className="p-5 space-y-4">
+        <CardContent className="p-4 sm:p-5 space-y-4">
           <Skeleton className="h-4 w-24" />
           <Skeleton className="h-64 w-full max-w-[440px] mx-auto rounded-lg" />
           {[1, 2, 3].map(i => (
@@ -122,7 +122,7 @@ export default function PortalPersonalityPage() {
       {(hasTraits || data.summary) && (
         <section>
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-            <CardContent className="p-5">
+            <CardContent className="p-4 sm:p-5">
               <h2 className="text-xs font-bold text-foreground mb-3 tracking-wide">人格</h2>
 
               {/* レーダーチャート（3つ以上の場合のみ） */}

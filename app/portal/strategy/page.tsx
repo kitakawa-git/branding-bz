@@ -151,7 +151,7 @@ export default function PortalStrategyPage() {
     <div className="max-w-4xl mx-auto px-5 pt-4 pb-10 space-y-6">
       {/* ターゲット概要＋主なターゲット＋ペルソナ（2列） */}
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-        <CardContent className="p-5 space-y-4">
+        <CardContent className="p-4 sm:p-5 space-y-4">
           <Skeleton className="h-4 w-28" />
           <Skeleton className="h-16 w-full" />
           <Skeleton className="h-4 w-24" />
@@ -172,7 +172,7 @@ export default function PortalStrategyPage() {
       </Card>
       {/* ポジショニングマップ */}
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-        <CardContent className="p-5">
+        <CardContent className="p-4 sm:p-5">
           <Skeleton className="h-4 w-40" />
           <Skeleton className="h-64 w-full mt-3 rounded-lg" />
         </CardContent>
@@ -196,7 +196,7 @@ export default function PortalStrategyPage() {
       {(hasTarget || validPersonas.length > 0) && (
         <section>
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-            <CardContent className="p-5 space-y-6">
+            <CardContent className="p-4 sm:p-5 space-y-6">
               {hasTarget && (
                 <div>
                   <h2 className="text-xs font-bold text-foreground mb-3 tracking-wide">ターゲット</h2>
@@ -281,7 +281,7 @@ export default function PortalStrategyPage() {
       {(positioningMapData || positioningMapUrl) && (
         <section>
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none overflow-hidden">
-            <CardContent className="p-5">
+            <CardContent className="p-4 sm:p-5">
               <h2 className="text-xs font-bold text-foreground mb-3 tracking-wide">ポジショニングマップ</h2>
               {positioningMapData ? (
                 <PositioningMap data={positioningMapData} />
@@ -316,7 +316,7 @@ export default function PortalStrategyPage() {
       {providedValues.length > 0 && (
         <section>
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-            <CardContent className="p-5">
+            <CardContent className="p-4 sm:p-5">
               <h2 className="text-xs font-bold text-foreground mb-3 tracking-wide">提供価値</h2>
               <div className="space-y-3">
                 {providedValues.map((val, i) => (

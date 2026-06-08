@@ -154,7 +154,7 @@ export default function PortalVerbalIdentityPage() {
       {hasTone && (
         <section>
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-            <CardContent className="p-5">
+            <CardContent className="p-4 sm:p-5">
               <h2 className="text-xs font-bold text-foreground mb-3 tracking-wide">トーンオブボイス</h2>
               {(() => {
                 const { copy, body } = splitToneOfVoice(toneOfVoice)

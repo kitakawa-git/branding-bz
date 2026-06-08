@@ -258,7 +258,7 @@ export default function SurveyRespondPage() {
         <div className="space-y-6">
           {[1, 2, 3, 4, 5].map(i => (
             <Card key={i} className="bg-[hsl(0_0%_97%)] border shadow-none">
-              <CardContent className="p-5">
+              <CardContent className="p-4 sm:p-5">
                 <Skeleton className="h-4 w-3/4 mb-4" />
                 <div className="flex gap-2">
                   {[1, 2, 3, 4, 5].map(j => (
@@ -350,7 +350,7 @@ export default function SurveyRespondPage() {
 
       {/* 回答者属性 */}
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-6">
-        <CardContent className="p-5">
+        <CardContent className="p-4 sm:p-5">
           <h2 className="text-xs font-bold text-foreground mb-4">回答者情報</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
@@ -405,7 +405,7 @@ export default function SurveyRespondPage() {
                     selectedScore ? 'bg-[hsl(0_0%_97%)]' : 'bg-white border-dashed'
                   }`}
                 >
-                  <CardContent className="p-5">
+                  <CardContent className="p-4 sm:p-5">
                     {/* 設問テキスト */}
                     <p className="text-base sm:text-sm text-foreground leading-relaxed mb-4">
                       <span className="text-xs font-mono text-muted-foreground mr-2">

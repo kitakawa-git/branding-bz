@@ -201,7 +201,7 @@ export default function QuizResultPage() {
       <div className="space-y-3">
         {answers.map((a, idx) => (
           <Card key={a.question_id} className="bg-[hsl(0_0%_97%)] border shadow-none">
-            <CardContent className="p-5">
+            <CardContent className="p-4 sm:p-5">
               <div className="flex items-start gap-2 mb-3">
                 <span className="text-xs font-mono text-muted-foreground mt-0.5">Q{idx + 1}.</span>
                 <div className="flex-1">

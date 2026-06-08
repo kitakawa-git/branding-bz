@@ -141,7 +141,7 @@ export default function PortalGuidelinesPage() {
     <div className="max-w-4xl mx-auto px-5 pt-4 pb-10 space-y-6">
       {/* スローガン＋コンセプトビジュアル＋動画＋メッセージ */}
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-        <CardContent className="p-5 space-y-4">
+        <CardContent className="p-4 sm:p-5 space-y-4">
           <Skeleton className="h-4 w-24" />
           <Skeleton className="h-6 w-3/4" />
           <Skeleton className="h-48 w-full rounded-lg" />
@@ -151,7 +151,7 @@ export default function PortalGuidelinesPage() {
       </Card>
       {/* ミッション＋ビジョン＋バリュー（バリューは2列） */}
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-        <CardContent className="p-5 space-y-6">
+        <CardContent className="p-4 sm:p-5 space-y-6">
           <div className="space-y-2"><Skeleton className="h-4 w-28" /><Skeleton className="h-7 w-2/3" /><Skeleton className="h-4 w-full" /></div>
           <div className="space-y-2"><Skeleton className="h-4 w-24" /><Skeleton className="h-7 w-1/2" /><Skeleton className="h-4 w-full" /></div>
           <div>
@@ -169,7 +169,7 @@ export default function PortalGuidelinesPage() {
       </Card>
       {/* 提供価値 / 行動指針（番号付きリスト） */}
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-        <CardContent className="p-5 space-y-3">
+        <CardContent className="p-4 sm:p-5 space-y-3">
           <Skeleton className="h-4 w-24" />
           {[1, 2, 3].map(i => (
             <div key={i} className="rounded-lg border border-border bg-background p-4 flex items-start gap-4">
@@ -181,7 +181,7 @@ export default function PortalGuidelinesPage() {
       </Card>
       {/* ブランドストーリー＋沿革＋事業内容 */}
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-        <CardContent className="p-5 space-y-4">
+        <CardContent className="p-4 sm:p-5 space-y-4">
           <Skeleton className="h-4 w-36" />
           <Skeleton className="h-20 w-full" />
           <Skeleton className="h-4 w-24" />
@@ -216,7 +216,7 @@ export default function PortalGuidelinesPage() {
       {(data.slogan || data.concept_visuals.length > 0 || data.brand_video_url || data.brand_statement) && (
         <section>
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none overflow-hidden">
-            <CardContent className="p-5 space-y-6">
+            <CardContent className="p-4 sm:p-5 space-y-6">
               {data.slogan && (
                 <div>
                   <h2 className="text-xs font-bold text-foreground mb-2 tracking-wide">スローガン</h2>
@@ -269,7 +269,7 @@ export default function PortalGuidelinesPage() {
       {(data.mission || data.vision || filteredValues.length > 0) && (
         <section>
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-            <CardContent className="p-5 space-y-6">
+            <CardContent className="p-4 sm:p-5 space-y-6">
               {data.mission && (() => {
                 const { copy, body } = splitBrandCopy(data.mission)
                 return (
@@ -320,7 +320,7 @@ export default function PortalGuidelinesPage() {
       {data.action_guidelines.length > 0 && (
         <section>
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-            <CardContent className="p-5">
+            <CardContent className="p-4 sm:p-5">
               <h2 className="text-xs font-bold text-foreground mb-3 tracking-wide">行動指針</h2>
               <div className="space-y-2">
                 {data.action_guidelines.map((g, i) => (
@@ -350,7 +350,7 @@ export default function PortalGuidelinesPage() {
       {(data.brand_story || filteredHistory.length > 0 || filteredBusiness.length > 0) && (
         <section>
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-            <CardContent className="p-5 space-y-6">
+            <CardContent className="p-4 sm:p-5 space-y-6">
               {data.brand_story && (
                 <div>
                   <h2 className="text-xs font-bold text-foreground mb-3 tracking-wide">ブランドストーリー</h2>

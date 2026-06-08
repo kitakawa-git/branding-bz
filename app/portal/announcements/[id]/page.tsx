@@ -199,7 +199,7 @@ export default function PortalAnnouncementDetailPage() {
         <Skeleton className="h-5 w-24 mb-3" />
         <Skeleton className="h-8 w-3/4 mb-4" />
         <Card className="border shadow-none">
-          <CardContent className="p-5">
+          <CardContent className="p-4 sm:p-5">
             <Skeleton className="h-4 w-full mb-2" />
             <Skeleton className="h-4 w-full mb-2" />
             <Skeleton className="h-4 w-3/4 mb-2" />
@@ -249,7 +249,7 @@ export default function PortalAnnouncementDetailPage() {
 
       {/* 本文 */}
       <Card className="border shadow-none mb-4">
-        <CardContent className="p-5">
+        <CardContent className="p-4 sm:p-5">
           <p className="text-base sm:text-sm text-foreground whitespace-pre-wrap m-0 leading-relaxed">
             {announcement.content}
           </p>

@@ -389,7 +389,7 @@ export default function ProfilePage() {
 
       {/* ===== B. 基本情報 ===== */}
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-6">
-        <CardContent className="p-5 space-y-5">
+        <CardContent className="p-4 sm:p-5 space-y-5">
           <h2 className="text-xs font-bold text-foreground">基本情報</h2>
 
           <div>
@@ -469,7 +469,7 @@ export default function ProfilePage() {
 
       {/* ===== C. SNSリンク ===== */}
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-6">
-        <CardContent className="p-5 space-y-5">
+        <CardContent className="p-4 sm:p-5 space-y-5">
           <h2 className="text-xs font-bold text-foreground">SNSリンク</h2>
 
           <div>
@@ -527,7 +527,7 @@ export default function ProfilePage() {
 
       {/* ===== D. パスワード変更 ===== */}
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-        <CardContent className="p-5">
+        <CardContent className="p-4 sm:p-5">
           <button
             type="button"
             onClick={() => setShowPasswordChange(!showPasswordChange)}

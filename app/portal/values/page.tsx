@@ -49,7 +49,7 @@ export default function PortalValuesPage() {
         <Skeleton className="h-4 w-64 mt-2" />
       </div>
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-        <CardContent className="p-5 space-y-3">
+        <CardContent className="p-4 sm:p-5 space-y-3">
           {[1, 2, 3].map(i => (
             <div key={i} className="rounded-lg border border-border bg-background p-4 flex items-start gap-4">
               <Skeleton className="w-9 h-9 rounded-full shrink-0" />
@@ -69,7 +69,7 @@ export default function PortalValuesPage() {
     <div className="max-w-4xl mx-auto px-5 pt-4 pb-10 space-y-6">
 
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-        <CardContent className="p-5 space-y-3">
+        <CardContent className="p-4 sm:p-5 space-y-3">
           {values.map((val, i) => (
             <div key={i} className="rounded-lg border border-border bg-background p-4 flex items-start gap-4">
               <div className="shrink-0 w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center text-base font-bold">

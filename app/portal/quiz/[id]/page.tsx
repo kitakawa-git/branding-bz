@@ -180,7 +180,7 @@ export default function QuizTakePage() {
         <div className="space-y-6">
           {[1, 2, 3, 4].map((i) => (
             <Card key={i} className="bg-[hsl(0_0%_97%)] border shadow-none">
-              <CardContent className="p-5">
+              <CardContent className="p-4 sm:p-5">
                 <Skeleton className="h-4 w-3/4 mb-4" />
                 <div className="space-y-2">
                   {[1, 2, 3, 4].map((j) => (
@@ -261,7 +261,7 @@ export default function QuizTakePage() {
 
       {/* 役職カテゴリ（自己申告。department はサーバが profiles から取得） */}
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-6">
-        <CardContent className="p-5">
+        <CardContent className="p-4 sm:p-5">
           <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">
             役職カテゴリ（集計用）
           </label>
@@ -289,7 +289,7 @@ export default function QuizTakePage() {
                 selected ? 'bg-[hsl(0_0%_97%)]' : 'bg-white border-dashed'
               }`}
             >
-              <CardContent className="p-5">
+              <CardContent className="p-4 sm:p-5">
                 <p className="text-base sm:text-sm text-foreground leading-relaxed mb-4">
                   <span className="text-xs font-mono text-muted-foreground mr-2">Q{n}.</span>
                   {q.question_text}

@@ -616,7 +616,7 @@ export default function KpiPage() {
         {/* 期間情報 */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none"><CardContent className="p-4 flex items-center gap-2"><Skeleton className="size-4 rounded" /><Skeleton className="h-4 w-56" /></CardContent></Card>
         {/* 目標＋総合進捗 */}
-        <Card className="bg-[hsl(0_0%_97%)] border shadow-none"><CardContent className="p-5 space-y-3">
+        <Card className="bg-[hsl(0_0%_97%)] border shadow-none"><CardContent className="p-4 sm:p-5 space-y-3">
           <Skeleton className="h-5 w-2/3" />
           <Skeleton className="h-2 w-full rounded-full" />
           <div className="flex gap-2">{[1, 2, 3].map(i => <Skeleton key={i} className="h-5 w-16 rounded-full" />)}</div>
@@ -697,7 +697,7 @@ export default function KpiPage() {
 
       {/* ゴール期間 + 目標表示 */}
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-        <CardContent className="p-5">
+        <CardContent className="p-4 sm:p-5">
           <div className="flex items-start justify-between gap-3 mb-3">
             <h2 className="text-xl font-bold text-foreground m-0 leading-relaxed">{goal.title}</h2>
             {canEdit && (
@@ -726,7 +726,7 @@ export default function KpiPage() {
 
       {/* KPI総合サマリー + KPI一覧（入れ子） */}
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-        <CardContent className="p-5">
+        <CardContent className="p-4 sm:p-5">
           {kpis.length > 0 && (
             <>
               <div className="flex items-center justify-between mb-3">

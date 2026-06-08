@@ -114,7 +114,7 @@ export default function PortalLearningWatchPage() {
           {/* 説明 */}
           {video.description && (
             <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-              <CardContent className="p-5">
+              <CardContent className="p-4 sm:p-5">
                 <p className="text-base sm:text-sm text-gray-600 leading-relaxed whitespace-pre-wrap m-0">
                   {video.description}
                 </p>
