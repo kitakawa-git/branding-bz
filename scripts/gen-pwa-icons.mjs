@@ -8,8 +8,9 @@
 import sharp from 'sharp'
 import { mkdir } from 'node:fs/promises'
 
-const BG = '#1a1a1a'      // favicon(app/icon.svg)と統一
-const FG = '#ffffff'
+// 白黒反転版：白背景＋濃いマーク
+const BG = '#ffffff'
+const FG = '#1a1a1a'
 
 // ブランドマーク（logo.svg のマーク部分。元bbox x:0-112 / y:25.791-95）
 const MARK = `
