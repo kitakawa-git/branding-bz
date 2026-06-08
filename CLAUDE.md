@@ -133,6 +133,18 @@ id (uuid), company_id (FK→companies), name, position, department, bio, photo_u
 - 将来 Next.js が webpack ビルドを廃止、または serwist が Turbopack ネイティブ対応したら、
   configurator モード（`@serwist/cli`・2段ビルド）への移行を検討。
 
+## モバイルUI（文字サイズ方針）
+
+- **本文段落はスマホで一段階大きく（C案）**: 読ませる段落本文（説明文・ストーリー・ミッション本文等、
+  `leading-[1.8/1.9]`/`leading-relaxed`/`whitespace-pre-*` を伴う `<p>`）は **`text-base sm:text-sm`**
+  ＝スマホ16px / 640px以上14px。**見出し・ラベル・リンク・ボタン・バッジ・エラーバナーは対象外**（本文だけ）。
+- **root の font-size はいじらない**（ブラウザ既定16px）。過去に `@media(max-width:639.98px){html{font-size:17px}}`
+  を試したが「効果が薄い・全体に効きすぎる」ため撤去済み。底上げは「コンポーネント単位（include.bz基準）
+  ＋本文のみ `sm:` で切替」で行う方針（root一括スケールはしない）。
+- **入力欄(input/textarea)はフォント16px以上必須**（iOS入力時の自動ズーム防止）。shadcn `Input` 既定は
+  `text-base md:text-sm`＝モバイルは元々16pxだが、認証前ページ等は `text-base md:text-base` でPC含め16px固定。
+- ポータルのコンパクト設計（見出し `text-xs` 等）はPC基準。モバイルで小さく感じる箇所は上記方針で個別に引き上げる。
+
 ## デザインシステム（公開ページ共通）
 新しい画面を作成する際は、以下のトークンとパターンに必ず準拠すること。
 
