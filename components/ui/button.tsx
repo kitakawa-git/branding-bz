@@ -23,9 +23,11 @@ const buttonVariants = cva(
           "border border-destructive/30 text-destructive bg-background shadow-sm hover:bg-destructive/10",
       },
       size: {
+        // 大中小（モバイル基準）: default(h-9)=小・入力欄と整列 / sm=小(h-9に統一) / lg=大(h-12)
+        // 中(h-11)・大(h-12)は主要ボタンで className/size を明示して使う
         default: "h-9 px-4 py-2",
-        sm: "h-8 rounded-md px-3 text-xs",
-        lg: "h-10 rounded-md px-8",
+        sm: "h-9 rounded-md px-3 text-xs",
+        lg: "h-12 rounded-md px-8",
         icon: "h-9 w-9",
       },
     },
