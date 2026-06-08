@@ -24,6 +24,18 @@ export function PWAUpdatePrompt() {
         toast("新しいバージョンがあります", {
           description: "更新すると最新の状態でご利用いただけます。",
           duration: Infinity, // ユーザーが操作するまで残す
+          // 文字・ボタンを一回り大きく（モバイルで見やすく・押しやすく）
+          classNames: {
+            title: "!text-base !font-bold",
+            description: "!text-sm",
+          },
+          actionButtonStyle: {
+            height: "44px",
+            padding: "0 18px",
+            fontSize: "15px",
+            fontWeight: 700,
+            borderRadius: "9999px",
+          },
           action: {
             label: "更新",
             onClick: () => {
