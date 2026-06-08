@@ -1197,7 +1197,7 @@ function PostCard({
         </div>
 
         {/* Content */}
-        <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap m-0 mb-3">
+        <p className="text-base sm:text-sm text-foreground leading-relaxed whitespace-pre-wrap m-0 mb-3">
           {post.content}
         </p>
 
@@ -1311,7 +1311,7 @@ function PostCard({
                           </button>
                         )}
                       </div>
-                      <p className="text-sm text-foreground/80 leading-relaxed m-0 mt-0.5">
+                      <p className="text-base sm:text-sm text-foreground/80 leading-relaxed m-0 mt-0.5">
                         {comment.content}
                       </p>
                     </div>

@@ -151,7 +151,7 @@ export default function PortalPersonalityPage() {
 
               {/* パーソナリティ概要（brand_guidelines.personality_summary） */}
               {data.summary && (
-                <p className="text-sm text-foreground/80 leading-[1.9] whitespace-pre-wrap mb-6 m-0">
+                <p className="text-base sm:text-sm text-foreground/80 leading-[1.9] whitespace-pre-wrap mb-6 m-0">
                   {data.summary}
                 </p>
               )}
@@ -171,7 +171,7 @@ export default function PortalPersonalityPage() {
                         </p>
                       )}
                       {description && (
-                        <p className="text-sm text-foreground/70 leading-[1.8] whitespace-pre-wrap mt-1 m-0">
+                        <p className="text-base sm:text-sm text-foreground/70 leading-[1.8] whitespace-pre-wrap mt-1 m-0">
                           {description}
                         </p>
                       )}

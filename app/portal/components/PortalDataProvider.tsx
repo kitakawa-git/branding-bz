@@ -267,7 +267,7 @@ export function PortalDataProvider({ children }: { children: React.ReactNode }) 
               <h2 className="text-xl font-bold text-foreground mb-3">
                 アクセス権限がありません
               </h2>
-              <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
+              <p className="text-base sm:text-sm text-muted-foreground mb-6 leading-relaxed">
                 このアカウントはメンバーとして登録されていません。管理者に連絡してください。
               </p>
               <Button onClick={signOut} className="rounded-lg">

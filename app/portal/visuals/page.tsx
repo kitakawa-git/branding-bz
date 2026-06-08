@@ -290,7 +290,7 @@ export default function PortalVisualsPage() {
               {data.logo_concept && (
                 <div>
                   <h2 className="text-xs font-bold text-foreground mb-3 tracking-wide">ロゴコンセプト</h2>
-                  <p className="text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0">{data.logo_concept}</p>
+                  <p className="text-base sm:text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0">{data.logo_concept}</p>
                 </div>
               )}
 
@@ -421,7 +421,7 @@ export default function PortalVisualsPage() {
                 )}
               </div>
               {data.visual_guidelines && (
-                <p className="text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0">{data.visual_guidelines}</p>
+                <p className="text-base sm:text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0">{data.visual_guidelines}</p>
               )}
               {sortedGuidelineImages.length > 0 && guidelineLayout === 'grid' && (
                 <div className={`grid grid-cols-3 gap-4 ${data.visual_guidelines ? 'mt-4' : ''}`}>

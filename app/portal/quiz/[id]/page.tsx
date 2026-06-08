@@ -241,7 +241,7 @@ export default function QuizTakePage() {
           {quiz?.title}
         </h1>
         {quiz?.description && (
-          <p className="text-sm text-muted-foreground leading-relaxed mb-1">{quiz.description}</p>
+          <p className="text-base sm:text-sm text-muted-foreground leading-relaxed mb-1">{quiz.description}</p>
         )}
         <p className="text-xs text-muted-foreground">
           記名式のテストです。あなたのスコア・解説はあなただけが確認でき、管理者には部署平均（3人以上）としてのみ集計されます。提出は1回のみです。
@@ -290,7 +290,7 @@ export default function QuizTakePage() {
               }`}
             >
               <CardContent className="p-5">
-                <p className="text-sm text-foreground leading-relaxed mb-4">
+                <p className="text-base sm:text-sm text-foreground leading-relaxed mb-4">
                   <span className="text-xs font-mono text-muted-foreground mr-2">Q{n}.</span>
                   {q.question_text}
                 </p>

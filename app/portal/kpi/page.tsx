@@ -1032,7 +1032,7 @@ export default function KpiPage() {
                   return (
                     <div>
                       <Label className="text-[10px] text-muted-foreground uppercase tracking-wider">私たちのミッション</Label>
-                      {copy && <p className="text-sm font-semibold text-foreground mt-1 m-0 leading-relaxed">{copy}</p>}
+                      {copy && <p className="text-base sm:text-sm font-semibold text-foreground mt-1 m-0 leading-relaxed">{copy}</p>}
                       {body && <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-line mt-1 m-0">{body}</p>}
                     </div>
                   )
@@ -1096,7 +1096,7 @@ export default function KpiPage() {
             {/* 設定済み目標の表示 */}
             <div className="bg-muted/50 rounded-lg p-4">
               <Label className="text-[10px] text-muted-foreground uppercase tracking-wider">あなたの目標</Label>
-              <p className="text-sm font-semibold text-foreground mt-1 m-0 leading-relaxed">{setupGoalText}</p>
+              <p className="text-base sm:text-sm font-semibold text-foreground mt-1 m-0 leading-relaxed">{setupGoalText}</p>
             </div>
 
             {/* 配分サマリー */}

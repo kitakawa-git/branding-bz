@@ -202,7 +202,7 @@ export default function PortalStrategyPage() {
                   <h2 className="text-xs font-bold text-foreground mb-3 tracking-wide">ターゲット</h2>
                   {/* 概要文（プロセス文） */}
                   {target && (
-                    <p className="text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0 mb-3" style={secondaryStyle}>{target}</p>
+                    <p className="text-base sm:text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0 mb-3" style={secondaryStyle}>{target}</p>
                   )}
                   {/* 主なターゲット（セグメント一覧） */}
                   {targetSegments.length > 0 && (
@@ -213,7 +213,7 @@ export default function PortalStrategyPage() {
                           <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-600" />
                           <p className="text-sm font-bold text-foreground m-0">{seg.name}</p>
                           {seg.description && (
-                            <p className="text-sm text-foreground/70 leading-[1.8] whitespace-pre-wrap mt-1 m-0" style={secondaryStyle}>{seg.description}</p>
+                            <p className="text-base sm:text-sm text-foreground/70 leading-[1.8] whitespace-pre-wrap mt-1 m-0" style={secondaryStyle}>{seg.description}</p>
                           )}
                         </div>
                       ))}
@@ -231,13 +231,13 @@ export default function PortalStrategyPage() {
                     <p className="text-base font-bold text-foreground mb-0.5 m-0">
                       {persona.name}
                     </p>
-                    <p className="text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0">
+                    <p className="text-base sm:text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0">
                       {[persona.age_range, persona.occupation].filter(Boolean).join(' / ')}
                     </p>
                   </div>
 
                   {persona.description && (
-                    <p className="text-sm text-muted-foreground leading-relaxed mb-4 m-0">
+                    <p className="text-base sm:text-sm text-muted-foreground leading-relaxed mb-4 m-0">
                       {persona.description}
                     </p>
                   )}
@@ -329,7 +329,7 @@ export default function PortalStrategyPage() {
                         {val.title}
                       </div>
                       {val.description && (
-                        <div className="text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap" style={secondaryStyle}>
+                        <div className="text-base sm:text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap" style={secondaryStyle}>
                           {val.description}
                         </div>
                       )}

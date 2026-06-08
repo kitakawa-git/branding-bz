@@ -138,7 +138,7 @@ function PortalRegisterContent() {
             <h2 className="text-xl font-bold text-foreground mb-3">
               無効な招待リンク
             </h2>
-            <p className="text-sm text-muted-foreground m-0 leading-relaxed">
+            <p className="text-base sm:text-sm text-muted-foreground m-0 leading-relaxed">
               この招待リンクは無効または期限切れです。管理者に新しいリンクを発行してもらってください。
             </p>
           </CardContent>

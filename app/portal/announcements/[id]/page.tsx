@@ -250,7 +250,7 @@ export default function PortalAnnouncementDetailPage() {
       {/* 本文 */}
       <Card className="border shadow-none mb-4">
         <CardContent className="p-5">
-          <p className="text-sm text-foreground whitespace-pre-wrap m-0 leading-relaxed">
+          <p className="text-base sm:text-sm text-foreground whitespace-pre-wrap m-0 leading-relaxed">
             {announcement.content}
           </p>
         </CardContent>

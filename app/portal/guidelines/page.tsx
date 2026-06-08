@@ -257,7 +257,7 @@ export default function PortalGuidelinesPage() {
               {data.brand_statement && (
                 <div>
                   <h2 className="text-xs font-bold text-foreground mb-3 tracking-wide">メッセージ</h2>
-                  <p className="text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0" style={secondaryStyle}>{data.brand_statement}</p>
+                  <p className="text-base sm:text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0" style={secondaryStyle}>{data.brand_statement}</p>
                 </div>
               )}
             </CardContent>
@@ -276,7 +276,7 @@ export default function PortalGuidelinesPage() {
                   <div>
                     <h2 className="text-xs font-bold text-foreground mb-2 tracking-wide">ミッション</h2>
                     {copy && <p className="text-2xl font-bold text-foreground m-0" style={primaryStyle}>{copy}</p>}
-                    {body && <p className="text-sm text-foreground/80 leading-[1.8] whitespace-pre-line mt-3 m-0" style={secondaryStyle}>{body}</p>}
+                    {body && <p className="text-base sm:text-sm text-foreground/80 leading-[1.8] whitespace-pre-line mt-3 m-0" style={secondaryStyle}>{body}</p>}
                   </div>
                 )
               })()}
@@ -286,7 +286,7 @@ export default function PortalGuidelinesPage() {
                   <div>
                     <h2 className="text-xs font-bold text-foreground mb-2 tracking-wide">ビジョン</h2>
                     {copy && <p className="text-2xl font-bold text-foreground m-0" style={primaryStyle}>{copy}</p>}
-                    {body && <p className="text-sm text-foreground/80 leading-[1.8] whitespace-pre-line mt-3 m-0" style={secondaryStyle}>{body}</p>}
+                    {body && <p className="text-base sm:text-sm text-foreground/80 leading-[1.8] whitespace-pre-line mt-3 m-0" style={secondaryStyle}>{body}</p>}
                   </div>
                 )
               })()}
@@ -300,7 +300,7 @@ export default function PortalGuidelinesPage() {
                           {v.name}
                         </p>
                         {v.description && (
-                          <p className="text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0" style={secondaryStyle}>
+                          <p className="text-base sm:text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0" style={secondaryStyle}>
                             {v.description}
                           </p>
                         )}
@@ -333,7 +333,7 @@ export default function PortalGuidelinesPage() {
                     <div className="flex-1 min-w-0">
                       <span className="text-base font-semibold text-foreground">{g.title}</span>
                       {g.description && (
-                        <p className="text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap mt-1 m-0" style={secondaryStyle}>
+                        <p className="text-base sm:text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap mt-1 m-0" style={secondaryStyle}>
                           {g.description}
                         </p>
                       )}
@@ -357,7 +357,7 @@ export default function PortalGuidelinesPage() {
                   <ExpandableText
                     text={data.brand_story}
                     limit={300}
-                    className="text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0"
+                    className="text-base sm:text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0"
                     style={secondaryStyle}
                   />
                 </div>
@@ -376,7 +376,7 @@ export default function PortalGuidelinesPage() {
                           <span className="absolute left-0 top-1.5 w-2 h-2 rounded-full bg-blue-600 z-10" />
                           {item.year}
                         </div>
-                        <div className="text-sm text-foreground leading-relaxed">
+                        <div className="text-base sm:text-sm text-foreground leading-relaxed">
                           {item.event}
                         </div>
                       </div>
@@ -398,7 +398,7 @@ export default function PortalGuidelinesPage() {
                         <div className="flex-1 min-w-0">
                           <span className="text-base font-semibold text-foreground">{item.title}</span>
                           {item.description && (
-                            <p className="text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap mt-1 m-0">
+                            <p className="text-base sm:text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap mt-1 m-0">
                               {item.description}
                             </p>
                           )}

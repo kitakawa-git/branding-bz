@@ -185,7 +185,7 @@ function DashboardPostCard({
               {getRelativeTime(post.created_at)}
             </span>
           </div>
-          <p className="text-sm text-foreground line-clamp-2 m-0 whitespace-pre-wrap">
+          <p className="text-base sm:text-sm text-foreground line-clamp-2 m-0 whitespace-pre-wrap">
             {post.content}
           </p>
           <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
@@ -830,7 +830,7 @@ export default function PortalTopPage() {
                     </p>
                   )}
                   {body && (
-                    <p className="text-sm text-foreground/80 leading-[1.8] whitespace-pre-line mt-4 m-0">
+                    <p className="text-base sm:text-sm text-foreground/80 leading-[1.8] whitespace-pre-line mt-4 m-0">
                       {body}
                     </p>
                   )}
@@ -869,7 +869,7 @@ export default function PortalTopPage() {
                           ｜{q.noun}
                         </span>
                       </div>
-                      <p className="text-sm text-muted-foreground leading-relaxed mt-1 m-0">
+                      <p className="text-base sm:text-sm text-muted-foreground leading-relaxed mt-1 m-0">
                         {q.items}
                       </p>
                     </div>

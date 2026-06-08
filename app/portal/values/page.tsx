@@ -80,7 +80,7 @@ export default function PortalValuesPage() {
                   {val.title}
                 </div>
                 {val.description && (
-                  <div className="text-sm text-muted-foreground leading-relaxed">
+                  <div className="text-base sm:text-sm text-muted-foreground leading-relaxed">
                     {val.description}
                   </div>
                 )}

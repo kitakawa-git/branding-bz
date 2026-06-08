@@ -307,7 +307,7 @@ export default function SurveyRespondPage() {
             <h2 className="text-xl font-bold text-foreground mb-2">
               ご回答ありがとうございました
             </h2>
-            <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
+            <p className="text-base sm:text-sm text-muted-foreground mb-6 leading-relaxed">
               回答は匿名で集計されます。
             </p>
             <Button onClick={() => router.push('/portal')}>
@@ -327,7 +327,7 @@ export default function SurveyRespondPage() {
         <h1 className="text-2xl font-bold text-foreground mb-2">
           {survey?.title}
         </h1>
-        <p className="text-sm text-muted-foreground leading-relaxed mb-1">
+        <p className="text-base sm:text-sm text-muted-foreground leading-relaxed mb-1">
           回答は匿名で集計されます。各項目について、あなたの実感に最も近いものを選んでください。
         </p>
         <p className="text-xs text-muted-foreground">
@@ -407,7 +407,7 @@ export default function SurveyRespondPage() {
                 >
                   <CardContent className="p-5">
                     {/* 設問テキスト */}
-                    <p className="text-sm text-foreground leading-relaxed mb-4">
+                    <p className="text-base sm:text-sm text-foreground leading-relaxed mb-4">
                       <span className="text-xs font-mono text-muted-foreground mr-2">
                         Q{currentGlobalIndex}.
                       </span>

@@ -161,7 +161,7 @@ export default function PortalVerbalIdentityPage() {
                 return (
                   <>
                     {copy && <p className="text-base font-bold text-foreground mb-1 m-0" style={secondaryStyle}>{copy}</p>}
-                    {body && <p className="text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0" style={secondaryStyle}>{body}</p>}
+                    {body && <p className="text-base sm:text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0" style={secondaryStyle}>{body}</p>}
                   </>
                 )
               })()}
