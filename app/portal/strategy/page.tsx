@@ -32,7 +32,7 @@ type Persona = {
 // 主なターゲット（管理画面で編集する companies.target_segments）
 type TargetSegment = { name: string; description: string }
 
-// 提供価値（brand_values テーブル ＋ companies.provided_values レガシー）
+// 提供価値（value_propositions テーブル ＋ companies.provided_values レガシー）
 type ProvidedValueItem = { title: string; description: string | null }
 
 export default function PortalStrategyPage() {
@@ -73,14 +73,14 @@ export default function PortalStrategyPage() {
           .eq('company_id', companyId)
           .order('sort_order')
       ),
-      // 主なターゲット（companies.target_segments）＋ 提供価値レガシー（companies.provided_values）
+      // 主なターゲット（companies.target_segments）
       fetchWithRetry(() =>
-        supabase.from('companies').select('target_segments, provided_values').eq('id', companyId).maybeSingle()
+        supabase.from('companies').select('target_segments').eq('id', companyId).maybeSingle()
       ),
-      // 提供価値（brand_values テーブル。管理画面 ブランド戦略で編集）
+      // 提供価値（value_propositions テーブル。管理画面 ブランド戦略で編集）
       fetchWithRetry(() =>
         supabase
-          .from('brand_values')
+          .from('value_propositions')
           .select('title, description, sort_order')
           .eq('company_id', companyId)
           .order('sort_order')
@@ -96,18 +96,12 @@ export default function PortalStrategyPage() {
         .map(s => ({ name: s.name || '', description: s.description || '' }))
       setTargetSegments(parsedSegments)
 
-      // 提供価値の統合（brand_values → companies.provided_values の順）
+      // 提供価値（value_propositions のみ。レガシー companies.provided_values は廃止し business_content へ移行済み）
       const parsedProvidedValues: ProvidedValueItem[] = []
       if (bvRes.data && Array.isArray(bvRes.data)) {
         for (const d of bvRes.data as Record<string, unknown>[]) {
           const title = (d.title as string) || ''
           if (title.trim()) parsedProvidedValues.push({ title, description: (d.description as string) || null })
-        }
-      }
-      const legacyProvided = (companyData?.provided_values as string[] | undefined)
-      if (Array.isArray(legacyProvided)) {
-        for (const v of legacyProvided) {
-          if (typeof v === 'string' && v.trim()) parsedProvidedValues.push({ title: v, description: null })
         }
       }
       setProvidedValues(parsedProvidedValues)
@@ -312,7 +306,7 @@ export default function PortalStrategyPage() {
         </section>
       )}
 
-      {/* 提供価値（brand_values ＋ companies.provided_values。空なら非表示。「考え方」から移動） */}
+      {/* 提供価値（value_propositions ＋ companies.provided_values。空なら非表示。「考え方」から移動） */}
       {providedValues.length > 0 && (
         <section>
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
