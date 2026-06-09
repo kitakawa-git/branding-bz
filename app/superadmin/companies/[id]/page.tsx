@@ -13,6 +13,7 @@ import { Fab, FabButton } from '@/components/ui/fab'
 import ProofPointsSection, { type ValuePropositionRef } from './_sections/ProofPointsSection'
 import GovernanceRulesSection from './_sections/GovernanceRulesSection'
 import ElementRelationsSection from './_sections/ElementRelationsSection'
+import IntegrityCheckSection from './_sections/IntegrityCheckSection'
 
 type Company = {
   id: string
@@ -448,6 +449,17 @@ export default function CompanyDetailPage() {
             理念・提供価値・証拠・表現ルール・ペルソナの「跨ぐ関係」（方向づける／裏づけられる／矛盾する 等）。AIのコピー生成時に整合性の根拠として参照されます。
           </p>
           <ElementRelationsSection companyId={companyId} />
+        </CardContent>
+      </Card>
+
+      {/* === 整合性チェック（決定論的・読み取りのみ）セクション === */}
+      <Card className="bg-muted/50 border shadow-none mt-6">
+        <CardContent className="p-6">
+          <h3 className="text-base font-bold text-foreground mb-1">整合性チェック</h3>
+          <p className="text-xs text-muted-foreground mb-4">
+            ブランド体系の綻び（証拠なき約束・孤立した証拠・用語規定違反・矛盾の明示・証拠の鮮度）を決定論的に検出します。可視化のみ（自動修正はしません）。
+          </p>
+          <IntegrityCheckSection companyId={companyId} />
         </CardContent>
       </Card>
     </div>
