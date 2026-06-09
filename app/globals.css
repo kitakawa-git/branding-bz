@@ -29,7 +29,8 @@
 
     --muted: 0 0% 96.1%;
 
-    --muted-foreground: 0 0% 45.1%;
+    /* モバイルUX基準 §6: 薄い×小さいの可読性確保のため一段濃く（白地で約5.7:1・WCAG AA） */
+    --muted-foreground: 0 0% 40%;
 
     --accent: 0 0% 96.1%;
 
