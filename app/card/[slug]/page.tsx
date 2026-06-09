@@ -16,6 +16,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
 import { Mail, Phone, ExternalLink } from 'lucide-react'
 import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
+import { fetchPhilosophy } from '@/lib/brand/philosophy'
 
 type Props = {
   params: Promise<{ slug: string }>
@@ -154,7 +155,7 @@ export default async function CardPage({ params }: Props) {
   }
 
   // ブランドデータをブランドテーブルから取得
-  const [guidelinesRes, visualsRes] = await Promise.all([
+  const [guidelinesRes, visualsRes, phil] = await Promise.all([
     supabase
       .from('brand_guidelines')
       .select('*')
@@ -165,6 +166,8 @@ export default async function CardPage({ params }: Props) {
       .select('*')
       .eq('company_id', companyId)
       .single(),
+    // ミッション・ビジョン・バリューは philosophy_elements 由来
+    fetchPhilosophy(supabase, companyId),
   ])
 
   const guidelines = guidelinesRes.data
@@ -186,8 +189,8 @@ export default async function CardPage({ params }: Props) {
 
   // スローガン・ミッション・ビジョン・バリュー・ブランドストーリー（brand_guidelines テーブルから取得）
   const slogan = guidelines?.slogan || ''
-  const mission = guidelines?.mission || ''
-  const vision = guidelines?.vision || ''
+  const mission = phil.mission || ''
+  const vision = phil.vision || ''
   const brandStory = guidelines?.brand_story || ''
 
   // カバー写真: 個人のカバー写真があれば優先、なければ企業のコンセプトビジュアル（先頭画像）を適用
@@ -199,11 +202,11 @@ export default async function CardPage({ params }: Props) {
   // ミッション表示用テキスト
   const missionText = mission || ''
 
-  // バリュー（JSONB配列 [{name, description, added_index}, ...] を安全にパース）
+  // バリュー（philosophy_elements 由来 [{name, description, added_index}, ...]）
   type ValueItem = { name: string; description?: string }
-  const brandValues: ValueItem[] = Array.isArray(guidelines?.values)
-    ? guidelines.values.filter((item: ValueItem) => item.name).map((item: ValueItem) => ({ name: item.name, description: item.description }))
-    : []
+  const brandValues: ValueItem[] = phil.values
+    .filter((item) => item.name)
+    .map((item) => ({ name: item.name, description: item.description }))
 
   // 事業内容（JSONB配列 [{title, description}, ...] を安全にパース）
   type BusinessContent = { title: string; description?: string }

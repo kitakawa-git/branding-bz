@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, PieChart, Pie, Cell } from 'recharts'
 import { supabase } from '@/lib/supabase'
+import { fetchPhilosophy } from '@/lib/brand/philosophy'
 import { useAuth } from '../components/AdminDataProvider'
 import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
 import { Card, CardContent } from '@/components/ui/card'
@@ -227,7 +228,7 @@ export default function DashboardPage() {
 
     const fetchDashboard = async () => {
       try {
-        const [postsRes, likesRes, commentsRes, membersRes, personasRes] = await Promise.allSettled([
+        const [postsRes, likesRes, commentsRes, membersRes, philRes] = await Promise.allSettled([
           supabase
             .from('timeline_posts')
             .select('id, user_id, category, created_at')
@@ -246,23 +247,18 @@ export default function DashboardPage() {
             .select('id, auth_id, display_name, profile:profiles(name, photo_url)')
             .eq('company_id', companyId)
             .eq('is_active', true),
-          supabase
-            .from('brand_guidelines')
-            .select('action_guidelines')
-            .eq('company_id', companyId)
-            .maybeSingle(),
+          // 行動指針は philosophy_elements 由来（brand_guidelines.action_guidelines から正規化済み）
+          fetchPhilosophy(supabase, companyId),
         ])
 
         const posts: PostRow[] = postsRes.status === 'fulfilled' ? postsRes.value.data || [] : []
         const likes: LikeRow[] = likesRes.status === 'fulfilled' ? likesRes.value.data || [] : []
         const comments: CommentRow[] = commentsRes.status === 'fulfilled' ? commentsRes.value.data || [] : []
         const members: MemberRow[] = membersRes.status === 'fulfilled' ? membersRes.value.data || [] : []
-        const guidelinesData = personasRes.status === 'fulfilled' ? personasRes.value.data : null
 
         const categories: string[] = []
-        if (guidelinesData) {
-          const guidelines = (guidelinesData as { action_guidelines?: { title: string }[] }).action_guidelines || null
-          if (guidelines) guidelines.forEach(g => categories.push(g.title))
+        if (philRes.status === 'fulfilled') {
+          philRes.value.action_guidelines.forEach(g => { if (g.title) categories.push(g.title) })
         }
 
         setRawPosts(posts)

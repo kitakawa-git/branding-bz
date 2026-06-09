@@ -10,6 +10,7 @@ import { SurveyBanner } from './components/SurveyBanner'
 import { QuizBanner } from './components/QuizBanner'
 import { getRelativeTime } from '@/lib/time-utils'
 import { splitBrandCopy } from '@/lib/brand-mvv'
+import { fetchPhilosophy } from '@/lib/brand/philosophy'
 import { PieChart, Pie, Cell } from 'recharts'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -360,11 +361,7 @@ export default function PortalTopPage() {
         // === Group 1: base queries (parallel) ===
         const [missionRes, allUserPostsRes, userRecent3Res, companyRecent3Res, announcementsRes, kpiGoalsRes, goalPeriodRes, goalPeriodsRes] =
           await Promise.allSettled([
-            supabase
-              .from('brand_guidelines')
-              .select('mission')
-              .eq('company_id', companyId)
-              .single(),
+            fetchPhilosophy(supabase, companyId),
             supabase
               .from('timeline_posts')
               .select('id, category, created_at')
@@ -414,7 +411,7 @@ export default function PortalTopPage() {
 
         // Extract results
         const missionData =
-          missionRes.status === 'fulfilled' ? missionRes.value.data : null
+          missionRes.status === 'fulfilled' ? missionRes.value : null
         if (missionData?.mission) {
           setMission(missionData.mission)
         }

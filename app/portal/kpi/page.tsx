@@ -8,6 +8,7 @@ import { usePortalAuth } from '../components/PortalDataProvider'
 import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
 import { splitBrandCopy } from '@/lib/brand-mvv'
+import { fetchPhilosophy } from '@/lib/brand/philosophy'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -368,15 +369,10 @@ export default function KpiPage() {
     setSetupStep(1)
 
     if (!brandDataLoaded && companyId) {
-      const { data } = await supabase
-        .from('brand_guidelines')
-        .select('mission, values')
-        .eq('company_id', companyId)
-        .single()
-      if (data) {
-        setMissionText(data.mission || null)
-        setValuesData((data.values as BrandValue[]) || [])
-      }
+      // mission/values は philosophy_elements 由来（brand_guidelines から正規化済み）
+      const phil = await fetchPhilosophy(supabase, companyId)
+      setMissionText(phil.mission)
+      setValuesData(phil.values as BrandValue[])
       setBrandDataLoaded(true)
     }
   }

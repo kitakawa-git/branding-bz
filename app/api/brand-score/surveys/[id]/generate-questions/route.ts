@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { callClaude } from '@/lib/claude-api'
+import { fetchPhilosophy } from '@/lib/brand/philosophy'
 
 type RouteContext = { params: Promise<{ id: string }> }
 
@@ -129,7 +130,7 @@ export async function POST(_request: NextRequest, context: RouteContext) {
       // brand_guidelines（slogan の参照元。companies.slogan は廃止）
       supabase
         .from('brand_guidelines')
-        .select('slogan, business_content, mission, vision, values, traits, brand_story')
+        .select('slogan, business_content, traits, brand_story')
         .eq('company_id', companyId)
         .single(),
       // brand_personas（複数行の可能性）
@@ -166,6 +167,14 @@ export async function POST(_request: NextRequest, context: RouteContext) {
     }
     if (guidelinesResult.status === 'fulfilled' && !guidelinesResult.value.error) {
       brandData.guidelines = guidelinesResult.value.data
+    }
+    // mission/vision/values は philosophy_elements 由来（brand_guidelines から正規化済み）
+    const phil = await fetchPhilosophy(supabase, companyId)
+    brandData.guidelines = {
+      ...(brandData.guidelines ?? {}),
+      mission: phil.mission ?? undefined,
+      vision: phil.vision ?? undefined,
+      values: phil.values,
     }
     if (personasResult.status === 'fulfilled' && !personasResult.value.error) {
       brandData.personas = personasResult.value.data ?? []

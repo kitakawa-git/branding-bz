@@ -9,6 +9,7 @@
 import { NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { getAdminContext } from '@/lib/learning/auth'
+import { fetchPhilosophy } from '@/lib/brand/philosophy'
 import {
   generateCompetitorSuggestions,
   getCompetitorRemaining,
@@ -47,7 +48,7 @@ export async function POST() {
       .maybeSingle(),
     supabase
       .from('brand_guidelines')
-      .select('business_content, mission, vision')
+      .select('business_content')
       .eq('company_id', companyId)
       .maybeSingle(),
     supabase
@@ -84,8 +85,10 @@ export async function POST() {
         .filter(Boolean)
     : []
   if (businessContent.length > 0) brandInfo['事業内容'] = businessContent
-  if (guidelines?.mission) brandInfo['ミッション'] = guidelines.mission
-  if (guidelines?.vision) brandInfo['ビジョン'] = guidelines.vision
+  // mission/vision は philosophy_elements 由来（brand_guidelines から正規化済み）
+  const phil = await fetchPhilosophy(supabase, companyId)
+  if (phil.mission) brandInfo['ミッション'] = phil.mission
+  if (phil.vision) brandInfo['ビジョン'] = phil.vision
 
   const targetSegments = Array.isArray(company.target_segments)
     ? (company.target_segments as Array<{ name?: string; description?: string }>)

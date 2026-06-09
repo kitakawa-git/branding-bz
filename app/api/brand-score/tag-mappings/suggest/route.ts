@@ -5,6 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { callClaude } from '@/lib/claude-api'
+import { fetchPhilosophy } from '@/lib/brand/philosophy'
 
 const ALL_TAGS = [
   '信頼感',
@@ -60,7 +61,7 @@ export async function POST(request: NextRequest) {
         .single(),
       supabase
         .from('brand_guidelines')
-        .select('slogan, mission, vision, values, brand_story')
+        .select('slogan, brand_story')
         .eq('company_id', companyId)
         .single(),
       supabase
@@ -74,6 +75,8 @@ export async function POST(request: NextRequest) {
     const company = companyResult.status === 'fulfilled' ? companyResult.value.data : null
     const guidelines = guidelinesResult.status === 'fulfilled' ? guidelinesResult.value.data : null
     const personality = personalityResult.status === 'fulfilled' ? personalityResult.value.data : null
+    // mission/vision/values は philosophy_elements 由来（brand_guidelines から正規化済み）
+    const phil = await fetchPhilosophy(supabase, companyId)
 
     if (!company) {
       return NextResponse.json(
@@ -83,7 +86,7 @@ export async function POST(request: NextRequest) {
     }
 
     // ブランドデータが十分かチェック
-    const hasData = company.name || guidelines?.slogan || guidelines?.brand_story || guidelines?.mission || guidelines?.vision
+    const hasData = company.name || guidelines?.slogan || guidelines?.brand_story || phil.mission || phil.vision
     if (!hasData) {
       return NextResponse.json(
         { error: 'ブランドデータが不足しています。企業名・スローガン・ミッション・ビジョンなどを先に設定してください。' },
@@ -92,20 +95,16 @@ export async function POST(request: NextRequest) {
     }
 
     // valuesをテキスト化（jsonb配列の場合があるため）
-    const valuesText = guidelines?.values
-      ? (Array.isArray(guidelines.values)
-          ? guidelines.values.map((v: { title?: string; description?: string } | string) =>
-              typeof v === 'string' ? v : v.title || JSON.stringify(v)
-            ).join('、')
-          : String(guidelines.values))
+    const valuesText = phil.values.length > 0
+      ? phil.values.map((v) => v.name).filter(Boolean).join('、')
       : '未設定'
 
     // ユーザーメッセージ構築
     const brandData = {
       企業名: company.name || '未設定',
       スローガン: guidelines?.slogan || '未設定',
-      ミッション: guidelines?.mission || '未設定',
-      ビジョン: guidelines?.vision || '未設定',
+      ミッション: phil.mission || '未設定',
+      ビジョン: phil.vision || '未設定',
       バリュー: valuesText,
       ブランドストーリー: guidelines?.brand_story || '未設定',
       トーンオブボイス: personality?.tone_of_voice || '未設定',

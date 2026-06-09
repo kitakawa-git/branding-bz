@@ -4,6 +4,7 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { fetchWithRetry } from '@/lib/supabase-fetch'
+import { fetchPhilosophy } from '@/lib/brand/philosophy'
 import { usePortalAuth } from '../components/PortalDataProvider'
 import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
 import { getRelativeTime } from '@/lib/time-utils'
@@ -54,11 +55,6 @@ import { toast } from 'sonner'
 // ============================================
 // Types
 // ============================================
-
-type ActionGuideline = {
-  title: string
-  description: string
-}
 
 type PostProfile = {
   name: string | null
@@ -160,19 +156,10 @@ export default function PortalTimelinePage() {
   useEffect(() => {
     if (!companyId) return
     if (cached) return // キャッシュ済みならスキップ
-    fetchWithRetry(() =>
-      supabase
-        .from('brand_guidelines')
-        .select('action_guidelines')
-        .eq('company_id', companyId)
-        .maybeSingle()
-    ).then(({ data }) => {
+    fetchPhilosophy(supabase, companyId).then((phil) => {
       let cats = ['未分類']
-      if (data) {
-        const guidelines = ((data as Record<string, unknown>).action_guidelines as ActionGuideline[]) || []
-        const titles = guidelines.map(g => g.title).filter(Boolean)
-        if (titles.length > 0) cats = titles
-      }
+      const titles = phil.action_guidelines.map(g => g.title).filter(Boolean)
+      if (titles.length > 0) cats = titles
       setCategories(cats)
       categoriesRef.current = cats
       // カテゴリが1つだけの場合は自動選択

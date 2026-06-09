@@ -8,6 +8,7 @@
 import { useEffect, useState, type CSSProperties } from 'react'
 import { supabase } from '@/lib/supabase'
 import { fetchWithRetry } from '@/lib/supabase-fetch'
+import { fetchPhilosophy } from '@/lib/brand/philosophy'
 import { usePortalAuth } from '../components/PortalDataProvider'
 import { useBrandFonts } from '@/hooks/useBrandFonts'
 import { BrandFontLoader } from '@/components/BrandFontLoader'
@@ -97,18 +98,19 @@ export default function PortalGuidelinesPage() {
       fetchWithRetry(() =>
         supabase
           .from('brand_guidelines')
-          .select('slogan, concept_visual_url, concept_visuals, brand_video_url, brand_statement, mission, vision, values, values_sort, brand_story, history, business_content, business_content_sort, action_guidelines')
+          .select('slogan, concept_visual_url, concept_visuals, brand_video_url, brand_statement, values_sort, brand_story, history, business_content, business_content_sort')
           .eq('company_id', companyId)
           .single()
       ),
-    ]).then(([gRes]) => {
+      fetchPhilosophy(supabase, companyId),
+    ]).then(([gRes, phil]) => {
       const g = gRes.data as Record<string, unknown> | null
 
-      // 行動指針（brand_guidelines.action_guidelines）
-      const actionGuidelines: ActionGuideline[] = ((g?.action_guidelines as ActionGuideline[]) || []).filter(a => a && a.title)
+      // 行動指針は philosophy_elements 由来（brand_guidelines.action_guidelines から正規化済み）
+      const actionGuidelines: ActionGuideline[] = phil.action_guidelines.filter(a => a && a.title)
 
-      // brand_guidelines 行が無く、行動指針もゼロなら未登録扱い
-      if (!g && actionGuidelines.length === 0) {
+      // brand_guidelines 行も理念要素（ミッション/ビジョン/バリュー/行動指針）も無ければ未登録扱い
+      if (!g && actionGuidelines.length === 0 && !phil.mission && !phil.vision && phil.values.length === 0) {
         setLoading(false)
         return
       }
@@ -121,9 +123,9 @@ export default function PortalGuidelinesPage() {
           : (g?.concept_visual_url ? [g.concept_visual_url as string] : []),
         brand_video_url: (g?.brand_video_url as string) || null,
         brand_statement: (g?.brand_statement as string) || null,
-        mission: (g?.mission as string) || null,
-        vision: (g?.vision as string) || null,
-        values: (g?.values as ValueItem[]) || [],
+        mission: phil.mission,
+        vision: phil.vision,
+        values: phil.values,
         values_sort: (g?.values_sort as 'registered' | 'custom') || 'registered',
         brand_story: (g?.brand_story as string) || null,
         history: (g?.history as HistoryItem[]) || [],

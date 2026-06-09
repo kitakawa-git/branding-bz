@@ -35,10 +35,11 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 
-type ValueItem = { name: string; description: string; added_index: number }
+// id は philosophy_elements の行ID（新規追加項目では undefined → 保存時INSERT）
+type ValueItem = { id?: string; name: string; description: string; added_index: number }
 type HistoryItem = { year: string; event: string }
 type BusinessItem = { title: string; description: string; added_index: number }
-type ActionGuideline = { title: string; description: string }
+type ActionGuideline = { id?: string; title: string; description: string }
 
 type Guidelines = {
   slogan: string
@@ -230,34 +231,58 @@ export default function BrandGuidelinesPage() {
         // サブタイトル取得失敗は無視
       }
 
-      if (result) {
-        const parsedId = result.id as string
+      // 理念要素（mission/vision/values/action_guidelines）は philosophy_elements を正とする
+      // （Step4: 表示・編集とも新テーブル。brand_guidelines の当該列は読まない）
+      const { data: philData } = await fetchWithRetry(() =>
+        supabase
+          .from('philosophy_elements')
+          .select('id, element_type, title, body, sort_order')
+          .eq('company_id', companyId)
+          .order('sort_order', { ascending: true })
+      )
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const philRows = (philData as any[] | null) || []
+      const missionRow = philRows.find((r) => r.element_type === 'mission')
+      const visionRow = philRows.find((r) => r.element_type === 'vision')
+      const valueRows = philRows.filter((r) => r.element_type === 'value')
+      const actionRows = philRows.filter((r) => r.element_type === 'action_guideline')
+
+      if (result || philRows.length > 0) {
+        const parsedId = (result?.id as string) ?? null
         const parsedGuidelines: Guidelines = {
-          slogan: result.slogan || '',
+          slogan: result?.slogan || '',
           // 新カラム concept_visuals を優先。空ならレガシー concept_visual_url を1枚として取り込む
-          concept_visuals: (Array.isArray(result.concept_visuals) && result.concept_visuals.length > 0)
-            ? (result.concept_visuals as string[])
-            : (result.concept_visual_url ? [result.concept_visual_url as string] : []),
-          brand_video_url: result.brand_video_url || '',
-          brand_statement: result.brand_statement || '',
-          // 既存の連結テキストをコピー/説明文に分割してフォームへ
-          mission_copy: splitBrandCopy(result.mission as string).copy,
-          mission_body: splitBrandCopy(result.mission as string).body,
-          vision_copy: splitBrandCopy(result.vision as string).copy,
-          vision_body: splitBrandCopy(result.vision as string).body,
-          values: ((result.values as { name: string; description: string; added_index?: number }[]) || []).map((v, i) => ({
-            ...v,
-            added_index: v.added_index ?? i,
+          concept_visuals: (Array.isArray(result?.concept_visuals) && (result!.concept_visuals as string[]).length > 0)
+            ? (result!.concept_visuals as string[])
+            : (result?.concept_visual_url ? [result!.concept_visual_url as string] : []),
+          brand_video_url: result?.brand_video_url || '',
+          brand_statement: result?.brand_statement || '',
+          // mission/vision は philosophy_elements の body をコピー/説明文に分割してフォームへ
+          mission_copy: splitBrandCopy((missionRow?.body as string) || '').copy,
+          mission_body: splitBrandCopy((missionRow?.body as string) || '').body,
+          vision_copy: splitBrandCopy((visionRow?.body as string) || '').copy,
+          vision_body: splitBrandCopy((visionRow?.body as string) || '').body,
+          // values は philosophy_elements の value 行（id を保持し保存時の差分計算に使う）
+          values: valueRows.map((r, i) => ({
+            id: r.id as string,
+            name: (r.title as string) || '',
+            description: (r.body as string) || '',
+            added_index: (r.sort_order as number) ?? i,
           })),
-          values_sort: (result.values_sort as 'registered' | 'custom') || 'registered',
-          brand_story: result.brand_story || '',
-          history: result.history || [],
-          business_content: ((result.business_content as { title: string; description: string; added_index?: number }[]) || []).map((b, i) => ({
+          values_sort: (result?.values_sort as 'registered' | 'custom') || 'registered',
+          brand_story: result?.brand_story || '',
+          history: result?.history || [],
+          business_content: ((result?.business_content as { title: string; description: string; added_index?: number }[]) || []).map((b, i) => ({
             ...b,
             added_index: b.added_index ?? i,
           })),
-          business_content_sort: (result.business_content_sort as 'registered' | 'custom') || 'registered',
-          action_guidelines: ((result.action_guidelines as ActionGuideline[]) || []).filter(a => a),
+          business_content_sort: (result?.business_content_sort as 'registered' | 'custom') || 'registered',
+          // action_guidelines は philosophy_elements の action_guideline 行（id を保持）
+          action_guidelines: actionRows.map((r) => ({
+            id: r.id as string,
+            title: (r.title as string) || '',
+            description: (r.body as string) || '',
+          })),
         }
         setGuidelinesId(parsedId)
         setGuidelines(parsedGuidelines)
@@ -491,6 +516,115 @@ export default function BrandGuidelinesPage() {
     }
   }
 
+  // philosophy_elements 行同期（Step4: 編集も新テーブルへ）
+  // mission/vision = 各社1行のsingleton upsert、values/action_guideline = id一致の差分CRUD（INSERT/UPDATE/DELETE）。
+  // brand_guidelines の mission/vision/values/action_guidelines へは書かない（Step6でDROP予定）。
+  const syncPhilosophyElements = async (
+    cleanedValues: ValueItem[],
+    cleanedGuidelines: ActionGuideline[],
+  ): Promise<{ ok: boolean; error?: string; values: ValueItem[]; guidelines: ActionGuideline[] }> => {
+    try {
+      const now = new Date().toISOString()
+
+      // mission / vision: 各社1行。本文ありなら upsert、空なら既存行を削除。
+      const upsertSingleton = async (type: 'mission' | 'vision', text: string) => {
+        const { data: ex, error: exErr } = await supabase
+          .from('philosophy_elements')
+          .select('id')
+          .eq('company_id', companyId)
+          .eq('element_type', type)
+          .maybeSingle()
+        if (exErr) throw exErr
+        const exId = (ex as { id: string } | null)?.id ?? null
+        if (text) {
+          if (exId) {
+            const { error } = await supabase
+              .from('philosophy_elements')
+              .update({ title: null, body: text, sort_order: 0, status: 'published', updated_at: now })
+              .eq('id', exId)
+            if (error) throw error
+          } else {
+            const { error } = await supabase
+              .from('philosophy_elements')
+              .insert({ company_id: companyId, element_type: type, body: text, sort_order: 0, status: 'published' })
+            if (error) throw error
+          }
+        } else if (exId) {
+          const { error } = await supabase.from('philosophy_elements').delete().eq('id', exId)
+          if (error) throw error
+        }
+      }
+      await upsertSingleton('mission', combineBrandCopy(guidelines.mission_copy, guidelines.mission_body))
+      await upsertSingleton('vision', combineBrandCopy(guidelines.vision_copy, guidelines.vision_body))
+
+      // values / action_guideline: 複数行。id一致でUPDATE・id無し（新規）でINSERT・desiredに無い既存行をDELETE。
+      // sort_order = 表示順（配列インデックス）。表示ヘルパは sort_order を added_index に写像する。
+      const syncList = async (
+        type: 'value' | 'action_guideline',
+        desired: { id?: string; title: string; body: string }[],
+      ): Promise<string[]> => {
+        const { data: exRows, error: exErr } = await supabase
+          .from('philosophy_elements')
+          .select('id')
+          .eq('company_id', companyId)
+          .eq('element_type', type)
+        if (exErr) throw exErr
+        const existingIds = new Set((exRows as { id: string }[] | null)?.map((r) => r.id) ?? [])
+        const kept = new Set<string>()
+        const ids: string[] = []
+        for (let i = 0; i < desired.length; i++) {
+          const d = desired[i]
+          if (d.id && existingIds.has(d.id)) {
+            const { error } = await supabase
+              .from('philosophy_elements')
+              .update({ title: d.title, body: d.body, sort_order: i, status: 'published', updated_at: now })
+              .eq('id', d.id)
+            if (error) throw error
+            kept.add(d.id)
+            ids.push(d.id)
+          } else {
+            const { data, error } = await supabase
+              .from('philosophy_elements')
+              .insert({ company_id: companyId, element_type: type, title: d.title, body: d.body, sort_order: i, status: 'published' })
+              .select('id')
+              .single()
+            if (error) throw error
+            const nid = (data as { id: string }).id
+            kept.add(nid)
+            ids.push(nid)
+          }
+        }
+        const toDelete = [...existingIds].filter((id) => !kept.has(id))
+        if (toDelete.length > 0) {
+          const { error } = await supabase.from('philosophy_elements').delete().in('id', toDelete)
+          if (error) throw error
+        }
+        return ids
+      }
+
+      const valueIds = await syncList(
+        'value',
+        cleanedValues.map((v) => ({ id: v.id, title: v.name, body: v.description })),
+      )
+      const guidelineIds = await syncList(
+        'action_guideline',
+        cleanedGuidelines.map((g) => ({ id: g.id, title: g.title, body: g.description })),
+      )
+
+      // 保存後の最新id・表示順をフォーム状態へ反映（再保存時の差分計算のため）
+      const valuesWithId: ValueItem[] = cleanedValues.map((v, i) => ({ ...v, id: valueIds[i], added_index: i }))
+      const guidelinesWithId: ActionGuideline[] = cleanedGuidelines.map((g, i) => ({ ...g, id: guidelineIds[i] }))
+      return { ok: true, values: valuesWithId, guidelines: guidelinesWithId }
+    } catch (err) {
+      return {
+        ok: false,
+        error: err instanceof Error ? err.message : '不明なエラー',
+        values: cleanedValues,
+        guidelines: cleanedGuidelines,
+      }
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!companyId) return
@@ -513,28 +647,30 @@ export default function BrandGuidelinesPage() {
         concept_visual_url: guidelines.concept_visuals[0] || null,
         brand_video_url: guidelines.brand_video_url ? normalizeUrl(guidelines.brand_video_url) : null,
         brand_statement: guidelines.brand_statement || null,
-        // コピー＋説明文を空行区切りの1テキストに結合して保存
-        mission: combineBrandCopy(guidelines.mission_copy, guidelines.mission_body) || null,
-        vision: combineBrandCopy(guidelines.vision_copy, guidelines.vision_body) || null,
-        values: cleanedValues.length > 0 ? cleanedValues : [],
+        // ※ mission/vision/values/action_guidelines は philosophy_elements へ移行済み（Step4）。
+        //   ここでは brand_guidelines へ書かない（Step6でDROP）。values_sort は表示順設定として継続。
         values_sort: guidelines.values_sort,
         brand_story: guidelines.brand_story || null,
         history: cleanedHistory.length > 0 ? cleanedHistory : [],
         business_content: cleanedBusiness.length > 0 ? cleanedBusiness : [],
         business_content_sort: guidelines.business_content_sort,
-        action_guidelines: cleanedGuidelines.length > 0 ? cleanedGuidelines : [],
       }
 
       let result: { ok: boolean; error?: string; data?: Record<string, unknown> }
+      let effectiveGuidelinesId = guidelinesId
 
       if (guidelinesId) {
         result = await supabasePatch('brand_guidelines', guidelinesId, saveData, token)
       } else {
         result = await supabaseInsert('brand_guidelines', saveData, token)
         if (result.ok && result.data) {
-          setGuidelinesId(result.data.id as string)
+          effectiveGuidelinesId = result.data.id as string
+          setGuidelinesId(effectiveGuidelinesId)
         }
       }
+
+      // 理念要素（mission/vision/values/action_guidelines）を philosophy_elements の行へ同期
+      const philResult = await syncPhilosophyElements(cleanedValues, cleanedGuidelines)
 
       // ポータルサブタイトル保存
       const updatedSubtitles = { ...(portalSubtitlesData || {}) }
@@ -548,17 +684,27 @@ export default function BrandGuidelinesPage() {
       }, token)
       setPortalSubtitlesData(updatedSubtitles)
 
-      if (result.ok) {
+      if (result.ok && philResult.ok) {
         toast.success('保存しました')
-        handleChange('values', cleanedValues)
-        handleChange('history', cleanedHistory)
-        handleChange('business_content', cleanedBusiness)
-        handleChange('action_guidelines', cleanedGuidelines)
-        if (guidelines.brand_video_url) {
-          handleChange('brand_video_url', normalizeUrl(guidelines.brand_video_url))
+        // 保存後の正規化済み state（philosophy_elements の id・表示順を反映）
+        const nextGuidelines: Guidelines = {
+          ...guidelines,
+          values: philResult.values,
+          action_guidelines: philResult.guidelines,
+          history: cleanedHistory,
+          business_content: cleanedBusiness,
+          brand_video_url: guidelines.brand_video_url ? normalizeUrl(guidelines.brand_video_url) : '',
         }
+        setGuidelines(nextGuidelines)
+        // 再保存時の差分計算のため、最新id等をキャッシュへ反映
+        setPageCache<GuidelinesCache>(cacheKey, {
+          guidelinesId: effectiveGuidelinesId,
+          guidelines: nextGuidelines,
+          portalSubtitle: portalSubtitle.trim(),
+          portalSubtitlesData: updatedSubtitles,
+        })
       } else {
-        toast.error('保存に失敗しました: ' + result.error)
+        toast.error('保存に失敗しました: ' + (result.error || philResult.error || ''))
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : '不明なエラーが発生しました'

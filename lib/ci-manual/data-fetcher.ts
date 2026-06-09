@@ -1,5 +1,6 @@
 // CIマニュアル用データ一括取得
 import { supabase } from '@/lib/supabase'
+import { fetchPhilosophy } from '@/lib/brand/philosophy'
 import { parseFontsFromDB } from '@/lib/brand-fonts'
 import type {
   CIManualData,
@@ -164,7 +165,7 @@ export async function resolveImages(
 }
 
 export async function fetchCIManualData(companyId: string): Promise<CIManualData> {
-  const [companyResult, guidelinesResult, visualsResult, personalityResult, termsResult, personasResult] =
+  const [companyResult, guidelinesResult, visualsResult, personalityResult, termsResult, personasResult, phil] =
     await Promise.all([
       supabase.from('companies').select('name, logo_url, brand_color_primary').eq('id', companyId).single(),
       supabase.from('brand_guidelines').select('*').eq('company_id', companyId).single(),
@@ -172,6 +173,8 @@ export async function fetchCIManualData(companyId: string): Promise<CIManualData
       supabase.from('brand_personalities').select('*').eq('company_id', companyId).single(),
       supabase.from('brand_terms').select('*').eq('company_id', companyId).order('sort_order'),
       supabase.from('brand_personas').select('*').eq('company_id', companyId).order('sort_order'),
+      // ミッション・ビジョン・バリュー・行動指針は philosophy_elements 由来
+      fetchPhilosophy(supabase, companyId),
     ])
 
   const company = companyResult.data
@@ -192,8 +195,8 @@ export async function fetchCIManualData(companyId: string): Promise<CIManualData
   const firstPersona = personasData[0]
   const target = (firstPersona as Record<string, unknown>)?.target as string | null ?? null
   const positioningMapData = (firstPersona as Record<string, unknown>)?.positioning_map_data as PositioningMapData | null ?? null
-  // 行動指針は brand_guidelines.action_guidelines へ移設済み（旧: brand_personas 先頭行）
-  const actionGuidelines = ((gl as Record<string, unknown> | null)?.action_guidelines as ActionGuideline[]) || []
+  // 行動指針は philosophy_elements 由来（brand_guidelines.action_guidelines から正規化済み）
+  const actionGuidelines: ActionGuideline[] = phil.action_guidelines
 
   const personas: PersonaItem[] = personasData.map((p: Record<string, unknown>) => ({
     name: (p.name as string) || '',
@@ -214,9 +217,9 @@ export async function fetchCIManualData(companyId: string): Promise<CIManualData
           slogan: gl.slogan || null,
           concept_visual_url: gl.concept_visual_url || null,
           brand_statement: gl.brand_statement || null,
-          mission: gl.mission || null,
-          vision: gl.vision || null,
-          values: ((gl.values as ValueItem[]) || []).filter((v) => v.name),
+          mission: phil.mission,
+          vision: phil.vision,
+          values: phil.values.filter((v) => v.name),
           brand_story: gl.brand_story || null,
           history: ((gl.history as HistoryItem[]) || []).filter((h) => h.year || h.event),
           business_content: ((gl.business_content as BusinessItem[]) || []).filter((b) => b.title),
