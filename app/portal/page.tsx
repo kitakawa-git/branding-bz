@@ -973,7 +973,7 @@ export default function PortalTopPage() {
                     key={opt.value}
                     type="button"
                     onClick={() => handlePeriodChange(opt.value)}
-                    className={`rounded-full text-xs font-medium px-3 py-1 border-0 cursor-pointer transition-colors ${
+                    className={`rounded-full text-sm font-medium px-3.5 py-1.5 border-0 cursor-pointer transition-colors ${
                       statsPeriod === opt.value
                         ? 'bg-foreground text-background'
                         : 'bg-muted text-muted-foreground hover:bg-muted/80'

@@ -781,7 +781,7 @@ export default function PortalTimelinePage() {
       {/* ============================================ */}
       {/* 右下のFABボタン: クリックで投稿モーダルを開く */}
       <Fab>
-        <FabButton onClick={() => { resetForm(); setComposerOpen(true) }} icon={<Pencil size={16} />}>
+        <FabButton onClick={() => { resetForm(); setComposerOpen(true) }} icon={<Pencil size={18} />}>
           投稿する
         </FabButton>
       </Fab>
@@ -938,7 +938,7 @@ export default function PortalTimelinePage() {
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setFilterCategory('all')}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+              className={`px-3.5 py-2 rounded-full text-sm font-medium transition-colors ${
                 filterCategory === 'all'
                   ? 'bg-foreground text-background'
                   : 'bg-muted text-muted-foreground hover:bg-muted/80'
@@ -950,7 +950,7 @@ export default function PortalTimelinePage() {
               <button
                 key={cat}
                 onClick={() => setFilterCategory(cat)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                className={`px-3.5 py-2 rounded-full text-sm font-medium transition-colors ${
                   filterCategory === cat
                     ? 'bg-foreground text-background'
                     : 'bg-muted text-muted-foreground hover:bg-muted/80'
@@ -968,7 +968,7 @@ export default function PortalTimelinePage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="投稿を検索..."
-            className="h-8 pl-8 text-xs"
+            className="h-11 pl-9"
           />
         </div>
       </div>

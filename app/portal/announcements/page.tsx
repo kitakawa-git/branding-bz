@@ -134,7 +134,7 @@ export default function PortalAnnouncementsPage() {
           <button
             key={cat}
             onClick={() => setSelectedCategory(cat)}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+            className={`px-3.5 py-2 rounded-full text-sm font-medium transition-colors ${
               selectedCategory === cat
                 ? 'bg-foreground text-background'
                 : 'bg-muted text-muted-foreground hover:bg-muted/80'

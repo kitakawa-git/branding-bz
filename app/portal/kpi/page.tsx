@@ -673,7 +673,7 @@ export default function KpiPage() {
         {/* 右下FAB: 目標とKPIを設定する（設定期間内のみ表示） */}
         {(goalPeriod?.show_goal_banner !== false) && (
           <Fab>
-            <FabButton onClick={() => openSetupDialog(false)} icon={<Plus size={16} />}>
+            <FabButton onClick={() => openSetupDialog(false)} icon={<Plus size={18} />}>
               目標とKPIを設定する
             </FabButton>
           </Fab>
@@ -1125,7 +1125,7 @@ export default function KpiPage() {
                       value={kpi.title}
                       onChange={e => updateSetupKpi(kpi.id, 'title', e.target.value)}
                       placeholder="KPIタイトル"
-                      className="h-8 text-sm"
+                      className="h-9 text-sm"
                     />
                     <div className="flex gap-2">
                       <div className="flex-1">
