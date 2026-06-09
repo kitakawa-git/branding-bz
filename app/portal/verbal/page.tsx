@@ -155,7 +155,7 @@ export default function PortalVerbalIdentityPage() {
         <section>
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
             <CardContent className="p-4 sm:p-5">
-              <h2 className="text-xs font-bold text-foreground mb-3 tracking-wide">トーンオブボイス</h2>
+              <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">トーンオブボイス</h2>
               {(() => {
                 const { copy, body } = splitToneOfVoice(toneOfVoice)
                 return (
@@ -175,7 +175,7 @@ export default function PortalVerbalIdentityPage() {
         <section>
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none overflow-hidden">
             <CardContent className="p-5 pb-0">
-              <h2 className="text-xs font-bold text-foreground mb-3 tracking-wide">用語ルール</h2>
+              <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">用語ルール</h2>
 
               {/* 絞り込み＋検索 */}
               {(hasCategories || terms.length > 5) && (

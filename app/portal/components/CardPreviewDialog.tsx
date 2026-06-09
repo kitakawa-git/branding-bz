@@ -111,7 +111,7 @@ export function CardPreviewDialog({ open, onOpenChange, slug, name }: Props) {
               <div className="flex gap-3 mt-5 w-full max-w-[390px]">
                 <Button
                   asChild
-                  className="flex-1 h-10 gap-2"
+                  className="flex-1 h-11 gap-2"
                 >
                   <a href={cardUrl} target="_blank" rel="noopener noreferrer">
                     <ExternalLink size={14} />
@@ -122,7 +122,7 @@ export function CardPreviewDialog({ open, onOpenChange, slug, name }: Props) {
                   variant="outline"
                   onClick={handleDownloadQR}
                   disabled={downloading}
-                  className="flex-1 h-10 gap-2"
+                  className="flex-1 h-11 gap-2"
                 >
                   <QrCode size={14} />
                   {downloading ? '生成中...' : 'QRダウンロード'}

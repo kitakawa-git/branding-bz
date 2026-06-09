@@ -262,11 +262,11 @@ export default function QuizTakePage() {
       {/* 役職カテゴリ（自己申告。department はサーバが profiles から取得） */}
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-6">
         <CardContent className="p-4 sm:p-5">
-          <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">
+          <label className="text-sm font-semibold text-muted-foreground mb-1.5 block">
             役職カテゴリ（集計用）
           </label>
           <Select value={roleCategory} onValueChange={setRoleCategory}>
-            <SelectTrigger className="h-10">
+            <SelectTrigger className="h-11">
               <SelectValue placeholder="選択してください" />
             </SelectTrigger>
             <SelectContent>

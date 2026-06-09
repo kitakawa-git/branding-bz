@@ -930,7 +930,7 @@ export default function KpiPage() {
       <div className="mt-4">
         <div className="flex items-center gap-2 mb-3">
           <Archive size={16} className="text-muted-foreground" />
-          <h2 className="text-xs font-bold text-foreground">過去の目標・KPI</h2>
+          <h2 className="text-sm font-bold text-foreground">過去の目標・KPI</h2>
         </div>
         <div className="space-y-2">
           {archivedPeriods.map(ap => {
@@ -1039,7 +1039,7 @@ export default function KpiPage() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
                       {valuesData.map((v, i) => (
                         <div key={i} className="bg-background rounded-md p-2.5 border">
-                          <p className="text-xs font-bold text-foreground m-0">{v.name}</p>
+                          <p className="text-sm font-bold text-foreground m-0">{v.name}</p>
                           {v.description && <p className="text-[11px] text-muted-foreground mt-0.5 m-0 whitespace-pre-line">{v.description}</p>}
                         </div>
                       ))}

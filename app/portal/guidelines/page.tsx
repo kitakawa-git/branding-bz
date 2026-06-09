@@ -221,19 +221,19 @@ export default function PortalGuidelinesPage() {
             <CardContent className="p-4 sm:p-5 space-y-6">
               {data.slogan && (
                 <div>
-                  <h2 className="text-xs font-bold text-foreground mb-2 tracking-wide">スローガン</h2>
+                  <h2 className="text-sm font-bold text-foreground mb-2 tracking-wide">スローガン</h2>
                   <p className="text-3xl font-bold text-foreground m-0" style={primaryStyle}>{data.slogan}</p>
                 </div>
               )}
               {data.concept_visuals.length > 0 && (
                 <div>
-                  <h2 className="text-xs font-bold text-foreground mb-3 tracking-wide">コンセプトビジュアル</h2>
+                  <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">コンセプトビジュアル</h2>
                   <ConceptVisualSlideshow images={data.concept_visuals} />
                 </div>
               )}
               {data.brand_video_url && (
                 <div>
-                  <h2 className="text-xs font-bold text-foreground mb-3 tracking-wide">ブランド動画</h2>
+                  <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">ブランド動画</h2>
                   {embedUrl ? (
                     <div className="relative pb-[56.25%] h-0">
                       <iframe
@@ -258,7 +258,7 @@ export default function PortalGuidelinesPage() {
               )}
               {data.brand_statement && (
                 <div>
-                  <h2 className="text-xs font-bold text-foreground mb-3 tracking-wide">メッセージ</h2>
+                  <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">メッセージ</h2>
                   <p className="text-base sm:text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0" style={secondaryStyle}>{data.brand_statement}</p>
                 </div>
               )}
@@ -276,7 +276,7 @@ export default function PortalGuidelinesPage() {
                 const { copy, body } = splitBrandCopy(data.mission)
                 return (
                   <div>
-                    <h2 className="text-xs font-bold text-foreground mb-2 tracking-wide">ミッション</h2>
+                    <h2 className="text-sm font-bold text-foreground mb-2 tracking-wide">ミッション</h2>
                     {copy && <p className="text-2xl font-bold text-foreground m-0" style={primaryStyle}>{copy}</p>}
                     {body && <p className="text-base sm:text-sm text-foreground/80 leading-[1.8] whitespace-pre-line mt-3 m-0" style={secondaryStyle}>{body}</p>}
                   </div>
@@ -286,7 +286,7 @@ export default function PortalGuidelinesPage() {
                 const { copy, body } = splitBrandCopy(data.vision)
                 return (
                   <div>
-                    <h2 className="text-xs font-bold text-foreground mb-2 tracking-wide">ビジョン</h2>
+                    <h2 className="text-sm font-bold text-foreground mb-2 tracking-wide">ビジョン</h2>
                     {copy && <p className="text-2xl font-bold text-foreground m-0" style={primaryStyle}>{copy}</p>}
                     {body && <p className="text-base sm:text-sm text-foreground/80 leading-[1.8] whitespace-pre-line mt-3 m-0" style={secondaryStyle}>{body}</p>}
                   </div>
@@ -294,7 +294,7 @@ export default function PortalGuidelinesPage() {
               })()}
               {filteredValues.length > 0 && (
                 <div>
-                  <h2 className="text-xs font-bold text-foreground mb-3 tracking-wide">バリュー</h2>
+                  <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">バリュー</h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {filteredValues.map((v, i) => (
                       <div key={i} className="rounded-lg border border-border bg-background p-5">
@@ -323,7 +323,7 @@ export default function PortalGuidelinesPage() {
         <section>
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
             <CardContent className="p-4 sm:p-5">
-              <h2 className="text-xs font-bold text-foreground mb-3 tracking-wide">行動指針</h2>
+              <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">行動指針</h2>
               <div className="space-y-2">
                 {data.action_guidelines.map((g, i) => (
                   <div key={i} className="relative overflow-hidden rounded-lg border border-border bg-background p-4 pl-5 flex gap-3">
@@ -355,7 +355,7 @@ export default function PortalGuidelinesPage() {
             <CardContent className="p-4 sm:p-5 space-y-6">
               {data.brand_story && (
                 <div>
-                  <h2 className="text-xs font-bold text-foreground mb-3 tracking-wide">ブランドストーリー</h2>
+                  <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">ブランドストーリー</h2>
                   <ExpandableText
                     text={data.brand_story}
                     limit={300}
@@ -366,7 +366,7 @@ export default function PortalGuidelinesPage() {
               )}
               {filteredHistory.length > 0 && (
                 <div>
-                  <h2 className="text-xs font-bold text-foreground mb-3 tracking-wide">沿革</h2>
+                  <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">沿革</h2>
                   <div className="relative">
                     {filteredHistory.map((item, i) => (
                       <div key={i} className="relative flex gap-4 pb-6 last:pb-0">
@@ -388,7 +388,7 @@ export default function PortalGuidelinesPage() {
               )}
               {filteredBusiness.length > 0 && (
                 <div>
-                  <h2 className="text-xs font-bold text-foreground mb-3 tracking-wide">事業内容</h2>
+                  <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">事業内容</h2>
                   <div className="space-y-2">
                     {filteredBusiness.map((item, i) => (
                       <div key={i} className="relative overflow-hidden rounded-lg border border-border bg-background p-4 pl-5 flex gap-3">

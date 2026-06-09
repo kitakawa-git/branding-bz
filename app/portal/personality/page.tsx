@@ -123,7 +123,7 @@ export default function PortalPersonalityPage() {
         <section>
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
             <CardContent className="p-4 sm:p-5">
-              <h2 className="text-xs font-bold text-foreground mb-3 tracking-wide">人格</h2>
+              <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">人格</h2>
 
               {/* レーダーチャート（3つ以上の場合のみ） */}
               {chartData.length >= 3 && (
@@ -162,7 +162,7 @@ export default function PortalPersonalityPage() {
                   return (
                   <div key={i} className="rounded-lg border border-border bg-background p-4 flex items-center gap-4">
                     <div className="flex-1">
-                      <p className="text-xs font-bold text-foreground mb-0.5 m-0">
+                      <p className="text-sm font-bold text-foreground mb-0.5 m-0">
                         {trait.name}
                       </p>
                       {copy && (

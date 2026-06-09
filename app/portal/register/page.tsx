@@ -181,7 +181,7 @@ function PortalRegisterContent() {
                 onChange={(e) => setDisplayName(e.target.value)}
                 placeholder="山田太郎"
                 required
-                className="h-10"
+                className="h-11"
               />
             </div>
 
@@ -193,7 +193,7 @@ function PortalRegisterContent() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="member@example.com"
                 required
-                className="h-10"
+                className="h-11"
               />
             </div>
 
@@ -206,7 +206,7 @@ function PortalRegisterContent() {
                 placeholder="パスワードを入力"
                 required
                 minLength={8}
-                className="h-10"
+                className="h-11"
               />
             </div>
 
@@ -218,7 +218,7 @@ function PortalRegisterContent() {
                 onChange={(e) => setPasswordConfirm(e.target.value)}
                 placeholder="もう一度入力"
                 required
-                className="h-10"
+                className="h-11"
               />
             </div>
 

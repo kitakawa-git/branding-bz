@@ -351,25 +351,25 @@ export default function SurveyRespondPage() {
       {/* 回答者属性 */}
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-6">
         <CardContent className="p-4 sm:p-5">
-          <h2 className="text-xs font-bold text-foreground mb-4">回答者情報</h2>
+          <h2 className="text-sm font-bold text-foreground mb-4">回答者情報</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">
+              <label className="text-sm font-semibold text-muted-foreground mb-1.5 block">
                 部署
               </label>
               <Input
                 value={department}
                 onChange={e => setDepartment(e.target.value)}
                 placeholder="例: 営業部"
-                className="h-10"
+                className="h-11"
               />
             </div>
             <div>
-              <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">
+              <label className="text-sm font-semibold text-muted-foreground mb-1.5 block">
                 役職カテゴリ
               </label>
               <Select value={roleCategory} onValueChange={setRoleCategory}>
-                <SelectTrigger className="h-10">
+                <SelectTrigger className="h-11">
                   <SelectValue placeholder="選択してください" />
                 </SelectTrigger>
                 <SelectContent>

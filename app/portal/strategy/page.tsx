@@ -193,7 +193,7 @@ export default function PortalStrategyPage() {
             <CardContent className="p-4 sm:p-5 space-y-6">
               {hasTarget && (
                 <div>
-                  <h2 className="text-xs font-bold text-foreground mb-3 tracking-wide">ターゲット</h2>
+                  <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">ターゲット</h2>
                   {/* 概要文（プロセス文） */}
                   {target && (
                     <p className="text-base sm:text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0 mb-3" style={secondaryStyle}>{target}</p>
@@ -217,7 +217,7 @@ export default function PortalStrategyPage() {
               )}
               {validPersonas.length > 0 && (
                 <div>
-                  <h2 className="text-xs font-bold text-foreground mb-3 tracking-wide">ペルソナ</h2>
+                  <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">ペルソナ</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {validPersonas.map((persona, i) => (
                   <div key={i} className="rounded-lg border border-border bg-background p-5">
@@ -276,7 +276,7 @@ export default function PortalStrategyPage() {
         <section>
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none overflow-hidden">
             <CardContent className="p-4 sm:p-5">
-              <h2 className="text-xs font-bold text-foreground mb-3 tracking-wide">ポジショニングマップ</h2>
+              <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">ポジショニングマップ</h2>
               {positioningMapData ? (
                 <PositioningMap data={positioningMapData} />
               ) : positioningMapUrl ? (
@@ -311,7 +311,7 @@ export default function PortalStrategyPage() {
         <section>
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
             <CardContent className="p-4 sm:p-5">
-              <h2 className="text-xs font-bold text-foreground mb-3 tracking-wide">提供価値</h2>
+              <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">提供価値</h2>
               <div className="space-y-3">
                 {providedValues.map((val, i) => (
                   <div key={i} className="rounded-lg border border-border bg-background p-4 flex items-start gap-4">
