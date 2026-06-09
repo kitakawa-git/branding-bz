@@ -49,7 +49,7 @@ function scoreColor(v: number | null): string {
   if (v === null) return 'text-muted-foreground'
   if (v >= 80) return 'text-green-600'
   if (v >= 60) return 'text-blue-600'
-  if (v >= 40) return 'text-yellow-600'
+  if (v >= 40) return 'text-amber-600'
   return 'text-red-600'
 }
 
@@ -206,7 +206,7 @@ export default function QuizResultPage() {
                 <span className="text-xs font-mono text-muted-foreground mt-0.5">Q{idx + 1}.</span>
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-slate-100 text-slate-700">
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-gray-100 text-gray-700">
                       {CATEGORY_LABELS[a.category] ?? a.category}
                     </Badge>
                     {a.is_correct ? (

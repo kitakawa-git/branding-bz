@@ -712,7 +712,7 @@ export default function KpiPage() {
                 const remaining = getRemainingDays(goalPeriod.end_date)
                 const untilStart = getRemainingDays(goalPeriod.start_date)
                 if (remaining < 0) return <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-red-100 text-red-700">期間終了</Badge>
-                if (untilStart > 0) return <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-yellow-100 text-yellow-700">開始まで{untilStart}日</Badge>
+                if (untilStart > 0) return <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-amber-100 text-amber-700">開始まで{untilStart}日</Badge>
                 return <Badge variant="secondary" className="text-[10px] px-1.5 py-0">残り{remaining}日</Badge>
               })()}
             </div>

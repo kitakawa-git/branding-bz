@@ -1178,7 +1178,7 @@ function PostCard({
 
         {/* Category badge */}
         <div className="mb-3">
-          <Badge variant="secondary" className="text-xs bg-neutral-200 text-neutral-700">
+          <Badge variant="secondary" className="text-xs bg-gray-200 text-gray-700">
             {post.category}
           </Badge>
         </div>
