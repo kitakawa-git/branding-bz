@@ -20,7 +20,8 @@
 10. [デザインシステム](#10-デザインシステム)
 11. [API一覧](#11-api一覧)
 12. [ブランドスコア](#12-ブランドスコア)
-13. [変更履歴](#13-変更履歴)
+13. [ビデオラーニング](#13-ビデオラーニング)
+14. [変更履歴](#14-変更履歴)
 
 ---
 
@@ -147,7 +148,7 @@ app/
 
 ### RLS
 
-全テーブルRLS無効（プロトタイプ段階。本番前に要設定）
+全テーブルでRLS有効。ポリシー内の `auth.uid()` は `(select auth.uid())` でラップ済み（initplan最適化済み・Supabase advisor の `auth_rls_initplan` 警告は解消）。全外部キーにインデックス設定済み（`unindexed_fk=0`）。データアクセスは原則 service_role 経由の API Route（`getSupabaseAdmin()`）。一部テーブルはポータルの cookie セッション（authenticated ロール）で直接 SELECT する。新規テーブル（`learning_*` 等）は service_role 専用＝ポリシー0（anon/authenticated 直アクセス不可）。
 
 ---
 
@@ -262,6 +263,20 @@ app/
 | `brand_quiz_attempts` | quiz_id / **profile_id（記名）** / company_id / department / role_category / score / why_score / how_score / passed / total_questions / correct_count / **unique(quiz_id, profile_id)** |
 | `brand_quiz_answers` | attempt_id / question_id / selected_option_id / is_correct |
 
+### ビデオラーニング（4テーブル）
+
+YouTube動画の学習機能。カテゴリー > テーマ > 動画 の2階層で整理。RLS有効・ポリシー0（service_role経由のみ）。
+
+| テーブル | 主なカラム |
+|---|---|
+| `learning_categories` | company_id / name / sort_order（大分類） |
+| `learning_themes` | company_id / category_id(FK→categories, ON DELETE CASCADE) / name / description / sort_order（学習レベル） |
+| `learning_videos` | company_id / title / description / youtube_video_id / youtube_url / thumbnail_url / category(レガシーtext・未使用) / **theme_id(FK→themes, ON DELETE SET NULL)** / duration_seconds / sort_order / is_published / created_by |
+| `learning_video_views` | company_id / video_id(FK) / profile_id(FK) / watched_seconds / progress_percent(0-100) / completed(90%以上true) / started_at / last_progress_at（**1視聴セッション=1行**） |
+
+**削除挙動:** カテゴリー削除→配下テーマCASCADE削除→各動画は `theme_id=NULL`（未分類に戻る・動画は消えない）。テーマ削除→配下動画 `theme_id=NULL`。
+**インデックス:** `learning_videos(company_id, sort_order)`・`(theme_id)`、`learning_video_views(video_id)`・`(profile_id, video_id)`・`(company_id, created_at)`、`learning_categories(company_id, sort_order)`、`learning_themes(category_id, sort_order)`・`(company_id)`
+
 ### マイグレーション
 
 | ファイル | 内容 |
@@ -304,6 +319,8 @@ app/
 | 名刺プレビュー | `/portal/card-preview` | 完了 |
 | 理解度テスト受験＋本人結果 | `/portal/quiz/[id]` | 完了 |
 | お知らせ | `/portal/announcements` | 完了 |
+| ビデオラーニング 動画一覧（カテゴリー>テーマ階層・進捗バッジ） | `/portal/learning` | 完了 |
+| ビデオラーニング 動画視聴（プレイヤー＋進捗記録） | `/portal/learning/[id]` | 完了 |
 
 ### 管理画面
 
@@ -324,6 +341,9 @@ app/
 | 用語 | `/admin/brand/terms` | 完了 |
 | CIマニュアルPDF出力 | `/admin/ci-manual` | 完了 |
 | 理解度テスト（作成・AI設問生成・配信・k匿名集計・受験状況） | `/admin/brand-score/quizzes` | 完了 |
+| ビデオラーニング 動画管理（登録・編集・削除・公開切替・カテゴリー>テーマでグルーピング・並び替え） | `/admin/learning`（動画タブ） | 完了 |
+| ビデオラーニング カテゴリー・テーマ管理（CRUD＋並び替え） | `/admin/learning`（カテゴリー・テーマタブ） | 完了 |
+| ビデオラーニング 視聴分析（動画別・メンバー別） | `/admin/analytics/learning` | 完了 |
 
 ### スーパー管理画面
 
@@ -838,6 +858,26 @@ CLAUDE.md の「デザインシステム（公開ページ共通）」セクシ�
 | `/api/brand-score/quizzes/pending` | GET | 未受験 active クイズ（バナー用） |
 | `/api/brand-score/knowledge-gap` | GET | 共感×知識 ギャップ分析 |
 
+### ビデオラーニング
+
+すべて service_role。認証は cookie `getUser()`（管理=admin_users／メンバー=members）。
+
+| エンドポイント | メソッド | 説明 |
+|--------------|---------|------|
+| `/api/learning/videos` | GET/POST | 一覧（`?published=true`でポータル用＝公開のみ＋自分の進捗）・作成（URLからID抽出・サムネ自動生成・oEmbedタイトル・theme_id） |
+| `/api/learning/videos/[id]` | GET/PATCH/DELETE | 取得・更新（theme_id含む）・削除 |
+| `/api/learning/videos/reorder` | PATCH | 動画並び替え |
+| `/api/learning/views` | POST | 視聴セッション開始（INSERT）→ view_id |
+| `/api/learning/views/[id]` | PATCH | 進捗更新（巻き戻り防止・本人確認・duration確定同梱） |
+| `/api/learning/analytics` | GET | 視聴集計（動画別・メンバー別） |
+| `/api/learning/categories` | GET/POST | カテゴリー一覧・作成 |
+| `/api/learning/categories/[id]` | PATCH/DELETE | 更新・削除（配下テーマCASCADE） |
+| `/api/learning/categories/reorder` | PATCH | カテゴリー並び替え |
+| `/api/learning/themes` | GET/POST | テーマ一覧（`?category_id=`）・作成 |
+| `/api/learning/themes/[id]` | PATCH/DELETE | 更新・削除（配下動画は未分類化） |
+| `/api/learning/themes/reorder` | PATCH | テーマ並び替え |
+| `/api/learning/structure` | GET | カテゴリー>テーマ>動画のネスト＋video_count自動算出（`?published=true`でポータル用） |
+
 ---
 
 ## 12. ブランドスコア
@@ -854,9 +894,47 @@ CLAUDE.md の「デザインシステム（公開ページ共通）」セクシ�
 
 ---
 
-## 13. 変更履歴
+## 13. ビデオラーニング
+
+### 概要
+
+管理者が登録したYouTube動画を、ポータルメンバーが視聴できる学習機能（「浸透」レイヤー）。動画は **カテゴリー（大分類）> テーマ（学習レベル）> 動画** の2階層で整理する。視聴状況（誰が・何回・どこまで・完了したか）を管理画面で確認できる。
+
+### 階層構造
+
+- **カテゴリー**＝トピックの大分類（例：ブランディング／デザイン）。**テーマ**＝各カテゴリー配下の学習レベル（例：基礎編／応用編、順序つき）。**動画**＝1動画=1テーマ（`theme_id` 単一・複数所属は将来）。
+- テーマの「○本」はテーマ配下動画の **自動カウント**（手入力しない）。
+- 未分類（`theme_id=NULL`）の公開動画はポータル末尾「その他」に表示。`/api/learning/structure` がカテゴリー>テーマ>動画のネスト＋`video_count` を返す（`?published=true`でポータル用＝公開のみ＋自分の進捗）。
+
+### トラッキング設計
+
+YouTube IFrame Player API で再生イベント（PLAYING / PAUSED / ENDED）を捕捉。視聴セッション=1行（`learning_video_views`）として、再生開始でINSERT、進捗はその行をUPDATE。
+
+- **進捗送信:** 再生中は30秒間引き。一時停止・再生終了・ページ離脱時は即送信（離脱時は `fetch(keepalive:true)`）
+- **完了判定:** `progress_percent >= 90` で `completed=true`（ENDEDでもtrue）
+- **集計:** 視聴回数=セッション行数のCOUNT、到達度=`MAX(progress_percent)`、完了=`BOOL_OR(completed)`
+
+### 実装上の判断
+
+- **duration確定をメンバーAPIに集約:** 動画尺は `views/[id]` PATCH に同梱し未設定時のみ確定。`videos` のPATCH/DELETEは管理者専用のまま。
+- **進捗の巻き戻り防止:** 既存値より大きい場合のみ更新。
+- **DOM置換対策:** `YT.Player()` がDOM要素を置換する挙動による React unmount時の `NotFoundError` を、手動child node方式で回避。
+- **既存 `learning_videos.category`(text)** はレガシー残置（未使用・theme_id へ移行済み）。
+
+### スコープ外（将来）
+
+- プラン制限（Standard以上で開放）── Stripe実装後
+- 視聴必須化・未視聴リマインド／テーマのコース化（順番視聴強制・修了証）
+- ブランドスコア インナー指標（WHAT＝行動一致）との連動
+- 1動画＝複数テーマ所属（中間テーブル化）
+
+---
+
+## 14. 変更履歴
 
 | 日付 | バージョン | 変更内容 |
 |------|-----------|---------|
+| 2026-06-09 | v1.3.0 | **ビデオラーニング カテゴリー>テーマ階層化（commit 64546fa）。** `learning_categories`/`learning_themes` 新設＋`learning_videos.theme_id`（テーマ削除→動画は未分類化＝SET NULL、カテゴリ削除→テーマCASCADE）。API: categories/themes CRUD＋reorder・`structure`（ネスト＋video_count）・videos に theme_id。管理は「動画（グルーピング＋未分類）」「カテゴリー・テーマ」の2タブ＋動画ダイアログにカテゴリー→テーマ2段選択。ポータルは階層＋テーマ「○本」バッジ、未分類は末尾「その他」。視聴トラッキング/分析は不変。**併せて本書のRLS記述を実態（全テーブル有効・auth.uidラップ・FK全張り）に訂正、ビデオラーニング機能を本書に追記（DB4テーブル/§11 API/§13）** |
+| 2026-06-08 | v1.2.0 | **ビデオラーニング機能（基本）追加。** YouTube動画で社内学習。DB2テーブル（learning_videos/learning_video_views）、API（videos CRUD・reorder・views開始/進捗・analytics）、管理（動画管理＋視聴分析）、ポータル（一覧＋視聴プレイヤー）、両サイドバーに「ラーニング」。YouTube IFrame Player APIで進捗・完了トラッキング（30秒間引き＋一時停止/終了/離脱時即送信、90%で完了）。RLS有効・ポリシー0（service_role経由）。 |
 | 2026-06-04 | v1.1.0 | **ブランド理解度テスト（インナー：知識）追加。** 記名式クイズで社員の知識を測定。DB4テーブル（brand_quizzes/questions/attempts/answers）、API12本、管理UI（作成・AI設問生成レビュー・配信・k匿名集計・受験状況）、ポータルUI（バナー・受験・本人結果＝学習振り返り）、ダッシュボード統合（理解度カード＋共感×知識ギャップ分析）。採点=単純正答率、k匿名 n≥3（overall/company_average も n<3 抑制）、本人確認はセッション、take は正解・解説を除外。 |
 | 2026-03-09 | v0.8.0 | **STP Step3 ターゲティング大改修:** 競合分析を構造化データ（`competitors_analysis: [{name, traits}]`）に変更。Step1の競合企業から自動カード生成。AI提案を手動ボタン式に変更（確認ダイアログ付き）。「ターゲットの詳細定義」フィールドを廃止（Step2セグメント説明を自動採用）。購買決定要因・自社の強みを必須バリデーション化。 **suggest-target-detail API新設:** 購買決定要因・自社の強み・競合ごとの個別分析を提案。動的スキーマ（競合名を事前指定）。 **suggest-positioning API改修:** 構造化された競合分析データを活用したポジショニング軸提案。 **UI統一:** ラベル統一（競合企業→競合企業・サービス）、削除ボタンスタイル統一（`variant="outline" size="icon"` + destructive系）、ツール画面デザインガイドライン策定。 **Step5/PDF更新:** メインターゲットカード内にセグメント説明を統合表示。 **基本情報共通化:** companies.target_segments カラム追加、shared-profile APIによるツール↔本体の双方向データ同期、競合データREPLACEマージ方式。 **その他:** CIマニュアルPDF出力機能、公開ページのグラスモーフィズムデザインシステム適用。feature-requirements.md を最新状態に全面更新。 |
