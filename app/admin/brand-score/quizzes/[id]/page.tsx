@@ -727,7 +727,7 @@ export default function QuizDetailPage() {
                     <div className="flex-1 min-w-0">
                       {/* バッジ行 */}
                       <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-slate-100 text-slate-700">
+                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-gray-100 text-gray-700">
                           {CATEGORY_LABELS[q.category] || q.category}
                         </Badge>
                         <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-amber-100 text-amber-700">

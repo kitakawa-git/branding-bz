@@ -135,7 +135,7 @@ function getScoreColor(score: number | null): string {
   if (score === null) return 'text-muted-foreground'
   if (score >= 80) return 'text-green-600'
   if (score >= 60) return 'text-blue-600'
-  if (score >= 40) return 'text-yellow-600'
+  if (score >= 40) return 'text-amber-600'
   return 'text-red-600'
 }
 
@@ -143,7 +143,7 @@ function getScoreProgressColor(score: number | null): string {
   if (score === null) return 'bg-muted'
   if (score >= 80) return '[&>div]:bg-green-500'
   if (score >= 60) return '[&>div]:bg-blue-500'
-  if (score >= 40) return '[&>div]:bg-yellow-500'
+  if (score >= 40) return '[&>div]:bg-amber-500'
   return '[&>div]:bg-red-500'
 }
 
@@ -152,7 +152,7 @@ function getHeatmapBg(score: number | null): string {
   if (score === null) return ''
   if (score >= 80) return 'bg-green-50 text-green-700'
   if (score >= 60) return 'bg-blue-50 text-blue-700'
-  if (score >= 40) return 'bg-yellow-50 text-yellow-700'
+  if (score >= 40) return 'bg-amber-50 text-amber-700'
   return 'bg-red-50 text-red-700'
 }
 
@@ -168,7 +168,7 @@ function getQuestionBarColor(avg: number | null): string {
 function getRankBadgeClass(rank: string): string {
   if (rank === 'S') return 'bg-green-100 text-green-700 border-green-200'
   if (rank === 'A+' || rank === 'A') return 'bg-blue-100 text-blue-700 border-blue-200'
-  if (rank === 'B+' || rank === 'B') return 'bg-yellow-100 text-yellow-700 border-yellow-200'
+  if (rank === 'B+' || rank === 'B') return 'bg-amber-100 text-amber-700 border-amber-200'
   if (rank === 'C' || rank === 'D') return 'bg-red-100 text-red-700 border-red-200'
   return 'bg-gray-100 text-gray-500 border-gray-200'
 }

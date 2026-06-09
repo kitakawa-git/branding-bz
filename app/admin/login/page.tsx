@@ -226,7 +226,7 @@ function LoginContent() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="admin@example.com"
                 required
-                className="h-12 text-base md:text-base rounded-xl text-white placeholder:text-white/30 focus-visible:ring-indigo-500/50 focus-visible:ring-offset-0 focus-visible:border-indigo-400/40"
+                className="h-12 text-base md:text-base rounded-xl text-white placeholder:text-white/30 focus-visible:ring-blue-500/50 focus-visible:ring-offset-0 focus-visible:border-blue-400/40"
                 style={glassInput}
               />
             </div>
@@ -241,7 +241,7 @@ function LoginContent() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="パスワードを入力"
                 required
-                className="h-12 text-base md:text-base rounded-xl text-white placeholder:text-white/30 focus-visible:ring-indigo-500/50 focus-visible:ring-offset-0 focus-visible:border-indigo-400/40"
+                className="h-12 text-base md:text-base rounded-xl text-white placeholder:text-white/30 focus-visible:ring-blue-500/50 focus-visible:ring-offset-0 focus-visible:border-blue-400/40"
                 style={glassInput}
               />
             </div>
@@ -256,13 +256,13 @@ function LoginContent() {
           </form>
 
           <p className="text-center text-sm mt-6 mb-0">
-            <Link href="/portal/auth" className="text-indigo-300/80 no-underline hover:text-indigo-200 hover:underline transition-colors">
+            <Link href="/portal/auth" className="text-blue-300/80 no-underline hover:text-blue-200 hover:underline transition-colors">
               メンバーログインはこちら
             </Link>
           </p>
           <p className="text-center text-sm text-white/40 mt-3 mb-0">
             アカウントをお持ちでない方は{' '}
-            <Link href="/signup" className="text-indigo-300/80 no-underline font-bold hover:text-indigo-200 hover:underline transition-colors">
+            <Link href="/signup" className="text-blue-300/80 no-underline font-bold hover:text-blue-200 hover:underline transition-colors">
               こちら
             </Link>
             {' '}から登録

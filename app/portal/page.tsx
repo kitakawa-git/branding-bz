@@ -92,8 +92,8 @@ const BRAND_QUADRANTS = [
 
 // 内部=紫系 / 外部=緑系（既存のポータル配色に馴染ませる）
 const QUADRANT_TONES = {
-  purple: { bar: 'bg-violet-500', tile: 'bg-violet-100 text-violet-700' },
-  green: { bar: 'bg-emerald-500', tile: 'bg-emerald-100 text-emerald-700' },
+  purple: { bar: 'bg-purple-500', tile: 'bg-purple-100 text-purple-700' },
+  green: { bar: 'bg-green-500', tile: 'bg-green-100 text-green-700' },
 }
 
 // ============================================

@@ -415,7 +415,7 @@ export default function SmartCardPage() {
       </Card>
 
       {/* 印刷ガイド */}
-      <Card className="bg-sky-50 border-sky-200 shadow-none">
+      <Card className="bg-blue-50 border-blue-200 shadow-none">
         <CardContent className="p-5">
           <h3 className="text-[15px] font-bold text-foreground mb-3">
             印刷ガイド

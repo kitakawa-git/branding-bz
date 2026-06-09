@@ -25,7 +25,7 @@ type Inquiry = {
 
 const STATUS_LABELS: Record<string, { label: string; className: string }> = {
   new:         { label: '新規',   className: 'bg-blue-100 text-blue-700' },
-  in_progress: { label: '対応中', className: 'bg-yellow-100 text-yellow-700' },
+  in_progress: { label: '対応中', className: 'bg-amber-100 text-amber-700' },
   done:        { label: '完了',   className: 'bg-green-100 text-green-700' },
 }
 

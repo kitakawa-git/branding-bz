@@ -18,7 +18,7 @@ export function AccessibilityBadge({ score }: AccessibilityBadgeProps) {
             className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${
               passes
                 ? 'bg-green-50 text-green-700'
-                : 'bg-yellow-50 text-yellow-700'
+                : 'bg-amber-50 text-amber-700'
             }`}
           >
             {passes ? (
