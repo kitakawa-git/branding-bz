@@ -45,6 +45,10 @@ id (uuid), company_id (FK→companies), name, position, department, bio, photo_u
 - テーブル追加・カラム追加・RLSポリシー変更・RPC関数作成が必要な場合は、コード修正より先にSQLを出力し、ユーザーの実行完了を待つこと
 - Supabase MCP接続が使えない場合は、SQL Editorで手動実行する前提で出力する
 - 既存テーブルの構造が不明な場合は、想定で進めずユーザーに確認すること
+- **マイグレーションは必ずローカル `.sql` を先に作成してから適用する**（リモート直適用でローカル未記録にしない）。
+  - 可能なら Supabase CLI（`supabase migration new` → SQL記述 → `supabase db push`）でローカル先行・適用。
+  - CLI不可で `apply_migration`（MCP）を使う場合も、同一SQLを `supabase/migrations/<version>_<name>.sql` として保存し、**同じコミットに含める**（version はリモート `supabase_migrations.schema_migrations` の記録値に合わせる）。
+  - 破壊的変更（DROP等）は事前バックアップ（退避テーブル等）を必ず先に取る。
 
 ### 実機検証ルール（データ汚染防止・最重要）
 - **プレビュー（localhost:3004）は demo-admin1@branding.bz（企業＝株式会社テックブリッジ / `128a1513`）でログイン固定。** 検証はこのデモ企業の範囲だけで行う。
