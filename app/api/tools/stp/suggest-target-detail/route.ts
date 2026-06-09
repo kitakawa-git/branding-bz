@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { callClaude } from '@/lib/claude-api'
 import { getAdminContext } from '@/lib/learning/auth'
 import { getGuardrailsPromptForCompany } from '@/lib/brand/guardrails'
+import { getRelationsPromptForCompany } from '@/lib/brand/relations'
 
 export async function POST(request: NextRequest) {
 
@@ -147,7 +148,11 @@ ${competitorsNote}`
     const guardrails = guardrailCtx
       ? await getGuardrailsPromptForCompany(guardrailCtx.companyId)
       : ''
-    const system = guardrails ? `${SYSTEM_PROMPT}\n\n${guardrails}` : SYSTEM_PROMPT
+    // 要素間の関係グラフ（element_relations）を guardrails と並べて注入。0件・未解決なら従来どおり。
+    const relations = guardrailCtx
+      ? await getRelationsPromptForCompany(guardrailCtx.companyId)
+      : ''
+    const system = [SYSTEM_PROMPT, guardrails, relations].filter(Boolean).join('\n\n')
 
     const response = await callClaude({
       system,

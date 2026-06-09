@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { callClaude } from '@/lib/claude-api'
 import { getAdminContext } from '@/lib/learning/auth'
 import { getGuardrailsPromptForCompany } from '@/lib/brand/guardrails'
+import { getRelationsPromptForCompany } from '@/lib/brand/relations'
 
 const SYSTEM_PROMPT = `あなたはブランドマーケティングの専門家です。STP分析のポジショニング（軸の定義と企業の配置）を提案してください。X軸とY軸は、ターゲットの購買決定要因を考慮して、ターゲットに刺さる差別化軸を選んでください。自社の強みが活きるポジションに配置し、競合との差別化が明確になるよう配置してください。回答はJSON形式のみで、前後に説明文やマークダウンのコードブロックを含めないでください。
 
@@ -149,7 +150,11 @@ export async function POST(request: NextRequest) {
     const guardrails = guardrailCtx
       ? await getGuardrailsPromptForCompany(guardrailCtx.companyId)
       : ''
-    const system = guardrails ? `${SYSTEM_PROMPT}\n\n${guardrails}` : SYSTEM_PROMPT
+    // 要素間の関係グラフ（element_relations）を guardrails と並べて注入。0件・未解決なら従来どおり。
+    const relations = guardrailCtx
+      ? await getRelationsPromptForCompany(guardrailCtx.companyId)
+      : ''
+    const system = [SYSTEM_PROMPT, guardrails, relations].filter(Boolean).join('\n\n')
 
     const response = await callClaude({
       system,

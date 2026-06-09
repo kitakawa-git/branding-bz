@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { callClaude } from '@/lib/claude-api'
 import { getAdminContext } from '@/lib/learning/auth'
 import { getGuardrailsPromptForCompany } from '@/lib/brand/guardrails'
+import { getRelationsPromptForCompany } from '@/lib/brand/relations'
 
 const SYSTEM_PROMPT = `あなたはブランドマーケティングの専門家です。以下の企業情報とターゲット概要をもとに、具体的なペルソナのデモグラフィック情報を提案してください。「30代女性」のような曖昧なものではなく、名前・年齢・職業・居住地・年収・家族構成・趣味・情報収集方法まで具体的に1人の人物像を描いてください。回答はJSON形式のみで、前後に説明文やマークダウンのコードブロックを含めないでください。
 
@@ -89,7 +90,11 @@ export async function POST(request: NextRequest) {
     const guardrails = guardrailCtx
       ? await getGuardrailsPromptForCompany(guardrailCtx.companyId)
       : ''
-    const system = guardrails ? `${SYSTEM_PROMPT}\n\n${guardrails}` : SYSTEM_PROMPT
+    // 要素間の関係グラフ（element_relations）を guardrails と並べて注入。0件・未解決なら従来どおり。
+    const relations = guardrailCtx
+      ? await getRelationsPromptForCompany(guardrailCtx.companyId)
+      : ''
+    const system = [SYSTEM_PROMPT, guardrails, relations].filter(Boolean).join('\n\n')
 
     const response = await callClaude({
       system,
