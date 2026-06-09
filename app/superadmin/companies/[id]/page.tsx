@@ -12,6 +12,7 @@ import { ArrowLeft, Check } from 'lucide-react'
 import { Fab, FabButton } from '@/components/ui/fab'
 import ProofPointsSection, { type ValuePropositionRef } from './_sections/ProofPointsSection'
 import GovernanceRulesSection from './_sections/GovernanceRulesSection'
+import ElementRelationsSection from './_sections/ElementRelationsSection'
 
 type Company = {
   id: string
@@ -436,6 +437,17 @@ export default function CompanyDetailPage() {
             ブランドの表現ルール・禁則（トーン・主張・コンプラ）。「絶対遵守」はAI生成で必ず守られ、「原則遵守」は原則として守られます。
           </p>
           <GovernanceRulesSection companyId={companyId} valuePropositions={valueProps} />
+        </CardContent>
+      </Card>
+
+      {/* === 関係グラフ（element_relations）セクション === */}
+      <Card className="bg-muted/50 border shadow-none mt-6">
+        <CardContent className="p-6">
+          <h3 className="text-base font-bold text-foreground mb-1">関係グラフ</h3>
+          <p className="text-xs text-muted-foreground mb-4">
+            理念・提供価値・証拠・表現ルール・ペルソナの「跨ぐ関係」（方向づける／裏づけられる／矛盾する 等）。AIのコピー生成時に整合性の根拠として参照されます。
+          </p>
+          <ElementRelationsSection companyId={companyId} />
         </CardContent>
       </Card>
     </div>
