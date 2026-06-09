@@ -16,10 +16,15 @@ function urlBase64ToUint8Array(base64: string): Uint8Array {
   return arr;
 }
 
+type PermState = "default" | "granted" | "denied";
+
 export function PushToggle() {
   const [supported, setSupported] = useState(false);
   const [subscribed, setSubscribed] = useState(false);
   const [busy, setBusy] = useState(false);
+  // ブラウザ/OSの通知許可状態。"denied" は一度「許可しない」を選んだ状態で、
+  // requestPermission() を呼んでも再びダイアログは出ない（設定からの解除が必要）。
+  const [permission, setPermission] = useState<PermState>("default");
   const vapid = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 
   useEffect(() => {
@@ -28,6 +33,7 @@ export function PushToggle() {
       "serviceWorker" in navigator && "PushManager" in window && "Notification" in window && !!vapid;
     setSupported(ok);
     if (!ok) return;
+    setPermission(Notification.permission as PermState);
     navigator.serviceWorker.ready
       .then((reg) => reg.pushManager.getSubscription())
       .then((sub) => setSubscribed(!!sub))
@@ -41,8 +47,15 @@ export function PushToggle() {
     }
     setBusy(true);
     try {
-      const permission = await Notification.requestPermission();
-      if (permission !== "granted") {
+      const result = (await Notification.requestPermission()) as PermState;
+      setPermission(result);
+      if (result === "denied") {
+        // 一度「許可しない」を選ぶと再度ダイアログは出ない。設定からの解除を案内（下の案内UIに切替）。
+        toast.error("通知がブロックされています。端末の設定から許可してください");
+        return;
+      }
+      if (result !== "granted") {
+        // "default"（ダイアログを閉じた等）。再度ボタンを押せば再試行できる。
         toast.error("通知が許可されませんでした");
         return;
       }
@@ -93,6 +106,35 @@ export function PushToggle() {
       <p className="text-sm text-muted-foreground m-0 leading-relaxed">
         この端末/ブラウザでは通知に対応していません。iPhone の場合は、ホーム画面に追加したアプリ（PWA）から開くと利用できます。
       </p>
+    );
+  }
+
+  // 一度「許可しない」を選んだ状態。ボタンを押しても再ダイアログは出ないので、
+  // 設定からの解除手順を案内する（購読中＝subscribed のときは通常のオフ操作を優先）。
+  if (permission === "denied" && !subscribed) {
+    return (
+      <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+        <div className="flex items-center gap-2 text-sm font-bold text-amber-800">
+          <BellOff className="size-4 shrink-0" />
+          通知がブロックされています
+        </div>
+        <p className="mt-2 text-sm text-amber-800 leading-relaxed m-0">
+          以前に「許可しない」を選んだため、このボタンからはオンにできません。お使いの端末の設定から通知を許可してください。
+        </p>
+        <ul className="mt-3 space-y-1.5 text-sm text-amber-800 leading-relaxed">
+          <li>
+            <span className="font-semibold">iPhone：</span>
+            設定 → 通知 →（このアプリ）→「通知を許可」をオン
+          </li>
+          <li>
+            <span className="font-semibold">パソコン：</span>
+            アドレスバーの🔒（鍵）アイコン → 通知 →「許可」
+          </li>
+        </ul>
+        <p className="mt-3 text-sm text-amber-800/80 leading-relaxed m-0">
+          設定を変更したら、この画面を再読み込みしてから「通知をオンにする」を押してください。
+        </p>
+      </div>
     );
   }
 
