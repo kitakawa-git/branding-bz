@@ -1,4 +1,14 @@
 # branding.bz プロジェクト
+
+## 参照ファイル（@import）
+
+> チーム共有メモリ。下記は起動時に自動で読み込まれる。個人メモは `CLAUDE.local.md`（gitignore）へ。
+
+- 機能要件定義（本命）: @feature-requirements.md
+- プロダクト概要: @docs/branding-bz-overview.md
+- 用語・略語集: @docs/glossary.md
+- タスク: @TASKS.md
+
 ## 概要
 中小企業のブランドを「作る → 社内に根づかせる → 社外に届ける」まで一貫支援するSaaS。
 運営：ID INC.（川崎市、CEO：北川巧）
