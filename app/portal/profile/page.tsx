@@ -298,9 +298,9 @@ export default function ProfilePage() {
         <div className="flex justify-center -mt-12">
           <Skeleton className="w-24 h-24 rounded-full" />
         </div>
-        <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-11 w-full" />
+        <Skeleton className="h-11 w-full" />
+        <Skeleton className="h-11 w-full" />
         <Skeleton className="h-24 w-full" />
       </div>
     )
@@ -391,44 +391,44 @@ export default function ProfilePage() {
       {/* ===== B. 基本情報 ===== */}
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-6">
         <CardContent className="p-4 sm:p-5 space-y-5">
-          <h2 className="text-xs font-bold text-foreground">基本情報</h2>
+          <h2 className="text-sm font-bold text-foreground">基本情報</h2>
 
           <div>
-            <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">名前</label>
+            <label className="text-sm font-semibold text-muted-foreground mb-1.5 block">名前</label>
             <Input
               type="text"
               value={form.name}
               onChange={(e) => handleChange('name', e.target.value)}
               placeholder="山田太郎"
-              className="h-10"
+              className="h-11"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">役職</label>
+              <label className="text-sm font-semibold text-muted-foreground mb-1.5 block">役職</label>
               <Input
                 type="text"
                 value={form.position}
                 onChange={(e) => handleChange('position', e.target.value)}
                 placeholder="代表取締役"
-                className="h-10"
+                className="h-11"
               />
             </div>
             <div>
-              <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">部署</label>
+              <label className="text-sm font-semibold text-muted-foreground mb-1.5 block">部署</label>
               <Input
                 type="text"
                 value={form.department}
                 onChange={(e) => handleChange('department', e.target.value)}
                 placeholder="経営企画部"
-                className="h-10"
+                className="h-11"
               />
             </div>
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">自己紹介</label>
+            <label className="text-sm font-semibold text-muted-foreground mb-1.5 block">自己紹介</label>
             <textarea
               ref={bioRef}
               value={form.bio}
@@ -445,23 +445,23 @@ export default function ProfilePage() {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">メールアドレス</label>
+              <label className="text-sm font-semibold text-muted-foreground mb-1.5 block">メールアドレス</label>
               <Input
                 type="email"
                 value={form.email}
                 onChange={(e) => handleChange('email', e.target.value)}
                 placeholder="taro@example.com"
-                className="h-10"
+                className="h-11"
               />
             </div>
             <div>
-              <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">電話番号</label>
+              <label className="text-sm font-semibold text-muted-foreground mb-1.5 block">電話番号</label>
               <Input
                 type="tel"
                 value={form.phone}
                 onChange={(e) => handleChange('phone', e.target.value)}
                 placeholder="090-1234-5678"
-                className="h-10"
+                className="h-11"
               />
             </div>
           </div>
@@ -471,49 +471,49 @@ export default function ProfilePage() {
       {/* ===== C. SNSリンク ===== */}
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-6">
         <CardContent className="p-4 sm:p-5 space-y-5">
-          <h2 className="text-xs font-bold text-foreground">SNSリンク</h2>
+          <h2 className="text-sm font-bold text-foreground">SNSリンク</h2>
 
           <div>
-            <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">X (Twitter)</label>
+            <label className="text-sm font-semibold text-muted-foreground mb-1.5 block">X (Twitter)</label>
             <Input
               type="url"
               value={form.sns_x}
               onChange={(e) => handleChange('sns_x', e.target.value)}
               placeholder="https://x.com/username"
-              className="h-10"
+              className="h-11"
             />
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">LinkedIn</label>
+            <label className="text-sm font-semibold text-muted-foreground mb-1.5 block">LinkedIn</label>
             <Input
               type="url"
               value={form.sns_linkedin}
               onChange={(e) => handleChange('sns_linkedin', e.target.value)}
               placeholder="https://linkedin.com/in/username"
-              className="h-10"
+              className="h-11"
             />
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">Facebook</label>
+            <label className="text-sm font-semibold text-muted-foreground mb-1.5 block">Facebook</label>
             <Input
               type="url"
               value={form.sns_facebook}
               onChange={(e) => handleChange('sns_facebook', e.target.value)}
               placeholder="https://facebook.com/username"
-              className="h-10"
+              className="h-11"
             />
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">Instagram</label>
+            <label className="text-sm font-semibold text-muted-foreground mb-1.5 block">Instagram</label>
             <Input
               type="url"
               value={form.sns_instagram}
               onChange={(e) => handleChange('sns_instagram', e.target.value)}
               placeholder="https://instagram.com/username"
-              className="h-10"
+              className="h-11"
             />
           </div>
         </CardContent>
@@ -529,7 +529,7 @@ export default function ProfilePage() {
       {/* ===== 通知設定（プッシュ通知） ===== */}
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-6">
         <CardContent className="p-4 sm:p-5 space-y-3">
-          <h2 className="text-xs font-bold text-foreground">通知設定</h2>
+          <h2 className="text-sm font-bold text-foreground">通知設定</h2>
           <p className="text-base sm:text-sm text-muted-foreground m-0 leading-relaxed">
             新しいお知らせが投稿されたとき、この端末にプッシュ通知を受け取れます。
           </p>
@@ -545,7 +545,7 @@ export default function ProfilePage() {
             onClick={() => setShowPasswordChange(!showPasswordChange)}
             className="flex items-center justify-between w-full border-0 bg-transparent cursor-pointer p-0"
           >
-            <h2 className="text-xs font-bold text-foreground m-0">パスワード変更</h2>
+            <h2 className="text-sm font-bold text-foreground m-0">パスワード変更</h2>
             {showPasswordChange ? (
               <ChevronUp size={18} className="text-muted-foreground" />
             ) : (
@@ -562,7 +562,7 @@ export default function ProfilePage() {
               )}
 
               <div>
-                <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">
+                <label className="text-sm font-semibold text-muted-foreground mb-1.5 block">
                   現在のパスワード
                 </label>
                 <Input
@@ -570,12 +570,12 @@ export default function ProfilePage() {
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
                   placeholder="現在のパスワード"
-                  className="h-10"
+                  className="h-11"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">
+                <label className="text-sm font-semibold text-muted-foreground mb-1.5 block">
                   新しいパスワード（8文字以上）
                 </label>
                 <div className="relative">
@@ -584,7 +584,7 @@ export default function ProfilePage() {
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     placeholder="新しいパスワード"
-                    className="h-10 pr-10"
+                    className="h-11 pr-10"
                   />
                   <button
                     type="button"
@@ -597,7 +597,7 @@ export default function ProfilePage() {
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">
+                <label className="text-sm font-semibold text-muted-foreground mb-1.5 block">
                   新しいパスワード（確認）
                 </label>
                 <Input
@@ -605,7 +605,7 @@ export default function ProfilePage() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="もう一度入力してください"
-                  className="h-10"
+                  className="h-11"
                 />
                 {confirmPassword && newPassword !== confirmPassword && (
                   <p className="text-xs text-red-500 mt-1 m-0">パスワードが一致しません</p>
@@ -616,7 +616,7 @@ export default function ProfilePage() {
                 onClick={handlePasswordChange}
                 disabled={changingPassword}
                 variant="outline"
-                className="w-full h-10"
+                className="w-full h-11"
               >
                 {changingPassword ? '変更中...' : 'パスワードを変更'}
               </Button>
