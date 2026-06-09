@@ -26,7 +26,7 @@ export function Fab({
 }
 
 const fabButtonBase =
-  'flex items-center justify-center gap-2 h-12 px-6 rounded-full text-base font-bold cursor-pointer shadow-lg transition-transform hover:scale-105 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100'
+  'flex items-center justify-center gap-2 h-14 px-6 rounded-full text-base font-bold cursor-pointer shadow-lg transition-transform hover:scale-105 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100'
 
 const fabButtonVariants = {
   // 主要アクション（黒）
