@@ -490,7 +490,7 @@ export default function PortalVisualsPage() {
                 type="button"
                 onClick={() => setModalImage(null)}
                 aria-label="閉じる"
-                className="absolute right-2 top-2 z-10 flex items-center justify-center size-8 rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors cursor-pointer"
+                className="absolute right-2 top-2 z-10 flex items-center justify-center size-10 rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors cursor-pointer"
               >
                 <X size={16} />
               </button>

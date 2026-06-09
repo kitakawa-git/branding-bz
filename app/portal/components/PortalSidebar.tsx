@@ -216,27 +216,27 @@ export function PortalSidebar() {
                   align="start"
                   className="w-[--radix-dropdown-menu-trigger-width] min-w-56 p-2"
                 >
-                  <DropdownMenuItem asChild className="h-10 px-3 gap-2 text-base font-medium rounded-md">
+                  <DropdownMenuItem asChild className="h-11 px-3 gap-2 text-base font-medium rounded-md">
                     <Link href="/portal/profile" className="no-underline" onClick={handleNavClick}>
                       <CircleUser className="size-4" />
                       マイプロフィール
                     </Link>
                   </DropdownMenuItem>
                   {cardEnabled && (
-                    <DropdownMenuItem onClick={() => { handleNavClick(); setCardPreviewOpen(true) }} className="h-10 px-3 gap-2 text-base font-medium rounded-md">
+                    <DropdownMenuItem onClick={() => { handleNavClick(); setCardPreviewOpen(true) }} className="h-11 px-3 gap-2 text-base font-medium rounded-md">
                       <CreditCard className="size-4" />
                       名刺プレビュー
                     </DropdownMenuItem>
                   )}
                   {isAdmin && (
-                    <DropdownMenuItem asChild className="h-10 px-3 gap-2 text-base font-medium rounded-md">
+                    <DropdownMenuItem asChild className="h-11 px-3 gap-2 text-base font-medium rounded-md">
                       <Link href="/admin" className="no-underline" onClick={handleNavClick}>
                         <ArrowLeftRight className="size-4" />
                         管理画面
                       </Link>
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuItem onClick={signOut} className="h-10 px-3 gap-2 text-base font-medium rounded-md">
+                  <DropdownMenuItem onClick={signOut} className="h-11 px-3 gap-2 text-base font-medium rounded-md">
                     <LogOut className="size-4" />
                     ログアウト
                   </DropdownMenuItem>

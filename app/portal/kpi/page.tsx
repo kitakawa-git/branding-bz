@@ -697,7 +697,7 @@ export default function KpiPage() {
           <div className="flex items-start justify-between gap-3 mb-3">
             <h2 className="text-xl font-bold text-foreground m-0 leading-relaxed">{goal.title}</h2>
             {canEdit && (
-              <Button variant="ghost" size="icon" className="size-8 shrink-0" onClick={openGoalEdit}>
+              <Button variant="ghost" size="icon" className="size-11 shrink-0" onClick={openGoalEdit}>
                 <Pencil size={16} />
               </Button>
             )}
@@ -783,13 +783,13 @@ export default function KpiPage() {
                         )}
                         {!kpi.deadline && <span />}
                         {canEdit ? (
-                          <div className="flex items-center gap-0.5">
-                            <Button variant="ghost" size="icon" className="size-7" onClick={() => openKpiEdit(kpi)}>
+                          <div className="flex items-center gap-2">
+                            <Button variant="ghost" size="icon" className="size-11" onClick={() => openKpiEdit(kpi)}>
                               <Pencil size={16} />
                             </Button>
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="icon" className="size-7 text-destructive hover:text-destructive">
+                                <Button variant="ghost" size="icon" className="size-11 text-destructive hover:text-destructive">
                                   <Trash2 size={16} />
                                 </Button>
                               </AlertDialogTrigger>
@@ -806,7 +806,7 @@ export default function KpiPage() {
                             </AlertDialog>
                           </div>
                         ) : canReview ? (
-                          <Button variant="ghost" size="icon" className="size-7" onClick={() => openKpiEdit(kpi)}>
+                          <Button variant="ghost" size="icon" className="size-11" onClick={() => openKpiEdit(kpi)}>
                             <Pencil size={16} />
                           </Button>
                         ) : null}

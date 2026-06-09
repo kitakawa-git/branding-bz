@@ -62,7 +62,7 @@ function PortalLayoutInner({ children }: { children: React.ReactNode }) {
         <PortalSidebar />
         <SidebarInset>
           <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 px-4 bg-background/80 backdrop-blur-sm">
-            <SidebarTrigger className="-ml-1 size-10 [&_svg]:size-6" />
+            <SidebarTrigger className="-ml-1 size-11 [&_svg]:size-6" />
             <Separator
               orientation="vertical"
               className="mr-2 data-[orientation=vertical]:h-4"
@@ -97,7 +97,7 @@ function PortalLayoutInner({ children }: { children: React.ReactNode }) {
             <div className="ml-auto">
               <Link
                 href="/portal/announcements"
-                className="relative inline-flex items-center justify-center size-10 rounded-md hover:bg-muted transition-colors no-underline"
+                className="relative inline-flex items-center justify-center size-11 rounded-md hover:bg-muted transition-colors no-underline"
               >
                 <Bell size={24} className={pathname.startsWith('/portal/announcements') ? 'text-foreground' : 'text-muted-foreground'} />
                 {unreadCount > 0 && (

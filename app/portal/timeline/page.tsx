@@ -1154,7 +1154,7 @@ function PostCard({
           {(canEdit || canDelete) && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="size-8 shrink-0">
+                <Button variant="ghost" size="icon" className="size-11 shrink-0">
                   <MoreHorizontal className="size-4" />
                 </Button>
               </DropdownMenuTrigger>
@@ -1243,20 +1243,20 @@ function PostCard({
         <div className="flex items-center gap-4 pt-2 border-t border-border">
           <button
             onClick={onLike}
-            className={`flex items-center gap-1.5 text-xs transition-colors ${
+            className={`flex items-center gap-1.5 min-h-11 text-sm transition-colors ${
               post.is_liked
                 ? 'text-red-500'
                 : 'text-muted-foreground hover:text-red-500'
             }`}
           >
-            <Heart className={`size-4 ${post.is_liked ? 'fill-current' : ''}`} />
+            <Heart className={`size-5 ${post.is_liked ? 'fill-current' : ''}`} />
             <span>{post.like_count > 0 ? post.like_count : ''}</span>
           </button>
           <button
             onClick={onToggleComments}
-            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            className="flex items-center gap-1.5 min-h-11 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
-            <MessageCircle className="size-4" />
+            <MessageCircle className="size-5" />
             <span>{post.comment_count > 0 ? post.comment_count : ''}</span>
           </button>
         </div>
@@ -1319,15 +1319,15 @@ function PostCard({
                     onCommentSubmit()
                   }
                 }}
-                className="flex-1 h-9 text-sm bg-background"
+                className="flex-1 h-11 bg-background"
               />
               <Button
                 size="icon"
-                className="size-9 shrink-0"
+                className="size-11 shrink-0"
                 disabled={!commentInput.trim() || commentSubmitting}
                 onClick={onCommentSubmit}
               >
-                <Send className="size-4" />
+                <Send className="size-5" />
               </Button>
             </div>
           </div>
