@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
+import { PushToggle } from '@/components/pwa/PushToggle'
 import { toast } from 'sonner'
 import {
   Camera,
@@ -524,6 +525,17 @@ export default function ProfilePage() {
           {saving ? '保存中...' : '保存する'}
         </Button>
       </div>
+
+      {/* ===== 通知設定（プッシュ通知） ===== */}
+      <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-6">
+        <CardContent className="p-4 sm:p-5 space-y-3">
+          <h2 className="text-xs font-bold text-foreground">通知設定</h2>
+          <p className="text-base sm:text-sm text-muted-foreground m-0 leading-relaxed">
+            新しいお知らせが投稿されたとき、この端末にプッシュ通知を受け取れます。
+          </p>
+          <PushToggle />
+        </CardContent>
+      </Card>
 
       {/* ===== D. パスワード変更 ===== */}
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">

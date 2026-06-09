@@ -95,6 +95,23 @@ export function AnnouncementCreateDialog({ open, onOpenChange, companyId, userId
         throw new Error(`HTTP ${res.status}: ${body}`)
       }
 
+      // 公開時は、購読済みメンバーへプッシュ通知を送信（失敗しても保存は成功扱い・fire-and-forget）
+      if (isPublished) {
+        try {
+          const rows = await res.json()
+          const createdId = Array.isArray(rows) ? rows[0]?.id : rows?.id
+          if (createdId) {
+            fetch('/api/push/announce', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ announcementId: createdId }),
+            }).catch(() => {})
+          }
+        } catch {
+          // 通知送信は付随処理。失敗してもお知らせ保存は成功とする
+        }
+      }
+
       toast.success(isPublished ? 'お知らせを公開しました' : 'お知らせを下書き保存しました')
       resetForm()
       onOpenChange(false)

@@ -45,3 +45,44 @@ const serwist = new Serwist({
 });
 
 serwist.addEventListeners();
+
+// ── Web Push（お知らせ等の通知）──
+// 送信ペイロード: { title, body, url }
+self.addEventListener("push", (event) => {
+  let payload: { title?: string; body?: string; url?: string } = {};
+  if (event.data) {
+    try {
+      payload = event.data.json();
+    } catch {
+      payload = { title: "branding.bz", body: event.data.text() };
+    }
+  }
+  event.waitUntil(
+    self.registration.showNotification(payload.title || "branding.bz", {
+      body: payload.body || "",
+      icon: "/icons/icon-192.png",
+      badge: "/icons/icon-192.png",
+      data: { url: payload.url || "/portal/announcements" },
+    }),
+  );
+});
+
+// 通知タップ: 既存のウィンドウがあればフォーカスして遷移、なければ新規に開く
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url: string =
+    (event.notification.data && (event.notification.data as { url?: string }).url) ||
+    "/portal/announcements";
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        const wc = client as WindowClient;
+        if ("focus" in wc) {
+          wc.navigate?.(url);
+          return wc.focus();
+        }
+      }
+      return self.clients.openWindow(url);
+    }),
+  );
+});
