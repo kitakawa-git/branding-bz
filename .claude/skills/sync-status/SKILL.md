@@ -8,7 +8,7 @@ description: BRD-PROJECT-STATUS.md を現在のコード状態と突き合わせ
 BRD-PROJECT-STATUS.md は Claude Code・Cowork・Claude Projects の共通ハブファイル。
 このスキルは開発作業の区切りに実行し、ステータスを最新に保つ。
 
-**ファイルパス:** `../BRD-PROJECT-STATUS.md`（branding-bzルートからの相対パス）
+**ファイルパス:** `docs/BRD-PROJECT-STATUS.md`（branding-bz ルートからの相対パス、Git 管理下）
 
 ## 手順
 
@@ -19,7 +19,7 @@ BRD-PROJECT-STATUS.md は Claude Code・Cowork・Claude Projects の共通ハブ
 - `git diff --stat HEAD~1` — 直近の変更ファイル
 
 ### 2. ステータスファイルを読み込む
-- `../BRD-PROJECT-STATUS.md` を読む
+- `docs/BRD-PROJECT-STATUS.md` を読む
 
 ### 3. 残タスクを更新
 コード確認結果に基づいて:
