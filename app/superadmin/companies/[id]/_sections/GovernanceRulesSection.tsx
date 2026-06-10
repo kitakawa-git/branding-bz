@@ -4,14 +4,17 @@
 // - 一覧 / 追加 / 編集 / 削除 / 並び替え（上下）
 // - rule_type / scope / severity はセレクト、ng_example・ok_example は任意
 // - 書き込みは governance_rules_superadmin_all ポリシー（is_superadmin）で許可される前提
+// - 「AI草案を生成」: 業種・バリュー・用語規定からルール候補を推定（/api/superadmin/draft-extraction・
+//   押した時だけ）。候補は1件ずつ承認/編集/却下。承認・編集して登録した時のみ通常の作成経路でINSERT。
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { AutoResizeTextarea } from '@/components/ui/auto-resize-textarea'
-import { Plus, Trash2, Pencil, Check, X, ChevronUp, ChevronDown } from 'lucide-react'
+import { Plus, Trash2, Pencil, Check, X, ChevronUp, ChevronDown, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
 import type { ValuePropositionRef } from './ProofPointsSection'
+import type { RuleExtractDraft } from '@/lib/brand/draft-extraction'
 
 type GovernanceRule = {
   id: string
@@ -86,6 +89,9 @@ export default function GovernanceRulesSection({
   const [editingId, setEditingId] = useState<string | null>(null) // 'new' または行ID
   const [draft, setDraft] = useState<Draft>(emptyDraft())
   const [saving, setSaving] = useState(false)
+  const [aiDrafts, setAiDrafts] = useState<RuleExtractDraft[] | null>(null)
+  const [aiLoading, setAiLoading] = useState(false)
+  const [aiRegistering, setAiRegistering] = useState<number | null>(null)
 
   const vpTitle = (id: string | null) =>
     id ? valuePropositions.find((v) => v.id === id)?.title ?? '（削除済みの提供価値）' : null
@@ -204,6 +210,129 @@ export default function GovernanceRulesSection({
       return
     }
     await fetchRows()
+  }
+
+  // ---- AI草案生成（候補は表示のみ。登録は1件ずつの承認/編集時だけ） ----
+  const runAiExtract = async () => {
+    setAiLoading(true)
+    try {
+      const token = (await supabase.auth.getSession()).data.session?.access_token || ''
+      const res = await fetch('/api/superadmin/draft-extraction', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ companyId, kind: 'rule' }),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`)
+      setAiDrafts(json.drafts as RuleExtractDraft[])
+    } catch (err) {
+      console.error('[GovernanceRules] AI草案生成エラー:', err)
+      toast.error('AI草案の生成に失敗しました: ' + (err instanceof Error ? err.message : '不明なエラー'))
+    } finally {
+      setAiLoading(false)
+    }
+  }
+
+  const dismissAiDraft = (index: number) => {
+    setAiDrafts((prev) => (prev ? prev.filter((_, i) => i !== index) : prev))
+  }
+
+  // そのまま承認して登録（既存の作成経路と同じINSERT）
+  const approveAiDraft = async (d: RuleExtractDraft, index: number) => {
+    setAiRegistering(index)
+    try {
+      const nextOrder = rows.length > 0 ? Math.max(...rows.map((r) => r.sort_order)) + 1 : 0
+      const { error } = await supabase.from('governance_rules').insert({
+        company_id: companyId,
+        rule_type: d.rule_type,
+        scope: d.scope,
+        target_value_proposition_id: null,
+        rule_text: d.rule_text.trim(),
+        ng_example: d.ng_example.trim() || null,
+        ok_example: d.ok_example.trim() || null,
+        severity: d.severity,
+        sort_order: nextOrder,
+      })
+      if (error) throw error
+      toast.success('登録しました')
+      dismissAiDraft(index)
+      await fetchRows()
+    } catch (err) {
+      console.error('[GovernanceRules] AI草案登録エラー:', err)
+      toast.error('登録に失敗しました: ' + (err instanceof Error ? err.message : '不明なエラー'))
+    } finally {
+      setAiRegistering(null)
+    }
+  }
+
+  // 既存の追加フォームに読み込んで編集してから登録（保存は既存の save 経路）
+  const editAiDraft = (d: RuleExtractDraft, index: number) => {
+    setDraft({
+      rule_type: d.rule_type,
+      scope: d.scope,
+      target_value_proposition_id: '',
+      rule_text: d.rule_text,
+      ng_example: d.ng_example,
+      ok_example: d.ok_example,
+      severity: d.severity,
+    })
+    setEditingId('new')
+    dismissAiDraft(index)
+  }
+
+  const renderAiDrafts = () => {
+    if (aiDrafts === null) return null
+    return (
+      <div className="mt-4">
+        <div className="flex items-center gap-1.5 mb-2 text-xs font-bold text-foreground">
+          <Sparkles size={14} />
+          AI草案（{aiDrafts.length}）— 承認するまで登録されません
+        </div>
+        {aiDrafts.length === 0 ? (
+          <p className="text-muted-foreground text-sm m-0">
+            新しい草案は見つかりませんでした（業種・バリュー・用語規定に推定の源泉が無いか、既存と重複しています）
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {aiDrafts.map((d, i) => (
+              <div key={`${d.rule_text}-${i}`} className="border border-violet-200 bg-violet-50/40 rounded-lg p-3">
+                <div className="flex flex-wrap items-center gap-1.5 mb-1">
+                  {severityMeta(d.severity) && (
+                    <span className={`py-0.5 px-2 rounded text-[11px] font-semibold ${severityMeta(d.severity)!.cls}`}>
+                      {severityMeta(d.severity)!.label}
+                    </span>
+                  )}
+                  <span className="py-0.5 px-2 bg-gray-100 text-gray-600 rounded text-[11px] font-semibold">
+                    {labelOf(RULE_TYPES, d.rule_type)}
+                  </span>
+                  <span className="py-0.5 px-2 bg-blue-50 text-blue-700 rounded text-[11px] font-semibold">
+                    {labelOf(SCOPES, d.scope)}
+                  </span>
+                </div>
+                <p className="text-sm font-bold text-foreground break-words m-0">{d.rule_text}</p>
+                {d.ng_example && <p className="text-[13px] text-red-600 mt-0.5 break-words m-0">NG: {d.ng_example}</p>}
+                {d.ok_example && <p className="text-[13px] text-green-700 break-words m-0">OK: {d.ok_example}</p>}
+                <p className="text-[11px] text-muted-foreground mt-1 m-0">根拠: {d.rationale}</p>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  <Button type="button" size="sm" onClick={() => approveAiDraft(d, i)} disabled={aiRegistering !== null}>
+                    <Check size={14} />
+                    {aiRegistering === i ? '登録中...' : '承認して登録'}
+                  </Button>
+                  <Button type="button" size="sm" variant="outline" onClick={() => editAiDraft(d, i)} disabled={aiRegistering !== null}>
+                    <Pencil size={14} />
+                    編集して登録
+                  </Button>
+                  <Button type="button" size="sm" variant="outline" onClick={() => dismissAiDraft(i)} disabled={aiRegistering !== null}>
+                    <X size={14} />
+                    却下
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    )
   }
 
   const renderForm = () => (
@@ -410,11 +539,19 @@ export default function GovernanceRulesSection({
       {editingId === 'new' && renderForm()}
 
       {editingId === null && (
-        <Button type="button" variant="outline" onClick={startAdd} className="py-2 px-4 text-[13px]">
-          <Plus size={16} />
-          表現ルールを追加
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" variant="outline" onClick={startAdd} className="py-2 px-4 text-[13px]">
+            <Plus size={16} />
+            表現ルールを追加
+          </Button>
+          <Button type="button" onClick={runAiExtract} disabled={aiLoading || loading} className="py-2 px-4 text-[13px]">
+            <Sparkles size={16} />
+            {aiLoading ? '生成中...' : 'AI草案を生成'}
+          </Button>
+        </div>
       )}
+
+      {renderAiDrafts()}
     </div>
   )
 }

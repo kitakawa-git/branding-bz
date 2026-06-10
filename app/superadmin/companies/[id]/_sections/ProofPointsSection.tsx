@@ -4,13 +4,16 @@
 // - 一覧 / 追加 / 編集 / 削除 / 並び替え（上下）
 // - value_proposition_id は当該企業の提供価値(value_propositions)からセレクト（未選択=全般）
 // - 書き込みは proof_points_superadmin_all ポリシー（is_superadmin）で許可される前提
+// - 「AI草案を生成」: 登録済みデータから証拠候補を抽出（/api/superadmin/draft-extraction・押した時だけ）。
+//   候補は1件ずつ承認/編集/却下。承認・編集して登録した時のみ通常の作成経路でINSERTされる。
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { AutoResizeTextarea } from '@/components/ui/auto-resize-textarea'
-import { Plus, Trash2, Pencil, Check, X, ChevronUp, ChevronDown } from 'lucide-react'
+import { Plus, Trash2, Pencil, Check, X, ChevronUp, ChevronDown, Sparkles, AlertTriangle } from 'lucide-react'
 import { toast } from 'sonner'
+import type { ProofExtractDraft } from '@/lib/brand/draft-extraction'
 
 export type ValuePropositionRef = { id: string; title: string }
 
@@ -70,6 +73,9 @@ export default function ProofPointsSection({
   const [editingId, setEditingId] = useState<string | null>(null) // 'new' または行ID
   const [draft, setDraft] = useState<Draft>(emptyDraft())
   const [saving, setSaving] = useState(false)
+  const [aiDrafts, setAiDrafts] = useState<ProofExtractDraft[] | null>(null)
+  const [aiLoading, setAiLoading] = useState(false)
+  const [aiRegistering, setAiRegistering] = useState<number | null>(null)
 
   const vpTitle = (id: string | null) =>
     id ? valuePropositions.find((v) => v.id === id)?.title ?? '（削除済みの提供価値）' : '全般'
@@ -187,6 +193,134 @@ export default function ProofPointsSection({
       return
     }
     await fetchRows()
+  }
+
+  // ---- AI草案生成（候補は表示のみ。登録は1件ずつの承認/編集時だけ） ----
+  const runAiExtract = async () => {
+    setAiLoading(true)
+    try {
+      const token = (await supabase.auth.getSession()).data.session?.access_token || ''
+      const res = await fetch('/api/superadmin/draft-extraction', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ companyId, kind: 'proof' }),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`)
+      setAiDrafts(json.drafts as ProofExtractDraft[])
+    } catch (err) {
+      console.error('[ProofPoints] AI草案生成エラー:', err)
+      toast.error('AI草案の生成に失敗しました: ' + (err instanceof Error ? err.message : '不明なエラー'))
+    } finally {
+      setAiLoading(false)
+    }
+  }
+
+  const dismissAiDraft = (index: number) => {
+    setAiDrafts((prev) => (prev ? prev.filter((_, i) => i !== index) : prev))
+  }
+
+  // そのまま承認して登録（既存の作成経路と同じINSERT）
+  const approveAiDraft = async (d: ProofExtractDraft, index: number) => {
+    setAiRegistering(index)
+    try {
+      const nextOrder = rows.length > 0 ? Math.max(...rows.map((r) => r.sort_order)) + 1 : 0
+      const { error } = await supabase.from('proof_points').insert({
+        company_id: companyId,
+        value_proposition_id: d.value_proposition_id,
+        title: d.title.trim(),
+        description: d.description.trim() || null,
+        source_type: d.source_type || null,
+        source_url: null,
+        evidence_date: null,
+        sort_order: nextOrder,
+      })
+      if (error) throw error
+      toast.success('登録しました')
+      dismissAiDraft(index)
+      await fetchRows()
+    } catch (err) {
+      console.error('[ProofPoints] AI草案登録エラー:', err)
+      toast.error('登録に失敗しました: ' + (err instanceof Error ? err.message : '不明なエラー'))
+    } finally {
+      setAiRegistering(null)
+    }
+  }
+
+  // 既存の追加フォームに読み込んで編集してから登録（保存は既存の save 経路）
+  const editAiDraft = (d: ProofExtractDraft, index: number) => {
+    setDraft({
+      value_proposition_id: d.value_proposition_id ?? '',
+      title: d.title,
+      description: d.description,
+      source_type: d.source_type,
+      source_url: '',
+      evidence_date: '',
+    })
+    setEditingId('new')
+    dismissAiDraft(index)
+  }
+
+  const renderAiDrafts = () => {
+    if (aiDrafts === null) return null
+    return (
+      <div className="mt-4">
+        <div className="flex items-center gap-1.5 mb-2 text-xs font-bold text-foreground">
+          <Sparkles size={14} />
+          AI草案（{aiDrafts.length}）— 承認するまで登録されません
+        </div>
+        {aiDrafts.length === 0 ? (
+          <p className="text-muted-foreground text-sm m-0">
+            新しい草案は見つかりませんでした（登録済みデータに証拠の元になる記載が無いか、既存と重複しています）
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {aiDrafts.map((d, i) => (
+              <div
+                key={`${d.title}-${i}`}
+                className={`border rounded-lg p-3 ${d.needs_confirmation ? 'border-amber-200 bg-amber-50/40' : 'border-violet-200 bg-violet-50/40'}`}
+              >
+                <div className="flex flex-wrap items-center gap-1.5 mb-1">
+                  {d.needs_confirmation && (
+                    <span className="inline-flex items-center gap-1 py-0.5 px-2 bg-amber-100 text-amber-800 rounded text-[11px] font-semibold">
+                      <AlertTriangle size={11} />
+                      要確認
+                    </span>
+                  )}
+                  <span className="py-0.5 px-2 bg-blue-100 text-blue-800 rounded text-[11px] font-semibold">
+                    {vpTitle(d.value_proposition_id)}
+                  </span>
+                  {sourceLabel(d.source_type) && (
+                    <span className="py-0.5 px-2 bg-gray-100 text-gray-600 rounded text-[11px] font-semibold">
+                      {sourceLabel(d.source_type)}
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm font-bold text-foreground break-words m-0">{d.title}</p>
+                {d.description && (
+                  <p className="text-[13px] text-muted-foreground mt-0.5 break-words m-0">{d.description}</p>
+                )}
+                <p className="text-[11px] text-muted-foreground mt-1 m-0">出典: {d.source_note}</p>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  <Button type="button" size="sm" onClick={() => approveAiDraft(d, i)} disabled={aiRegistering !== null}>
+                    <Check size={14} />
+                    {aiRegistering === i ? '登録中...' : '承認して登録'}
+                  </Button>
+                  <Button type="button" size="sm" variant="outline" onClick={() => editAiDraft(d, i)} disabled={aiRegistering !== null}>
+                    <Pencil size={14} />
+                    編集して登録
+                  </Button>
+                  <Button type="button" size="sm" variant="outline" onClick={() => dismissAiDraft(i)} disabled={aiRegistering !== null}>
+                    <X size={14} />
+                    却下
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    )
   }
 
   const renderForm = () => (
@@ -374,11 +508,19 @@ export default function ProofPointsSection({
       {editingId === 'new' && renderForm()}
 
       {editingId === null && (
-        <Button type="button" variant="outline" onClick={startAdd} className="py-2 px-4 text-[13px]">
-          <Plus size={16} />
-          証拠・実績を追加
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" variant="outline" onClick={startAdd} className="py-2 px-4 text-[13px]">
+            <Plus size={16} />
+            証拠・実績を追加
+          </Button>
+          <Button type="button" onClick={runAiExtract} disabled={aiLoading || loading} className="py-2 px-4 text-[13px]">
+            <Sparkles size={16} />
+            {aiLoading ? '生成中...' : 'AI草案を生成'}
+          </Button>
+        </div>
       )}
+
+      {renderAiDrafts()}
     </div>
   )
 }
