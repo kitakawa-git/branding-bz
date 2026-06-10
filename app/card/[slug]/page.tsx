@@ -208,11 +208,9 @@ export default async function CardPage({ params }: Props) {
     .filter((item) => item.name)
     .map((item) => ({ name: item.name, description: item.description }))
 
-  // 事業内容（JSONB配列 [{title, description}, ...] を安全にパース）
+  // 事業内容（philosophy_elements service 由来 [{title, description, added_index}, ...]）
   type BusinessContent = { title: string; description?: string }
-  const businessContents: BusinessContent[] = Array.isArray(guidelines?.business_content)
-    ? guidelines.business_content.filter((item: BusinessContent) => item.title)
-    : []
+  const businessContents: BusinessContent[] = phil.services.filter((item) => item.title)
 
   // QRコードをサーバーサイドで生成
   const cardUrl = `https://branding.bz/card/${slug}`

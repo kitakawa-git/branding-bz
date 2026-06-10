@@ -39,16 +39,11 @@ export async function POST() {
   const supabase = getSupabaseAdmin()
 
   // ブランド情報収集（取れるものだけ）
-  const [companyResult, guidelinesResult, valuesResult, personasResult] = await Promise.allSettled([
+  const [companyResult, valuesResult, personasResult] = await Promise.allSettled([
     supabase
       .from('companies')
       .select('name, industry_category, industry_subcategory, target_segments, competitors')
       .eq('id', companyId)
-      .maybeSingle(),
-    supabase
-      .from('brand_guidelines')
-      .select('business_content')
-      .eq('company_id', companyId)
       .maybeSingle(),
     supabase
       .from('value_propositions')
@@ -63,7 +58,6 @@ export async function POST() {
   ])
 
   const company = companyResult.status === 'fulfilled' ? companyResult.value.data : null
-  const guidelines = guidelinesResult.status === 'fulfilled' ? guidelinesResult.value.data : null
   const values = valuesResult.status === 'fulfilled' ? valuesResult.value.data : null
   const personas = personasResult.status === 'fulfilled' ? personasResult.value.data : null
 
@@ -82,14 +76,12 @@ export async function POST() {
   if (company.industry_category) brandInfo['業種（大分類）'] = company.industry_category
   if (company.industry_subcategory) brandInfo['業種（小分類）'] = company.industry_subcategory
 
-  const businessContent = Array.isArray(guidelines?.business_content)
-    ? (guidelines.business_content as Array<{ title?: string; description?: string }>)
-        .map(c => [c.title, c.description].filter(Boolean).join('：'))
-        .filter(Boolean)
-    : []
-  if (businessContent.length > 0) brandInfo['事業内容'] = businessContent
-  // mission/vision は philosophy_elements 由来（brand_guidelines から正規化済み）
+  // 事業内容・mission/vision は philosophy_elements 由来（business_content は service 行へ正規化済み）
   const phil = await fetchPhilosophy(supabase, companyId)
+  const businessContent = phil.services
+    .map(c => [c.title, c.description].filter(Boolean).join('：'))
+    .filter(Boolean)
+  if (businessContent.length > 0) brandInfo['事業内容'] = businessContent
   if (phil.mission) brandInfo['ミッション'] = phil.mission
   if (phil.vision) brandInfo['ビジョン'] = phil.vision
 

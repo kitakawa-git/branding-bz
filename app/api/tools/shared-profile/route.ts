@@ -3,6 +3,7 @@
 // PATCH: セッション完了時に本体(companies)へ書き戻し
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { fetchPhilosophy } from '@/lib/brand/philosophy'
 
 // brand_stage の値を正規化（廃止された値を有効な値に変換）
 function normalizeBrandStage(stage: string | null | undefined): string {
@@ -35,12 +36,8 @@ export async function GET(request: NextRequest) {
         .eq('id', adminUser.company_id)
         .single()
 
-      // 3. brand_guidelines から事業内容を取得
-      const { data: guidelines } = await supabaseAdmin
-        .from('brand_guidelines')
-        .select('business_content')
-        .eq('company_id', adminUser.company_id)
-        .maybeSingle()
+      // 3. 事業内容（service）を philosophy_elements から取得（business_content は service 行へ正規化済み）
+      const phil = await fetchPhilosophy(supabaseAdmin, adminUser.company_id)
 
       // 4. brand_personas からターゲット情報を取得
       const { data: persona } = await supabaseAdmin
@@ -52,9 +49,8 @@ export async function GET(request: NextRequest) {
         .maybeSingle()
 
       if (company) {
-        // business_content 配列（構造化データ）
-        const businessContent = (guidelines?.business_content as Array<{ title: string; description: string }>) || []
-        const businessDescriptions = businessContent.map(c => ({
+        // 事業内容（service）構造化データ
+        const businessDescriptions = phil.services.map(c => ({
           title: c.title || '',
           description: c.description || '',
         }))
@@ -203,45 +199,31 @@ export async function PATCH(request: NextRequest) {
       }
     }
 
-    // brand_guidelines の事業内容を更新
+    // 事業内容（service）を philosophy_elements へ同期（PATCH は全置換セマンティクス）。
+    // business_content jsonb へは書かない（service 行へ正規化済み・Step 6でDROP）。
     if (business_descriptions !== undefined && Array.isArray(business_descriptions)) {
-      const businessContent = business_descriptions.map(
-        (item: { title: string; description: string }, i: number) => ({
+      const serviceRows = business_descriptions
+        .filter((item: { title: string; description: string }) => (item.title || '').trim() !== '')
+        .map((item: { title: string; description: string }, i: number) => ({
+          company_id: adminUser.company_id,
+          element_type: 'service',
           title: item.title || '',
-          description: item.description || '',
-          added_index: i,
-        })
-      )
+          body: item.description || '',
+          sort_order: i,
+          status: 'published',
+        }))
 
-      // brand_guidelines レコードが存在するか確認
-      const { data: existingGuidelines } = await supabaseAdmin
-        .from('brand_guidelines')
-        .select('id')
+      // 既存 service 行を全削除してから再構築
+      const { error: delErr } = await supabaseAdmin
+        .from('philosophy_elements')
+        .delete()
         .eq('company_id', adminUser.company_id)
-        .maybeSingle()
-
-      if (existingGuidelines) {
-        // 既存レコードを更新
-        const { error: guidelinesError } = await supabaseAdmin
-          .from('brand_guidelines')
-          .update({ business_content: businessContent })
-          .eq('id', existingGuidelines.id)
-
-        if (guidelinesError) {
-          console.error('[SharedProfile PATCH] brand_guidelines更新エラー:', guidelinesError)
-        }
-      } else {
-        // レコードがなければ新規作成
-        const { error: guidelinesError } = await supabaseAdmin
-          .from('brand_guidelines')
-          .insert({
-            company_id: adminUser.company_id,
-            business_content: businessContent,
-          })
-
-        if (guidelinesError) {
-          console.error('[SharedProfile PATCH] brand_guidelines挿入エラー:', guidelinesError)
-        }
+        .eq('element_type', 'service')
+      if (delErr) {
+        console.error('[SharedProfile PATCH] service削除エラー:', delErr)
+      } else if (serviceRows.length > 0) {
+        const { error: insErr } = await supabaseAdmin.from('philosophy_elements').insert(serviceRows)
+        if (insErr) console.error('[SharedProfile PATCH] service挿入エラー:', insErr)
       }
     }
 

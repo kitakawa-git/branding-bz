@@ -40,16 +40,11 @@ export async function POST() {
   const supabase = getSupabaseAdmin()
 
   // 入力データ収集（company_id 基準・取れるものだけ。最小は name ＋業種）
-  const [companyResult, guidelinesResult, personaResult] = await Promise.allSettled([
+  const [companyResult, personaResult] = await Promise.allSettled([
     supabase
       .from('companies')
       .select('name, industry_category, industry_subcategory, brand_stage, website_url, competitors, target_segments')
       .eq('id', companyId)
-      .maybeSingle(),
-    supabase
-      .from('brand_guidelines')
-      .select('business_content')
-      .eq('company_id', companyId)
       .maybeSingle(),
     supabase
       .from('brand_personas')
@@ -61,7 +56,6 @@ export async function POST() {
   ])
 
   const company = companyResult.status === 'fulfilled' ? companyResult.value.data : null
-  const guidelines = guidelinesResult.status === 'fulfilled' ? guidelinesResult.value.data : null
   const persona = personaResult.status === 'fulfilled' ? personaResult.value.data : null
 
   if (!company) {
@@ -79,14 +73,12 @@ export async function POST() {
   if (company.brand_stage) brandInfo['ブランドステージ'] = company.brand_stage
   if (company.website_url) brandInfo['ウェブサイト'] = company.website_url
 
-  const businessContent = Array.isArray(guidelines?.business_content)
-    ? (guidelines.business_content as Array<{ title?: string; description?: string }>)
-        .map(c => [c.title, c.description].filter(Boolean).join('：'))
-        .filter(Boolean)
-    : []
-  if (businessContent.length > 0) brandInfo['事業内容'] = businessContent
-  // mission/vision は philosophy_elements 由来（brand_guidelines から正規化済み）
+  // 事業内容・mission/vision は philosophy_elements 由来（business_content は service 行へ正規化済み）
   const phil = await fetchPhilosophy(supabase, companyId)
+  const businessContent = phil.services
+    .map(c => [c.title, c.description].filter(Boolean).join('：'))
+    .filter(Boolean)
+  if (businessContent.length > 0) brandInfo['事業内容'] = businessContent
   if (phil.mission) brandInfo['ミッション'] = phil.mission
   if (phil.vision) brandInfo['ビジョン'] = phil.vision
 

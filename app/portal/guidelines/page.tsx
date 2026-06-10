@@ -98,7 +98,7 @@ export default function PortalGuidelinesPage() {
       fetchWithRetry(() =>
         supabase
           .from('brand_guidelines')
-          .select('slogan, concept_visual_url, concept_visuals, brand_video_url, brand_statement, values_sort, brand_story, history, business_content, business_content_sort')
+          .select('slogan, concept_visual_url, concept_visuals, brand_video_url, brand_statement, values_sort, brand_story, history, business_content_sort')
           .eq('company_id', companyId)
           .single()
       ),
@@ -129,7 +129,7 @@ export default function PortalGuidelinesPage() {
         values_sort: (g?.values_sort as 'registered' | 'custom') || 'registered',
         brand_story: (g?.brand_story as string) || null,
         history: (g?.history as HistoryItem[]) || [],
-        business_content: (g?.business_content as BusinessItem[]) || [],
+        business_content: phil.services,
         business_content_sort: (g?.business_content_sort as 'registered' | 'custom') || 'registered',
         action_guidelines: actionGuidelines,
       }

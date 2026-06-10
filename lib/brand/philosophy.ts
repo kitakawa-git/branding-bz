@@ -12,14 +12,17 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 
 export type PhilosophyValue = { name: string; description: string; added_index: number }
 export type PhilosophyActionGuideline = { title: string; description: string; added_index: number }
+// service = 事業内容（旧 brand_guidelines.business_content）。形は {title, description, added_index}。
+export type PhilosophyService = { title: string; description: string; added_index: number }
 export type Philosophy = {
   mission: string | null
   vision: string | null
   values: PhilosophyValue[]
   action_guidelines: PhilosophyActionGuideline[]
+  services: PhilosophyService[]
 }
 
-const EMPTY: Philosophy = { mission: null, vision: null, values: [], action_guidelines: [] }
+const EMPTY: Philosophy = { mission: null, vision: null, values: [], action_guidelines: [], services: [] }
 
 type Row = { element_type: string; title: string | null; body: string | null; sort_order: number }
 
@@ -48,6 +51,9 @@ export function rowsToPhilosophy(rows: Row[]): Philosophy {
       .map((r) => ({ name: r.title ?? '', description: r.body ?? '', added_index: r.sort_order ?? 0 })),
     action_guidelines: sorted
       .filter((r) => r.element_type === 'action_guideline')
+      .map((r) => ({ title: r.title ?? '', description: r.body ?? '', added_index: r.sort_order ?? 0 })),
+    services: sorted
+      .filter((r) => r.element_type === 'service')
       .map((r) => ({ title: r.title ?? '', description: r.body ?? '', added_index: r.sort_order ?? 0 })),
   }
 }

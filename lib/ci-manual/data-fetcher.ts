@@ -222,7 +222,7 @@ export async function fetchCIManualData(companyId: string): Promise<CIManualData
           values: phil.values.filter((v) => v.name),
           brand_story: gl.brand_story || null,
           history: ((gl.history as HistoryItem[]) || []).filter((h) => h.year || h.event),
-          business_content: ((gl.business_content as BusinessItem[]) || []).filter((b) => b.title),
+          business_content: phil.services.filter((b) => b.title),
           traits: ((gl.traits as TraitItem[]) || []).filter((t) => t.name),
         }
       : null,

@@ -38,7 +38,7 @@ import { CSS } from '@dnd-kit/utilities'
 // id は philosophy_elements の行ID（新規追加項目では undefined → 保存時INSERT）
 type ValueItem = { id?: string; name: string; description: string; added_index: number }
 type HistoryItem = { year: string; event: string }
-type BusinessItem = { title: string; description: string; added_index: number }
+type BusinessItem = { id?: string; title: string; description: string; added_index: number }
 type ActionGuideline = { id?: string; title: string; description: string }
 
 type Guidelines = {
@@ -246,6 +246,7 @@ export default function BrandGuidelinesPage() {
       const visionRow = philRows.find((r) => r.element_type === 'vision')
       const valueRows = philRows.filter((r) => r.element_type === 'value')
       const actionRows = philRows.filter((r) => r.element_type === 'action_guideline')
+      const serviceRows = philRows.filter((r) => r.element_type === 'service')
 
       if (result || philRows.length > 0) {
         const parsedId = (result?.id as string) ?? null
@@ -272,9 +273,12 @@ export default function BrandGuidelinesPage() {
           values_sort: (result?.values_sort as 'registered' | 'custom') || 'registered',
           brand_story: result?.brand_story || '',
           history: result?.history || [],
-          business_content: ((result?.business_content as { title: string; description: string; added_index?: number }[]) || []).map((b, i) => ({
-            ...b,
-            added_index: b.added_index ?? i,
+          // business_content は philosophy_elements の service 行（id を保持し保存時の差分計算に使う）
+          business_content: serviceRows.map((r, i) => ({
+            id: r.id as string,
+            title: (r.title as string) || '',
+            description: (r.body as string) || '',
+            added_index: (r.sort_order as number) ?? i,
           })),
           business_content_sort: (result?.business_content_sort as 'registered' | 'custom') || 'registered',
           // action_guidelines は philosophy_elements の action_guideline 行（id を保持）
@@ -516,13 +520,14 @@ export default function BrandGuidelinesPage() {
     }
   }
 
-  // philosophy_elements 行同期（Step4: 編集も新テーブルへ）
-  // mission/vision = 各社1行のsingleton upsert、values/action_guideline = id一致の差分CRUD（INSERT/UPDATE/DELETE）。
-  // brand_guidelines の mission/vision/values/action_guidelines へは書かない（Step6でDROP予定）。
+  // philosophy_elements 行同期（編集も新テーブルへ）
+  // mission/vision = 各社1行のsingleton upsert、values/action_guideline/service = id一致の差分CRUD（INSERT/UPDATE/DELETE）。
+  // brand_guidelines の mission/vision/values/action_guidelines/business_content へは書かない（Step6でDROP予定）。
   const syncPhilosophyElements = async (
     cleanedValues: ValueItem[],
     cleanedGuidelines: ActionGuideline[],
-  ): Promise<{ ok: boolean; error?: string; values: ValueItem[]; guidelines: ActionGuideline[] }> => {
+    cleanedBusiness: BusinessItem[],
+  ): Promise<{ ok: boolean; error?: string; values: ValueItem[]; guidelines: ActionGuideline[]; business: BusinessItem[] }> => {
     try {
       const now = new Date().toISOString()
 
@@ -560,7 +565,7 @@ export default function BrandGuidelinesPage() {
       // values / action_guideline: 複数行。id一致でUPDATE・id無し（新規）でINSERT・desiredに無い既存行をDELETE。
       // sort_order = 表示順（配列インデックス）。表示ヘルパは sort_order を added_index に写像する。
       const syncList = async (
-        type: 'value' | 'action_guideline',
+        type: 'value' | 'action_guideline' | 'service',
         desired: { id?: string; title: string; body: string }[],
       ): Promise<string[]> => {
         const { data: exRows, error: exErr } = await supabase
@@ -610,17 +615,23 @@ export default function BrandGuidelinesPage() {
         'action_guideline',
         cleanedGuidelines.map((g) => ({ id: g.id, title: g.title, body: g.description })),
       )
+      const businessIds = await syncList(
+        'service',
+        cleanedBusiness.map((b) => ({ id: b.id, title: b.title, body: b.description })),
+      )
 
       // 保存後の最新id・表示順をフォーム状態へ反映（再保存時の差分計算のため）
       const valuesWithId: ValueItem[] = cleanedValues.map((v, i) => ({ ...v, id: valueIds[i], added_index: i }))
       const guidelinesWithId: ActionGuideline[] = cleanedGuidelines.map((g, i) => ({ ...g, id: guidelineIds[i] }))
-      return { ok: true, values: valuesWithId, guidelines: guidelinesWithId }
+      const businessWithId: BusinessItem[] = cleanedBusiness.map((b, i) => ({ ...b, id: businessIds[i], added_index: i }))
+      return { ok: true, values: valuesWithId, guidelines: guidelinesWithId, business: businessWithId }
     } catch (err) {
       return {
         ok: false,
         error: err instanceof Error ? err.message : '不明なエラー',
         values: cleanedValues,
         guidelines: cleanedGuidelines,
+        business: cleanedBusiness,
       }
     }
   }
@@ -647,12 +658,11 @@ export default function BrandGuidelinesPage() {
         concept_visual_url: guidelines.concept_visuals[0] || null,
         brand_video_url: guidelines.brand_video_url ? normalizeUrl(guidelines.brand_video_url) : null,
         brand_statement: guidelines.brand_statement || null,
-        // ※ mission/vision/values/action_guidelines は philosophy_elements へ移行済み（Step4）。
-        //   ここでは brand_guidelines へ書かない（Step6でDROP）。values_sort は表示順設定として継続。
+        // ※ mission/vision/values/action_guidelines/business_content は philosophy_elements へ移行済み。
+        //   ここでは brand_guidelines へ書かない（Step6でDROP）。values_sort/business_content_sort は表示順設定として継続。
         values_sort: guidelines.values_sort,
         brand_story: guidelines.brand_story || null,
         history: cleanedHistory.length > 0 ? cleanedHistory : [],
-        business_content: cleanedBusiness.length > 0 ? cleanedBusiness : [],
         business_content_sort: guidelines.business_content_sort,
       }
 
@@ -669,8 +679,8 @@ export default function BrandGuidelinesPage() {
         }
       }
 
-      // 理念要素（mission/vision/values/action_guidelines）を philosophy_elements の行へ同期
-      const philResult = await syncPhilosophyElements(cleanedValues, cleanedGuidelines)
+      // 理念要素（mission/vision/values/action_guidelines/service）を philosophy_elements の行へ同期
+      const philResult = await syncPhilosophyElements(cleanedValues, cleanedGuidelines, cleanedBusiness)
 
       // ポータルサブタイトル保存
       const updatedSubtitles = { ...(portalSubtitlesData || {}) }
@@ -692,7 +702,7 @@ export default function BrandGuidelinesPage() {
           values: philResult.values,
           action_guidelines: philResult.guidelines,
           history: cleanedHistory,
-          business_content: cleanedBusiness,
+          business_content: philResult.business,
           brand_video_url: guidelines.brand_video_url ? normalizeUrl(guidelines.brand_video_url) : '',
         }
         setGuidelines(nextGuidelines)
