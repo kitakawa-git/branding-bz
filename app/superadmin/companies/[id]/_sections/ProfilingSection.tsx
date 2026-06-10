@@ -167,7 +167,8 @@ export default function ProfilingSection({
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`)
       if (!json.draft) {
-        toast.error('回答から草案を作成できませんでした（回答に無い情報の混入を検出した場合は破棄されます）。表現を変えてもう一度お試しください')
+        // 破棄・失敗の理由はAPIが返す（例: 草案中の『20000』が回答内に見つかりませんでした）
+        toast.error(json.reason || '回答から草案を作成できませんでした。表現を変えてもう一度お試しください')
         return
       }
       setDraft(json.draft as LocalDraft)

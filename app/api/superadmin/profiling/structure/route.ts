@@ -45,8 +45,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'スーパー管理者権限が必要です。' }, { status: 403 })
     }
 
-    const draft = await structureAnswer(question, answer)
-    return NextResponse.json({ draft })
+    const { draft, reason } = await structureAnswer(question, answer)
+    return NextResponse.json({ draft, reason })
   } catch (err) {
     console.error('[profiling/structure] エラー:', err)
     return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })

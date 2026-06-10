@@ -173,6 +173,7 @@ const PROOF_SYSTEM = `あなたはブランド管理者のアシスタントで�
 厳守事項（最重要）:
 - 草案は回答文に含まれる情報のみで構成する。回答に無い数字・固有名詞・実績・date を推測で補ってはならない。
 - 回答が曖昧（数字なし）なら、草案も数字なしで書く。誇張・具体化をしない。
+- 数値は回答の表記のまま転記する。言い換え・単位変換・桁の書き換えをしない（例: 回答が「2万個」なら草案も「2万個」と書く。「20,000個」等に変換しない）。
 - title は回答の要点を30字以内で要約。description は回答の内容を1〜2文で整理（情報の追加禁止）。
 - source_type は jisseki（実績）/ jirei（事例）/ data（データ）/ voice（顧客の声）/ award（受賞）から最も近いもの。判断がつかなければ "other"。
 - 回答に実質的な情報が無い場合（「わからない」「特にない」「まだ無い」「なし」等のみの場合）は、JSONオブジェクトの代わりに null とだけ出力する。
@@ -185,6 +186,7 @@ const RULE_SYSTEM = `あなたはブランド管理者のアシスタントで�
 厳守事項（最重要）:
 - 草案は回答文に含まれる情報のみで構成する。回答に無い数字・固有名詞・例を推測で補ってはならない。
 - rule_text は「〜と言わない／〜という表現をしない」の形で1文に整理（情報の追加禁止）。
+- 数値は回答の表記のまま転記する。言い換え・単位変換・桁の書き換えをしない。
 - ng_example / ok_example は回答から直接導ける場合のみ書く。導けなければ空文字 "" にする。
 - rule_type は banned_word（禁止ワード）/ discouraged_expression（非推奨表現）/ tone_rule（トーン）/ claim_rule（主張）/ compliance_rule（コンプラ）から最も近いもの。
 - severity は回答のニュアンスから block（絶対遵守）または warn（原則遵守）。迷ったら warn。
@@ -213,28 +215,75 @@ function extractJsonObject(text: string): any | null {
 const normalizeDigits = (s: string) =>
   (s || '').replace(/[０-９]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0))
 
+// テキストから数値を「正規化された値」の集合として抽出する。
+// 同一視する表記: 全角数字、桁区切りカンマ（2,000=2000）、漢数字の万・千（2万=20000・3千=3000・
+// 2万5千=25000）、年号（昭和N=1925+N・平成N=1988+N・令和N=2018+N。元年=1年）。
+function extractNumberValues(input: string): Set<string> {
+  let s = normalizeDigits(input || '')
+  // 桁区切りカンマのみ除去（数字,3桁。列挙のカンマは残す）
+  s = s.replace(/(\d),(?=\d{3}(?!\d))/g, '$1')
+  const out = new Set<string>()
+  // 年号 → 西暦（消費して二重抽出を防ぐ）
+  s = s.replace(/(昭和|平成|令和)\s*(元|\d+)\s*年/g, (_m, era: string, n: string) => {
+    const base = era === '昭和' ? 1925 : era === '平成' ? 1988 : 2018
+    out.add(String(base + (n === '元' ? 1 : parseInt(n, 10))))
+    return ' '
+  })
+  // 万・千（2万 / 3千 / 2万5千 / 1.5万）
+  s = s.replace(
+    /(\d+(?:\.\d+)?)万(?:(\d+(?:\.\d+)?)千)?|(\d+(?:\.\d+)?)千/g,
+    (_m, man: string | undefined, manSen: string | undefined, sen: string | undefined) => {
+      const v =
+        man !== undefined
+          ? parseFloat(man) * 10000 + (manSen !== undefined ? parseFloat(manSen) * 1000 : 0)
+          : parseFloat(sen as string) * 1000
+      out.add(String(v))
+      return ' '
+    },
+  )
+  // 通常の数値
+  for (const m of s.match(/\d+(?:\.\d+)?/g) || []) out.add(String(parseFloat(m)))
+  return out
+}
+
 // 捏造防止の照合バリデーション（純関数・ユニットテスト可能）:
-// 草案テキストに含まれる数値が、すべて回答文に実在するか。1つでも回答に無い数値があれば false。
-export function draftNumbersGroundedInAnswer(draftTexts: string[], answer: string): boolean {
-  const ans = normalizeDigits(answer)
+// 草案テキストに含まれる数値のうち、回答文に見つからないもの（正規化後の値）を返す。
+export function findUngroundedNumbers(draftTexts: string[], answer: string): string[] {
+  const ans = extractNumberValues(answer)
+  const missing: string[] = []
   for (const t of draftTexts) {
-    const nums = normalizeDigits(t).match(/\d+(?:\.\d+)?/g) || []
-    for (const n of nums) {
-      if (!ans.includes(n)) return false
+    for (const n of extractNumberValues(t)) {
+      if (!ans.has(n) && !missing.includes(n)) missing.push(n)
     }
   }
-  return true
+  return missing
 }
+
+export function draftNumbersGroundedInAnswer(draftTexts: string[], answer: string): boolean {
+  return findUngroundedNumbers(draftTexts, answer).length === 0
+}
+
+// structureAnswer の結果。draft が null のときは reason に破棄・失敗の理由（ユーザー向け日本語）が入る。
+export type StructureResult = { draft: StructuredDraft | null; reason: string | null }
+
+const ok = (draft: StructuredDraft): StructureResult => ({ draft, reason: null })
+const ng = (reason: string): StructureResult => ({ draft: null, reason })
+
+const NO_INFO_REASON =
+  '回答に登録できる情報が見つかりませんでした（「わからない」「特にない」の場合は専用ボタンをご利用ください）'
+
+const ungroundedReason = (nums: string[]): string =>
+  `草案中の『${nums.join('』『')}』が回答内に見つかりませんでした。数値の表記を確認して、もう一度お試しください`
 
 // 自由記述回答を構造化草案に変換する。対象は unproven_promise / no_governance のみ
 // （選択式の orphan_proof / conflict_priority はAI不要・クライアント側で直接草案化する）。
-// 草案を作れない・捏造を検出した場合は null（UIは「破棄した」旨を表示し、何も登録しない）。
+// 草案を作れない・捏造を検出した場合は draft: null＋reason（UIは理由を表示し、何も登録しない）。
 export async function structureAnswer(
   question: ProfilingQuestion,
   answerText: string,
-): Promise<StructuredDraft | null> {
+): Promise<StructureResult> {
   const answer = (answerText || '').trim()
-  if (!answer) return null
+  if (!answer) return ng('回答が空です')
 
   try {
     if (question.type === 'unproven_promise') {
@@ -244,17 +293,18 @@ export async function structureAnswer(
         maxTokens: 1024,
       })
       const obj = extractJsonObject(raw)
-      if (!obj) return null
+      if (!obj) return ng(NO_INFO_REASON)
       const title = typeof obj.title === 'string' ? obj.title.trim() : ''
       const description = typeof obj.description === 'string' ? obj.description.trim() : ''
-      if (!title) return null
+      if (!title) return ng(NO_INFO_REASON)
       const source_type = PROOF_SOURCE_TYPES.has(obj.source_type) ? (obj.source_type as string) : 'other'
-      // 捏造防止: 回答に無い数値が混入した草案は破棄
-      if (!draftNumbersGroundedInAnswer([title, description], answer)) {
-        console.warn('[profiling] 草案に回答外の数値が混入したため破棄:', { title, description })
-        return null
+      // 捏造防止: 回答に無い数値が混入した草案は破棄（理由に対象の数値を明示）
+      const missing = findUngroundedNumbers([title, description], answer)
+      if (missing.length > 0) {
+        console.warn('[profiling] 草案に回答外の数値が混入したため破棄:', { title, description, missing })
+        return ng(ungroundedReason(missing))
       }
-      return { kind: 'proof_point', vp_id: question.vp_id, vp_title: question.vp_title, proof: { title, description, source_type } }
+      return ok({ kind: 'proof_point', vp_id: question.vp_id, vp_title: question.vp_title, proof: { title, description, source_type } })
     }
 
     if (question.type === 'no_governance') {
@@ -264,23 +314,24 @@ export async function structureAnswer(
         maxTokens: 1024,
       })
       const obj = extractJsonObject(raw)
-      if (!obj) return null
+      if (!obj) return ng(NO_INFO_REASON)
       const rule_text = typeof obj.rule_text === 'string' ? obj.rule_text.trim() : ''
-      if (!rule_text) return null
+      if (!rule_text) return ng(NO_INFO_REASON)
       const ng_example = typeof obj.ng_example === 'string' ? obj.ng_example.trim() : ''
       const ok_example = typeof obj.ok_example === 'string' ? obj.ok_example.trim() : ''
       const rule_type = RULE_TYPES.has(obj.rule_type) ? (obj.rule_type as string) : 'discouraged_expression'
       const severity = SEVERITIES.has(obj.severity) ? (obj.severity as string) : 'warn'
-      if (!draftNumbersGroundedInAnswer([rule_text, ng_example, ok_example], answer)) {
-        console.warn('[profiling] 草案に回答外の数値が混入したため破棄:', { rule_text })
-        return null
+      const missing = findUngroundedNumbers([rule_text, ng_example, ok_example], answer)
+      if (missing.length > 0) {
+        console.warn('[profiling] 草案に回答外の数値が混入したため破棄:', { rule_text, missing })
+        return ng(ungroundedReason(missing))
       }
-      return { kind: 'governance_rule', rule: { rule_type, rule_text, ng_example, ok_example, severity } }
+      return ok({ kind: 'governance_rule', rule: { rule_type, rule_text, ng_example, ok_example, severity } })
     }
 
-    return null // 選択式はこの関数の対象外
+    return ng('この質問種別は構造化の対象外です') // 選択式はこの関数の対象外
   } catch (err) {
     console.error('[profiling] 構造化失敗:', err)
-    return null
+    return ng('AI呼び出しに失敗しました。時間をおいてもう一度お試しください')
   }
 }
