@@ -14,6 +14,7 @@ import ProofPointsSection, { type ValuePropositionRef } from './_sections/ProofP
 import GovernanceRulesSection from './_sections/GovernanceRulesSection'
 import ElementRelationsSection from './_sections/ElementRelationsSection'
 import IntegrityCheckSection from './_sections/IntegrityCheckSection'
+import ProfilingSection from './_sections/ProfilingSection'
 
 type Company = {
   id: string
@@ -460,6 +461,17 @@ export default function CompanyDetailPage() {
             ブランド体系の綻び（証拠なき約束・孤立した証拠・用語規定違反・矛盾の明示・証拠の鮮度）を決定論的に検出します。可視化のみ（自動修正はしません）。
           </p>
           <IntegrityCheckSection companyId={companyId} />
+        </CardContent>
+      </Card>
+
+      {/* === ブランドプロファイリング（質問駆動の入力）セクション === */}
+      <Card className="bg-muted/50 border shadow-none mt-6">
+        <CardContent className="p-6">
+          <h3 className="text-base font-bold text-foreground mb-1">ブランドプロファイリング</h3>
+          <p className="text-xs text-muted-foreground mb-4">
+            整合性チェックで検出された穴を質問に変換し、回答から証拠・関係・禁則を引き出します。回答はAIが草案化し、承認した時だけ登録されます。
+          </p>
+          <ProfilingSection companyId={companyId} />
         </CardContent>
       </Card>
     </div>
