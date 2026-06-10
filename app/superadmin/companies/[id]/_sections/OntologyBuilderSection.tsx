@@ -43,7 +43,7 @@ const countResolvableWarns = (findings: Finding[]): number =>
 
 const STEPS: { num: number; label: string; full: string; why: string }[] = [
   { num: 1, label: '基本情報', full: '基本情報の確認', why: '理念と提供価値が、この後のすべての土台になります' },
-  { num: 2, label: '実績集め', full: '実績を集める', why: '裏づけが無いと、AIの提案が一般論になります' },
+  { num: 2, label: '実績・エピソード', full: '実績・エピソードを集める', why: '裏づけが無いと、AIの提案が一般論になります' },
   { num: 3, label: '言葉のルール', full: '言葉のルールを決める', why: '「言わないこと」を決めると、AIの生成から確実に排除されます' },
   { num: 4, label: 'つながり', full: 'つながりを整理する', why: '要素どうしの関係が、AI提案の文脈精度を上げます' },
   { num: 5, label: 'チェック', full: '不足・矛盾をチェック', why: '穴と矛盾を可視化してから埋めると効率的です' },
