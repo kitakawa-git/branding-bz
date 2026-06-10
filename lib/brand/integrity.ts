@@ -60,26 +60,28 @@ export async function runIntegrityChecks(companyId: string): Promise<IntegrityFi
   // 直接FK（proof_points.value_proposition_id）
   const vpIdsWithDirectProof = new Set(pps.filter((p) => p.value_proposition_id).map((p) => p.value_proposition_id as string))
 
-  // 1. 証拠なき約束（warn）: 直接FK も evidencedBy 関係も無い提供価値
+  // 1. 裏づけのない約束（warn・旧称: 証拠なき約束）: 直接FK も evidencedBy 関係も無い提供価値
+  //    ※ category はウィザード Step6 判定（OntologyBuilderSection の PROFILING_RESOLVABLE_CATEGORIES）
+  //      と文字列照合される。変更時は判定側も同時に更新すること。
   for (const vp of vps) {
     if (!vpIdsWithDirectProof.has(vp.id) && !evidencedVpIds.has(vp.id)) {
       findings.push({
         severity: 'warn',
-        category: '証拠なき約束',
-        message: `提供価値「${vp.title || '(無題)'}」を裏づける証拠が登録されていません`,
+        category: '裏づけのない約束',
+        message: `提供価値「${vp.title || '(無題)'}」を裏づける実績・エピソードが登録されていません`,
         refs: [{ kind: '提供価値', label: vp.title || '(無題)' }],
       })
     }
   }
 
-  // 2. 孤立した証拠（info）: 直接FK も evidencedBy 関係も無い証拠
+  // 2. どの約束にも繋がっていない実績（info・旧称: 孤立した証拠）: 直接FK も evidencedBy 関係も無い実績
   for (const pp of pps) {
     if (!pp.value_proposition_id && !evidencedProofIds.has(pp.id)) {
       findings.push({
         severity: 'info',
-        category: '孤立した証拠',
-        message: `証拠「${pp.title || '(無題)'}」がどの提供価値にも紐づいていません`,
-        refs: [{ kind: '証拠・実績', label: pp.title || '(無題)' }],
+        category: 'どの約束にも繋がっていない実績',
+        message: `実績「${pp.title || '(無題)'}」がどの提供価値にも紐づいていません`,
+        refs: [{ kind: '実績・エピソード', label: pp.title || '(無題)' }],
       })
     }
   }

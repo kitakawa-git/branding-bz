@@ -432,12 +432,12 @@ export default function CompanyDetailPage() {
         </CardContent>
       </Card>
 
-      {/* === 証拠・実績（proof_points）セクション === */}
+      {/* === 実績・エピソード（proof_points）セクション === */}
       <Card className="bg-muted/50 border shadow-none mt-6">
         <CardContent className="p-6">
-          <h3 className="text-base font-bold text-foreground mb-1">証拠・実績</h3>
+          <h3 className="text-base font-bold text-foreground mb-1">実績・エピソード</h3>
           <p className="text-xs text-muted-foreground mb-4">
-            提供価値を裏づける証拠・実績・具体例。AIのコピー生成時に根拠として参照され、抽象語への逃げを防ぎます。
+            提供価値（お客様への約束）を裏づける具体的な事実。数字・事例・お客様の声・受賞・体制など。AIがコピーを作るときの根拠になり、抽象的な表現への逃げを防ぎます。
           </p>
           <ProofPointsSection companyId={companyId} valuePropositions={valueProps} />
         </CardContent>
@@ -459,7 +459,7 @@ export default function CompanyDetailPage() {
         <CardContent className="p-6">
           <h3 className="text-base font-bold text-foreground mb-1">関係グラフ</h3>
           <p className="text-xs text-muted-foreground mb-4">
-            理念・提供価値・証拠・表現ルール・ペルソナの「跨ぐ関係」（方向づける／裏づけられる／矛盾する 等）。AIのコピー生成時に整合性の根拠として参照されます。
+            理念・提供価値・実績・表現ルール・ペルソナの「跨ぐ関係」（方向づける／裏づけられる／矛盾する 等）。AIのコピー生成時に整合性の根拠として参照されます。
           </p>
           <ElementRelationsSection companyId={companyId} />
         </CardContent>
@@ -470,7 +470,7 @@ export default function CompanyDetailPage() {
         <CardContent className="p-6">
           <h3 className="text-base font-bold text-foreground mb-1">整合性チェック</h3>
           <p className="text-xs text-muted-foreground mb-4">
-            ブランド体系の綻び（証拠なき約束・孤立した証拠・用語規定違反・矛盾の明示・証拠の鮮度）を決定論的に検出します。可視化のみ（自動修正はしません）。
+            ブランド体系の綻び（裏づけのない約束・どの約束にも繋がっていない実績・用語規定違反・矛盾の明示・証拠の鮮度）を決定論的に検出します。可視化のみ（自動修正はしません）。
           </p>
           <IntegrityCheckSection companyId={companyId} />
         </CardContent>
@@ -481,7 +481,7 @@ export default function CompanyDetailPage() {
         <CardContent className="p-6">
           <h3 className="text-base font-bold text-foreground mb-1">ブランドプロファイリング</h3>
           <p className="text-xs text-muted-foreground mb-4">
-            整合性チェックで検出された穴を質問に変換し、回答から証拠・関係・禁則を引き出します。回答はAIが草案化し、承認した時だけ登録されます。
+            整合性チェックで検出された穴を質問に変換し、回答から実績・関係・禁則を引き出します。回答はAIが草案化し、承認した時だけ登録されます。
           </p>
           <ProfilingSection companyId={companyId} />
         </CardContent>

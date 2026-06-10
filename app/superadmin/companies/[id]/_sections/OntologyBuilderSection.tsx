@@ -6,9 +6,10 @@
 //   （ロジックの複製なし。ページ下部の個別カードは従来どおり詳細管理用に残る）。
 // - ステップは強制しない（クリックで任意のステップへ移動可。ガイドであって檻ではない）。
 // - Step 5 の完了は「このセッション内でチェックを実行した」こと（onChecked コールバック）。
-// - Step 6 の完了判定は「プロファイリングで解消できる warn（証拠なき約束・孤立した証拠系）」のみが
-//   対象（v1.1）。用語規定違反などプロファイリングで解消しない検出は判定から除外する
+// - Step 6 の完了判定は「プロファイリングで解消できる warn（裏づけのない約束・繋がっていない実績系）」
+//   のみが対象（v1.1）。用語規定違反などプロファイリングで解消しない検出は判定から除外する
 //   （整合性チェックの表示自体には全カテゴリ出る）。
+//   ※ カテゴリは integrity.ts が emit する表示文字列と照合される。リネーム時は両側を同時に更新すること。
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
@@ -34,14 +35,15 @@ const ZERO_COUNTS: Counts = { mission: 0, vision: 0, value: 0, vp: 0, proof: 0, 
 
 // Step6 完了判定の対象カテゴリ（プロファイリングの質問で解消できる検出のみ）。
 // 用語規定違反は言い換え推奨の参考情報のためここに含めない（表示はされるが完了は妨げない）。
-const PROFILING_RESOLVABLE_CATEGORIES = new Set(['証拠なき約束', '孤立した証拠'])
+// ※ integrity.ts の category 文字列と一致させること（旧称: 証拠なき約束・孤立した証拠）。
+const PROFILING_RESOLVABLE_CATEGORIES = new Set(['裏づけのない約束', 'どの約束にも繋がっていない実績'])
 
 const countResolvableWarns = (findings: Finding[]): number =>
   findings.filter((f) => f.severity === 'warn' && PROFILING_RESOLVABLE_CATEGORIES.has(f.category)).length
 
 const STEPS: { num: number; label: string; full: string; why: string }[] = [
   { num: 1, label: '基本情報', full: '基本情報の確認', why: '理念と提供価値が、この後のすべての土台になります' },
-  { num: 2, label: '実績集め', full: '実績を集める', why: '証拠が無いと、AIの提案が一般論になります' },
+  { num: 2, label: '実績集め', full: '実績を集める', why: '裏づけが無いと、AIの提案が一般論になります' },
   { num: 3, label: '言葉のルール', full: '言葉のルールを決める', why: '「言わないこと」を決めると、AIの生成から確実に排除されます' },
   { num: 4, label: 'つながり', full: 'つながりを整理する', why: '要素どうしの関係が、AI提案の文脈精度を上げます' },
   { num: 5, label: 'チェック', full: '不足・矛盾をチェック', why: '穴と矛盾を可視化してから埋めると効率的です' },
@@ -217,7 +219,7 @@ export default function OntologyBuilderSection({
         <div className="border border-green-200 bg-green-50 rounded-lg p-4 mb-4">
           <p className="text-sm font-bold text-green-800 m-0 mb-1">オントロジー構築完了 🎉</p>
           <p className="text-[13px] text-foreground m-0">
-            プロファイリングで解消できるwarn系の検出（証拠なき約束など）は0件です。現在の登録: 理念 {counts.mission + counts.vision + counts.value}件・提供価値 {counts.vp}件・証拠 {counts.proof}件・表現ルール {counts.rule}件・関係 {counts.relation}本
+            プロファイリングで解消できるwarn系の検出（裏づけのない約束など）は0件です。現在の登録: 理念 {counts.mission + counts.vision + counts.value}件・提供価値 {counts.vp}件・実績 {counts.proof}件・表現ルール {counts.rule}件・関係 {counts.relation}本
           </p>
         </div>
       )

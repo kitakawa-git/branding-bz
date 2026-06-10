@@ -91,14 +91,14 @@ export async function generateProfilingQuestions(
   const labelMap = new Map(catalog.map((e) => [`${e.kind}:${e.id}`, e.label]))
   const labelOf = (kind: ElementKind, id: string) => labelMap.get(`${kind}:${id}`) ?? '不明な要素'
 
-  // warn 系（証拠なき約束）を優先し、次いで禁則ゼロ→孤立した証拠→矛盾の順で最大7問
+  // warn 系（裏づけのない約束）を優先し、次いで禁則ゼロ→繋がっていない実績→矛盾の順で最大7問
   const unproven: ProfilingQuestion[] = vps
     .filter((vp) => !vpIdsWithDirectProof.has(vp.id) && !evidencedVpIds.has(vp.id))
     .map((vp) => ({
       key: `unproven:${vp.id}`,
       type: 'unproven_promise' as const,
       question: `「${vp.title || '(無題)'}」を約束していますが、それを裏づける実績・事実はありますか？（数字・事例・受賞など）`,
-      why: '証拠の無い約束は、AIの提案が一般論になる原因です',
+      why: '裏づけの無い約束は、AIの提案が一般論になる原因です',
       vp_id: vp.id,
       vp_title: vp.title || '(無題)',
     }))
@@ -121,7 +121,7 @@ export async function generateProfilingQuestions(
       key: `orphan:${pp.id}`,
       type: 'orphan_proof' as const,
       question: `「${pp.title || '(無題)'}」は、どの提供価値の裏づけですか？`,
-      why: '孤立した証拠は、AIがどの約束の根拠として使えるか判断できません',
+      why: 'どの約束にも繋がっていない実績は、AIがどの約束の根拠として使えるか判断できません',
       pp_id: pp.id,
       pp_title: pp.title || '(無題)',
       choices: vps.map((v) => ({ id: v.id, title: v.title || '(無題)' })),

@@ -3,7 +3,7 @@
 // スーパー管理画面 企業詳細: 「ブランドプロファイリング」セクション
 // - 整合性チェックの検出結果から生成された質問（/api/superadmin/profiling・決定論）に1問ずつ回答する。
 // - 自由記述回答は /api/superadmin/profiling/structure（Claude）で構造化草案に変換。
-//   選択式（孤立した証拠の紐づけ・矛盾の優先順位）はAI不要でクライアント側で草案化。
+//   選択式（繋がっていない実績の紐づけ・矛盾の優先順位）はAI不要でクライアント側で草案化。
 // - 草案は〔承認して登録〕した時だけ DB へ書く（クライアント supabase INSERT/UPDATE。RLSが効く経路）。
 //   「まだ無い」「わからない」「特にない」「どれでもない」・スキップは何も登録しない。
 // - セッション末尾に整合性チェック（決定論）を再実行し、カテゴリ別件数の改善を表示する。
@@ -179,7 +179,7 @@ export default function ProfilingSection({
     }
   }
 
-  // 選択式（孤立した証拠 → 提供価値の紐づけ）: AI不要・直接関係草案
+  // 選択式（繋がっていない実績 → 提供価値の紐づけ）: AI不要・直接関係草案
   const makeOrphanDraft = () => {
     if (!current || current.type !== 'orphan_proof') return
     const vp = current.choices.find((c) => c.id === orphanVpId)
@@ -235,7 +235,7 @@ export default function ProfilingSection({
           .select('id')
           .single()
         if (error) throw error
-        // evidencedBy 関係草案も併せて登録（提供価値 → 新しい証拠）
+        // evidencedBy 関係草案も併せて登録（提供価値 → 新しい実績）
         const relOrder = await nextSortOrder('element_relations')
         const { error: relErr } = await supabase.from('element_relations').insert({
           company_id: companyId,
@@ -306,7 +306,7 @@ export default function ProfilingSection({
         {draft.kind === 'proof_point' && (
           <>
             <p className="text-[13px] text-muted-foreground m-0">
-              証拠・実績として登録し、提供価値「{draft.vp_title}」へ evidencedBy 関係を張ります
+              実績・エピソードとして登録し、提供価値「{draft.vp_title}」へ evidencedBy 関係を張ります
             </p>
             <div>
               <label className="text-xs font-bold text-foreground mb-1.5 block">タイトル</label>
@@ -399,7 +399,7 @@ export default function ProfilingSection({
 
         {draft.kind === 'relation' && (
           <p className="text-[13px] text-foreground m-0">
-            提供価値「{draft.vp_title}」 —evidencedBy→ 証拠「{draft.pp_title}」 の関係を登録します
+            提供価値「{draft.vp_title}」 —evidencedBy→ 実績「{draft.pp_title}」 の関係を登録します
           </p>
         )}
 
@@ -577,7 +577,7 @@ export default function ProfilingSection({
 
       {questions !== null && questions.length === 0 && !finished && (
         <p className="text-sm text-foreground border border-green-200 bg-green-50 rounded-lg p-3 mt-3 mb-0">
-          質問はありません。整合性チェックで検出された穴（証拠なき約束・孤立した証拠・矛盾・禁則ゼロ）が無い状態です
+          質問はありません。整合性チェックで検出された穴（裏づけのない約束・どの約束にも繋がっていない実績・矛盾・禁則ゼロ）が無い状態です
         </p>
       )}
 

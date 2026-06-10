@@ -16,7 +16,7 @@ export type ElementRef = { kind: ElementKind; id: string; label: string }
 export const KIND_LABELS: Record<ElementKind, string> = {
   philosophy_element: '理念',
   value_proposition: '提供価値',
-  proof_point: '証拠・実績',
+  proof_point: '実績・エピソード',
   governance_rule: '表現ルール',
   persona: 'ペルソナ',
 }
@@ -32,7 +32,7 @@ const PHIL_TYPE_LABELS: Record<string, string> = {
 // relation_type の和訳（オーサリングUI・AI整形で共有）
 export const RELATION_TYPES: { value: string; label: string; desc: string }[] = [
   { value: 'guides', label: '方向づける', desc: 'A が B を方向づける' },
-  { value: 'evidencedBy', label: '裏づけられる', desc: 'A は B（証拠）に裏づけられる' },
+  { value: 'evidencedBy', label: '裏づけられる', desc: 'A は B（実績）に裏づけられる' },
   { value: 'promisedTo', label: '約束する相手', desc: 'A は B（相手）に約束される' },
   { value: 'communicatedAs', label: '表現される', desc: 'A は B として表現される' },
   { value: 'constrainedBy', label: '制約される', desc: 'A は B（禁則）に制約される' },

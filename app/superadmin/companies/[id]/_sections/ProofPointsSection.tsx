@@ -1,10 +1,10 @@
 'use client'
 
-// スーパー管理画面 企業詳細: 「証拠・実績」(proof_points) CRUD セクション
+// スーパー管理画面 企業詳細: 「実績・エピソード」(proof_points) CRUD セクション（表示名のみ。テーブル・識別子は proof_points のまま）
 // - 一覧 / 追加 / 編集 / 削除 / 並び替え（上下）
 // - value_proposition_id は当該企業の提供価値(value_propositions)からセレクト（未選択=全般）
 // - 書き込みは proof_points_superadmin_all ポリシー（is_superadmin）で許可される前提
-// - 「AI草案を生成」: 登録済みデータから証拠候補を抽出（/api/superadmin/draft-extraction・押した時だけ）。
+// - 「AI草案を生成」: 登録済みデータから実績候補を抽出（/api/superadmin/draft-extraction・押した時だけ）。
 //   候補は1件ずつ承認/編集/却下。承認・編集して登録した時のみ通常の作成経路でINSERTされる。
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
@@ -93,7 +93,7 @@ export default function ProofPointsSection({
       .order('created_at', { ascending: true })
     if (error) {
       console.error('[ProofPoints] 取得エラー:', error)
-      toast.error('証拠・実績の取得に失敗しました')
+      toast.error('実績・エピソードの取得に失敗しました')
     } else {
       setRows((data as ProofPoint[]) || [])
       onDataChanged?.()
@@ -171,7 +171,7 @@ export default function ProofPointsSection({
   }
 
   const remove = async (id: string) => {
-    if (!confirm('この証拠・実績を削除しますか？')) return
+    if (!confirm('この実績を削除しますか？')) return
     const { error } = await supabase.from('proof_points').delete().eq('id', id)
     if (error) {
       console.error('[ProofPoints] 削除エラー:', error)
@@ -275,7 +275,7 @@ export default function ProofPointsSection({
         </div>
         {aiDrafts.length === 0 ? (
           <p className="text-muted-foreground text-sm m-0">
-            新しい草案は見つかりませんでした（登録済みデータに証拠の元になる記載が無いか、既存と重複しています）
+            新しい草案は見つかりませんでした（登録済みデータに実績の元になる記載が無いか、既存と重複しています）
           </p>
         ) : (
           <div className="space-y-2">
@@ -363,14 +363,14 @@ export default function ProofPointsSection({
         <AutoResizeTextarea
           value={draft.description}
           onChange={(e) => setDraft({ ...draft, description: e.target.value })}
-          placeholder="この証拠の補足・背景"
+          placeholder="この実績の補足・背景"
           className="min-h-[70px]"
         />
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="flex-1">
-          <label className="text-xs font-bold text-foreground mb-1.5 block">証拠タイプ</label>
+          <label className="text-xs font-bold text-foreground mb-1.5 block">実績タイプ</label>
           <select
             className={SELECT_CLASS}
             value={draft.source_type}
@@ -385,7 +385,7 @@ export default function ProofPointsSection({
           </select>
         </div>
         <div className="flex-1">
-          <label className="text-xs font-bold text-foreground mb-1.5 block">証拠の日付</label>
+          <label className="text-xs font-bold text-foreground mb-1.5 block">実績の日付</label>
           <Input
             type="date"
             value={draft.evidence_date}
@@ -424,7 +424,7 @@ export default function ProofPointsSection({
       {loading ? (
         <p className="text-muted-foreground text-sm">読み込み中...</p>
       ) : rows.length === 0 && editingId !== 'new' ? (
-        <p className="text-muted-foreground text-sm mb-3">証拠・実績が登録されていません</p>
+        <p className="text-muted-foreground text-sm mb-3">実績・エピソードが登録されていません</p>
       ) : (
         rows.map((row, index) =>
           editingId === row.id ? (
@@ -515,7 +515,7 @@ export default function ProofPointsSection({
         <div className="flex flex-wrap gap-2">
           <Button type="button" variant="outline" onClick={startAdd} className="py-2 px-4 text-[13px]">
             <Plus size={16} />
-            証拠・実績を追加
+            実績を追加
           </Button>
           <Button type="button" onClick={runAiExtract} disabled={aiLoading || loading} className="py-2 px-4 text-[13px]">
             <Sparkles size={16} />
