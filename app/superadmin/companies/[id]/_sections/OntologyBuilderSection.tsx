@@ -43,11 +43,11 @@ const countResolvableWarns = (findings: Finding[]): number =>
 
 const STEPS: { num: number; label: string; full: string; why: string }[] = [
   { num: 1, label: '基本情報', full: '基本情報の確認', why: '理念と提供価値が、この後のすべての土台になります' },
-  { num: 2, label: '実績・エピソード', full: '実績・エピソードを集める', why: '裏づけが無いと、AIの提案が一般論になります' },
-  { num: 3, label: '言葉のルール', full: '言葉のルールを決める', why: '「言わないこと」を決めると、AIの生成から確実に排除されます' },
-  { num: 4, label: 'つながり', full: 'つながりを整理する', why: '要素どうしの関係が、AI提案の文脈精度を上げます' },
-  { num: 5, label: 'チェック', full: '不足・矛盾をチェック', why: '穴と矛盾を可視化してから埋めると効率的です' },
-  { num: 6, label: '補足質問', full: '補足質問', why: '質問に答えるだけで、残った穴が埋まります' },
+  { num: 2, label: '実績・エピソード', full: '実績・エピソードを集める', why: '提供価値に沿った実績・エピソードがあるほど、AIの提案が御社ならではの内容になります' },
+  { num: 3, label: '言葉のルール', full: '言葉のルールを決める', why: '「言わせたくないこと」を決めるほど、AIの言葉づかいが御社らしくなります' },
+  { num: 4, label: 'つながり', full: 'つながりを整理する', why: 'どの提供価値をどの実績が支えているかを登録すると、AIが正しい根拠を選んで語れるようになります' },
+  { num: 5, label: 'チェック', full: '不足・矛盾をチェック', why: '実績の裏づけがない提供価値や、内容のくい違いがないかを自動で点検します' },
+  { num: 6, label: '補足質問', full: '補足質問', why: '足りない情報を質問でお聞きします。答えるほどAIの提案精度が上がります' },
 ]
 
 export default function OntologyBuilderSection({
@@ -288,8 +288,8 @@ export default function OntologyBuilderSection({
             <p className="text-sm font-bold text-foreground m-0">
               ステップ{current.num}: {current.full}
             </p>
-            <p className="flex items-center gap-1 text-xs text-muted-foreground m-0 mt-0.5">
-              <Info size={12} className="shrink-0" />
+            <p className="inline-flex items-center gap-1.5 text-[13px] text-blue-900 bg-blue-100/60 rounded-md px-2.5 py-1 m-0 mt-1.5">
+              <Info size={13} className="shrink-0" />
               {current.why}
             </p>
           </div>

@@ -439,8 +439,8 @@ export default function ProfilingSection({
           </span>
         </div>
         <p className="text-sm font-bold text-foreground mb-1">{current.question}</p>
-        <p className="flex items-center gap-1 text-xs text-muted-foreground mb-3">
-          <Info size={12} className="shrink-0" />
+        <p className="inline-flex items-center gap-1.5 text-[13px] text-blue-900 bg-blue-100/60 rounded-md px-2.5 py-1 mb-3">
+          <Info size={13} className="shrink-0" />
           なぜ聞くか: {current.why}
         </p>
 
