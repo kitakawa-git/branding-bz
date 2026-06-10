@@ -4,12 +4,15 @@
 // - 5種の要素（理念/提供価値/証拠/表現ルール/ペルソナ）から source→relation_type→target を作成
 // - 端点は (kind, id) のポリモーフィック。存在＋同一company はDBトリガで担保。
 // - 重複・自己参照は DB制約＋UI で弾く。書込みは element_relations_superadmin_all（is_superadmin）で許可される前提。
+// - 「AIスキャン」: 既存要素から関係候補をAIが推定（/api/superadmin/relation-scan・POST・押した時だけ）。
+//   候補は1件ずつ承認/却下。承認時のみ通常の作成経路（クライアント supabase INSERT）で登録する。
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { AutoResizeTextarea } from '@/components/ui/auto-resize-textarea'
-import { Plus, Trash2, Check, X, ChevronUp, ChevronDown, ArrowRight } from 'lucide-react'
+import { Plus, Trash2, Check, X, ChevronUp, ChevronDown, ArrowRight, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
+import type { RelationCandidate } from '@/lib/brand/relation-scan'
 import {
   fetchElementsCatalog,
   KIND_LABELS,
@@ -65,6 +68,9 @@ export default function ElementRelationsSection({ companyId }: { companyId: stri
   const [adding, setAdding] = useState(false)
   const [draft, setDraft] = useState<Draft>(emptyDraft())
   const [saving, setSaving] = useState(false)
+  const [candidates, setCandidates] = useState<RelationCandidate[] | null>(null)
+  const [scanning, setScanning] = useState(false)
+  const [approvingKey, setApprovingKey] = useState<string | null>(null)
 
   const catalogMap = new Map(catalog.map((e) => [`${e.kind}:${e.id}`, e.label]))
   const labelOf = (kind: string, id: string) =>
@@ -180,6 +186,75 @@ export default function ElementRelationsSection({ companyId }: { companyId: stri
       return
     }
     await fetchAll()
+  }
+
+  // ---- AIスキャン（候補は表示のみ。登録は1件ずつの承認時だけ） ----
+  const candidateKey = (c: RelationCandidate) =>
+    `${c.source_kind}:${c.source_id}|${c.relation_type}|${c.target_kind}:${c.target_id}`
+
+  const runScan = async () => {
+    setScanning(true)
+    try {
+      const token = (await supabase.auth.getSession()).data.session?.access_token || ''
+      const res = await fetch('/api/superadmin/relation-scan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ companyId }),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`)
+      setCandidates(json.candidates as RelationCandidate[])
+    } catch (err) {
+      console.error('[ElementRelations] AIスキャンエラー:', err)
+      toast.error('AIスキャンに失敗しました: ' + (err instanceof Error ? err.message : '不明なエラー'))
+    } finally {
+      setScanning(false)
+    }
+  }
+
+  const dismissCandidate = (c: RelationCandidate) => {
+    // 却下はセッション内で非表示にするだけ（永続記録はしない）
+    setCandidates((prev) => (prev ? prev.filter((x) => candidateKey(x) !== candidateKey(c)) : prev))
+  }
+
+  const approveCandidate = async (c: RelationCandidate) => {
+    // スキャン後に手動追加された等で重複していたら登録せず候補だけ消す
+    const dup = rows.some(
+      (r) =>
+        r.source_kind === c.source_kind &&
+        r.source_id === c.source_id &&
+        r.target_kind === c.target_kind &&
+        r.target_id === c.target_id &&
+        r.relation_type === c.relation_type,
+    )
+    if (dup) {
+      toast.error('同じ関係が既に登録されています')
+      dismissCandidate(c)
+      return
+    }
+    setApprovingKey(candidateKey(c))
+    try {
+      const nextOrder = rows.length > 0 ? Math.max(...rows.map((r) => r.sort_order)) + 1 : 0
+      const { error } = await supabase.from('element_relations').insert({
+        company_id: companyId,
+        source_kind: c.source_kind,
+        source_id: c.source_id,
+        target_kind: c.target_kind,
+        target_id: c.target_id,
+        relation_type: c.relation_type,
+        note: `AI提案: ${c.rationale}`,
+        sort_order: nextOrder,
+      })
+      if (error) throw error
+      toast.success('関係を登録しました')
+      dismissCandidate(c)
+      await fetchAll()
+    } catch (err) {
+      console.error('[ElementRelations] 候補承認エラー:', err)
+      toast.error('登録に失敗しました: ' + (err instanceof Error ? err.message : '不明なエラー'))
+    } finally {
+      setApprovingKey(null)
+    }
   }
 
   // source 起点でグルーピング（rows は sort_order 順）
@@ -328,10 +403,80 @@ export default function ElementRelationsSection({ companyId }: { companyId: stri
       {adding && renderForm()}
 
       {!adding && (
-        <Button type="button" variant="outline" onClick={startAdd} className="py-2 px-4 text-[13px]">
-          <Plus size={16} />
-          関係を追加
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" variant="outline" onClick={startAdd} className="py-2 px-4 text-[13px]">
+            <Plus size={16} />
+            関係を追加
+          </Button>
+          <Button type="button" onClick={runScan} disabled={scanning || loading} className="py-2 px-4 text-[13px]">
+            <Sparkles size={16} />
+            {scanning ? 'スキャン中...' : 'AIスキャンを実行'}
+          </Button>
+        </div>
+      )}
+
+      {/* AIスキャン候補（承認するまで一切登録されない） */}
+      {candidates !== null && (
+        <div className="mt-4">
+          <div className="flex items-center gap-1.5 mb-2 text-xs font-bold text-foreground">
+            <Sparkles size={14} />
+            AIスキャン候補（{candidates.length}）
+          </div>
+          {candidates.length === 0 ? (
+            <p className="text-muted-foreground text-sm m-0">
+              新しい関係候補は見つかりませんでした（既存の関係は提案対象外です）
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {candidates.map((c) => {
+                const key = candidateKey(c)
+                return (
+                  <div key={key} className="border border-violet-200 bg-violet-50/40 rounded-lg p-3">
+                    <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
+                      <span className="py-0.5 px-1.5 bg-gray-100 text-gray-600 rounded text-[11px] font-semibold shrink-0">
+                        {KIND_LABELS[c.source_kind]}
+                      </span>
+                      <span className="text-sm font-medium text-foreground break-words">{c.source_label}</span>
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-violet-700">
+                        <ArrowRight size={13} />
+                        {relationLabel(c.relation_type)}（{c.relation_type}）
+                      </span>
+                      <span className="py-0.5 px-1.5 bg-gray-100 text-gray-600 rounded text-[11px] font-semibold shrink-0">
+                        {KIND_LABELS[c.target_kind]}
+                      </span>
+                      <span className="text-sm font-medium text-foreground break-words">{c.target_label}</span>
+                      {c.confidence === 'medium' && (
+                        <span className="py-0.5 px-1.5 bg-gray-100 text-gray-500 rounded text-[11px]">確信度: 中</span>
+                      )}
+                    </div>
+                    <p className="text-[13px] text-foreground/80 break-words m-0 mb-2">{c.rationale}</p>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => approveCandidate(c)}
+                        disabled={approvingKey !== null}
+                      >
+                        <Check size={14} />
+                        {approvingKey === key ? '登録中...' : '承認'}
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => dismissCandidate(c)}
+                        disabled={approvingKey !== null}
+                      >
+                        <X size={14} />
+                        却下
+                      </Button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
       )}
     </div>
   )
