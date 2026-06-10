@@ -131,6 +131,7 @@ export function LearningVideoDialog({ open, onOpenChange, video, categoriesTree,
         title: title.trim(),
         description: description.trim(),
         youtube_url: youtubeUrl.trim(),
+        category_id: categoryId === UNASSIGNED ? null : categoryId,
         theme_id: themeId === UNASSIGNED ? null : themeId,
         is_published: isPublished,
       }

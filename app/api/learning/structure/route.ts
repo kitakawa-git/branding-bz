@@ -84,12 +84,17 @@ export async function GET(request: NextRequest) {
     }
 
     const videosByTheme = new Map<string, typeof videos>()
+    const directByCategory = new Map<string, typeof videos>() // テーマ無し・カテゴリーのみ
     const uncategorized: typeof videos = []
     for (const v of videos) {
       if (v.theme_id) {
         const arr = videosByTheme.get(v.theme_id) ?? []
         arr.push(v)
         videosByTheme.set(v.theme_id, arr)
+      } else if (v.category_id) {
+        const arr = directByCategory.get(v.category_id) ?? []
+        arr.push(v)
+        directByCategory.set(v.category_id, arr)
       } else {
         uncategorized.push(v)
       }
@@ -110,9 +115,10 @@ export async function GET(request: NextRequest) {
             return { ...t, video_count: themeVideos.length, videos: themeVideos }
           })
           .filter((t) => (publishedOnly ? t.video_count > 0 : true))
-        return { ...c, themes: builtThemes }
+        const directVideos = directByCategory.get(c.id) ?? []
+        return { ...c, direct_videos: directVideos, themes: builtThemes }
       })
-      .filter((c) => (publishedOnly ? c.themes.length > 0 : true))
+      .filter((c) => (publishedOnly ? c.themes.length > 0 || c.direct_videos.length > 0 : true))
 
     return NextResponse.json({ categories: builtCategories, uncategorized })
   } catch (err) {

@@ -5,6 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { getAdminContext } from '@/lib/learning/auth'
+import { resolveCategoryTheme } from '@/lib/learning/resolve'
 import { extractVideoId, getThumbnailUrl } from '@/lib/youtube'
 
 type RouteContext = { params: Promise<{ id: string }> }
@@ -71,8 +72,14 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     if ('category' in b) {
       updates.category = typeof b.category === 'string' ? b.category.trim() || null : null
     }
-    if ('theme_id' in b) {
-      updates.theme_id = typeof b.theme_id === 'string' && b.theme_id ? b.theme_id : null
+    if ('theme_id' in b || 'category_id' in b) {
+      // テーマ指定時はそのカテゴリーを採用、テーマ無し＝カテゴリー単独可、両方無し＝未分類
+      const resolved = await resolveCategoryTheme(getSupabaseAdmin(), admin.companyId, b.category_id, b.theme_id)
+      if ('error' in resolved) {
+        return NextResponse.json({ error: resolved.error }, { status: resolved.status })
+      }
+      updates.category_id = resolved.category_id
+      updates.theme_id = resolved.theme_id
     }
     if (typeof b.is_published === 'boolean') {
       updates.is_published = b.is_published

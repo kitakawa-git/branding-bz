@@ -9,8 +9,9 @@ export type LearningVideo = {
   youtube_video_id: string
   youtube_url: string | null
   thumbnail_url: string | null
-  category: string | null // レガシー（旧テキストカテゴリ。今後は theme_id を使用）
-  theme_id: string | null // 所属テーマ（未分類は null）
+  category: string | null // レガシー（旧テキストカテゴリ。今後は category_id/theme_id を使用）
+  category_id: string | null // 所属カテゴリー（テーマ未選択でもカテゴリー単独で割当可。未分類は null）
+  theme_id: string | null // 所属テーマ（任意。カテゴリーのみは null）
   duration_seconds: number | null
   sort_order: number
   is_published: boolean
@@ -45,8 +46,10 @@ export type LearningTheme = {
 }
 
 // 階層構造レスポンス（カテゴリー > テーマ > 動画）
+// direct_videos: そのカテゴリー直下でテーマ未設定の動画（category_id のみ）
 export type LearningStructure<V = LearningVideo> = {
   categories: (Omit<LearningCategory, 'themes'> & {
+    direct_videos: V[]
     themes: (Omit<LearningTheme, 'videos'> & { video_count: number; videos: V[] })[]
   })[]
   uncategorized: V[]

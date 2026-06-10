@@ -17,7 +17,12 @@ type ThemeNode = {
   video_count: number
   videos: LearningVideoWithProgress[]
 }
-type CategoryNode = { id: string; name: string; themes: ThemeNode[] }
+type CategoryNode = {
+  id: string
+  name: string
+  direct_videos: LearningVideoWithProgress[]
+  themes: ThemeNode[]
+}
 type Structure = { categories: CategoryNode[]; uncategorized: LearningVideoWithProgress[] }
 
 function ProgressBadge({ video }: { video: LearningVideoWithProgress }) {
@@ -148,6 +153,13 @@ export default function PortalLearningPage() {
               </div>
             </div>
           ))}
+          {cat.direct_videos.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {cat.direct_videos.map((v) => (
+                <VideoCard key={v.id} video={v} />
+              ))}
+            </div>
+          )}
         </section>
       ))}
 

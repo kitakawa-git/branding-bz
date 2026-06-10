@@ -45,7 +45,10 @@ type ThemeWithVideos = Pick<LearningTheme, 'id' | 'category_id' | 'name' | 'desc
   video_count: number
   videos: LearningVideo[]
 }
-type CategoryWithThemes = Pick<LearningCategory, 'id' | 'name' | 'sort_order'> & { themes: ThemeWithVideos[] }
+type CategoryWithThemes = Pick<LearningCategory, 'id' | 'name' | 'sort_order'> & {
+  direct_videos: LearningVideo[]
+  themes: ThemeWithVideos[]
+}
 type Structure = { categories: CategoryWithThemes[]; uncategorized: LearningVideo[] }
 
 function formatDuration(sec: number | null): string | null {
@@ -189,7 +192,10 @@ export default function AdminLearningPage() {
 
   const totalVideos = useMemo(() => {
     if (!structure) return 0
-    const inThemes = structure.categories.reduce((s, c) => s + c.themes.reduce((ss, t) => ss + t.videos.length, 0), 0)
+    const inThemes = structure.categories.reduce(
+      (s, c) => s + c.themes.reduce((ss, t) => ss + t.videos.length, 0) + c.direct_videos.length,
+      0
+    )
     return inThemes + structure.uncategorized.length
   }, [structure])
 
@@ -283,23 +289,39 @@ export default function AdminLearningPage() {
                     <FolderOpen size={16} className="text-foreground" />
                     <h2 className="text-sm font-bold text-foreground m-0">{cat.name}</h2>
                   </div>
-                  {cat.themes.length === 0 ? (
-                    <p className="text-xs text-muted-foreground pl-6">テーマがありません（「カテゴリー・テーマ」タブで追加）</p>
+                  {cat.themes.length === 0 && cat.direct_videos.length === 0 ? (
+                    <p className="text-xs text-muted-foreground pl-6">テーマ・動画がありません（「カテゴリー・テーマ」タブでテーマ追加、または動画の編集でこのカテゴリーに割当）</p>
                   ) : (
-                    cat.themes.map((theme) => (
-                      <div key={theme.id} className="pl-2">
-                        <div className="flex items-center gap-1.5 mb-1">
-                          <Layers size={13} className="text-muted-foreground" />
-                          <h3 className="text-xs font-semibold text-foreground m-0">{theme.name}</h3>
-                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{theme.videos.length}本</Badge>
+                    <>
+                      {cat.themes.map((theme) => (
+                        <div key={theme.id} className="pl-2">
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <Layers size={13} className="text-muted-foreground" />
+                            <h3 className="text-xs font-semibold text-foreground m-0">{theme.name}</h3>
+                            <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{theme.videos.length}本</Badge>
+                          </div>
+                          <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+                            <CardContent className="p-0">
+                              <VideoGroup videos={theme.videos} busyId={busyId} onReorder={handleReorder} onTogglePublish={handleTogglePublish} onEdit={openEdit} onDelete={handleDelete} />
+                            </CardContent>
+                          </Card>
                         </div>
-                        <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-                          <CardContent className="p-0">
-                            <VideoGroup videos={theme.videos} busyId={busyId} onReorder={handleReorder} onTogglePublish={handleTogglePublish} onEdit={openEdit} onDelete={handleDelete} />
-                          </CardContent>
-                        </Card>
-                      </div>
-                    ))
+                      ))}
+                      {cat.direct_videos.length > 0 && (
+                        <div className="pl-2">
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <Layers size={13} className="text-muted-foreground/60" />
+                            <h3 className="text-xs font-semibold text-muted-foreground m-0">（テーマ未設定）</h3>
+                            <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{cat.direct_videos.length}本</Badge>
+                          </div>
+                          <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+                            <CardContent className="p-0">
+                              <VideoGroup videos={cat.direct_videos} busyId={busyId} onReorder={handleReorder} onTogglePublish={handleTogglePublish} onEdit={openEdit} onDelete={handleDelete} />
+                            </CardContent>
+                          </Card>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               ))}

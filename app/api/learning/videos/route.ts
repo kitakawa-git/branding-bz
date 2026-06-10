@@ -5,6 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { getAdminContext, getMemberContext } from '@/lib/learning/auth'
+import { resolveCategoryTheme } from '@/lib/learning/resolve'
 import { extractVideoId, getThumbnailUrl } from '@/lib/youtube'
 import type { LearningVideo, LearningVideoWithProgress } from '@/lib/types/learning'
 
@@ -137,6 +138,7 @@ export async function POST(request: NextRequest) {
       description,
       youtube_url,
       category,
+      category_id,
       theme_id,
       is_published,
       thumbnail_url,
@@ -177,6 +179,12 @@ export async function POST(request: NextRequest) {
         ? thumbnail_url.trim()
         : getThumbnailUrl(videoId)
 
+    // カテゴリー/テーマ解決: テーマ指定時はそのテーマのカテゴリーを採用。テーマ無し＝カテゴリー単独可
+    const resolved = await resolveCategoryTheme(supabase, admin.companyId, category_id, theme_id)
+    if ('error' in resolved) {
+      return NextResponse.json({ error: resolved.error }, { status: resolved.status })
+    }
+
     const { data: video, error: insertError } = await supabase
       .from('learning_videos')
       .insert({
@@ -187,7 +195,8 @@ export async function POST(request: NextRequest) {
         youtube_url: youtube_url.trim(),
         thumbnail_url: finalThumb,
         category: typeof category === 'string' ? category.trim() || null : null,
-        theme_id: typeof theme_id === 'string' && theme_id ? theme_id : null,
+        category_id: resolved.category_id,
+        theme_id: resolved.theme_id,
         is_published: typeof is_published === 'boolean' ? is_published : false,
         sort_order: nextSortOrder,
         created_by: admin.authId,
