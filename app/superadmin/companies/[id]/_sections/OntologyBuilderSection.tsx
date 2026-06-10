@@ -6,12 +6,15 @@
 //   （ロジックの複製なし。ページ下部の個別カードは従来どおり詳細管理用に残る）。
 // - ステップは強制しない（クリックで任意のステップへ移動可。ガイドであって檻ではない）。
 // - Step 5 の完了は「このセッション内でチェックを実行した」こと（onChecked コールバック）。
-// - Step 6 は warn 系 findings 0件で「構築完了」表示（決定論チェックAPIを再取得して判定）。
+// - Step 6 の完了判定は「プロファイリングで解消できる warn（証拠なき約束・孤立した証拠系）」のみが
+//   対象（v1.1）。用語規定違反などプロファイリングで解消しない検出は判定から除外する
+//   （整合性チェックの表示自体には全カテゴリ出る）。
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Check, Info, RefreshCw } from 'lucide-react'
 import ProofPointsSection, { type ValuePropositionRef } from './ProofPointsSection'
+import { type Finding } from './IntegrityCheckSection'
 import GovernanceRulesSection from './GovernanceRulesSection'
 import ElementRelationsSection from './ElementRelationsSection'
 import IntegrityCheckSection from './IntegrityCheckSection'
@@ -28,6 +31,13 @@ type Counts = {
 }
 
 const ZERO_COUNTS: Counts = { mission: 0, vision: 0, value: 0, vp: 0, proof: 0, rule: 0, relation: 0 }
+
+// Step6 完了判定の対象カテゴリ（プロファイリングの質問で解消できる検出のみ）。
+// 用語規定違反は言い換え推奨の参考情報のためここに含めない（表示はされるが完了は妨げない）。
+const PROFILING_RESOLVABLE_CATEGORIES = new Set(['証拠なき約束', '孤立した証拠'])
+
+const countResolvableWarns = (findings: Finding[]): number =>
+  findings.filter((f) => f.severity === 'warn' && PROFILING_RESOLVABLE_CATEGORIES.has(f.category)).length
 
 const STEPS: { num: number; label: string; full: string; why: string }[] = [
   { num: 1, label: '基本情報', full: '基本情報の確認', why: '理念と提供価値が、この後のすべての土台になります' },
@@ -49,7 +59,8 @@ export default function OntologyBuilderSection({
   const [loading, setLoading] = useState(true)
   const [activeStep, setActiveStep] = useState<number | null>(null) // 初回ロード後に自動設定
   const [integrityRan, setIntegrityRan] = useState(false) // Step5: セッション内でチェック実行済みか
-  const [warnCount, setWarnCount] = useState<number | null>(null) // Step6判定用（null=未取得）
+  // Step6判定用: プロファイリングで解消できる warn の件数（null=未取得）
+  const [warnCount, setWarnCount] = useState<number | null>(null)
   const [warnLoading, setWarnLoading] = useState(false)
 
   // 完了状態はすべてデータから導出（進捗テーブルなし）
@@ -128,7 +139,7 @@ export default function OntologyBuilderSection({
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`)
-      setWarnCount((json.findings as { severity: string }[]).filter((f) => f.severity === 'warn').length)
+      setWarnCount(countResolvableWarns(json.findings as Finding[]))
     } catch (err) {
       console.error('[OntologyBuilder] warn件数取得エラー:', err)
     } finally {
@@ -197,7 +208,7 @@ export default function OntologyBuilderSection({
     if (warnCount === 0 && !basicsDone) {
       return (
         <p className="text-[13px] text-muted-foreground border border-border bg-muted/40 rounded-lg p-3 mb-4">
-          warn系の検出は0件ですが、データがまだ少ないため検出対象がない状態です。先にステップ1〜4を埋めてください
+          解消すべき検出は0件ですが、データがまだ少ないため検出対象がない状態です。先にステップ1〜4を埋めてください
         </p>
       )
     }
@@ -206,14 +217,14 @@ export default function OntologyBuilderSection({
         <div className="border border-green-200 bg-green-50 rounded-lg p-4 mb-4">
           <p className="text-sm font-bold text-green-800 m-0 mb-1">オントロジー構築完了 🎉</p>
           <p className="text-[13px] text-foreground m-0">
-            warn系の検出は0件です。現在の登録: 理念 {counts.mission + counts.vision + counts.value}件・提供価値 {counts.vp}件・証拠 {counts.proof}件・表現ルール {counts.rule}件・関係 {counts.relation}本
+            プロファイリングで解消できるwarn系の検出（証拠なき約束など）は0件です。現在の登録: 理念 {counts.mission + counts.vision + counts.value}件・提供価値 {counts.vp}件・証拠 {counts.proof}件・表現ルール {counts.rule}件・関係 {counts.relation}本
           </p>
         </div>
       )
     }
     return (
       <p className="text-[13px] text-amber-700 border border-amber-200 bg-amber-50/40 rounded-lg p-3 mb-4">
-        warn系の検出が残り {warnCount}件あります。下の質問に回答すると埋まっていきます
+        プロファイリングで解消できるwarn系の検出が残り {warnCount}件あります。下の質問に回答すると埋まっていきます
       </p>
     )
   }
@@ -292,9 +303,9 @@ export default function OntologyBuilderSection({
           {current.num === 5 && (
             <IntegrityCheckSection
               companyId={companyId}
-              onChecked={(warn) => {
+              onChecked={(findings) => {
                 setIntegrityRan(true)
-                setWarnCount(warn)
+                setWarnCount(countResolvableWarns(findings))
               }}
             />
           )}

@@ -84,7 +84,8 @@ export async function runIntegrityChecks(companyId: string): Promise<IntegrityFi
     }
   }
 
-  // 3. 用語規定違反（warn）: avoided_term が主要テキストに使われていないか走査（部分一致）
+  // 3. 用語規定違反（info）: avoided_term が主要テキストに使われていないか走査（部分一致）。
+  //    言い換え推奨の性質上、機械検出は参考情報に留める（v1.1で warn から降格）。
   const texts: { loc: string; text: string }[] = []
   if (bg?.slogan) texts.push({ loc: 'スローガン', text: bg.slogan })
   if (bg?.brand_statement) texts.push({ loc: 'メッセージ', text: bg.brand_statement })
@@ -105,7 +106,7 @@ export async function runIntegrityChecks(companyId: string): Promise<IntegrityFi
       if (text.includes(av)) {
         const rec = term.preferred_term ? `（推奨: ${term.preferred_term}）` : ''
         findings.push({
-          severity: 'warn',
+          severity: 'info',
           category: '用語規定違反',
           message: `避けたい用語「${av}」が ${loc} に使われています${rec}`,
         })
