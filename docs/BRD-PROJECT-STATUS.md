@@ -5,8 +5,8 @@
 > Cowork: 直接読み書き
 > Claude Projects: ナレッジとしてアップロード（週1回推奨）
 
-**最終更新:** 2026-06-09
-**更新者:** Claude Code（/sync-status）
+**最終更新:** 2026-06-10
+**更新者:** Claude Code（ブランド理念オントロジー実装）
 
 ---
 
@@ -116,6 +116,10 @@
 - マイページ振り分け修正＋LP「無料で始める」導線（2026-06-07・本番デプロイ済み、commit e92960c） — ①`/mypage` を「スーパー管理者のみ /superadmin/companies、一般管理者・メンバーは /portal」に変更（従来は一般管理者が /admin/dashboard に着地。管理画面へはポータルのサイドメニューから遷移可）②LPヒーロー「無料で始める」のリンクを `/contact`→`/signup` に変更（下部CTA「お問い合わせ」は /contact 据え置き）
 - スケルトンローディングを実構造に整合（全16ページ）（2026-06-04・本番デプロイ済み、commit 3d987d3） — ローディング時のスケルトンが実際の描画（段組数・カード/セクション数・レイアウト種別）と乖離していた問題を全ページ点検し修正。**ポータル**: dashboard=4象限を誤 `grid-cols-3`→`grid-cols-2`＋KPIバナー/統計整合、guidelines=4セクション構成、visuals=タイトル→タブ＋ガイドライン4枚目追加、strategy=移設済み行動指針カード除去、kpi=進捗バー＋3カード、timeline=廃止した常時投稿フォーム除去→フィルタ/検索行＋投稿カード。**管理**: analytics=サマリ4→3＋最終2列、brand/{guidelines,personality,values,verbal,visuals}=カード数・項目整合、brand/strategy=タイトル＋タブ＋3カード→2カード、company=タイトル除去＋ロゴ＋5項目、members-portal=タイトル除去。**スーパー管理**: companies=ヘッダーのタイトル＋ボタン除去（新規登録は右下FAB）＋先頭列を画像→テキスト。stale なタイトル/タブ要素を整理、型エラー0。**理解度テスト等の未完成分は持ち込まず、別worktree経由でスケルトン16ファイルのみ main に載せて本番デプロイ**
 - ビデオラーニング カテゴリー>テーマ階層化（2026-06-08・本番デプロイ済み、commit 64546fa） — 動画を「**カテゴリー（大分類）> テーマ（学習レベル）> 動画**」の2階層で整理。DB: `learning_categories`/`learning_themes` 新設＋`learning_videos.theme_id`（RLS有効ポリシー0／**テーマ削除→動画は theme_id=NULL で生存**=SET NULL、**カテゴリ削除→テーマCASCADE**）。API（service_role）: categories/themes の CRUD＋reorder、`/api/learning/structure`（カテゴリ>テーマ>動画ネスト＋テーマ配下 **video_count 自動算出**、`?published=true`でポータル用=公開のみ＋自分の進捗）。`videos` POST/PATCH に `theme_id` 対応（**既存 `/api/learning/videos` GET 応答形は不変**）。管理 `/admin/learning`＝「動画（カテゴリー>テーマでグルーピング＋未分類）」「カテゴリー・テーマ」の2タブ＋動画ダイアログにカテゴリー→テーマ2段選択。ポータル `/portal/learning`＝階層表示＋テーマ「○本」バッジ、未分類は末尾「その他」。1動画=1テーマ（複数所属は将来）。既存 `learning_videos.category`(text) はレガシー残置（未使用）。視聴トラッキング/進捗/視聴分析(`/admin/analytics/learning`)は不変
+- **ブランド理念オントロジー実装（要素ID化＋型付き関係グラフ＋整合性チェック）**（2026-06-09〜10・本番デプロイ済み） — ブランド体系を「自由文/jsonb」から「ID付き要素＋関係グラフ」へ正規化し、AI参照・整合性点検を可能にした。**全段階 dual-run（新テーブル稼働→読取り切替→編集切替→デプロイ→旧列DROP）を厳守**。
+  - **理念要素のID化 `philosophy_elements`**: mission/vision/value/action_guideline/**service（事業内容）** を 1行=1要素 のテーブルへ正規化（旧 `brand_guidelines` の mission/vision(text)・values/action_guidelines/business_content(jsonb) を撤去）。表示（card/portal/guidelines/ci-manual）・AI（targets/competitors/quiz設問/brand-data）・編集（`/admin/brand/guidelines` を行差分CRUDへ）・`tools/shared-profile`（読み書き同期）を全て新テーブルへ切替。旧列は退避テーブル `archive_brand_guidelines_*`（RLS有効・ポリシー無し=service_role限定）へバックアップ後 DROP。取得は `lib/brand/philosophy.ts`（`fetchPhilosophy`）に集約
+  - **型付き関係グラフ `element_relations`**: 5種（philosophy_element/value_proposition/proof_point/governance_rule/persona）をポリモーフィック端点(kind+id)で結ぶ関係（guides/evidencedBy/promisedTo/communicatedAs/constrainedBy/conflictsWith）。端点存在＋同一company を SECURITY DEFINER トリガで担保（自己参照/重複はDB制約）。superadmin 企業詳細にオーサリングUI、AI草案生成6ルートへ関係要約を注入（`lib/brand/relations.ts`）。テックブリッジに実関係5件を投入し before/after でAI出力反映を実証
+  - **整合性チェック**: ①決定論（`lib/brand/integrity.ts`・5チェック=証拠なき約束/孤立証拠/用語違反/矛盾明示/証拠鮮度）②AI判定（`lib/brand/integrity-ai.ts`・governance_rules の tone/claim/discouraged を Claude が実テキスト評価＋修正案。1社1回呼び出し・NG/OK例few-shot・引用バリデーションでハルシネーション防護）。superadmin 企業詳細に「チェック実行（決定論）」「AI判定を実行」パネル（**読み取り専用・自動修正なし**）
 
 ---
 
@@ -212,6 +216,10 @@
 | 2026-06-08 | **Turbopack `.next` キャッシュ破損**で dev が `Module not found: next-dev-turbopack.js` / `corrupted database` / `Unable to open static sorted file *.sst`：dev 起動中に git reset/checkout でファイルを大量に入れ替えると Turbopack 永続キャッシュ(`.sst`)が不整合化する。対処＝**dev停止→`rm -rf .next`→`npm run dev` 再起動**（ソース不変・生成物のみ削除で必ず直る）。本番(Vercel)は毎回クリーンビルドのため無関係 |
 | 2026-06-09 | **カラースキームを「役割で1色」に統合**（commit 781a8db）。ニュートラル=gray（slate/neutral廃止）/ アクセント・情報=blue（sky/indigo廃止）/ success=green（emerald廃止）/ warning=amber（yellow廃止）/ error=red。**アクセントは橙#FF6A00を一度全面適用→ユーザー判断でblueへ巻き戻し**（橙トークン・config・globalsは完全撤去済み）。**重要な落とし穴**＝スコア/ランクのティア配色（green→blue→amber→orange→red）・感情スケール（red→orange→gray→green→emerald）・KPIカテゴリは「段階/項目の区別」用の**Layer 3 多色で、意味色統合の対象外**。一律 sed で潰すとティアが同色化して壊れる→必ず文脈確認。規約は `branding-bz/CLAUDE.md` カラー章に明文化 |
 | 2026-06-09 | **並列セッションの再確認**：色作業中に別経路で `PortalSidebar.tsx`/`PortalLayoutClient.tsx`/`visuals/page.tsx`＋新規 `lib/brand/integrity.ts` 等が working tree に出現。コミットは `git add -u`＋無関係分を `git restore --staged` で除外し**自分の12ファイルのみ**を commit。`git add -A` は他セッションの作業を巻き込むので使わない |
+| 2026-06-10 | **理念オントロジーの正本は `philosophy_elements`**（mission/vision=各社1行singleton、value/action_guideline/service=複数行）。`brand_guidelines` の mission/vision/values/action_guidelines/business_content は DROP 済み（退避テーブルにバックアップ）。表示・AI・編集は全て `lib/brand/philosophy.ts`（`fetchPhilosophy`）経由。編集は行差分CRUD（id一致でUPDATE・新規INSERT・消えた行DELETE）。values_sort/business_content_sort（表示順設定）は brand_guidelines に残置 |
+| 2026-06-10 | **element_relations はポリモーフィック端点(kind+id)**。直接FK（proof_points.value_proposition_id等）は残し、跨ぐ関係のみ本テーブル。端点検証は SECURITY DEFINER トリガ（存在＋同一company）。トリガ関数は EXECUTE を anon/authenticated から剥奪（トリガは権限無しでも発火する）。`lib/brand/elements-catalog.ts` が5種を `{kind,id,label}` で返す共通取得 |
+| 2026-06-10 | **マイグレは必ずローカル.sql先行→適用**（`branding-bz/CLAUDE.md` 恒久ルール化）。MCP `apply_migration` 使用時も同一SQLを `supabase/migrations/<version>_<name>.sql` に保存し同コミットに含める（version はリモート `schema_migrations` 記録値に合わせる）。破壊的変更（DROP）は退避テーブルへ事前バックアップ。旧 iCloud フォルダ撤去→**正本は `~/dev/branding-bz`＋GitHub** |
+| 2026-06-10 | **AI判定の誤検知/ハルシネーション対策**: 1社1回のClaude呼び出し（ルート毎に呼ばない＝コスト/レート対策）、NG/OK例をfew-shot、「明確な違反のみ報告」指示、返却の quoted_text が原文に実在・rule_id/target_ref が実在することをコード側で検証し通らないものは破棄。プロンプトで `target_ref` と label を**別行**に（同一行だとAIがlabelをrefに混入させ全dropするバグ）。1チェック≒3,000〜6,000 tokens（sonnet） |
 
 ---
 
