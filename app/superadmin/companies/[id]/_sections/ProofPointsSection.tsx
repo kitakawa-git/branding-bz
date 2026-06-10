@@ -64,9 +64,12 @@ const SELECT_CLASS =
 export default function ProofPointsSection({
   companyId,
   valuePropositions,
+  onDataChanged,
 }: {
   companyId: string
   valuePropositions: ValuePropositionRef[]
+  // データ再取得のたびに通知（ウィザードのステップ判定更新用・任意）
+  onDataChanged?: () => void
 }) {
   const [rows, setRows] = useState<ProofPoint[]>([])
   const [loading, setLoading] = useState(true)
@@ -93,6 +96,7 @@ export default function ProofPointsSection({
       toast.error('証拠・実績の取得に失敗しました')
     } else {
       setRows((data as ProofPoint[]) || [])
+      onDataChanged?.()
     }
     setLoading(false)
   }

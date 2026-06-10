@@ -35,7 +35,14 @@ const RULE_TYPE_JP: Record<string, string> = {
   discouraged_expression: '非推奨表現',
 }
 
-export default function IntegrityCheckSection({ companyId }: { companyId: string }) {
+export default function IntegrityCheckSection({
+  companyId,
+  onChecked,
+}: {
+  companyId: string
+  // 決定論チェック実行後に warn 件数を通知（ウィザードのステップ判定用・任意）
+  onChecked?: (warnCount: number) => void
+}) {
   const [findings, setFindings] = useState<Finding[] | null>(null)
   const [running, setRunning] = useState(false)
   const [aiFindings, setAiFindings] = useState<AiFinding[] | null>(null)
@@ -52,6 +59,7 @@ export default function IntegrityCheckSection({ companyId }: { companyId: string
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`)
       setFindings(json.findings as Finding[])
+      onChecked?.((json.findings as Finding[]).filter((f) => f.severity === 'warn').length)
     } catch (err) {
       console.error('[IntegrityCheck] 実行エラー:', err)
       toast.error('チェックに失敗しました: ' + (err instanceof Error ? err.message : '不明なエラー'))

@@ -15,6 +15,7 @@ import GovernanceRulesSection from './_sections/GovernanceRulesSection'
 import ElementRelationsSection from './_sections/ElementRelationsSection'
 import IntegrityCheckSection from './_sections/IntegrityCheckSection'
 import ProfilingSection from './_sections/ProfilingSection'
+import OntologyBuilderSection from './_sections/OntologyBuilderSection'
 
 type Company = {
   id: string
@@ -221,6 +222,17 @@ export default function CompanyDetailPage() {
           </Card>
         ))}
       </div>
+
+      {/* === オントロジー構築ウィザード（ガイドレイヤー。個別カードは下部に従来どおり） === */}
+      <Card className="bg-muted/50 border shadow-none mb-6">
+        <CardContent className="p-6">
+          <h3 className="text-base font-bold text-foreground mb-1">オントロジー構築</h3>
+          <p className="text-xs text-muted-foreground mb-4">
+            ブランドの体系をゼロから埋めるためのガイドです。ステップ順が迷わない道筋ですが、任意のステップに直接移動もできます。
+          </p>
+          <OntologyBuilderSection companyId={companyId} valuePropositions={valueProps} />
+        </CardContent>
+      </Card>
 
       {/* === 企業情報編集セクション === */}
       <Card className="bg-muted/50 border shadow-none mb-6">

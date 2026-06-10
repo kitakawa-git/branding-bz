@@ -53,7 +53,14 @@ const CONFLICT_CHOICES: { value: 'a' | 'b' | 'case'; label: (a: string, b: strin
   { value: 'case', label: () => '場面による' },
 ]
 
-export default function ProfilingSection({ companyId }: { companyId: string }) {
+export default function ProfilingSection({
+  companyId,
+  onDataChanged,
+}: {
+  companyId: string
+  // 承認登録のたびに通知（ウィザードのステップ判定更新用・任意）
+  onDataChanged?: () => void
+}) {
   const [questions, setQuestions] = useState<ProfilingQuestion[] | null>(null)
   const [baseline, setBaseline] = useState<Record<string, number>>({})
   const [idx, setIdx] = useState(0)
@@ -279,6 +286,7 @@ export default function ProfilingSection({ companyId }: { companyId: string }) {
       }
       setRegisteredCount((n) => n + 1)
       toast.success('登録しました')
+      onDataChanged?.()
       await next()
     } catch (err) {
       console.error('[Profiling] 登録エラー:', err)

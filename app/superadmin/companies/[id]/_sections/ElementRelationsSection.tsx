@@ -61,7 +61,14 @@ function parseRef(v: string): { kind: ElementKind; id: string } | null {
   return { kind: v.slice(0, i) as ElementKind, id: v.slice(i + 1) }
 }
 
-export default function ElementRelationsSection({ companyId }: { companyId: string }) {
+export default function ElementRelationsSection({
+  companyId,
+  onDataChanged,
+}: {
+  companyId: string
+  // データ再取得のたびに通知（ウィザードのステップ判定更新用・任意）
+  onDataChanged?: () => void
+}) {
   const [rows, setRows] = useState<Relation[]>([])
   const [catalog, setCatalog] = useState<ElementRef[]>([])
   const [loading, setLoading] = useState(true)
@@ -92,6 +99,7 @@ export default function ElementRelationsSection({ companyId }: { companyId: stri
       toast.error('関係グラフの取得に失敗しました')
     } else {
       setRows((relRes.data as Relation[]) || [])
+      onDataChanged?.()
     }
     setCatalog(cat)
     setLoading(false)

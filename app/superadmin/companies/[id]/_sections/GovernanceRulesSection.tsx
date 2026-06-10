@@ -80,9 +80,12 @@ const SELECT_CLASS =
 export default function GovernanceRulesSection({
   companyId,
   valuePropositions,
+  onDataChanged,
 }: {
   companyId: string
   valuePropositions: ValuePropositionRef[]
+  // データ再取得のたびに通知（ウィザードのステップ判定更新用・任意）
+  onDataChanged?: () => void
 }) {
   const [rows, setRows] = useState<GovernanceRule[]>([])
   const [loading, setLoading] = useState(true)
@@ -109,6 +112,7 @@ export default function GovernanceRulesSection({
       toast.error('表現ルールの取得に失敗しました')
     } else {
       setRows((data as GovernanceRule[]) || [])
+      onDataChanged?.()
     }
     setLoading(false)
   }
