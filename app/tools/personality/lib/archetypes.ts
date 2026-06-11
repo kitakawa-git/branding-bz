@@ -156,7 +156,7 @@ export const AAKER_DIMENSIONS: AakerDefinition[] = [
   },
   {
     dimension: 'ruggedness',
-    label: '素朴',
+    label: '逞しさ',
     copy: '飾らない強さ、本物のタフさ。',
     description: '質実剛健・実直・たくましさ。虚飾のない本物感。高いブランドは「無骨だが裏切らない相棒」と感じられます。',
   },
@@ -165,6 +165,9 @@ export const AAKER_DIMENSIONS: AakerDefinition[] = [
 export const AAKER_BY_DIMENSION: Record<AakerDimension, AakerDefinition> = Object.fromEntries(
   AAKER_DIMENSIONS.map(d => [d.dimension, d])
 ) as Record<AakerDimension, AakerDefinition>
+
+/** Aaker 5次元の出典表記（結果画面フッター・PDFで使用） */
+export const AAKER_CITATION = 'Jennifer Aaker (1997) "Dimensions of Brand Personality" に基づく'
 
 /**
  * 期待印象タグの確定8語（これ以外はバリデーションで弾く）。

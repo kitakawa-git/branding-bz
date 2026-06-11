@@ -3,7 +3,7 @@
 // アーキタイプ・Aaker軸の文言は archetypes.ts の定数（コピー定義v1）をそのまま使用。
 import { Document, Page, View, Text, StyleSheet, Font, Svg, Polygon, Line, Text as SvgText } from '@react-pdf/renderer'
 import path from 'path'
-import { ARCHETYPE_BY_KEY, AAKER_BY_DIMENSION, type ArchetypeKey, type AakerDimension } from '../../lib/archetypes'
+import { ARCHETYPE_BY_KEY, AAKER_BY_DIMENSION, AAKER_CITATION, type ArchetypeKey, type AakerDimension } from '../../lib/archetypes'
 import type { DiagnosisResult } from '../../lib/diagnosis'
 
 // NotoSansJP フォント登録（STP PDFと同パターン）
@@ -309,6 +309,9 @@ export function PersonalityPdfDocument({ data }: { data: PersonalityPdfData }) {
             </View>
           </View>
         ) : null}
+
+        {/* 出典表記 */}
+        <Text style={{ fontSize: 7.5, color: '#9CA3AF', marginTop: 4 }}>{AAKER_CITATION}</Text>
 
         {/* フッター */}
         <View style={styles.pageFooter} fixed>

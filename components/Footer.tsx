@@ -13,6 +13,7 @@ const footerLinks = {
     { href: '/tools/stp', label: 'STP分析' },
     { href: '/tools/persona', label: 'ペルソナビルダー' },
     { href: '/tools/colors', label: 'ブランドカラー定義' },
+    { href: '/tools/personality', label: 'パーソナリティ診断' },
   ],
   legal: [
     { href: '/terms', label: '利用規約' },

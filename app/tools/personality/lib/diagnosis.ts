@@ -84,7 +84,7 @@ export function buildSystemPrompt(framework: FrameworkKey): string {
     .join('\n')
 
   const summaryVocab = framework === 'aaker'
-    ? 'Aaker 5次元の語彙（誠実・刺激・能力・洗練・素朴とその強弱）'
+    ? `Aaker 5次元の語彙（${AAKER_DIMENSIONS.map(d => d.label).join('・')}とその強弱）`
     : '12アーキタイプの語彙（主人格・副人格の型の名前と性質）'
 
   return `あなたは中小企業のブランドパーソナリティ設計の専門家。経営者が答えた10問の診断から、ブランドの「人格」を構造化する。
@@ -131,7 +131,7 @@ ${archetypeDefs}
     { "dimension": "excitement", "label": "刺激", "score": 2, "copy": "...", "description": "..." },
     { "dimension": "competence", "label": "能力", "score": 5, "copy": "...", "description": "..." },
     { "dimension": "sophistication", "label": "洗練", "score": 3, "copy": "...", "description": "..." },
-    { "dimension": "ruggedness", "label": "素朴", "score": 2, "copy": "...", "description": "..." }
+    { "dimension": "ruggedness", "label": "逞しさ", "score": 2, "copy": "...", "description": "..." }
   ],
   "archetype": {
     "primary": { "key": "sage", "label": "賢者", "copy": "...", "description": "..." },

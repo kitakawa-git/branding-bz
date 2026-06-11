@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
-import { Menu, X, ChevronDown, Palette, Target, UserCircle } from 'lucide-react'
+import { Menu, X, ChevronDown, Palette, Target, UserCircle, Fingerprint } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import {
   DropdownMenu,
@@ -23,6 +23,7 @@ const toolItems = [
   { href: '/tools/stp', label: 'STP分析', icon: Target },
   { href: '/tools/persona', label: 'ペルソナビルダー', icon: UserCircle },
   { href: '/tools/colors', label: 'ブランドカラー定義', icon: Palette },
+  { href: '/tools/personality', label: 'パーソナリティ診断', icon: Fingerprint },
 ]
 
 /**

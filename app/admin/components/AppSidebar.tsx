@@ -50,6 +50,7 @@ import {
   Crosshair,
   UserRound,
   Palette,
+  Fingerprint,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -80,6 +81,7 @@ const buildItems: NavItem[] = [
   { href: '/tools/stp/app', label: 'STP分析', icon: Crosshair },
   { href: '/tools/persona/app', label: 'ペルソナビルダー', icon: UserRound },
   { href: '/tools/colors/app', label: 'ブランドカラー定義', icon: Palette },
+  { href: '/tools/personality/app', label: 'パーソナリティ診断', icon: Fingerprint },
 ]
 
 // 浸透（branding.bz本体の浸透施策）: サーベイ・理解度テスト・ラーニング

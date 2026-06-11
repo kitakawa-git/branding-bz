@@ -25,7 +25,7 @@ import {
 } from 'recharts'
 import { toast } from 'sonner'
 import { ArrowLeft, Download, SlidersHorizontal, Check, X, Unplug } from 'lucide-react'
-import { ARCHETYPE_BY_KEY, type ArchetypeKey } from '../../../lib/archetypes'
+import { ARCHETYPE_BY_KEY, AAKER_CITATION, type ArchetypeKey } from '../../../lib/archetypes'
 import type { FrameworkKey } from '../../../lib/questions'
 import type { DiagnosisResult, AakerScoreItem } from '../../../lib/diagnosis'
 
@@ -389,6 +389,9 @@ export function Step5Result({ sessionId, framework, diagnosis, companyName, onSa
           )}
         </CardContent>
       </Card>
+
+      {/* 出典表記 */}
+      <p className="mt-3 text-[11px] text-muted-foreground">{AAKER_CITATION}</p>
 
       {/* ===== 本体連携（管理者のみ） ===== */}
       {!checkingAdmin && (
