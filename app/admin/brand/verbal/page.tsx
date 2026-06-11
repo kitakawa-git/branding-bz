@@ -1,7 +1,9 @@
 'use client'
 
-// バーバルアイデンティティ 編集ページ（トーンオブボイス＋用語ルール）
+// バーバルアイデンティティ 編集ページ（トーンオブボイス＋表現ルール＋用語ルール）
 // - トーンオブボイス: brand_personalities.tone_of_voice
+// - 表現ルール: governance_rules の rule_type='tone_rule' のみ（claim_rule 等はオントロジー側の管轄）。
+//   RLSで管理者は直接書けないため /api/brand/tone-rules 経由。削除は element_relations のエッジを巻き込む
 // - 用語ルール: brand_terms
 import { useEffect, useState, useMemo } from 'react'
 import { toast } from 'sonner'
@@ -18,6 +20,16 @@ import { type PortalSubtitles } from '@/lib/portal-subtitles'
 import { splitToneOfVoice, combineBrandCopy } from '@/lib/brand-mvv'
 import { Plus, Trash2, Check } from 'lucide-react'
 import { Fab, FabButton } from '@/components/ui/fab'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 
 type Personality = {
   // トーンオブボイスは「コピー＋説明文」を分けて編集（保存時に空行区切りで結合し tone_of_voice 列へ）
@@ -31,6 +43,22 @@ type TermItem = {
   context: string
   category: string
 }
+
+// 表現ルール（governance_rules の tone_rule）。id=null は未保存の新規行
+type ToneRuleItem = {
+  id: string | null
+  rule_text: string
+  ng_example: string
+  ok_example: string
+  severity: 'info' | 'warn' | 'block'
+  edge_count: number
+}
+
+const SEVERITY_OPTIONS: Array<{ value: ToneRuleItem['severity']; label: string }> = [
+  { value: 'info', label: '参考' },
+  { value: 'warn', label: '原則遵守' },
+  { value: 'block', label: '絶対遵守' },
+]
 
 type VerbalCache = {
   personalityId: string | null
@@ -52,6 +80,35 @@ export default function VerbalIdentityPage() {
   const [saving, setSaving] = useState(false)
   const [portalSubtitle, setPortalSubtitle] = useState(cached?.portalSubtitle ?? '')
   const [portalSubtitlesData, setPortalSubtitlesData] = useState<PortalSubtitles | null>(cached?.portalSubtitlesData ?? null)
+
+  // 表現ルール（ページキャッシュとは独立に毎回API取得。id が安定している必要があるため）
+  const [toneRules, setToneRules] = useState<ToneRuleItem[]>([])
+  const [deleteTarget, setDeleteTarget] = useState<{ index: number; rule: ToneRuleItem } | null>(null)
+  const [deletingRule, setDeletingRule] = useState(false)
+
+  const fetchToneRules = async () => {
+    try {
+      const res = await fetch('/api/brand/tone-rules')
+      if (!res.ok) return
+      const data = await res.json()
+      setToneRules((Array.isArray(data.rules) ? data.rules : []).map((r: Record<string, unknown>) => ({
+        id: (r.id as string) || null,
+        rule_text: (r.rule_text as string) || '',
+        ng_example: (r.ng_example as string) || '',
+        ok_example: (r.ok_example as string) || '',
+        severity: (['info', 'warn', 'block'].includes(r.severity as string) ? r.severity : 'warn') as ToneRuleItem['severity'],
+        edge_count: (r.edge_count as number) ?? 0,
+      })))
+    } catch {
+      // 取得失敗時はセクションを空のまま表示（保存時にエラーで気づける）
+    }
+  }
+
+  useEffect(() => {
+    if (!companyId) return
+    fetchToneRules()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [companyId])
 
   const fetchData = async () => {
     if (!companyId) return
@@ -157,6 +214,51 @@ export default function VerbalIdentityPage() {
     setTerms(terms.filter((_, i) => i !== index))
   }
 
+  // --- 表現ルール操作 ---
+  const addToneRule = () => {
+    setToneRules([...toneRules, { id: null, rule_text: '', ng_example: '', ok_example: '', severity: 'warn', edge_count: 0 }])
+  }
+
+  const updateToneRule = (index: number, field: 'rule_text' | 'ng_example' | 'ok_example' | 'severity', value: string) => {
+    const updated = [...toneRules]
+    updated[index] = { ...updated[index], [field]: value }
+    setToneRules(updated)
+  }
+
+  const requestRemoveToneRule = (index: number) => {
+    const rule = toneRules[index]
+    if (!rule.id) {
+      // 未保存の新規行はローカル削除のみ
+      setToneRules(toneRules.filter((_, i) => i !== index))
+      return
+    }
+    setDeleteTarget({ index, rule })
+  }
+
+  const confirmRemoveToneRule = async () => {
+    if (!deleteTarget?.rule.id) return
+    setDeletingRule(true)
+    try {
+      const res = await fetch(`/api/brand/tone-rules?id=${deleteTarget.rule.id}`, { method: 'DELETE' })
+      const data = await res.json()
+      if (!res.ok) {
+        toast.error(data.error || '表現ルールの削除に失敗しました')
+        return
+      }
+      setToneRules(prev => prev.filter((_, i) => i !== deleteTarget.index))
+      toast.success(
+        data.deletedEdges > 0
+          ? `表現ルールを削除しました（関係グラフのエッジ ${data.deletedEdges} 本も削除）`
+          : '表現ルールを削除しました'
+      )
+    } catch {
+      toast.error('表現ルールの削除中にエラーが発生しました')
+    } finally {
+      setDeletingRule(false)
+      setDeleteTarget(null)
+    }
+  }
+
   // Supabase REST API直接fetch
   const supabasePatch = async (table: string, id: string, data: Record<string, unknown>, token: string): Promise<{ ok: boolean; error?: string }> => {
     const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`
@@ -233,10 +335,10 @@ export default function VerbalIdentityPage() {
       const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 
       // --- 1. トーンオブボイス保存（brand_personalities） ---
+      // ※ communication_style はこの画面に編集UIがないため触らない（診断連携で書かれた値を消さない）
       const personalityData: Record<string, unknown> = {
         company_id: companyId,
         tone_of_voice: combineBrandCopy(personality.tone_copy, personality.tone_body) || null,
-        communication_style: null,
       }
       let pResult: { ok: boolean; error?: string; data?: Record<string, unknown> }
       if (personalityId) {
@@ -290,6 +392,34 @@ export default function VerbalIdentityPage() {
         }
       }
       setTerms(cleanedTerms)
+
+      // --- 3. 表現ルール保存（governance_rules tone_rule・API経由の差分UPSERT） ---
+      // 未保存の新規行で空のものは除外。既存行のルール文が空ならエラー
+      const rulesToSave = toneRules.filter(r => r.id || r.rule_text.trim())
+      if (rulesToSave.some(r => r.id && !r.rule_text.trim())) {
+        throw new Error('表現ルールのルール文は必須です')
+      }
+      if (rulesToSave.length > 0 || toneRules.length !== rulesToSave.length) {
+        const ruleRes = await fetch('/api/brand/tone-rules', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            rules: rulesToSave.map(r => ({
+              id: r.id || undefined,
+              rule_text: r.rule_text,
+              ng_example: r.ng_example,
+              ok_example: r.ok_example,
+              severity: r.severity,
+            })),
+          }),
+        })
+        if (!ruleRes.ok) {
+          const body = await ruleRes.json().catch(() => ({}))
+          throw new Error('表現ルール保存エラー: ' + (body.error || `HTTP ${ruleRes.status}`))
+        }
+        // 新規行に id を割り当てるため再取得
+        await fetchToneRules()
+      }
 
       // ポータルサブタイトルは入力UIを廃止。既存値はそのまま保持（再書き込みで温存）
       const updatedSubtitles = { ...(portalSubtitlesData || {}) }
@@ -383,7 +513,90 @@ export default function VerbalIdentityPage() {
           </CardContent>
         </Card>
 
-        {/* カード2: 用語ルール */}
+        {/* カード2: 表現ルール（governance_rules tone_rule） */}
+        <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+          <CardContent className="p-5">
+            <h2 className="text-xs font-bold mb-2">表現ルール</h2>
+            <p className="text-xs text-muted-foreground mb-4">
+              ブランドの語り口の制約ルール（NG例・OK例つき）を設定します。AIのコピー生成やパーソナリティ診断の連携で参照されます
+            </p>
+
+            <div className="space-y-3">
+              {toneRules.map((rule, index) => (
+                <div key={rule.id ?? `new-${index}`} className="rounded-lg border border-border bg-background p-3">
+                  <div className="flex gap-2 items-center mb-2">
+                    <Input
+                      value={rule.rule_text}
+                      onChange={(e) => updateToneRule(index, 'rule_text', e.target.value)}
+                      placeholder="ルール文（例：専門用語を使う際は必ず平易な言葉で補足する）"
+                      className="h-10 flex-1"
+                    />
+                    <select
+                      value={rule.severity}
+                      onChange={(e) => updateToneRule(index, 'severity', e.target.value)}
+                      className="h-10 w-[110px] shrink-0 rounded-md border border-input bg-background px-2 text-sm"
+                    >
+                      {SEVERITY_OPTIONS.map(o => (
+                        <option key={o.value} value={o.value}>{o.label}</option>
+                      ))}
+                    </select>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => requestRemoveToneRule(index)}
+                      className="size-9 shrink-0 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+                    >
+                      <Trash2 size={14} />
+                    </Button>
+                  </div>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <Input
+                      value={rule.ng_example}
+                      onChange={(e) => updateToneRule(index, 'ng_example', e.target.value)}
+                      placeholder="NG例"
+                      className="h-10"
+                    />
+                    <Input
+                      value={rule.ok_example}
+                      onChange={(e) => updateToneRule(index, 'ok_example', e.target.value)}
+                      placeholder="OK例"
+                      className="h-10"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <Button type="button" variant="outline" onClick={addToneRule} className="mt-3 gap-1">
+              <Plus size={16} />表現ルールを追加
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* 表現ルール削除の確認ダイアログ（関係グラフのエッジ巻き込み削除を明示） */}
+        <AlertDialog open={!!deleteTarget} onOpenChange={(o) => { if (!o) setDeleteTarget(null) }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>表現ルールを削除します</AlertDialogTitle>
+              <AlertDialogDescription>
+                「{deleteTarget?.rule.rule_text || '（無題のルール）'}」を削除します。
+                {(deleteTarget?.rule.edge_count ?? 0) > 0 && (
+                  <> 関連する関係グラフのエッジ{deleteTarget?.rule.edge_count}本も削除されます。</>
+                )}
+                {' '}この操作は元に戻せません。
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={deletingRule}>キャンセル</AlertDialogCancel>
+              <AlertDialogAction onClick={(e) => { e.preventDefault(); confirmRemoveToneRule() }} disabled={deletingRule}>
+                {deletingRule ? '削除中...' : '削除する'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* カード3: 用語ルール */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-5">
             <h2 className="text-xs font-bold mb-2">用語ルール</h2>

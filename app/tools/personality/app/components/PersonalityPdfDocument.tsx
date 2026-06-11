@@ -298,6 +298,24 @@ export function PersonalityPdfDocument({ data }: { data: PersonalityPdfData }) {
           ) : null}
         </View>
 
+        {/* 表現ルール */}
+        {d.tone_rules?.length > 0 ? (
+          <View style={styles.section} wrap={false}>
+            <Text style={styles.sectionTitle}>表現ルール</Text>
+            {d.tone_rules.map((r, i) => (
+              <View key={i} style={styles.card} wrap={false}>
+                <Text style={{ fontSize: 9, fontWeight: 700, color: '#374151', marginBottom: 3 }}>{r.rule_text}</Text>
+                {r.ng_example ? (
+                  <Text style={{ fontSize: 8.5, color: '#B91C1C', lineHeight: 1.5 }}>NG例: {r.ng_example}</Text>
+                ) : null}
+                {r.ok_example ? (
+                  <Text style={{ fontSize: 8.5, color: '#15803D', lineHeight: 1.5, marginTop: 2 }}>OK例: {r.ok_example}</Text>
+                ) : null}
+              </View>
+            ))}
+          </View>
+        ) : null}
+
         {/* 期待タグ */}
         {d.expected_tags?.length > 0 ? (
           <View style={styles.section} wrap={false}>
