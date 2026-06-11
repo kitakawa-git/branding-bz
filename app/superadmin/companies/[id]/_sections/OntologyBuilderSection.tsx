@@ -253,6 +253,9 @@ export default function OntologyBuilderSection({
             : 'プロファイリングで解消できるwarn系の検出（裏づけのない約束など）は0件です。'}
           現在の登録: 理念 {counts.mission + counts.vision + counts.value}件・提供価値 {counts.vp}件・実績 {counts.proof}件・表現ルール {counts.rule}件・関係 {counts.relation}本
         </p>
+        <a href="#brand-map" className="inline-block text-[13px] font-semibold text-blue-700 mt-1.5">
+          ブランドマップを見る →
+        </a>
       </div>
     )
   }

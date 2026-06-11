@@ -16,6 +16,7 @@ import ElementRelationsSection from './_sections/ElementRelationsSection'
 import IntegrityCheckSection from './_sections/IntegrityCheckSection'
 import ProfilingSection from './_sections/ProfilingSection'
 import OntologyBuilderSection from './_sections/OntologyBuilderSection'
+import BrandMapSection from './_sections/BrandMapSection'
 
 type Company = {
   id: string
@@ -462,6 +463,17 @@ export default function CompanyDetailPage() {
             理念・提供価値・実績・表現ルール・ペルソナの「跨ぐ関係」（方向づける／裏づけられる／矛盾する 等）。AIのコピー生成時に整合性の根拠として参照されます。
           </p>
           <ElementRelationsSection companyId={companyId} />
+        </CardContent>
+      </Card>
+
+      {/* === ブランドマップ（読み取り専用の可視化）セクション === */}
+      <Card id="brand-map" className="bg-muted/50 border shadow-none mt-6">
+        <CardContent className="p-6">
+          <h3 className="text-base font-bold text-foreground mb-1">ブランドマップ</h3>
+          <p className="text-xs text-muted-foreground mb-4">
+            理念・提供価値・実績・ルール・ペルソナの繋がりを可視化します。現状マップ（力学配置・診断用）と構造マップ（同心円・説明用）をタブで切り替えられます。
+          </p>
+          <BrandMapSection companyId={companyId} />
         </CardContent>
       </Card>
 
