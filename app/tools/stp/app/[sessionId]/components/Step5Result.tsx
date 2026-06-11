@@ -9,6 +9,8 @@ import { PositioningMap } from '@/components/PositioningMap'
 import type { PositioningMapData } from '@/lib/types/positioning-map'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
+import { ConnectModal } from './ConnectModal'
+import { ToolConnectActions } from '@/components/shared/ToolConnectActions'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,12 +24,12 @@ import {
 import {
   ArrowLeft,
   Download,
-  Link as LinkIcon,
   LayoutGrid,
   Target,
   MapPin,
-  RotateCcw,
   Loader2,
+  Sparkles,
+  RefreshCw,
 } from 'lucide-react'
 
 // 型定義
@@ -60,6 +62,9 @@ interface TargetingData {
   main_target: string
   sub_targets: string[]
   target_description: string
+  target_summary?: string
+  buying_factors?: string[]
+  strengths?: string
 }
 
 interface PositioningItem {
@@ -148,10 +153,56 @@ export function Step5Result({
 }: Step5Props) {
   const router = useRouter()
   const [pdfLoading, setPdfLoading] = useState(false)
-  const [connectLoading, setConnectLoading] = useState(false)
   const [adminCompanyId, setAdminCompanyId] = useState<string | null>(companyId)
   const [isAdminUser, setIsAdminUser] = useState(false)
   const [checkingAdmin, setCheckingAdmin] = useState(true)
+  const [targetSummary, setTargetSummary] = useState<string>(targeting.target_summary || '')
+  const [summaryLoading, setSummaryLoading] = useState(false)
+
+  // ターゲット概要文をAI生成（再生成にも使う）
+  const generateTargetSummary = useCallback(async () => {
+    if (!targeting.main_target) return
+    setSummaryLoading(true)
+    try {
+      const res = await fetch('/api/tools/stp/suggest-target-summary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ basic_info: basicInfo, segmentation, targeting }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        toast.error(data.error || 'ターゲット概要の生成に失敗しました')
+        return
+      }
+      const data = await res.json()
+      const summary = String(data.summary || '')
+      setTargetSummary(summary)
+      // セッションに保存
+      try {
+        await fetch(`/api/tools/stp/sessions/${sessionId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionData: { targeting: { ...targeting, target_summary: summary } },
+          }),
+        })
+      } catch {
+        // 保存失敗時は次回再生成で復帰
+      }
+    } catch {
+      toast.error('ターゲット概要の生成中にエラーが発生しました')
+    } finally {
+      setSummaryLoading(false)
+    }
+  }, [sessionId, basicInfo, segmentation, targeting])
+
+  // 初回表示時に未生成なら自動生成
+  useEffect(() => {
+    if (!targetSummary && !summaryLoading && targeting.main_target) {
+      generateTargetSummary()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // admin_users に存在するか確認
   useEffect(() => {
@@ -240,62 +291,39 @@ export function Step5Result({
   }, [sessionId, basicInfo.company_name])
 
   // branding.bz連携
-  const [connectConfirmOpen, setConnectConfirmOpen] = useState(false)
+  const [connectModalOpen, setConnectModalOpen] = useState(false)
 
   const handleConnectClick = useCallback(() => {
     if (!adminCompanyId) {
       router.push('/admin/login')
       return
     }
-    setConnectConfirmOpen(true)
+    setConnectModalOpen(true)
   }, [adminCompanyId, router])
 
-  const handleConnect = useCallback(async () => {
-    if (!adminCompanyId) return
-
-    setConnectLoading(true)
+  // 連携成功時：基本情報を本体（companies）へ書き戻し
+  const handleConnected = useCallback(async () => {
     try {
-      const res = await fetch('/api/tools/stp/connect', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId, companyId: adminCompanyId }),
-      })
-
-      if (!res.ok) {
-        const data = await res.json()
-        toast.error(data.error || '連携に失敗しました')
-        return
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        await fetch('/api/tools/shared-profile', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: user.id,
+            company_name: basicInfo.company_name,
+            industry_category: basicInfo.industry_category,
+            industry_subcategory: basicInfo.industry_subcategory,
+            competitors: basicInfo.competitors,
+            business_descriptions: basicInfo.business_descriptions,
+            target_segments: basicInfo.target_segments,
+          }),
+        })
       }
-
-      // 基本情報を本体（companies）へ書き戻し
-      try {
-        const { data: { user } } = await supabase.auth.getUser()
-        if (user) {
-          await fetch('/api/tools/shared-profile', {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              userId: user.id,
-              company_name: basicInfo.company_name,
-              industry_category: basicInfo.industry_category,
-              industry_subcategory: basicInfo.industry_subcategory,
-              competitors: basicInfo.competitors,
-              business_descriptions: basicInfo.business_descriptions,
-              target_segments: basicInfo.target_segments,
-            }),
-          })
-        }
-      } catch {
-        // 書き戻し失敗は無視
-      }
-
-      toast.success('branding.bz のブランド戦略に連携しました')
     } catch {
-      toast.error('連携中にエラーが発生しました')
-    } finally {
-      setConnectLoading(false)
+      // 書き戻し失敗は無視
     }
-  }, [sessionId, adminCompanyId, basicInfo])
+  }, [basicInfo])
 
   // 最初からやり直す
   const [restartConfirmOpen, setRestartConfirmOpen] = useState(false)
@@ -337,14 +365,13 @@ export function Step5Result({
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-foreground mb-6">Step 5: 確認・出力</h1>
+      <h1 className="text-2xl font-bold text-foreground mb-2">Step 5: 確認・出力</h1>
+      <p className="mb-5 text-[13px] text-muted-foreground">
+        STP分析の結果を確認し、PDF出力や branding.bz への連携を行いましょう
+      </p>
 
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
         <CardContent className="p-5">
-          <p className="mb-5 text-[13px] text-muted-foreground">
-            STP分析の結果を確認し、PDF出力や branding.bz への連携を行いましょう
-          </p>
-
           {/* ===== S — セグメンテーション ===== */}
           <div className="mb-5 rounded-lg border border-gray-200 bg-white p-5">
         <div className="mb-4 flex items-center gap-2">
@@ -441,6 +468,42 @@ export function Step5Result({
           </div>
         )}
 
+        {/* ターゲット概要文（AI生成） */}
+        <div className="mt-4 rounded-lg border border-blue-100 bg-blue-50/30 p-4">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5">
+              <Sparkles className="h-3.5 w-3.5 text-ds-app-accent" />
+              <p className="text-xs font-bold text-ds-app-accent">ターゲット戦略の概要（AI生成）</p>
+            </div>
+            {targetSummary && !summaryLoading && (
+              <button
+                type="button"
+                onClick={generateTargetSummary}
+                className="flex items-center gap-1 text-[11px] text-gray-500 hover:text-ds-app-accent"
+              >
+                <RefreshCw className="h-3 w-3" />
+                再生成
+              </button>
+            )}
+          </div>
+          {summaryLoading ? (
+            <div className="flex items-center gap-2 text-xs text-gray-500">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ターゲット戦略の概要を生成中...
+            </div>
+          ) : targetSummary ? (
+            <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{targetSummary}</p>
+          ) : (
+            <button
+              type="button"
+              onClick={generateTargetSummary}
+              className="text-xs text-ds-app-accent hover:underline"
+            >
+              AIで概要文を生成する
+            </button>
+          )}
+        </div>
+
       </div>
 
           {/* ===== P — ポジショニング ===== */}
@@ -476,60 +539,18 @@ export function Step5Result({
         </div>
       </div>
 
-          {/* ===== アクションボタン ===== */}
-          <div className="space-y-3 rounded-lg border border-gray-200 bg-white p-5">
-        <div className="flex flex-col gap-3 sm:flex-row">
-          {/* PDF出力 */}
-          <Button
-            onClick={handlePdfExport}
-            disabled={pdfLoading}
-            className="flex-1 gap-2"
-          >
-            {pdfLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Download className="h-4 w-4" />
-            )}
-            {pdfLoading ? 'PDF生成中...' : 'PDF出力'}
-          </Button>
-
-          {/* branding.bz連携 */}
-          {!checkingAdmin && (
-            <Button
-              onClick={handleConnectClick}
-              disabled={connectLoading}
-              variant={isAdminUser ? 'default' : 'outline'}
-              className="flex-1 gap-2"
-            >
-              {connectLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <LinkIcon className="h-4 w-4" />
-              )}
-              {connectLoading
-                ? '連携中...'
-                : isAdminUser
-                  ? 'branding.bz に連携'
-                  : 'branding.bz にログインして連携'}
-            </Button>
-          )}
-        </div>
-
-            {/* 最初からやり直す */}
-            <div className="text-center">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setRestartConfirmOpen(true)}
-                className="text-xs text-gray-500"
-              >
-                <RotateCcw className="h-3 w-3 mr-1" />
-                最初からやり直す
-              </Button>
-            </div>
-          </div>
         </CardContent>
       </Card>
+
+      {/* ===== ツール末尾共通アクション（連携 + やり直す） ===== */}
+      <ToolConnectActions
+        checkingAdmin={checkingAdmin}
+        isAdminUser={isAdminUser}
+        adminDescription="STP分析の結果をブランド管理プラットフォームに登録できます。連携する項目は次の画面で選択します。"
+        nonAdminDescription="本体への連携には branding.bz の企業アカウント（管理者）が必要です。分析結果はPDFでダウンロードしてご活用ください。"
+        onConnectClick={handleConnectClick}
+        onRestart={() => setRestartConfirmOpen(true)}
+      />
 
       {/* フッターナビゲーション */}
       <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 bg-background/80 backdrop-blur border-t border-border px-6 py-3 flex items-center justify-between">
@@ -537,23 +558,25 @@ export function Step5Result({
           <ArrowLeft className="h-4 w-4" />
           戻る
         </Button>
+        <Button onClick={handlePdfExport} disabled={pdfLoading} className="gap-1">
+          {pdfLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+          {pdfLoading ? 'PDF生成中...' : 'PDFをダウンロード'}
+        </Button>
       </div>
 
-      {/* branding.bz連携の確認ダイアログ */}
-      <AlertDialog open={connectConfirmOpen} onOpenChange={setConnectConfirmOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>branding.bz に連携</AlertDialogTitle>
-            <AlertDialogDescription>
-              分析データをブランド戦略ページに反映します。既存のターゲット・ポジショニングマップデータは上書きされます。よろしいですか？
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>キャンセル</AlertDialogCancel>
-            <AlertDialogAction onClick={() => handleConnect()}>連携する</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* branding.bz連携モーダル */}
+      {adminCompanyId && (
+        <ConnectModal
+          sessionId={sessionId}
+          companyId={adminCompanyId}
+          segmentation={segmentation}
+          targeting={targeting}
+          positioning={positioning}
+          open={connectModalOpen}
+          onOpenChange={setConnectModalOpen}
+          onConnected={handleConnected}
+        />
+      )}
 
       {/* やり直しの確認ダイアログ */}
       <AlertDialog open={restartConfirmOpen} onOpenChange={setRestartConfirmOpen}>

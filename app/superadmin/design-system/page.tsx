@@ -45,6 +45,7 @@ import {
 } from '@/components/ui/select'
 import { FabButton } from '@/components/ui/fab'
 import { StepProgressBar } from '@/components/shared/StepProgressBar'
+import { ToolConnectActions } from '@/components/shared/ToolConnectActions'
 
 // ============================================================
 // 実測の設定
@@ -811,6 +812,24 @@ const COMPONENT_SAMPLES: ComponentSample[] = [
         steps={[{ label: '基本情報' }, { label: 'ブランド' }, { label: '確認' }, { label: '完了' }]}
         currentStep={2}
       />
+    ),
+  },
+  {
+    key: 'tool-connect-actions',
+    name: 'ToolConnectActions（ツール末尾共通アクション）',
+    description: 'STP・パーソナリティ等の Step5 末尾で使う「branding.bz への連携」Card＋任意の「最初からやり直す」ボタン。',
+    classNames: ['<ToolConnectActions isAdminUser adminDescription onConnectClick onRestart>'],
+    minHeight: 220,
+    fullWidth: true,
+    render: () => (
+      <div className="max-w-2xl">
+        <ToolConnectActions
+          isAdminUser
+          adminDescription="STP分析の結果をブランド管理プラットフォームに登録できます。連携する項目は次の画面で選択します。"
+          onConnectClick={() => {}}
+          onRestart={() => {}}
+        />
+      </div>
     ),
   },
 ]
