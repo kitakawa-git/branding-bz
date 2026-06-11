@@ -5,11 +5,22 @@
 // - アーキタイプカードの文言は archetypes.ts の定数（コピー定義v1）をそのまま表示
 // - 微調整は Aaker スコアのスライダー編集のみ（AI再生成はv1ではしない）
 import { useState, useEffect, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { supabase } from '@/lib/supabase'
 import { ConnectModal } from './ConnectModal'
 import { Slider } from '@/components/ui/slider'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import {
   ChartContainer,
   ChartTooltip,
@@ -23,7 +34,7 @@ import {
   RadarChart,
 } from 'recharts'
 import { toast } from 'sonner'
-import { ArrowLeft, Download, SlidersHorizontal, Check, X, Unplug } from 'lucide-react'
+import { ArrowLeft, Download, SlidersHorizontal, Check, X, Unplug, RotateCcw } from 'lucide-react'
 import { ARCHETYPE_BY_KEY, AAKER_CITATION, type ArchetypeKey } from '../../../lib/archetypes'
 import type { FrameworkKey } from '../../../lib/questions'
 import type { DiagnosisResult, AakerScoreItem } from '../../../lib/diagnosis'
@@ -50,7 +61,39 @@ const radarConfig = {
 }
 
 export function Step5Result({ sessionId, framework, diagnosis, companyName, onSaveField, onBack }: Step5Props) {
+  const router = useRouter()
   const defaultTab: FrameworkKey = framework === 'archetype' ? 'archetype' : 'aaker'
+  const [restartConfirmOpen, setRestartConfirmOpen] = useState(false)
+
+  // 最初からやり直す（STPと同パターン: 現セッションを完了化→新規セッション作成→遷移）
+  const handleRestart = useCallback(async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        toast.error('認証エラーが発生しました')
+        return
+      }
+      await fetch(`/api/tools/personality/sessions/${sessionId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionData: { completed: true }, status: 'completed' }),
+      })
+      const res = await fetch('/api/tools/personality/sessions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id }),
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        toast.error(data.error || '新しいセッションの作成に失敗しました')
+        return
+      }
+      const { sessionId: newSessionId } = await res.json()
+      router.replace(`/tools/personality/app/${newSessionId}`)
+    } catch {
+      toast.error('エラーが発生しました')
+    }
+  }, [sessionId, router])
   const [editing, setEditing] = useState(false)
   const [editScores, setEditScores] = useState<AakerScoreItem[]>([])
   const [savingScores, setSavingScores] = useState(false)
@@ -453,6 +496,19 @@ export function Step5Result({ sessionId, framework, diagnosis, companyName, onSa
         />
       )}
 
+      {/* ===== 最初からやり直す ===== */}
+      <div className="mt-4 text-center">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setRestartConfirmOpen(true)}
+          className="text-xs text-gray-500"
+        >
+          <RotateCcw className="h-3 w-3 mr-1" />
+          最初からやり直す
+        </Button>
+      </div>
+
       {/* フッターナビゲーション */}
       <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 bg-background/80 backdrop-blur border-t border-border px-6 py-3 flex justify-between">
         <Button variant="outline" onClick={onBack} className="gap-1">
@@ -464,6 +520,22 @@ export function Step5Result({ sessionId, framework, diagnosis, companyName, onSa
           {exporting ? 'PDF生成中...' : 'PDFをダウンロード'}
         </Button>
       </div>
+
+      {/* やり直しの確認ダイアログ */}
+      <AlertDialog open={restartConfirmOpen} onOpenChange={setRestartConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>最初からやり直す</AlertDialogTitle>
+            <AlertDialogDescription>
+              診断結果は保存されています。新しい診断を始めますか？
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>キャンセル</AlertDialogCancel>
+            <AlertDialogAction onClick={() => handleRestart()}>やり直す</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
