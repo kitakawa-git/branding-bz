@@ -50,7 +50,7 @@ const STEPS: { num: number; label: string; full: string; why: string }[] = [
   { num: 2, label: '実績・エピソード', full: '実績・エピソードを集める', why: '提供価値に沿った実績・エピソードがあるほど、AIの提案が御社ならではの内容になります' },
   { num: 3, label: '言葉のルール', full: '言葉のルールを決める', why: '「言わせたくないこと」を決めるほど、AIの言葉づかいが御社らしくなります' },
   { num: 4, label: '関係性', full: '際立つ関係性を洗い出す', why: '要素どうしが支え合う関係・ぶつかる関係を登録すると、AIが正しい根拠と避けるべき表現を判断できるようになります' },
-  { num: 5, label: '補足質問', full: '補足質問', why: '自動点検で見つかった不足を、質問でお聞きします。答えるほどAIの提案精度が上がります' },
+  { num: 5, label: '補足質問', full: '補足質問', why: 'ここまでに登録された内容を精査して、不足している点を質問でお聞きします' },
 ]
 
 export default function OntologyBuilderSection({
