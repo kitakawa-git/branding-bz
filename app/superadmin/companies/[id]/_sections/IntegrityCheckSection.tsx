@@ -1,13 +1,14 @@
 'use client'
 
 // スーパー管理画面 企業詳細: 「整合性チェック」パネル
-// - 「チェック実行」: 決定論的5チェック（/api/superadmin/integrity）。読み取りのみ。
+// - 決定論チェック（/api/superadmin/integrity）は表示時に自動実行（AI不要・読み取りのみ・コストゼロ。
+//   手動の「チェック実行」ボタンは廃止＝自動点検と二重のため）。
 // - 「AI判定を実行」: governance_rules の tone/claim/discouraged を Claude が実テキストに対して評価
 //   （/api/superadmin/integrity-ai・POST・押した時だけ）。違反箇所＋理由＋修正案を表示。修正案は表示のみ（自動適用しない）。
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
-import { AlertTriangle, Info, Play, ShieldCheck, Sparkles, Copy } from 'lucide-react'
+import { AlertTriangle, Info, ShieldCheck, Sparkles, Copy } from 'lucide-react'
 import { toast } from 'sonner'
 
 type Finding = {
@@ -59,6 +60,12 @@ export default function IntegrityCheckSection({ companyId }: { companyId: string
       setRunning(false)
     }
   }
+
+  // 決定論チェックは表示時に自動実行（手動ボタンは廃止。AI判定のみ手動＝コスト発生のため）
+  useEffect(() => {
+    run()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [companyId])
 
   const runAi = async () => {
     setAiRunning(true)
@@ -138,15 +145,16 @@ export default function IntegrityCheckSection({ companyId }: { companyId: string
   return (
     <div>
       <div className="flex flex-wrap gap-2">
-        <Button type="button" onClick={run} disabled={running} variant="outline" className="py-2 px-4 text-[13px]">
-          <Play size={16} />
-          {running ? 'チェック中...' : 'チェック実行（決定論）'}
-        </Button>
         <Button type="button" onClick={runAi} disabled={aiRunning} className="py-2 px-4 text-[13px]">
           <Sparkles size={16} />
           {aiRunning ? 'AI判定中...' : 'AI判定を実行'}
         </Button>
       </div>
+
+      {/* 決定論チェックは自動実行（読み込み中表示のみ） */}
+      {running && findings === null && (
+        <p className="text-[13px] text-muted-foreground mt-3 mb-0">自動点検中...</p>
+      )}
 
       {/* 決定論 結果 */}
       {findings !== null && (
