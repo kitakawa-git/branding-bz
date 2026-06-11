@@ -6,7 +6,7 @@
 import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { Palette, BarChart3, UserCircle, Building2 } from 'lucide-react'
+import { Palette, BarChart3, UserCircle, Fingerprint, Building2 } from 'lucide-react'
 
 interface ServiceCard {
   id: string
@@ -43,6 +43,15 @@ const SERVICES: ServiceCard[] = [
     title: 'ブランドカラー定義ツール',
     description: 'AIがブランドに最適なカラーパレットを3案提案します',
     href: '/tools/colors/app',
+    buttonLabel: '始める',
+    highlightButtonLabel: '続ける',
+  },
+  {
+    id: 'personality',
+    Icon: Fingerprint,
+    title: 'ブランドパーソナリティ診断',
+    description: '10問の質問からAIがブランドの人格をスコア・タイプで診断',
+    href: '/tools/personality/app',
     buttonLabel: '始める',
     highlightButtonLabel: '続ける',
   },
