@@ -177,7 +177,7 @@ export default function CompaniesPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <Button variant="ghost" size="sm" className="h-8 text-xs gap-1 text-blue-600 hover:text-blue-700" asChild>
+                        <Button variant="ghost" size="sm" className="h-8 text-xs gap-1 text-ds-app-accent hover:text-ds-app-accent-hover" asChild>
                           <Link href={`/superadmin/companies/${company.id}`}>
                             詳細
                             <ArrowRight size={14} />

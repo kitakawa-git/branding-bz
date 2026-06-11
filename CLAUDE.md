@@ -265,7 +265,7 @@ id (uuid), company_id (FK→companies), name, position, department, bio, photo_u
 | `var(--ds-bg-glass)` ほか | インラインrgba | グラスカード背景・CTAピル・バッジ背景・枠線・影（インライン style で参照） |
 | `text-ds-app-accent` / `bg-ds-app-accent` / `border-ds-app-accent` | `blue-600` / `#2563eb` | アプリ青アクセント（リンク・選択状態・チャート青・ステップバー）。`-hover`=blue-700、`-soft`=blue-500(チャート副線)。recharts/SVG には `var(--ds-app-accent)` を直接 stroke/fill に渡せる |
 
-※未トークン化の青（`blue-*` 216件・gray系623件・STPランダムパレット等）はフェーズ2で段階移行。フェーズ1で置換済みは personality Step5（レーダー＋バッジ）・brand-score Line・signup ステップバーのみ。`/50` 等の不透明度修飾は `ds-*`/var() 参照では使えないため淡色背景 `bg-blue-50` 等は据え置き。
+※**青はフェーズ2でほぼ全置換済み（2026-06-11）**: `blue-500/600/700` の text/bg/border/ring（165件）＋ recharts/SVG/inline の青hex（8件）を `ds-app-accent`系トークンへ（色1:1一致＝`blue-600`=accent / `blue-700`=hover / `blue-500`=soft）。**据え置き**は ①淡色背景 `bg-blue-50/100/200`（86件・`/50`等の不透明度修飾がvar()で効かない）②ブランドカラー定義データ（`brand/visuals` の `accent_colors`＝企業が選ぶ色でテーマ色と別物）③PDF（`@react-pdf`はvar()不可）④`AdminStyles.ts`（dead code）⑤`ring-blue-500/50`。gray系623件は未着手。新規UIで青を使うときは `text-ds-app-accent` 等を使うこと（`blue-*` 直書き禁止）。
 
 ### タイポグラフィ
 | 用途 | クラス |

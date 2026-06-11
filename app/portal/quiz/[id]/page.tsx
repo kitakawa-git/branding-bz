@@ -237,7 +237,7 @@ export default function QuizTakePage() {
     <div className="max-w-2xl mx-auto px-5 pt-4 pb-10">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-foreground mb-2 flex items-center gap-2">
-          <ClipboardCheck size={22} className="text-blue-600 shrink-0" />
+          <ClipboardCheck size={22} className="text-ds-app-accent shrink-0" />
           {quiz?.title}
         </h1>
         {quiz?.description && (

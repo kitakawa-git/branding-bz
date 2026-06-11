@@ -72,7 +72,7 @@ export default function PortalValuesPage() {
         <CardContent className="p-4 sm:p-5 space-y-3">
           {values.map((val, i) => (
             <div key={i} className="rounded-lg border border-border bg-background p-4 flex items-start gap-4">
-              <div className="shrink-0 w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center text-base font-bold">
+              <div className="shrink-0 w-9 h-9 rounded-full bg-ds-app-accent text-white flex items-center justify-center text-base font-bold">
                 {i + 1}
               </div>
               <div>

@@ -254,7 +254,7 @@ export function AdminDataProvider({
             </p>
             <button
               onClick={signOut}
-              className="px-6 py-2.5 bg-blue-600 text-white border-none rounded-lg text-sm font-bold cursor-pointer hover:bg-blue-700 transition-colors"
+              className="px-6 py-2.5 bg-ds-app-accent text-white border-none rounded-lg text-sm font-bold cursor-pointer hover:bg-ds-app-accent-hover transition-colors"
             >
               ログアウト
             </button>

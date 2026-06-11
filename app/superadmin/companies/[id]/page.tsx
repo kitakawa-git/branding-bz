@@ -202,7 +202,7 @@ export default function CompanyDetailPage() {
       {/* === アクセス解析サマリー === */}
       <div className="grid grid-cols-3 gap-4 mb-6">
         {[
-          { label: '総閲覧数', value: viewStats.total, color: '#2563eb' },
+          { label: '総閲覧数', value: viewStats.total, color: 'var(--ds-app-accent)' },
           { label: '今月', value: viewStats.month, color: '#16a34a' },
           { label: '今週', value: viewStats.week, color: '#f59e0b' },
         ].map((stat) => (
@@ -359,7 +359,7 @@ export default function CompanyDetailPage() {
                       <Link
                         href={`/card/${profile.slug}`}
                         target="_blank"
-                        className="text-blue-600 no-underline"
+                        className="text-ds-app-accent no-underline"
                       >
                         {profile.slug}
                       </Link>

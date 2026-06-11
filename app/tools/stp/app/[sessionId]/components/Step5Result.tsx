@@ -129,7 +129,7 @@ function toMapData(positioning: PositioningData): PositioningMapData {
 function SegmentBadge({ name, description }: { name: string; description: string }) {
   return (
     <span
-      className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700"
+      className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-medium text-ds-app-accent-hover"
       title={description}
     >
       {name}
@@ -348,7 +348,7 @@ export function Step5Result({
           {/* ===== S — セグメンテーション ===== */}
           <div className="mb-5 rounded-lg border border-gray-200 bg-white p-5">
         <div className="mb-4 flex items-center gap-2">
-          <LayoutGrid className="h-5 w-5 text-blue-600" />
+          <LayoutGrid className="h-5 w-5 text-ds-app-accent" />
           <h3 className="text-base font-bold text-gray-900">
             S — セグメンテーション
           </h3>
@@ -381,7 +381,7 @@ export function Step5Result({
           {/* ===== T — ターゲティング ===== */}
           <div className="mb-5 rounded-lg border border-gray-200 bg-white p-5">
         <div className="mb-4 flex items-center gap-2">
-          <Target className="h-5 w-5 text-blue-600" />
+          <Target className="h-5 w-5 text-ds-app-accent" />
           <h3 className="text-base font-bold text-gray-900">
             T — ターゲティング
           </h3>
@@ -389,7 +389,7 @@ export function Step5Result({
 
         {/* メインターゲット */}
         <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
-          <p className="mb-1 text-xs font-bold text-blue-600">メインターゲット</p>
+          <p className="mb-1 text-xs font-bold text-ds-app-accent">メインターゲット</p>
           <p className="text-sm font-bold text-gray-900">
             {targeting.main_target || '未選択'}
           </p>
@@ -446,7 +446,7 @@ export function Step5Result({
           {/* ===== P — ポジショニング ===== */}
           <div className="mb-5 rounded-lg border border-gray-200 bg-white p-5">
         <div className="mb-4 flex items-center gap-2">
-          <MapPin className="h-5 w-5 text-blue-600" />
+          <MapPin className="h-5 w-5 text-ds-app-accent" />
           <h3 className="text-base font-bold text-gray-900">
             P — ポジショニング
           </h3>
@@ -468,7 +468,7 @@ export function Step5Result({
               <span className="text-xs text-gray-700">
                 {item.name}
                 {item.is_self && (
-                  <span className="ml-1 text-blue-600">（自社）</span>
+                  <span className="ml-1 text-ds-app-accent">（自社）</span>
                 )}
               </span>
             </div>

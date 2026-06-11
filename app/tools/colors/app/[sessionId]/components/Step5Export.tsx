@@ -187,7 +187,7 @@ export function Step5Export({
           {/* 確定ボタン */}
           {!confirmed && (
             <div className="mt-5 rounded-lg border-2 border-dashed border-blue-200 bg-blue-50 p-5 text-center">
-          <p className="mb-3 text-sm text-blue-700">
+          <p className="mb-3 text-sm text-ds-app-accent-hover">
             このパレットでよろしいですか？確定後も調整ステップに戻れます。
           </p>
           <Button onClick={handleConfirm} size="lg">
@@ -225,7 +225,7 @@ export function Step5Export({
                   className="rounded-lg border border-gray-200 bg-white p-4 text-left transition-all hover:border-gray-300 hover:shadow-md"
             >
               <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50">
-                <svg className="h-5 w-5 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg className="h-5 w-5 text-ds-app-accent-soft" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <polyline points="16 18 22 12 16 6" />
                   <polyline points="8 6 2 12 8 18" />
                 </svg>

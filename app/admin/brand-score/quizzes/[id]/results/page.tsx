@@ -24,7 +24,7 @@ import { QuizTabs } from '../QuizTabs'
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
   draft: { label: '下書き', className: 'bg-gray-100 text-gray-700' },
   active: { label: '実施中', className: 'bg-green-100 text-green-700' },
-  closed: { label: '終了', className: 'bg-blue-100 text-blue-700' },
+  closed: { label: '終了', className: 'bg-blue-100 text-ds-app-accent-hover' },
   archived: { label: 'アーカイブ', className: 'bg-gray-100 text-gray-500' },
 }
 
@@ -56,7 +56,7 @@ type Results = {
 
 function barColor(v: number): string {
   if (v >= 80) return '#16a34a'
-  if (v >= 60) return '#2563eb'
+  if (v >= 60) return 'var(--ds-app-accent)'
   if (v >= 40) return '#ca8a04'
   return '#dc2626'
 }

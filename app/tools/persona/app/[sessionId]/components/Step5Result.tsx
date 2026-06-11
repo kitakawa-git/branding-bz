@@ -207,7 +207,7 @@ export function Step5Result({ sessionId, basicInfo, demographics, goals, journey
               <span className="text-xs font-bold text-gray-500 mb-1 block">性格特性</span>
               <div className="flex flex-wrap gap-1.5">
                 {demographics.personality_traits.map((t, i) => (
-                  <span key={i} className="rounded-full bg-blue-50 border border-blue-100 px-2.5 py-0.5 text-xs text-blue-700">{t}</span>
+                  <span key={i} className="rounded-full bg-blue-50 border border-blue-100 px-2.5 py-0.5 text-xs text-ds-app-accent-hover">{t}</span>
                 ))}
               </div>
             </div>
@@ -432,7 +432,7 @@ function InfoItem({ label, value }: { label: string; value: string }) {
 function TagList({ label, items, color }: { label: string; items: string[]; color: string }) {
   if (!items?.length) return null
   const colorMap: Record<string, string> = {
-    blue: 'bg-blue-50 border-blue-100 text-blue-700',
+    blue: 'bg-blue-50 border-blue-100 text-ds-app-accent-hover',
     red: 'bg-red-50 border-red-100 text-red-700',
     orange: 'bg-orange-50 border-orange-100 text-orange-700',
     green: 'bg-green-50 border-green-100 text-green-700',

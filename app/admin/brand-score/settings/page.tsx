@@ -188,7 +188,7 @@ export default function BrandScoreSettingsPage() {
               key={m.tag}
               className={`cursor-pointer transition-all hover:shadow-md ${
                 m.is_expected
-                  ? 'border-blue-500 bg-blue-50 shadow-sm'
+                  ? 'border-ds-app-accent-soft bg-blue-50 shadow-sm'
                   : 'border-gray-200 bg-white'
               }`}
               onClick={() => toggleTag(m.tag)}
@@ -196,13 +196,13 @@ export default function BrandScoreSettingsPage() {
               <CardContent className="p-4 flex items-center justify-between">
                 <span
                   className={`text-sm font-medium ${
-                    m.is_expected ? 'text-blue-700' : 'text-gray-700'
+                    m.is_expected ? 'text-ds-app-accent-hover' : 'text-gray-700'
                   }`}
                 >
                   {m.tag}
                 </span>
                 {m.is_expected && (
-                  <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center shrink-0">
+                  <div className="w-5 h-5 rounded-full bg-ds-app-accent-soft flex items-center justify-center shrink-0">
                     <Check size={12} className="text-white" />
                   </div>
                 )}

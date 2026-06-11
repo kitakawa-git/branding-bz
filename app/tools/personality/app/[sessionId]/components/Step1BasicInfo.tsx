@@ -243,15 +243,15 @@ export function Step1BasicInfo({ basicInfo, framework, onNext, onSaveField }: St
                 type="button"
                 onClick={() => setSelectedFramework(key)}
                 className={`relative rounded-xl border-2 p-5 text-left transition-all hover:shadow-md ${
-                  isSelected ? 'border-blue-600 bg-blue-50/50' : 'border-border bg-background'
+                  isSelected ? 'border-ds-app-accent bg-blue-50/50' : 'border-border bg-background'
                 }`}
               >
                 {isSelected && (
-                  <span className="absolute top-3 right-3 flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-white">
+                  <span className="absolute top-3 right-3 flex h-6 w-6 items-center justify-center rounded-full bg-ds-app-accent text-white">
                     <Check className="h-4 w-4" />
                   </span>
                 )}
-                <Icon size={28} strokeWidth={1.5} className={isSelected ? 'text-blue-600' : 'text-foreground'} />
+                <Icon size={28} strokeWidth={1.5} className={isSelected ? 'text-ds-app-accent' : 'text-foreground'} />
                 <h3 className="mt-3 text-base font-bold text-foreground">{title}</h3>
                 <p className="text-xs font-semibold text-muted-foreground mt-0.5">{subtitle}</p>
                 <p className="mt-2 text-xs text-muted-foreground leading-relaxed">{description}</p>

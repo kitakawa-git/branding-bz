@@ -25,7 +25,7 @@ export function PaletteCard({ proposal, selected, onSelect }: PaletteCardProps) 
     <div
       className={`rounded-lg border-2 bg-white transition-all ${
         selected
-          ? 'border-blue-500 shadow-lg shadow-blue-100'
+          ? 'border-ds-app-accent-soft shadow-lg shadow-blue-100'
           : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
       }`}
     >

@@ -59,7 +59,7 @@ const emptyDraft = (): Draft => ({
 })
 
 const SELECT_CLASS =
-  'h-10 w-full rounded-md border border-border bg-white px-3 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
+  'h-10 w-full rounded-md border border-border bg-white px-3 text-sm outline-none focus:border-ds-app-accent-soft focus:ring-1 focus:ring-ds-app-accent-soft'
 
 export default function ProofPointsSection({
   companyId,
@@ -457,7 +457,7 @@ export default function ProofPointsSection({
                       href={row.source_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-[13px] text-blue-600 break-all"
+                      className="text-[13px] text-ds-app-accent break-all"
                     >
                       {row.source_url}
                     </a>

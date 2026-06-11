@@ -21,7 +21,7 @@ export function StepProgressBar({ steps, currentStep, className }: StepProgressB
         {/* 完了ライン（青：進捗分だけ上書き） */}
         {currentStep > 1 && (
           <div
-            className="absolute top-[15px] left-4 h-0.5 bg-blue-600 transition-all"
+            className="absolute top-[15px] left-4 h-0.5 bg-ds-app-accent transition-all"
             style={{ width: `calc((100% - 32px) * ${progress})` }}
           />
         )}
@@ -39,7 +39,7 @@ export function StepProgressBar({ steps, currentStep, className }: StepProgressB
                   className={cn(
                     'flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition-colors',
                     isCompleted || isCurrent
-                      ? 'bg-blue-600 text-white'
+                      ? 'bg-ds-app-accent text-white'
                       : 'bg-gray-200 text-gray-500'
                   )}
                 >

@@ -42,7 +42,7 @@ const AutoResizeTextarea = React.forwardRef<
       value={value}
       onChange={handleChange}
       className={cn(
-        'w-full px-3 py-2.5 bg-white border border-border rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 overflow-hidden resize-none',
+        'w-full px-3 py-2.5 bg-white border border-border rounded-lg text-sm outline-none focus:border-ds-app-accent-soft focus:ring-1 focus:ring-ds-app-accent-soft overflow-hidden resize-none',
         className
       )}
       {...props}

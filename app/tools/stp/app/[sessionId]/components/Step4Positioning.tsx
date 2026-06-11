@@ -359,7 +359,7 @@ export function Step4Positioning({
                       className="h-8 flex-1 text-sm font-medium"
                     />
                     {item.is_self && (
-                      <span className="shrink-0 rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-700">
+                      <span className="shrink-0 rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-ds-app-accent-hover">
                         自社
                       </span>
                     )}

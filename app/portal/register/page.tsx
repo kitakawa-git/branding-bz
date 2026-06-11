@@ -160,7 +160,7 @@ function PortalRegisterContent() {
               メンバー登録
             </p>
             {companyName && (
-              <p className="text-xs text-blue-600 mt-2 font-bold m-0">
+              <p className="text-xs text-ds-app-accent mt-2 font-bold m-0">
                 {companyName}
               </p>
             )}

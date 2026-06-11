@@ -59,9 +59,9 @@ function ToggleRow({ checked, onToggle, title, children }: {
   children: React.ReactNode
 }) {
   return (
-    <div className={`rounded-lg border p-4 transition-colors ${checked ? 'border-blue-600 bg-blue-50/40' : 'border-border bg-background'}`}>
+    <div className={`rounded-lg border p-4 transition-colors ${checked ? 'border-ds-app-accent bg-blue-50/40' : 'border-border bg-background'}`}>
       <button type="button" onClick={onToggle} className="flex w-full items-center gap-2 text-left">
-        <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border ${checked ? 'border-blue-600 bg-blue-600 text-white' : 'border-gray-300 bg-white'}`}>
+        <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border ${checked ? 'border-ds-app-accent bg-ds-app-accent text-white' : 'border-gray-300 bg-white'}`}>
           {checked && <Check className="h-3.5 w-3.5" />}
         </span>
         <span className="text-sm font-bold text-foreground">{title}</span>
@@ -203,7 +203,7 @@ export function ConnectModal({ sessionId, userId, diagnosis: d, framework, open,
               <div className="flex flex-wrap gap-2">
                 {traitPreview.map((t, i) => (
                   <span key={i} className="rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-700">
-                    {t.name} <span className="font-bold text-blue-700">{t.score}</span>
+                    {t.name} <span className="font-bold text-ds-app-accent-hover">{t.score}</span>
                   </span>
                 ))}
               </div>
@@ -266,7 +266,7 @@ export function ConnectModal({ sessionId, userId, diagnosis: d, framework, open,
             >
               <div className="flex flex-wrap gap-2">
                 {d.expected_tags.map(t => (
-                  <span key={t} className="rounded-full border border-blue-600 bg-blue-50 px-3 py-1 text-xs text-blue-700">{t}</span>
+                  <span key={t} className="rounded-full border border-ds-app-accent bg-blue-50 px-3 py-1 text-xs text-ds-app-accent-hover">{t}</span>
                 ))}
               </div>
               {(existing?.expectedTags.length ?? 0) > 0 && (
@@ -288,10 +288,10 @@ export function ConnectModal({ sessionId, userId, diagnosis: d, framework, open,
                         key={i}
                         type="button"
                         onClick={() => toggleRule(i)}
-                        className={`w-full rounded-lg border p-3 text-left transition-colors ${checked ? 'border-blue-600 bg-blue-50/40' : 'border-border bg-background'}`}
+                        className={`w-full rounded-lg border p-3 text-left transition-colors ${checked ? 'border-ds-app-accent bg-blue-50/40' : 'border-border bg-background'}`}
                       >
                         <div className="flex items-start gap-2">
-                          <span className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border ${checked ? 'border-blue-600 bg-blue-600 text-white' : 'border-gray-300 bg-white'}`}>
+                          <span className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border ${checked ? 'border-ds-app-accent bg-ds-app-accent text-white' : 'border-gray-300 bg-white'}`}>
                             {checked && <Check className="h-3 w-3" />}
                           </span>
                           <div className="min-w-0">

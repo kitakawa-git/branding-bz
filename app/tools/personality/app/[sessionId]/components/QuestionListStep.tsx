@@ -113,7 +113,7 @@ export function QuestionListStep({
             <Card key={question.id} className="bg-[hsl(0_0%_97%)] border shadow-none">
               <CardContent className="p-5">
                 <h2 className="text-sm font-bold text-foreground mb-1">
-                  <span className="text-blue-600 mr-2">Q{question.number}.</span>
+                  <span className="text-ds-app-accent mr-2">Q{question.number}.</span>
                   {question.text}
                 </h2>
                 {question.type === 'multi' && (
@@ -137,7 +137,7 @@ export function QuestionListStep({
                         disabled={isDisabled}
                         className={`inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm transition-colors ${
                           isSelected
-                            ? 'border-blue-600 bg-blue-600 text-white'
+                            ? 'border-ds-app-accent bg-ds-app-accent text-white'
                             : isDisabled
                               ? 'border-border bg-background text-muted-foreground/40 cursor-not-allowed'
                               : 'border-border bg-background text-foreground hover:border-blue-400 hover:bg-blue-50'

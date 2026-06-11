@@ -361,7 +361,7 @@ export function Step3Targeting({
                   key={seg.name}
                   className={`relative rounded-lg border transition-all ${
                     isMain
-                      ? 'border-blue-500 bg-blue-50/50'
+                      ? 'border-ds-app-accent-soft bg-blue-50/50'
                       : isSub
                         ? 'border-blue-300 bg-blue-50/30'
                         : 'border-gray-200 bg-white hover:border-gray-300'
@@ -375,12 +375,12 @@ export function Step3Targeting({
                   >
                     {/* 選択状態バッジ */}
                     {isMain && (
-                      <span className="absolute top-3 right-3 rounded-full bg-blue-500 px-2.5 py-0.5 text-[10px] font-bold text-white">
+                      <span className="absolute top-3 right-3 rounded-full bg-ds-app-accent-soft px-2.5 py-0.5 text-[10px] font-bold text-white">
                         メインターゲット
                       </span>
                     )}
                     {isSub && (
-                      <span className="absolute top-3 right-3 rounded-full bg-blue-100 px-2.5 py-0.5 text-[10px] font-bold text-blue-700">
+                      <span className="absolute top-3 right-3 rounded-full bg-blue-100 px-2.5 py-0.5 text-[10px] font-bold text-ds-app-accent-hover">
                         サブターゲット
                       </span>
                     )}
@@ -424,7 +424,7 @@ export function Step3Targeting({
                             {buyingFactors.map((tag, i) => (
                               <span
                                 key={i}
-                                className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-700"
+                                className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-ds-app-accent-hover"
                               >
                                 {tag}
                                 <button

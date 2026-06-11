@@ -64,7 +64,7 @@ export function MoodboardPairSelector({
       </div>
       <div className="h-1.5 overflow-hidden rounded-full bg-gray-200">
         <div
-          className="h-full rounded-full bg-blue-600 transition-all"
+          className="h-full rounded-full bg-ds-app-accent transition-all"
           style={{ width: `${(value.length / MOODBOARD_PAIRS.length) * 100}%` }}
         />
       </div>
@@ -106,7 +106,7 @@ export function MoodboardPairSelector({
           <button
             onClick={goNext}
             disabled={currentIndex >= MOODBOARD_PAIRS.length - 1}
-            className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 disabled:opacity-30"
+            className="flex items-center gap-1 text-sm text-ds-app-accent hover:text-ds-app-accent-hover disabled:opacity-30"
           >
             次の質問
             <ArrowRight className="h-3.5 w-3.5" />
@@ -125,7 +125,7 @@ export function MoodboardPairSelector({
               className={cn(
                 'h-2.5 w-2.5 rounded-full transition-all',
                 i === currentIndex
-                  ? 'scale-125 bg-blue-600'
+                  ? 'scale-125 bg-ds-app-accent'
                   : answered
                     ? 'bg-blue-300'
                     : 'bg-gray-200'
@@ -157,7 +157,7 @@ function MoodboardCard({
       className={cn(
         'relative overflow-hidden rounded-xl border-2 p-6 text-left transition-all',
         isSelected
-          ? 'border-blue-500 shadow-lg ring-2 ring-blue-200'
+          ? 'border-ds-app-accent-soft shadow-lg ring-2 ring-blue-200'
           : 'border-transparent hover:border-gray-300 hover:shadow-md'
       )}
     >
@@ -189,7 +189,7 @@ function MoodboardCard({
 
       {/* 選択マーク */}
       {isSelected && (
-        <div className="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-white">
+        <div className="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full bg-ds-app-accent text-white">
           <Check className="h-4 w-4" />
         </div>
       )}

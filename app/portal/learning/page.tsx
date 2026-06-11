@@ -36,7 +36,7 @@ function ProgressBadge({ video }: { video: LearningVideoWithProgress }) {
   }
   if (video.my_progress_percent > 0) {
     return (
-      <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-blue-50 text-blue-700 gap-1">
+      <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-blue-50 text-ds-app-accent-hover gap-1">
         <PlayCircle size={14} />
         視聴中 {video.my_progress_percent}%
       </Badge>

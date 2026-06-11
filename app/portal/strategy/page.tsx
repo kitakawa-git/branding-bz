@@ -204,7 +204,7 @@ export default function PortalStrategyPage() {
                       {targetSegments.map((seg, i) => (
                         <div key={i} className="relative overflow-hidden rounded-lg border border-border bg-background p-4 pl-5">
                           {/* 左端の青バー（「私たちの『らしさ』」カード同装飾） */}
-                          <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-600" />
+                          <div className="absolute left-0 top-0 bottom-0 w-1 bg-ds-app-accent" />
                           <p className="text-sm font-bold text-foreground m-0">{seg.name}</p>
                           {seg.description && (
                             <p className="text-base sm:text-sm text-foreground/70 leading-[1.8] whitespace-pre-wrap mt-1 m-0" style={secondaryStyle}>{seg.description}</p>
@@ -241,7 +241,7 @@ export default function PortalStrategyPage() {
                       <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2 m-0">ニーズ</p>
                       <div className="flex flex-wrap gap-1.5">
                         {persona.needs.map((need, ni) => (
-                          <span key={ni} className="inline-block px-2.5 py-1 bg-blue-50 border border-blue-200 rounded-full text-xs text-blue-700">
+                          <span key={ni} className="inline-block px-2.5 py-1 bg-blue-50 border border-blue-200 rounded-full text-xs text-ds-app-accent-hover">
                             {need}
                           </span>
                         ))}
@@ -315,7 +315,7 @@ export default function PortalStrategyPage() {
               <div className="space-y-3">
                 {providedValues.map((val, i) => (
                   <div key={i} className="rounded-lg border border-border bg-background p-4 flex items-start gap-4">
-                    <div className="shrink-0 w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center text-base font-bold">
+                    <div className="shrink-0 w-9 h-9 rounded-full bg-ds-app-accent text-white flex items-center justify-center text-base font-bold">
                       {i + 1}
                     </div>
                     <div className="min-w-0">

@@ -42,7 +42,7 @@ const nodeColor = (n: MapNode): string => {
   if (n.kind === 'value_proposition') return '#ec4899'
   if (n.kind === 'proof_point') return '#16a34a'
   if (n.kind === 'governance_rule') return '#ea580c'
-  return '#2563eb'
+  return 'var(--ds-app-accent)'
 }
 const nodeKindLabel = (n: MapNode): string =>
   n.kind === 'philosophy_element' && n.philType === 'service' ? '事業' : KIND_LABELS[n.kind]
@@ -51,7 +51,7 @@ const EDGE_STYLE: Record<string, { stroke: string; dash?: string; width: number 
   guides: { stroke: '#7c3aed', width: 1.5 },
   evidencedBy: { stroke: '#16a34a', width: 1.5 },
   [FK_EVIDENCE_TYPE]: { stroke: '#86efac', width: 1 }, // 実績の直接FK＝裏づけ（直接）。細い薄緑
-  promisedTo: { stroke: '#2563eb', width: 1.5 },
+  promisedTo: { stroke: 'var(--ds-app-accent)', width: 1.5 },
   communicatedAs: { stroke: '#0d9488', width: 1.5 },
   constrainedBy: { stroke: '#ea580c', dash: '5 4', width: 1.5 },
   conflictsWith: { stroke: '#dc2626', dash: '6 4', width: 2.5 }, // 矛盾は破線赤・太め
@@ -67,7 +67,7 @@ const NODE_LEGEND: { label: string; color: string }[] = [
   { label: '提供価値', color: '#ec4899' },
   { label: '実績', color: '#16a34a' },
   { label: 'ルール', color: '#ea580c' },
-  { label: 'ペルソナ', color: '#2563eb' },
+  { label: 'ペルソナ', color: 'var(--ds-app-accent)' },
 ]
 
 const truncate = (s: string, n: number) => (s.length > n ? s.slice(0, n) + '…' : s)
@@ -257,14 +257,14 @@ export default function BrandMapSection({ companyId }: { companyId: string }) {
           <button
             type="button"
             onClick={() => setTab('force')}
-            className={`px-3 py-1.5 text-[13px] font-semibold border-0 cursor-pointer ${tab === 'force' ? 'bg-blue-600 text-white' : 'bg-background text-muted-foreground hover:text-foreground'}`}
+            className={`px-3 py-1.5 text-[13px] font-semibold border-0 cursor-pointer ${tab === 'force' ? 'bg-ds-app-accent text-white' : 'bg-background text-muted-foreground hover:text-foreground'}`}
           >
             現状マップ
           </button>
           <button
             type="button"
             onClick={() => setTab('circle')}
-            className={`px-3 py-1.5 text-[13px] font-semibold border-0 cursor-pointer ${tab === 'circle' ? 'bg-blue-600 text-white' : 'bg-background text-muted-foreground hover:text-foreground'}`}
+            className={`px-3 py-1.5 text-[13px] font-semibold border-0 cursor-pointer ${tab === 'circle' ? 'bg-ds-app-accent text-white' : 'bg-background text-muted-foreground hover:text-foreground'}`}
           >
             構造マップ
           </button>
@@ -349,7 +349,7 @@ export default function BrandMapSection({ companyId }: { companyId: string }) {
                   onMouseEnter={() => setHover(n.ref)}
                   onMouseLeave={() => setHover(null)}
                 >
-                  <circle r={radius(n)} fill={nodeColor(n)} stroke={selected === n.ref ? '#1d4ed8' : '#ffffff'} strokeWidth={selected === n.ref ? 3 : 1.5} />
+                  <circle r={radius(n)} fill={nodeColor(n)} stroke={selected === n.ref ? 'var(--ds-app-accent-hover)' : '#ffffff'} strokeWidth={selected === n.ref ? 3 : 1.5} />
                   {showLabel(n) && (
                     <text
                       y={radius(n) + 12}

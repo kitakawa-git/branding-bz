@@ -98,14 +98,14 @@ export default function PortalLearningWatchPage() {
                   完了
                 </Badge>
               ) : liveProgress > 0 ? (
-                <Badge variant="secondary" className="shrink-0 text-[11px] px-2 py-0.5 bg-blue-50 text-blue-700 gap-1">
+                <Badge variant="secondary" className="shrink-0 text-[11px] px-2 py-0.5 bg-blue-50 text-ds-app-accent-hover gap-1">
                   <PlayCircle size={14} />
                   {liveProgress}%
                 </Badge>
               ) : null}
             </div>
             {video.category && (
-              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-blue-50 text-blue-700">
+              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-blue-50 text-ds-app-accent-hover">
                 {video.category}
               </Badge>
             )}

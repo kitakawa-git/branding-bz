@@ -48,7 +48,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 function scoreColor(v: number | null): string {
   if (v === null) return 'text-muted-foreground'
   if (v >= 80) return 'text-green-600'
-  if (v >= 60) return 'text-blue-600'
+  if (v >= 60) return 'text-ds-app-accent'
   if (v >= 40) return 'text-amber-600'
   return 'text-red-600'
 }

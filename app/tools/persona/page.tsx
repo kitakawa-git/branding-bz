@@ -93,7 +93,7 @@ export default function PersonaLandingPage() {
       {/* ヒーロー */}
       <section className="mx-auto max-w-7xl px-6 pt-24 pb-8 text-center md:pt-32 md:pb-12">
         <div
-          className="mb-8 inline-flex items-center gap-2 rounded-full px-6 py-1.5 text-sm text-blue-700 relative overflow-hidden"
+          className="mb-8 inline-flex items-center gap-2 rounded-full px-6 py-1.5 text-sm text-ds-app-accent-hover relative overflow-hidden"
           style={{
             background: 'rgba(0, 97, 255, 0.1)',
             backdropFilter: 'blur(12px) saturate(120%)',
@@ -258,7 +258,7 @@ export default function PersonaLandingPage() {
         }} />
         <div className="relative z-10 w-full max-w-4xl mx-auto">
           <div
-            className="mb-8 inline-flex items-center gap-2 rounded-full px-6 py-1.5 text-sm text-blue-700 relative overflow-hidden"
+            className="mb-8 inline-flex items-center gap-2 rounded-full px-6 py-1.5 text-sm text-ds-app-accent-hover relative overflow-hidden"
             style={{
               background: 'rgba(0, 97, 255, 0.1)',
               backdropFilter: 'blur(12px) saturate(120%)',

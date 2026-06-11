@@ -66,7 +66,7 @@ export function ColorPicker({
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <button
-            className="h-8 w-8 flex-shrink-0 rounded-md border border-gray-300 shadow-sm transition-shadow hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+            className="h-8 w-8 flex-shrink-0 rounded-md border border-gray-300 shadow-sm transition-shadow hover:shadow-md focus:outline-none focus:ring-2 focus:ring-ds-app-accent-soft focus:ring-offset-1"
             style={{ backgroundColor: isValidHex(value) ? value : '#888888' }}
             aria-label={label || 'カラーピッカーを開く'}
           />

@@ -222,7 +222,7 @@ type AnnouncementSummary = {
 
 const ANNOUNCEMENT_CATEGORY_COLORS: Record<string, string> = {
   '重要': 'bg-red-100 text-red-700',
-  'イベント': 'bg-blue-100 text-blue-700',
+  'イベント': 'bg-blue-100 text-ds-app-accent-hover',
   '更新': 'bg-green-100 text-green-700',
   'その他': 'bg-gray-100 text-gray-700',
 }
@@ -772,7 +772,7 @@ export default function PortalTopPage() {
             </div>
             <Link
               href="/portal/announcements"
-              className="text-xs text-blue-600 hover:underline flex items-center gap-1 no-underline"
+              className="text-xs text-ds-app-accent hover:underline flex items-center gap-1 no-underline"
             >
               すべて見る <ArrowRight size={14} />
             </Link>
@@ -892,7 +892,7 @@ export default function PortalTopPage() {
       )}
       {kpiEnabled && hasGoals && (() => {
         const STATUS_LABELS: Record<string, string> = { not_started: '未着手', in_progress: '進行中', completed: '達成' }
-        const STATUS_COLORS: Record<string, string> = { not_started: 'bg-gray-100 text-gray-600', in_progress: 'bg-blue-100 text-blue-700', completed: 'bg-green-100 text-green-700' }
+        const STATUS_COLORS: Record<string, string> = { not_started: 'bg-gray-100 text-gray-600', in_progress: 'bg-blue-100 text-ds-app-accent-hover', completed: 'bg-green-100 text-green-700' }
         let totalWeight = 0, weightedSum = 0
         kpiGoals.forEach(k => { const w = k.weight || 0; weightedSum += k.progress * w; totalWeight += w })
         const overallProgress = totalWeight > 0 ? Math.round(weightedSum / totalWeight) : 0
@@ -1168,7 +1168,7 @@ export default function PortalTopPage() {
               </div>
               <Link
                 href="/portal/timeline"
-                className="text-xs text-blue-600 hover:underline flex items-center gap-1 no-underline"
+                className="text-xs text-ds-app-accent hover:underline flex items-center gap-1 no-underline"
               >
                 すべて見る <ArrowRight size={14} />
               </Link>

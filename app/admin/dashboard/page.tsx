@@ -838,7 +838,7 @@ export default function DashboardPage() {
                           className="h-full rounded transition-[width] duration-500"
                           style={{
                             width: `${barWidth}%`,
-                            backgroundColor: i === 0 ? '#f59e0b' : i === 1 ? '#94a3b8' : i === 2 ? '#cd7f32' : '#2563eb',
+                            backgroundColor: i === 0 ? '#f59e0b' : i === 1 ? '#94a3b8' : i === 2 ? '#cd7f32' : 'var(--ds-app-accent)',
                           }}
                         />
                       </div>

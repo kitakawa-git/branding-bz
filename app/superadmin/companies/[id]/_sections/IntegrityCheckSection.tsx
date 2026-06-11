@@ -105,7 +105,7 @@ export default function IntegrityCheckSection({
     const cls =
       tone === 'warn'
         ? { head: 'text-amber-700', card: 'border-amber-200 bg-amber-50/40', badge: 'bg-amber-100 text-amber-800' }
-        : { head: 'text-blue-700', card: 'border-blue-200 bg-blue-50/40', badge: 'bg-blue-100 text-blue-800' }
+        : { head: 'text-ds-app-accent-hover', card: 'border-blue-200 bg-blue-50/40', badge: 'bg-blue-100 text-blue-800' }
     return (
       <div className="mb-4">
         <div className={`flex items-center gap-1.5 mb-2 text-xs font-bold ${cls.head}`}>

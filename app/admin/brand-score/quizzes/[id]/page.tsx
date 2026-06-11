@@ -84,14 +84,14 @@ type Question = {
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
   draft: { label: '下書き', className: 'bg-gray-100 text-gray-700' },
   active: { label: '実施中', className: 'bg-green-100 text-green-700' },
-  closed: { label: '終了', className: 'bg-blue-100 text-blue-700' },
+  closed: { label: '終了', className: 'bg-blue-100 text-ds-app-accent-hover' },
   archived: { label: 'アーカイブ', className: 'bg-gray-100 text-gray-500' },
 }
 
 const SOURCE_CONFIG: Record<string, { label: string; className: string }> = {
   template: { label: 'テンプレート', className: 'bg-gray-100 text-gray-600' },
   ai_generated: { label: 'AI生成', className: 'bg-purple-100 text-purple-700' },
-  custom: { label: 'カスタム', className: 'bg-blue-100 text-blue-700' },
+  custom: { label: 'カスタム', className: 'bg-blue-100 text-ds-app-accent-hover' },
 }
 
 const CATEGORY_LABELS: Record<string, string> = {

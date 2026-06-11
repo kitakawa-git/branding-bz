@@ -203,7 +203,7 @@ export default function AnalyticsPage() {
             </p>
             <Link
               href="/admin/settings"
-              className="text-sm font-semibold text-blue-600 hover:underline no-underline"
+              className="text-sm font-semibold text-ds-app-accent hover:underline no-underline"
             >
               設定ページを開く
             </Link>
@@ -411,7 +411,7 @@ export default function AnalyticsPage() {
                           className="h-full rounded transition-[width] duration-500"
                           style={{
                             width: `${barWidth}%`,
-                            backgroundColor: i === 0 ? '#f59e0b' : i === 1 ? '#94a3b8' : i === 2 ? '#cd7f32' : '#2563eb',
+                            backgroundColor: i === 0 ? '#f59e0b' : i === 1 ? '#94a3b8' : i === 2 ? '#cd7f32' : 'var(--ds-app-accent)',
                           }}
                         />
                       </div>

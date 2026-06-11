@@ -295,28 +295,28 @@ export function Step2Segmentation({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="rounded-lg border border-blue-100 bg-blue-50 p-3">
                     <div className="flex items-center gap-1.5 mb-1">
-                      <MapPin className="h-4 w-4 text-blue-600" />
+                      <MapPin className="h-4 w-4 text-ds-app-accent" />
                       <span className="text-sm font-semibold text-gray-800">地理的</span>
                     </div>
                     <p className="text-xs text-gray-600 leading-relaxed">地域・都道府県・都市規模・気候など、場所に基づく分け方</p>
                   </div>
                   <div className="rounded-lg border border-blue-100 bg-blue-50 p-3">
                     <div className="flex items-center gap-1.5 mb-1">
-                      <Users className="h-4 w-4 text-blue-600" />
+                      <Users className="h-4 w-4 text-ds-app-accent" />
                       <span className="text-sm font-semibold text-gray-800">属性（デモグラフィック）</span>
                     </div>
                     <p className="text-xs text-gray-600 leading-relaxed">年齢・性別・職業・年収・企業規模・業種など、客観的な特徴</p>
                   </div>
                   <div className="rounded-lg border border-blue-100 bg-blue-50 p-3">
                     <div className="flex items-center gap-1.5 mb-1">
-                      <Heart className="h-4 w-4 text-blue-600" />
+                      <Heart className="h-4 w-4 text-ds-app-accent" />
                       <span className="text-sm font-semibold text-gray-800">価値観（サイコグラフィック）</span>
                     </div>
                     <p className="text-xs text-gray-600 leading-relaxed">ライフスタイル・価値観・性格・関心ごとなど、内面的な特徴</p>
                   </div>
                   <div className="rounded-lg border border-blue-100 bg-blue-50 p-3">
                     <div className="flex items-center gap-1.5 mb-1">
-                      <Activity className="h-4 w-4 text-blue-600" />
+                      <Activity className="h-4 w-4 text-ds-app-accent" />
                       <span className="text-sm font-semibold text-gray-800">行動</span>
                     </div>
                     <p className="text-xs text-gray-600 leading-relaxed">購買頻度・利用シーン・ブランドロイヤルティ・情報収集方法など</p>

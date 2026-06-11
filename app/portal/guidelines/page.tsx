@@ -71,7 +71,7 @@ function ExpandableText({
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
-          className="mt-2 text-xs font-bold text-blue-600 hover:text-blue-700 cursor-pointer bg-transparent border-0 p-0"
+          className="mt-2 text-xs font-bold text-ds-app-accent hover:text-ds-app-accent-hover cursor-pointer bg-transparent border-0 p-0"
         >
           {expanded ? '閉じる' : 'もっと見る'}
         </button>
@@ -249,7 +249,7 @@ export default function PortalGuidelinesPage() {
                       href={data.brand_video_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-600 text-sm"
+                      className="text-ds-app-accent text-sm"
                     >
                       {data.brand_video_url}
                     </a>
@@ -328,7 +328,7 @@ export default function PortalGuidelinesPage() {
                 {data.action_guidelines.map((g, i) => (
                   <div key={i} className="relative overflow-hidden rounded-lg border border-border bg-background p-4 pl-5 flex gap-3">
                     {/* 左端の青バー（「私たちの『らしさ』」カードと同装飾：角丸クリップで丸端） */}
-                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-600" />
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-ds-app-accent" />
                     <span className="text-xs font-mono text-muted-foreground tabular-nums pt-0.5">
                       {String(i + 1).padStart(2, '0')}
                     </span>
@@ -374,8 +374,8 @@ export default function PortalGuidelinesPage() {
                         {i < filteredHistory.length - 1 && (
                           <span className="absolute left-[3px] top-2 -bottom-1.5 w-px bg-blue-200" />
                         )}
-                        <div className="shrink-0 w-16 text-sm font-bold text-blue-600 relative pl-4">
-                          <span className="absolute left-0 top-1.5 w-2 h-2 rounded-full bg-blue-600 z-10" />
+                        <div className="shrink-0 w-16 text-sm font-bold text-ds-app-accent relative pl-4">
+                          <span className="absolute left-0 top-1.5 w-2 h-2 rounded-full bg-ds-app-accent z-10" />
                           {item.year}
                         </div>
                         <div className="text-base sm:text-sm text-foreground leading-relaxed">
@@ -393,7 +393,7 @@ export default function PortalGuidelinesPage() {
                     {filteredBusiness.map((item, i) => (
                       <div key={i} className="relative overflow-hidden rounded-lg border border-border bg-background p-4 pl-5 flex gap-3">
                         {/* 左端の青バー（「私たちの『らしさ』」カードと同装飾：角丸クリップで丸端） */}
-                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-600" />
+                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-ds-app-accent" />
                         <span className="text-xs font-mono text-muted-foreground tabular-nums pt-0.5">
                           {String(i + 1).padStart(2, '0')}
                         </span>

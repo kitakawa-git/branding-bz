@@ -134,7 +134,7 @@ type InnerScoreData = {
 function getScoreColor(score: number | null): string {
   if (score === null) return 'text-muted-foreground'
   if (score >= 80) return 'text-green-600'
-  if (score >= 60) return 'text-blue-600'
+  if (score >= 60) return 'text-ds-app-accent'
   if (score >= 40) return 'text-amber-600'
   return 'text-red-600'
 }
@@ -142,7 +142,7 @@ function getScoreColor(score: number | null): string {
 function getScoreProgressColor(score: number | null): string {
   if (score === null) return 'bg-muted'
   if (score >= 80) return '[&>div]:bg-green-500'
-  if (score >= 60) return '[&>div]:bg-blue-500'
+  if (score >= 60) return '[&>div]:bg-ds-app-accent-soft'
   if (score >= 40) return '[&>div]:bg-amber-500'
   return '[&>div]:bg-red-500'
 }
@@ -151,7 +151,7 @@ function getScoreProgressColor(score: number | null): string {
 function getHeatmapBg(score: number | null): string {
   if (score === null) return ''
   if (score >= 80) return 'bg-green-50 text-green-700'
-  if (score >= 60) return 'bg-blue-50 text-blue-700'
+  if (score >= 60) return 'bg-blue-50 text-ds-app-accent-hover'
   if (score >= 40) return 'bg-amber-50 text-amber-700'
   return 'bg-red-50 text-red-700'
 }
@@ -160,14 +160,14 @@ function getHeatmapBg(score: number | null): string {
 function getQuestionBarColor(avg: number | null): string {
   if (avg === null) return 'bg-muted'
   if (avg >= 4) return 'bg-green-500'
-  if (avg >= 3) return 'bg-blue-500'
+  if (avg >= 3) return 'bg-ds-app-accent-soft'
   return 'bg-orange-500'
 }
 
 // ランクバッジ色
 function getRankBadgeClass(rank: string): string {
   if (rank === 'S') return 'bg-green-100 text-green-700 border-green-200'
-  if (rank === 'A+' || rank === 'A') return 'bg-blue-100 text-blue-700 border-blue-200'
+  if (rank === 'A+' || rank === 'A') return 'bg-blue-100 text-ds-app-accent-hover border-blue-200'
   if (rank === 'B+' || rank === 'B') return 'bg-amber-100 text-amber-700 border-amber-200'
   if (rank === 'C' || rank === 'D') return 'bg-red-100 text-red-700 border-red-200'
   return 'bg-gray-100 text-gray-500 border-gray-200'
@@ -184,7 +184,7 @@ const ROLE_LABELS: Record<string, string> = {
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
   draft: { label: '下書き', className: 'bg-gray-100 text-gray-700' },
   active: { label: '実施中', className: 'bg-green-100 text-green-700' },
-  closed: { label: '終了', className: 'bg-blue-100 text-blue-700' },
+  closed: { label: '終了', className: 'bg-blue-100 text-ds-app-accent-hover' },
   archived: { label: 'アーカイブ', className: 'bg-gray-100 text-gray-500' },
 }
 
@@ -192,7 +192,7 @@ const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
 const SOURCE_CONFIG: Record<string, { label: string; className: string }> = {
   template: { label: 'テンプレート', className: 'bg-gray-100 text-gray-600' },
   ai_generated: { label: 'AI生成', className: 'bg-purple-100 text-purple-700' },
-  custom: { label: 'カスタム', className: 'bg-blue-100 text-blue-700' },
+  custom: { label: 'カスタム', className: 'bg-blue-100 text-ds-app-accent-hover' },
 }
 
 // カテゴリ表示名

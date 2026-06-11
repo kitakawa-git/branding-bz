@@ -303,7 +303,7 @@ export default function OntologyBuilderSection({
                     done
                       ? 'bg-green-600 text-white'
                       : active
-                        ? 'bg-blue-600 text-white ring-2 ring-blue-200'
+                        ? 'bg-ds-app-accent text-white ring-2 ring-blue-200'
                         : 'bg-gray-100 text-gray-500 group-hover:bg-gray-200'
                   }`}
                 >

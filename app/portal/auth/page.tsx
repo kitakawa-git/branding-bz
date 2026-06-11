@@ -249,7 +249,7 @@ function PortalAuthContent() {
               アカウントをお持ちでない方は{' '}
               <button
                 onClick={() => router.push('/signup')}
-                className="font-bold text-blue-600 underline-offset-2 hover:underline bg-transparent border-0 cursor-pointer"
+                className="font-bold text-ds-app-accent underline-offset-2 hover:underline bg-transparent border-0 cursor-pointer"
               >
                 新規登録
               </button>

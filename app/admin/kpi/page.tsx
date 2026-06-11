@@ -96,7 +96,7 @@ type AdminKpiCache = {
 // ============================================
 
 const STATUS_LABELS: Record<string, string> = { not_started: '未着手', in_progress: '進行中', completed: '達成' }
-const STATUS_COLORS: Record<string, string> = { not_started: 'bg-gray-100 text-gray-600', in_progress: 'bg-blue-100 text-blue-700', completed: 'bg-green-100 text-green-700' }
+const STATUS_COLORS: Record<string, string> = { not_started: 'bg-gray-100 text-gray-600', in_progress: 'bg-blue-100 text-ds-app-accent-hover', completed: 'bg-green-100 text-green-700' }
 const PERIOD_TYPE_LABELS: Record<string, string> = { quarter: '四半期', half: '半期', half_year: '半期', year: '年度', custom: 'カスタム' }
 
 // ============================================
@@ -577,7 +577,7 @@ export default function AdminKpiPage() {
             </p>
             <Link
               href="/admin/settings"
-              className="text-sm font-semibold text-blue-600 hover:underline no-underline"
+              className="text-sm font-semibold text-ds-app-accent hover:underline no-underline"
             >
               設定ページを開く
             </Link>

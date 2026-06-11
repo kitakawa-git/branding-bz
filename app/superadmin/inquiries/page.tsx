@@ -24,7 +24,7 @@ type Inquiry = {
 }
 
 const STATUS_LABELS: Record<string, { label: string; className: string }> = {
-  new:         { label: '新規',   className: 'bg-blue-100 text-blue-700' },
+  new:         { label: '新規',   className: 'bg-blue-100 text-ds-app-accent-hover' },
   in_progress: { label: '対応中', className: 'bg-amber-100 text-amber-700' },
   done:        { label: '完了',   className: 'bg-green-100 text-green-700' },
 }
@@ -120,7 +120,7 @@ export default function InquiriesPage() {
                       <td className="px-4 py-3 border-b border-border">
                         <button
                           onClick={() => setSelected(inquiry)}
-                          className="text-blue-600 text-sm font-semibold"
+                          className="text-ds-app-accent text-sm font-semibold"
                         >
                           詳細
                         </button>

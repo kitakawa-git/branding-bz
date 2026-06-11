@@ -75,7 +75,7 @@ const emptyDraft = (): Draft => ({
 })
 
 const SELECT_CLASS =
-  'h-10 w-full rounded-md border border-border bg-white px-3 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
+  'h-10 w-full rounded-md border border-border bg-white px-3 text-sm outline-none focus:border-ds-app-accent-soft focus:ring-1 focus:ring-ds-app-accent-soft'
 
 export default function GovernanceRulesSection({
   companyId,
@@ -309,7 +309,7 @@ export default function GovernanceRulesSection({
                   <span className="py-0.5 px-2 bg-gray-100 text-gray-600 rounded text-[11px] font-semibold">
                     {labelOf(RULE_TYPES, d.rule_type)}
                   </span>
-                  <span className="py-0.5 px-2 bg-blue-50 text-blue-700 rounded text-[11px] font-semibold">
+                  <span className="py-0.5 px-2 bg-blue-50 text-ds-app-accent-hover rounded text-[11px] font-semibold">
                     {labelOf(SCOPES, d.scope)}
                   </span>
                 </div>
@@ -475,7 +475,7 @@ export default function GovernanceRulesSection({
                     <span className="py-0.5 px-2 bg-gray-100 text-gray-600 rounded text-xs font-semibold">
                       {labelOf(RULE_TYPES, row.rule_type)}
                     </span>
-                    <span className="py-0.5 px-2 bg-blue-50 text-blue-700 rounded text-xs font-semibold">
+                    <span className="py-0.5 px-2 bg-blue-50 text-ds-app-accent-hover rounded text-xs font-semibold">
                       {labelOf(SCOPES, row.scope)}
                     </span>
                     {vpTitle(row.target_value_proposition_id) && (

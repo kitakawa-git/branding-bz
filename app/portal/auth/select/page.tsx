@@ -185,7 +185,7 @@ function ServiceSelectContent() {
 
               <div className="relative z-10 flex items-center gap-4 p-5">
                 <div className="flex-shrink-0 flex items-center justify-center w-12 h-12">
-                  <service.Icon size={28} strokeWidth={1.5} className={isHighlighted ? 'text-blue-600' : 'text-gray-900'} />
+                  <service.Icon size={28} strokeWidth={1.5} className={isHighlighted ? 'text-ds-app-accent' : 'text-gray-900'} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="text-sm font-bold text-gray-900 mb-0.5">
@@ -199,7 +199,7 @@ function ServiceSelectContent() {
                   <span className={`
                     inline-flex items-center px-4 py-1.5 rounded-full text-xs font-bold transition-colors
                     ${isHighlighted
-                      ? 'bg-blue-600 text-white'
+                      ? 'bg-ds-app-accent text-white'
                       : 'bg-gray-100 text-gray-600 group-hover:bg-gray-200'
                     }
                   `}>

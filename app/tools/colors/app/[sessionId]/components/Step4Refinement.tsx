@@ -150,7 +150,7 @@ export function Step4Refinement({
                     <Popover>
                       <PopoverTrigger asChild>
                         <button
-                          className="h-10 w-10 flex-shrink-0 rounded-lg border border-gray-200 shadow-sm transition-shadow hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                          className="h-10 w-10 flex-shrink-0 rounded-lg border border-gray-200 shadow-sm transition-shadow hover:shadow-md focus:outline-none focus:ring-2 focus:ring-ds-app-accent-soft focus:ring-offset-1"
                           style={{ backgroundColor: c.color.hex }}
                           aria-label={`${c.label}のカラーピッカーを開く`}
                         />

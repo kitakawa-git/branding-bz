@@ -885,7 +885,7 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
-                        className="inline-flex items-center gap-1 break-all text-xs text-blue-700 hover:underline"
+                        className="inline-flex items-center gap-1 break-all text-xs text-ds-app-accent-hover hover:underline"
                       >
                         {s.url}
                         <ExternalLink size={11} className="shrink-0" />

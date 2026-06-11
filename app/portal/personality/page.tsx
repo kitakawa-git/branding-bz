@@ -193,7 +193,7 @@ export default function PortalPersonalityPage() {
                       )}
                     </div>
                     <div className="shrink-0 text-center">
-                      <div className="w-11 h-11 rounded-full bg-blue-600 text-white flex items-center justify-center text-base font-bold">
+                      <div className="w-11 h-11 rounded-full bg-ds-app-accent text-white flex items-center justify-center text-base font-bold">
                         {trait.score}
                       </div>
                       <div className="text-[10px] text-muted-foreground mt-1">/5</div>
@@ -215,11 +215,11 @@ export default function PortalPersonalityPage() {
               <h2 className="text-sm font-bold text-foreground tracking-wide">アーキタイプ</h2>
 
               {/* 主人格（大） */}
-              <div className="rounded-lg border-2 border-blue-600 bg-blue-50/40 p-5">
-                <p className="text-[11px] font-semibold tracking-wide text-blue-700 mb-1">主人格</p>
+              <div className="rounded-lg border-2 border-ds-app-accent bg-blue-50/40 p-5">
+                <p className="text-[11px] font-semibold tracking-wide text-ds-app-accent-hover mb-1">主人格</p>
                 <h3 className="text-xl font-bold text-foreground m-0">{archetype.primary.label}</h3>
                 {archetype.primary.copy && (
-                  <p className="mt-1 text-base font-semibold text-blue-700 m-0">{archetype.primary.copy}</p>
+                  <p className="mt-1 text-base font-semibold text-ds-app-accent-hover m-0">{archetype.primary.copy}</p>
                 )}
                 {archetype.primary.description && (
                   <p className="mt-3 text-base sm:text-sm text-foreground/80 leading-[1.8] m-0">{archetype.primary.description}</p>

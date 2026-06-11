@@ -148,7 +148,7 @@ interface Snapshot {
 function getScoreColor(score: number | null): string {
   if (score === null) return 'text-muted-foreground'
   if (score >= 80) return 'text-green-600'
-  if (score >= 60) return 'text-blue-600'
+  if (score >= 60) return 'text-ds-app-accent'
   if (score >= 40) return 'text-amber-600'
   return 'text-red-600'
 }
@@ -156,7 +156,7 @@ function getScoreColor(score: number | null): string {
 function getScoreProgressColor(score: number | null): string {
   if (score === null) return ''
   if (score >= 80) return '[&>div]:bg-green-500'
-  if (score >= 60) return '[&>div]:bg-blue-500'
+  if (score >= 60) return '[&>div]:bg-ds-app-accent-soft'
   if (score >= 40) return '[&>div]:bg-amber-500'
   return '[&>div]:bg-red-500'
 }
@@ -173,7 +173,7 @@ function getGapBadgeClass(direction: string): string {
 function getHeatmapBg(score: number | null): string {
   if (score === null) return ''
   if (score >= 80) return 'bg-green-50 text-green-700'
-  if (score >= 60) return 'bg-blue-50 text-blue-700'
+  if (score >= 60) return 'bg-blue-50 text-ds-app-accent-hover'
   if (score >= 40) return 'bg-amber-50 text-amber-700'
   return 'bg-red-50 text-red-700'
 }
@@ -181,7 +181,7 @@ function getHeatmapBg(score: number | null): string {
 function getRankBadgeClass(rank: string | null): string {
   if (!rank || rank === '-') return 'bg-gray-100 text-gray-500 border-gray-200'
   if (rank === 'S') return 'bg-green-100 text-green-700 border-green-200'
-  if (rank === 'A+' || rank === 'A') return 'bg-blue-100 text-blue-700 border-blue-200'
+  if (rank === 'A+' || rank === 'A') return 'bg-blue-100 text-ds-app-accent-hover border-blue-200'
   if (rank === 'B+' || rank === 'B') return 'bg-amber-100 text-amber-700 border-amber-200'
   if (rank === 'C') return 'bg-orange-100 text-orange-700 border-orange-200'
   return 'bg-gray-100 text-gray-500 border-gray-200'
@@ -200,7 +200,7 @@ function getRank(score: number | null): string {
 
 function getBarColor(rate: number): string {
   if (rate >= 40) return 'bg-green-500'
-  if (rate >= 20) return 'bg-blue-500'
+  if (rate >= 20) return 'bg-ds-app-accent-soft'
   if (rate >= 10) return 'bg-amber-500'
   return 'bg-gray-300'
 }
@@ -810,7 +810,7 @@ export default function BrandScoreDashboard() {
 
                 <Link
                   href="/admin/brand-score/surveys"
-                  className="flex items-center gap-1 text-xs text-blue-600 hover:underline"
+                  className="flex items-center gap-1 text-xs text-ds-app-accent hover:underline"
                 >
                   サーベイ管理 <ArrowRight size={12} />
                 </Link>
@@ -880,7 +880,7 @@ export default function BrandScoreDashboard() {
 
                 <Link
                   href="/admin/analytics"
-                  className="flex items-center gap-1 text-xs text-blue-600 hover:underline"
+                  className="flex items-center gap-1 text-xs text-ds-app-accent hover:underline"
                 >
                   アナリティクス詳細 <ArrowRight size={12} />
                 </Link>
@@ -928,7 +928,7 @@ export default function BrandScoreDashboard() {
                   </div>
                   <Link
                     href="/admin/brand-score/quizzes"
-                    className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline"
+                    className="inline-flex items-center gap-1 text-xs text-ds-app-accent hover:underline"
                   >
                     理解度テスト管理 <ArrowRight size={12} />
                   </Link>
@@ -969,7 +969,7 @@ export default function BrandScoreDashboard() {
 
                   <Link
                     href="/admin/brand-score/quizzes"
-                    className="flex items-center gap-1 text-xs text-blue-600 hover:underline"
+                    className="flex items-center gap-1 text-xs text-ds-app-accent hover:underline"
                   >
                     理解度テスト管理 <ArrowRight size={12} />
                   </Link>
@@ -1029,10 +1029,10 @@ export default function BrandScoreDashboard() {
                       <div className="space-y-1.5">
                         <div>
                           <div className="flex items-center justify-between text-[11px] mb-0.5">
-                            <span className="text-blue-600">共感（サーベイ）</span>
+                            <span className="text-ds-app-accent">共感（サーベイ）</span>
                             <span className="font-semibold">{item.empathy.toFixed(1)}</span>
                           </div>
-                          <Progress value={item.empathy} className="h-1.5 [&>div]:bg-blue-500" />
+                          <Progress value={item.empathy} className="h-1.5 [&>div]:bg-ds-app-accent-soft" />
                         </div>
                         <div>
                           <div className="flex items-center justify-between text-[11px] mb-0.5">
@@ -1089,7 +1089,7 @@ export default function BrandScoreDashboard() {
                     <div key={tc.tag} className="flex items-center gap-3">
                       <div className="w-28 shrink-0 flex items-center gap-1.5">
                         {isExpected && (
-                          <Check size={12} className="text-blue-500 shrink-0" />
+                          <Check size={12} className="text-ds-app-accent-soft shrink-0" />
                         )}
                         <span className={`text-sm ${isExpected ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}>
                           {tc.tag}
@@ -1176,7 +1176,7 @@ export default function BrandScoreDashboard() {
                           <TableCell className="text-sm font-medium">{tc.tag}</TableCell>
                           <TableCell className="text-center">
                             {isExpected ? (
-                              <Check size={14} className="mx-auto text-blue-500" />
+                              <Check size={14} className="mx-auto text-ds-app-accent-soft" />
                             ) : (
                               <Minus size={14} className="mx-auto text-muted-foreground/40" />
                             )}

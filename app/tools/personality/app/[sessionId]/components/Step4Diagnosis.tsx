@@ -82,7 +82,7 @@ export function Step4Diagnosis({ sessionId, hasDiagnosis, onComplete, onBack }: 
         <CardContent className="p-8 text-center">
           {running ? (
             <>
-              <Loader2 className="mx-auto h-10 w-10 text-blue-600 animate-spin" strokeWidth={1.5} />
+              <Loader2 className="mx-auto h-10 w-10 text-ds-app-accent animate-spin" strokeWidth={1.5} />
               <h2 className="mt-4 text-base font-bold text-foreground">
                 {LOADING_MESSAGES[messageIndex]}
               </h2>
@@ -92,7 +92,7 @@ export function Step4Diagnosis({ sessionId, hasDiagnosis, onComplete, onBack }: 
             </>
           ) : (
             <>
-              <Sparkles className="mx-auto h-10 w-10 text-blue-600" strokeWidth={1.5} />
+              <Sparkles className="mx-auto h-10 w-10 text-ds-app-accent" strokeWidth={1.5} />
               <h2 className="mt-4 text-base font-bold text-foreground">
                 回答をもとに、AIがブランドの人格を生成します
               </h2>

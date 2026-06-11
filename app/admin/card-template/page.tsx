@@ -253,7 +253,7 @@ export default function SmartCardPage() {
             </p>
             <Link
               href="/admin/settings"
-              className="text-sm font-semibold text-blue-600 hover:underline no-underline"
+              className="text-sm font-semibold text-ds-app-accent hover:underline no-underline"
             >
               設定ページを開く
             </Link>
@@ -305,20 +305,20 @@ export default function SmartCardPage() {
                     onClick={() => toggleTag(m.tag)}
                     className={`rounded-xl border px-4 py-3 text-left transition-all hover:shadow-md ${
                       m.is_expected
-                        ? 'border-blue-500 bg-blue-50 shadow-sm'
+                        ? 'border-ds-app-accent-soft bg-blue-50 shadow-sm'
                         : 'border-gray-200 bg-white'
                     }`}
                   >
                     <div className="flex items-center justify-between">
                       <span
                         className={`text-sm font-medium ${
-                          m.is_expected ? 'text-blue-700' : 'text-gray-700'
+                          m.is_expected ? 'text-ds-app-accent-hover' : 'text-gray-700'
                         }`}
                       >
                         {m.tag}
                       </span>
                       {m.is_expected && (
-                        <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center shrink-0">
+                        <div className="w-5 h-5 rounded-full bg-ds-app-accent-soft flex items-center justify-center shrink-0">
                           <Check size={12} className="text-white" />
                         </div>
                       )}

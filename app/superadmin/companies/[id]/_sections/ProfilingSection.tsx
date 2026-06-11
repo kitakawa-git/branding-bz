@@ -43,9 +43,9 @@ const SEVERITIES: { value: string; label: string }[] = [
 ]
 
 const SELECT_CLASS =
-  'h-10 w-full rounded-md border border-border bg-white px-3 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
+  'h-10 w-full rounded-md border border-border bg-white px-3 text-sm outline-none focus:border-ds-app-accent-soft focus:ring-1 focus:ring-ds-app-accent-soft'
 const INPUT_CLASS =
-  'h-10 w-full rounded-md border border-border bg-white px-3 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
+  'h-10 w-full rounded-md border border-border bg-white px-3 text-sm outline-none focus:border-ds-app-accent-soft focus:ring-1 focus:ring-ds-app-accent-soft'
 
 const CONFLICT_CHOICES: { value: 'a' | 'b' | 'case'; label: (a: string, b: string) => string }[] = [
   { value: 'a', label: (a) => `「${a}」を優先` },

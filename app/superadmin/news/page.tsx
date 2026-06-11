@@ -15,7 +15,7 @@ import { NewsCreateDialog } from './NewsCreateDialog'
 
 // カテゴリバッジの色分け
 const CATEGORY_STYLES: Record<NewsCategory, string> = {
-  press_release: 'bg-blue-50 text-blue-700',
+  press_release: 'bg-blue-50 text-ds-app-accent-hover',
   service_update: 'bg-green-50 text-green-700',
   media: 'bg-purple-50 text-purple-700',
   announcement: 'bg-gray-100 text-gray-700',

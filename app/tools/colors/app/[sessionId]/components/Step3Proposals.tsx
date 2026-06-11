@@ -96,7 +96,7 @@ export function Step3Proposals({
           <CardContent className="p-5">
             <div className="space-y-4 rounded-lg border border-gray-200 bg-white p-8 text-center">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-blue-50">
-            <svg className="h-8 w-8 animate-spin text-blue-500" viewBox="0 0 24 24" fill="none">
+            <svg className="h-8 w-8 animate-spin text-ds-app-accent-soft" viewBox="0 0 24 24" fill="none">
               <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="opacity-25" />
               <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
             </svg>

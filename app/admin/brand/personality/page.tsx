@@ -351,11 +351,11 @@ export default function BrandPersonalityPage() {
                 <h2 className="text-xs font-bold">アーキタイプ（主・副人格）</h2>
                 <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">診断連携・読み取り専用</span>
               </div>
-              <div className="rounded-lg border-2 border-blue-600 bg-blue-50/40 p-4">
-                <p className="text-[10px] font-semibold tracking-wide text-blue-700 mb-1">主人格</p>
+              <div className="rounded-lg border-2 border-ds-app-accent bg-blue-50/40 p-4">
+                <p className="text-[10px] font-semibold tracking-wide text-ds-app-accent-hover mb-1">主人格</p>
                 <div className="flex items-baseline gap-2 flex-wrap">
                   <span className="text-lg font-bold text-foreground">{archetype.primary.label}</span>
-                  {archetype.primary.copy && <span className="text-sm font-semibold text-blue-700">{archetype.primary.copy}</span>}
+                  {archetype.primary.copy && <span className="text-sm font-semibold text-ds-app-accent-hover">{archetype.primary.copy}</span>}
                 </div>
                 {archetype.primary.description && (
                   <p className="mt-2 text-xs text-foreground/80 leading-relaxed">{archetype.primary.description}</p>

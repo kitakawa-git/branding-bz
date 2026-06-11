@@ -52,7 +52,7 @@ const KIND_ORDER: ElementKind[] = [
 const emptyDraft = (): Draft => ({ source: '', relation_type: 'guides', target: '', note: '' })
 
 const SELECT_CLASS =
-  'h-10 w-full rounded-md border border-border bg-white px-3 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
+  'h-10 w-full rounded-md border border-border bg-white px-3 text-sm outline-none focus:border-ds-app-accent-soft focus:ring-1 focus:ring-ds-app-accent-soft'
 
 // `${kind}:${id}` を分解（id は uuid＝コロンを含まないため先頭コロンで分割）
 function parseRef(v: string): { kind: ElementKind; id: string } | null {
@@ -377,7 +377,7 @@ export default function ElementRelationsSection({
                 <div key={r.id} className="flex items-start gap-2 border-l-2 border-blue-200 pl-3 py-1">
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-blue-700">
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-ds-app-accent-hover">
                         <ArrowRight size={13} />
                         {relationLabel(r.relation_type)}
                       </span>

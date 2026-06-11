@@ -14,7 +14,7 @@ import { Heart } from 'lucide-react'
 
 const CATEGORY_COLORS: Record<string, string> = {
   '重要': 'bg-red-100 text-red-700',
-  'イベント': 'bg-blue-100 text-blue-700',
+  'イベント': 'bg-blue-100 text-ds-app-accent-hover',
   '更新': 'bg-green-100 text-green-700',
   'その他': 'bg-gray-100 text-gray-700',
 }
@@ -164,7 +164,7 @@ export default function PortalAnnouncementsPage() {
                     {/* 未読ドット */}
                     <div className="pt-2 shrink-0">
                       {!a.is_read ? (
-                        <div className="size-2 rounded-full bg-blue-500" />
+                        <div className="size-2 rounded-full bg-ds-app-accent-soft" />
                       ) : (
                         <div className="size-2" />
                       )}

@@ -16,7 +16,7 @@ import Link from 'next/link'
 
 const CATEGORY_COLORS: Record<string, string> = {
   '重要': 'bg-red-100 text-red-700',
-  'イベント': 'bg-blue-100 text-blue-700',
+  'イベント': 'bg-blue-100 text-ds-app-accent-hover',
   '更新': 'bg-green-100 text-green-700',
   'その他': 'bg-gray-100 text-gray-700',
 }

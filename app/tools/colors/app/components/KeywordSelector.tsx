@@ -58,7 +58,7 @@ function SortableKeywordItem({
       <button {...attributes} {...listeners} className="cursor-grab text-gray-400 hover:text-gray-600">
         <GripVertical className="h-4 w-4" />
       </button>
-      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-700">
+      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-ds-app-accent-hover">
         {priority}
       </span>
       <span className="flex-1 text-sm text-gray-700">{keyword}</span>
@@ -131,7 +131,7 @@ export function KeywordSelector({ value, onChange }: KeywordSelectorProps) {
                     disabled={!isSelected && !canAdd}
                     className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-sm transition-colors ${
                       isSelected
-                        ? 'bg-blue-600 text-white'
+                        ? 'bg-ds-app-accent text-white'
                         : canAdd
                           ? 'border border-gray-200 bg-white text-gray-700 hover:border-blue-300 hover:bg-blue-50'
                           : 'cursor-not-allowed border border-gray-100 bg-gray-50 text-gray-300'
