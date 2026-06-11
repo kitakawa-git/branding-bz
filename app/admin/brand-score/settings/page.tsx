@@ -18,17 +18,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { WandSparkles, Loader2, Check, Settings } from 'lucide-react'
 import { Fab, FabButton } from '@/components/ui/fab'
-
-const ALL_TAGS = [
-  '信頼感',
-  '革新的',
-  '親しみやすい',
-  '専門的',
-  '洗練された',
-  '情熱的',
-  '堅実',
-  '遊び心がある',
-] as const
+import { ALL_IMPRESSION_TAGS as ALL_TAGS } from '@/lib/brand-score/impression-tags'
 
 interface TagMapping {
   tag: string

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '../components/AdminDataProvider'
 import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
+import { ALL_IMPRESSION_TAGS as ALL_TAGS } from '@/lib/brand-score/impression-tags'
 import { supabase } from '@/lib/supabase'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
 import Link from 'next/link'
@@ -203,11 +204,6 @@ function getBarColor(rate: number): string {
   if (rate >= 10) return 'bg-amber-500'
   return 'bg-gray-300'
 }
-
-const ALL_TAGS = [
-  '信頼感', '革新的', '親しみやすい', '専門的',
-  '洗練された', '情熱的', '堅実', '遊び心がある',
-]
 
 const dashboardTabs = [
   { label: 'スコア', href: '/admin/brand-score' },

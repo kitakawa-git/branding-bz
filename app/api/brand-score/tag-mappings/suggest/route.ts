@@ -7,16 +7,7 @@ import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { callClaude } from '@/lib/claude-api'
 import { fetchPhilosophy } from '@/lib/brand/philosophy'
 
-const ALL_TAGS = [
-  '信頼感',
-  '革新的',
-  '親しみやすい',
-  '専門的',
-  '洗練された',
-  '情熱的',
-  '堅実',
-  '遊び心がある',
-] as const
+import { ALL_IMPRESSION_TAGS as ALL_TAGS } from '@/lib/brand-score/impression-tags'
 
 const SYSTEM_PROMPT = `あなたはブランディングの専門家です。
 企業のブランドデータ（企業名、スローガン、ミッション、ビジョン、バリュー、ブランドストーリー、トーン・オブ・ボイス）を分析し、

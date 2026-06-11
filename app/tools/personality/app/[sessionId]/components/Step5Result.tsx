@@ -4,9 +4,11 @@
 // - Step 1 で選択したフレームワークをデフォルト表示、タブでもう一方へ切替（再診断なし）
 // - アーキタイプカードの文言は archetypes.ts の定数（コピー定義v1）をそのまま表示
 // - 微調整は Aaker スコアのスライダー編集のみ（AI再生成はv1ではしない）
-import { useState, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { supabase } from '@/lib/supabase'
+import { ConnectModal } from './ConnectModal'
 import { Slider } from '@/components/ui/slider'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import {
@@ -22,7 +24,7 @@ import {
   RadarChart,
 } from 'recharts'
 import { toast } from 'sonner'
-import { ArrowLeft, Download, SlidersHorizontal, Check, X } from 'lucide-react'
+import { ArrowLeft, Download, SlidersHorizontal, Check, X, Unplug } from 'lucide-react'
 import { ARCHETYPE_BY_KEY, type ArchetypeKey } from '../../../lib/archetypes'
 import type { FrameworkKey } from '../../../lib/questions'
 import type { DiagnosisResult, AakerScoreItem } from '../../../lib/diagnosis'
@@ -53,6 +55,35 @@ export function Step5Result({ sessionId, framework, diagnosis, companyName, onSa
   const [savingScores, setSavingScores] = useState(false)
   const [exporting, setExporting] = useState(false)
   const [localDiagnosis, setLocalDiagnosis] = useState<StoredDiagnosis | null>(diagnosis)
+
+  // 本体連携: 管理者判定（admin_users に存在するユーザーのみ連携ボタンを表示）
+  const [isAdminUser, setIsAdminUser] = useState(false)
+  const [checkingAdmin, setCheckingAdmin] = useState(true)
+  const [userId, setUserId] = useState('')
+  const [connectOpen, setConnectOpen] = useState(false)
+
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return
+        setUserId(user.id)
+
+        const { data: adminUser } = await supabase
+          .from('admin_users')
+          .select('company_id')
+          .eq('auth_id', user.id)
+          .maybeSingle()
+
+        if (adminUser?.company_id) setIsAdminUser(true)
+      } catch {
+        console.error('[PersonalityStep5] admin_users確認エラー')
+      } finally {
+        setCheckingAdmin(false)
+      }
+    }
+    checkAdminStatus()
+  }, [])
 
   const d = localDiagnosis
 
@@ -358,6 +389,42 @@ export function Step5Result({ sessionId, framework, diagnosis, companyName, onSa
           )}
         </CardContent>
       </Card>
+
+      {/* ===== 本体連携（管理者のみ） ===== */}
+      {!checkingAdmin && (
+        <Card className="mt-4 bg-[hsl(0_0%_97%)] border shadow-none">
+          <CardContent className="p-5">
+            <h3 className="text-sm font-bold text-foreground mb-2">branding.bz への連携</h3>
+            {isAdminUser ? (
+              <>
+                <p className="text-xs text-muted-foreground mb-3">
+                  診断結果をブランド管理プラットフォームに登録できます。連携する項目は次の画面で選択します。
+                </p>
+                <Button variant="outline" onClick={() => setConnectOpen(true)} className="gap-1.5">
+                  <Unplug className="h-4 w-4" />
+                  連携する項目を選ぶ
+                </Button>
+              </>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                本体への連携には branding.bz の企業アカウント（管理者）が必要です。診断結果はPDFでダウンロードしてご活用ください。
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* 連携モーダル */}
+      {isAdminUser && userId && framework && (
+        <ConnectModal
+          sessionId={sessionId}
+          userId={userId}
+          diagnosis={d}
+          framework={framework}
+          open={connectOpen}
+          onOpenChange={setConnectOpen}
+        />
+      )}
 
       {/* フッターナビゲーション */}
       <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 bg-background/80 backdrop-blur border-t border-border px-6 py-3 flex justify-between">

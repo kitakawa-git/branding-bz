@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '../components/AdminDataProvider'
 import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
+import { ALL_IMPRESSION_TAGS as ALL_TAGS } from '@/lib/brand-score/impression-tags'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
@@ -32,18 +33,8 @@ import {
 } from '@/lib/qr-download'
 
 // ============================================
-// 印象タグ設定
+// 印象タグ設定（語彙は lib/brand-score/impression-tags.ts が唯一の定義源）
 // ============================================
-const ALL_TAGS = [
-  '信頼感',
-  '革新的',
-  '親しみやすい',
-  '専門的',
-  '洗練された',
-  '情熱的',
-  '堅実',
-  '遊び心がある',
-] as const
 
 interface TagMapping {
   tag: string

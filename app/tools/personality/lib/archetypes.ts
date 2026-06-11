@@ -166,7 +166,9 @@ export const AAKER_BY_DIMENSION: Record<AakerDimension, AakerDefinition> = Objec
   AAKER_DIMENSIONS.map(d => [d.dimension, d])
 ) as Record<AakerDimension, AakerDefinition>
 
-/** 期待印象タグの確定8語（これ以外はバリデーションで弾く） */
-export const EXPECTED_TAG_VOCABULARY = [
-  '信頼感', '革新的', '親しみやすい', '専門的', '洗練', '情熱的', '堅実', '遊び心',
-] as const
+/**
+ * 期待印象タグの確定8語（これ以外はバリデーションで弾く）。
+ * 計測側（brand_micro_feedbacks / tag_mappings）との文字列照合のため、
+ * 正準語彙 lib/brand-score/impression-tags.ts を唯一の定義源として再エクスポートする（手書き複製禁止）。
+ */
+export { ALL_IMPRESSION_TAGS as EXPECTED_TAG_VOCABULARY } from '@/lib/brand-score/impression-tags'
