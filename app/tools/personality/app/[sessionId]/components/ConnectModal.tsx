@@ -81,7 +81,8 @@ export function ConnectModal({ sessionId, userId, diagnosis: d, framework, open,
     summary: true,
     tone: true,
     tags: true,
-    archetype: true,
+    // アーキタイプ連携は「タイプで診断（archetype）」を選んだ場合のみ
+    archetype: framework === 'archetype',
     toneRuleIndexes: d.tone_rules.map((_, i) => i),
   })
 
@@ -222,7 +223,8 @@ export function ConnectModal({ sessionId, userId, diagnosis: d, framework, open,
               <p className="text-xs text-muted-foreground leading-relaxed line-clamp-3">{d.personality_summary}</p>
             </ToggleRow>
 
-            {/* archetype（主・副人格。framework 不問で連携可） */}
+            {/* archetype（主・副人格。framework=archetype のときのみ表示） */}
+            {framework === 'archetype' && (
             <ToggleRow
               checked={selections.archetype}
               onToggle={() => setSelections(p => ({ ...p, archetype: !p.archetype }))}
@@ -244,6 +246,7 @@ export function ConnectModal({ sessionId, userId, diagnosis: d, framework, open,
                 </p>
               )}
             </ToggleRow>
+            )}
 
             {/* tone */}
             <ToggleRow

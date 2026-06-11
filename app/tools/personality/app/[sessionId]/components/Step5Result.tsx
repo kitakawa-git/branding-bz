@@ -10,7 +10,6 @@ import { Card, CardContent } from '@/components/ui/card'
 import { supabase } from '@/lib/supabase'
 import { ConnectModal } from './ConnectModal'
 import { Slider } from '@/components/ui/slider'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import {
   ChartContainer,
   ChartTooltip,
@@ -168,14 +167,9 @@ export function Step5Result({ sessionId, framework, diagnosis, companyName, onSa
     <div>
       <h1 className="text-2xl font-bold text-foreground mb-6">Step 5: 診断結果</h1>
 
-      <Tabs defaultValue={defaultTab}>
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="aaker">スコア（Aaker 5次元）</TabsTrigger>
-          <TabsTrigger value="archetype">タイプ（12アーキタイプ）</TabsTrigger>
-        </TabsList>
-
-        {/* ===== Aaker タブ ===== */}
-        <TabsContent value="aaker" className="mt-4 space-y-4">
+      {/* 選択フレームワークの結果のみ表示（タブ切替は廃止・仕様改定） */}
+      {defaultTab === 'aaker' ? (
+        <div className="space-y-4">
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
             <CardContent className="p-5">
               <div className="flex items-center justify-between mb-2">
@@ -267,10 +261,9 @@ export function Step5Result({ sessionId, framework, diagnosis, companyName, onSa
               )}
             </CardContent>
           </Card>
-        </TabsContent>
-
-        {/* ===== アーキタイプ タブ ===== */}
-        <TabsContent value="archetype" className="mt-4 space-y-4">
+        </div>
+      ) : (
+        <div className="space-y-4">
           {/* 主人格カード（大）: label＋copy＋description＋keywords — コピー定義v1の文言 */}
           {primaryDef && (
             <Card className="border-2 border-blue-600 bg-blue-50/40 shadow-none">
@@ -353,8 +346,8 @@ export function Step5Result({ sessionId, framework, diagnosis, companyName, onSa
               </CardContent>
             </Card>
           )}
-        </TabsContent>
-      </Tabs>
+        </div>
+      )}
 
       {/* ===== 共通表示: 物語文・トーン・期待タグ ===== */}
       <Card className="mt-4 bg-[hsl(0_0%_97%)] border shadow-none">
