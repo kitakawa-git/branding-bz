@@ -53,7 +53,9 @@ type SegmentationData = {
 }
 
 // 提供価値（value_propositions テーブル。「考え方」から「接し方」へ移動・統合）
+// id は保存時の id保持sync 用（既存行はUPDATE・新規はINSERT）。新規入力時は未定義。
 type ProvidedValueItem = {
+  id?: string
   title: string
   description: string
 }
@@ -133,9 +135,10 @@ export default function BrandStrategyPage() {
 
       // 提供価値（value_propositions テーブル。「考え方」から移動・統合）
       const { data: bvData } = await fetchWithRetry(() =>
-        supabase.from('value_propositions').select('title, description, sort_order').eq('company_id', companyId).order('sort_order')
+        supabase.from('value_propositions').select('id, title, description, sort_order').eq('company_id', companyId).order('sort_order')
       )
       const parsedProvidedValues: ProvidedValueItem[] = ((bvData as Record<string, unknown>[]) || []).map((d) => ({
+        id: (d.id as string) || undefined,
         title: (d.title as string) || '',
         description: (d.description as string) || '',
       }))
@@ -535,32 +538,47 @@ export default function BrandStrategyPage() {
         }
       }
 
-      // 提供価値（value_propositions）保存: 全削除→全INSERT（旧 /admin/brand/values の保存ロジックを移植）
+      // 提供価値（value_propositions）保存: id保持sync。
+      // 全削除→全INSERT だと毎回 id が変わり、削除時トリガ cleanup_element_relations_on_delete が
+      // vp を端点に持つ element_relations を道連れに消す（エッジ消失バグ）。よって
+      // 既存id→PATCH（in-place UPDATE）/ 新規→POST / 実際に削除された分のみ DELETE に変更する。
       const cleanedValues = providedValues.filter(v => v.title.trim() !== '')
-      const bvDelRes = await fetch(`${supabaseUrl}/rest/v1/value_propositions?company_id=eq.${companyId}`, {
-        method: 'DELETE',
-        headers,
-      })
-      if (!bvDelRes.ok) {
-        const body = await bvDelRes.text()
-        throw new Error(`提供価値の削除エラー: HTTP ${bvDelRes.status}: ${body}`)
+      const bvExRes = await fetch(`${supabaseUrl}/rest/v1/value_propositions?company_id=eq.${companyId}&select=id`, { headers })
+      if (!bvExRes.ok) {
+        throw new Error(`提供価値の既存取得エラー: HTTP ${bvExRes.status}: ${await bvExRes.text()}`)
       }
-      if (cleanedValues.length > 0) {
-        const bvInsertData = cleanedValues.map((v, i) => ({
-          company_id: companyId,
-          title: v.title.trim(),
-          description: v.description?.trim() || null,
-          sort_order: i,
-        }))
-        const bvInsRes = await fetch(`${supabaseUrl}/rest/v1/value_propositions`, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify(bvInsertData),
-        })
-        if (!bvInsRes.ok) {
-          const body = await bvInsRes.text()
-          throw new Error(`提供価値の挿入エラー: HTTP ${bvInsRes.status}: ${body}`)
+      const bvExistingIds = new Set(((await bvExRes.json()) as { id: string }[]).map(r => r.id))
+      const savedValues: ProvidedValueItem[] = []
+      const bvKept = new Set<string>()
+      for (let i = 0; i < cleanedValues.length; i++) {
+        const v = cleanedValues[i]
+        const payload = { title: v.title.trim(), description: v.description?.trim() || null, sort_order: i }
+        if (v.id && bvExistingIds.has(v.id)) {
+          const res = await fetch(`${supabaseUrl}/rest/v1/value_propositions?id=eq.${v.id}`, {
+            method: 'PATCH', headers, body: JSON.stringify(payload),
+          })
+          if (!res.ok) throw new Error(`提供価値の更新エラー: HTTP ${res.status}: ${await res.text()}`)
+          bvKept.add(v.id)
+          savedValues.push({ ...v, id: v.id })
+        } else {
+          const res = await fetch(`${supabaseUrl}/rest/v1/value_propositions`, {
+            method: 'POST', headers: { ...headers, 'Prefer': 'return=representation' },
+            body: JSON.stringify({ company_id: companyId, ...payload }),
+          })
+          if (!res.ok) throw new Error(`提供価値の挿入エラー: HTTP ${res.status}: ${await res.text()}`)
+          const inserted = (await res.json()) as { id: string }[]
+          const nid = inserted[0]?.id
+          if (nid) bvKept.add(nid)
+          savedValues.push({ ...v, id: nid })
         }
+      }
+      // 実際に削除された提供価値のみ DELETE（ここだけ削除時トリガでエッジ整理が正しく起きる）
+      const bvToDelete = [...bvExistingIds].filter(id => !bvKept.has(id))
+      if (bvToDelete.length > 0) {
+        const res = await fetch(`${supabaseUrl}/rest/v1/value_propositions?id=in.(${bvToDelete.join(',')})`, {
+          method: 'DELETE', headers,
+        })
+        if (!res.ok) throw new Error(`提供価値の削除エラー: HTTP ${res.status}: ${await res.text()}`)
       }
 
       // ポータルサブタイトル + ターゲットセグメント保存（companies テーブル）
@@ -582,13 +600,14 @@ export default function BrandStrategyPage() {
 
       setPersonas(cleanedPersonas)
       setTargetSegments(validSegments)
-      setProvidedValues(cleanedValues)
+      // 保存で確定した id を状態へ反映（reload無しの再保存で新規行が重複INSERTされないように）
+      setProvidedValues(savedValues)
       // 保存内容でページキャッシュを更新（他ページ往復で消える問題の防止）
       setPageCache<StrategyCache>(cacheKey, {
         targetOverview: overviewText,
         targetSegments: validSegments,
         segmentationData,
-        providedValues: cleanedValues,
+        providedValues: savedValues,
         personas: cleanedPersonas,
         positioningMapData,
         portalSubtitle: portalSubtitle.trim(),
