@@ -6,12 +6,13 @@
 //   実DOMの computedStyle から「実測」する（ハードコードの転記表は持たない）
 // - レスポンシブ: コンパイル済みCSSの @media ルールを CSSOM から列挙
 // - コンポーネント: 実コンポーネントをそのまま描画（カタログの選定のみ手動）
-import { useEffect, useState, type ReactElement } from 'react'
+import { useCallback, useEffect, useState, type ReactElement } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
-import { Monitor, Smartphone, Plus, RefreshCw } from 'lucide-react'
-import DesignTokenEditor, { type DesignScope } from './DesignTokenEditor'
+import { Monitor, Smartphone, Plus, RefreshCw, Copy, Download, Check, Save } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
+import DesignTokenEditor, { type DesignScope, SCOPE_CATEGORIES, CATEGORY_LABELS } from './DesignTokenEditor'
 import ComponentPreview from '@/components/superadmin/design-system/ComponentPreview'
 import { useDesignAudit } from './useDesignAudit'
 import {
@@ -849,11 +850,210 @@ function ComponentsTab({ scope }: { scope: DesignScope }) {
 }
 
 // ============================================================
+// Document Tab（design.md：自動サマリー＋手書きメモ）
+// ============================================================
+
+type DocToken = { token_name: string; value: string; label: string | null; category: string }
+
+// トークン・実測値・コンポーネント・ブレークポイントを Markdown サマリーに集約
+function buildAutoMarkdown(
+  scope: DesignScope,
+  tokens: DocToken[],
+  audit: ReturnType<typeof useDesignAudit>,
+  mediaStats: MediaStat[]
+): string {
+  const scopeLabel = scope === 'website' ? 'ウェブサイト（公開LP）' : 'サービス画面（ログイン後アプリ）'
+  const lines: string[] = []
+  lines.push(`# デザインシステム — ${scopeLabel}`, '')
+  lines.push('> デザインシステム画面から自動生成。トークン値・実測値は出力時点のスナップショット。', '')
+
+  // カラーパレット（DB最新）
+  lines.push('## カラーパレット', '')
+  for (const cat of SCOPE_CATEGORIES[scope]) {
+    const items = tokens.filter((t) => t.category === cat)
+    if (!items.length) continue
+    lines.push(`### ${CATEGORY_LABELS[cat] ?? cat}`, '')
+    for (const t of items) {
+      lines.push(`- \`${t.token_name}\`: \`${t.value}\`${t.label ? ` — ${t.label}` : ''}`)
+    }
+    lines.push('')
+  }
+
+  // タイポグラフィ（実測）
+  if (audit.result?.typography?.length) {
+    lines.push('## タイポグラフィ（実測）', '')
+    lines.push('| タグ | サイズ / 太さ / 行間 | 件数 |', '|---|---|---|')
+    for (const t of audit.result.typography) {
+      lines.push(`| ${t.tag} | ${t.fontSize} / ${t.fontWeight} / ${t.lineHeight} | ${t.count} |`)
+    }
+    lines.push('')
+  }
+
+  // スペーシング（実測）
+  if (audit.result) {
+    const yPads = audit.result.paddings.filter((p) => p.axis === 'y').map((p) => `${p.px}px`)
+    const xPads = audit.result.paddings.filter((p) => p.axis === 'x').map((p) => `${p.px}px`)
+    if (yPads.length || xPads.length || audit.result.containers.length) {
+      lines.push('## スペーシング（実測）', '')
+      if (yPads.length) lines.push(`- 上下余白: ${yPads.join(', ')}`)
+      if (xPads.length) lines.push(`- 左右余白: ${xPads.join(', ')}`)
+      if (audit.result.containers.length)
+        lines.push(`- コンテナ幅: ${audit.result.containers.map((c) => c.maxWidth).join(', ')}`)
+      lines.push('')
+    }
+  }
+
+  // コンポーネント（scope別カタログ）
+  const samples = COMPONENT_SAMPLES.filter((c) =>
+    scope === 'website' ? c.key.startsWith('lp-') : !c.key.startsWith('lp-')
+  )
+  if (samples.length) {
+    lines.push('## コンポーネント', '')
+    for (const c of samples) lines.push(`- **${c.name}** — ${c.description}`)
+    lines.push('')
+  }
+
+  // レスポンシブ（@media）
+  if (mediaStats.length) {
+    lines.push('## レスポンシブ（@media）', '')
+    for (const m of mediaStats) {
+      lines.push(`- \`${m.condition}\`${m.bpName ? ` (${m.bpName})` : ''}: ${m.ruleCount}ルール`)
+    }
+    lines.push('')
+  }
+
+  return lines.join('\n')
+}
+
+function DocumentTab({ scope, audit }: { scope: DesignScope; audit: ReturnType<typeof useDesignAudit> }) {
+  const [tokens, setTokens] = useState<DocToken[]>([])
+  const [body, setBody] = useState('')
+  const [savedBody, setSavedBody] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [copied, setCopied] = useState(false)
+  const [mediaStats, setMediaStats] = useState<MediaStat[]>([])
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    const [tokRes, docRes] = await Promise.all([
+      supabase.from('design_tokens').select('token_name, value, label, category'),
+      supabase.from('design_docs').select('body').eq('scope', scope).maybeSingle(),
+    ])
+    if (tokRes.data) setTokens(tokRes.data as DocToken[])
+    const b = (docRes.data?.body as string) ?? ''
+    setBody(b)
+    setSavedBody(b)
+    setMediaStats(extractMediaStats(document))
+    setLoading(false)
+  }, [scope])
+
+  useEffect(() => {
+    load()
+  }, [load])
+
+  const autoMd = buildAutoMarkdown(scope, tokens, audit, mediaStats)
+  const fullMd = body.trim() ? `${autoMd}\n---\n\n## 補足メモ（手書き）\n\n${body.trim()}\n` : autoMd
+  const dirty = body !== savedBody
+
+  const save = async () => {
+    setSaving(true)
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    const { error } = await supabase
+      .from('design_docs')
+      .update({ body, updated_at: new Date().toISOString(), updated_by: user?.id ?? null })
+      .eq('scope', scope)
+    if (!error) setSavedBody(body)
+    setSaving(false)
+  }
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(fullMd)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    } catch {
+      // ignore
+    }
+  }
+
+  const download = () => {
+    const blob = new Blob([fullMd], { type: 'text/markdown' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `design-${scope}.md`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  if (loading) {
+    return <div className="py-10 text-center text-sm text-muted-foreground">読み込み中...</div>
+  }
+
+  return (
+    <div className="space-y-6 pt-4">
+      {/* 手書きメモ */}
+      <section>
+        <h2 className="mb-1 text-base font-bold">方針メモ（手書き）</h2>
+        <p className="mb-2 text-xs text-muted-foreground">
+          design.md の自由記述部分。Markdownで書けます（命名規則・注意書き・意図など）。下の自動サマリーと結合して出力されます。
+        </p>
+        <textarea
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          rows={8}
+          placeholder={'# 方針\n- 新規UIの青は text-ds-app-accent を使う\n- ...'}
+          className="w-full rounded-md border border-border bg-background p-3 text-sm font-mono leading-relaxed"
+        />
+        <div className="mt-2">
+          <Button size="sm" disabled={!dirty || saving} onClick={save} className="h-8 text-xs">
+            <Save size={12} className="mr-1" />
+            {saving ? '保存中...' : '保存'}
+          </Button>
+        </div>
+      </section>
+
+      {/* 生成される design.md */}
+      <section>
+        <div className="mb-2 flex items-center justify-between">
+          <h2 className="text-base font-bold">
+            生成される design.md（{scope === 'website' ? 'ウェブサイト' : 'サービス画面'}）
+          </h2>
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" onClick={copy} className="h-8 text-xs">
+              {copied ? <Check size={12} className="mr-1 text-green-600" /> : <Copy size={12} className="mr-1" />}
+              コピー
+            </Button>
+            <Button size="sm" variant="outline" onClick={download} className="h-8 text-xs">
+              <Download size={12} className="mr-1" />
+              .md
+            </Button>
+          </div>
+        </div>
+        <Card className="py-0">
+          <CardContent className="p-0">
+            <pre className="max-h-[480px] overflow-auto p-4 text-[11px] leading-relaxed font-mono whitespace-pre-wrap">
+              {fullMd}
+            </pre>
+          </CardContent>
+        </Card>
+        <p className="mt-2 text-[11px] text-muted-foreground">
+          ※トークンはDB最新、タイポ/スペーシングは「実測対象」で選んだページの計測値（実測タブで対象を切り替えてから戻ると反映）。
+        </p>
+      </section>
+    </div>
+  )
+}
+
+// ============================================================
 // Main Page
 // ============================================================
 
-// 実測（iframe）が必要なタブ
-const AUDIT_TABS = ['typography', 'spacing', 'layout']
+// 実測（iframe）が必要なタブ（document も実測値を取り込むため含める）
+const AUDIT_TABS = ['typography', 'spacing', 'layout', 'document']
 
 export default function DesignSystemPage() {
   const [scope, setScope] = useState<DesignScope>('website')
@@ -902,13 +1102,14 @@ export default function DesignSystemPage() {
 
       {/* 下位タブ: カラーパレット 〜 レスポンシブ（上位スコープに連動） */}
       <Tabs value={tab} onValueChange={setTab} className="mt-5">
-        <TabsList className="flex-wrap gap-2">
+        <TabsList className="h-auto flex-wrap gap-2">
           <TabsTrigger value="colors">カラーパレット</TabsTrigger>
           <TabsTrigger value="typography">タイポグラフィ</TabsTrigger>
           <TabsTrigger value="spacing">スペーシング</TabsTrigger>
           <TabsTrigger value="components">コンポーネント</TabsTrigger>
           <TabsTrigger value="layout">レイアウト</TabsTrigger>
           <TabsTrigger value="responsive">レスポンシブ</TabsTrigger>
+          <TabsTrigger value="document">ドキュメント</TabsTrigger>
         </TabsList>
 
         {auditEnabled && (
@@ -931,6 +1132,7 @@ export default function DesignSystemPage() {
         <TabsContent value="components"><ComponentsTab scope={scope} /></TabsContent>
         <TabsContent value="layout"><LayoutTab audit={audit} /></TabsContent>
         <TabsContent value="responsive"><ResponsiveTab /></TabsContent>
+        <TabsContent value="document"><DocumentTab scope={scope} audit={audit} /></TabsContent>
       </Tabs>
     </div>
   )

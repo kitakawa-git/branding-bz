@@ -45,7 +45,7 @@ type HistoryEntry = {
   changed_at: string
 }
 
-const CATEGORY_LABELS: Record<string, string> = {
+export const CATEGORY_LABELS: Record<string, string> = {
   // ウェブサイト(LP)用 --ds-*（hex/rgba）
   text: 'テキスト',
   bg: '背景',
