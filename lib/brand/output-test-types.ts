@@ -15,4 +15,7 @@ export type OutputTestResult = {
   injected: { proof: number; rule: number; relation: number; philosophy: number; valueProposition: number }
   groundedNumbers: string[] // Aの出力に含まれ、注入事実にも実在する数値（正規化値）
   noOntology: boolean // 注入できるオントロジーが皆無（A=B になる）
+  // 透明化: 実際に送ったプロンプト全文（system＋指示）。A/Bの差分＝注入ブロックの有無のみ
+  promptA: string
+  promptB: string
 }

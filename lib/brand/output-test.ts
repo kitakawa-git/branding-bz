@@ -39,6 +39,8 @@ export async function runOutputTest(companyId: string, topic: OutputTestTopic): 
     injected: { proof: 0, rule: 0, relation: 0, philosophy: 0, valueProposition: 0 },
     groundedNumbers: [],
     noOntology: true,
+    promptA: '',
+    promptB: '',
   }
   if (!companyId) return empty
 
@@ -59,13 +61,25 @@ export async function runOutputTest(companyId: string, topic: OutputTestTopic): 
   const vps = (vpR.data as VP[] | null) || []
   const relationCount = relCount.count ?? 0
 
-  // 会社名・業種（A/B 共通の最小アイデンティティ）
+  // ---- 基本情報（A/B 共通）: 会社名・業種・事業概要 ----
+  // 事業概要は philosophy_elements の service 行。A/B 双方に渡し、Bが「何をする会社か」を
+  // 知らないまま書く不公平を解消する（単一変数の比較＝差分は注入ブロックの有無のみ）。
   const name = comp?.name || '（社名未登録）'
   const industry = [comp?.industry_category, comp?.industry_subcategory].filter(Boolean).join(' / ')
-  const identityBlock = `# 企業\n会社名: ${name}${industry ? `\n業種: ${industry}` : ''}`
+  const servicePhils = phils.filter((p) => p.element_type === 'service')
+  const serviceLines = servicePhils
+    .map((p) => [p.title, p.body].filter(Boolean).join('：'))
+    .filter((t) => t.trim())
+  const basicBlock = [
+    `# 企業（基本情報）\n会社名: ${name}${industry ? `\n業種: ${industry}` : ''}`,
+    serviceLines.length > 0 ? `事業概要:\n${serviceLines.map((s) => `- ${s}`).join('\n')}` : '',
+  ]
+    .filter(Boolean)
+    .join('\n')
 
-  // 注入ブロック（A のみ）: 理念・提供価値・guardrails（実績・ルール）・関係
-  const philLines = phils
+  // ---- 注入ブロック（A のみ）: 理念（service除く）・提供価値・guardrails（実績・ルール）・関係 ----
+  const nonServicePhils = phils.filter((p) => p.element_type !== 'service')
+  const philLines = nonServicePhils
     .map((p) => {
       const t = [p.title, p.body].filter(Boolean).join('：')
       return t.trim() ? `- ${PHIL_JP[p.element_type] ?? p.element_type}: ${t}` : ''
@@ -82,9 +96,10 @@ export async function runOutputTest(companyId: string, topic: OutputTestTopic): 
     proof: guardrails.proofPoints.length,
     rule: guardrails.governanceRules.length,
     relation: relationCount,
-    philosophy: phils.length,
+    philosophy: nonServicePhils.length, // A専用に注入する理念（事業概要=serviceは基本情報のため除外）
     valueProposition: vps.length,
   }
+  // 注入できるオントロジーが皆無なら A=B（基本情報のserviceは双方に入るため差にならない）
   const noOntology =
     injected.proof === 0 &&
     injected.rule === 0 &&
@@ -93,30 +108,35 @@ export async function runOutputTest(companyId: string, topic: OutputTestTopic): 
     injected.valueProposition === 0
 
   const userMessage = conf.instruction
+  const fullPrompt = (system: string) => `${system}\n\n# 指示\n${userMessage}`
 
-  // B: 素のプロンプト（会社名・業種のみ）
-  const systemB = `${BASE_SYSTEM}\n\n${identityBlock}`
-  const outputB = await callClaude({ system: systemB, userMessage, maxTokens: conf.maxTokens })
+  // B: 基本情報のみ（注入ブロックを除いたAと同一構成・同一モデル/パラメータ）
+  const systemB = `${BASE_SYSTEM}\n\n${basicBlock}`
+  const promptB = fullPrompt(systemB)
 
-  // 注入が皆無なら A=B（2回目を呼ばずコスト節約）
-  if (noOntology) {
-    return { ...empty, outputA: outputB, outputB, injected, noOntology: true }
-  }
-
-  // A: オントロジー注入あり
-  const systemA = [BASE_SYSTEM, identityBlock, philBlock, vpBlock, guardrailsBlock, relationsPrompt]
+  // A: 基本情報 ＋ 注入ブロック
+  const systemA = [BASE_SYSTEM, basicBlock, philBlock, vpBlock, guardrailsBlock, relationsPrompt]
     .filter(Boolean)
     .join('\n\n')
+  const promptA = fullPrompt(systemA)
+
+  const outputB = await callClaude({ system: systemB, userMessage, maxTokens: conf.maxTokens })
+
+  // 注入が皆無なら A=B（2回目を呼ばずコスト節約。プロンプトも同一）
+  if (noOntology) {
+    return { ...empty, outputA: outputB, outputB, injected, noOntology: true, promptA: promptB, promptB }
+  }
+
   const outputA = await callClaude({ system: systemA, userMessage, maxTokens: conf.maxTokens })
 
   // グラウンディング: A出力の数値のうち、注入事実（実績・提供価値・理念）に実在するもの
   const corpus = [
     ...guardrails.proofPoints.map((p) => `${p.title} ${p.description ?? ''}`),
     ...vps.map((v) => `${v.title ?? ''} ${v.description ?? ''}`),
-    ...phils.map((p) => `${p.title ?? ''} ${p.body ?? ''}`),
+    ...nonServicePhils.map((p) => `${p.title ?? ''} ${p.body ?? ''}`),
   ].join(' ')
   const corpusNums = extractNumberValues(corpus)
   const groundedNumbers = [...extractNumberValues(outputA)].filter((n) => corpusNums.has(n))
 
-  return { topicLabel, outputA, outputB, injected, groundedNumbers, noOntology: false }
+  return { topicLabel, outputA, outputB, injected, groundedNumbers, noOntology: false, promptA, promptB }
 }

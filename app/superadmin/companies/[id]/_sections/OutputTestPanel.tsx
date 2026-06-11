@@ -58,7 +58,11 @@ export default function OutputTestPanel({ companyId }: { companyId: string }) {
         </Button>
       </div>
       <p className="text-[11px] text-muted-foreground mt-1.5 mb-0">
-        ※ 1回のテストでAIを2回呼び出します（注入あり／なし）。コストは通常の2倍です
+        ※ 1回のテストでAIを2回呼び出します（注入あり／なし）。コストは通常の2倍です。
+        A/Bはモデル・パラメータ・基本情報（会社名・業種・事業概要）を揃え、差分は「オントロジー注入の有無」のみです
+      </p>
+      <p className="text-[11px] text-muted-foreground mt-0.5 mb-0">
+        ※ 生成は毎回変わります（同条件でも別の文案が出ます）
       </p>
 
       {result && (
@@ -90,13 +94,21 @@ export default function OutputTestPanel({ companyId }: { companyId: string }) {
                 )}
               </div>
               <p className="text-[13px] text-foreground whitespace-pre-wrap break-words m-0">{result.outputA}</p>
+              <details className="mt-2">
+                <summary className="text-[11px] text-muted-foreground cursor-pointer">プロンプトを表示</summary>
+                <pre className="text-[11px] text-muted-foreground whitespace-pre-wrap break-words bg-background border border-border rounded-md p-2 mt-1 m-0">{result.promptA}</pre>
+              </details>
             </div>
-            {/* B: 注入なし */}
+            {/* B: 注入なし（基本情報のみ） */}
             <div className="border border-border bg-muted/30 rounded-lg p-3">
               <div className="mb-1.5">
-                <span className="py-0.5 px-2 bg-gray-100 text-gray-600 rounded text-[11px] font-bold">B: 注入なし（素のプロンプト）</span>
+                <span className="py-0.5 px-2 bg-gray-100 text-gray-600 rounded text-[11px] font-bold">B: 注入なし（基本情報のみ）</span>
               </div>
               <p className="text-[13px] text-foreground whitespace-pre-wrap break-words m-0">{result.outputB}</p>
+              <details className="mt-2">
+                <summary className="text-[11px] text-muted-foreground cursor-pointer">プロンプトを表示</summary>
+                <pre className="text-[11px] text-muted-foreground whitespace-pre-wrap break-words bg-background border border-border rounded-md p-2 mt-1 m-0">{result.promptB}</pre>
+              </details>
             </div>
           </div>
         </div>
