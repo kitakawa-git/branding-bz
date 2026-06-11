@@ -16,11 +16,13 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
-import { Check, Info, RefreshCw } from 'lucide-react'
-import ProofPointsSection, { type ValuePropositionRef } from './ProofPointsSection'
-import GovernanceRulesSection from './GovernanceRulesSection'
-import ElementRelationsSection from './ElementRelationsSection'
+import { ArrowRight, Check, ChevronDown, ChevronUp, Info, RefreshCw } from 'lucide-react'
 import ProfilingSection from './ProfilingSection'
+
+// 下部の各セクション（実績・ルール・関係・質問）でデータが変わったときに発火するイベント名。
+// ウィザード（ステップ判定）とサマリーハブ（島チップ）がこれを購読して再取得する。
+// CRUDの実体は各セクションのみ（ウィザードはStep2〜4で再マウントしない＝二重マウント解消）。
+export const ONTOLOGY_DATA_CHANGED_EVENT = 'ontology-data-changed'
 
 type Counts = {
   mission: number
@@ -35,10 +37,19 @@ type Counts = {
 const ZERO_COUNTS: Counts = { mission: 0, vision: 0, value: 0, vp: 0, proof: 0, rule: 0, relation: 0 }
 
 // 自動点検の結果（/api/superadmin/profiling のレスポンスから使う分）
-type Inspection = {
+export type Inspection = {
   baseline: Record<string, number> // integrity.ts のカテゴリ文字列 → 件数
   uncoveredWarnCount: number // 未解消かつ未保留の warn（Step5完了判定: 0で完了）
-  acknowledgedUnprovenCount: number // 保留済み件数（完了バナーに明示）
+  acknowledgedUnprovenCount: number // 保留済み件数（完了バナー・ハブのチップに明示）
+  openUnprovenCount: number // 裏づけのない提供価値の現存数（ハブの「裏づけ N/M」用）
+}
+
+// サマリーハブへ通知する状態（判定ロジックはこのコンポーネントが唯一の持ち主。ハブは表示だけ）
+export type OntologyStatus = {
+  counts: { mission: number; vision: number; value: number; vp: number; proof: number; rule: number; relation: number }
+  inspection: Inspection | null
+  complete: boolean // ウィザード完了（解消可能warn 0＋ステップ1〜4充足）
+  pendingCount: number // 保留件数
 }
 
 const STEPS: { num: number; label: string; full: string; why: string }[] = [
@@ -51,10 +62,14 @@ const STEPS: { num: number; label: string; full: string; why: string }[] = [
 
 export default function OntologyBuilderSection({
   companyId,
-  valuePropositions,
+  collapsible = false,
+  onStatusChange,
 }: {
   companyId: string
-  valuePropositions: ValuePropositionRef[]
+  // true: 構築完了の会社では1行バーに自動折りたたみ（展開ボタンで従来表示）。未完了は常に展開
+  collapsible?: boolean
+  // 件数・点検・完了状態をサマリーハブへ通知（任意）
+  onStatusChange?: (s: OntologyStatus) => void
 }) {
   const [counts, setCounts] = useState<Counts>(ZERO_COUNTS)
   const [loading, setLoading] = useState(true)
@@ -142,6 +157,7 @@ export default function OntologyBuilderSection({
         baseline: (json.baseline as Record<string, number>) || {},
         uncoveredWarnCount: (json.uncoveredWarnCount as number) || 0,
         acknowledgedUnprovenCount: (json.acknowledgedUnprovenCount as number) || 0,
+        openUnprovenCount: (json.openUnprovenCount as number) || 0,
       })
     } catch (err) {
       console.error('[OntologyBuilder] 自動点検エラー:', err)
@@ -156,12 +172,45 @@ export default function OntologyBuilderSection({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeStep])
 
-  // ステップ2〜4での承認登録直後（各セクションの onDataChanged）＋手動更新ボタン:
+  // 下部セクションでの登録・削除（ONTOLOGY_DATA_CHANGED_EVENT）＋Step5内の承認＋手動更新ボタン:
   // 件数と自動点検の両方を取り直す
   const onChildDataChanged = useCallback(() => {
     fetchCounts()
     fetchInspection()
   }, [fetchCounts, fetchInspection])
+
+  // 下部の各セクション（実績・ルール・関係性）でのCRUDを購読してステップ判定を更新
+  // （ジャンプ→入力→戻ってきたときに判定が最新になっている）
+  useEffect(() => {
+    const handler = () => onChildDataChanged()
+    window.addEventListener(ONTOLOGY_DATA_CHANGED_EVENT, handler)
+    return () => window.removeEventListener(ONTOLOGY_DATA_CHANGED_EVENT, handler)
+  }, [onChildDataChanged])
+
+  // 該当セクションへスムーズスクロール＋一瞬ハイライト（CRUDの実体はジャンプ先のみ）
+  const jumpTo = (anchorId: string) => {
+    const el = document.getElementById(anchorId)
+    if (!el) return
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    el.classList.add('ring-2', 'ring-blue-400', 'transition-shadow')
+    setTimeout(() => el.classList.remove('ring-2', 'ring-blue-400', 'transition-shadow'), 1600)
+  }
+
+  // サマリーハブへ状態を通知（判定はここが唯一の持ち主。ハブは表示のみ）
+  useEffect(() => {
+    if (loading) return
+    onStatusChange?.({
+      counts,
+      inspection,
+      complete: inspection !== null && inspection.uncoveredWarnCount === 0 && basicsDone,
+      pendingCount: inspection?.acknowledgedUnprovenCount ?? 0,
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, counts, inspection, basicsDone])
+
+  // 折りたたみ（collapsible 時のみ）。完了している会社では1行バーに畳む。未完了は常に展開
+  const complete = inspection !== null && inspection.uncoveredWarnCount === 0 && basicsDone
+  const [userExpanded, setUserExpanded] = useState(false)
 
   const current = STEPS.find((s) => s.num === activeStep) ?? null
 
@@ -206,31 +255,22 @@ export default function OntologyBuilderSection({
     )
   }
 
-  // ---- Step 5: 自動点検サマリ＋完了バナー ----
-  const renderInspectionSummary = () => {
-    if (inspection === null) {
-      return (
-        <p className="text-[13px] text-muted-foreground border border-border bg-muted/40 rounded-lg p-3 mb-3">
-          自動点検を実行中...
-        </p>
-      )
-    }
-    const unproven = inspection.baseline['裏づけのない約束'] || 0
-    const orphan = inspection.baseline['どの約束にも繋がっていない実績'] || 0
-    const conflict = inspection.baseline['矛盾の明示'] || 0
-    return (
-      <div className="border border-border bg-muted/40 rounded-lg p-3 mb-3">
-        <p className="text-[13px] text-foreground m-0">
-          <span className="font-bold">自動点検: </span>
-          裏づけのない提供価値 {unproven}件
-          {inspection.acknowledgedUnprovenCount > 0 && `（うち保留 ${inspection.acknowledgedUnprovenCount}件）`}
-          {' ／ '}どの約束にも繋がっていない実績 {orphan}件 ／ 内容のくい違い {conflict}件
-          {inspectionLoading && <span className="text-muted-foreground">（更新中...）</span>}
-        </p>
-      </div>
-    )
-  }
+  // ---- Step 2〜4: 状態の要約＋ジャンプボタン（AI草案・追加はジャンプ先のセクションで） ----
+  const renderJumpStep = (summary: string, label: string, anchorId: string) => (
+    <div>
+      <p className="text-sm text-foreground mb-2">{summary}</p>
+      <Button type="button" variant="outline" onClick={() => jumpTo(anchorId)} className="py-2 px-4 text-[13px]">
+        {label}
+        <ArrowRight size={14} />
+      </Button>
+      <p className="text-[12px] text-muted-foreground mt-2 mb-0">
+        登録・AI草案はジャンプ先のセクションで行えます。登録するとこのステップ判定は自動で更新されます
+      </p>
+    </div>
+  )
 
+  // ---- Step 5: 完了バナー ----
+  // 点検数値のサマリ表示はサマリーハブの点検チップに一本化済み（ここでは出さない）。
   const renderCompletionBanner = () => {
     if (inspection === null) return null
     if (inspection.uncoveredWarnCount !== 0) return null
@@ -251,11 +291,32 @@ export default function OntologyBuilderSection({
           {pending > 0
             ? `対象の検出はすべて解消または保留済みです。保留した項目は後からいつでも回答できます。`
             : 'プロファイリングで解消できるwarn系の検出（裏づけのない約束など）は0件です。'}
-          現在の登録: 理念 {counts.mission + counts.vision + counts.value}件・提供価値 {counts.vp}件・実績 {counts.proof}件・表現ルール {counts.rule}件・関係 {counts.relation}本
         </p>
-        <a href="#brand-map" className="inline-block text-[13px] font-semibold text-blue-700 mt-1.5">
+        <a href="#relations-section" className="inline-block text-[13px] font-semibold text-blue-700 mt-1.5">
           ブランドマップを見る →
         </a>
+      </div>
+    )
+  }
+
+  // 完了済み＋collapsible: 1行バーに折りたたみ（未完了の導線は塞がない）
+  if (collapsible && complete && !userExpanded) {
+    return (
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="inline-flex items-center justify-center size-5 rounded-full bg-green-600 text-white shrink-0">
+          <Check size={12} />
+        </span>
+        <span className="text-sm font-semibold text-foreground">構築ガイド: 全5ステップ完了</span>
+        {(inspection?.acknowledgedUnprovenCount ?? 0) > 0 && (
+          <span className="py-0.5 px-2 bg-amber-100 text-amber-800 rounded text-[11px] font-semibold">
+            保留 {inspection!.acknowledgedUnprovenCount}件
+          </span>
+        )}
+        <div className="grow" />
+        <Button type="button" variant="outline" size="sm" onClick={() => setUserExpanded(true)} className="h-7 px-2.5 text-[12px]">
+          <ChevronDown size={13} />
+          展開
+        </Button>
       </div>
     )
   }
@@ -306,6 +367,18 @@ export default function OntologyBuilderSection({
         >
           <RefreshCw size={13} />
         </Button>
+        {collapsible && complete && userExpanded && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={() => setUserExpanded(false)}
+            className="size-7 shrink-0"
+            title="折りたたむ"
+          >
+            <ChevronUp size={13} />
+          </Button>
+        )}
       </div>
 
       {/* 現在ステップのパネル */}
@@ -324,16 +397,27 @@ export default function OntologyBuilderSection({
           </div>
 
           {current.num === 1 && renderStep1()}
-          {current.num === 2 && (
-            <ProofPointsSection companyId={companyId} valuePropositions={valuePropositions} onDataChanged={onChildDataChanged} />
-          )}
-          {current.num === 3 && (
-            <GovernanceRulesSection companyId={companyId} valuePropositions={valuePropositions} onDataChanged={onChildDataChanged} />
-          )}
-          {current.num === 4 && <ElementRelationsSection companyId={companyId} onDataChanged={onChildDataChanged} />}
+          {/* Step2〜4: 状態の要約＋ジャンプのみ（CRUDの再マウント廃止＝二重マウント解消） */}
+          {current.num === 2 &&
+            renderJumpStep(
+              counts.proof > 0 ? `実績 ${counts.proof}件登録済み` : '実績はまだ登録されていません',
+              '実績・エピソードへ移動',
+              'proofs-section',
+            )}
+          {current.num === 3 &&
+            renderJumpStep(
+              counts.rule > 0 ? `表現ルール ${counts.rule}件登録済み` : '表現ルールはまだ登録されていません',
+              '表現ルールへ移動',
+              'rules-section',
+            )}
+          {current.num === 4 &&
+            renderJumpStep(
+              counts.relation > 0 ? `関係 ${counts.relation}本登録済み` : '関係はまだ登録されていません',
+              '関係性（リスト/マップ）へ移動',
+              'relations-section',
+            )}
           {current.num === 5 && (
             <>
-              {renderInspectionSummary()}
               {renderCompletionBanner()}
               <ProfilingSection companyId={companyId} onDataChanged={onChildDataChanged} autoStart />
             </>

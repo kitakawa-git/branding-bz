@@ -1,0 +1,144 @@
+'use client'
+
+// スーパー管理画面 企業詳細: 「ブランドオントロジー」サマリーハブ。
+// 設計原則: 情報の「正」は1箇所、ここはチップとリンクで参照するだけ。
+// - 完了判定・件数・点検数値は OntologyBuilderSection（ウィザード）からの onStatusChange 通知を表示
+//   （判定ロジックの持ち主はウィザード。ここでは再計算しない）
+// - 島・未接続のみマップと同じ純関数（buildBrandMapGraph）で導出（新しい集計APIは作らない）
+// - AIレビュー（MapReviewPanel）はここが唯一の置き場。クイックアクションは各セクションへの
+//   アンカー移動のみで、機能の実体は持たない。
+import { useCallback, useEffect, useState } from 'react'
+import { supabase } from '@/lib/supabase'
+import { fetchElementsCatalog } from '@/lib/brand/elements-catalog'
+import { buildBrandMapGraph, type ProofFkRow, type RelationRow } from '@/lib/brand/map-data'
+import OntologyBuilderSection, { ONTOLOGY_DATA_CHANGED_EVENT, type OntologyStatus } from './OntologyBuilderSection'
+import MapReviewPanel from './MapReviewPanel'
+
+type MapStats = { islands: number; unconnected: number }
+
+const Chip = ({ label, value, tone = 'gray' }: { label: string; value: string; tone?: 'gray' | 'green' | 'amber' }) => {
+  const cls =
+    tone === 'green'
+      ? 'bg-green-100 text-green-800'
+      : tone === 'amber'
+        ? 'bg-amber-100 text-amber-800'
+        : 'bg-gray-100 text-gray-700'
+  return (
+    <span className={`inline-flex items-center gap-1 py-1 px-2.5 rounded-md text-[12px] font-semibold ${cls}`}>
+      <span className="font-normal opacity-80">{label}</span>
+      {value}
+    </span>
+  )
+}
+
+export default function OntologySummaryHub({ companyId }: { companyId: string }) {
+  const [status, setStatus] = useState<OntologyStatus | null>(null)
+  const [mapStats, setMapStats] = useState<MapStats | null>(null)
+
+  const onStatusChange = useCallback((s: OntologyStatus) => setStatus(s), [])
+
+  // 島・未接続: マップと同じ純関数で導出（表示はここが唯一。マップ側のバッジは撤去済み）
+  const fetchMapStats = useCallback(async () => {
+    const [catalog, relR, philR, ppR] = await Promise.all([
+      fetchElementsCatalog(supabase, companyId),
+      supabase
+        .from('element_relations')
+        .select('id, source_kind, source_id, target_kind, target_id, relation_type, note')
+        .eq('company_id', companyId),
+      supabase.from('philosophy_elements').select('id, element_type').eq('company_id', companyId),
+      supabase.from('proof_points').select('id, value_proposition_id').eq('company_id', companyId),
+    ])
+    const philTypes: Record<string, string> = {}
+    for (const p of (philR.data as { id: string; element_type: string }[] | null) || []) {
+      philTypes[p.id] = p.element_type
+    }
+    const g = buildBrandMapGraph(
+      catalog,
+      (relR.data as RelationRow[] | null) || [],
+      philTypes,
+      (ppR.data as ProofFkRow[] | null) || [],
+    )
+    setMapStats({ islands: g.islandCount, unconnected: g.unconnectedCount })
+  }, [companyId])
+
+  // 初回＋下部セクションでのCRUD（ONTOLOGY_DATA_CHANGED_EVENT）で再取得
+  useEffect(() => {
+    fetchMapStats()
+    const handler = () => fetchMapStats()
+    window.addEventListener(ONTOLOGY_DATA_CHANGED_EVENT, handler)
+    return () => window.removeEventListener(ONTOLOGY_DATA_CHANGED_EVENT, handler)
+  }, [fetchMapStats])
+
+  const c = status?.counts
+  const insp = status?.inspection ?? null
+  const vpTotal = c?.vp ?? 0
+  const backed = insp ? Math.max(0, vpTotal - insp.openUnprovenCount) : null
+  const conflicts = insp?.baseline['矛盾の明示'] ?? null
+  const pending = status?.pendingCount ?? 0
+
+  const statusChip = !status
+    ? { label: '読込中...', tone: 'gray' as const }
+    : status.complete
+      ? { label: pending > 0 ? `構築完了（保留 ${pending}）` : '構築完了', tone: 'green' as const }
+      : { label: '構築中', tone: 'amber' as const }
+
+  return (
+    <div>
+      {/* ヘッダ: タイトル＋状態チップ */}
+      <div className="flex flex-wrap items-center gap-2 mb-1">
+        <h3 className="text-base font-bold text-foreground m-0">ブランドオントロジー</h3>
+        <Chip label="" value={statusChip.label} tone={statusChip.tone} />
+      </div>
+      <p className="text-xs text-muted-foreground mb-4">
+        理念から実績までの体系の現在地です。編集は下の各セクションで行います。
+      </p>
+
+      {/* ウィザードバー（完了済みは1行に自動折りたたみ・未完了は展開） */}
+      <div className="border border-border rounded-lg p-3 bg-background mb-3">
+        <OntologyBuilderSection companyId={companyId} collapsible onStatusChange={onStatusChange} />
+      </div>
+
+      {/* 件数チップ（5つ） */}
+      <div className="flex flex-wrap gap-1.5 mb-2">
+        <Chip label="理念" value={c ? String(c.mission + c.vision + c.value) : '–'} />
+        <Chip label="提供価値" value={c ? String(c.vp) : '–'} />
+        <Chip label="実績" value={c ? String(c.proof) : '–'} />
+        <Chip label="ルール" value={c ? String(c.rule) : '–'} />
+        <Chip label="関係" value={c ? String(c.relation) : '–'} />
+      </div>
+
+      {/* 点検チップ（3つ）— 点検数値の唯一の表示場所 */}
+      <div className="flex flex-wrap gap-1.5 mb-3">
+        <Chip
+          label="裏づけ"
+          value={insp ? `${backed}/${vpTotal}${pending > 0 ? `（保留${pending}）` : ''}` : '–'}
+          tone={insp ? (insp.uncoveredWarnCount > 0 ? 'amber' : 'green') : 'gray'}
+        />
+        <Chip label="くい違い" value={conflicts === null ? '–' : String(conflicts)} tone={conflicts ? 'amber' : 'gray'} />
+        <Chip
+          label="島"
+          value={mapStats ? `${mapStats.islands}クラスタ・未接続${mapStats.unconnected}件` : '–'}
+          tone={mapStats ? (mapStats.islands > 1 || mapStats.unconnected > 0 ? 'amber' : 'green') : 'gray'}
+        />
+      </div>
+
+      {/* AIレビュー（唯一の置き場） */}
+      <div className="mb-3">
+        <MapReviewPanel companyId={companyId} />
+      </div>
+
+      {/* クイックアクション（実体は各セクション。アンカー移動のみ） */}
+      <div className="flex flex-wrap gap-2">
+        <a href="#relations-section" className="inline-flex items-center rounded-md border border-border bg-background px-3 py-1.5 text-[13px] font-semibold text-foreground no-underline hover:bg-muted">
+          AIスキャンを実行 →
+        </a>
+        <a href="#inspection-section" className="inline-flex items-center rounded-md border border-border bg-background px-3 py-1.5 text-[13px] font-semibold text-foreground no-underline hover:bg-muted">
+          質問に答える{pending > 0 ? `（保留 ${pending}）` : ''} →
+        </a>
+        <a href="#inspection-section" className="inline-flex items-center rounded-md border border-border bg-background px-3 py-1.5 text-[13px] font-semibold text-foreground no-underline hover:bg-muted">
+          AI判定（トーン・主張） →
+        </a>
+      </div>
+    </div>
+  )
+}
