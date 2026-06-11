@@ -191,6 +191,11 @@ export default function PersonalitySessionPage() {
       )}
       {currentStep === 4 && (
         <Step4Diagnosis
+          sessionId={sessionId}
+          hasDiagnosis={!!sd.diagnosis && Object.keys(sd.diagnosis).length > 0}
+          onComplete={(diagnosis) =>
+            saveAndAdvance(5, Object.keys(diagnosis).length > 0 ? { diagnosis } : undefined)
+          }
           onBack={() => saveAndAdvance(3)}
         />
       )}

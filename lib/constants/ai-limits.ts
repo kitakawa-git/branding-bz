@@ -6,3 +6,7 @@ export const COMPETITOR_SUGGEST_MONTHLY_LIMIT = 1
 
 // ターゲット提案: 1社あたり月あたりの実行回数上限（管理画面・STP共有）
 export const TARGET_SUGGEST_MONTHLY_LIMIT = 1
+
+// パーソナリティ診断: 1社あたり月あたりの実行回数上限
+// （web_search なしのため連打対策水準。company_id なしのツール単独ユーザーはセッション上限で制御）
+export const PERSONALITY_DIAGNOSIS_MONTHLY_LIMIT = 10
