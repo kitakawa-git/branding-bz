@@ -470,7 +470,7 @@ export default function CompanyDetailPage() {
         <CardContent className="p-6">
           <h3 className="text-base font-bold text-foreground mb-1">整合性チェック</h3>
           <p className="text-xs text-muted-foreground mb-4">
-            ブランド体系の綻び（裏づけのない約束・どの約束にも繋がっていない実績・用語規定違反・矛盾の明示・証拠の鮮度）を決定論的に検出します。可視化のみ（自動修正はしません）。
+            ブランド体系の綻び（裏づけのない約束・どの約束にも繋がっていない実績・用語規定違反・矛盾の明示・証拠の鮮度・宙に浮いた関係・理念から辿れない要素）を決定論的に検出します。可視化のみ（自動修正はしません）。
           </p>
           <IntegrityCheckSection companyId={companyId} />
         </CardContent>

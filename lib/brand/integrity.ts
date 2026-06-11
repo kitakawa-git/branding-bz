@@ -145,8 +145,91 @@ export async function runIntegrityChecks(companyId: string): Promise<IntegrityFi
         severity: 'info',
         category: '証拠の鮮度',
         message: `証拠「${p.title || '(無題)'}」の日付（${p.evidence_date}）が2年より古いため、再確認を推奨します`,
-        refs: [{ kind: '証拠・実績', label: p.title || '(無題)' }],
+        refs: [{ kind: '実績・エピソード', label: p.title || '(無題)' }],
       })
+    }
+  }
+
+  // 6. 宙に浮いた関係（info）: 端点が解決できない関係（削除済み要素・別company要素を指す幽霊エッジ）。
+  //    削除時トリガ cleanup_element_relations_on_delete で再発しないはずだが、防御として検出を残す。
+  //    info のためウィザード Step5 の完了判定（uncoveredWarnCount=裏づけのない約束ベース）には影響しない。
+  for (const r of ers) {
+    const srcOk = labelMap.has(`${r.source_kind}:${r.source_id}`)
+    const tgtOk = labelMap.has(`${r.target_kind}:${r.target_id}`)
+    if (srcOk && tgtOk) continue
+    const side = !srcOk && !tgtOk ? '起点と対象' : !srcOk ? '起点' : '対象'
+    const known = srcOk
+      ? `起点「${refOf(r.source_kind, r.source_id)}」`
+      : tgtOk
+        ? `対象「${refOf(r.target_kind, r.target_id)}」`
+        : ''
+    findings.push({
+      severity: 'info',
+      category: '宙に浮いた関係',
+      message: `関係（${r.relation_type}）の${side}の要素が見つかりません。削除済みの要素を指している可能性があります${known ? `（${known}）` : ''}。関係グラフから削除を推奨します`,
+    })
+  }
+
+  // 7. 理念から辿れない要素（info）: mission（無ければ vision、どちらも無ければ value 全件）を根に、
+  //    関係（向きは無視・無向）＋証拠の直接FK（proof_points.value_proposition_id）を辺として
+  //    到達可能性を見る。届かない要素は「島」＝論理の根拠が未登録のサイン。
+  //    - 検出対象: 理念（根自身を除く）/提供価値/実績/表現ルール。ペルソナは対象外
+  //      （理念由来でなくてよい）が、経路としては通過できる。
+  //    - 根が1つも無い会社（理念未登録）はチェック自体をスキップ（全要素が島になり煩雑なため）。
+  //    - ラベルはカタログ由来（title が null の理念も body で表示される。幽霊エッジ誤診の教訓）。
+  //    - info のためウィザード Step5 の完了判定には影響しない。
+  {
+    const rootPhils = (() => {
+      const m = phils.filter((p) => p.element_type === 'mission')
+      if (m.length > 0) return m
+      const v = phils.filter((p) => p.element_type === 'vision')
+      if (v.length > 0) return v
+      return phils.filter((p) => p.element_type === 'value')
+    })()
+    if (rootPhils.length > 0) {
+      const adj = new Map<string, string[]>()
+      const addEdge = (a: string, b: string) => {
+        if (!adj.has(a)) adj.set(a, [])
+        if (!adj.has(b)) adj.set(b, [])
+        adj.get(a)!.push(b)
+        adj.get(b)!.push(a)
+      }
+      for (const r of ers) addEdge(`${r.source_kind}:${r.source_id}`, `${r.target_kind}:${r.target_id}`)
+      for (const p of pps) {
+        if (p.value_proposition_id) addEdge(`value_proposition:${p.value_proposition_id}`, `proof_point:${p.id}`)
+      }
+      const reachable = new Set<string>(rootPhils.map((p) => `philosophy_element:${p.id}`))
+      const queue = [...reachable]
+      for (let i = 0; i < queue.length; i++) {
+        for (const nb of adj.get(queue[i]) || []) {
+          if (!reachable.has(nb)) {
+            reachable.add(nb)
+            queue.push(nb)
+          }
+        }
+      }
+      const rootIds = new Set(rootPhils.map((p) => p.id))
+      const unreachable = catalog.filter(
+        (e) =>
+          e.kind !== 'persona' &&
+          !(e.kind === 'philosophy_element' && rootIds.has(e.id)) &&
+          !reachable.has(`${e.kind}:${e.id}`),
+      )
+      if (unreachable.length > 0) {
+        findings.push({
+          severity: 'info',
+          category: '理念から辿れない要素',
+          message: `理念からの線が繋がっていない要素が${unreachable.length}件あります。関係性ステップでAIスキャンを再実行するか、手動で関係を追加してください`,
+        })
+        for (const e of unreachable) {
+          findings.push({
+            severity: 'info',
+            category: '理念から辿れない要素',
+            message: `「${e.label}」は理念からの線が繋がっていません（島になっています）`,
+            refs: [{ kind: KIND_LABELS[e.kind], label: e.label }],
+          })
+        }
+      }
     }
   }
 
