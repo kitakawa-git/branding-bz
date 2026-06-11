@@ -5,8 +5,8 @@
 > Cowork: 直接読み書き
 > Claude Projects: ナレッジとしてアップロード（週1回推奨）
 
-**最終更新:** 2026-06-10
-**更新者:** Claude Code（ブランド理念オントロジー実装）
+**最終更新:** 2026-06-11
+**更新者:** Claude Code（STP分析 Step5 リニューアル）
 
 ---
 
@@ -120,6 +120,7 @@
   - **理念要素のID化 `philosophy_elements`**: mission/vision/value/action_guideline/**service（事業内容）** を 1行=1要素 のテーブルへ正規化（旧 `brand_guidelines` の mission/vision(text)・values/action_guidelines/business_content(jsonb) を撤去）。表示（card/portal/guidelines/ci-manual）・AI（targets/competitors/quiz設問/brand-data）・編集（`/admin/brand/guidelines` を行差分CRUDへ）・`tools/shared-profile`（読み書き同期）を全て新テーブルへ切替。旧列は退避テーブル `archive_brand_guidelines_*`（RLS有効・ポリシー無し=service_role限定）へバックアップ後 DROP。取得は `lib/brand/philosophy.ts`（`fetchPhilosophy`）に集約
   - **型付き関係グラフ `element_relations`**: 5種（philosophy_element/value_proposition/proof_point/governance_rule/persona）をポリモーフィック端点(kind+id)で結ぶ関係（guides/evidencedBy/promisedTo/communicatedAs/constrainedBy/conflictsWith）。端点存在＋同一company を SECURITY DEFINER トリガで担保（自己参照/重複はDB制約）。superadmin 企業詳細にオーサリングUI、AI草案生成6ルートへ関係要約を注入（`lib/brand/relations.ts`）。テックブリッジに実関係5件を投入し before/after でAI出力反映を実証
   - **整合性チェック**: ①決定論（`lib/brand/integrity.ts`・5チェック=証拠なき約束/孤立証拠/用語違反/矛盾明示/証拠鮮度）②AI判定（`lib/brand/integrity-ai.ts`・governance_rules の tone/claim/discouraged を Claude が実テキスト評価＋修正案。1社1回呼び出し・NG/OK例few-shot・引用バリデーションでハルシネーション防護）。superadmin 企業詳細に「チェック実行（決定論）」「AI判定を実行」パネル（**読み取り専用・自動修正なし**）
+- **デザインシステム管理機能（デザイントークンDB管理＋実測ビューア）**（2026-06-11・本番デプロイ済み、commit ee66a4f/f60c701/fde3b26/7dbcf63） — include-bz から移植し、`/superadmin/design-system`（スーパー管理者専用）でサービス全体の色をパレット管理。**①基盤色までDB化**: `design_tokens`（LP用 `--ds-*` ＋ shadcn基盤 `--primary`/`--foreground`/`--border` 等のHSL成分 ＋ アプリ青 `--ds-app-*`、計52トークン）を `getDesignTokensCss()`→`app/layout.tsx` の `<style id="design-tokens">` で :root 注入、`/api/revalidate` でタグ無効化。基盤色を変えると管理/ポータル/ツール全画面が一括追従（seed=現行値の透過コピーで**見た目不変**）。履歴 `design_token_history`＋ロールバック。RLSは superadmin_all＋SELECT公開（LP SSRがanon読み）。**②ハードコード青の全置換**: `blue-500/600/700` の text/bg/border/ring 165件＋recharts/SVG/inlineの青hex 8件を `--ds-app-*` へ（色1:1一致＝blue-600=accent/700=hover/500=soft）。淡色背景 `bg-blue-50` 等・PDF・ブランドカラーデータは据え置き。**③2階層タブ＋実測ビューア**: 上位＝ウェブサイト(LP)/サービス画面(アプリ)の下線型タブ、下位＝カラーパレット/タイポ/スペーシング/コンポーネント/レイアウト/レスポンシブ/ドキュメントの7タブ。タイポ等は対象ページ（website=公開LP群／service=管理ダッシュボード等）を不可視iframeで**実測**（ハードコードの転記表を持たない）。コンポーネントは実体描画＋使用色をトークン逆引き。**④ドキュメントタブ（design.md）**: 自動サマリー（DBトークン/実測タイポ・スペーシング/コンポーネント/@media）＋手書きメモ（`design_docs` テーブル・scope別・RLS superadmin）を結合し**コピー/.mdダウンロード**。編集UIは hex/rgba/HSL成分のマルチフォーマット対応（`hsl-color.ts` で双方向変換）。DB migration: 20260611130000/140000/150000。残: 淡色背景の青・gray系623件のトークン化は将来
 
 ---
 
