@@ -76,7 +76,10 @@ export function Step4Diagnosis({ sessionId, hasDiagnosis, onComplete, onBack }: 
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-foreground mb-6">Step 4: AI診断</h1>
+      <h1 className="text-2xl font-bold text-foreground mb-2">Step 4: AI診断</h1>
+      <p className="mb-5 text-[13px] text-muted-foreground">
+        回答10問をもとに、AIがブランドの人格をスコア・タイプ・トーンまで一括で生成します
+      </p>
 
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
         <CardContent className="p-8 text-center">

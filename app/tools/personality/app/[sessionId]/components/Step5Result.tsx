@@ -167,7 +167,10 @@ export function Step5Result({ sessionId, framework, diagnosis, companyName, onSa
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-foreground mb-6">Step 5: 診断結果</h1>
+      <h1 className="text-2xl font-bold text-foreground mb-2">Step 5: 診断結果</h1>
+      <p className="mb-5 text-[13px] text-muted-foreground">
+        診断結果を確認し、スコアの微調整・PDF出力・branding.bz への連携を行いましょう
+      </p>
 
       {/* 選択フレームワークの結果のみ表示（タブ切替は廃止・仕様改定） */}
       {defaultTab === 'aaker' ? (

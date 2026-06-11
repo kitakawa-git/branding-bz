@@ -97,12 +97,12 @@ export function QuestionListStep({
 
   return (
     <div>
-      <div className="mb-6 flex items-end justify-between">
+      <div className="mb-2 flex items-end justify-between">
         <h1 className="text-2xl font-bold text-foreground">{`Step ${stepNumber}: ${title}`}</h1>
         <span className="text-xs text-muted-foreground">{answeredCount} / {questions.length} 問回答済み</span>
       </div>
-      <p className="mb-6 text-sm text-muted-foreground">
-        選択肢に正解はありません。「うちのブランドらしいかどうか」の直感で選んでください。
+      <p className="mb-5 text-[13px] text-muted-foreground">
+        選択肢に正解はありません。「うちのブランドらしいかどうか」の直感で選んでください
       </p>
 
       <div className="space-y-5">

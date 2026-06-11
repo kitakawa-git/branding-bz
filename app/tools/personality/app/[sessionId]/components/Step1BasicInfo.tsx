@@ -177,7 +177,10 @@ export function Step1BasicInfo({ basicInfo, framework, onNext, onSaveField }: St
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-foreground mb-6">Step 1: 基本情報</h1>
+      <h1 className="text-2xl font-bold text-foreground mb-2">Step 1: 基本情報</h1>
+      <p className="mb-5 text-[13px] text-muted-foreground">
+        企業情報と診断タイプを選び、AIに正しく文脈を渡すための土台を整えます
+      </p>
 
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
         <CardContent className="p-5">
