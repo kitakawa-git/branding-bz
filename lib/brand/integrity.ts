@@ -61,8 +61,9 @@ export async function runIntegrityChecks(companyId: string): Promise<IntegrityFi
   const vpIdsWithDirectProof = new Set(pps.filter((p) => p.value_proposition_id).map((p) => p.value_proposition_id as string))
 
   // 1. 裏づけのない約束（warn・旧称: 証拠なき約束）: 直接FK も evidencedBy 関係も無い提供価値
-  //    ※ category はウィザード Step6 判定（OntologyBuilderSection の PROFILING_RESOLVABLE_CATEGORIES）
-  //      と文字列照合される。変更時は判定側も同時に更新すること。
+  //    ※ category 文字列はウィザードの点検サマリ（OntologyBuilderSection）と
+  //      プロファイリングの改善表示が表示キーとして参照する。リネーム時は両側を同時に更新すること。
+  //      （Step5完了判定は category 照合ではなく lib/brand/profiling.ts の uncoveredWarnCount を使う）
   for (const vp of vps) {
     if (!vpIdsWithDirectProof.has(vp.id) && !evidencedVpIds.has(vp.id)) {
       findings.push({

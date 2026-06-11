@@ -74,6 +74,8 @@ export default function ProfilingSection({
   const [finished, setFinished] = useState(false)
   const [afterCounts, setAfterCounts] = useState<Record<string, number> | null>(null)
   const [registeredCount, setRegisteredCount] = useState(0)
+  // 保留済み（profiling_acknowledgments に記録あり）の件数。「保留した質問をもう一度見る」の表示判定
+  const [pendingCount, setPendingCount] = useState(0)
 
   // 質問ごとの入力
   const [answerText, setAnswerText] = useState('')
@@ -93,16 +95,19 @@ export default function ProfilingSection({
     setDraft(null)
   }
 
-  const generate = async () => {
+  // includePending: true で保留済み（まだ無い/わからない）の質問も再表示する
+  const generate = async (includePending = false) => {
     setGenerating(true)
     try {
-      const res = await fetch(`/api/superadmin/profiling?companyId=${companyId}`, {
-        headers: { Authorization: `Bearer ${await token()}` },
-      })
+      const res = await fetch(
+        `/api/superadmin/profiling?companyId=${companyId}${includePending ? '&includeAcknowledged=1' : ''}`,
+        { headers: { Authorization: `Bearer ${await token()}` } },
+      )
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`)
       setQuestions(json.questions as ProfilingQuestion[])
       setBaseline((json.baseline as Record<string, number>) || {})
+      setPendingCount((json.acknowledgedUnprovenCount as number) || 0)
       setIdx(0)
       setFinished(false)
       setAfterCounts(null)
@@ -155,9 +160,40 @@ export default function ProfilingSection({
     }
   }
 
-  // 「まだ無い」「わからない」「特にない」「どれでもない」・スキップ: 何も登録せず次へ
+  // 「特にない」「どれでもない」・スキップ: 何も登録せず次へ（保留記録もしない）
   const skip = async () => {
     await next()
+  }
+
+  // 「まだ無い」「わからない」: 保留として永続化（profiling_acknowledgments）して次へ。
+  // 保留した質問は次回の生成でデフォルト除外され、ウィザードStep5の完了判定では
+  // 「保留済みでカバーされた検出」として扱われる。実績が登録されたら保留は解除される。
+  const acknowledge = async () => {
+    if (current?.type === 'unproven_promise') {
+      const { error } = await supabase.from('profiling_acknowledgments').upsert(
+        { company_id: companyId, target_ref: `value_proposition:${current.vp_id}` },
+        { onConflict: 'company_id,target_ref' },
+      )
+      if (error) {
+        console.error('[Profiling] 保留の保存エラー:', error)
+        toast.error('保留の保存に失敗しました: ' + error.message)
+        return // 保存できていないのに進めない（スキップしたい場合はスキップボタン）
+      }
+      setPendingCount((n) => n + 1)
+      toast.success('保留しました（後からいつでも回答できます）')
+      onDataChanged?.()
+    }
+    await next()
+  }
+
+  // 実績が登録された提供価値の保留記録を解除（無ければ何も起きない）
+  const clearAcknowledgment = async (vpId: string) => {
+    const { error } = await supabase
+      .from('profiling_acknowledgments')
+      .delete()
+      .eq('company_id', companyId)
+      .eq('target_ref', `value_proposition:${vpId}`)
+    if (error) console.error('[Profiling] 保留解除エラー:', error)
   }
 
   // 自由記述 → 構造化草案（Claude）
@@ -258,6 +294,7 @@ export default function ProfilingSection({
           sort_order: relOrder,
         })
         if (relErr) throw relErr
+        await clearAcknowledgment(draft.vp_id) // 実績が付いたので保留は解除
       } else if (draft.kind === 'governance_rule') {
         if (!draft.rule.rule_text.trim()) throw new Error('ルール本文は必須です')
         const order = await nextSortOrder('governance_rules')
@@ -286,6 +323,7 @@ export default function ProfilingSection({
           sort_order: order,
         })
         if (error) throw error
+        await clearAcknowledgment(draft.vp_id) // 実績が紐づいたので保留は解除
       } else if (draft.kind === 'conflict_note') {
         const newNote = draft.existing_note ? `${draft.existing_note}\n${draft.note}` : draft.note
         const { error } = await supabase
@@ -469,8 +507,8 @@ export default function ProfilingSection({
               </Button>
               {current.type === 'unproven_promise' ? (
                 <>
-                  <Button type="button" size="sm" variant="outline" onClick={skip} disabled={structuring}>まだ無い</Button>
-                  <Button type="button" size="sm" variant="outline" onClick={skip} disabled={structuring}>わからない</Button>
+                  <Button type="button" size="sm" variant="outline" onClick={acknowledge} disabled={structuring}>まだ無い</Button>
+                  <Button type="button" size="sm" variant="outline" onClick={acknowledge} disabled={structuring}>わからない</Button>
                 </>
               ) : (
                 <Button type="button" size="sm" variant="outline" onClick={skip} disabled={structuring}>特にない</Button>
@@ -579,16 +617,36 @@ export default function ProfilingSection({
   return (
     <div>
       {(questions === null || finished) && (
-        <Button type="button" onClick={generate} disabled={generating} className="py-2 px-4 text-[13px]">
-          {finished ? <RotateCcw size={16} /> : <Play size={16} />}
-          {generating ? '生成中...' : finished ? 'もう一度質問を生成' : '質問を生成'}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" onClick={() => generate()} disabled={generating} className="py-2 px-4 text-[13px]">
+            {finished ? <RotateCcw size={16} /> : <Play size={16} />}
+            {generating ? '生成中...' : finished ? 'もう一度質問を生成' : '質問を生成'}
+          </Button>
+          {pendingCount > 0 && (
+            <Button type="button" variant="outline" onClick={() => generate(true)} disabled={generating} className="py-2 px-4 text-[13px]">
+              保留した質問をもう一度見る（{pendingCount}）
+            </Button>
+          )}
+        </div>
       )}
 
       {questions !== null && questions.length === 0 && !finished && (
-        <p className="text-sm text-foreground border border-green-200 bg-green-50 rounded-lg p-3 mt-3 mb-0">
-          質問はありません。整合性チェックで検出された穴（裏づけのない約束・どの約束にも繋がっていない実績・矛盾・禁則ゼロ）が無い状態です
-        </p>
+        <div className="mt-3">
+          {pendingCount > 0 ? (
+            <>
+              <p className="text-sm text-foreground border border-border bg-muted/40 rounded-lg p-3 mb-2">
+                未回答の質問はありません（保留中 {pendingCount}件）。保留した項目は後からいつでも回答できます
+              </p>
+              <Button type="button" variant="outline" onClick={() => generate(true)} disabled={generating} className="py-2 px-4 text-[13px]">
+                保留した質問をもう一度見る（{pendingCount}）
+              </Button>
+            </>
+          ) : (
+            <p className="text-sm text-foreground border border-green-200 bg-green-50 rounded-lg p-3 mb-0">
+              質問はありません。整合性チェックで検出された穴（裏づけのない約束・どの約束にも繋がっていない実績・矛盾・禁則ゼロ）が無い状態です
+            </p>
+          )}
+        </div>
       )}
 
       {!finished && renderQuestion()}

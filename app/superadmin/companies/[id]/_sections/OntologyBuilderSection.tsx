@@ -8,16 +8,16 @@
 // - 決定論チェックは自動実行: ステップ5を開いたとき＋ステップ2〜4で承認登録した直後
 //   （onDataChanged 経由）に走り、ステップ5冒頭に点検サマリを常時表示する。
 //   手動の「チェック実行」ボタンはウィザードには無い（AI判定含め、下部の既存
-//   「整合性チェック」カードに従来どおり残る）。
-// - Step 5 の完了判定は「プロファイリングで解消できる warn（裏づけのない約束・繋がっていない実績系）」
-//   が0件＋ステップ1〜4充足ガード（旧Step6と同一）。用語規定違反などは判定から除外する。
-//   ※ カテゴリは integrity.ts が emit する表示文字列と照合される。リネーム時は両側を同時に更新すること。
+//   「整合性チェック」カードに従来どおり残る。検出表示はそのまま＝穴の事実は隠さない）。
+// - Step 5 の完了判定:「プロファイリング対象の warn（裏づけのない約束）が、解消済みまたは
+//   保留済み（profiling_acknowledgments）で全件カバーされている」＋ステップ1〜4充足ガード。
+//   判定値は /api/superadmin/profiling の uncoveredWarnCount（lib/brand/profiling.ts で算出）。
+//   点検サマリは同レスポンスの baseline（integrity.ts のカテゴリ文字列がキー。リネーム時は要同時更新）。
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Check, Info, RefreshCw } from 'lucide-react'
 import ProofPointsSection, { type ValuePropositionRef } from './ProofPointsSection'
-import { type Finding } from './IntegrityCheckSection'
 import GovernanceRulesSection from './GovernanceRulesSection'
 import ElementRelationsSection from './ElementRelationsSection'
 import ProfilingSection from './ProfilingSection'
@@ -34,16 +34,12 @@ type Counts = {
 
 const ZERO_COUNTS: Counts = { mission: 0, vision: 0, value: 0, vp: 0, proof: 0, rule: 0, relation: 0 }
 
-// Step5 完了判定の対象カテゴリ（プロファイリングの質問で解消できる検出のみ）。
-// 用語規定違反は言い換え推奨の参考情報のためここに含めない（表示はされるが完了は妨げない）。
-// ※ integrity.ts の category 文字列と一致させること（旧称: 証拠なき約束・孤立した証拠）。
-const PROFILING_RESOLVABLE_CATEGORIES = new Set(['裏づけのない約束', 'どの約束にも繋がっていない実績'])
-
-const countResolvableWarns = (findings: Finding[]): number =>
-  findings.filter((f) => f.severity === 'warn' && PROFILING_RESOLVABLE_CATEGORIES.has(f.category)).length
-
-const countCategory = (findings: Finding[], category: string): number =>
-  findings.filter((f) => f.category === category).length
+// 自動点検の結果（/api/superadmin/profiling のレスポンスから使う分）
+type Inspection = {
+  baseline: Record<string, number> // integrity.ts のカテゴリ文字列 → 件数
+  uncoveredWarnCount: number // 未解消かつ未保留の warn（Step5完了判定: 0で完了）
+  acknowledgedUnprovenCount: number // 保留済み件数（完了バナーに明示）
+}
 
 const STEPS: { num: number; label: string; full: string; why: string }[] = [
   { num: 1, label: '基本情報', full: '基本情報の確認', why: '理念と提供価値が、この後のすべての土台になります' },
@@ -63,11 +59,9 @@ export default function OntologyBuilderSection({
   const [counts, setCounts] = useState<Counts>(ZERO_COUNTS)
   const [loading, setLoading] = useState(true)
   const [activeStep, setActiveStep] = useState<number | null>(null) // 初回ロード後に自動設定
-  // 自動点検（決定論チェック）の結果（null=未取得）
-  const [findings, setFindings] = useState<Finding[] | null>(null)
-  const [findingsLoading, setFindingsLoading] = useState(false)
-
-  const resolvableWarn = findings === null ? null : countResolvableWarns(findings)
+  // 自動点検（決定論チェック＋保留カバレッジ）の結果（null=未取得）
+  const [inspection, setInspection] = useState<Inspection | null>(null)
+  const [inspectionLoading, setInspectionLoading] = useState(false)
 
   // 完了状態はすべてデータから導出（進捗テーブルなし）
   // Step5 は warn 0件だけだと「データが空＝検出対象なし」の会社まで完了扱いになるため、
@@ -92,12 +86,13 @@ export default function OntologyBuilderSection({
         case 4:
           return counts.relation > 0
         case 5:
-          return resolvableWarn === 0 && basicsDone
+          // 対象warnが「解消済みまたは保留済み」で全件カバーされていれば完了
+          return inspection !== null && inspection.uncoveredWarnCount === 0 && basicsDone
         default:
           return false
       }
     },
-    [counts, resolvableWarn, basicsDone],
+    [counts, inspection, basicsDone],
   )
 
   const fetchCounts = useCallback(async () => {
@@ -133,27 +128,31 @@ export default function OntologyBuilderSection({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading])
 
-  // 自動点検: 決定論チェックを取得（AI不要・読み取りのみ・コスト極小）
-  const fetchFindings = useCallback(async () => {
-    setFindingsLoading(true)
+  // 自動点検: 決定論チェック＋保留カバレッジを取得（AI不要・読み取りのみ・コスト極小）
+  const fetchInspection = useCallback(async () => {
+    setInspectionLoading(true)
     try {
       const token = (await supabase.auth.getSession()).data.session?.access_token || ''
-      const res = await fetch(`/api/superadmin/integrity?companyId=${companyId}`, {
+      const res = await fetch(`/api/superadmin/profiling?companyId=${companyId}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`)
-      setFindings(json.findings as Finding[])
+      setInspection({
+        baseline: (json.baseline as Record<string, number>) || {},
+        uncoveredWarnCount: (json.uncoveredWarnCount as number) || 0,
+        acknowledgedUnprovenCount: (json.acknowledgedUnprovenCount as number) || 0,
+      })
     } catch (err) {
       console.error('[OntologyBuilder] 自動点検エラー:', err)
     } finally {
-      setFindingsLoading(false)
+      setInspectionLoading(false)
     }
   }, [companyId])
 
   // ステップ5を開いたら自動点検（未取得時のみ。データ変化時は onChildDataChanged が再実行する）
   useEffect(() => {
-    if (activeStep === 5 && findings === null && !findingsLoading) fetchFindings()
+    if (activeStep === 5 && inspection === null && !inspectionLoading) fetchInspection()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeStep])
 
@@ -161,8 +160,8 @@ export default function OntologyBuilderSection({
   // 件数と自動点検の両方を取り直す
   const onChildDataChanged = useCallback(() => {
     fetchCounts()
-    fetchFindings()
-  }, [fetchCounts, fetchFindings])
+    fetchInspection()
+  }, [fetchCounts, fetchInspection])
 
   const current = STEPS.find((s) => s.num === activeStep) ?? null
 
@@ -209,47 +208,53 @@ export default function OntologyBuilderSection({
 
   // ---- Step 5: 自動点検サマリ＋完了バナー ----
   const renderInspectionSummary = () => {
-    if (findings === null) {
+    if (inspection === null) {
       return (
         <p className="text-[13px] text-muted-foreground border border-border bg-muted/40 rounded-lg p-3 mb-3">
           自動点検を実行中...
         </p>
       )
     }
-    const unproven = countCategory(findings, '裏づけのない約束')
-    const orphan = countCategory(findings, 'どの約束にも繋がっていない実績')
-    const conflict = countCategory(findings, '矛盾の明示')
+    const unproven = inspection.baseline['裏づけのない約束'] || 0
+    const orphan = inspection.baseline['どの約束にも繋がっていない実績'] || 0
+    const conflict = inspection.baseline['矛盾の明示'] || 0
     return (
       <div className="border border-border bg-muted/40 rounded-lg p-3 mb-3">
         <p className="text-[13px] text-foreground m-0">
           <span className="font-bold">自動点検: </span>
-          裏づけのない提供価値 {unproven}件 ／ どの約束にも繋がっていない実績 {orphan}件 ／ 内容のくい違い {conflict}件
-          {findingsLoading && <span className="text-muted-foreground">（更新中...）</span>}
+          裏づけのない提供価値 {unproven}件
+          {inspection.acknowledgedUnprovenCount > 0 && `（うち保留 ${inspection.acknowledgedUnprovenCount}件）`}
+          {' ／ '}どの約束にも繋がっていない実績 {orphan}件 ／ 内容のくい違い {conflict}件
+          {inspectionLoading && <span className="text-muted-foreground">（更新中...）</span>}
         </p>
       </div>
     )
   }
 
   const renderCompletionBanner = () => {
-    if (resolvableWarn === null) return null
-    if (resolvableWarn === 0 && !basicsDone) {
+    if (inspection === null) return null
+    if (inspection.uncoveredWarnCount !== 0) return null
+    if (!basicsDone) {
       return (
         <p className="text-[13px] text-muted-foreground border border-border bg-muted/40 rounded-lg p-3 mb-4">
           解消すべき検出は0件ですが、データがまだ少ないため検出対象がない状態です。先にステップ1〜4を埋めてください
         </p>
       )
     }
-    if (resolvableWarn === 0) {
-      return (
-        <div className="border border-green-200 bg-green-50 rounded-lg p-4 mb-4">
-          <p className="text-sm font-bold text-green-800 m-0 mb-1">オントロジー構築完了 🎉</p>
-          <p className="text-[13px] text-foreground m-0">
-            プロファイリングで解消できるwarn系の検出（裏づけのない約束など）は0件です。現在の登録: 理念 {counts.mission + counts.vision + counts.value}件・提供価値 {counts.vp}件・実績 {counts.proof}件・表現ルール {counts.rule}件・関係 {counts.relation}本
-          </p>
-        </div>
-      )
-    }
-    return null
+    const pending = inspection.acknowledgedUnprovenCount
+    return (
+      <div className="border border-green-200 bg-green-50 rounded-lg p-4 mb-4">
+        <p className="text-sm font-bold text-green-800 m-0 mb-1">
+          オントロジー構築完了{pending > 0 ? `（保留 ${pending}件）` : ''} 🎉
+        </p>
+        <p className="text-[13px] text-foreground m-0">
+          {pending > 0
+            ? `対象の検出はすべて解消または保留済みです。保留した項目は後からいつでも回答できます。`
+            : 'プロファイリングで解消できるwarn系の検出（裏づけのない約束など）は0件です。'}
+          現在の登録: 理念 {counts.mission + counts.vision + counts.value}件・提供価値 {counts.vp}件・実績 {counts.proof}件・表現ルール {counts.rule}件・関係 {counts.relation}本
+        </p>
+      </div>
+    )
   }
 
   return (

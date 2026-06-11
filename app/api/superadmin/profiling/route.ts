@@ -1,6 +1,7 @@
 // ブランドプロファイリング 質問生成API（superadmin限定・読み取りのみ）
-// GET /api/superadmin/profiling?companyId=...
+// GET /api/superadmin/profiling?companyId=...&includeAcknowledged=1
 // 整合性チェックの検出結果を質問キューに変換して返す（決定論・AI不要）。DBへは書き込まない。
+// includeAcknowledged=1 で保留済み（まだ無い/わからない）の質問も再表示する。
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
@@ -39,7 +40,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'スーパー管理者権限が必要です。' }, { status: 403 })
     }
 
-    const result = await generateProfilingQuestions(companyId)
+    const includeAcknowledged = request.nextUrl.searchParams.get('includeAcknowledged') === '1'
+    const result = await generateProfilingQuestions(companyId, { includeAcknowledged })
     return NextResponse.json(result)
   } catch (err) {
     console.error('[profiling] エラー:', err)

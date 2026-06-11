@@ -57,21 +57,31 @@ export type ProfilingQuestionsResult = {
   questions: ProfilingQuestion[]
   // セッション末尾の改善表示用ベースライン（整合性チェックのカテゴリ別件数）
   baseline: Record<string, number>
+  // 「裏づけのない約束」（warn・プロファイリング対象）の現存数
+  openUnprovenCount: number
+  // うち保留済み（profiling_acknowledgments に記録あり）
+  acknowledgedUnprovenCount: number
+  // 未解消かつ未保留（ウィザード Step5 完了判定: これが0＋ステップ1〜4充足で完了）
+  uncoveredWarnCount: number
 }
 
 export async function generateProfilingQuestions(
   companyId: string,
+  options?: { includeAcknowledged?: boolean }, // true: 保留済みの質問も再表示する
 ): Promise<ProfilingQuestionsResult> {
-  if (!companyId) return { questions: [], baseline: {} }
+  if (!companyId) {
+    return { questions: [], baseline: {}, openUnprovenCount: 0, acknowledgedUnprovenCount: 0, uncoveredWarnCount: 0 }
+  }
   const supabase = getSupabaseAdmin()
 
-  const [vpR, ppR, erR, govR, catalog, baselineFindings] = await Promise.all([
+  const [vpR, ppR, erR, govR, catalog, baselineFindings, ackR] = await Promise.all([
     supabase.from('value_propositions').select('id, title').eq('company_id', companyId).order('sort_order', { ascending: true }),
     supabase.from('proof_points').select('id, title, value_proposition_id').eq('company_id', companyId).order('sort_order', { ascending: true }),
     supabase.from('element_relations').select('id, source_kind, source_id, target_kind, target_id, relation_type, note').eq('company_id', companyId),
     supabase.from('governance_rules').select('id', { count: 'exact', head: true }).eq('company_id', companyId),
     fetchElementsCatalog(supabase, companyId),
     runIntegrityChecks(companyId), // 読み取り再利用（ベースライン件数のみ）
+    supabase.from('profiling_acknowledgments').select('target_ref').eq('company_id', companyId),
   ])
 
   type VP = { id: string; title: string | null }
@@ -91,9 +101,18 @@ export async function generateProfilingQuestions(
   const labelMap = new Map(catalog.map((e) => [`${e.kind}:${e.id}`, e.label]))
   const labelOf = (kind: ElementKind, id: string) => labelMap.get(`${kind}:${id}`) ?? '不明な要素'
 
-  // warn 系（裏づけのない約束）を優先し、次いで禁則ゼロ→繋がっていない実績→矛盾の順で最大7問
-  const unproven: ProfilingQuestion[] = vps
-    .filter((vp) => !vpIdsWithDirectProof.has(vp.id) && !evidencedVpIds.has(vp.id))
+  // 保留済み（まだ無い/わからない）の target_ref 集合
+  const ackSet = new Set((((ackR.data as { target_ref: string }[] | null) || []).map((a) => a.target_ref)))
+
+  // 現存する「裏づけのない約束」（warn・プロファイリング対象）と保留カバレッジ
+  const openUnprovenVps = vps.filter((vp) => !vpIdsWithDirectProof.has(vp.id) && !evidencedVpIds.has(vp.id))
+  const acknowledgedUnprovenCount = openUnprovenVps.filter((vp) => ackSet.has(`value_proposition:${vp.id}`)).length
+  const uncoveredWarnCount = openUnprovenVps.length - acknowledgedUnprovenCount
+
+  // warn 系（裏づけのない約束）を優先し、次いで禁則ゼロ→繋がっていない実績→矛盾の順で最大7問。
+  // 保留済みはデフォルトで質問から除外（includeAcknowledged 指定時のみ再表示）
+  const unproven: ProfilingQuestion[] = openUnprovenVps
+    .filter((vp) => options?.includeAcknowledged || !ackSet.has(`value_proposition:${vp.id}`))
     .map((vp) => ({
       key: `unproven:${vp.id}`,
       type: 'unproven_promise' as const,
@@ -145,7 +164,13 @@ export async function generateProfilingQuestions(
   const baseline: Record<string, number> = {}
   for (const f of baselineFindings) baseline[f.category] = (baseline[f.category] || 0) + 1
 
-  return { questions, baseline }
+  return {
+    questions,
+    baseline,
+    openUnprovenCount: openUnprovenVps.length,
+    acknowledgedUnprovenCount,
+    uncoveredWarnCount,
+  }
 }
 
 // ---- 回答の構造化（自由記述 → 草案。Claude 使用） ----
