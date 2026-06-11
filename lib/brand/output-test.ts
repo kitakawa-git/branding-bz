@@ -12,10 +12,11 @@ import { getRelationsPromptForCompany } from '@/lib/brand/relations'
 import { extractNumberValues } from '@/lib/brand/profiling'
 import { OUTPUT_TEST_TOPICS, type OutputTestResult, type OutputTestTopic } from '@/lib/brand/output-test-types'
 
-const TOPIC_INSTRUCTION: Record<OutputTestTopic, { instruction: string; maxTokens: number }> = {
-  company_intro: { instruction: 'この会社の紹介文を100字程度で1本書いてください。', maxTokens: 500 },
-  catchcopy: { instruction: 'この会社のキャッチコピー案を3本書いてください（各20字以内・箇条書きで）。', maxTokens: 500 },
-  proposal: { instruction: 'この会社からターゲット顧客への提案文を200字程度で1本書いてください。', maxTokens: 700 },
+// taskKind: copy=キャッチコピー等（対内語彙の引用禁止・最も強い事実を選ぶ）/ descriptive=従来どおり事実の引用推奨
+const TOPIC_INSTRUCTION: Record<OutputTestTopic, { instruction: string; maxTokens: number; taskKind: 'copy' | 'descriptive' }> = {
+  company_intro: { instruction: 'この会社の紹介文を100字程度で1本書いてください。', maxTokens: 500, taskKind: 'descriptive' },
+  catchcopy: { instruction: 'この会社のキャッチコピー案を3本書いてください（各20字以内・箇条書きで）。', maxTokens: 500, taskKind: 'copy' },
+  proposal: { instruction: 'この会社からターゲット顧客への提案文を200字程度で1本書いてください。', maxTokens: 700, taskKind: 'descriptive' },
 }
 
 const BASE_SYSTEM =
@@ -78,6 +79,9 @@ export async function runOutputTest(companyId: string, topic: OutputTestTopic): 
     .join('\n')
 
   // ---- 注入ブロック（A のみ）: 理念（service除く）・提供価値・guardrails（実績・ルール）・関係 ----
+  // copy系では対内要素（バリュー・行動指針を含む理念）を「トーン・精神の参考」に格下げし、
+  // 語彙としての直接引用を禁止する（例: バリュー「素直に」をコピーにそのまま使わない）。
+  const isCopy = conf.taskKind === 'copy'
   const nonServicePhils = phils.filter((p) => p.element_type !== 'service')
   const philLines = nonServicePhils
     .map((p) => {
@@ -85,12 +89,17 @@ export async function runOutputTest(companyId: string, topic: OutputTestTopic): 
       return t.trim() ? `- ${PHIL_JP[p.element_type] ?? p.element_type}: ${t}` : ''
     })
     .filter(Boolean)
-  const philBlock = philLines.length > 0 ? `# 理念\n${philLines.join('\n')}` : ''
+  const philBlock =
+    philLines.length > 0
+      ? isCopy
+        ? `# 理念（トーン・精神の参考。語彙として引用しない）\n以下は社内向けの価値観・行動指針である。コピーのトーン・精神の拠り所にとどめ、これらの語彙をコピーに直接引用しないこと（言葉をなぞるより、事実で語る）。\n${philLines.join('\n')}`
+        : `# 理念\n${philLines.join('\n')}`
+      : ''
   const vpBlock =
     vps.length > 0
       ? `# 提供価値\n${vps.map((v) => `- ${[v.title, v.description].filter(Boolean).join('：')}`).join('\n')}`
       : ''
-  const guardrailsBlock = buildGuardrailsPrompt(guardrails)
+  const guardrailsBlock = buildGuardrailsPrompt(guardrails, { taskKind: conf.taskKind })
 
   const injected = {
     proof: guardrails.proofPoints.length,

@@ -108,9 +108,17 @@ export async function fetchBrandGuardrails(
 /**
  * 取得した証拠・表現ルールを、systemプロンプトへ追記するための文字列に整形する。
  * 両方0件なら空文字を返す（＝注入なし＝従来挙動）。
+ * taskKind（任意・既定 descriptive）:
+ *   - 'descriptive': 紹介文・提案文・ターゲット提案など。事実の引用を推奨（従来挙動）
+ *   - 'copy': キャッチコピー等の短文。「最も強い事実を選んで使う」指示に切替（全部盛り防止）
+ *   いずれもルール（禁則）は絶対適用で変わらない。
  */
-export function buildGuardrailsPrompt(g: BrandGuardrails): string {
+export function buildGuardrailsPrompt(
+  g: BrandGuardrails,
+  opts?: { taskKind?: 'copy' | 'descriptive' },
+): string {
   const sections: string[] = []
+  const isCopy = opts?.taskKind === 'copy'
 
   if (g.proofPoints.length > 0) {
     const lines = g.proofPoints.map((p) => {
@@ -123,7 +131,9 @@ export function buildGuardrailsPrompt(g: BrandGuardrails): string {
     sections.push(
       [
         '# 証拠・実績（ProofPoint）',
-        '提供価値に関する主張は、必ず以下の証拠のいずれかを根拠として用いること。',
+        isCopy
+          ? '事実を使う場合は、以下から最も強い事実を1〜2個だけ選んで使うこと。登録要素の言葉をなぞるのではなく、選んだ事実そのもので語ること（全部を盛り込まない）。'
+          : '提供価値に関する主張は、必ず以下の証拠のいずれかを根拠として用いること。',
         'ここに無い実績・数値・受賞・顧客の声などを創作してはならない（事実の捏造は禁止）。',
         ...lines,
       ].join('\n'),
