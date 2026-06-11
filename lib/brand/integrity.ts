@@ -26,7 +26,7 @@ const PHIL_JP: Record<string, string> = {
 }
 
 type VP = { id: string; title: string | null; description: string | null }
-type PP = { id: string; title: string | null; value_proposition_id: string | null; evidence_date: string | null }
+type PP = { id: string; title: string | null; value_proposition_id: string | null }
 type ER = { source_kind: ElementKind; source_id: string; target_kind: ElementKind; target_id: string; relation_type: string; note: string | null }
 type Term = { avoided_term: string | null; preferred_term: string | null }
 type BG = { slogan: string | null; brand_statement: string | null; brand_story: string | null }
@@ -38,7 +38,7 @@ export async function runIntegrityChecks(companyId: string): Promise<IntegrityFi
 
   const [vpR, ppR, erR, termsR, bgR, philR, catalog] = await Promise.all([
     supabase.from('value_propositions').select('id, title, description').eq('company_id', companyId).order('sort_order', { ascending: true }),
-    supabase.from('proof_points').select('id, title, value_proposition_id, evidence_date').eq('company_id', companyId).order('sort_order', { ascending: true }),
+    supabase.from('proof_points').select('id, title, value_proposition_id').eq('company_id', companyId).order('sort_order', { ascending: true }),
     supabase.from('element_relations').select('source_kind, source_id, target_kind, target_id, relation_type, note').eq('company_id', companyId),
     supabase.from('brand_terms').select('avoided_term, preferred_term').eq('company_id', companyId),
     supabase.from('brand_guidelines').select('slogan, brand_statement, brand_story').eq('company_id', companyId).maybeSingle(),
@@ -137,21 +137,10 @@ export async function runIntegrityChecks(companyId: string): Promise<IntegrityFi
     })
   }
 
-  // 5. 証拠の鮮度（info・任意）: evidence_date が2年より古い証拠
-  const twoYearsAgo = new Date()
-  twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2)
-  for (const p of pps) {
-    if (!p.evidence_date) continue
-    const d = new Date(p.evidence_date)
-    if (!isNaN(d.getTime()) && d < twoYearsAgo) {
-      findings.push({
-        severity: 'info',
-        category: '証拠の鮮度',
-        message: `証拠「${p.title || '(無題)'}」の日付（${p.evidence_date}）が2年より古いため、再確認を推奨します`,
-        refs: [{ kind: '実績・エピソード', label: p.title || '(無題)' }],
-      })
-    }
-  }
+  // （旧5. 証拠の鮮度チェックは撤去（2026-06-11）。evidence_date の入力経路が手動フォームのみで
+  //   AI草案・プロファイリング経由はすべて null となり、ほぼ発火しない休眠チェックだったため。
+  //   evidence_date カラムと手動入力欄は残置。AI推定による evidence_date 補完は
+  //   捏造防止の原則（元データに無い値を作らない）に反するため不採用と判断した。）
 
   // 6. 宙に浮いた関係（info）: 端点が解決できない関係（削除済み要素・別company要素を指す幽霊エッジ）。
   //    削除時トリガ cleanup_element_relations_on_delete で再発しないはずだが、防御として検出を残す。

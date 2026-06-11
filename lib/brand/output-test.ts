@@ -21,12 +21,12 @@ const TOPIC_INSTRUCTION: Record<OutputTestTopic, { instruction: string; maxToken
 const BASE_SYSTEM =
   'あなたはプロのコピーライターです。与えられた企業情報だけをもとに、自然で簡潔な日本語で書いてください。前置き・説明・補足は不要で、成果物そのものだけを出力してください。'
 
+// 注入ブロック用の理念ラベル（service=事業概要は基本情報側でA/B共通に渡すためここには無い）
 const PHIL_JP: Record<string, string> = {
   mission: 'ミッション',
   vision: 'ビジョン',
   value: 'バリュー',
   action_guideline: '行動指針',
-  service: '事業内容',
 }
 
 export async function runOutputTest(companyId: string, topic: OutputTestTopic): Promise<OutputTestResult> {

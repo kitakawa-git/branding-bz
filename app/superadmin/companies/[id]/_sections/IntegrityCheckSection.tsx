@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button'
 import { AlertTriangle, Info, Play, ShieldCheck, Sparkles, Copy } from 'lucide-react'
 import { toast } from 'sonner'
 
-export type Finding = {
+type Finding = {
   severity: 'warn' | 'info'
   category: string
   message: string
@@ -35,14 +35,7 @@ const RULE_TYPE_JP: Record<string, string> = {
   discouraged_expression: '非推奨表現',
 }
 
-export default function IntegrityCheckSection({
-  companyId,
-  onChecked,
-}: {
-  companyId: string
-  // 決定論チェック実行後に findings を通知（ウィザードのステップ判定用・任意）
-  onChecked?: (findings: Finding[]) => void
-}) {
+export default function IntegrityCheckSection({ companyId }: { companyId: string }) {
   const [findings, setFindings] = useState<Finding[] | null>(null)
   const [running, setRunning] = useState(false)
   const [aiFindings, setAiFindings] = useState<AiFinding[] | null>(null)
@@ -59,7 +52,6 @@ export default function IntegrityCheckSection({
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`)
       setFindings(json.findings as Finding[])
-      onChecked?.(json.findings as Finding[])
     } catch (err) {
       console.error('[IntegrityCheck] 実行エラー:', err)
       toast.error('チェックに失敗しました: ' + (err instanceof Error ? err.message : '不明なエラー'))

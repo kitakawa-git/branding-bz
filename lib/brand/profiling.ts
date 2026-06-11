@@ -304,9 +304,6 @@ export function findUngroundedNumbers(draftTexts: string[], answer: string): str
   return missing
 }
 
-export function draftNumbersGroundedInAnswer(draftTexts: string[], answer: string): boolean {
-  return findUngroundedNumbers(draftTexts, answer).length === 0
-}
 
 // structureAnswer の結果。draft が null のときは reason に破棄・失敗の理由（ユーザー向け日本語）が入る。
 export type StructureResult = { draft: StructuredDraft | null; reason: string | null }
