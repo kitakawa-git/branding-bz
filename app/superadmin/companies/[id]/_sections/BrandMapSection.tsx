@@ -82,9 +82,11 @@ export default function BrandMapSection({ companyId }: { companyId: string }) {
   const [hover, setHover] = useState<string | null>(null)
   const [forcePos, setForcePos] = useState<Map<string, LayoutPos>>(new Map())
   const [tf, setTf] = useState({ k: 1, x: 0, y: 0 }) // 現状マップのズーム/パン
-  // AIレビュー（手動実行のみ・永続化なし）
+  // AIレビュー: 保存済みがあれば固定表示（AI呼び出しなし）。無ければ初回表示時に自動生成して保存。
+  // 再生成はボタン押下時のみ。鮮度（保存時とデータが変わった）はヒント表示のみで自動再生成しない。
   const [review, setReview] = useState<string | null>(null)
   const [reviewAt, setReviewAt] = useState<string | null>(null)
+  const [reviewStale, setReviewStale] = useState(false)
   const [reviewLoading, setReviewLoading] = useState(false)
 
   const svgRef = useRef<SVGSVGElement>(null)
@@ -225,31 +227,41 @@ export default function BrandMapSection({ companyId }: { companyId: string }) {
     return `M${s.x},${s.y} Q${qx},${qy} ${t.x},${t.y}`
   }
 
-  // AIレビュー生成（ボタン押下時のみ。自動実行しない）
-  const runReview = async () => {
+  // AIレビュー取得/生成。regenerate=false は保存済み返却（無ければ初回のみ自動生成して保存）、
+  // regenerate=true はボタン押下時のみ（上書き保存）。
+  const fetchReview = async (regenerate: boolean) => {
     setReviewLoading(true)
     try {
       const token = (await supabase.auth.getSession()).data.session?.access_token || ''
       const res = await fetch('/api/superadmin/map-review', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ companyId }),
+        body: JSON.stringify({ companyId, regenerate }),
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`)
       if (!json.review) {
-        toast.error(json.reason || 'レビューを生成できませんでした')
+        if (regenerate) toast.error(json.reason || 'レビューを生成できませんでした')
         return
       }
       setReview(json.review as string)
-      setReviewAt(new Date().toLocaleString('ja-JP'))
+      setReviewAt(json.generatedAt ? new Date(json.generatedAt as string).toLocaleString('ja-JP') : null)
+      setReviewStale(json.stale === true)
     } catch (err) {
       console.error('[BrandMap] AIレビューエラー:', err)
-      toast.error('AIレビューの生成に失敗しました: ' + (err instanceof Error ? err.message : '不明なエラー'))
+      if (regenerate) {
+        toast.error('AIレビューの生成に失敗しました: ' + (err instanceof Error ? err.message : '不明なエラー'))
+      }
     } finally {
       setReviewLoading(false)
     }
   }
+
+  // 関係があるときだけ、表示時に保存済みレビューを取得（無い会社はこの初回だけ自動生成・保存される）
+  useEffect(() => {
+    if (graph && graph.edges.length > 0) fetchReview(false)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [graph])
 
   const selectedNode = selected ? nodeByRef.get(selected) : null
   const selectedEdges = useMemo(() => {
@@ -417,19 +429,30 @@ export default function BrandMapSection({ companyId }: { companyId: string }) {
         ))}
       </div>
 
-      {/* AIレビュー（手動実行・永続化なし） */}
+      {/* AIレビュー（保存済みは固定表示・初回のみ自動生成・再生成はボタンのみ） */}
       <div className="mt-3">
-        <Button type="button" onClick={runReview} disabled={reviewLoading} className="py-2 px-4 text-[13px]">
-          <Sparkles size={16} />
-          {reviewLoading ? 'レビュー生成中...' : 'AIレビューを生成'}
-        </Button>
+        {reviewLoading && !review && (
+          <p className="text-[13px] text-muted-foreground border border-border bg-muted/40 rounded-lg p-3 m-0">
+            AIレビューを{review === null ? '生成' : '取得'}中...（初回のみ自動生成されます）
+          </p>
+        )}
         {review && (
-          <div className="border border-violet-200 bg-violet-50/40 rounded-lg p-4 mt-2">
-            <div className="flex items-center gap-1.5 mb-2 text-xs font-bold text-foreground">
+          <div className="border border-violet-200 bg-violet-50/40 rounded-lg p-4">
+            <div className="flex flex-wrap items-center gap-1.5 mb-2 text-xs font-bold text-foreground">
               <Sparkles size={14} />
               AIレビュー
               {reviewAt && <span className="font-normal text-muted-foreground">（生成: {reviewAt}）</span>}
+              <span className="grow" />
+              <Button type="button" variant="outline" size="sm" onClick={() => fetchReview(true)} disabled={reviewLoading} className="h-7 px-2.5 text-[12px]">
+                <RotateCcw size={13} />
+                {reviewLoading ? '再生成中...' : '再生成'}
+              </Button>
             </div>
+            {reviewStale && (
+              <p className="text-[12px] text-amber-700 border border-amber-200 bg-amber-50/60 rounded-md px-2.5 py-1.5 mb-2">
+                データが更新されています。再生成をおすすめします
+              </p>
+            )}
             <p className="text-[13px] text-foreground whitespace-pre-wrap break-words m-0">{review}</p>
           </div>
         )}

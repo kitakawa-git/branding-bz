@@ -223,10 +223,10 @@ export function filterGroundedLines(
 }
 
 // ---- (b) 講評生成 ----
-export async function generateMapReview(companyId: string): Promise<MapReviewResult> {
+export async function generateMapReview(companyId: string, factsOverride?: MapFacts): Promise<MapReviewResult> {
   if (!companyId) return { review: null, reason: 'companyId がありません', droppedLines: 0, facts: null }
   try {
-    const facts = await computeMapFacts(companyId)
+    const facts = factsOverride ?? (await computeMapFacts(companyId))
     if (facts.counts.edges === 0) {
       return {
         review: null,
@@ -258,5 +258,104 @@ export async function generateMapReview(companyId: string): Promise<MapReviewRes
   } catch (err) {
     console.error('[map-review] 生成失敗:', err)
     return { review: null, reason: 'レビューを生成できませんでした。時間をおいてもう一度お試しください', droppedLines: 0, facts: null }
+  }
+}
+
+// ---- 永続化（brand_map_reviews・1社1行） ----
+// コスト特性: 自動生成は「保存が無い会社の初回表示」の一度きり。以降はボタン押下（regenerate）のみ。
+
+// 鮮度比較用スナップショット（関係数・要素数・島数）
+type FactsSnapshot = {
+  edges: number
+  philosophy: number
+  value_proposition: number
+  proof_point: number
+  governance_rule: number
+  persona: number
+  islands: number
+}
+
+const snapshotOf = (f: MapFacts): FactsSnapshot => ({
+  edges: f.counts.edges,
+  philosophy: f.counts.philosophy,
+  value_proposition: f.counts.value_proposition,
+  proof_point: f.counts.proof_point,
+  governance_rule: f.counts.governance_rule,
+  persona: f.counts.persona,
+  islands: f.islands.length,
+})
+
+const SNAPSHOT_KEYS: (keyof FactsSnapshot)[] = [
+  'edges', 'philosophy', 'value_proposition', 'proof_point', 'governance_rule', 'persona', 'islands',
+]
+
+const snapshotsDiffer = (cur: FactsSnapshot, saved: unknown): boolean => {
+  const s = (saved ?? {}) as Record<string, unknown>
+  return SNAPSHOT_KEYS.some((k) => s[k] !== cur[k])
+}
+
+export type MapReviewView = {
+  review: string | null
+  generatedAt: string | null
+  stale: boolean // facts_snapshot と現在の事実が異なる（再生成をおすすめ）
+  reason: string | null
+  generatedNow: boolean // この呼び出しでAI生成した（=コストが発生した）か
+  droppedLines: number
+}
+
+// 保存済みがあればそれを返し（AI呼び出しなし・鮮度判定つき）、無ければ生成して保存する。
+// regenerate: true はボタン押下時のみ（生成して上書き保存）。
+// 関係0件の会社は生成も保存もしない（案内 reason を返す）。
+export async function getOrGenerateMapReview(
+  companyId: string,
+  options?: { regenerate?: boolean },
+): Promise<MapReviewView> {
+  const none = (reason: string, droppedLines = 0): MapReviewView => ({
+    review: null, generatedAt: null, stale: false, reason, generatedNow: false, droppedLines,
+  })
+  if (!companyId) return none('companyId がありません')
+  try {
+    const supabase = getSupabaseAdmin()
+    const facts = await computeMapFacts(companyId)
+    const snap = snapshotOf(facts)
+
+    if (!options?.regenerate) {
+      const { data } = await supabase
+        .from('brand_map_reviews')
+        .select('review_text, facts_snapshot, generated_at')
+        .eq('company_id', companyId)
+        .maybeSingle()
+      const saved = data as { review_text: string; facts_snapshot: unknown; generated_at: string } | null
+      if (saved) {
+        return {
+          review: saved.review_text,
+          generatedAt: saved.generated_at,
+          stale: snapshotsDiffer(snap, saved.facts_snapshot),
+          reason: null,
+          generatedNow: false,
+          droppedLines: 0,
+        }
+      }
+    }
+
+    if (facts.counts.edges === 0) {
+      return none('関係が登録されていないため、レビューできる体系がまだありません。まずウィザードのステップ4（関係性）でAIスキャンを実行してください')
+    }
+
+    const gen = await generateMapReview(companyId, facts)
+    if (!gen.review) return none(gen.reason ?? 'レビューを生成できませんでした', gen.droppedLines)
+
+    const generatedAt = new Date().toISOString()
+    const { error } = await supabase
+      .from('brand_map_reviews')
+      .upsert(
+        { company_id: companyId, review_text: gen.review, facts_snapshot: snap, generated_at: generatedAt },
+        { onConflict: 'company_id' },
+      )
+    if (error) console.error('[map-review] 保存失敗（レビュー自体は返却）:', error)
+    return { review: gen.review, generatedAt, stale: false, reason: null, generatedNow: true, droppedLines: gen.droppedLines }
+  } catch (err) {
+    console.error('[map-review] 取得/生成失敗:', err)
+    return none('レビューを取得できませんでした。時間をおいてもう一度お試しください')
   }
 }

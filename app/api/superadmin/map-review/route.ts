@@ -1,11 +1,12 @@
-// ブランドマップ AIレビューAPI（superadmin限定・読み取り専用）
-// POST /api/superadmin/map-review  body: { companyId }
-// グラフ事実は決定論計算し、Claude は講評を書くだけ（コスト発生のため POST・手動実行のみ）。
-// DBへは一切書き込まない。レビューの永続化もしない（v1）。
+// ブランドマップ AIレビューAPI（superadmin限定）
+// POST /api/superadmin/map-review  body: { companyId, regenerate? }
+// - 保存済みレビュー（brand_map_reviews）があればそれを返す（AI呼び出しなし・鮮度判定つき）
+// - 無ければ生成して保存（初回の一度きり）。regenerate: true はボタン押下時のみ・上書き保存
+// - 関係0件の会社は生成も保存もしない（案内 reason を返す）
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
-import { generateMapReview } from '@/lib/brand/map-review'
+import { getOrGenerateMapReview } from '@/lib/brand/map-review'
 
 export async function POST(request: NextRequest) {
   try {
@@ -41,8 +42,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'スーパー管理者権限が必要です。' }, { status: 403 })
     }
 
-    const { review, reason, droppedLines } = await generateMapReview(companyId)
-    return NextResponse.json({ review, reason, droppedLines })
+    const regenerate = body?.regenerate === true
+    const result = await getOrGenerateMapReview(companyId, { regenerate })
+    return NextResponse.json(result)
   } catch (err) {
     console.error('[map-review] エラー:', err)
     return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
