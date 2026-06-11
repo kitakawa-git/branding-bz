@@ -11,8 +11,13 @@ import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { fetchElementsCatalog } from '@/lib/brand/elements-catalog'
 import { buildBrandMapGraph, type ProofFkRow, type RelationRow } from '@/lib/brand/map-data'
-import OntologyBuilderSection, { ONTOLOGY_DATA_CHANGED_EVENT, type OntologyStatus } from './OntologyBuilderSection'
+import OntologyBuilderSection, {
+  ONTOLOGY_DATA_CHANGED_EVENT,
+  ONTOLOGY_GOTO_STEP_EVENT,
+  type OntologyStatus,
+} from './OntologyBuilderSection'
 import MapReviewPanel from './MapReviewPanel'
+import type { ValuePropositionRef } from './ProofPointsSection'
 
 type MapStats = { islands: number; unconnected: number }
 
@@ -31,11 +36,22 @@ const Chip = ({ label, value, tone = 'gray' }: { label: string; value: string; t
   )
 }
 
-export default function OntologySummaryHub({ companyId }: { companyId: string }) {
+export default function OntologySummaryHub({
+  companyId,
+  valuePropositions,
+}: {
+  companyId: string
+  valuePropositions: ValuePropositionRef[]
+}) {
   const [status, setStatus] = useState<OntologyStatus | null>(null)
   const [mapStats, setMapStats] = useState<MapStats | null>(null)
 
   const onStatusChange = useCallback((s: OntologyStatus) => setStatus(s), [])
+
+  // クイックアクション → ウィザードの該当ステップへ切替（実体はステップパネル内）
+  const gotoStep = (step: number) => {
+    window.dispatchEvent(new CustomEvent(ONTOLOGY_GOTO_STEP_EVENT, { detail: step }))
+  }
 
   // 島・未接続: マップと同じ純関数で導出（表示はここが唯一。マップ側のバッジは撤去済み）
   const fetchMapStats = useCallback(async () => {
@@ -90,13 +106,8 @@ export default function OntologySummaryHub({ companyId }: { companyId: string })
         <Chip label="" value={statusChip.label} tone={statusChip.tone} />
       </div>
       <p className="text-xs text-muted-foreground mb-4">
-        理念から実績までの体系の現在地です。編集は下の各セクションで行います。
+        理念から実績までの体系の現在地です。登録・編集・点検はこのカード内の各ステップで行います。
       </p>
-
-      {/* ウィザードバー（完了済みは1行に自動折りたたみ・未完了は展開） */}
-      <div className="border border-border rounded-lg p-3 bg-background mb-3">
-        <OntologyBuilderSection companyId={companyId} collapsible onStatusChange={onStatusChange} />
-      </div>
 
       {/* 件数チップ（5つ） */}
       <div className="flex flex-wrap gap-1.5 mb-2">
@@ -127,17 +138,38 @@ export default function OntologySummaryHub({ companyId }: { companyId: string })
         <MapReviewPanel companyId={companyId} />
       </div>
 
-      {/* クイックアクション（実体は各セクション。アンカー移動のみ） */}
-      <div className="flex flex-wrap gap-2">
-        <a href="#relations-section" className="inline-flex items-center rounded-md border border-border bg-background px-3 py-1.5 text-[13px] font-semibold text-foreground no-underline hover:bg-muted">
+      {/* クイックアクション（実体は下のステップパネル。該当ステップへの切替のみ） */}
+      <div className="flex flex-wrap gap-2 mb-4">
+        <button
+          type="button"
+          onClick={() => gotoStep(4)}
+          className="inline-flex items-center rounded-md border border-border bg-background px-3 py-1.5 text-[13px] font-semibold text-foreground cursor-pointer hover:bg-muted"
+        >
           AIスキャンを実行 →
-        </a>
-        <a href="#inspection-section" className="inline-flex items-center rounded-md border border-border bg-background px-3 py-1.5 text-[13px] font-semibold text-foreground no-underline hover:bg-muted">
+        </button>
+        <button
+          type="button"
+          onClick={() => gotoStep(5)}
+          className="inline-flex items-center rounded-md border border-border bg-background px-3 py-1.5 text-[13px] font-semibold text-foreground cursor-pointer hover:bg-muted"
+        >
           質問に答える{pending > 0 ? `（保留 ${pending}）` : ''} →
-        </a>
-        <a href="#inspection-section" className="inline-flex items-center rounded-md border border-border bg-background px-3 py-1.5 text-[13px] font-semibold text-foreground no-underline hover:bg-muted">
+        </button>
+        <button
+          type="button"
+          onClick={() => gotoStep(5)}
+          className="inline-flex items-center rounded-md border border-border bg-background px-3 py-1.5 text-[13px] font-semibold text-foreground cursor-pointer hover:bg-muted"
+        >
           AI判定（トーン・主張） →
-        </a>
+        </button>
+      </div>
+
+      {/* ステッパー（常設ナビ）＋各ステップに機能の実体を埋め込み */}
+      <div className="border border-border rounded-lg p-3 bg-background">
+        <OntologyBuilderSection
+          companyId={companyId}
+          valuePropositions={valuePropositions}
+          onStatusChange={onStatusChange}
+        />
       </div>
     </div>
   )

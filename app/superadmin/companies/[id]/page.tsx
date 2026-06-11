@@ -10,18 +10,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ArrowLeft, Check } from 'lucide-react'
 import { Fab, FabButton } from '@/components/ui/fab'
-import ProofPointsSection, { type ValuePropositionRef } from './_sections/ProofPointsSection'
-import GovernanceRulesSection from './_sections/GovernanceRulesSection'
-import IntegrityCheckSection from './_sections/IntegrityCheckSection'
-import ProfilingSection from './_sections/ProfilingSection'
+import { type ValuePropositionRef } from './_sections/ProofPointsSection'
 import OntologySummaryHub from './_sections/OntologySummaryHub'
-import RelationsTabs from './_sections/RelationsTabs'
-import { ONTOLOGY_DATA_CHANGED_EVENT } from './_sections/OntologyBuilderSection'
-
-// 下部セクションでのCRUDをハブ・ウィザードに通知（ステップ判定・島チップの自動更新）
-const notifyOntologyChange = () => {
-  window.dispatchEvent(new Event(ONTOLOGY_DATA_CHANGED_EVENT))
-}
 
 type Company = {
   id: string
@@ -229,56 +219,10 @@ export default function CompanyDetailPage() {
         ))}
       </div>
 
-      {/* === ブランドオントロジー サマリーハブ（情報の正は各セクション。ここはチップとリンクで参照） === */}
+      {/* === ブランドオントロジー（全機能の実体を内包する常設カード。重複セクションは置かない） === */}
       <Card className="bg-muted/50 border shadow-none mb-6">
         <CardContent className="p-6">
-          <OntologySummaryHub companyId={companyId} />
-        </CardContent>
-      </Card>
-
-      {/* === 実績・エピソード（proof_points・唯一のCRUD） === */}
-      <Card id="proofs-section" className="bg-muted/50 border shadow-none mb-6">
-        <CardContent className="p-6">
-          <h3 className="text-base font-bold text-foreground mb-1">実績・エピソード</h3>
-          <p className="text-xs text-muted-foreground mb-4">
-            提供価値（お客様への約束）を裏づける具体的な事実。数字・事例・お客様の声・受賞・体制など。AIがコピーを作るときの根拠になり、抽象的な表現への逃げを防ぎます。
-          </p>
-          <ProofPointsSection companyId={companyId} valuePropositions={valueProps} onDataChanged={notifyOntologyChange} />
-        </CardContent>
-      </Card>
-
-      {/* === 表現ルール（governance_rules・唯一のCRUD） === */}
-      <Card id="rules-section" className="bg-muted/50 border shadow-none mb-6">
-        <CardContent className="p-6">
-          <h3 className="text-base font-bold text-foreground mb-1">表現ルール</h3>
-          <p className="text-xs text-muted-foreground mb-4">
-            ブランドの表現ルール・禁則（トーン・主張・コンプラ）。「絶対遵守」はAI生成で必ず守られ、「原則遵守」は原則として守られます。
-          </p>
-          <GovernanceRulesSection companyId={companyId} valuePropositions={valueProps} onDataChanged={notifyOntologyChange} />
-        </CardContent>
-      </Card>
-
-      {/* === 関係性（リスト＝CRUD＋AIスキャン ／ マップ＝可視化 のタブ統合） === */}
-      <Card id="relations-section" className="bg-muted/50 border shadow-none mb-6">
-        <CardContent className="p-6">
-          <h3 className="text-base font-bold text-foreground mb-1">関係性</h3>
-          <p className="text-xs text-muted-foreground mb-4">
-            理念・提供価値・実績・表現ルール・ペルソナの「跨ぐ関係」。リストで編集・AIスキャン、マップで全体像（現状/構造の2ビュー）を確認できます。
-          </p>
-          <RelationsTabs companyId={companyId} onDataChanged={notifyOntologyChange} />
-        </CardContent>
-      </Card>
-
-      {/* === 点検・質問（整合性チェック＋プロファイリングの統合カード） === */}
-      <Card id="inspection-section" className="bg-muted/50 border shadow-none mb-6">
-        <CardContent className="p-6">
-          <h3 className="text-base font-bold text-foreground mb-1">点検・質問</h3>
-          <p className="text-xs text-muted-foreground mb-4">
-            ブランド体系の綻びを決定論的に検出し（裏づけのない約束・矛盾・島など）、AI判定（トーン・主張）と質問への回答で埋めていきます。回答はAIが草案化し、承認した時だけ登録されます。
-          </p>
-          <IntegrityCheckSection companyId={companyId} />
-          <div className="border-t border-border my-5" />
-          <ProfilingSection companyId={companyId} onDataChanged={notifyOntologyChange} />
+          <OntologySummaryHub companyId={companyId} valuePropositions={valueProps} />
         </CardContent>
       </Card>
 

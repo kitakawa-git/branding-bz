@@ -16,13 +16,19 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
-import { ArrowRight, Check, ChevronDown, ChevronUp, Info, RefreshCw } from 'lucide-react'
+import { Check, Info, RefreshCw } from 'lucide-react'
 import ProfilingSection from './ProfilingSection'
+import ProofPointsSection, { type ValuePropositionRef } from './ProofPointsSection'
+import GovernanceRulesSection from './GovernanceRulesSection'
+import RelationsTabs from './RelationsTabs'
+import IntegrityCheckSection from './IntegrityCheckSection'
 
-// 下部の各セクション（実績・ルール・関係・質問）でデータが変わったときに発火するイベント名。
+// オントロジーのデータが変わったときに発火するイベント名。
 // ウィザード（ステップ判定）とサマリーハブ（島チップ）がこれを購読して再取得する。
-// CRUDの実体は各セクションのみ（ウィザードはStep2〜4で再マウントしない＝二重マウント解消）。
+// CRUDの実体は各ステップパネル内の1箇所のみ（カード外に重複セクションは置かない）。
 export const ONTOLOGY_DATA_CHANGED_EVENT = 'ontology-data-changed'
+// ハブのクイックアクション→該当ステップへの切替イベント（detail: ステップ番号）
+export const ONTOLOGY_GOTO_STEP_EVENT = 'ontology-goto-step'
 
 type Counts = {
   mission: number
@@ -62,12 +68,11 @@ const STEPS: { num: number; label: string; full: string; why: string }[] = [
 
 export default function OntologyBuilderSection({
   companyId,
-  collapsible = false,
+  valuePropositions,
   onStatusChange,
 }: {
   companyId: string
-  // true: 構築完了の会社では1行バーに自動折りたたみ（展開ボタンで従来表示）。未完了は常に展開
-  collapsible?: boolean
+  valuePropositions: ValuePropositionRef[]
   // 件数・点検・完了状態をサマリーハブへ通知（任意）
   onStatusChange?: (s: OntologyStatus) => void
 }) {
@@ -179,22 +184,28 @@ export default function OntologyBuilderSection({
     fetchInspection()
   }, [fetchCounts, fetchInspection])
 
-  // 下部の各セクション（実績・ルール・関係性）でのCRUDを購読してステップ判定を更新
-  // （ジャンプ→入力→戻ってきたときに判定が最新になっている）
+  // 各ステップ内のCRUDが発火するイベント（broadcastDataChanged）を購読してステップ判定を更新。
+  // ハブ（島チップ）も同じイベントを購読しているため、通知経路はこの1本に統一されている
   useEffect(() => {
     const handler = () => onChildDataChanged()
     window.addEventListener(ONTOLOGY_DATA_CHANGED_EVENT, handler)
     return () => window.removeEventListener(ONTOLOGY_DATA_CHANGED_EVENT, handler)
   }, [onChildDataChanged])
 
-  // 該当セクションへスムーズスクロール＋一瞬ハイライト（CRUDの実体はジャンプ先のみ）
-  const jumpTo = (anchorId: string) => {
-    const el = document.getElementById(anchorId)
-    if (!el) return
-    el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    el.classList.add('ring-2', 'ring-blue-400', 'transition-shadow')
-    setTimeout(() => el.classList.remove('ring-2', 'ring-blue-400', 'transition-shadow'), 1600)
-  }
+  // 埋め込みセクションの onDataChanged → 全購読者（自分＋ハブ）へブロードキャスト
+  const broadcastDataChanged = useCallback(() => {
+    window.dispatchEvent(new Event(ONTOLOGY_DATA_CHANGED_EVENT))
+  }, [])
+
+  // ハブのクイックアクションからのステップ切替を購読
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const step = (e as CustomEvent).detail
+      if (typeof step === 'number' && step >= 1 && step <= 5) setActiveStep(step)
+    }
+    window.addEventListener(ONTOLOGY_GOTO_STEP_EVENT, handler)
+    return () => window.removeEventListener(ONTOLOGY_GOTO_STEP_EVENT, handler)
+  }, [])
 
   // サマリーハブへ状態を通知（判定はここが唯一の持ち主。ハブは表示のみ）
   useEffect(() => {
@@ -207,10 +218,6 @@ export default function OntologyBuilderSection({
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, counts, inspection, basicsDone])
-
-  // 折りたたみ（collapsible 時のみ）。完了している会社では1行バーに畳む。未完了は常に展開
-  const complete = inspection !== null && inspection.uncoveredWarnCount === 0 && basicsDone
-  const [userExpanded, setUserExpanded] = useState(false)
 
   const current = STEPS.find((s) => s.num === activeStep) ?? null
 
@@ -255,20 +262,6 @@ export default function OntologyBuilderSection({
     )
   }
 
-  // ---- Step 2〜4: 状態の要約＋ジャンプボタン（AI草案・追加はジャンプ先のセクションで） ----
-  const renderJumpStep = (summary: string, label: string, anchorId: string) => (
-    <div>
-      <p className="text-sm text-foreground mb-2">{summary}</p>
-      <Button type="button" variant="outline" onClick={() => jumpTo(anchorId)} className="py-2 px-4 text-[13px]">
-        {label}
-        <ArrowRight size={14} />
-      </Button>
-      <p className="text-[12px] text-muted-foreground mt-2 mb-0">
-        登録・AI草案はジャンプ先のセクションで行えます。登録するとこのステップ判定は自動で更新されます
-      </p>
-    </div>
-  )
-
   // ---- Step 5: 完了バナー ----
   // 点検数値のサマリ表示はサマリーハブの点検チップに一本化済み（ここでは出さない）。
   const renderCompletionBanner = () => {
@@ -292,31 +285,13 @@ export default function OntologyBuilderSection({
             ? `対象の検出はすべて解消または保留済みです。保留した項目は後からいつでも回答できます。`
             : 'プロファイリングで解消できるwarn系の検出（裏づけのない約束など）は0件です。'}
         </p>
-        <a href="#relations-section" className="inline-block text-[13px] font-semibold text-blue-700 mt-1.5">
-          ブランドマップを見る →
-        </a>
-      </div>
-    )
-  }
-
-  // 完了済み＋collapsible: 1行バーに折りたたみ（未完了の導線は塞がない）
-  if (collapsible && complete && !userExpanded) {
-    return (
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="inline-flex items-center justify-center size-5 rounded-full bg-green-600 text-white shrink-0">
-          <Check size={12} />
-        </span>
-        <span className="text-sm font-semibold text-foreground">構築ガイド: 全5ステップ完了</span>
-        {(inspection?.acknowledgedUnprovenCount ?? 0) > 0 && (
-          <span className="py-0.5 px-2 bg-amber-100 text-amber-800 rounded text-[11px] font-semibold">
-            保留 {inspection!.acknowledgedUnprovenCount}件
-          </span>
-        )}
-        <div className="grow" />
-        <Button type="button" variant="outline" size="sm" onClick={() => setUserExpanded(true)} className="h-7 px-2.5 text-[12px]">
-          <ChevronDown size={13} />
-          展開
-        </Button>
+        <button
+          type="button"
+          onClick={() => setActiveStep(4)}
+          className="inline-block text-[13px] font-semibold text-blue-700 mt-1.5 bg-transparent border-0 p-0 cursor-pointer"
+        >
+          ブランドマップを見る（ステップ4・マップタブ） →
+        </button>
       </div>
     )
   }
@@ -367,18 +342,6 @@ export default function OntologyBuilderSection({
         >
           <RefreshCw size={13} />
         </Button>
-        {collapsible && complete && userExpanded && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={() => setUserExpanded(false)}
-            className="size-7 shrink-0"
-            title="折りたたむ"
-          >
-            <ChevronUp size={13} />
-          </Button>
-        )}
       </div>
 
       {/* 現在ステップのパネル */}
@@ -397,29 +360,20 @@ export default function OntologyBuilderSection({
           </div>
 
           {current.num === 1 && renderStep1()}
-          {/* Step2〜4: 状態の要約＋ジャンプのみ（CRUDの再マウント廃止＝二重マウント解消） */}
-          {current.num === 2 &&
-            renderJumpStep(
-              counts.proof > 0 ? `実績 ${counts.proof}件登録済み` : '実績はまだ登録されていません',
-              '実績・エピソードへ移動',
-              'proofs-section',
-            )}
-          {current.num === 3 &&
-            renderJumpStep(
-              counts.rule > 0 ? `表現ルール ${counts.rule}件登録済み` : '表現ルールはまだ登録されていません',
-              '表現ルールへ移動',
-              'rules-section',
-            )}
-          {current.num === 4 &&
-            renderJumpStep(
-              counts.relation > 0 ? `関係 ${counts.relation}本登録済み` : '関係はまだ登録されていません',
-              '関係性（リスト/マップ）へ移動',
-              'relations-section',
-            )}
+          {/* Step2〜5: 機能の実体を埋め込み（カード外に重複セクションは無い＝実体は各1箇所） */}
+          {current.num === 2 && (
+            <ProofPointsSection companyId={companyId} valuePropositions={valuePropositions} onDataChanged={broadcastDataChanged} />
+          )}
+          {current.num === 3 && (
+            <GovernanceRulesSection companyId={companyId} valuePropositions={valuePropositions} onDataChanged={broadcastDataChanged} />
+          )}
+          {current.num === 4 && <RelationsTabs companyId={companyId} onDataChanged={broadcastDataChanged} />}
           {current.num === 5 && (
             <>
               {renderCompletionBanner()}
-              <ProfilingSection companyId={companyId} onDataChanged={onChildDataChanged} autoStart />
+              <IntegrityCheckSection companyId={companyId} />
+              <div className="border-t border-border my-5" />
+              <ProfilingSection companyId={companyId} onDataChanged={broadcastDataChanged} autoStart />
             </>
           )}
         </div>
