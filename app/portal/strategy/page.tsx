@@ -32,6 +32,14 @@ type Persona = {
 // 主なターゲット（管理画面で編集する companies.target_segments）
 type TargetSegment = { name: string; description: string }
 
+// セグメンテーション（STP分析ツールから連携。brand_personas[0].segmentation_data）
+type SegmentationData = {
+  variables?: Array<{
+    name: string
+    segments?: Array<{ name: string; description?: string; selected?: boolean }>
+  }>
+}
+
 // 提供価値（value_propositions テーブル ＋ companies.provided_values レガシー）
 type ProvidedValueItem = { title: string; description: string | null }
 
@@ -44,6 +52,7 @@ export default function PortalStrategyPage() {
   type StrategyCache = {
     target: string
     targetSegments: TargetSegment[]
+    segmentationData: SegmentationData | null
     providedValues: ProvidedValueItem[]
     personas: Persona[]
     positioningMapUrl: string
@@ -54,6 +63,7 @@ export default function PortalStrategyPage() {
 
   const [target, setTarget] = useState(cached?.target ?? '')
   const [targetSegments, setTargetSegments] = useState<TargetSegment[]>(cached?.targetSegments ?? [])
+  const [segmentationData, setSegmentationData] = useState<SegmentationData | null>(cached?.segmentationData ?? null)
   const [providedValues, setProvidedValues] = useState<ProvidedValueItem[]>(cached?.providedValues ?? [])
   const [personas, setPersonas] = useState<Persona[]>(cached?.personas ?? [])
   const [positioningMapUrl, setPositioningMapUrl] = useState(cached?.positioningMapUrl ?? '')
@@ -69,7 +79,7 @@ export default function PortalStrategyPage() {
       fetchWithRetry(() =>
         supabase
           .from('brand_personas')
-          .select('name, age_range, occupation, description, needs, pain_points, target, positioning_map_url, positioning_map_data, sort_order')
+          .select('name, age_range, occupation, description, needs, pain_points, target, positioning_map_url, positioning_map_data, segmentation_data, sort_order')
           .eq('company_id', companyId)
           .order('sort_order')
       ),
@@ -110,11 +120,13 @@ export default function PortalStrategyPage() {
       let parsedPersonas: Persona[] = []
       let parsedMapUrl = ''
       let parsedMapData: PositioningMapData | null = null
+      let parsedSegmentation: SegmentationData | null = null
       if (data && Array.isArray(data) && data.length > 0) {
         const first = data[0]
         parsedTarget = (first.target as string) || ''
         parsedMapUrl = (first.positioning_map_url as string) || ''
         parsedMapData = (first.positioning_map_data as PositioningMapData) || null
+        parsedSegmentation = (first.segmentation_data as SegmentationData) || null
         parsedPersonas = data.map((rec) => ({
           name: (rec.name as string) || '',
           age_range: (rec.age_range as string) || null,
@@ -127,11 +139,13 @@ export default function PortalStrategyPage() {
       setTarget(parsedTarget)
       setPositioningMapUrl(parsedMapUrl)
       setPositioningMapData(parsedMapData)
+      setSegmentationData(parsedSegmentation)
       setPersonas(parsedPersonas)
 
       setPageCache(cacheKey, {
         target: parsedTarget,
         targetSegments: parsedSegments,
+        segmentationData: parsedSegmentation,
         providedValues: parsedProvidedValues,
         positioningMapUrl: parsedMapUrl,
         positioningMapData: parsedMapData,
@@ -175,7 +189,12 @@ export default function PortalStrategyPage() {
   )
 
   const hasTarget = targetSegments.length > 0 || !!target
-  const hasContent = hasTarget || personas.some(p => p.name) || positioningMapData || positioningMapUrl || providedValues.length > 0
+  // セグメンテーション: 採用（selected）セグメントを持つ切り口のみ表示対象
+  const segmentationVariables = (segmentationData?.variables || [])
+    .map(v => ({ name: v.name, segments: (v.segments || []).filter(s => s.selected) }))
+    .filter(v => v.segments.length > 0)
+  const hasSegmentation = segmentationVariables.length > 0
+  const hasContent = hasTarget || hasSegmentation || personas.some(p => p.name) || positioningMapData || positioningMapUrl || providedValues.length > 0
   if (!hasContent) return <div className="text-center py-16 text-muted-foreground text-[15px]">まだ登録されていません</div>
 
   const validPersonas = personas.filter(p => p.name)
@@ -186,18 +205,38 @@ export default function PortalStrategyPage() {
     {companyId && <BrandPageTracker companyId={companyId} pageType="strategy" />}
     <div className="max-w-4xl mx-auto px-5 pt-4 pb-10 space-y-6">
 
-      {/* Card 1: ターゲット＋ペルソナ */}
-      {(hasTarget || validPersonas.length > 0) && (
+      {/* Card 1: セグメンテーション＋ターゲット＋ペルソナ */}
+      {(hasSegmentation || hasTarget || validPersonas.length > 0) && (
         <section>
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
             <CardContent className="p-4 sm:p-5 space-y-6">
+              {/* セグメンテーション（STP分析ツールから連携） */}
+              {hasSegmentation && (
+                <div>
+                  <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">セグメンテーション</h2>
+                  <div className="space-y-3">
+                    {segmentationVariables.map((variable, vi) => (
+                      <div key={vi}>
+                        <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2 m-0">{variable.name}</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {variable.segments.map((seg, si) => (
+                            <span
+                              key={si}
+                              className="inline-block px-2.5 py-1 bg-blue-50 border border-blue-200 rounded-full text-xs text-ds-app-accent-hover"
+                              title={seg.description || undefined}
+                            >
+                              {seg.name}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
               {hasTarget && (
                 <div>
                   <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">ターゲット</h2>
-                  {/* 概要文（プロセス文） */}
-                  {target && (
-                    <p className="text-base sm:text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0 mb-3" style={secondaryStyle}>{target}</p>
-                  )}
                   {/* 主なターゲット（セグメント一覧） */}
                   {targetSegments.length > 0 && (
                     <div className="space-y-3">
@@ -212,6 +251,10 @@ export default function PortalStrategyPage() {
                         </div>
                       ))}
                     </div>
+                  )}
+                  {/* 概要文（プロセス文）。主なターゲットの下に表示 */}
+                  {target && (
+                    <p className={`text-base sm:text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0 ${targetSegments.length > 0 ? 'mt-3' : ''}`} style={secondaryStyle}>{target}</p>
                   )}
                 </div>
               )}

@@ -302,6 +302,9 @@ export function Step5Result({
   }, [adminCompanyId, router])
 
   // 連携成功時：基本情報を本体（companies）へ書き戻し
+  // ※ target_segments は送らない — 連携API が書いた「ターゲット概要＋主なターゲット」を
+  //   Step1プリフィルの古い値で上書きしてしまうため（shared-profile PATCH は
+  //   companies.target_segments と brand_personas[0].target の両方を書き換える）
   const handleConnected = useCallback(async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser()
@@ -316,7 +319,6 @@ export function Step5Result({
             industry_subcategory: basicInfo.industry_subcategory,
             competitors: basicInfo.competitors,
             business_descriptions: basicInfo.business_descriptions,
-            target_segments: basicInfo.target_segments,
           }),
         })
       }
