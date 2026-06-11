@@ -327,7 +327,7 @@ export default function OntologyBuilderSection({
             <>
               {renderInspectionSummary()}
               {renderCompletionBanner()}
-              <ProfilingSection companyId={companyId} onDataChanged={onChildDataChanged} />
+              <ProfilingSection companyId={companyId} onDataChanged={onChildDataChanged} autoStart />
             </>
           )}
         </div>

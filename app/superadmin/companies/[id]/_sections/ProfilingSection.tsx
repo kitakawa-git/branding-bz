@@ -7,7 +7,7 @@
 // - 草案は〔承認して登録〕した時だけ DB へ書く（クライアント supabase INSERT/UPDATE。RLSが効く経路）。
 //   「まだ無い」「わからない」「特にない」「どれでもない」・スキップは何も登録しない。
 // - セッション末尾に整合性チェック（決定論）を再実行し、カテゴリ別件数の改善を表示する。
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { AutoResizeTextarea } from '@/components/ui/auto-resize-textarea'
@@ -56,10 +56,13 @@ const CONFLICT_CHOICES: { value: 'a' | 'b' | 'case'; label: (a: string, b: strin
 export default function ProfilingSection({
   companyId,
   onDataChanged,
+  autoStart = false,
 }: {
   companyId: string
   // 承認登録のたびに通知（ウィザードのステップ判定更新用・任意）
   onDataChanged?: () => void
+  // true なら表示時に質問を自動生成（質問生成は決定論・AI不要のためコストゼロ。ウィザード用）
+  autoStart?: boolean
 }) {
   const [questions, setQuestions] = useState<ProfilingQuestion[] | null>(null)
   const [baseline, setBaseline] = useState<Record<string, number>>({})
@@ -112,6 +115,12 @@ export default function ProfilingSection({
       setGenerating(false)
     }
   }
+
+  // autoStart 時は表示と同時に質問を自動生成（未生成のときのみ。再生成はボタンから）
+  useEffect(() => {
+    if (autoStart && questions === null && !generating) generate()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoStart, companyId])
 
   // セッション終了: 整合性チェック（決定論）を再実行し改善を表示
   const finish = async () => {
