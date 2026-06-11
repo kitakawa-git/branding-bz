@@ -146,6 +146,16 @@ export default function CompanyDetailPage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    // 会社名を変更する場合は誤操作防止の確認ダイアログ（実データ取り違え事故の再発防止）
+    const currentName = company?.name ?? ''
+    if (editName.trim() !== currentName) {
+      const ok = window.confirm(
+        `会社名を変更します。\n\n「${currentName}」\n→「${editName.trim()}」\n\nこの操作で他の会社の名前を誤って書き換えていないか確認してください。続行しますか？`,
+      )
+      if (!ok) return
+    }
+
     setSaving(true)
     setMessage('')
 
@@ -165,6 +175,8 @@ export default function CompanyDetailPage() {
     } else {
       setMessage('保存しました')
       setMessageType('success')
+      // 確認ダイアログが次回も正しい現在値と比較できるよう、ローカルの会社名を更新
+      setCompany((prev) => (prev ? { ...prev, name: editName.trim() } : prev))
     }
     setSaving(false)
   }
