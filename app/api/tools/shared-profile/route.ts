@@ -213,17 +213,38 @@ export async function PATCH(request: NextRequest) {
           status: 'published',
         }))
 
-      // 既存 service 行を全削除してから再構築
-      const { error: delErr } = await supabaseAdmin
+      // service 行を id保持で同期する。全削除→全INSERT だと行の id が毎回変わり、削除時トリガ
+      // cleanup_element_relations_on_delete が service を端点に持つ element_relations を道連れに
+      // 消してしまう（エッジ消失バグ）。クライアントは id を持たないため、sort_order 順の既存行に
+      // 位置で対応づけて UPDATE し、増えた分は INSERT、減った末尾分のみ DELETE する。
+      // → 通常編集では既存行の id が保たれエッジが残る。実際に減らした分だけ正しくエッジ整理される。
+      const { data: existingSvc, error: exErr } = await supabaseAdmin
         .from('philosophy_elements')
-        .delete()
+        .select('id')
         .eq('company_id', adminUser.company_id)
         .eq('element_type', 'service')
-      if (delErr) {
-        console.error('[SharedProfile PATCH] service削除エラー:', delErr)
-      } else if (serviceRows.length > 0) {
-        const { error: insErr } = await supabaseAdmin.from('philosophy_elements').insert(serviceRows)
-        if (insErr) console.error('[SharedProfile PATCH] service挿入エラー:', insErr)
+        .order('sort_order', { ascending: true })
+      if (exErr) {
+        console.error('[SharedProfile PATCH] service既存取得エラー:', exErr)
+      } else {
+        const existingIds = (existingSvc as { id: string }[] | null)?.map((r) => r.id) ?? []
+        for (let i = 0; i < serviceRows.length; i++) {
+          if (i < existingIds.length) {
+            const { error } = await supabaseAdmin
+              .from('philosophy_elements')
+              .update({ title: serviceRows[i].title, body: serviceRows[i].body, sort_order: i, status: 'published' })
+              .eq('id', existingIds[i])
+            if (error) console.error('[SharedProfile PATCH] service更新エラー:', error)
+          } else {
+            const { error } = await supabaseAdmin.from('philosophy_elements').insert(serviceRows[i])
+            if (error) console.error('[SharedProfile PATCH] service挿入エラー:', error)
+          }
+        }
+        if (existingIds.length > serviceRows.length) {
+          const toDelete = existingIds.slice(serviceRows.length)
+          const { error } = await supabaseAdmin.from('philosophy_elements').delete().in('id', toDelete)
+          if (error) console.error('[SharedProfile PATCH] service削除エラー:', error)
+        }
       }
     }
 
