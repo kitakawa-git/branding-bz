@@ -19,14 +19,17 @@ import {
 } from 'd3-force'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
-import { Minus, Plus, RotateCcw, X } from 'lucide-react'
+import { Minus, Plus, RotateCcw, Sparkles, X } from 'lucide-react'
+import { toast } from 'sonner'
 import { fetchElementsCatalog, KIND_LABELS, relationLabel, type ElementKind } from '@/lib/brand/elements-catalog'
 import {
   buildBrandMapGraph,
   concentricLayout,
+  FK_EVIDENCE_TYPE,
   type BrandMapGraph,
   type LayoutPos,
   type MapNode,
+  type ProofFkRow,
   type RelationRow,
 } from '@/lib/brand/map-data'
 
@@ -47,12 +50,16 @@ const nodeKindLabel = (n: MapNode): string =>
 const EDGE_STYLE: Record<string, { stroke: string; dash?: string; width: number }> = {
   guides: { stroke: '#7c3aed', width: 1.5 },
   evidencedBy: { stroke: '#16a34a', width: 1.5 },
+  [FK_EVIDENCE_TYPE]: { stroke: '#86efac', width: 1 }, // 実績の直接FK＝裏づけ（直接）。細い薄緑
   promisedTo: { stroke: '#2563eb', width: 1.5 },
   communicatedAs: { stroke: '#0d9488', width: 1.5 },
   constrainedBy: { stroke: '#ea580c', dash: '5 4', width: 1.5 },
   conflictsWith: { stroke: '#dc2626', dash: '6 4', width: 2.5 }, // 矛盾は破線赤・太め
 }
 const edgeStyle = (t: string) => EDGE_STYLE[t] ?? { stroke: '#9ca3af', width: 1.5 }
+
+// FK由来エッジは element_relations に無い表示専用種別のため、ラベルもここで吸収する
+const relLabel = (t: string) => (t === FK_EVIDENCE_TYPE ? '裏づけ（直接）' : relationLabel(t))
 
 const NODE_LEGEND: { label: string; color: string }[] = [
   { label: '理念', color: '#7c3aed' },
@@ -75,6 +82,10 @@ export default function BrandMapSection({ companyId }: { companyId: string }) {
   const [hover, setHover] = useState<string | null>(null)
   const [forcePos, setForcePos] = useState<Map<string, LayoutPos>>(new Map())
   const [tf, setTf] = useState({ k: 1, x: 0, y: 0 }) // 現状マップのズーム/パン
+  // AIレビュー（手動実行のみ・永続化なし）
+  const [review, setReview] = useState<string | null>(null)
+  const [reviewAt, setReviewAt] = useState<string | null>(null)
+  const [reviewLoading, setReviewLoading] = useState(false)
 
   const svgRef = useRef<SVGSVGElement>(null)
   const simRef = useRef<{ sim: Simulation<SimNode, undefined>; nodes: SimNode[] } | null>(null)
@@ -85,19 +96,27 @@ export default function BrandMapSection({ companyId }: { companyId: string }) {
   useEffect(() => {
     const run = async () => {
       setLoading(true)
-      const [catalog, relR, philR] = await Promise.all([
+      const [catalog, relR, philR, ppR] = await Promise.all([
         fetchElementsCatalog(supabase, companyId),
         supabase
           .from('element_relations')
           .select('id, source_kind, source_id, target_kind, target_id, relation_type, note')
           .eq('company_id', companyId),
         supabase.from('philosophy_elements').select('id, element_type').eq('company_id', companyId),
+        supabase.from('proof_points').select('id, value_proposition_id').eq('company_id', companyId),
       ])
       const philTypes: Record<string, string> = {}
       for (const p of (philR.data as { id: string; element_type: string }[] | null) || []) {
         philTypes[p.id] = p.element_type
       }
-      setGraph(buildBrandMapGraph(catalog, ((relR.data as RelationRow[] | null) || []), philTypes))
+      setGraph(
+        buildBrandMapGraph(
+          catalog,
+          (relR.data as RelationRow[] | null) || [],
+          philTypes,
+          (ppR.data as ProofFkRow[] | null) || [],
+        ),
+      )
       setLoading(false)
     }
     run()
@@ -204,6 +223,32 @@ export default function BrandMapSection({ companyId }: { companyId: string }) {
     const qx = mx + (W / 2 - mx) * 0.35
     const qy = my + (H / 2 - my) * 0.35
     return `M${s.x},${s.y} Q${qx},${qy} ${t.x},${t.y}`
+  }
+
+  // AIレビュー生成（ボタン押下時のみ。自動実行しない）
+  const runReview = async () => {
+    setReviewLoading(true)
+    try {
+      const token = (await supabase.auth.getSession()).data.session?.access_token || ''
+      const res = await fetch('/api/superadmin/map-review', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ companyId }),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`)
+      if (!json.review) {
+        toast.error(json.reason || 'レビューを生成できませんでした')
+        return
+      }
+      setReview(json.review as string)
+      setReviewAt(new Date().toLocaleString('ja-JP'))
+    } catch (err) {
+      console.error('[BrandMap] AIレビューエラー:', err)
+      toast.error('AIレビューの生成に失敗しました: ' + (err instanceof Error ? err.message : '不明なエラー'))
+    } finally {
+      setReviewLoading(false)
+    }
   }
 
   const selectedNode = selected ? nodeByRef.get(selected) : null
@@ -367,9 +412,27 @@ export default function BrandMapSection({ companyId }: { companyId: string }) {
             <svg width="22" height="6">
               <line x1="0" y1="3" x2="22" y2="3" stroke={st.stroke} strokeWidth={st.width} strokeDasharray={st.dash} />
             </svg>
-            {relationLabel(k)}
+            {relLabel(k)}
           </span>
         ))}
+      </div>
+
+      {/* AIレビュー（手動実行・永続化なし） */}
+      <div className="mt-3">
+        <Button type="button" onClick={runReview} disabled={reviewLoading} className="py-2 px-4 text-[13px]">
+          <Sparkles size={16} />
+          {reviewLoading ? 'レビュー生成中...' : 'AIレビューを生成'}
+        </Button>
+        {review && (
+          <div className="border border-violet-200 bg-violet-50/40 rounded-lg p-4 mt-2">
+            <div className="flex items-center gap-1.5 mb-2 text-xs font-bold text-foreground">
+              <Sparkles size={14} />
+              AIレビュー
+              {reviewAt && <span className="font-normal text-muted-foreground">（生成: {reviewAt}）</span>}
+            </div>
+            <p className="text-[13px] text-foreground whitespace-pre-wrap break-words m-0">{review}</p>
+          </div>
+        )}
       </div>
 
       {/* クリック詳細 */}
@@ -395,7 +458,7 @@ export default function BrandMapSection({ companyId }: { companyId: string }) {
               return (
                 <div key={e.id} className="text-[13px] border-l-2 pl-2" style={{ borderColor: st.stroke }}>
                   <span className="font-semibold" style={{ color: st.stroke }}>
-                    {isSource ? `—${relationLabel(e.relation_type)}→` : `←${relationLabel(e.relation_type)}—`}
+                    {isSource ? `—${relLabel(e.relation_type)}→` : `←${relLabel(e.relation_type)}—`}
                   </span>{' '}
                   <span className="text-foreground break-words">
                     {other ? `${nodeKindLabel(other)}「${other.label}」` : '（不明な要素）'}

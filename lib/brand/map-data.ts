@@ -1,8 +1,16 @@
 // ブランドマップのグラフデータ整形（純関数・決定論。DBアクセス・AIなし）
 // - 端点が解決できない関係は描画から除外（幽霊エッジ防御）
+// - 実績の直接FK（proof_points.value_proposition_id）も「裏づけ（直接）」エッジとして含める。
+//   連結性チェック（integrity.ts）がFKを辺に数えるのと描画・島数を一致させるため。
+//   同じペアに明示的な evidencedBy 関係がある場合はFK線を重ねない（二重線回避）。
 // - 表示対象は関係を1本以上持つ要素のみ（孤立要素は件数だけ返す）
-// - 連結成分（島）の数も決定論で計算（integrity.ts の連結性チェックと同思想）
+// - 連結成分（島）の数も決定論で計算（integrity.ts の連結性チェックと同基準）
 import type { ElementKind, ElementRef } from '@/lib/brand/elements-catalog'
+
+// 実績の直接FK由来エッジの擬似 relation_type（element_relations には存在しない表示専用の種別）
+export const FK_EVIDENCE_TYPE = 'fk_evidence'
+
+export type ProofFkRow = { id: string; value_proposition_id: string | null }
 
 export type RelationRow = {
   id: string
@@ -43,6 +51,7 @@ export function buildBrandMapGraph(
   catalog: ElementRef[],
   relations: RelationRow[],
   philTypes: Record<string, string>, // philosophy_elements の id → element_type
+  proofFks: ProofFkRow[] = [], // 実績の直接FK（裏づけ（直接）エッジとして描画・島数に算入）
 ): BrandMapGraph {
   const refs = new Set(catalog.map((e) => `${e.kind}:${e.id}`))
 
@@ -56,6 +65,19 @@ export function buildBrandMapGraph(
       continue
     }
     edges.push({ id: r.id, source: s, target: t, relation_type: r.relation_type, note: r.note })
+  }
+
+  // 実績の直接FK → 裏づけ（直接）エッジ。同ペアに明示的 evidencedBy があればスキップ（二重線回避）
+  const evidencedPairs = new Set(
+    edges.filter((e) => e.relation_type === 'evidencedBy').map((e) => `${e.source}|${e.target}`),
+  )
+  for (const p of proofFks) {
+    if (!p.value_proposition_id) continue
+    const vpRef = `value_proposition:${p.value_proposition_id}`
+    const ppRef = `proof_point:${p.id}`
+    if (!refs.has(vpRef) || !refs.has(ppRef)) continue
+    if (evidencedPairs.has(`${vpRef}|${ppRef}`) || evidencedPairs.has(`${ppRef}|${vpRef}`)) continue
+    edges.push({ id: `fk:${p.id}`, source: vpRef, target: ppRef, relation_type: FK_EVIDENCE_TYPE, note: null })
   }
 
   const degree = new Map<string, number>()
