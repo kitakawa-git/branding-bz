@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { PWAUpdatePrompt } from "@/components/pwa/PWAUpdatePrompt";
+import { getDesignTokensCss } from "@/lib/design-tokens";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -53,13 +54,25 @@ export const viewport: Viewport = {
   themeColor: '#ffffff',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // DB管理のデザイントークン（--ds-*）を :root として注入。
+  // 取得失敗時は空文字 → globals.css の静的フォールバックが効く。
+  const designTokensCss = await getDesignTokensCss();
+
   return (
     <html lang="ja" suppressHydrationWarning>
+      <head>
+        {designTokensCss && (
+          <style
+            id="design-tokens"
+            dangerouslySetInnerHTML={{ __html: designTokensCss }}
+          />
+        )}
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

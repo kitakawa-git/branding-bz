@@ -44,7 +44,9 @@ interface Step5Props {
 }
 
 const radarConfig = {
-  score: { label: 'スコア', color: '#2563eb' },
+  // アプリ青アクセント（DB design_tokens(app) → --ds-app-accent）。
+  // ChartContainer が --color-score: var(--ds-app-accent) を生成し、Radar の fill/stroke が解決する。
+  score: { label: 'スコア', color: 'var(--ds-app-accent)' },
 }
 
 export function Step5Result({ sessionId, framework, diagnosis, companyName, onSaveField, onBack }: Step5Props) {
@@ -219,10 +221,10 @@ export function Step5Result({ sessionId, framework, diagnosis, companyName, onSa
                       <div className="min-w-0">
                         <span className="text-sm font-bold text-foreground">{s.label}</span>
                         {!editing && s.copy && (
-                          <span className="ml-2 text-xs font-semibold text-blue-700">{s.copy}</span>
+                          <span className="ml-2 text-xs font-semibold text-ds-app-accent-hover">{s.copy}</span>
                         )}
                       </div>
-                      <div className="shrink-0 flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white">
+                      <div className="shrink-0 flex h-8 w-8 items-center justify-center rounded-full bg-ds-app-accent text-sm font-bold text-white">
                         {s.score}
                       </div>
                     </div>
@@ -266,15 +268,15 @@ export function Step5Result({ sessionId, framework, diagnosis, companyName, onSa
         <div className="space-y-4">
           {/* 主人格カード（大）: label＋copy＋description＋keywords — コピー定義v1の文言 */}
           {primaryDef && (
-            <Card className="border-2 border-blue-600 bg-blue-50/40 shadow-none">
+            <Card className="border-2 border-ds-app-accent bg-blue-50/40 shadow-none">
               <CardContent className="p-6">
-                <p className="text-[11px] font-semibold tracking-wide text-blue-700 mb-1">主人格</p>
+                <p className="text-[11px] font-semibold tracking-wide text-ds-app-accent-hover mb-1">主人格</p>
                 <h2 className="text-2xl font-bold text-foreground">{primaryDef.label}</h2>
-                <p className="mt-1 text-base font-semibold text-blue-700">{primaryDef.copy}</p>
+                <p className="mt-1 text-base font-semibold text-ds-app-accent-hover">{primaryDef.copy}</p>
                 <p className="mt-3 text-sm text-foreground/80 leading-relaxed">{primaryDef.description}</p>
                 <div className="mt-4 flex flex-wrap gap-2">
                   {primaryDef.keywords.map(k => (
-                    <span key={k} className="rounded-full bg-blue-600 px-3 py-1 text-xs font-medium text-white">{k}</span>
+                    <span key={k} className="rounded-full bg-ds-app-accent px-3 py-1 text-xs font-medium text-white">{k}</span>
                   ))}
                 </div>
               </CardContent>
@@ -306,7 +308,7 @@ export function Step5Result({ sessionId, framework, diagnosis, companyName, onSa
               <div className="space-y-3">
                 {d.archetype.primary.description && (
                   <div>
-                    <p className="text-xs font-semibold text-blue-700 mb-1">{primaryDef?.label}（主人格）</p>
+                    <p className="text-xs font-semibold text-ds-app-accent-hover mb-1">{primaryDef?.label}（主人格）</p>
                     <p className="text-sm text-foreground/80 leading-relaxed">{d.archetype.primary.description}</p>
                   </div>
                 )}
@@ -331,9 +333,9 @@ export function Step5Result({ sessionId, framework, diagnosis, companyName, onSa
                       <div className="flex items-center justify-between gap-3">
                         <div className="min-w-0">
                           <span className="text-sm font-bold text-foreground">{t.name}</span>
-                          {t.copy && <span className="ml-2 text-xs font-semibold text-blue-700">{t.copy}</span>}
+                          {t.copy && <span className="ml-2 text-xs font-semibold text-ds-app-accent-hover">{t.copy}</span>}
                         </div>
-                        <div className="shrink-0 flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white">
+                        <div className="shrink-0 flex h-8 w-8 items-center justify-center rounded-full bg-ds-app-accent text-sm font-bold text-white">
                           {t.score}
                         </div>
                       </div>
@@ -375,7 +377,7 @@ export function Step5Result({ sessionId, framework, diagnosis, companyName, onSa
               <h3 className="text-sm font-bold text-foreground mb-2">期待される印象タグ</h3>
               <div className="flex flex-wrap gap-2">
                 {d.expected_tags.map(t => (
-                  <span key={t} className="rounded-full border border-blue-600 bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">{t}</span>
+                  <span key={t} className="rounded-full border border-ds-app-accent bg-blue-50 px-3 py-1 text-xs font-medium text-ds-app-accent-hover">{t}</span>
                 ))}
               </div>
             </div>

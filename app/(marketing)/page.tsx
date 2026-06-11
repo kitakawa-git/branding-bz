@@ -25,9 +25,9 @@ function HeroSection() {
     <section className="text-center">
       <div className="w-full max-w-4xl mx-auto px-6 pt-24 pb-8 md:pt-32 md:pb-12">
         <div
-          className="mb-8 inline-flex items-center gap-2 rounded-full px-6 py-1.5 text-sm text-blue-700 relative overflow-hidden"
+          className="mb-8 inline-flex items-center gap-2 rounded-full px-6 py-1.5 text-sm text-ds-accent relative overflow-hidden"
           style={{
-            background: 'rgba(0, 97, 255, 0.1)',
+            background: 'var(--ds-bg-badge)',
             backdropFilter: 'blur(12px) saturate(120%)',
             WebkitBackdropFilter: 'blur(12px) saturate(120%)',
             border: '1px solid rgba(255, 255, 255, 0.2)',
@@ -39,19 +39,19 @@ function HeroSection() {
           <WandSparkles className="h-4 w-4 relative z-10" />
           <span className="relative z-10">AIガイドで約5〜10分</span>
         </div>
-        <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-gray-900">
+        <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-ds-strong">
           AIでブランディングを加速させる
         </h1>
-        <p className="mt-6 text-[20px] text-gray-700 max-w-2xl mx-auto leading-relaxed">
+        <p className="mt-6 text-[20px] text-ds-body max-w-2xl mx-auto leading-relaxed">
           社員が体現し、顧客に届く。<br className="hidden sm:block" />
           ブランドの構築・浸透・発信を、ひとつのプラットフォームで。
         </p>
         <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
           <Link href="/signup">
             <button
-              className="relative h-12 w-48 rounded-full text-base font-bold text-white overflow-hidden transition-all hover:scale-105 hover:shadow-2xl"
+              className="relative h-12 w-48 rounded-full text-base font-bold text-ds-inverse overflow-hidden transition-all hover:scale-105 hover:shadow-2xl"
               style={{
-                background: 'rgba(0, 0, 0, 0.75)',
+                background: 'var(--ds-bg-cta-primary)',
                 backdropFilter: 'blur(12px) saturate(120%)',
                 WebkitBackdropFilter: 'blur(12px) saturate(120%)',
                 border: '1px solid rgba(255, 255, 255, 0.15)',
@@ -63,12 +63,12 @@ function HeroSection() {
           </Link>
           <Link href="/plan">
             <button
-              className="relative h-12 w-48 rounded-full text-base font-bold text-gray-900 overflow-hidden transition-all hover:scale-105 hover:shadow-2xl"
+              className="relative h-12 w-48 rounded-full text-base font-bold text-ds-strong overflow-hidden transition-all hover:scale-105 hover:shadow-2xl"
               style={{
-                background: 'rgba(255, 255, 255, 0.25)',
+                background: 'var(--ds-bg-cta-secondary)',
                 backdropFilter: 'blur(12px) saturate(120%)',
                 WebkitBackdropFilter: 'blur(12px) saturate(120%)',
-                border: '1px solid rgba(255, 255, 255, 0.4)',
+                border: '1px solid var(--ds-border-glass-strong)',
                 boxShadow: '0px 8px 24px 0 rgba(12, 74, 110, 0.1), inset 0px 1px 0px 0px rgba(255, 255, 255, 0.3)',
               }}
             >
@@ -110,7 +110,7 @@ function LayersSection() {
   return (
     <section className="px-6 py-16">
       <div className="mx-auto max-w-7xl">
-        <h2 className="text-center text-xl md:text-[1.625rem] font-bold text-gray-900 mb-8">
+        <h2 className="text-center text-xl md:text-[1.625rem] font-bold text-ds-strong mb-8">
           あらゆるステップを、AIがサポート
         </h2>
 
@@ -120,11 +120,11 @@ function LayersSection() {
               key={layer.label}
               className="relative rounded-2xl overflow-hidden transition-all hover:scale-[1.02] hover:shadow-2xl"
               style={{
-                background: 'rgba(255, 255, 255, 0.12)',
+                background: 'var(--ds-bg-glass)',
                 backdropFilter: 'blur(12px) saturate(120%)',
                 WebkitBackdropFilter: 'blur(12px) saturate(120%)',
-                border: '1px solid rgba(255, 255, 255, 0.25)',
-                boxShadow: '0px 8px 24px 0 rgba(12, 74, 110, 0.12), inset 0px 0px 4px 2px rgba(255, 255, 255, 0.15)',
+                border: '1px solid var(--ds-border-glass)',
+                boxShadow: 'var(--ds-shadow-glass), inset 0px 0px 4px 2px rgba(255, 255, 255, 0.15)',
               }}
             >
               {/* リフレクションハイライト */}
@@ -139,17 +139,17 @@ function LayersSection() {
               {/* カードコンテンツ */}
               <div className="relative z-10 p-8">
                 <div className="mb-5">
-                  <span className="text-sm font-semibold tracking-wide text-gray-700">
+                  <span className="text-sm font-semibold tracking-wide text-ds-body">
                     {layer.label}
                   </span>
                 </div>
                 <div className="mb-4">
                   <layer.icon size={32} strokeWidth={1.5} className="text-foreground" />
                 </div>
-                <h3 className="text-lg font-bold text-gray-900 mb-3">
+                <h3 className="text-lg font-bold text-ds-strong mb-3">
                   {layer.title.split('を')[0]}を<br />{layer.title.split('を').slice(1).join('を')}
                 </h3>
-                <p className="text-sm text-gray-600 leading-relaxed">{layer.description}</p>
+                <p className="text-sm text-ds-muted leading-relaxed">{layer.description}</p>
               </div>
             </div>
           ))}
@@ -162,19 +162,19 @@ function LayersSection() {
 /* ─── セクション4: About ─── */
 function AboutSection() {
   return (
-    <section className="bg-gray-50 px-6 py-16 md:py-24">
+    <section className="bg-ds-section px-6 py-16 md:py-24">
       <div className="mx-auto max-w-7xl">
-        <h2 className="text-center text-xl md:text-[1.625rem] font-bold text-gray-900 mb-10">
+        <h2 className="text-center text-xl md:text-[1.625rem] font-bold text-ds-strong mb-10">
           ブランディング会社の現場から生まれたSaaS
         </h2>
 
-        <div className="mx-auto max-w-3xl space-y-4 text-gray-600 leading-relaxed text-center">
+        <div className="mx-auto max-w-3xl space-y-4 text-ds-muted leading-relaxed text-center">
           <p>
             ID INC. は15年以上、企業のブランディングを手がけてきました。<br className="hidden md:block" />
             その現場で何度も直面したのは、「作ったブランドが浸透しない」という壁。<br className="hidden md:block" />
             どれだけ良い理念を作っても、社員の行動が変わらなければ意味がない。
           </p>
-          <p className="text-gray-900 font-semibold">
+          <p className="text-ds-strong font-semibold">
             この「浸透の壁」をAIとテクノロジーで壊すために、branding.bz は生まれました。<br className="hidden md:block" />
             構築から浸透、発信まで——ブランドの旅路をまるごと支える、はじめてのプラットフォームです。
           </p>
@@ -255,12 +255,12 @@ const features: { title: string; description: string; gif: string | null; icon: 
 
 function FeaturesSection() {
   return (
-    <section className="bg-white px-6 py-16 md:py-24">
+    <section className="bg-ds-base px-6 py-16 md:py-24">
       <div className="mx-auto max-w-7xl">
-        <h2 className="text-center text-xl md:text-[1.625rem] font-bold text-gray-900 mb-4">
+        <h2 className="text-center text-xl md:text-[1.625rem] font-bold text-ds-strong mb-4">
           ブランドを加速させる機能
         </h2>
-        <p className="text-center text-gray-500 mb-12">
+        <p className="text-center text-ds-meta mb-12">
           必要なすべてを、ひとつのプラットフォームに
         </p>
 
@@ -270,11 +270,11 @@ function FeaturesSection() {
               key={feature.title}
               className="relative rounded-2xl overflow-hidden transition-all hover:scale-[1.02] hover:shadow-2xl break-inside-avoid"
               style={{
-                background: 'rgba(255, 255, 255, 0.12)',
+                background: 'var(--ds-bg-glass)',
                 backdropFilter: 'blur(12px) saturate(120%)',
                 WebkitBackdropFilter: 'blur(12px) saturate(120%)',
-                border: '1px solid rgba(255, 255, 255, 0.25)',
-                boxShadow: '0px 8px 24px 0 rgba(12, 74, 110, 0.12), inset 0px 0px 4px 2px rgba(255, 255, 255, 0.15)',
+                border: '1px solid var(--ds-border-glass)',
+                boxShadow: 'var(--ds-shadow-glass), inset 0px 0px 4px 2px rgba(255, 255, 255, 0.15)',
               }}
             >
               {/* リフレクションハイライト */}
@@ -288,10 +288,10 @@ function FeaturesSection() {
               />
               {/* カードコンテンツ */}
               <div className="relative z-10 p-6 flex items-start gap-4">
-                <feature.icon size={32} strokeWidth={1.5} className="mt-1 text-gray-900 shrink-0" />
+                <feature.icon size={32} strokeWidth={1.5} className="mt-1 text-ds-strong shrink-0" />
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">{feature.title}</h3>
-                  <p className="text-sm text-gray-600 leading-relaxed">{feature.description}</p>
+                  <h3 className="text-lg font-bold text-ds-strong mb-2">{feature.title}</h3>
+                  <p className="text-sm text-ds-muted leading-relaxed">{feature.description}</p>
                 </div>
               </div>
               {feature.gif && (
@@ -332,9 +332,9 @@ function CTASection() {
       <div className="w-full max-w-4xl mx-auto">
         {/* βテスター募集 */}
         <div
-          className="mb-8 inline-flex items-center gap-2 rounded-full px-6 py-1.5 text-sm text-blue-700 relative overflow-hidden"
+          className="mb-8 inline-flex items-center gap-2 rounded-full px-6 py-1.5 text-sm text-ds-accent relative overflow-hidden"
           style={{
-            background: 'rgba(0, 97, 255, 0.1)',
+            background: 'var(--ds-bg-badge)',
             backdropFilter: 'blur(12px) saturate(120%)',
             WebkitBackdropFilter: 'blur(12px) saturate(120%)',
             border: '1px solid rgba(255, 255, 255, 0.2)',
@@ -346,10 +346,10 @@ function CTASection() {
           <span className="relative z-10 font-bold">残り2社限定</span>
           <span className="relative z-10">無料で最新バージョンをいち早くお試しいただけます</span>
         </div>
-        <h2 className="text-2xl md:text-4xl font-bold tracking-tight text-gray-900">
+        <h2 className="text-2xl md:text-4xl font-bold tracking-tight text-ds-strong">
           さぁ、&ldquo;らしさ&rdquo;をひろげよう
         </h2>
-        <p className="mt-6 text-lg md:text-xl text-gray-700 max-w-2xl mx-auto leading-relaxed">
+        <p className="mt-6 text-lg md:text-xl text-ds-body max-w-2xl mx-auto leading-relaxed">
           ブランドは、作った瞬間から走り出す。<br className="hidden sm:block" />
           branding.bz で、その加速を始めませんか。
         </p>
@@ -357,9 +357,9 @@ function CTASection() {
         <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
           <Link href="/contact">
             <button
-              className="relative h-12 w-48 rounded-full text-base font-bold text-white overflow-hidden transition-all hover:scale-105 hover:shadow-2xl"
+              className="relative h-12 w-48 rounded-full text-base font-bold text-ds-inverse overflow-hidden transition-all hover:scale-105 hover:shadow-2xl"
               style={{
-                background: 'rgba(0, 0, 0, 0.75)',
+                background: 'var(--ds-bg-cta-primary)',
                 backdropFilter: 'blur(12px) saturate(120%)',
                 WebkitBackdropFilter: 'blur(12px) saturate(120%)',
                 border: '1px solid rgba(255, 255, 255, 0.15)',
@@ -371,12 +371,12 @@ function CTASection() {
           </Link>
           <Link href="/plan">
             <button
-              className="relative h-12 w-48 rounded-full text-base font-bold text-gray-900 overflow-hidden transition-all hover:scale-105 hover:shadow-2xl"
+              className="relative h-12 w-48 rounded-full text-base font-bold text-ds-strong overflow-hidden transition-all hover:scale-105 hover:shadow-2xl"
               style={{
-                background: 'rgba(255, 255, 255, 0.25)',
+                background: 'var(--ds-bg-cta-secondary)',
                 backdropFilter: 'blur(12px) saturate(120%)',
                 WebkitBackdropFilter: 'blur(12px) saturate(120%)',
-                border: '1px solid rgba(255, 255, 255, 0.4)',
+                border: '1px solid var(--ds-border-glass-strong)',
                 boxShadow: '0px 8px 24px 0 rgba(12, 74, 110, 0.1), inset 0px 1px 0px 0px rgba(255, 255, 255, 0.3)',
               }}
             >

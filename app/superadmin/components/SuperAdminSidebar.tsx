@@ -27,6 +27,7 @@ import {
   Building2,
   Newspaper,
   MessageSquare,
+  Palette,
   ShieldCheck,
   ArrowLeftRight,
   LogOut,
@@ -41,6 +42,7 @@ const navItems: NavItem[] = [
   { href: '/superadmin/companies', label: '企業一覧', icon: Building2 },
   { href: '/superadmin/news', label: 'ニュース', icon: Newspaper },
   { href: '/superadmin/inquiries', label: 'お問い合わせ', icon: MessageSquare },
+  { href: '/superadmin/design-system', label: 'デザインシステム', icon: Palette },
 ]
 
 export function SuperAdminSidebar() {

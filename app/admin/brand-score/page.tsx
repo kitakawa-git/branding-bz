@@ -735,7 +735,7 @@ export default function BrandScoreDashboard() {
                   <Line
                     type="monotone"
                     dataKey="inner_score"
-                    stroke="#3b82f6"
+                    stroke="var(--ds-app-accent-soft)"
                     strokeWidth={1.5}
                     dot={{ r: 3 }}
                     connectNulls

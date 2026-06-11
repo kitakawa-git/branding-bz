@@ -241,7 +241,7 @@ export default function SignupPage() {
                     <div
                       className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
                       style={{
-                        backgroundColor: isDone ? '#2563eb' : isActive ? '#2563eb' : 'rgba(0,0,0,0.06)',
+                        backgroundColor: isDone || isActive ? 'var(--ds-app-accent)' : 'rgba(0,0,0,0.06)',
                         color: isDone || isActive ? '#fff' : 'rgba(0,0,0,0.4)',
                       }}
                     >

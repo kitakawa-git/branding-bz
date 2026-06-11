@@ -11,6 +11,7 @@ const breadcrumbMap: Record<string, SuperAdminCrumb> = {
   '/superadmin/companies': { title: '企業一覧' },
   '/superadmin/news': { title: 'ニュース管理' },
   '/superadmin/inquiries': { title: 'お問い合わせ' },
+  '/superadmin/design-system': { title: 'デザインシステム' },
 }
 
 export function resolveSuperAdminCrumb(pathname: string): SuperAdminCrumb | null {

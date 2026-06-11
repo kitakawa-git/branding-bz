@@ -159,6 +159,34 @@
   background: hsl(0 0% 97%);
 }
 
+/* 公開LP用デザイントークン（--ds-*）
+   正本は Supabase design_tokens（/admin/design-system で編集）。
+   app/layout.tsx が <style id="design-tokens"> で :root を上書き注入するため、
+   ここは DB 未到達時の静的フォールバック。恒久変更は DB 側とここの両方を更新する。 */
+:root {
+  --ds-text-strong: #111827;
+  --ds-text-body: #374151;
+  --ds-text-muted: #4b5563;
+  --ds-text-meta: #6b7280;
+  --ds-text-inverse: #ffffff;
+  --ds-bg-base: #ffffff;
+  --ds-bg-section: #f9fafb;
+  --ds-bg-media: #f3f4f6;
+  --ds-bg-glass: rgba(255, 255, 255, 0.12);
+  --ds-bg-cta-primary: rgba(0, 0, 0, 0.75);
+  --ds-bg-cta-secondary: rgba(255, 255, 255, 0.25);
+  --ds-bg-badge: rgba(0, 97, 255, 0.1);
+  --ds-border-glass: rgba(255, 255, 255, 0.25);
+  --ds-border-glass-strong: rgba(255, 255, 255, 0.4);
+  --ds-accent-primary: #1d4ed8;
+  --ds-shadow-glass: 0px 8px 24px 0 rgba(12, 74, 110, 0.12);
+  /* アプリ青アクセント（リンク・選択状態・チャート青・ステップバー）。
+     DB design_tokens(app) が正本、ここは未到達時フォールバック。 */
+  --ds-app-accent: #2563eb;
+  --ds-app-accent-hover: #1d4ed8;
+  --ds-app-accent-soft: #3b82f6;
+}
+
 body {
   background: hsl(var(--background));
   color: hsl(var(--foreground));

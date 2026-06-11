@@ -241,16 +241,31 @@ id (uuid), company_id (FK→companies), name, position, department, bio, photo_u
 → 詳細: memory/tool-screen-design.md（コンテナ・Card・フッター・フォーム要素・削除ボタン等）
 
 ### カラー
-| トークン | 用途 | 備考 |
+
+> **カラートークンは DB 管理（2026-06-11〜）**: 正本は Supabase `design_tokens` テーブル。
+> `/superadmin/design-system`（スーパー管理画面）で編集 → 保存時に `POST /api/revalidate` → 全画面へ反映。
+> 静的フォールバックは `app/globals.css` の `:root`（恒久変更は DB と globals.css の両方を更新）。
+> 履歴は `design_token_history` に UPDATE トリガーで自動記録され、管理画面からロールバック可能。
+>
+> **管理対象（category）**: ①LP用 `--ds-*`（text/bg/border/accent/shadow、hex/rgba） ②アプリ青アクセント `--ds-app-*`（app、hex） ③shadcn基盤 `--primary`/`--foreground`/`--border` 等（base/sidebar/chart/radius、**HSL成分** "0 0% 9%"）。
+> **基盤(base/sidebar/chart)を変えると管理・ポータル・ツール画面まで一括で色が変わる**（`text-foreground`/`bg-primary`/`border-border` 等が全部追従）。
+> 注意: `.dark`（非運用）と `[data-portal]`（ポータル明色sidebar）は `:root` 注入では上書きされない＝対象外。HSL成分は `hsl()` でラップせず成分のまま保存（tailwind の `hsl(var(--x))` が解決。二重ラップ厳禁）。`--lp-*`/teal は未使用の孤立定義。
+
+| トークン（新規実装はこちら） | 旧表記 | 用途 |
 |---------|------|------|
-| `text-gray-900` | 見出し、ブランド名 | メイン文字色 |
-| `text-gray-700` | サブテキスト、説明文（大） | Hero副文等 |
-| `text-gray-600` | 説明文（小）、フッターリンク | カード本文等 |
-| `text-gray-500` | タグライン、補足 | |
-| `text-gray-400` | コピーライト | 最も薄い文字 |
-| `text-blue-700` | バッジテキスト | アクセントバッジ用 |
-| `bg-white` | メイン背景、フッター | |
-| `bg-gray-50` | セクション背景（交互） | About、パレット例、機能ハイライト |
+| `text-ds-strong` | `text-gray-900` | 見出し、ブランド名 |
+| `text-ds-body` | `text-gray-700` | サブテキスト、説明文（大）、Hero副文 |
+| `text-ds-muted` | `text-gray-600` | 説明文（小）、カード本文 |
+| `text-ds-meta` | `text-gray-500` | タグライン、補足 |
+| `text-ds-accent` | `text-blue-700` | バッジテキスト |
+| `text-ds-inverse` | `text-white` | 黒CTAボタン上の白文字 |
+| `bg-ds-base` | `bg-white` | メイン背景、フッター |
+| `bg-ds-section` | `bg-gray-50` | セクション背景（交互） |
+| `bg-ds-media` | `bg-gray-100` | 機能GIF枠等のメディア背景 |
+| `var(--ds-bg-glass)` ほか | インラインrgba | グラスカード背景・CTAピル・バッジ背景・枠線・影（インライン style で参照） |
+| `text-ds-app-accent` / `bg-ds-app-accent` / `border-ds-app-accent` | `blue-600` / `#2563eb` | アプリ青アクセント（リンク・選択状態・チャート青・ステップバー）。`-hover`=blue-700、`-soft`=blue-500(チャート副線)。recharts/SVG には `var(--ds-app-accent)` を直接 stroke/fill に渡せる |
+
+※未トークン化の青（`blue-*` 216件・gray系623件・STPランダムパレット等）はフェーズ2で段階移行。フェーズ1で置換済みは personality Step5（レーダー＋バッジ）・brand-score Line・signup ステップバーのみ。`/50` 等の不透明度修飾は `ds-*`/var() 参照では使えないため淡色背景 `bg-blue-50` 等は据え置き。
 
 ### タイポグラフィ
 | 用途 | クラス |
