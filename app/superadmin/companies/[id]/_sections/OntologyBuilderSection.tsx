@@ -16,7 +16,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
-import { AlertTriangle, Check, Info, RefreshCw } from 'lucide-react'
+import { AlertTriangle, Check, Info } from 'lucide-react'
 import ProfilingSection from './ProfilingSection'
 import ProofPointsSection, { type ValuePropositionRef } from './ProofPointsSection'
 import GovernanceRulesSection from './GovernanceRulesSection'
@@ -175,8 +175,8 @@ export default function OntologyBuilderSection({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeStep])
 
-  // 下部セクションでの登録・削除（ONTOLOGY_DATA_CHANGED_EVENT）＋Step5内の承認＋手動更新ボタン:
-  // 件数と自動点検の両方を取り直す
+  // ステップ内の登録・削除（ONTOLOGY_DATA_CHANGED_EVENT 経由）で件数と自動点検の両方を取り直す
+  // （手動更新ボタンは廃止済み。更新はイベント連動の自動のみ）
   const onChildDataChanged = useCallback(() => {
     fetchCounts()
     fetchInspection()
@@ -331,17 +331,6 @@ export default function OntologyBuilderSection({
             </div>
           )
         })}
-        <div className="grow" />
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          onClick={onChildDataChanged}
-          className="size-7 shrink-0"
-          title="ステップ判定を更新"
-        >
-          <RefreshCw size={13} />
-        </Button>
       </div>
 
       {/* 現在ステップのパネル */}
