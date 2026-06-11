@@ -46,23 +46,39 @@ type HistoryEntry = {
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
-  // LP 用 --ds-*（hex/rgba）
-  text: 'テキスト（LP）',
-  bg: '背景（LP）',
-  border: 'ボーダー・罫線（LP）',
-  accent: 'アクセント（LP）',
-  shadow: '影（LP）',
-  // アプリ青アクセント（hex）
+  // ウェブサイト(LP)用 --ds-*（hex/rgba）
+  text: 'テキスト',
+  bg: '背景',
+  border: 'ボーダー・罫線',
+  accent: 'アクセント',
+  shadow: '影',
+  // サービス画面(アプリ)用
   app: 'アプリ青アクセント',
-  // shadcn 基盤（HSL成分）
-  base: '基盤色（アプリUI全体）',
+  base: '基盤色（UI全体）',
   sidebar: 'サイドバー',
   chart: 'グラフ',
   radius: '角丸',
 }
 
-// LP系 → アプリ青 → 基盤 の順で表示
-const CATEGORY_ORDER = ['text', 'bg', 'border', 'accent', 'shadow', 'app', 'base', 'sidebar', 'chart', 'radius']
+// カラーパレットを「ウェブサイト(LP)」「サービス画面(アプリ)」の2スコープに分けて表示。
+// website = LP独自の --ds-*（公開サイト）／ service = shadcn基盤＋アプリ青（ログイン後のUI）
+const SCOPE_DEFS = [
+  {
+    key: 'website' as const,
+    label: 'ウェブサイト',
+    sublabel: '公開サイト（LP）',
+    desc: 'トップ・料金・FAQ など、ログイン前に表示される公開ページの色。',
+    categories: ['text', 'bg', 'border', 'accent', 'shadow'],
+  },
+  {
+    key: 'service' as const,
+    label: 'サービス画面',
+    sublabel: 'ログイン後のアプリ',
+    desc: '管理画面・ポータル・ツールの色。「基盤色」を変えると文字・ボタン・罫線などが全画面で一括変更されます。',
+    categories: ['app', 'base', 'sidebar', 'chart', 'radius'],
+  },
+]
+type ScopeKey = (typeof SCOPE_DEFS)[number]['key']
 
 export default function DesignTokenEditor() {
   const [tokens, setTokens] = useState<DesignToken[]>([])
@@ -72,6 +88,7 @@ export default function DesignTokenEditor() {
   const [historyLimit, setHistoryLimit] = useState(20)
   const [loading, setLoading] = useState(true)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  const [scope, setScope] = useState<ScopeKey>('website')
 
   const loadAll = useCallback(async () => {
     const [tokensRes, historyRes] = await Promise.all([
@@ -198,18 +215,58 @@ export default function DesignTokenEditor() {
     )
   }
 
-  const groups = CATEGORY_ORDER.map((cat) => ({
-    category: cat,
-    items: tokens.filter((t) => t.category === cat),
-  })).filter((g) => g.items.length > 0)
+  const activeScope = SCOPE_DEFS.find((s) => s.key === scope)!
+  // 各スコープの編集中（dirty）件数バッジ用
+  const dirtyCountByScope = (categories: readonly string[]) =>
+    tokens.filter((t) => categories.includes(t.category) && (draft[t.id] ?? t.value) !== t.value).length
+
+  const groups = activeScope.categories
+    .map((cat) => ({
+      category: cat,
+      items: tokens.filter((t) => t.category === cat),
+    }))
+    .filter((g) => g.items.length > 0)
 
   return (
-    <div className="space-y-8 pt-6">
+    <div className="space-y-6 pt-6">
       {errorMsg && (
         <div className="rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-700">
           {errorMsg}
         </div>
       )}
+
+      {/* スコープ切替: ウェブサイト(LP) / サービス画面(アプリ) */}
+      <div className="space-y-2">
+        <div className="inline-flex rounded-lg border border-border bg-muted/40 p-1">
+          {SCOPE_DEFS.map((s) => {
+            const isActive = s.key === scope
+            const dirty = dirtyCountByScope(s.categories)
+            return (
+              <button
+                key={s.key}
+                type="button"
+                onClick={() => setScope(s.key)}
+                className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                  isActive
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <span className="flex flex-col items-start leading-tight">
+                  <span>{s.label}</span>
+                  <span className="text-[10px] font-normal text-muted-foreground">{s.sublabel}</span>
+                </span>
+                {dirty > 0 && (
+                  <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700">
+                    未保存{dirty}
+                  </span>
+                )}
+              </button>
+            )
+          })}
+        </div>
+        <p className="text-xs text-muted-foreground">{activeScope.desc}</p>
+      </div>
 
       {groups.map((group) => (
         <section key={group.category}>
