@@ -13,6 +13,7 @@ import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { callClaude } from '@/lib/claude-api'
 import { fetchElementsCatalog, type ElementKind } from '@/lib/brand/elements-catalog'
 import { runIntegrityChecks } from '@/lib/brand/integrity'
+import { backingNoun, isProofLinked, isTargetBacked, resolveBackingTargets, type BackingKind } from '@/lib/brand/backing-targets'
 
 // ---- 質問 ----
 
@@ -22,6 +23,8 @@ export type ProfilingQuestion =
       type: 'unproven_promise'
       question: string
       why: string
+      // 裏づけ対象（提供価値があればVP、無ければバリュー）。vp_id/vp_title は互換のため名前を維持
+      target_kind: BackingKind
       vp_id: string
       vp_title: string
     }
@@ -32,7 +35,7 @@ export type ProfilingQuestion =
       why: string
       pp_id: string
       pp_title: string
-      choices: { id: string; title: string }[] // 提供価値の選択肢
+      choices: { id: string; title: string; kind: BackingKind }[] // 裏づけ対象の選択肢
     }
   | {
       key: string
@@ -63,6 +66,9 @@ export type ProfilingQuestionsResult = {
   acknowledgedUnprovenCount: number
   // 未解消かつ未保留（ウィザード Step5 完了判定: これが0＋ステップ1〜4充足で完了）
   uncoveredWarnCount: number
+  // 裏づけ対象の総数（ハブの「裏づけ N/M」の分母）＋呼称
+  backingTotal: number
+  backingNoun: string
 }
 
 export async function generateProfilingQuestions(
@@ -70,15 +76,16 @@ export async function generateProfilingQuestions(
   options?: { includeAcknowledged?: boolean }, // true: 保留済みの質問も再表示する
 ): Promise<ProfilingQuestionsResult> {
   if (!companyId) {
-    return { questions: [], baseline: {}, openUnprovenCount: 0, acknowledgedUnprovenCount: 0, uncoveredWarnCount: 0 }
+    return { questions: [], baseline: {}, openUnprovenCount: 0, acknowledgedUnprovenCount: 0, uncoveredWarnCount: 0, backingTotal: 0, backingNoun: '提供価値' }
   }
   const supabase = getSupabaseAdmin()
 
-  const [vpR, ppR, erR, govR, catalog, baselineFindings, ackR] = await Promise.all([
+  const [vpR, ppR, erR, govR, philR, catalog, baselineFindings, ackR] = await Promise.all([
     supabase.from('value_propositions').select('id, title').eq('company_id', companyId).order('sort_order', { ascending: true }),
     supabase.from('proof_points').select('id, title, value_proposition_id').eq('company_id', companyId).order('sort_order', { ascending: true }),
     supabase.from('element_relations').select('id, source_kind, source_id, target_kind, target_id, relation_type, note').eq('company_id', companyId),
     supabase.from('governance_rules').select('id', { count: 'exact', head: true }).eq('company_id', companyId),
+    supabase.from('philosophy_elements').select('id, element_type, title, body').eq('company_id', companyId).order('sort_order', { ascending: true }),
     fetchElementsCatalog(supabase, companyId),
     runIntegrityChecks(companyId), // 読み取り再利用（ベースライン件数のみ）
     supabase.from('profiling_acknowledgments').select('target_ref').eq('company_id', companyId),
@@ -87,16 +94,20 @@ export async function generateProfilingQuestions(
   type VP = { id: string; title: string | null }
   type PP = { id: string; title: string | null; value_proposition_id: string | null }
   type ER = { id: string; source_kind: ElementKind; source_id: string; target_kind: ElementKind; target_id: string; relation_type: string; note: string | null }
+  type Phil = { id: string; element_type: string; title: string | null; body: string | null }
 
   const vps = (vpR.data as VP[] | null) || []
   const pps = (ppR.data as PP[] | null) || []
   const ers = (erR.data as ER[] | null) || []
+  const phils = (philR.data as Phil[] | null) || []
   const govCount = govR.count ?? 0
 
-  // integrity.ts と同一基準: 直接FK（proof_points.value_proposition_id）または evidencedBy 関係
-  const evidencedVpIds = new Set(ers.filter((r) => r.relation_type === 'evidencedBy' && r.source_kind === 'value_proposition').map((r) => r.source_id))
-  const evidencedProofIds = new Set(ers.filter((r) => r.relation_type === 'evidencedBy' && r.target_kind === 'proof_point').map((r) => r.target_id))
   const vpIdsWithDirectProof = new Set(pps.filter((p) => p.value_proposition_id).map((p) => p.value_proposition_id as string))
+
+  // 裏づけ対象 = 提供価値があればVP、無ければバリュー（integrity.ts と同一基準）
+  const valuePhils = phils.filter((p) => p.element_type === 'value')
+  const { targets: backingTargets, mode: backingMode } = resolveBackingTargets(vps, valuePhils)
+  const noun = backingNoun(backingMode)
 
   const labelMap = new Map(catalog.map((e) => [`${e.kind}:${e.id}`, e.label]))
   const labelOf = (kind: ElementKind, id: string) => labelMap.get(`${kind}:${id}`) ?? '不明な要素'
@@ -105,21 +116,23 @@ export async function generateProfilingQuestions(
   const ackSet = new Set((((ackR.data as { target_ref: string }[] | null) || []).map((a) => a.target_ref)))
 
   // 現存する「裏づけのない約束」（warn・プロファイリング対象）と保留カバレッジ
-  const openUnprovenVps = vps.filter((vp) => !vpIdsWithDirectProof.has(vp.id) && !evidencedVpIds.has(vp.id))
-  const acknowledgedUnprovenCount = openUnprovenVps.filter((vp) => ackSet.has(`value_proposition:${vp.id}`)).length
-  const uncoveredWarnCount = openUnprovenVps.length - acknowledgedUnprovenCount
+  const refOfTarget = (t: { kind: BackingKind; id: string }) => `${t.kind}:${t.id}`
+  const openUnproven = backingTargets.filter((t) => !isTargetBacked(t, ers, vpIdsWithDirectProof))
+  const acknowledgedUnprovenCount = openUnproven.filter((t) => ackSet.has(refOfTarget(t))).length
+  const uncoveredWarnCount = openUnproven.length - acknowledgedUnprovenCount
 
   // warn 系（裏づけのない約束）を優先し、次いで禁則ゼロ→繋がっていない実績→矛盾の順で最大7問。
   // 保留済みはデフォルトで質問から除外（includeAcknowledged 指定時のみ再表示）
-  const unproven: ProfilingQuestion[] = openUnprovenVps
-    .filter((vp) => options?.includeAcknowledged || !ackSet.has(`value_proposition:${vp.id}`))
-    .map((vp) => ({
-      key: `unproven:${vp.id}`,
+  const unproven: ProfilingQuestion[] = openUnproven
+    .filter((t) => options?.includeAcknowledged || !ackSet.has(refOfTarget(t)))
+    .map((t) => ({
+      key: `unproven:${t.kind}:${t.id}`,
       type: 'unproven_promise' as const,
-      question: `「${vp.title || '(無題)'}」を約束していますが、それを裏づける実績・事実はありますか？（数字・事例・受賞など）`,
+      question: `${noun}「${t.label}」を体現する実績・事実はありますか？（数字・事例・受賞など）`,
       why: '裏づけの無い約束は、AIの提案が一般論になる原因です',
-      vp_id: vp.id,
-      vp_title: vp.title || '(無題)',
+      target_kind: t.kind,
+      vp_id: t.id,
+      vp_title: t.label,
     }))
 
   const noGov: ProfilingQuestion[] =
@@ -134,17 +147,21 @@ export async function generateProfilingQuestions(
         ]
       : []
 
-  const orphan: ProfilingQuestion[] = pps
-    .filter((pp) => !pp.value_proposition_id && !evidencedProofIds.has(pp.id))
-    .map((pp) => ({
-      key: `orphan:${pp.id}`,
-      type: 'orphan_proof' as const,
-      question: `「${pp.title || '(無題)'}」は、どの提供価値の裏づけですか？`,
-      why: 'どの約束にも繋がっていない実績は、AIがどの約束の根拠として使えるか判断できません',
-      pp_id: pp.id,
-      pp_title: pp.title || '(無題)',
-      choices: vps.map((v) => ({ id: v.id, title: v.title || '(無題)' })),
-    }))
+  // 紐づけ先候補が無い（提供価値もバリューも0）なら orphan 質問は出さない（答えられないため）
+  const orphan: ProfilingQuestion[] =
+    backingTargets.length === 0
+      ? []
+      : pps
+          .filter((pp) => !isProofLinked(pp, ers))
+          .map((pp) => ({
+            key: `orphan:${pp.id}`,
+            type: 'orphan_proof' as const,
+            question: `「${pp.title || '(無題)'}」は、どの${noun}の裏づけですか？`,
+            why: 'どの約束にも繋がっていない実績は、AIがどの約束の根拠として使えるか判断できません',
+            pp_id: pp.id,
+            pp_title: pp.title || '(無題)',
+            choices: backingTargets.map((t) => ({ id: t.id, title: t.label, kind: t.kind })),
+          }))
 
   const conflicts: ProfilingQuestion[] = ers
     .filter((r) => r.relation_type === 'conflictsWith')
@@ -167,9 +184,11 @@ export async function generateProfilingQuestions(
   return {
     questions,
     baseline,
-    openUnprovenCount: openUnprovenVps.length,
+    openUnprovenCount: openUnproven.length,
     acknowledgedUnprovenCount,
     uncoveredWarnCount,
+    backingTotal: backingTargets.length,
+    backingNoun: noun,
   }
 }
 
@@ -177,7 +196,8 @@ export async function generateProfilingQuestions(
 
 export type ProofDraft = {
   kind: 'proof_point'
-  vp_id: string
+  target_kind: BackingKind // 紐づけ先の種別（提供価値 or バリュー）
+  vp_id: string // 紐づけ先の id
   vp_title: string
   proof: { title: string; description: string; source_type: string }
 }
@@ -243,7 +263,7 @@ const normalizeDigits = (s: string) =>
 // テキストから数値を「正規化された値」の集合として抽出する。
 // 同一視する表記: 全角数字、桁区切りカンマ（2,000=2000）、漢数字の万・千（2万=20000・3千=3000・
 // 2万5千=25000）、年号（昭和N=1925+N・平成N=1988+N・令和N=2018+N。元年=1年）。
-function extractNumberValues(input: string): Set<string> {
+export function extractNumberValues(input: string): Set<string> {
   let s = normalizeDigits(input || '')
   // 桁区切りカンマのみ除去（数字,3桁。列挙のカンマは残す）
   s = s.replace(/(\d),(?=\d{3}(?!\d))/g, '$1')
@@ -314,7 +334,7 @@ export async function structureAnswer(
     if (question.type === 'unproven_promise') {
       const raw = await callClaude({
         system: PROOF_SYSTEM,
-        userMessage: `# 質問\n提供価値「${question.vp_title}」を裏づける実績・事実はありますか？\n\n# 経営者の回答\n"""\n${answer}\n"""`,
+        userMessage: `# 質問\n${question.target_kind === 'value_proposition' ? '提供価値' : 'バリュー'}「${question.vp_title}」を体現する実績・事実はありますか？\n\n# 経営者の回答\n"""\n${answer}\n"""`,
         maxTokens: 1024,
       })
       const obj = extractJsonObject(raw)
@@ -329,7 +349,7 @@ export async function structureAnswer(
         console.warn('[profiling] 草案に回答外の数値が混入したため破棄:', { title, description, missing })
         return ng(ungroundedReason(missing))
       }
-      return ok({ kind: 'proof_point', vp_id: question.vp_id, vp_title: question.vp_title, proof: { title, description, source_type } })
+      return ok({ kind: 'proof_point', target_kind: question.target_kind, vp_id: question.vp_id, vp_title: question.vp_title, proof: { title, description, source_type } })
     }
 
     if (question.type === 'no_governance') {

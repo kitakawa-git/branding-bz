@@ -9,6 +9,7 @@ import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { callClaude } from '@/lib/claude-api'
 import { fetchElementsCatalog, KIND_LABELS, relationLabel } from '@/lib/brand/elements-catalog'
 import { buildBrandMapGraph, FK_EVIDENCE_TYPE, type ProofFkRow, type RelationRow } from '@/lib/brand/map-data'
+import { backingNoun, resolveBackingTargets } from '@/lib/brand/backing-targets'
 
 export type MapFacts = {
   counts: {
@@ -23,6 +24,7 @@ export type MapFacts = {
   islands: { size: number; members: string[] }[] // 大きい順
   hubs: { label: string; kind: string; degree: number }[] // 次数上位
   vpCoverage: { label: string; proofCount: number; acknowledged: boolean }[]
+  backingNoun: string // 裏づけ対象の呼称（提供価値 / バリュー）
   conflicts: { a: string; b: string; note: string | null }[]
   roots: { label: string; degree: number }[] // mission/vision の接続数（背骨の太さ）
 }
@@ -89,27 +91,34 @@ export async function computeMapFacts(companyId: string): Promise<MapFacts> {
     .slice(0, 5)
     .map((n) => ({ label: n.label, kind: n.kind === 'philosophy_element' && n.philType === 'service' ? '事業' : KIND_LABELS[n.kind], degree: n.degree }))
 
-  // 裏づけカバレッジ（提供価値ごと: FK＋evidencedBy の実績数・保留有無）
-  const vpRefs = catalog.filter((e) => e.kind === 'value_proposition')
-  const proofCountByVp = new Map<string, number>()
+  // 裏づけカバレッジ（裏づけ対象ごと: FK＋evidencedBy の実績数・保留有無）。
+  // 対象 = 提供価値があればVP、無ければバリュー（提供価値未選定の会社への対応）。
+  const vpList = catalog.filter((e) => e.kind === 'value_proposition').map((e) => ({ id: e.id, title: e.label }))
+  const valuePhilList = catalog
+    .filter((e) => e.kind === 'philosophy_element' && philTypes[e.id] === 'value')
+    .map((e) => ({ id: e.id, title: e.label, body: null }))
+  const { targets: backingTargets, mode: backingMode } = resolveBackingTargets(vpList, valuePhilList)
+  const noun = backingNoun(backingMode)
+
+  const proofCountByTarget = new Map<string, number>() // key = `${kind}:${id}`
   for (const p of proofFks) {
     if (p.value_proposition_id) {
-      proofCountByVp.set(p.value_proposition_id, (proofCountByVp.get(p.value_proposition_id) || 0) + 1)
+      const k = `value_proposition:${p.value_proposition_id}`
+      proofCountByTarget.set(k, (proofCountByTarget.get(k) || 0) + 1)
     }
   }
   for (const e of graph.edges) {
     if (e.relation_type !== 'evidencedBy') continue
-    const vpRef = e.source.startsWith('value_proposition:') ? e.source : e.target.startsWith('value_proposition:') ? e.target : null
-    const ppRef = e.source.startsWith('proof_point:') ? e.source : e.target.startsWith('proof_point:') ? e.target : null
-    if (vpRef && ppRef) {
-      const vpId = vpRef.slice('value_proposition:'.length)
-      proofCountByVp.set(vpId, (proofCountByVp.get(vpId) || 0) + 1)
-    }
+    const ppIsSource = e.source.startsWith('proof_point:')
+    const ppIsTarget = e.target.startsWith('proof_point:')
+    if (!ppIsSource && !ppIsTarget) continue
+    const otherRef = ppIsSource ? e.target : e.source // 実績の反対側＝裏づけ対象候補
+    proofCountByTarget.set(otherRef, (proofCountByTarget.get(otherRef) || 0) + 1)
   }
-  const vpCoverage = vpRefs.map((vp) => ({
-    label: vp.label,
-    proofCount: proofCountByVp.get(vp.id) || 0,
-    acknowledged: ackSet.has(`value_proposition:${vp.id}`),
+  const vpCoverage = backingTargets.map((t) => ({
+    label: t.label,
+    proofCount: proofCountByTarget.get(`${t.kind}:${t.id}`) || 0,
+    acknowledged: ackSet.has(`${t.kind}:${t.id}`),
   }))
 
   // 矛盾の一覧
@@ -125,7 +134,7 @@ export async function computeMapFacts(companyId: string): Promise<MapFacts> {
   return {
     counts: {
       philosophy: catalog.filter((e) => e.kind === 'philosophy_element').length,
-      value_proposition: vpRefs.length,
+      value_proposition: vpList.length,
       proof_point: catalog.filter((e) => e.kind === 'proof_point').length,
       governance_rule: catalog.filter((e) => e.kind === 'governance_rule').length,
       persona: catalog.filter((e) => e.kind === 'persona').length,
@@ -135,6 +144,7 @@ export async function computeMapFacts(companyId: string): Promise<MapFacts> {
     islands,
     hubs,
     vpCoverage,
+    backingNoun: noun,
     conflicts,
     roots,
   }
@@ -151,7 +161,7 @@ export function renderFactsText(facts: MapFacts): string {
   })
   lines.push(`\n# 接続ハブ上位（次数順）`)
   for (const h of facts.hubs) lines.push(`- 「${h.label}」（${h.kind}・接続${h.degree}本）`)
-  lines.push(`\n# 提供価値ごとの裏づけ`)
+  lines.push(`\n# ${facts.backingNoun}ごとの裏づけ`)
   for (const v of facts.vpCoverage) {
     lines.push(`- 「${v.label}」: 実績${v.proofCount}件${v.acknowledged ? '（裏づけ未取得として保留中）' : ''}`)
   }

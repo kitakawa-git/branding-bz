@@ -7,6 +7,7 @@
 // 次段（本カット外）: governance_rules の tone/claim を Claude が評価するAI判定チェック。
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { fetchElementsCatalog, KIND_LABELS, type ElementKind } from '@/lib/brand/elements-catalog'
+import { backingNoun, isProofLinked, isTargetBacked, resolveBackingTargets } from '@/lib/brand/backing-targets'
 
 export type IntegritySeverity = 'warn' | 'info'
 
@@ -54,34 +55,36 @@ export async function runIntegrityChecks(companyId: string): Promise<IntegrityFi
 
   const findings: IntegrityFinding[] = []
 
-  // evidencedBy 関係（value_proposition → proof_point）
-  const evidencedVpIds = new Set(ers.filter((r) => r.relation_type === 'evidencedBy' && r.source_kind === 'value_proposition').map((r) => r.source_id))
-  const evidencedProofIds = new Set(ers.filter((r) => r.relation_type === 'evidencedBy' && r.target_kind === 'proof_point').map((r) => r.target_id))
   // 直接FK（proof_points.value_proposition_id）
   const vpIdsWithDirectProof = new Set(pps.filter((p) => p.value_proposition_id).map((p) => p.value_proposition_id as string))
 
-  // 1. 裏づけのない約束（warn・旧称: 証拠なき約束）: 直接FK も evidencedBy 関係も無い提供価値
+  // 裏づけ対象 = 提供価値があればVP、無ければバリュー（提供価値未選定の会社への対応）。
+  const valuePhils = phils.filter((p) => p.element_type === 'value')
+  const { targets: backingTargets, mode: backingMode } = resolveBackingTargets(vps, valuePhils)
+  const noun = backingNoun(backingMode)
+
+  // 1. 裏づけのない約束（warn・旧称: 証拠なき約束）: 実績で裏づけられていない裏づけ対象
   //    ※ category 文字列はウィザードの点検サマリ（OntologyBuilderSection）と
   //      プロファイリングの改善表示が表示キーとして参照する。リネーム時は両側を同時に更新すること。
   //      （Step5完了判定は category 照合ではなく lib/brand/profiling.ts の uncoveredWarnCount を使う）
-  for (const vp of vps) {
-    if (!vpIdsWithDirectProof.has(vp.id) && !evidencedVpIds.has(vp.id)) {
+  for (const t of backingTargets) {
+    if (!isTargetBacked(t, ers, vpIdsWithDirectProof)) {
       findings.push({
         severity: 'warn',
         category: '裏づけのない約束',
-        message: `提供価値「${vp.title || '(無題)'}」を裏づける実績・エピソードが登録されていません`,
-        refs: [{ kind: '提供価値', label: vp.title || '(無題)' }],
+        message: `${noun}「${t.label}」を裏づける実績・エピソードが登録されていません`,
+        refs: [{ kind: noun, label: t.label }],
       })
     }
   }
 
-  // 2. どの約束にも繋がっていない実績（info・旧称: 孤立した証拠）: 直接FK も evidencedBy 関係も無い実績
+  // 2. どの約束にも繋がっていない実績（info・旧称: 孤立した証拠）: どの対象にも結びついていない実績
   for (const pp of pps) {
-    if (!pp.value_proposition_id && !evidencedProofIds.has(pp.id)) {
+    if (!isProofLinked(pp, ers)) {
       findings.push({
         severity: 'info',
         category: 'どの約束にも繋がっていない実績',
-        message: `実績「${pp.title || '(無題)'}」がどの提供価値にも紐づいていません`,
+        message: `実績「${pp.title || '(無題)'}」がどの${noun}にも紐づいていません`,
         refs: [{ kind: '実績・エピソード', label: pp.title || '(無題)' }],
       })
     }

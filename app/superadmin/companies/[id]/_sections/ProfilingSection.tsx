@@ -14,11 +14,13 @@ import { AutoResizeTextarea } from '@/components/ui/auto-resize-textarea'
 import { Play, Check, X, Info, Sparkles, SkipForward, RotateCcw } from 'lucide-react'
 import { toast } from 'sonner'
 import type { ProfilingQuestion, ProofDraft, RuleDraft } from '@/lib/brand/profiling'
+import type { BackingKind } from '@/lib/brand/backing-targets'
 
 type LocalDraft =
   | ProofDraft
   | RuleDraft
-  | { kind: 'relation'; vp_id: string; vp_title: string; pp_id: string; pp_title: string }
+  // relation: 実績 → 裏づけ対象（提供価値 or バリュー）への evidencedBy 草案
+  | { kind: 'relation'; target_kind: BackingKind; vp_id: string; vp_title: string; pp_id: string; pp_title: string }
   | { kind: 'conflict_note'; relation_id: string; note: string; existing_note: string | null }
 
 const SOURCE_TYPES: { value: string; label: string }[] = [
@@ -171,7 +173,7 @@ export default function ProfilingSection({
   const acknowledge = async () => {
     if (current?.type === 'unproven_promise') {
       const { error } = await supabase.from('profiling_acknowledgments').upsert(
-        { company_id: companyId, target_ref: `value_proposition:${current.vp_id}` },
+        { company_id: companyId, target_ref: `${current.target_kind}:${current.vp_id}` },
         { onConflict: 'company_id,target_ref' },
       )
       if (error) {
@@ -186,13 +188,13 @@ export default function ProfilingSection({
     await next()
   }
 
-  // 実績が登録された提供価値の保留記録を解除（無ければ何も起きない）
-  const clearAcknowledgment = async (vpId: string) => {
+  // 実績が登録された裏づけ対象の保留記録を解除（無ければ何も起きない）
+  const clearAcknowledgment = async (targetRef: string) => {
     const { error } = await supabase
       .from('profiling_acknowledgments')
       .delete()
       .eq('company_id', companyId)
-      .eq('target_ref', `value_proposition:${vpId}`)
+      .eq('target_ref', targetRef)
     if (error) console.error('[Profiling] 保留解除エラー:', error)
   }
 
@@ -225,15 +227,15 @@ export default function ProfilingSection({
     }
   }
 
-  // 選択式（繋がっていない実績 → 提供価値の紐づけ）: AI不要・直接関係草案
+  // 選択式（繋がっていない実績 → 裏づけ対象の紐づけ）: AI不要・直接関係草案
   const makeOrphanDraft = () => {
     if (!current || current.type !== 'orphan_proof') return
-    const vp = current.choices.find((c) => c.id === orphanVpId)
-    if (!vp) {
-      toast.error('提供価値を選択してください')
+    const target = current.choices.find((c) => c.id === orphanVpId)
+    if (!target) {
+      toast.error('紐づけ先を選択してください')
       return
     }
-    setDraft({ kind: 'relation', vp_id: vp.id, vp_title: vp.title, pp_id: current.pp_id, pp_title: current.pp_title })
+    setDraft({ kind: 'relation', target_kind: target.kind, vp_id: target.id, vp_title: target.title, pp_id: current.pp_id, pp_title: current.pp_title })
   }
 
   // 選択式（矛盾の優先順位）: AI不要・既存 conflictsWith 関係の note 追記草案
@@ -281,11 +283,11 @@ export default function ProfilingSection({
           .select('id')
           .single()
         if (error) throw error
-        // evidencedBy 関係草案も併せて登録（提供価値 → 新しい実績）
+        // evidencedBy 関係草案も併せて登録（裏づけ対象 → 新しい実績）
         const relOrder = await nextSortOrder('element_relations')
         const { error: relErr } = await supabase.from('element_relations').insert({
           company_id: companyId,
-          source_kind: 'value_proposition',
+          source_kind: draft.target_kind,
           source_id: draft.vp_id,
           target_kind: 'proof_point',
           target_id: (inserted as { id: string }).id,
@@ -294,7 +296,7 @@ export default function ProfilingSection({
           sort_order: relOrder,
         })
         if (relErr) throw relErr
-        await clearAcknowledgment(draft.vp_id) // 実績が付いたので保留は解除
+        await clearAcknowledgment(`${draft.target_kind}:${draft.vp_id}`) // 実績が付いたので保留は解除
       } else if (draft.kind === 'governance_rule') {
         if (!draft.rule.rule_text.trim()) throw new Error('ルール本文は必須です')
         const order = await nextSortOrder('governance_rules')
@@ -314,7 +316,7 @@ export default function ProfilingSection({
         const order = await nextSortOrder('element_relations')
         const { error } = await supabase.from('element_relations').insert({
           company_id: companyId,
-          source_kind: 'value_proposition',
+          source_kind: draft.target_kind,
           source_id: draft.vp_id,
           target_kind: 'proof_point',
           target_id: draft.pp_id,
@@ -323,7 +325,7 @@ export default function ProfilingSection({
           sort_order: order,
         })
         if (error) throw error
-        await clearAcknowledgment(draft.vp_id) // 実績が紐づいたので保留は解除
+        await clearAcknowledgment(`${draft.target_kind}:${draft.vp_id}`) // 実績が紐づいたので保留は解除
       } else if (draft.kind === 'conflict_note') {
         const newNote = draft.existing_note ? `${draft.existing_note}\n${draft.note}` : draft.note
         const { error } = await supabase
@@ -354,7 +356,7 @@ export default function ProfilingSection({
         {draft.kind === 'proof_point' && (
           <>
             <p className="text-[13px] text-muted-foreground m-0">
-              実績・エピソードとして登録し、提供価値「{draft.vp_title}」へ evidencedBy 関係を張ります
+              実績・エピソードとして登録し、{draft.target_kind === 'value_proposition' ? '提供価値' : 'バリュー'}「{draft.vp_title}」へ evidencedBy 関係を張ります
             </p>
             <div>
               <label className="text-xs font-bold text-foreground mb-1.5 block">タイトル</label>
@@ -447,7 +449,7 @@ export default function ProfilingSection({
 
         {draft.kind === 'relation' && (
           <p className="text-[13px] text-foreground m-0">
-            提供価値「{draft.vp_title}」 —evidencedBy→ 実績「{draft.pp_title}」 の関係を登録します
+            {draft.target_kind === 'value_proposition' ? '提供価値' : 'バリュー'}「{draft.vp_title}」 —evidencedBy→ 実績「{draft.pp_title}」 の関係を登録します
           </p>
         )}
 
@@ -524,7 +526,9 @@ export default function ProfilingSection({
         {!draft && current.type === 'orphan_proof' && (
           <>
             <select className={SELECT_CLASS} value={orphanVpId} onChange={(e) => setOrphanVpId(e.target.value)}>
-              <option value="">提供価値を選択してください</option>
+              <option value="">
+                {current.choices[0]?.kind === 'value_proposition' ? '提供価値' : 'バリュー'}を選択してください
+              </option>
               {current.choices.map((c) => (
                 <option key={c.id} value={c.id}>{c.title}</option>
               ))}
@@ -532,7 +536,7 @@ export default function ProfilingSection({
             <div className="flex flex-wrap gap-2 mt-2">
               <Button type="button" size="sm" onClick={makeOrphanDraft}>
                 <Check size={14} />
-                この提供価値に紐づける
+                これに紐づける
               </Button>
               <Button type="button" size="sm" variant="outline" onClick={skip}>どれでもない</Button>
               <Button type="button" size="sm" variant="ghost" onClick={skip}>

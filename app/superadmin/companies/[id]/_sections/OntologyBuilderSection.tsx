@@ -16,7 +16,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
-import { Check, Info, RefreshCw } from 'lucide-react'
+import { AlertTriangle, Check, Info, RefreshCw } from 'lucide-react'
 import ProfilingSection from './ProfilingSection'
 import ProofPointsSection, { type ValuePropositionRef } from './ProofPointsSection'
 import GovernanceRulesSection from './GovernanceRulesSection'
@@ -41,7 +41,9 @@ export type Inspection = {
   baseline: Record<string, number> // integrity.ts のカテゴリ文字列 → 件数
   uncoveredWarnCount: number // 未解消かつ未保留の warn（Step5完了判定: 0で完了）
   acknowledgedUnprovenCount: number // 保留済み件数（完了バナー・ハブのチップに明示）
-  openUnprovenCount: number // 裏づけのない提供価値の現存数（ハブの「裏づけ N/M」用）
+  openUnprovenCount: number // 裏づけのない対象の現存数（ハブの「裏づけ N/M」の N側計算用）
+  backingTotal: number // 裏づけ対象の総数（提供価値 or バリュー。ハブ「裏づけ N/M」の分母M）
+  backingNoun: string // 裏づけ対象の呼称（提供価値 / バリュー）
 }
 
 // サマリーハブへ通知する状態（判定ロジックはこのコンポーネントが唯一の持ち主。ハブは表示だけ）
@@ -80,11 +82,11 @@ export default function OntologyBuilderSection({
   // 完了状態はすべてデータから導出（進捗テーブルなし）
   // Step5 は warn 0件だけだと「データが空＝検出対象なし」の会社まで完了扱いになるため、
   // ステップ1〜4の充足を前提条件にする。
+  // 提供価値は任意（推奨）扱い。必須は理念（mission/vision/value）と実績・ルール・関係のみ。
   const basicsDone =
     counts.mission > 0 &&
     counts.vision > 0 &&
     counts.value > 0 &&
-    counts.vp > 0 &&
     counts.proof > 0 &&
     counts.rule > 0 &&
     counts.relation > 0
@@ -92,7 +94,7 @@ export default function OntologyBuilderSection({
     (num: number): boolean => {
       switch (num) {
         case 1:
-          return counts.mission > 0 && counts.vision > 0 && counts.value > 0 && counts.vp > 0
+          return counts.mission > 0 && counts.vision > 0 && counts.value > 0
         case 2:
           return counts.proof > 0
         case 3:
@@ -157,6 +159,8 @@ export default function OntologyBuilderSection({
         uncoveredWarnCount: (json.uncoveredWarnCount as number) || 0,
         acknowledgedUnprovenCount: (json.acknowledgedUnprovenCount as number) || 0,
         openUnprovenCount: (json.openUnprovenCount as number) || 0,
+        backingTotal: (json.backingTotal as number) || 0,
+        backingNoun: (json.backingNoun as string) || '提供価値',
       })
     } catch (err) {
       console.error('[OntologyBuilder] 自動点検エラー:', err)
@@ -217,13 +221,14 @@ export default function OntologyBuilderSection({
 
   // ---- Step 1: 基本情報チェックリスト（このウィザードでは作らない・既存編集画面へ案内） ----
   const renderStep1 = () => {
-    const items: { label: string; ok: boolean; hint: string }[] = [
-      { label: 'ミッション', ok: counts.mission > 0, hint: '管理画面「ブランドの考え方」で登録（AIサジェスト可）' },
-      { label: 'ビジョン', ok: counts.vision > 0, hint: '管理画面「ブランドの考え方」で登録（AIサジェスト可）' },
-      { label: 'バリュー', ok: counts.value > 0, hint: '管理画面「ブランドの考え方」で登録（AIサジェスト可）' },
-      { label: '提供価値', ok: counts.vp > 0, hint: '管理画面「ブランド戦略」で登録' },
+    const items: { label: string; ok: boolean; hint: string; required: boolean }[] = [
+      { label: 'ミッション', ok: counts.mission > 0, hint: '管理画面「ブランドの考え方」で登録（AIサジェスト可）', required: true },
+      { label: 'ビジョン', ok: counts.vision > 0, hint: '管理画面「ブランドの考え方」で登録（AIサジェスト可）', required: true },
+      { label: 'バリュー', ok: counts.value > 0, hint: '管理画面「ブランドの考え方」で登録（AIサジェスト可）', required: true },
+      { label: '提供価値（推奨）', ok: counts.vp > 0, hint: '管理画面「ブランド戦略」で登録。実績・点検の精度が上がります', required: false },
     ]
-    const missing = items.filter((i) => !i.ok)
+    // 必須項目のみで完了判定（提供価値は任意のため不足案内には含めない）
+    const missing = items.filter((i) => i.required && !i.ok)
     return (
       <div>
         <div className="space-y-1.5 mb-3">
@@ -243,13 +248,21 @@ export default function OntologyBuilderSection({
             </div>
           ))}
         </div>
-        {missing.length === 0 ? (
-          <p className="text-sm text-green-700 border border-green-200 bg-green-50 rounded-lg p-3 m-0">
-            基本情報は揃っています。次のステップへ進んでください
-          </p>
-        ) : (
+        {missing.length > 0 ? (
           <p className="text-[13px] text-muted-foreground m-0">
             不足分はこのウィザードでは作成しません。該当企業の管理画面（ブランドの考え方／ブランド戦略）の編集機能・AIサジェストで登録してから戻ってきてください
+          </p>
+        ) : counts.vp === 0 ? (
+          // 必須（理念）は充足。提供価値は任意だが未登録なのでアラートで促す
+          <div className="flex items-start gap-2 text-[13px] text-amber-800 border border-amber-200 bg-amber-50 rounded-lg p-3 m-0">
+            <AlertTriangle size={15} className="shrink-0 mt-0.5" />
+            <span>
+              提供価値が未登録です。任意ですが、登録すると実績の裏づけ・点検・AI草案の精度が上がります。管理画面「ブランド戦略」で登録できます
+            </span>
+          </div>
+        ) : (
+          <p className="text-sm text-green-700 border border-green-200 bg-green-50 rounded-lg p-3 m-0">
+            基本情報は揃っています。次のステップへ進んでください
           </p>
         )}
       </div>

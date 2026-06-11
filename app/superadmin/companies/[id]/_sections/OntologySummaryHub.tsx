@@ -15,6 +15,7 @@ import OntologyBuilderSection, { type OntologyStatus } from './OntologyBuilderSe
 import { ONTOLOGY_DATA_CHANGED_EVENT, ONTOLOGY_GOTO_STEP_EVENT } from './ontology-events'
 import BrandMapSection from './BrandMapSection'
 import MapReviewPanel from './MapReviewPanel'
+import OutputTestPanel from './OutputTestPanel'
 import type { ValuePropositionRef } from './ProofPointsSection'
 
 type MapStats = { islands: number; unconnected: number }
@@ -85,8 +86,10 @@ export default function OntologySummaryHub({
 
   const c = status?.counts
   const insp = status?.inspection ?? null
-  const vpTotal = c?.vp ?? 0
-  const backed = insp ? Math.max(0, vpTotal - insp.openUnprovenCount) : null
+  // 裏づけチップの分母は「裏づけ対象（提供価値があればVP、無ければバリュー）」の総数
+  const backingTotal = insp?.backingTotal ?? 0
+  const backed = insp ? Math.max(0, backingTotal - insp.openUnprovenCount) : null
+  const backingLabel = insp ? `${insp.backingNoun}の裏づけ` : '裏づけ'
   const conflicts = insp?.baseline['矛盾の明示'] ?? null
   const pending = status?.pendingCount ?? 0
 
@@ -110,7 +113,8 @@ export default function OntologySummaryHub({
       {/* 件数チップ（5つ） */}
       <div className="flex flex-wrap gap-1.5 mb-2">
         <Chip label="理念" value={c ? String(c.mission + c.vision + c.value) : '–'} />
-        <Chip label="提供価値" value={c ? String(c.vp) : '–'} />
+        {/* 提供価値は任意だが未登録は警告色で気づけるように */}
+        <Chip label="提供価値" value={c ? String(c.vp) : '–'} tone={c && c.vp === 0 ? 'amber' : 'gray'} />
         <Chip label="実績" value={c ? String(c.proof) : '–'} />
         <Chip label="ルール" value={c ? String(c.rule) : '–'} />
         <Chip label="関係" value={c ? String(c.relation) : '–'} />
@@ -119,8 +123,8 @@ export default function OntologySummaryHub({
       {/* 点検チップ（3つ）— 点検数値の唯一の表示場所 */}
       <div className="flex flex-wrap gap-1.5 mb-3">
         <Chip
-          label="裏づけ"
-          value={insp ? `${backed}/${vpTotal}${pending > 0 ? `（保留${pending}）` : ''}` : '–'}
+          label={backingLabel}
+          value={insp ? `${backed}/${backingTotal}${pending > 0 ? `（保留${pending}）` : ''}` : '–'}
           tone={insp ? (insp.uncoveredWarnCount > 0 ? 'amber' : 'green') : 'gray'}
         />
         <Chip label="くい違い" value={conflicts === null ? '–' : String(conflicts)} tone={conflicts ? 'amber' : 'gray'} />
@@ -139,6 +143,11 @@ export default function OntologySummaryHub({
       {/* AIレビュー（マップ直下・唯一の置き場） */}
       <div className="mb-3">
         <MapReviewPanel companyId={companyId} />
+      </div>
+
+      {/* 出力テスト（オントロジーの効果を注入あり/なしで比較） */}
+      <div className="mb-3">
+        <OutputTestPanel companyId={companyId} />
       </div>
 
       {/* クイックアクション（実体は下のステップパネル。該当ステップへの切替のみ） */}
