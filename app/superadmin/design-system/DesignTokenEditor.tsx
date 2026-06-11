@@ -60,27 +60,15 @@ const CATEGORY_LABELS: Record<string, string> = {
   radius: '角丸',
 }
 
-// カラーパレットを「ウェブサイト(LP)」「サービス画面(アプリ)」の2スコープに分けて表示。
+// スコープ（ウェブサイト/サービス画面）は親ページの上位タブから受け取る。
 // website = LP独自の --ds-*（公開サイト）／ service = shadcn基盤＋アプリ青（ログイン後のUI）
-const SCOPE_DEFS = [
-  {
-    key: 'website' as const,
-    label: 'ウェブサイト',
-    sublabel: '公開サイト（LP）',
-    desc: 'トップ・料金・FAQ など、ログイン前に表示される公開ページの色。',
-    categories: ['text', 'bg', 'border', 'accent', 'shadow'],
-  },
-  {
-    key: 'service' as const,
-    label: 'サービス画面',
-    sublabel: 'ログイン後のアプリ',
-    desc: '管理画面・ポータル・ツールの色。「基盤色」を変えると文字・ボタン・罫線などが全画面で一括変更されます。',
-    categories: ['app', 'base', 'sidebar', 'chart', 'radius'],
-  },
-]
-type ScopeKey = (typeof SCOPE_DEFS)[number]['key']
+export type DesignScope = 'website' | 'service'
+export const SCOPE_CATEGORIES: Record<DesignScope, string[]> = {
+  website: ['text', 'bg', 'border', 'accent', 'shadow'],
+  service: ['app', 'base', 'sidebar', 'chart', 'radius'],
+}
 
-export default function DesignTokenEditor() {
+export default function DesignTokenEditor({ scope }: { scope: DesignScope }) {
   const [tokens, setTokens] = useState<DesignToken[]>([])
   const [draft, setDraft] = useState<Record<string, string>>({})
   const [savingIds, setSavingIds] = useState<Set<string>>(new Set())
@@ -88,7 +76,6 @@ export default function DesignTokenEditor() {
   const [historyLimit, setHistoryLimit] = useState(20)
   const [loading, setLoading] = useState(true)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
-  const [scope, setScope] = useState<ScopeKey>('website')
 
   const loadAll = useCallback(async () => {
     const [tokensRes, historyRes] = await Promise.all([
@@ -215,12 +202,7 @@ export default function DesignTokenEditor() {
     )
   }
 
-  const activeScope = SCOPE_DEFS.find((s) => s.key === scope)!
-  // 各スコープの編集中（dirty）件数バッジ用
-  const dirtyCountByScope = (categories: readonly string[]) =>
-    tokens.filter((t) => categories.includes(t.category) && (draft[t.id] ?? t.value) !== t.value).length
-
-  const groups = activeScope.categories
+  const groups = SCOPE_CATEGORIES[scope]
     .map((cat) => ({
       category: cat,
       items: tokens.filter((t) => t.category === cat),
@@ -234,39 +216,6 @@ export default function DesignTokenEditor() {
           {errorMsg}
         </div>
       )}
-
-      {/* スコープ切替: ウェブサイト(LP) / サービス画面(アプリ) */}
-      <div className="space-y-2">
-        <div className="inline-flex rounded-lg border border-border bg-muted/40 p-1">
-          {SCOPE_DEFS.map((s) => {
-            const isActive = s.key === scope
-            const dirty = dirtyCountByScope(s.categories)
-            return (
-              <button
-                key={s.key}
-                type="button"
-                onClick={() => setScope(s.key)}
-                className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'bg-background text-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                <span className="flex flex-col items-start leading-tight">
-                  <span>{s.label}</span>
-                  <span className="text-[10px] font-normal text-muted-foreground">{s.sublabel}</span>
-                </span>
-                {dirty > 0 && (
-                  <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700">
-                    未保存{dirty}
-                  </span>
-                )}
-              </button>
-            )
-          })}
-        </div>
-        <p className="text-xs text-muted-foreground">{activeScope.desc}</p>
-      </div>
 
       {groups.map((group) => (
         <section key={group.category}>

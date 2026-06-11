@@ -11,7 +11,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { Monitor, Smartphone, Plus, RefreshCw } from 'lucide-react'
-import DesignTokenEditor from './DesignTokenEditor'
+import DesignTokenEditor, { type DesignScope } from './DesignTokenEditor'
 import ComponentPreview from '@/components/superadmin/design-system/ComponentPreview'
 import { useDesignAudit } from './useDesignAudit'
 import {
@@ -49,14 +49,28 @@ import { StepProgressBar } from '@/components/shared/StepProgressBar'
 // 実測の設定
 // ============================================================
 
-// 計測対象ページ（公開LP配下）
-const AUDIT_PAGES = [
-  { value: '/', label: 'トップ（/）' },
-  { value: '/plan', label: '料金プラン（/plan）' },
-  { value: '/faq', label: 'FAQ（/faq）' },
-  { value: '/news', label: 'ニュース（/news）' },
-  { value: '/contact', label: 'お問い合わせ（/contact）' },
+// 上位タブ（ウェブサイト/サービス画面）の定義
+const SCOPE_TABS: { key: DesignScope; label: string; sub: string }[] = [
+  { key: 'website', label: 'ウェブサイト', sub: '公開サイト（LP）' },
+  { key: 'service', label: 'サービス画面', sub: 'ログイン後のアプリ' },
 ]
+
+// 実測対象ページ（スコープ別）。service はログイン後の画面（プレビューの認証cookieで読める）。
+const AUDIT_PAGES_BY_SCOPE: Record<DesignScope, { value: string; label: string }[]> = {
+  website: [
+    { value: '/', label: 'トップ（/）' },
+    { value: '/plan', label: '料金プラン（/plan）' },
+    { value: '/faq', label: 'FAQ（/faq）' },
+    { value: '/news', label: 'ニュース（/news）' },
+    { value: '/contact', label: 'お問い合わせ（/contact）' },
+  ],
+  service: [
+    { value: '/admin/dashboard', label: '管理ダッシュボード' },
+    { value: '/admin/brand-score', label: 'ブランドスコア' },
+    { value: '/portal', label: 'ポータル' },
+    { value: '/signup', label: 'サインアップ' },
+  ],
+}
 
 const VIEWPORTS = [
   { width: 1280, label: 'PC', icon: Monitor },
@@ -86,13 +100,14 @@ const DS_TOKEN_NAMES = [
 type AuditControlsProps = {
   page: string
   setPage: (v: string) => void
+  pages: { value: string; label: string }[]
   viewport: number
   setViewport: (v: number) => void
   remeasure: () => void
   loading: boolean
 }
 
-function AuditControls({ page, setPage, viewport, setViewport, remeasure, loading }: AuditControlsProps) {
+function AuditControls({ page, setPage, pages, viewport, setViewport, remeasure, loading }: AuditControlsProps) {
   return (
     <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2">
       <span className="text-[11px] font-semibold text-muted-foreground shrink-0">実測対象:</span>
@@ -101,7 +116,7 @@ function AuditControls({ page, setPage, viewport, setViewport, remeasure, loadin
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          {AUDIT_PAGES.map((p) => (
+          {pages.map((p) => (
             <SelectItem key={p.value} value={p.value} className="text-xs">
               {p.label}
             </SelectItem>
@@ -133,7 +148,7 @@ function AuditControls({ page, setPage, viewport, setViewport, remeasure, loadin
         再計測
       </Button>
       <span className="text-[10px] text-muted-foreground">
-        ※公開ページを不可視フレームで読み込み、実DOMから計測
+        ※対象ページを不可視フレームで読み込み、実DOMから計測
       </span>
     </div>
   )
@@ -141,7 +156,7 @@ function AuditControls({ page, setPage, viewport, setViewport, remeasure, loadin
 
 function AuditStatus({ loading, error }: { loading: boolean; error: string | null }) {
   if (loading) {
-    return <div className="py-10 text-center text-sm text-muted-foreground">公開ページを計測中...</div>
+    return <div className="py-10 text-center text-sm text-muted-foreground">対象ページを計測中...</div>
   }
   if (error) {
     return (
@@ -799,12 +814,16 @@ const COMPONENT_SAMPLES: ComponentSample[] = [
   },
 ]
 
-function ComponentsTab() {
+function ComponentsTab({ scope }: { scope: DesignScope }) {
+  // ウェブサイト = LP系（lp-* キー）／ サービス画面 = shadcn系（それ以外）
+  const samples = COMPONENT_SAMPLES.filter((c) =>
+    scope === 'website' ? c.key.startsWith('lp-') : !c.key.startsWith('lp-')
+  )
   return (
     <div className="space-y-6 pt-4">
       {/* メイソンリー: CSS columns で各カードの高さに応じて段詰めする。 */}
       <div className="columns-1 lg:columns-2 gap-4 [column-fill:_balance]">
-        {COMPONENT_SAMPLES.map((comp) => (
+        {samples.map((comp) => (
           <div
             key={comp.key}
             className={`mb-4 break-inside-avoid${comp.fullWidth ? ' [column-span:all]' : ''}`}
@@ -837,10 +856,17 @@ function ComponentsTab() {
 const AUDIT_TABS = ['typography', 'spacing', 'layout']
 
 export default function DesignSystemPage() {
+  const [scope, setScope] = useState<DesignScope>('website')
   const [tab, setTab] = useState('colors')
-  const [auditPage, setAuditPage] = useState('/')
+  const [auditPage, setAuditPage] = useState(AUDIT_PAGES_BY_SCOPE.website[0].value)
   const [viewport, setViewport] = useState<number>(1280)
   const [measureKey, setMeasureKey] = useState(0)
+
+  const auditPages = AUDIT_PAGES_BY_SCOPE[scope]
+  // スコープ切替時、実測対象ページをそのスコープの先頭に合わせる
+  useEffect(() => {
+    setAuditPage(AUDIT_PAGES_BY_SCOPE[scope][0].value)
+  }, [scope])
 
   const auditEnabled = AUDIT_TABS.includes(tab)
   // 再計測は URL のダミークエリを変えて effect を再発火させる
@@ -852,7 +878,30 @@ export default function DesignSystemPage() {
 
   return (
     <div>
-      <Tabs value={tab} onValueChange={setTab}>
+      {/* 上位タブ: ウェブサイト / サービス画面（下線型） */}
+      <div className="flex gap-8 border-b border-border">
+        {SCOPE_TABS.map((s) => {
+          const active = s.key === scope
+          return (
+            <button
+              key={s.key}
+              type="button"
+              onClick={() => setScope(s.key)}
+              className={`relative -mb-px border-b-2 px-1 pb-3 pt-1 text-left transition-colors ${
+                active ? 'border-foreground' : 'border-transparent hover:border-border'
+              }`}
+            >
+              <span className={`block text-base font-bold ${active ? 'text-foreground' : 'text-muted-foreground'}`}>
+                {s.label}
+              </span>
+              <span className="block text-[11px] text-muted-foreground">{s.sub}</span>
+            </button>
+          )
+        })}
+      </div>
+
+      {/* 下位タブ: カラーパレット 〜 レスポンシブ（上位スコープに連動） */}
+      <Tabs value={tab} onValueChange={setTab} className="mt-5">
         <TabsList className="flex-wrap gap-2">
           <TabsTrigger value="colors">カラーパレット</TabsTrigger>
           <TabsTrigger value="typography">タイポグラフィ</TabsTrigger>
@@ -867,6 +916,7 @@ export default function DesignSystemPage() {
             <AuditControls
               page={auditPage}
               setPage={setAuditPage}
+              pages={auditPages}
               viewport={viewport}
               setViewport={setViewport}
               remeasure={() => setMeasureKey((k) => k + 1)}
@@ -875,10 +925,10 @@ export default function DesignSystemPage() {
           </div>
         )}
 
-        <TabsContent value="colors"><DesignTokenEditor /></TabsContent>
+        <TabsContent value="colors"><DesignTokenEditor scope={scope} /></TabsContent>
         <TabsContent value="typography"><TypographyTab audit={audit} /></TabsContent>
         <TabsContent value="spacing"><SpacingTab audit={audit} /></TabsContent>
-        <TabsContent value="components"><ComponentsTab /></TabsContent>
+        <TabsContent value="components"><ComponentsTab scope={scope} /></TabsContent>
         <TabsContent value="layout"><LayoutTab audit={audit} /></TabsContent>
         <TabsContent value="responsive"><ResponsiveTab /></TabsContent>
       </Tabs>
