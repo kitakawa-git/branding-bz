@@ -40,6 +40,7 @@ interface PreflightExisting {
   traitsCount: number
   hasSummary: boolean
   expectedTags: string[]
+  hasArchetype: boolean
 }
 
 interface Selections {
@@ -47,6 +48,7 @@ interface Selections {
   summary: boolean
   tone: boolean
   tags: boolean
+  archetype: boolean
   toneRuleIndexes: number[]
 }
 
@@ -73,12 +75,13 @@ export function ConnectModal({ sessionId, userId, diagnosis: d, framework, open,
   const [existing, setExisting] = useState<PreflightExisting | null>(null)
   const [loadingPreflight, setLoadingPreflight] = useState(false)
   const [connecting, setConnecting] = useState(false)
-  const [confirmTarget, setConfirmTarget] = useState<{ traits: boolean; tags: boolean } | null>(null)
+  const [confirmTarget, setConfirmTarget] = useState<{ traits: boolean; tags: boolean; archetype: boolean } | null>(null)
   const [selections, setSelections] = useState<Selections>({
     traits: true,
     summary: true,
     tone: true,
     tags: true,
+    archetype: true,
     toneRuleIndexes: d.tone_rules.map((_, i) => i),
   })
 
@@ -118,9 +121,9 @@ export function ConnectModal({ sessionId, userId, diagnosis: d, framework, open,
   }
 
   const hasSelection =
-    selections.traits || selections.summary || selections.tone || selections.tags || selections.toneRuleIndexes.length > 0
+    selections.traits || selections.summary || selections.tone || selections.tags || selections.archetype || selections.toneRuleIndexes.length > 0
 
-  const executeConnect = useCallback(async (confirm: { overwriteTraits?: boolean; replaceTags?: boolean }) => {
+  const executeConnect = useCallback(async (confirm: { overwriteTraits?: boolean; replaceTags?: boolean; overwriteArchetype?: boolean }) => {
     setConnecting(true)
     try {
       const res = await fetch('/api/tools/personality/connect', {
@@ -132,7 +135,11 @@ export function ConnectModal({ sessionId, userId, diagnosis: d, framework, open,
 
       if (res.status === 409 && data.needsConfirm) {
         // サーバー側の安全弁に当たった場合も確認ダイアログへ
-        setConfirmTarget({ traits: data.needsConfirm === 'traits', tags: data.needsConfirm === 'tags' })
+        setConfirmTarget({
+          traits: data.needsConfirm === 'traits',
+          tags: data.needsConfirm === 'tags',
+          archetype: data.needsConfirm === 'archetype',
+        })
         return
       }
       if (!res.ok) {
@@ -153,8 +160,9 @@ export function ConnectModal({ sessionId, userId, diagnosis: d, framework, open,
     // 既存値があり、該当項目が選択されている場合は確認ダイアログを先に挟む
     const needsTraitsConfirm = selections.traits && (existing?.traitsCount ?? 0) > 0
     const needsTagsConfirm = selections.tags && (existing?.expectedTags.length ?? 0) > 0
-    if (needsTraitsConfirm || needsTagsConfirm) {
-      setConfirmTarget({ traits: needsTraitsConfirm, tags: needsTagsConfirm })
+    const needsArchetypeConfirm = selections.archetype && !!existing?.hasArchetype
+    if (needsTraitsConfirm || needsTagsConfirm || needsArchetypeConfirm) {
+      setConfirmTarget({ traits: needsTraitsConfirm, tags: needsTagsConfirm, archetype: needsArchetypeConfirm })
       return
     }
     executeConnect({})
@@ -164,6 +172,7 @@ export function ConnectModal({ sessionId, userId, diagnosis: d, framework, open,
     const confirm = {
       overwriteTraits: confirmTarget?.traits || undefined,
       replaceTags: confirmTarget?.tags || undefined,
+      overwriteArchetype: confirmTarget?.archetype || undefined,
     }
     setConfirmTarget(null)
     executeConnect(confirm)
@@ -211,6 +220,29 @@ export function ConnectModal({ sessionId, userId, diagnosis: d, framework, open,
               title="パーソナリティ概要"
             >
               <p className="text-xs text-muted-foreground leading-relaxed line-clamp-3">{d.personality_summary}</p>
+            </ToggleRow>
+
+            {/* archetype（主・副人格。framework 不問で連携可） */}
+            <ToggleRow
+              checked={selections.archetype}
+              onToggle={() => setSelections(p => ({ ...p, archetype: !p.archetype }))}
+              title="アーキタイプ（主・副人格）"
+            >
+              <div className="space-y-1">
+                <p className="text-xs text-foreground">
+                  主人格: <span className="font-bold">{d.archetype.primary.label}</span>
+                  <span className="text-muted-foreground">　{d.archetype.primary.copy}</span>
+                </p>
+                <p className="text-xs text-foreground">
+                  副人格: <span className="font-bold">{d.archetype.secondary.label}</span>
+                  <span className="text-muted-foreground">　{d.archetype.secondary.copy}</span>
+                </p>
+              </div>
+              {existing?.hasArchetype && (
+                <p className="mt-2 text-xs text-amber-600">
+                  ⚠ 既存のアーキタイプを上書きします（実行前に確認があります）
+                </p>
+              )}
             </ToggleRow>
 
             {/* tone */}
@@ -291,8 +323,8 @@ export function ConnectModal({ sessionId, userId, diagnosis: d, framework, open,
             <AlertDialogTitle>既存データを上書きします</AlertDialogTitle>
             <AlertDialogDescription>
               {confirmTarget?.traits && '本体に登録済みの特性（traits）が診断結果で上書きされます。'}
-              {confirmTarget?.traits && confirmTarget?.tags && ' また、'}
-              {confirmTarget?.tags && '既存の期待タグが診断結果のタグに置換されます。'}
+              {confirmTarget?.tags && `${confirmTarget?.traits ? ' また、' : ''}既存の期待タグが診断結果のタグに置換されます。`}
+              {confirmTarget?.archetype && `${(confirmTarget?.traits || confirmTarget?.tags) ? ' また、' : ''}既存のアーキタイプが診断結果で上書きされます。`}
               {' '}この操作は元に戻せません。続行しますか？
             </AlertDialogDescription>
           </AlertDialogHeader>

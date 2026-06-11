@@ -83,7 +83,7 @@ export async function GET(request: NextRequest) {
     }
 
     const supabaseAdmin = getSupabaseAdmin()
-    const [guidelinesRes, tagsRes] = await Promise.all([
+    const [guidelinesRes, tagsRes, personalitiesRes] = await Promise.all([
       supabaseAdmin
         .from('brand_guidelines')
         .select('traits, personality_summary')
@@ -94,6 +94,11 @@ export async function GET(request: NextRequest) {
         .select('tag')
         .eq('company_id', ctx.adminCompanyId)
         .eq('is_expected', true),
+      supabaseAdmin
+        .from('brand_personalities')
+        .select('archetype')
+        .eq('company_id', ctx.adminCompanyId)
+        .maybeSingle(),
     ])
 
     const existingTraits = Array.isArray(guidelinesRes.data?.traits) ? guidelinesRes.data.traits : []
@@ -105,6 +110,7 @@ export async function GET(request: NextRequest) {
         traitsCount: existingTraits.length,
         hasSummary: !!guidelinesRes.data?.personality_summary,
         expectedTags: (tagsRes.data || []).map(t => t.tag),
+        hasArchetype: !!personalitiesRes.data?.archetype,
       },
     })
   } catch (err) {
@@ -126,9 +132,10 @@ export async function POST(request: NextRequest) {
       summary?: boolean
       tone?: boolean
       tags?: boolean
+      archetype?: boolean
       toneRuleIndexes?: number[]
     }
-    const confirm = (body.confirm || {}) as { overwriteTraits?: boolean; replaceTags?: boolean }
+    const confirm = (body.confirm || {}) as { overwriteTraits?: boolean; replaceTags?: boolean; overwriteArchetype?: boolean }
 
     if (!sessionId || !userId) {
       return NextResponse.json({ error: 'sessionId と userId が必要です' }, { status: 400 })
@@ -171,6 +178,16 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: '既存の期待タグがあります。置換確認が必要です。', needsConfirm: 'tags' }, { status: 409 })
       }
     }
+    if (selections.archetype) {
+      const { data: existingPers } = await supabaseAdmin
+        .from('brand_personalities')
+        .select('archetype')
+        .eq('company_id', companyId)
+        .maybeSingle()
+      if (existingPers?.archetype && !confirm.overwriteArchetype) {
+        return NextResponse.json({ error: '既存のアーキタイプがあります。上書き確認が必要です。', needsConfirm: 'archetype' }, { status: 409 })
+      }
+    }
 
     // --- brand_guidelines（traits / personality_summary）---
     const needsGuidelines = selections.traits || selections.summary
@@ -205,26 +222,36 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // --- brand_personalities（tone_of_voice / communication_style）---
-    if (selections.tone) {
+    // --- brand_personalities（tone_of_voice / communication_style / archetype）---
+    if (selections.tone || selections.archetype) {
       const { data: existing } = await supabaseAdmin
         .from('brand_personalities')
         .select('id')
         .eq('company_id', companyId)
         .maybeSingle()
 
-      const toneData = {
-        tone_of_voice: d.tone_of_voice,
-        communication_style: d.communication_style,
+      const personalityData: Record<string, unknown> = {}
+      if (selections.tone) {
+        personalityData.tone_of_voice = d.tone_of_voice
+        personalityData.communication_style = d.communication_style
+        written.tone = true
       }
+      if (selections.archetype) {
+        // diagnosis.archetype の label/copy は定義表スナップショット、description は AI企業固有文（framework 不問で常に算出済み）
+        personalityData.archetype = {
+          primary: d.archetype.primary,
+          secondary: d.archetype.secondary,
+        }
+        written.archetype = true
+      }
+
       if (existing?.id) {
-        const { error } = await supabaseAdmin.from('brand_personalities').update(toneData).eq('id', existing.id)
+        const { error } = await supabaseAdmin.from('brand_personalities').update(personalityData).eq('id', existing.id)
         if (error) throw new Error(`brand_personalities 更新エラー: ${error.message}`)
       } else {
-        const { error } = await supabaseAdmin.from('brand_personalities').insert({ company_id: companyId, ...toneData })
+        const { error } = await supabaseAdmin.from('brand_personalities').insert({ company_id: companyId, ...personalityData })
         if (error) throw new Error(`brand_personalities 作成エラー: ${error.message}`)
       }
-      written.tone = true
     }
 
     // --- brand_personality_tag_mappings（期待タグ・置換。確認チェックは冒頭で実施済み）---

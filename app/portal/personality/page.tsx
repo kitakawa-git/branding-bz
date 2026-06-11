@@ -30,10 +30,14 @@ import {
 
 type TraitItem = { name: string; score: number; copy?: string; description: string; added_index?: number }
 
+type ArchetypeSide = { key: string; label: string; copy: string; description: string }
+type Archetype = { primary: ArchetypeSide; secondary: ArchetypeSide } | null
+
 type Personality = {
   traits: TraitItem[]
   traits_sort: 'registered' | 'custom'
   summary: string | null
+  archetype: Archetype
 }
 
 export default function PortalPersonalityPage() {
@@ -48,19 +52,30 @@ export default function PortalPersonalityPage() {
     if (!companyId) return
     if (getPageCache<Personality>(cacheKey)) return
 
-    // 人格: brand_guidelines.traits
-    fetchWithRetry(() =>
-      supabase
-        .from('brand_guidelines')
-        .select('traits, traits_sort, personality_summary')
-        .eq('company_id', companyId)
-        .maybeSingle()
-    ).then((gRes) => {
+    // 人格: brand_guidelines.traits ＋ アーキタイプ: brand_personalities.archetype
+    Promise.all([
+      fetchWithRetry(() =>
+        supabase
+          .from('brand_guidelines')
+          .select('traits, traits_sort, personality_summary')
+          .eq('company_id', companyId)
+          .maybeSingle()
+      ),
+      fetchWithRetry(() =>
+        supabase
+          .from('brand_personalities')
+          .select('archetype')
+          .eq('company_id', companyId)
+          .maybeSingle()
+      ),
+    ]).then(([gRes, pRes]) => {
       const g = gRes.data as Record<string, unknown> | null
+      const p = pRes.data as Record<string, unknown> | null
       const parsed: Personality = {
         traits: (g?.traits as TraitItem[]) || [],
         traits_sort: (g?.traits_sort as 'registered' | 'custom') || 'registered',
         summary: (g?.personality_summary as string) || null,
+        archetype: (p?.archetype as Archetype) || null,
       }
       setData(parsed)
       setPageCache(cacheKey, parsed)
@@ -107,8 +122,9 @@ export default function PortalPersonalityPage() {
   } satisfies ChartConfig
 
   const hasTraits = filteredTraits.length > 0
+  const archetype = data.archetype
 
-  if (!hasTraits && !data.summary) {
+  if (!hasTraits && !data.summary && !archetype) {
     return <div className="text-center py-16 text-muted-foreground text-[15px]">まだ登録されていません</div>
   }
 
@@ -185,6 +201,40 @@ export default function PortalPersonalityPage() {
                   </div>
                   )
                 })}
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+      )}
+
+      {/* 2. アーキタイプ（主・副人格：brand_personalities.archetype） */}
+      {archetype && (
+        <section>
+          <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+            <CardContent className="p-4 sm:p-5 space-y-4">
+              <h2 className="text-sm font-bold text-foreground tracking-wide">アーキタイプ</h2>
+
+              {/* 主人格（大） */}
+              <div className="rounded-lg border-2 border-blue-600 bg-blue-50/40 p-5">
+                <p className="text-[11px] font-semibold tracking-wide text-blue-700 mb-1">主人格</p>
+                <h3 className="text-xl font-bold text-foreground m-0">{archetype.primary.label}</h3>
+                {archetype.primary.copy && (
+                  <p className="mt-1 text-base font-semibold text-blue-700 m-0">{archetype.primary.copy}</p>
+                )}
+                {archetype.primary.description && (
+                  <p className="mt-3 text-base sm:text-sm text-foreground/80 leading-[1.8] m-0">{archetype.primary.description}</p>
+                )}
+              </div>
+
+              {/* 副人格（小） */}
+              <div className="rounded-lg border border-border bg-background p-4">
+                <p className="text-[11px] font-semibold tracking-wide text-muted-foreground mb-1">副人格</p>
+                <div className="flex items-baseline gap-3 flex-wrap">
+                  <h3 className="text-lg font-bold text-foreground m-0">{archetype.secondary.label}</h3>
+                  {archetype.secondary.copy && (
+                    <p className="text-sm font-semibold text-muted-foreground m-0">{archetype.secondary.copy}</p>
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>

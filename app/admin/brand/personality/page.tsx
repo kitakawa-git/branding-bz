@@ -36,11 +36,15 @@ import { CSS } from '@dnd-kit/utilities'
 
 type TraitItem = { name: string; score: number; copy: string; description: string; added_index: number }
 
+type ArchetypeSide = { key: string; label: string; copy: string; description: string }
+type Archetype = { primary: ArchetypeSide; secondary: ArchetypeSide } | null
+
 type PersonalityCache = {
   guidelinesId: string | null
   summary: string
   traits: TraitItem[]
   traitsSort: 'registered' | 'custom'
+  archetype: Archetype
 }
 
 function SortableTraitItem({
@@ -77,6 +81,7 @@ export default function BrandPersonalityPage() {
   const [summary, setSummary] = useState<string>(cached?.summary ?? '')
   const [traits, setTraits] = useState<TraitItem[]>(cached?.traits ?? [])
   const [traitsSort, setTraitsSort] = useState<'registered' | 'custom'>(cached?.traitsSort ?? 'registered')
+  const [archetype, setArchetype] = useState<Archetype>(cached?.archetype ?? null)
   const [loading, setLoading] = useState(!cached)
   const [fetchError, setFetchError] = useState('')
   const [saving, setSaving] = useState(false)
@@ -87,11 +92,18 @@ export default function BrandPersonalityPage() {
     setFetchError('')
 
     try {
-      // 特性（brand_guidelines.traits）。新規企業は行が未作成のため maybeSingle
-      const guidelinesRes = await fetchWithRetry(() =>
-        supabase.from('brand_guidelines').select('id, traits, traits_sort, personality_summary').eq('company_id', companyId).maybeSingle()
-      )
+      // 特性（brand_guidelines.traits）＋ アーキタイプ（brand_personalities.archetype）。新規企業は行が未作成のため maybeSingle
+      const [guidelinesRes, personalitiesRes] = await Promise.all([
+        fetchWithRetry(() =>
+          supabase.from('brand_guidelines').select('id, traits, traits_sort, personality_summary').eq('company_id', companyId).maybeSingle()
+        ),
+        fetchWithRetry(() =>
+          supabase.from('brand_personalities').select('archetype').eq('company_id', companyId).maybeSingle()
+        ),
+      ])
       if (guidelinesRes.error) throw new Error(guidelinesRes.error)
+      const parsedArchetype = ((personalitiesRes.data as Record<string, unknown> | null)?.archetype as Archetype) || null
+      setArchetype(parsedArchetype)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const guidelinesData = guidelinesRes.data as Record<string, any> | null
 
@@ -119,6 +131,7 @@ export default function BrandPersonalityPage() {
         summary: parsedSummary,
         traits: parsedTraits,
         traitsSort: parsedTraitsSort,
+        archetype: parsedArchetype,
       })
     } catch (err) {
       console.error('[BrandPersonality] データ取得エラー:', err)
@@ -329,6 +342,35 @@ export default function BrandPersonalityPage() {
             />
           </CardContent>
         </Card>
+
+        {/* アーキタイプ（読み取り専用。パーソナリティ診断ツールの連携で登録される／brand_personalities.archetype） */}
+        {archetype && (
+          <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+            <CardContent className="p-5 space-y-3">
+              <div className="flex items-center gap-2">
+                <h2 className="text-xs font-bold">アーキタイプ（主・副人格）</h2>
+                <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">診断連携・読み取り専用</span>
+              </div>
+              <div className="rounded-lg border-2 border-blue-600 bg-blue-50/40 p-4">
+                <p className="text-[10px] font-semibold tracking-wide text-blue-700 mb-1">主人格</p>
+                <div className="flex items-baseline gap-2 flex-wrap">
+                  <span className="text-lg font-bold text-foreground">{archetype.primary.label}</span>
+                  {archetype.primary.copy && <span className="text-sm font-semibold text-blue-700">{archetype.primary.copy}</span>}
+                </div>
+                {archetype.primary.description && (
+                  <p className="mt-2 text-xs text-foreground/80 leading-relaxed">{archetype.primary.description}</p>
+                )}
+              </div>
+              <div className="rounded-lg border border-border bg-background p-4">
+                <p className="text-[10px] font-semibold tracking-wide text-muted-foreground mb-1">副人格</p>
+                <div className="flex items-baseline gap-2 flex-wrap">
+                  <span className="text-base font-bold text-foreground">{archetype.secondary.label}</span>
+                  {archetype.secondary.copy && <span className="text-sm font-semibold text-muted-foreground">{archetype.secondary.copy}</span>}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* 特性（人格スコア／brand_guidelines.traits） */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
