@@ -7,7 +7,7 @@
 //   ペルソナは外周の別アーク）。決定論レイアウト（同じデータなら毎回同じ図）。プレゼンビュー。
 // - 表示対象は関係を1本以上持つ要素のみ（孤立要素は「未接続の要素 N件」とだけ添える）。
 // - 端点が解決できない関係は描画から除外（幽霊エッジ防御。buildBrandMapGraph 側で実施）。
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   forceCenter,
   forceCollide,
@@ -21,6 +21,7 @@ import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Minus, Plus, RotateCcw, X } from 'lucide-react'
 import { fetchElementsCatalog, KIND_LABELS, relationLabel, type ElementKind } from '@/lib/brand/elements-catalog'
+import { ONTOLOGY_DATA_CHANGED_EVENT } from './ontology-events'
 import {
   buildBrandMapGraph,
   concentricLayout,
@@ -88,10 +89,10 @@ export default function BrandMapSection({ companyId }: { companyId: string }) {
   const dragId = useRef<string | null>(null)
   const pan = useRef<{ sx: number; sy: number; ox: number; oy: number } | null>(null)
 
-  // ---- データ取得（読み取りのみ） ----
-  useEffect(() => {
-    const run = async () => {
-      setLoading(true)
+  // ---- データ取得（読み取りのみ）。silent=true は再取得時（「読み込み中」を挟まず差し替え） ----
+  const load = useCallback(
+    async (silent = false) => {
+      if (!silent) setLoading(true)
       const [catalog, relR, philR, ppR] = await Promise.all([
         fetchElementsCatalog(supabase, companyId),
         supabase
@@ -114,9 +115,17 @@ export default function BrandMapSection({ companyId }: { companyId: string }) {
         ),
       )
       setLoading(false)
-    }
-    run()
-  }, [companyId])
+    },
+    [companyId],
+  )
+
+  // 初回ロード＋ステップパネル内のCRUD（ONTOLOGY_DATA_CHANGED_EVENT）で再取得
+  useEffect(() => {
+    load()
+    const handler = () => load(true)
+    window.addEventListener(ONTOLOGY_DATA_CHANGED_EVENT, handler)
+    return () => window.removeEventListener(ONTOLOGY_DATA_CHANGED_EVENT, handler)
+  }, [load])
 
   // ---- 現状マップ: d3-force シミュレーション ----
   useEffect(() => {

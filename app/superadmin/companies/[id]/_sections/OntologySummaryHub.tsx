@@ -11,11 +11,9 @@ import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { fetchElementsCatalog } from '@/lib/brand/elements-catalog'
 import { buildBrandMapGraph, type ProofFkRow, type RelationRow } from '@/lib/brand/map-data'
-import OntologyBuilderSection, {
-  ONTOLOGY_DATA_CHANGED_EVENT,
-  ONTOLOGY_GOTO_STEP_EVENT,
-  type OntologyStatus,
-} from './OntologyBuilderSection'
+import OntologyBuilderSection, { type OntologyStatus } from './OntologyBuilderSection'
+import { ONTOLOGY_DATA_CHANGED_EVENT, ONTOLOGY_GOTO_STEP_EVENT } from './ontology-events'
+import BrandMapSection from './BrandMapSection'
 import MapReviewPanel from './MapReviewPanel'
 import type { ValuePropositionRef } from './ProofPointsSection'
 
@@ -133,7 +131,12 @@ export default function OntologySummaryHub({
         />
       </div>
 
-      {/* AIレビュー（唯一の置き場） */}
+      {/* ブランドマップ（常設・唯一の置き場。現状/構造の2ビュー・凡例・クリック詳細） */}
+      <div className="mb-3">
+        <BrandMapSection companyId={companyId} />
+      </div>
+
+      {/* AIレビュー（マップ直下・唯一の置き場） */}
       <div className="mb-3">
         <MapReviewPanel companyId={companyId} />
       </div>

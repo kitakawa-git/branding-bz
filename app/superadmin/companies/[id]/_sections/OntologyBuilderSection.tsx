@@ -20,15 +20,9 @@ import { Check, Info, RefreshCw } from 'lucide-react'
 import ProfilingSection from './ProfilingSection'
 import ProofPointsSection, { type ValuePropositionRef } from './ProofPointsSection'
 import GovernanceRulesSection from './GovernanceRulesSection'
-import RelationsTabs from './RelationsTabs'
+import ElementRelationsSection from './ElementRelationsSection'
 import IntegrityCheckSection from './IntegrityCheckSection'
-
-// オントロジーのデータが変わったときに発火するイベント名。
-// ウィザード（ステップ判定）とサマリーハブ（島チップ）がこれを購読して再取得する。
-// CRUDの実体は各ステップパネル内の1箇所のみ（カード外に重複セクションは置かない）。
-export const ONTOLOGY_DATA_CHANGED_EVENT = 'ontology-data-changed'
-// ハブのクイックアクション→該当ステップへの切替イベント（detail: ステップ番号）
-export const ONTOLOGY_GOTO_STEP_EVENT = 'ontology-goto-step'
+import { ONTOLOGY_DATA_CHANGED_EVENT, ONTOLOGY_GOTO_STEP_EVENT } from './ontology-events'
 
 type Counts = {
   mission: number
@@ -285,13 +279,6 @@ export default function OntologyBuilderSection({
             ? `対象の検出はすべて解消または保留済みです。保留した項目は後からいつでも回答できます。`
             : 'プロファイリングで解消できるwarn系の検出（裏づけのない約束など）は0件です。'}
         </p>
-        <button
-          type="button"
-          onClick={() => setActiveStep(4)}
-          className="inline-block text-[13px] font-semibold text-blue-700 mt-1.5 bg-transparent border-0 p-0 cursor-pointer"
-        >
-          ブランドマップを見る（ステップ4・マップタブ） →
-        </button>
       </div>
     )
   }
@@ -367,7 +354,9 @@ export default function OntologyBuilderSection({
           {current.num === 3 && (
             <GovernanceRulesSection companyId={companyId} valuePropositions={valuePropositions} onDataChanged={broadcastDataChanged} />
           )}
-          {current.num === 4 && <RelationsTabs companyId={companyId} onDataChanged={broadcastDataChanged} />}
+          {current.num === 4 && (
+            <ElementRelationsSection companyId={companyId} onDataChanged={broadcastDataChanged} />
+          )}
           {current.num === 5 && (
             <>
               {renderCompletionBanner()}
