@@ -201,6 +201,11 @@ export default function PersonalitySessionPage() {
       )}
       {currentStep === 5 && (
         <Step5Result
+          sessionId={sessionId}
+          framework={sd.framework || ''}
+          diagnosis={sd.diagnosis && Object.keys(sd.diagnosis).length > 0 ? sd.diagnosis : null}
+          companyName={sd.basic_info?.company_name || ''}
+          onSaveField={(data) => saveField(data)}
           onBack={() => saveAndAdvance(4)}
         />
       )}
