@@ -2,10 +2,11 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Check, ArrowRight } from 'lucide-react'
 import ComparisonSection from './ComparisonSection'
+import { SoftwareApplicationSchema } from '@/components/seo/SoftwareApplicationSchema'
 
 export const metadata: Metadata = {
-  title: '料金プラン | branding.bz',
-  description: 'AIブランディングSaaS branding.bz の料金プラン。Free / Brand Card / Brand Standard / Brand Premium の4プランから、あなたのブランドフェーズに最適なプランを選べます。',
+  title: { absolute: '料金プラン｜AIブランディングツールbranding.bz | 4プラン比較' },
+  description: 'AIブランディングツール branding.bz の料金プラン4種。Free / Brand Card / Brand Standard / Brand Premium、それぞれの機能・価格・対象企業規模を比較。中小企業・スタートアップに最適なプランが見つかります。',
   alternates: {
     canonical: '/plan',
   },
@@ -166,6 +167,7 @@ import React from 'react'
 export default function PlanPage() {
   return (
     <>
+      <SoftwareApplicationSchema />
       {/* ── セクション A: ヒーロー ── */}
       <section className="px-6 pt-[120px] pb-16 md:pt-[120px] md:pb-24 text-center">
         <div className="mx-auto max-w-4xl">

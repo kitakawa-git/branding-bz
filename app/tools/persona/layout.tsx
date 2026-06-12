@@ -1,11 +1,11 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'ペルソナビルダー | 無料AIペルソナ作成ツール',
-  description: 'AIがターゲット顧客のペルソナを自動生成。名前・年齢・職業・行動パターン・インサイトまで具体化。カスタマージャーニーマップの作成にも対応。経営者・マーケター向け無料ツール。',
+  title: { absolute: 'ペルソナ作成ツール｜AIで無料生成・カスタマージャーニー対応 | branding.bz' },
+  description: 'AIがBtoB/BtoCのペルソナを自動生成。名前・年齢・職業・行動パターン・インサイトまで具体化し、カスタマージャーニーマップも作成。中小企業・スタートアップ向け無料ペルソナ作成ツール。',
   openGraph: {
-    title: 'ペルソナビルダー | 無料AIペルソナ作成ツール | branding.bz',
-    description: 'AIがターゲット顧客のペルソナを自動生成。経営者・マーケター向け無料ツール。',
+    title: 'ペルソナ作成ツール｜AIで無料生成・カスタマージャーニー対応 | branding.bz',
+    description: 'AIがBtoB/BtoCのペルソナを自動生成。カスタマージャーニーマップも作成できる無料ツール。',
   },
   alternates: {
     canonical: '/tools/persona',

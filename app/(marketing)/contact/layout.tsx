@@ -1,8 +1,9 @@
 import type { Metadata } from 'next'
+import { SoftwareApplicationSchema } from '@/components/seo/SoftwareApplicationSchema'
 
 export const metadata: Metadata = {
-  title: 'お問い合わせ',
-  description: 'branding.bz へのお問い合わせ。AIブランディングSaaSの導入相談・無料デモ・料金のご質問はこちら。',
+  title: { absolute: 'お問い合わせ｜branding.bz | AIブランディングツール' },
+  description: 'AIブランディングツール branding.bz へのお問い合わせ。導入相談・料金見積・カスタマイズ要件・無料デモのご依頼はこちら。中小企業・スタートアップのブランディングをご支援します。',
   alternates: {
     canonical: '/contact',
   },
@@ -13,5 +14,10 @@ export default function ContactLayout({
 }: {
   children: React.ReactNode
 }) {
-  return <>{children}</>
+  return (
+    <>
+      <SoftwareApplicationSchema />
+      {children}
+    </>
+  )
 }

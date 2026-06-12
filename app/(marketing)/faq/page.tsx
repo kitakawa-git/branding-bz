@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import type { Metadata } from 'next'
+import { SoftwareApplicationSchema } from '@/components/seo/SoftwareApplicationSchema'
 import {
   Accordion,
   AccordionContent,
@@ -9,7 +10,7 @@ import {
 } from '@/components/ui/accordion'
 
 export const metadata: Metadata = {
-  title: 'よくある質問 | AIブランディングSaaS',
+  title: { absolute: 'よくある質問｜branding.bz | AIブランディングツール' },
   description: 'branding.bz に関するよくある質問と回答。料金プラン・機能・ブランドスコア・スマート名刺・導入方法について。AIブランディングSaaSの疑問を解決します。',
   alternates: {
     canonical: '/faq',
@@ -102,6 +103,7 @@ const faqCategories = [
 export default function FAQPage() {
   return (
     <>
+      <SoftwareApplicationSchema />
       {/* FAQ構造化データ */}
       <script
         type="application/ld+json"

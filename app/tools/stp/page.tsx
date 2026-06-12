@@ -85,6 +85,16 @@ export default function STPLandingPage() {
               name: 'branding.bz',
               url: 'https://branding.bz',
             },
+            publisher: {
+              '@type': 'Organization',
+              '@id': 'https://include.bz/#organization',
+              name: 'ID INC.',
+              url: 'https://include.bz',
+            },
+            audience: {
+              '@type': 'BusinessAudience',
+              audienceType: '中小企業・スタートアップの経営者・マーケ担当者',
+            },
           }),
         }}
       />

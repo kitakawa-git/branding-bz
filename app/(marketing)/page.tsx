@@ -4,13 +4,14 @@ import type { Metadata } from 'next'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { ArrowRight, WandSparkles, BotMessageSquare, ChartLine, CreditCard, LayoutDashboard, MessageSquareHeart, Milestone, Compass, Bell, BarChart3, Activity, Headset, type LucideIcon } from 'lucide-react'
+import { SOFTWARE_APPLICATION_SCHEMA } from '@/components/seo/SoftwareApplicationSchema'
 
 export const metadata: Metadata = {
-  title: 'branding.bz — AIで、ブランディングを加速させる。',
-  description: '社員が体現し、顧客に届く。ブランドの構築・浸透・発信をひとつのプラットフォームで。branding.bz はブランディング会社の現場から生まれたSaaSです。',
+  title: { absolute: 'AIブランディングツール｜中小企業・スタートアップのブランド構築SaaS | branding.bz' },
+  description: 'AIがブランディングを加速。中小企業・スタートアップ向けのブランド構築・浸透・発信を一気通貫で支援するSaaS。STP分析・ペルソナ作成・ブランドカラー定義など無料ツールも公開中。ブランディング会社の現場ノウハウから生まれました。',
   openGraph: {
-    title: 'branding.bz — AIで、ブランディングを加速させる。',
-    description: '社員が体現し、顧客に届く。ブランドの構築・浸透・発信をひとつのプラットフォームで。',
+    title: 'AIブランディングツール｜中小企業・スタートアップのブランド構築SaaS | branding.bz',
+    description: 'AIがブランディングを加速。ブランドの構築・浸透・発信を一気通貫で支援するSaaS。STP分析・ペルソナ作成・カラー定義など無料ツールも公開中。',
     siteName: 'branding.bz',
     url: 'https://branding.bz',
   },
@@ -422,6 +423,7 @@ export default function MarketingPage() {
               url: 'https://branding.bz',
               description: 'AIで、ブランディングを加速させる。中小企業のブランド構築・浸透・発信を一貫支援するSaaS。',
             },
+            SOFTWARE_APPLICATION_SCHEMA,
           ]),
         }}
       />
