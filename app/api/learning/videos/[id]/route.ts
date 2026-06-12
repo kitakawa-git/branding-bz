@@ -7,9 +7,9 @@ import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { getAdminContext } from '@/lib/learning/auth'
 import { resolveCategoryTheme } from '@/lib/learning/resolve'
 import { extractVideoId, getThumbnailUrl } from '@/lib/youtube'
-import { sendPushToCompany } from '@/lib/push'
+import { notifyLearningVideoPublished } from '@/lib/learning/notify'
 
-// web-push（VAPID）は Node ランタイム必須
+// お知らせ作成＋web-push（VAPID）のため Node ランタイム必須
 export const runtime = 'nodejs'
 
 type RouteContext = { params: Promise<{ id: string }> }
@@ -146,17 +146,9 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       )
     }
 
-    // 下書き→公開 への切り替え時にプッシュ通知（お知らせ公開と同様）
+    // 下書き→公開 への切り替え時: お知らせ作成＋プッシュ通知
     if (wasUnpublished && data.is_published) {
-      try {
-        await sendPushToCompany(admin.companyId, {
-          title: '新しい学習動画',
-          body: data.title,
-          url: `/portal/learning/${data.id}`,
-        })
-      } catch (e) {
-        console.error('[Learning Video PATCH] push送信エラー:', e)
-      }
+      await notifyLearningVideoPublished(admin.companyId, admin.authId, data)
     }
 
     return NextResponse.json({ video: data })
