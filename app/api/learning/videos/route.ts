@@ -7,7 +7,11 @@ import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { getAdminContext, getMemberContext } from '@/lib/learning/auth'
 import { resolveCategoryTheme } from '@/lib/learning/resolve'
 import { extractVideoId, getThumbnailUrl } from '@/lib/youtube'
+import { sendPushToCompany } from '@/lib/push'
 import type { LearningVideo, LearningVideoWithProgress } from '@/lib/types/learning'
+
+// web-push（VAPID）は Node ランタイム必須
+export const runtime = 'nodejs'
 
 // YouTube oEmbed からタイトルを取得（API キー不要・失敗時 null）
 async function fetchOEmbedTitle(youtubeUrl: string): Promise<string | null> {
@@ -207,6 +211,19 @@ export async function POST(request: NextRequest) {
     if (insertError) {
       console.error('[Learning Videos POST] INSERT エラー:', insertError.message)
       return NextResponse.json({ error: insertError.message }, { status: 500 })
+    }
+
+    // 公開で登録された場合はポータルメンバーへプッシュ通知（失敗しても作成は成功扱い）
+    if (video.is_published) {
+      try {
+        await sendPushToCompany(admin.companyId, {
+          title: '新しい学習動画',
+          body: video.title,
+          url: `/portal/learning/${video.id}`,
+        })
+      } catch (e) {
+        console.error('[Learning Videos POST] push送信エラー:', e)
+      }
     }
 
     return NextResponse.json({ video }, { status: 201 })

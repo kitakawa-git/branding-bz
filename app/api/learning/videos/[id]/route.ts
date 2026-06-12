@@ -7,6 +7,10 @@ import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { getAdminContext } from '@/lib/learning/auth'
 import { resolveCategoryTheme } from '@/lib/learning/resolve'
 import { extractVideoId, getThumbnailUrl } from '@/lib/youtube'
+import { sendPushToCompany } from '@/lib/push'
+
+// web-push（VAPID）は Node ランタイム必須
+export const runtime = 'nodejs'
 
 type RouteContext = { params: Promise<{ id: string }> }
 
@@ -113,6 +117,19 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     updates.updated_at = new Date().toISOString()
 
     const supabase = getSupabaseAdmin()
+
+    // 下書き→公開 の遷移検知（既に公開済みの再保存では通知しない）
+    let wasUnpublished = false
+    if (b.is_published === true) {
+      const { data: cur } = await supabase
+        .from('learning_videos')
+        .select('is_published')
+        .eq('id', id)
+        .eq('company_id', admin.companyId)
+        .maybeSingle()
+      wasUnpublished = cur?.is_published === false
+    }
+
     const { data, error } = await supabase
       .from('learning_videos')
       .update(updates)
@@ -127,6 +144,19 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         { error: status === 404 ? '動画が見つかりません' : error.message },
         { status }
       )
+    }
+
+    // 下書き→公開 への切り替え時にプッシュ通知（お知らせ公開と同様）
+    if (wasUnpublished && data.is_published) {
+      try {
+        await sendPushToCompany(admin.companyId, {
+          title: '新しい学習動画',
+          body: data.title,
+          url: `/portal/learning/${data.id}`,
+        })
+      } catch (e) {
+        console.error('[Learning Video PATCH] push送信エラー:', e)
+      }
     }
 
     return NextResponse.json({ video: data })
