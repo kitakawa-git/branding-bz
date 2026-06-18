@@ -40,7 +40,7 @@ export async function callClaude(options: {
   const client = getClient()
 
   const message = await client.messages.create({
-    model: 'claude-sonnet-4-20250514',
+    model: 'claude-sonnet-4-6',
     max_tokens: options.maxTokens || 4096,
     system: options.system,
     messages: [{ role: 'user', content: options.userMessage }],
@@ -70,7 +70,7 @@ export async function callClaudeWithWebSearch(options: {
   const client = getClient()
 
   const message = await client.messages.create({
-    model: 'claude-sonnet-4-20250514',
+    model: 'claude-sonnet-4-6',
     max_tokens: options.maxTokens || 2048,
     system: options.system,
     messages: [{ role: 'user', content: options.userMessage }],
@@ -109,7 +109,7 @@ export function streamClaude(options: {
         const client = getClient()
 
         const stream = client.messages.stream({
-          model: 'claude-sonnet-4-20250514',
+          model: 'claude-sonnet-4-6',
           max_tokens: options.maxTokens || 4096,
           system: options.system,
           messages: options.messages,
