@@ -20,6 +20,10 @@ export type CopyOntologyBlocks = {
   personaBlock: string       // brand_personas（name/description/needs/pain_points）
   injectedProofIds: string[] // generation_meta に残す（根拠の追跡）
   quotablePhrases: string[]  // communicatedAs承認フレーズ＋スローガン（Stage3のマスク用に温存）
+  intentStrings: string[]    // INTENT素材の生フレーズ（引用禁止対象。Stage3 継承重複の照合元）
+  factText: string           // FACT素材の生コーパス（Stage3 数字捏造照合元＝proof+承認表現）
+  painPoints: string[]       // 対象ペルソナの pain_points（Stage3 藁人形判定の素材）
+  bannedTerms: string[]      // governance_rules(banned_word/discouraged_expression)の生語（Stage3 クリシェ密度の照合元）
 }
 
 const SEVERITY_LABEL: Record<string, string> = { block: '絶対遵守', warn: '原則遵守', info: '参考' }
@@ -31,29 +35,30 @@ const txt = (s: string | null | undefined) => (s || '').replace(/\s+/g, ' ').tri
 const arr = (v: unknown): string[] =>
   Array.isArray(v) ? v.map((x) => (typeof x === 'string' ? x : txt(String((x as { text?: string })?.text ?? x)))).filter(Boolean) : []
 
-// brand_personas から1体ぶんの「読み手」ブロックを組む（personaId指定→該当、未指定→sort先頭）。
-// 0件なら空文字（呼び出し側で「ペルソナ未登録」フォールバック）。
-export async function fetchPersonaBlock(
+// brand_personas から1体ぶんの「読み手」データを取り出す（personaId指定→該当、未指定→sort先頭）。
+// block=プロンプト用整形文字列、painPoints=藁人形判定などStage3で使う生配列。
+// 0件なら block='' / painPoints=[]（呼び出し側で「ペルソナ未登録」フォールバック）。
+export async function fetchPersonaData(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   supabase: any,
   companyId: string,
   personaId?: string,
-): Promise<string> {
-  if (!companyId) return ''
+): Promise<{ block: string; painPoints: string[] }> {
+  if (!companyId) return { block: '', painPoints: [] }
   const { data } = await supabase
     .from('brand_personas')
     .select('id, name, age_range, occupation, description, needs, pain_points, sort_order')
     .eq('company_id', companyId)
     .order('sort_order', { ascending: true })
   const rows = Array.isArray(data) ? data : []
-  if (rows.length === 0) return ''
+  if (rows.length === 0) return { block: '', painPoints: [] }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const p = (personaId ? rows.find((r: any) => r.id === personaId) : null) ?? rows[0]
-  if (!p) return ''
+  if (!p) return { block: '', painPoints: [] }
   const meta = [p.age_range, p.occupation].map(txt).filter(Boolean).join('・')
   const needs = arr(p.needs)
   const pains = arr(p.pain_points)
-  return [
+  const block = [
     `${txt(p.name) || '（名称未設定）'}${meta ? `（${meta}）` : ''}`,
     txt(p.description) ? `状況: ${txt(p.description)}` : '',
     needs.length ? `望み: ${needs.join(' / ')}` : '',
@@ -61,6 +66,17 @@ export async function fetchPersonaBlock(
   ]
     .filter(Boolean)
     .join('\n')
+  return { block, painPoints: pains }
+}
+
+// 後方互換: 整形済みブロック文字列のみ返す（generate.ts のベースライン経路が使用）。
+export async function fetchPersonaBlock(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any,
+  companyId: string,
+  personaId?: string,
+): Promise<string> {
+  return (await fetchPersonaData(supabase, companyId, personaId)).block
 }
 
 export async function buildCopyOntologyBlocks(
@@ -69,12 +85,12 @@ export async function buildCopyOntologyBlocks(
 ): Promise<CopyOntologyBlocks> {
   const empty: CopyOntologyBlocks = {
     intentBlock: '', factBlock: '', rulesBlock: '', personaBlock: '',
-    injectedProofIds: [], quotablePhrases: [],
+    injectedProofIds: [], quotablePhrases: [], intentStrings: [], factText: '', painPoints: [], bannedTerms: [],
   }
   if (!companyId) return empty
   const supabase = getSupabaseAdmin()
 
-  const [philosophy, vpRes, proofRes, ruleRes, relRes, catalog, bgRes, personaBlock] = await Promise.all([
+  const [philosophy, vpRes, proofRes, ruleRes, relRes, catalog, bgRes, personaData] = await Promise.all([
     fetchPhilosophy(supabase, companyId),
     supabase.from('value_propositions').select('title, description').eq('company_id', companyId).order('sort_order', { ascending: true }),
     supabase.from('proof_points').select('id, title, description, source_type').eq('company_id', companyId).order('sort_order', { ascending: true }),
@@ -82,23 +98,25 @@ export async function buildCopyOntologyBlocks(
     supabase.from('element_relations').select('source_kind, source_id, target_kind, target_id, relation_type').eq('company_id', companyId).eq('relation_type', 'communicatedAs').order('sort_order', { ascending: true }),
     fetchElementsCatalog(supabase, companyId),
     supabase.from('brand_guidelines').select('slogan').eq('company_id', companyId).maybeSingle(),
-    fetchPersonaBlock(supabase, companyId, personaId),
+    fetchPersonaData(supabase, companyId, personaId),
   ])
+  const personaBlock = personaData.block
 
   // ---- INTENT（引用禁止：意味だけ抜く）＋ 事業概要（引用可の客観情報） ----
   const serviceLines = philosophy.services
     .map((s) => [txt(s.title), txt(s.description)].filter(Boolean).join('：'))
     .filter(Boolean)
   const intentLines: string[] = []
-  if (philosophy.mission) intentLines.push(`- ミッション: ${txt(philosophy.mission)}`)
-  if (philosophy.vision) intentLines.push(`- ビジョン: ${txt(philosophy.vision)}`)
+  const intentStrings: string[] = [] // 継承重複の照合元（引用禁止素材の生フレーズ。service=引用可は含めない）
+  if (philosophy.mission) { intentLines.push(`- ミッション: ${txt(philosophy.mission)}`); intentStrings.push(txt(philosophy.mission)) }
+  if (philosophy.vision) { intentLines.push(`- ビジョン: ${txt(philosophy.vision)}`); intentStrings.push(txt(philosophy.vision)) }
   for (const v of philosophy.values) {
     const t = [txt(v.name), txt(v.description)].filter(Boolean).join('：')
-    if (t) intentLines.push(`- バリュー: ${t}`)
+    if (t) { intentLines.push(`- バリュー: ${t}`); intentStrings.push(txt(v.name), txt(v.description)) }
   }
   for (const g of philosophy.action_guidelines) {
     const t = [txt(g.title), txt(g.description)].filter(Boolean).join('：')
-    if (t) intentLines.push(`- 行動指針: ${t}`)
+    if (t) { intentLines.push(`- 行動指針: ${t}`); intentStrings.push(txt(g.title), txt(g.description)) }
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const vps = (Array.isArray(vpRes.data) ? vpRes.data : []) as any[]
@@ -106,6 +124,7 @@ export async function buildCopyOntologyBlocks(
     .map((v) => [txt(v.title), txt(v.description)].filter(Boolean).join('：'))
     .filter(Boolean)
     .map((t) => `- 提供価値: ${t}`)
+  for (const v of vps) intentStrings.push(txt(v.title), txt(v.description))
 
   const intentSections: string[] = []
   if (serviceLines.length) {
@@ -119,9 +138,12 @@ export async function buildCopyOntologyBlocks(
   const intentBlock = intentSections.join('\n\n')
 
   // ---- FACT（引用可：数字・固有名詞の接地元） ----
-  // proof_points: title空（要確認の空欄実績）は除外。※現行スキーマに needs_confirmation 列は無いため title 空で代替判定。
+  // proof_points 除外: title空、および description 先頭が【要確認】の未確定実績（現行スキーマに
+  // needs_confirmation 列は無いため、description 先頭の【要確認】を「要確認」フラグとして扱う）。
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const proofs = ((Array.isArray(proofRes.data) ? proofRes.data : []) as any[]).filter((p) => txt(p.title))
+  const proofs = ((Array.isArray(proofRes.data) ? proofRes.data : []) as any[]).filter(
+    (p) => txt(p.title) && !txt(p.description).startsWith('【要確認】'),
+  )
   const injectedProofIds = proofs.map((p) => p.id as string)
   const factLines = proofs.map((p) => {
     const label = SOURCE_TYPE_LABEL[p.source_type as string] ?? null
@@ -165,9 +187,31 @@ export async function buildCopyOntologyBlocks(
     })
   const rulesBlock = ruleLines.join('\n')
 
+  // bannedTerms: クリシェ密度の照合元（禁止語・非推奨表現の生語＝rule_text＋ng_example）
+  const bannedTerms = Array.from(
+    new Set(
+      rules
+        .filter((r) => ['banned_word', 'discouraged_expression'].includes(r.rule_type as string))
+        .flatMap((r) => [txt(r.rule_text), txt(r.ng_example)])
+        .filter(Boolean),
+    ),
+  )
+
   // quotablePhrases：communicatedAs承認フレーズ＋スローガン（Stage3のマスク用に温存）
   const slogan = txt((bgRes.data as { slogan?: string } | null)?.slogan)
   const quotablePhrases = Array.from(new Set([...communicatedLabels, ...(slogan ? [slogan] : [])]))
 
-  return { intentBlock, factBlock, rulesBlock, personaBlock, injectedProofIds, quotablePhrases }
+  // factText: 数字捏造照合の生コーパス（proof title+description ＋ 承認済み対外表現）。
+  const factText = [
+    ...proofs.map((p) => [txt(p.title), txt(p.description)].filter(Boolean).join(' ')),
+    ...communicatedLabels,
+  ].join(' ')
+
+  return {
+    intentBlock, factBlock, rulesBlock, personaBlock, injectedProofIds, quotablePhrases,
+    intentStrings: Array.from(new Set(intentStrings.filter(Boolean))),
+    factText,
+    painPoints: personaData.painPoints,
+    bannedTerms,
+  }
 }

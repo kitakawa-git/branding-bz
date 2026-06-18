@@ -36,11 +36,12 @@ export async function callClaude(options: {
   system: string
   userMessage: string
   maxTokens?: number
+  model?: string // 既定＝生成器モデル。インスペクター等が claude-opus-4-8 を渡せる（出題者≠採点者）
 }): Promise<string> {
   const client = getClient()
 
   const message = await client.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: options.model || 'claude-sonnet-4-6',
     max_tokens: options.maxTokens || 4096,
     system: options.system,
     messages: [{ role: 'user', content: options.userMessage }],

@@ -29,6 +29,12 @@ export async function generateCopyDraft(opts: {
   chosenInsight?: string
   chosenAngle?: string
   injectOntology?: boolean // false=ベースライン（before）用。デフォルト true
+  // Stage3 自動リライト: 前案＋インスペクターの処方箋（方向のみ）を注入して書き直させる。
+  // 本文はあくまで生成器が書く（インスペクターはリライト本文を書かない＝原則②）。
+  rewriteDirectives?: {
+    priorBody: string
+    edits: { quote: string; problem: string; rewrite_direction: string }[]
+  }
 }): Promise<{ bodies: string[]; system: string; injectedProofIds: string[] }> {
   const inject = opts.injectOntology !== false
   const spec = COPY_ROLE_MATRIX[opts.role]
@@ -88,7 +94,20 @@ export async function generateCopyDraft(opts: {
     chosenInsight: opts.chosenInsight,
     chosenAngle: opts.chosenAngle,
   })
-  const system = [companyBasics, core].filter(Boolean).join('\n\n')
+  // 自動リライト時: 前案＋処方箋（方向のみ）を末尾に注入。本文は生成器が書く。
+  let rewriteBlock = ''
+  if (opts.rewriteDirectives && opts.rewriteDirectives.edits.length > 0) {
+    const edits = opts.rewriteDirectives.edits
+      .map((e) => `- 「${e.quote}」: ${e.problem} → ${e.rewrite_direction}`)
+      .join('\n')
+    rewriteBlock = [
+      '# これは書き直し（リライト）です',
+      `前案: ${opts.rewriteDirectives.priorBody}`,
+      '編集者の処方箋（本文ではなく方向。以下の弱点を消すよう、前案をなぞらず具体に書き直せ）:',
+      edits,
+    ].join('\n')
+  }
+  const system = [companyBasics, core, rewriteBlock].filter(Boolean).join('\n\n')
 
   const userMessage = `上記の制約に従い、この企業の${spec.label}のコピーを生成してください。`
   const raw = await callClaude({ system, userMessage, maxTokens: 1024 })
