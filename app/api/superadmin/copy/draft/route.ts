@@ -67,12 +67,27 @@ export async function POST(request: NextRequest) {
     }
     if (!project) return NextResponse.json({ error: 'プロジェクトが見つかりません' }, { status: 404 })
 
+    // 人間ゲートで選択済みのインサイト本文・切り口をサーバ側で取得（クライアントから本文は受け取らない）。
+    // 無ければ従来どおり brief 駆動。injectOntology=false（ベースライン）では注入しない。
+    let chosenInsight: string | undefined
+    let chosenAngle: string | undefined
+    if (injectOntology) {
+      const [{ data: selInsight }, { data: selAngle }] = await Promise.all([
+        supabaseAdmin.from('copy_insights').select('body').eq('project_id', project.id).eq('is_selected', true).order('created_at', { ascending: true }).limit(1).maybeSingle(),
+        supabaseAdmin.from('copy_angles').select('stance, premise').eq('project_id', project.id).eq('is_selected', true).order('created_at', { ascending: true }).limit(1).maybeSingle(),
+      ])
+      chosenInsight = selInsight?.body ?? undefined
+      chosenAngle = selAngle ? [selAngle.stance, selAngle.premise ? `（根拠: ${selAngle.premise}）` : ''].filter(Boolean).join('') : undefined
+    }
+
     const { bodies, injectedProofIds } = await generateCopyDraft({
       companyId: project.company_id,
       role,
       register,
       brief: project.brief ?? undefined,
       personaId: project.persona_id ?? undefined,
+      chosenInsight,
+      chosenAngle,
       injectOntology,
     })
 
