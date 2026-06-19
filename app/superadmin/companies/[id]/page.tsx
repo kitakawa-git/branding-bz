@@ -8,7 +8,7 @@ import { supabase } from '@/lib/supabase'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { ArrowLeft, Check } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Check } from 'lucide-react'
 import { Fab, FabButton } from '@/components/ui/fab'
 import { type ValuePropositionRef } from './_sections/ProofPointsSection'
 import OntologySummaryHub from './_sections/OntologySummaryHub'
@@ -237,6 +237,21 @@ export default function CompanyDetailPage() {
           <OntologySummaryHub companyId={companyId} valuePropositions={valueProps} />
         </CardContent>
       </Card>
+
+      {/* === コピーAI ワークベンチへの導線 === */}
+      <Link href={`/superadmin/companies/${companyId}/copy`} className="block mb-6">
+        <Card className="bg-muted/50 border shadow-none transition-colors hover:border-ds-app-accent">
+          <CardContent className="p-6 flex items-center justify-between gap-4">
+            <div className="min-w-0">
+              <h3 className="text-base font-bold text-foreground mb-1">コピーAI</h3>
+              <p className="text-[13px] text-muted-foreground">
+                本音→切り口→生成→批評。オントロジーに接地した、退屈でないコピーを作る。
+              </p>
+            </div>
+            <ArrowRight className="h-5 w-5 shrink-0 text-muted-foreground" />
+          </CardContent>
+        </Card>
+      </Link>
 
       {/* === 企業情報編集セクション（設定系・下部） === */}
       <Card className="bg-muted/50 border shadow-none mb-6">
