@@ -133,9 +133,9 @@ export default function PersonaLandingPage() {
       </section>
 
       {/* ペルソナとは？（上のラッパーの背景を共有） */}
-      <section className="px-6 py-16">
+      <section className="px-6 pt-16 pb-20">
         <div className="mx-auto max-w-6xl">
-          <h2 className="mb-10 text-center text-3xl font-bold tracking-tight md:text-4xl">
+          <h2 className="mb-8 text-center text-3xl font-bold tracking-tight md:text-4xl">
             ペルソナ＆ジャーニーマップとは？
           </h2>
           <div className="grid gap-5 md:grid-cols-3">
