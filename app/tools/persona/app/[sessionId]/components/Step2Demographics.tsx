@@ -1,7 +1,8 @@
 'use client'
 
-// Step 2: デモグラフィック（マルチペルソナ・AI提案＋編集）
-// 1ターゲット＝1ペルソナ。basic_info.target_segments ごとに suggest-demographics を1件に絞って呼ぶ。
+// Step 2: デモグラフィック（ターゲット別グループ・マルチペルソナ）
+// target_segments ごとにグループ枠を描画し、各グループに target_name 一致のペルソナを表示。
+// グループ単位で「このターゲットにペルソナを追加」（1ターゲット複数ペルソナ可）。
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -26,7 +27,6 @@ interface Step2Props {
   onSaveField: (personas: Persona[]) => Promise<void>
 }
 
-// 1セグメントぶんの demographics を AI 生成
 async function suggestForSegment(basicInfo: BasicInfo, segment?: { name: string; description?: string }): Promise<Demographics> {
   const res = await fetch('/api/tools/persona/suggest-demographics', {
     method: 'POST',
@@ -57,16 +57,17 @@ export function Step2Demographics({ personas: initialPersonas, basicInfo, onNext
     debounceRef.current = setTimeout(() => { onSaveField(p) }, 1000)
   }, [onSaveField])
 
-  const segments = basicInfo.target_segments?.filter(s => s?.name?.trim()) || []
+  const segments = (basicInfo.target_segments || []).filter(s => s?.name?.trim())
+  const segNames = new Set(segments.map(s => s.name))
 
-  // 初期生成: personas 空なら target_segments ごとに（無ければ1件汎用）生成
+  // 初期/全件: 各セグメントで1ペルソナ生成（target_name 付与）。未分類は消える（全置換）。
   const generateAll = useCallback(async () => {
     setAiLoading(true)
     setAiError('')
     try {
       const segs = segments.length > 0 ? segments : [undefined]
       const demos = await Promise.all(segs.map(s => suggestForSegment(basicInfo, s)))
-      const next = demos.map(d => ({ demographics: d, goals: emptyPersona().goals }))
+      const next = demos.map((d, i) => ({ ...emptyPersona(segs[i]?.name || ''), demographics: d }))
       setPersonas(next)
       triggerAutoSave(next)
     } catch (err) {
@@ -86,32 +87,32 @@ export function Step2Demographics({ personas: initialPersonas, basicInfo, onNext
 
   useEffect(() => () => { if (debounceRef.current) clearTimeout(debounceRef.current) }, [])
 
-  const updateDemographics = useCallback((idx: number, next: Demographics) => {
+  const updateDemographics = useCallback((absIdx: number, next: Demographics) => {
     setPersonas(prev => {
-      const arr = prev.map((p, i) => (i === idx ? { ...p, demographics: next } : p))
+      const arr = prev.map((p, i) => (i === absIdx ? { ...p, demographics: next } : p))
       triggerAutoSave(arr)
       return arr
     })
   }, [triggerAutoSave])
 
-  const removePersona = (idx: number) => {
+  const removePersona = (absIdx: number) => {
     setPersonas(prev => {
-      const arr = prev.filter((_, i) => i !== idx)
+      const arr = prev.filter((_, i) => i !== absIdx)
       triggerAutoSave(arr)
       return arr
     })
   }
 
-  const addPersona = async () => {
-    // 未割当セグメント（personas数 < segments数）があればそれで、無ければ汎用生成
-    const nextIdx = personas.length
-    const seg = segments[nextIdx]
-    setPersonas(prev => [...prev, emptyPersona()])
-    setAddingIdx(nextIdx)
+  // ターゲット単位の追加（同じ target_name で末尾に追加）
+  const addToSegment = async (segment?: { name: string; description?: string }) => {
+    const targetName = segment?.name || ''
+    const newIdx = personas.length
+    setPersonas(prev => [...prev, emptyPersona(targetName)])
+    setAddingIdx(newIdx)
     try {
-      const demo = await suggestForSegment(basicInfo, seg)
+      const demo = await suggestForSegment(basicInfo, segment)
       setPersonas(prev => {
-        const arr = prev.map((p, i) => (i === nextIdx ? { ...p, demographics: demo } : p))
+        const arr = prev.map((p, i) => (i === newIdx ? { ...p, demographics: demo } : p))
         triggerAutoSave(arr)
         return arr
       })
@@ -138,8 +139,7 @@ export function Step2Demographics({ personas: initialPersonas, basicInfo, onNext
         <div className="space-y-4">
           {[1, 2, 3].map(i => (
             <div key={i} className="rounded-xl border bg-white p-5">
-              <Skeleton className="mb-4 h-5 w-32" />
-              <Skeleton className="h-10 w-full" />
+              <Skeleton className="mb-4 h-5 w-32" /><Skeleton className="h-10 w-full" />
             </div>
           ))}
           <p className="text-center text-sm text-gray-400">各ターゲットのペルソナを生成中...</p>
@@ -148,14 +148,29 @@ export function Step2Demographics({ personas: initialPersonas, basicInfo, onNext
     )
   }
 
+  // インデックス付きでグループ化（絶対indexで操作）
+  const indexed = personas.map((p, idx) => ({ p, idx }))
+  const unclassified = indexed.filter(({ p }) => !segNames.has(p.target_name))
+
+  const renderForm = ({ p, idx }: { p: Persona; idx: number }, ordinal: number) => (
+    <DemographicsForm
+      key={idx}
+      ordinal={ordinal}
+      data={p.demographics}
+      generating={addingIdx === idx}
+      onChange={(next) => updateDemographics(idx, next)}
+      onRemove={personas.length > 1 ? () => removePersona(idx) : undefined}
+    />
+  )
+
   return (
     <div>
       <h1 className="text-2xl font-bold text-foreground mb-2">Step 2: デモグラフィック</h1>
       <p className="mb-5 text-[13px] text-muted-foreground">
-        ターゲットごとに1ペルソナ。役割像（セグメント）として定義します。AIの提案を編集できます。
+        ターゲットごとにペルソナを定義します。1つのターゲットに複数のペルソナを追加できます。
       </p>
 
-      <div className="flex justify-start mb-3 gap-2">
+      <div className="flex justify-start mb-3">
         <Button variant="outline" size="sm" onClick={() => setConfirmOpen(true)} className="gap-1.5 text-xs">
           <WandSparkles className="h-3.5 w-3.5" /> AIに全件再提案
         </Button>
@@ -168,22 +183,40 @@ export function Step2Demographics({ personas: initialPersonas, basicInfo, onNext
         </div>
       )}
 
-      <div className="space-y-4">
-        {personas.map((p, idx) => (
-          <DemographicsForm
-            key={idx}
-            index={idx}
-            data={p.demographics}
-            generating={addingIdx === idx}
-            onChange={(next) => updateDemographics(idx, next)}
-            onRemove={personas.length > 1 ? () => removePersona(idx) : undefined}
-          />
-        ))}
-      </div>
+      <div className="space-y-6">
+        {segments.map((seg) => {
+          const members = indexed.filter(({ p }) => p.target_name === seg.name)
+          return (
+            <section key={seg.name} className="rounded-xl border border-gray-200 bg-gray-50/50 p-4">
+              <div className="mb-3">
+                <h2 className="text-sm font-bold text-gray-800">{seg.name}</h2>
+                {seg.description && <p className="text-[12px] text-muted-foreground mt-0.5">{seg.description}</p>}
+              </div>
+              <div className="space-y-3">
+                {members.length === 0 && (
+                  <p className="text-[13px] text-muted-foreground">このターゲットのペルソナはまだありません。</p>
+                )}
+                {members.map((e, k) => renderForm(e, k + 1))}
+              </div>
+              <Button variant="outline" size="sm" onClick={() => addToSegment(seg)} disabled={addingIdx !== null} className="mt-3 gap-1.5">
+                <Plus className="h-4 w-4" /> このターゲットにペルソナを追加（AI生成）
+              </Button>
+            </section>
+          )
+        })}
 
-      <Button variant="outline" onClick={addPersona} disabled={addingIdx !== null} className="mt-4 gap-1.5">
-        <Plus className="h-4 w-4" /> ペルソナを追加（AI生成）
-      </Button>
+        {unclassified.length > 0 && (
+          <section className="rounded-xl border border-amber-200 bg-amber-50/40 p-4">
+            <div className="mb-3">
+              <h2 className="text-sm font-bold text-amber-800">未分類</h2>
+              <p className="text-[12px] text-muted-foreground mt-0.5">現在のターゲットに紐づかないペルソナ（ターゲットの削除・改名など）。</p>
+            </div>
+            <div className="space-y-3">
+              {unclassified.map((e, k) => renderForm(e, k + 1))}
+            </div>
+          </section>
+        )}
+      </div>
 
       <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 bg-background/80 backdrop-blur border-t border-border px-6 py-3 flex items-center justify-between">
         <Button variant="outline" onClick={onBack} className="gap-1">
@@ -199,7 +232,7 @@ export function Step2Demographics({ personas: initialPersonas, basicInfo, onNext
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>確認</AlertDialogTitle>
-            <AlertDialogDescription>全ペルソナをAIで再生成します。現在の内容は上書きされます。よろしいですか？</AlertDialogDescription>
+            <AlertDialogDescription>各ターゲットで1ペルソナを再生成します。現在の内容（未分類含む）は上書きされます。よろしいですか？</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>キャンセル</AlertDialogCancel>
@@ -212,8 +245,8 @@ export function Step2Demographics({ personas: initialPersonas, basicInfo, onNext
 }
 
 // 1ペルソナぶんの編集フォーム（controlled）
-function DemographicsForm({ index, data, generating, onChange, onRemove }: {
-  index: number
+function DemographicsForm({ ordinal, data, generating, onChange, onRemove }: {
+  ordinal: number
   data: Demographics
   generating: boolean
   onChange: (next: Demographics) => void
@@ -228,10 +261,10 @@ function DemographicsForm({ index, data, generating, onChange, onRemove }: {
   }
 
   return (
-    <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-      <CardContent className="p-5 space-y-5">
+    <Card className="bg-white border shadow-none">
+      <CardContent className="p-4 space-y-5">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-bold text-gray-700">ペルソナ{index + 1}</h3>
+          <h3 className="text-sm font-bold text-gray-700">ペルソナ{ordinal}</h3>
           {onRemove && (
             <Button type="button" variant="outline" size="icon" onClick={onRemove}
               className="size-9 shrink-0 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive">

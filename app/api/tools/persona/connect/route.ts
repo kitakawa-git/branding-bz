@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
 
     // マルチペルソナ: personas[] を正とする。無ければ旧 demographics/goals(単一) を1件として後方互換。
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const personas: Array<{ demographics: any; goals: any }> =
+    const personas: Array<{ target_name?: string; demographics: any; goals: any }> =
       Array.isArray(sessionData.personas) && sessionData.personas.length > 0
         ? sessionData.personas
         : sessionData.demographics || sessionData.goals
@@ -46,10 +46,11 @@ export async function POST(request: NextRequest) {
 
     // 1ペルソナぶんの書き込み値を作る（rich persona_data ＋ 離散カラム写像）。
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const buildValues = (p: { demographics: any; goals: any }, i: number) => {
+    const buildValues = (p: { target_name?: string; demographics: any; goals: any }, i: number) => {
       const demographics = p.demographics || {}
       const goalsData = p.goals || {}
       const personaData = {
+        target_name: p.target_name || '', // ターゲット紐づけ（brand_personasのカラム追加はせず persona_data に格納）
         persona_name: demographics.persona_name || '',
         age: demographics.age || null,
         gender: demographics.gender || '',

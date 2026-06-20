@@ -27,8 +27,9 @@ export interface GoalsData {
   success_definition: string
 }
 
-// マルチの正：1ターゲット＝1ペルソナ（demographics＋goals）
+// マルチの正：1ペルソナ（target_name でターゲットにグルーピング）
 export interface Persona {
+  target_name: string // 属するターゲットセグメント名（target_segments[i].name）。未分類は ''
   demographics: Demographics
   goals: GoalsData
 }
@@ -55,7 +56,8 @@ export const EMPTY_GOALS: GoalsData = {
   brand_expectations: '', success_definition: '',
 }
 
-export const emptyPersona = (): Persona => ({
+export const emptyPersona = (target_name = ''): Persona => ({
+  target_name,
   demographics: { ...EMPTY_DEMOGRAPHICS },
   goals: { ...EMPTY_GOALS },
 })
@@ -67,16 +69,20 @@ export function narrowBasicInfoToSegment(basicInfo: BasicInfo, segment?: { name:
 }
 
 // 旧単一セッション（demographics/goals 単体）→ personas[] へ正規化（後方互換）。
-export function normalizePersonas(sd: any): Persona[] {
+// target_name 欠落のペルソナには、配列インデックス対応の target_segments[i]?.name を割当て。
+export function normalizePersonas(sd: any, segments?: Array<{ name?: string }>): Persona[] {
+  const segName = (i: number) => (segments?.[i]?.name || '').trim()
   if (Array.isArray(sd?.personas) && sd.personas.length > 0) {
-    return sd.personas.map((p: any) => ({
+    return sd.personas.map((p: any, i: number) => ({
+      target_name: typeof p?.target_name === 'string' && p.target_name ? p.target_name : segName(i),
       demographics: { ...EMPTY_DEMOGRAPHICS, ...(p?.demographics || {}) },
       goals: { ...EMPTY_GOALS, ...(p?.goals || {}) },
     }))
   }
-  // 旧形式: 単一 demographics/goals があれば1ペルソナへ
+  // 旧形式: 単一 demographics/goals があれば1ペルソナへ（第1セグメントに割当て）
   if (sd?.demographics || sd?.goals) {
     return [{
+      target_name: segName(0),
       demographics: { ...EMPTY_DEMOGRAPHICS, ...(sd.demographics || {}) },
       goals: { ...EMPTY_GOALS, ...(sd.goals || {}) },
     }]

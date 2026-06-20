@@ -12,16 +12,17 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { ArrowLeft, Link as LinkIcon, RotateCcw, Loader2, UserCircle, Target } from 'lucide-react'
-import { type Persona } from './persona-types'
+import { type Persona, type BasicInfo } from './persona-types'
 
 interface Step5Props {
   sessionId: string
   personas: Persona[]
+  basicInfo: BasicInfo
   companyId: string | null
   onBack: () => void
 }
 
-export function Step5Result({ sessionId, personas, companyId, onBack }: Step5Props) {
+export function Step5Result({ sessionId, personas, basicInfo, companyId, onBack }: Step5Props) {
   const router = useRouter()
   const [connecting, setConnecting] = useState(false)
   const [connected, setConnected] = useState(false)
@@ -66,6 +67,14 @@ export function Step5Result({ sessionId, personas, companyId, onBack }: Step5Pro
 
   const handleNewSession = () => router.push('/tools/persona/app')
 
+  const segments = (basicInfo.target_segments || []).filter(s => s?.name?.trim())
+  const segNames = new Set(segments.map(s => s.name))
+  const unclassified = personas.filter(p => !segNames.has(p.target_name))
+  const groups: Array<{ name: string; description?: string; members: Persona[] }> = [
+    ...segments.map(s => ({ name: s.name, description: s.description, members: personas.filter(p => p.target_name === s.name) })),
+    ...(unclassified.length > 0 ? [{ name: '未分類', description: undefined, members: unclassified }] : []),
+  ]
+
   return (
     <div>
       <h1 className="text-2xl font-bold text-foreground mb-2">Step 5: 確認・出力</h1>
@@ -73,8 +82,16 @@ export function Step5Result({ sessionId, personas, companyId, onBack }: Step5Pro
         作成した{personas.length}件のペルソナを確認し、branding.bzに連携できます
       </p>
 
-      <div className="space-y-6">
-        {personas.map((p, idx) => (
+      <div className="space-y-8">
+        {groups.map((group) => (
+          <div key={group.name}>
+            <div className="mb-2">
+              <h2 className={`text-sm font-bold ${group.name === '未分類' ? 'text-amber-800' : 'text-gray-800'}`}>{group.name}</h2>
+              {group.description && <p className="text-[12px] text-muted-foreground mt-0.5">{group.description}</p>}
+            </div>
+            <div className="space-y-4">
+              {group.members.length === 0 && <p className="text-[13px] text-muted-foreground">このターゲットのペルソナはありません。</p>}
+              {group.members.map((p, idx) => (
           <Card key={idx} className="border shadow-none">
             <CardContent className="p-6">
               <div className="flex items-center gap-3 mb-5">
@@ -118,6 +135,9 @@ export function Step5Result({ sessionId, personas, companyId, onBack }: Step5Pro
               </div>
             </CardContent>
           </Card>
+              ))}
+            </div>
+          </div>
         ))}
       </div>
 

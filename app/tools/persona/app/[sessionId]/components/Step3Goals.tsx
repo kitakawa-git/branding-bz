@@ -102,6 +102,11 @@ export function Step3Goals({ personas: initialPersonas, basicInfo, onNext, onBac
   const isValid = personas.length > 0 && personas.every(p =>
     p.goals?.primary_goals?.some(g => g.trim()) || p.goals?.pain_points?.some(c => c.trim()))
 
+  const segments = (basicInfo.target_segments || []).filter(s => s?.name?.trim())
+  const segNames = new Set(segments.map(s => s.name))
+  const indexed = personas.map((p, idx) => ({ p, idx }))
+  const unclassified = indexed.filter(({ p }) => !segNames.has(p.target_name))
+
   if (aiLoading) {
     return (
       <div>
@@ -139,15 +144,37 @@ export function Step3Goals({ personas: initialPersonas, basicInfo, onNext, onBac
         </div>
       )}
 
-      <div className="space-y-4">
-        {personas.map((p, idx) => (
-          <GoalsForm
-            key={idx}
-            personaName={p.demographics.persona_name || `ペルソナ${idx + 1}`}
-            data={p.goals}
-            onChange={(next) => updateGoals(idx, next)}
-          />
-        ))}
+      <div className="space-y-6">
+        {segments.map((seg) => {
+          const members = indexed.filter(({ p }) => p.target_name === seg.name)
+          return (
+            <section key={seg.name} className="rounded-xl border border-gray-200 bg-gray-50/50 p-4">
+              <div className="mb-3">
+                <h2 className="text-sm font-bold text-gray-800">{seg.name}</h2>
+                {seg.description && <p className="text-[12px] text-muted-foreground mt-0.5">{seg.description}</p>}
+              </div>
+              <div className="space-y-3">
+                {members.length === 0 && <p className="text-[13px] text-muted-foreground">このターゲットのペルソナはまだありません。</p>}
+                {members.map(({ p, idx }) => (
+                  <GoalsForm key={idx} personaName={p.demographics.persona_name || `ペルソナ${idx + 1}`} data={p.goals} onChange={(next) => updateGoals(idx, next)} />
+                ))}
+              </div>
+            </section>
+          )
+        })}
+
+        {unclassified.length > 0 && (
+          <section className="rounded-xl border border-amber-200 bg-amber-50/40 p-4">
+            <div className="mb-3">
+              <h2 className="text-sm font-bold text-amber-800">未分類</h2>
+            </div>
+            <div className="space-y-3">
+              {unclassified.map(({ p, idx }) => (
+                <GoalsForm key={idx} personaName={p.demographics.persona_name || `ペルソナ${idx + 1}`} data={p.goals} onChange={(next) => updateGoals(idx, next)} />
+              ))}
+            </div>
+          </section>
+        )}
       </div>
 
       <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 bg-background/80 backdrop-blur border-t border-border px-6 py-3 flex items-center justify-between">

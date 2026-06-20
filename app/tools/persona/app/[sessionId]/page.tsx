@@ -158,8 +158,8 @@ export default function PersonaSessionPage() {
 
   const currentStep = session.current_step
   const sd = session.session_data
-  // 後方互換正規化: personas[] が正。旧単一 demographics/goals は1ペルソナへ。
-  const personas = normalizePersonas(sd)
+  // 後方互換正規化: personas[] が正。旧単一 demographics/goals は1ペルソナへ。target_name はセグメントから補完。
+  const personas = normalizePersonas(sd, sd.basic_info?.target_segments)
   // Step4(ジャーニー)・互換のため先頭ペルソナの demographics/goals を渡す
   const firstDemographics = personas[0]?.demographics || sd.demographics || {}
   const firstGoals = personas[0]?.goals || sd.goals || {}
@@ -214,6 +214,7 @@ export default function PersonaSessionPage() {
         <Step5Result
           sessionId={sessionId}
           personas={personas}
+          basicInfo={sd.basic_info || {}}
           companyId={session.company_id}
           onBack={() => saveAndAdvance(4)}
         />
