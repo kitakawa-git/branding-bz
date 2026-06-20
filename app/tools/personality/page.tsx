@@ -1,30 +1,15 @@
 'use client'
 
-// ブランドパーソナリティ診断 ランディングページ
+// ブランドパーソナリティ診断 ランディングページ（LPダークデザインに準拠）
 import Link from 'next/link'
-import { WandSparkles, Fingerprint, Radar, Drama, CheckCircle2, Sparkles, SlidersHorizontal, Download, Unplug } from 'lucide-react'
-import Header from '@/components/Header'
+import { Fingerprint, Radar, Drama, CheckCircle2, Sparkles, SlidersHorizontal, Download, Unplug, ArrowRight, type LucideIcon } from 'lucide-react'
+import Nav from '../../lp/_components/Nav'
 import Footer from '@/components/Footer'
 
 const CONCEPT_CARDS = [
-  {
-    label: 'パーソナリティとは？',
-    icon: Fingerprint,
-    title: 'ブランドを「人格」に翻訳',
-    description: '「もしブランドが人だったら、どんな性格か」。頭の中にある感覚を10問の質問で引き出し、AIが人格として言語化します。',
-  },
-  {
-    label: 'スコアで診断',
-    icon: Radar,
-    title: 'Aaker 5次元スコア型',
-    description: '誠実・刺激・能力・洗練・素朴の5次元をスコア化し、レーダーチャートで表示。分析的にブランドの輪郭を把握できます。',
-  },
-  {
-    label: 'タイプで診断',
-    icon: Drama,
-    title: '12アーキタイプ タイプ型',
-    description: '英雄・賢者・探検家など12の元型から主人格と副人格を判定。「うちは賢者×援助者」とひと言で語れるようになります。',
-  },
+  { label: 'パーソナリティとは？', icon: Fingerprint, title: 'ブランドを「人格」に翻訳', description: '「もしブランドが人だったら、どんな性格か」。頭の中にある感覚を10問の質問で引き出し、AIが人格として言語化します。' },
+  { label: 'スコアで診断', icon: Radar, title: 'Aaker 5次元スコア型', description: '誠実・刺激・能力・洗練・素朴の5次元をスコア化し、レーダーチャートで表示。分析的にブランドの輪郭を把握できます。' },
+  { label: 'タイプで診断', icon: Drama, title: '12アーキタイプ タイプ型', description: '英雄・賢者・探検家など12の元型から主人格と副人格を判定。「うちは賢者×援助者」とひと言で語れるようになります。' },
 ]
 
 const STEPS = [
@@ -36,35 +21,40 @@ const STEPS = [
 ]
 
 const HIGHLIGHTS = [
-  {
-    label: 'AI診断',
-    icon: Sparkles,
-    title: ['10問の回答から', 'AIが人格を生成'],
-    description: '選択式中心の10問に答えるだけ。スコアもタイプも1回の診断で同時に算出し、タブで切り替えて見られます。',
-  },
-  {
-    label: '微調整',
-    icon: SlidersHorizontal,
-    title: ['スコアを', '自分の感覚で調整'],
-    description: 'AIの診断結果はスライダーで微調整可能。「ここはもう少し誠実寄り」という肌感覚を反映できます。',
-  },
-  {
-    label: '出力',
-    icon: Download,
-    title: ['診断結果を', 'PDFでダウンロード'],
-    description: '人格スコア・タイプカード・トーンオブボイスをまとめたレポートをワンクリックでPDF出力。',
-  },
-  {
-    label: '連携',
-    icon: Unplug,
-    title: ['ワンクリックで', 'branding.bz に連携'],
-    description: '確定した人格をブランディングプラットフォームに登録。トーン・期待タグまでブランド運用に即反映。',
-  },
+  { label: 'AI診断', icon: Sparkles, title: ['10問の回答から', 'AIが人格を生成'], description: '選択式中心の10問に答えるだけ。スコアもタイプも1回の診断で同時に算出し、タブで切り替えて見られます。' },
+  { label: '微調整', icon: SlidersHorizontal, title: ['スコアを', '自分の感覚で調整'], description: 'AIの診断結果はスライダーで微調整可能。「ここはもう少し誠実寄り」という肌感覚を反映できます。' },
+  { label: '出力', icon: Download, title: ['診断結果を', 'PDFでダウンロード'], description: '人格スコア・タイプカード・トーンオブボイスをまとめたレポートをワンクリックでPDF出力。' },
+  { label: '連携', icon: Unplug, title: ['ワンクリックで', 'branding.bz に連携'], description: '確定した人格をブランディングプラットフォームに登録。トーン・期待タグまでブランド運用に即反映。' },
 ]
+
+/* LP準拠のダークグラスカード */
+function GlowCard({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div
+      className={`relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03] ${className}`}
+      style={{ boxShadow: 'inset 0 1px 0 0 rgba(255,255,255,0.06), 0 24px 60px -20px rgba(0,0,0,0.8)' }}
+    >
+      {children}
+    </div>
+  )
+}
+
+function FeatureCard({ icon: Icon, label, title, description }: { icon: LucideIcon; label: string; title: React.ReactNode; description: string }) {
+  return (
+    <GlowCard className="p-7 transition-transform hover:-translate-y-1">
+      <div className="mb-5 inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/5">
+        <Icon size={20} className="text-emerald-400" />
+      </div>
+      <div className="mb-2 text-sm font-semibold text-emerald-400">{label}</div>
+      <h3 className="text-lg font-bold leading-snug text-white">{title}</h3>
+      <p className="mt-3 text-sm leading-relaxed text-white/55">{description}</p>
+    </GlowCard>
+  )
+}
 
 export default function PersonalityLandingPage() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[#08080a] text-white">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -74,126 +64,67 @@ export default function PersonalityLandingPage() {
             name: 'ブランドパーソナリティ診断',
             applicationCategory: 'BusinessApplication',
             operatingSystem: 'Web',
-            offers: {
-              '@type': 'Offer',
-              price: '0',
-              priceCurrency: 'JPY',
-            },
+            offers: { '@type': 'Offer', price: '0', priceCurrency: 'JPY' },
             description: '10問の質問に答えるだけで、AIがブランドの人格を診断。Aaker 5次元と12アーキタイプの2フレームワークで「らしさ」を言語化。',
-            provider: {
-              '@type': 'Organization',
-              name: 'branding.bz',
-              url: 'https://branding.bz',
-            },
+            provider: { '@type': 'Organization', name: 'branding.bz', url: 'https://branding.bz' },
           }),
         }}
       />
-      <Header />
+      <Nav />
 
-      {/* ヒーロー */}
-      <section className="mx-auto max-w-7xl px-6 pt-24 pb-8 text-center md:pt-32 md:pb-12">
-        <div
-          className="mb-8 inline-flex items-center gap-2 rounded-full px-6 py-1.5 text-sm text-ds-app-accent-hover relative overflow-hidden"
-          style={{
-            background: 'rgba(0, 97, 255, 0.1)',
-            backdropFilter: 'blur(12px) saturate(120%)',
-            WebkitBackdropFilter: 'blur(12px) saturate(120%)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            boxShadow: '0px 8px 24px 0 rgba(12, 74, 110, 0.15), inset 0px 0px 4px 2px rgba(255, 255, 255, 0.2)',
-          }}
-        >
-          <div className="absolute inset-0 pointer-events-none rounded-full"
-            style={{ background: 'linear-gradient(to left top, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 50%)' }} />
-          <WandSparkles className="h-4 w-4 relative z-10" />
-          <span className="relative z-10">10問・約5〜10分で診断</span>
-        </div>
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900 md:text-5xl">
-          ブランドパーソナリティ診断
-        </h1>
-        <p className="mt-6 mx-auto max-w-2xl text-[20px] text-gray-600 leading-relaxed">
-          あなたのブランドが「人」だったら、どんな性格？<br className="hidden sm:block" />
-          10問の質問から、AIがブランドの人格を言語化します。
-        </p>
-        <div className="mt-10">
-          <Link
-            href="/portal/auth?from=personality"
-            className="relative inline-flex items-center justify-center h-12 px-12 rounded-full text-base font-bold text-white overflow-hidden transition-all hover:scale-105 hover:shadow-2xl"
-            style={{
-              background: 'rgba(0, 0, 0, 0.75)',
-              backdropFilter: 'blur(12px) saturate(120%)',
-              WebkitBackdropFilter: 'blur(12px) saturate(120%)',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
-              boxShadow: '0px 8px 24px 0 rgba(0, 0, 0, 0.2), inset 0px 1px 0px 0px rgba(255, 255, 255, 0.15)',
-            }}
-          >
-            <span className="relative z-10">無料で始める</span>
-          </Link>
-        </div>
-      </section>
+      {/* ヒーロー＋「パーソナリティ診断とは？」を1枚の背景（診断カード色のエメラルド）で覆う */}
+      <div className="relative" style={{ background: 'radial-gradient(120% 120% at 25% 20%,#10b981 0%,#0f172a 65%)' }}>
+        {/* 視認性のための暗幕（2セクション共通） */}
+        <div className="pointer-events-none absolute inset-0 bg-black/30" />
 
-      {/* パーソナリティ診断とは？ */}
-      <section className="bg-gray-50 px-6 py-12 md:py-16">
-        <div className="mx-auto max-w-7xl">
-          <h2 className="text-center text-xl md:text-[1.625rem] font-bold text-gray-900 mb-8">
-            ブランドパーソナリティ診断とは？
-          </h2>
-          <div className="grid md:grid-cols-3 gap-6">
-            {CONCEPT_CARDS.map((card) => (
-              <div
-                key={card.label}
-                className="relative rounded-2xl overflow-hidden transition-all hover:scale-[1.02] hover:shadow-2xl"
-                style={{
-                  background: 'rgba(255, 255, 255, 0.7)',
-                  backdropFilter: 'blur(12px) saturate(120%)',
-                  WebkitBackdropFilter: 'blur(12px) saturate(120%)',
-                  border: '1px solid rgba(255, 255, 255, 0.8)',
-                  boxShadow: '0px 8px 24px 0 rgba(12, 74, 110, 0.12), inset 0px 0px 4px 2px rgba(255, 255, 255, 0.15)',
-                }}
+        {/* ヒーロー */}
+        <section className="relative overflow-hidden px-6 pt-32 pb-16 text-center md:pt-40">
+          <div className="relative mx-auto max-w-4xl">
+            <p className="mb-7 text-sm text-white">10問・約5〜10分で診断</p>
+            <h1 className="text-5xl font-bold leading-[1.05] tracking-[-0.03em] md:text-7xl">ブランドパーソナリティ診断</h1>
+            <p className="mx-auto mt-7 max-w-2xl text-lg text-white/80 md:text-xl">
+              あなたのブランドが「人」だったら、どんな性格？
+              <br className="hidden sm:block" />
+              10問の質問から、AIがブランドの人格を言語化します。
+            </p>
+            <div className="mt-10">
+              <Link
+                href="/portal/auth?from=personality"
+                className="inline-flex h-12 items-center gap-2 rounded-full bg-white px-8 text-base font-semibold text-black transition-transform hover:scale-105"
               >
-                <div
-                  className="absolute inset-0 pointer-events-none rounded-2xl"
-                  style={{ background: 'linear-gradient(to left top, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 50%)' }}
-                />
-                <div
-                  className="absolute inset-0 pointer-events-none rounded-2xl"
-                  style={{ background: 'linear-gradient(to bottom, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0) 100%)' }}
-                />
-                <div className="relative z-10 p-8">
-                  <div className="mb-5">
-                    <span className="text-sm font-semibold tracking-wide text-gray-700">
-                      {card.label}
-                    </span>
-                  </div>
-                  <div className="mb-4">
-                    <card.icon size={32} strokeWidth={1.5} className="text-foreground" />
-                  </div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-3">
-                    {card.title}
-                  </h3>
-                  <p className="text-sm text-gray-600 leading-relaxed">{card.description}</p>
-                </div>
-              </div>
-            ))}
+                無料で始める <ArrowRight size={18} />
+              </Link>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+
+        {/* パーソナリティ診断とは？ */}
+        <section className="relative px-6 pt-16 pb-20">
+          <div className="mx-auto max-w-6xl">
+            <h2 className="mb-8 text-center text-3xl font-bold tracking-tight md:text-4xl">パーソナリティ診断とは？</h2>
+            <div className="grid gap-5 md:grid-cols-3">
+              {CONCEPT_CARDS.map((card) => (
+                <FeatureCard key={card.label} icon={card.icon} label={card.label} title={card.title} description={card.description} />
+              ))}
+            </div>
+          </div>
+        </section>
+      </div>
 
       {/* ステップ説明 */}
-      <section className="bg-white px-6 py-16 md:py-24">
-        <div className="mx-auto max-w-7xl">
-          <h2 className="mb-12 text-center text-xl md:text-[1.625rem] font-bold text-gray-900">
-            5ステップで人格を言語化
-          </h2>
-          <div className="relative flex flex-col gap-4 md:flex-row md:items-start md:gap-24">
-            <div className="hidden md:block absolute top-5 h-px bg-gray-900" style={{ left: 'calc((100% - 24rem) / 10)', right: 'calc((100% - 24rem) / 10)' }} />
+      <section className="px-6 py-16">
+        <div className="mx-auto max-w-6xl">
+          <h2 className="mb-12 text-center text-3xl font-bold tracking-tight md:text-4xl">5ステップで人格を診断</h2>
+          <div className="relative flex flex-col gap-4 md:flex-row md:items-start md:gap-16">
+            <div className="absolute top-5 hidden h-px bg-white/15 md:block" style={{ left: 'calc((100% - 24rem) / 10)', right: 'calc((100% - 24rem) / 10)' }} />
             {STEPS.map((step) => (
               <div key={step.title} className="flex items-center gap-3 md:flex-1 md:flex-col md:gap-0 md:text-center">
-                <div className="relative z-10 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gray-900 text-sm font-bold text-white md:mb-3">
+                <div className="relative z-10 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-white text-sm font-bold text-black md:mb-3">
                   {step.icon}
                 </div>
-                <div className="md:mt-0">
-                  <h3 className="text-base font-bold text-gray-900">{step.title}</h3>
-                  <p className="text-sm text-gray-500">{step.description}</p>
+                <div>
+                  <h3 className="text-base font-bold text-white">{step.title}</h3>
+                  <p className="text-sm text-white/50">{step.description}</p>
                 </div>
               </div>
             ))}
@@ -202,102 +133,45 @@ export default function PersonalityLandingPage() {
       </section>
 
       {/* 機能ハイライト */}
-      <section className="bg-gray-50 px-6 py-16 md:py-24">
-        <div className="mx-auto max-w-7xl">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+      <section className="px-6 py-16">
+        <div className="mx-auto max-w-6xl">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {HIGHLIGHTS.map((item) => (
-              <div
+              <FeatureCard
                 key={item.label}
-                className="relative rounded-2xl overflow-hidden transition-all hover:scale-[1.02] hover:shadow-2xl"
-                style={{
-                  background: 'rgba(255, 255, 255, 0.7)',
-                  backdropFilter: 'blur(12px) saturate(120%)',
-                  WebkitBackdropFilter: 'blur(12px) saturate(120%)',
-                  border: '1px solid rgba(255, 255, 255, 0.8)',
-                  boxShadow: '0px 8px 24px 0 rgba(12, 74, 110, 0.08), inset 0px 0px 4px 2px rgba(255, 255, 255, 0.3)',
-                }}
-              >
-                <div
-                  className="absolute inset-0 pointer-events-none rounded-2xl"
-                  style={{ background: 'linear-gradient(to left top, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 50%)' }}
-                />
-                <div
-                  className="absolute inset-0 pointer-events-none rounded-2xl"
-                  style={{ background: 'linear-gradient(to bottom, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0) 100%)' }}
-                />
-                <div className="relative z-10 p-8">
-                  <div className="mb-5">
-                    <span className="text-sm font-semibold tracking-wide text-gray-700">
-                      {item.label}
-                    </span>
-                  </div>
-                  <div className="mb-4">
-                    <item.icon size={32} strokeWidth={1.5} className="text-foreground" />
-                  </div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-3">
-                    {item.title[0]}<br />{item.title[1]}
-                  </h3>
-                  <p className="text-sm text-gray-600 leading-relaxed">{item.description}</p>
-                </div>
-              </div>
+                icon={item.icon}
+                label={item.label}
+                title={<>{item.title[0]}<br />{item.title[1]}</>}
+                description={item.description}
+              />
             ))}
           </div>
         </div>
       </section>
 
       {/* CTA */}
-      <section className="relative overflow-hidden px-6 py-16 md:py-24 text-center">
-        <div className="absolute inset-0 z-0" style={{
-          background: [
-            'radial-gradient(ellipse 180% 160% at 5% 20%, rgba(196, 181, 253, 0.8) 0%, transparent 55%)',
-            'radial-gradient(ellipse 160% 140% at 85% 10%, rgba(253, 186, 116, 0.7) 0%, transparent 55%)',
-            'radial-gradient(ellipse 150% 130% at 50% 90%, rgba(167, 243, 208, 0.65) 0%, transparent 55%)',
-            'radial-gradient(ellipse 130% 110% at 95% 65%, rgba(251, 207, 232, 0.6) 0%, transparent 55%)',
-            'linear-gradient(135deg, rgba(245, 243, 255, 1) 0%, rgba(255, 251, 245, 1) 50%, rgba(243, 255, 251, 1) 100%)',
-          ].join(', '),
-        }} />
-        <div className="relative z-10 w-full max-w-4xl mx-auto">
+      <section className="px-6 py-24">
+        <div className="mx-auto max-w-5xl">
           <div
-            className="mb-8 inline-flex items-center gap-2 rounded-full px-6 py-1.5 text-sm text-ds-app-accent-hover relative overflow-hidden"
-            style={{
-              background: 'rgba(0, 97, 255, 0.1)',
-              backdropFilter: 'blur(12px) saturate(120%)',
-              WebkitBackdropFilter: 'blur(12px) saturate(120%)',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
-              boxShadow: '0px 8px 24px 0 rgba(12, 74, 110, 0.15), inset 0px 0px 4px 2px rgba(255, 255, 255, 0.2)',
-            }}
+            className="relative overflow-hidden rounded-[2rem] border border-white/10 px-8 py-20 text-center"
+            style={{ background: 'radial-gradient(80% 120% at 50% 0%, rgba(16,185,129,0.4) 0%, rgba(8,8,10,0) 60%), #0d0d11' }}
           >
-            <div className="absolute inset-0 pointer-events-none rounded-full"
-              style={{ background: 'linear-gradient(to left top, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 50%)' }} />
-            <span className="relative z-10 flex items-center gap-1">
-              <CheckCircle2 className="h-3.5 w-3.5" />
-              無料で3回まで利用可能
-            </span>
-            <span className="relative z-10 flex items-center gap-1">
-              <CheckCircle2 className="h-3.5 w-3.5" />
-              クレジットカード不要
-            </span>
-          </div>
-          <h2 className="text-2xl md:text-4xl font-bold tracking-tight text-gray-900">
-            今すぐブランドの人格を診断する
-          </h2>
-          <p className="mt-6 text-lg md:text-xl text-gray-700 max-w-2xl mx-auto leading-relaxed">
-            ブランドは、作った瞬間から走り出す。<br />branding.bz で、その加速を始めませんか。
-          </p>
-          <div className="mt-10">
-            <Link
-              href="/portal/auth?from=personality"
-              className="relative inline-flex items-center justify-center h-12 px-12 rounded-full text-base font-bold text-white overflow-hidden transition-all hover:scale-105 hover:shadow-2xl"
-              style={{
-                background: 'rgba(0, 0, 0, 0.75)',
-                backdropFilter: 'blur(12px) saturate(120%)',
-                WebkitBackdropFilter: 'blur(12px) saturate(120%)',
-                border: '1px solid rgba(255, 255, 255, 0.15)',
-                boxShadow: '0px 8px 24px 0 rgba(0, 0, 0, 0.2), inset 0px 1px 0px 0px rgba(255, 255, 255, 0.15)',
-              }}
-            >
-              <span className="relative z-10">無料で始める</span>
-            </Link>
+            <div className="mb-7 inline-flex flex-wrap items-center justify-center gap-4 text-sm text-white/70">
+              <span className="inline-flex items-center gap-1.5"><CheckCircle2 size={14} className="text-emerald-400" /> 無料で3回まで利用可能</span>
+              <span className="inline-flex items-center gap-1.5"><CheckCircle2 size={14} className="text-emerald-400" /> クレジットカード不要</span>
+            </div>
+            <h2 className="text-balance text-3xl font-bold tracking-tight md:text-5xl">今すぐブランドの人格を診断する</h2>
+            <p className="mx-auto mt-6 max-w-xl text-lg text-white/60">
+              ブランドは、作った瞬間から走り出す。branding.bz で、その加速を始めませんか。
+            </p>
+            <div className="mt-10">
+              <Link
+                href="/portal/auth?from=personality"
+                className="inline-flex h-12 items-center gap-2 rounded-full bg-white px-10 text-base font-semibold text-black transition-transform hover:scale-105"
+              >
+                無料で始める <ArrowRight size={18} />
+              </Link>
+            </div>
           </div>
         </div>
       </section>
