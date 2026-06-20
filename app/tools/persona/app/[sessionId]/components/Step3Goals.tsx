@@ -1,6 +1,7 @@
 'use client'
 
-// Step 3: ゴール・課題（AI深掘り＋編集）
+// Step 3: ゴール・課題（マルチペルソナ・ペルソナ単位）
+// 各ペルソナの demographics で suggest-goals を呼び、persona.goals に格納。
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -9,63 +10,37 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ArrowLeft, ArrowRight, WandSparkles, Plus, X } from 'lucide-react'
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-
-interface GoalsData {
-  primary_goals: string[]
-  challenges: string[]
-  pain_points: string[]
-  buying_motivation: string
-  buying_barriers: string[]
-  decision_factors: string[]
-  brand_expectations: string
-  success_definition: string
-}
-
-interface Demographics {
-  persona_name: string
-  age: number | string
-  gender: string
-  occupation: string
-  company_role: string
-  personality_traits: string[]
-  quote: string
-  [key: string]: unknown
-}
-
-interface BasicInfo {
-  company_name: string
-  industry_category: string
-  industry_subcategory: string
-  products: string
-  target_description: string
-}
+import {
+  type Demographics, type GoalsData, type Persona, type BasicInfo, EMPTY_GOALS,
+} from './persona-types'
 
 interface Step3Props {
-  goals: GoalsData
-  demographics: Demographics
+  personas: Persona[]
   basicInfo: BasicInfo
-  onNext: (data: GoalsData) => Promise<boolean>
+  onNext: (personas: Persona[]) => Promise<boolean>
   onBack: () => void
-  onSaveField: (data: GoalsData) => Promise<void>
+  onSaveField: (personas: Persona[]) => Promise<void>
 }
 
-const EMPTY_GOALS: GoalsData = {
-  primary_goals: [], challenges: [], pain_points: [],
-  buying_motivation: '', buying_barriers: [], decision_factors: [],
-  brand_expectations: '', success_definition: '',
+async function suggestGoals(basicInfo: BasicInfo, demographics: Demographics): Promise<GoalsData> {
+  const res = await fetch('/api/tools/persona/suggest-goals', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ basic_info: basicInfo, demographics }),
+  })
+  if (!res.ok) {
+    const d = await res.json().catch(() => ({}))
+    throw new Error(d.error || 'AI提案の取得に失敗しました')
+  }
+  const { goals } = await res.json()
+  return { ...EMPTY_GOALS, ...goals }
 }
 
-export function Step3Goals({ goals, demographics, basicInfo, onNext, onBack, onSaveField }: Step3Props) {
-  const [data, setData] = useState<GoalsData>({ ...EMPTY_GOALS, ...goals })
+export function Step3Goals({ personas: initialPersonas, basicInfo, onNext, onBack, onSaveField }: Step3Props) {
+  const [personas, setPersonas] = useState<Persona[]>(initialPersonas)
   const [aiLoading, setAiLoading] = useState(false)
   const [aiError, setAiError] = useState('')
   const [saving, setSaving] = useState(false)
@@ -74,102 +49,71 @@ export function Step3Goals({ goals, demographics, basicInfo, onNext, onBack, onS
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const aiRequestedRef = useRef(false)
 
-  const triggerAutoSave = useCallback((d: GoalsData) => {
+  const triggerAutoSave = useCallback((p: Persona[]) => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => { onSaveField(d) }, 1000)
+    debounceRef.current = setTimeout(() => { onSaveField(p) }, 1000)
   }, [onSaveField])
 
-  const updateField = useCallback(<K extends keyof GoalsData>(key: K, value: GoalsData[K]) => {
-    setData(prev => {
-      const next = { ...prev, [key]: value }
-      triggerAutoSave(next)
-      return next
-    })
-  }, [triggerAutoSave])
-
-  const fetchAISuggestion = useCallback(async () => {
+  // 全ペルソナの goals を（指定があればそれだけ・無ければ未生成のものを）生成
+  const generate = useCallback(async (onlyMissing: boolean) => {
     setAiLoading(true)
     setAiError('')
     try {
-      const res = await fetch('/api/tools/persona/suggest-goals', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ basic_info: basicInfo, demographics }),
+      const targets = personas.map((p, i) => ({ p, i })).filter(({ p }) => !onlyMissing || !(p.goals?.primary_goals?.length))
+      const results = await Promise.all(targets.map(({ p }) => suggestGoals(basicInfo, p.demographics)))
+      setPersonas(prev => {
+        const arr = [...prev]
+        targets.forEach(({ i }, k) => { arr[i] = { ...arr[i], goals: results[k] } })
+        triggerAutoSave(arr)
+        return arr
       })
-      if (!res.ok) {
-        const d = await res.json()
-        setAiError(d.error || 'AI提案の取得に失敗しました')
-        return
-      }
-      const { goals: suggested } = await res.json()
-      const merged = { ...EMPTY_GOALS, ...suggested }
-      setData(merged)
-      triggerAutoSave(merged)
     } catch (err) {
       setAiError(err instanceof Error ? err.message : 'エラーが発生しました')
     } finally {
       setAiLoading(false)
     }
-  }, [basicInfo, demographics, triggerAutoSave])
+  }, [personas, basicInfo, triggerAutoSave])
 
   useEffect(() => {
-    if (!data.primary_goals?.length && !aiRequestedRef.current) {
+    const needs = initialPersonas.some(p => !(p.goals?.primary_goals?.length))
+    if (needs && !aiRequestedRef.current) {
       aiRequestedRef.current = true
-      fetchAISuggestion()
+      generate(true)
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => {
-    return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
-  }, [])
+  useEffect(() => () => { if (debounceRef.current) clearTimeout(debounceRef.current) }, [])
 
-  const handleRegenerate = () => {
-    if (data.primary_goals?.length > 0) { setConfirmOpen(true); return }
-    fetchAISuggestion()
-  }
-
-  // リスト操作
-  const addItem = (key: keyof GoalsData) => {
-    const arr = data[key]
-    if (Array.isArray(arr)) updateField(key, [...arr, ''] as GoalsData[typeof key])
-  }
-  const removeItem = (key: keyof GoalsData, idx: number) => {
-    const arr = data[key]
-    if (Array.isArray(arr)) updateField(key, arr.filter((_, i) => i !== idx) as GoalsData[typeof key])
-  }
-  const updateItem = (key: keyof GoalsData, idx: number, value: string) => {
-    const arr = data[key]
-    if (Array.isArray(arr)) {
-      const next = [...arr]
-      next[idx] = value
-      updateField(key, next as GoalsData[typeof key])
-    }
-  }
+  const updateGoals = useCallback((idx: number, next: GoalsData) => {
+    setPersonas(prev => {
+      const arr = prev.map((p, i) => (i === idx ? { ...p, goals: next } : p))
+      triggerAutoSave(arr)
+      return arr
+    })
+  }, [triggerAutoSave])
 
   const handleNext = async () => {
     setSaving(true)
     if (debounceRef.current) clearTimeout(debounceRef.current)
-    const success = await onNext(data)
+    const success = await onNext(personas)
     if (!success) setSaving(false)
   }
 
-  const isValid = data.primary_goals?.some(g => g.trim()) || data.challenges?.some(c => c.trim())
+  const isValid = personas.length > 0 && personas.every(p =>
+    p.goals?.primary_goals?.some(g => g.trim()) || p.goals?.pain_points?.some(c => c.trim()))
 
   if (aiLoading) {
     return (
       <div>
         <h1 className="text-2xl font-bold text-foreground mb-6">Step 3: ゴール・課題</h1>
         <div className="space-y-4">
-          {[1, 2, 3].map(i => (
+          {[1, 2].map(i => (
             <div key={i} className="rounded-xl border bg-white p-5">
               <Skeleton className="mb-4 h-5 w-40" />
-              <Skeleton className="h-10 w-full mb-2" />
-              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full mb-2" /><Skeleton className="h-10 w-full" />
             </div>
           ))}
-          <p className="text-center text-sm text-gray-400">
-            {demographics.persona_name}の目標と課題を分析中...
-          </p>
+          <p className="text-center text-sm text-gray-400">各ペルソナの目標と課題を分析中...</p>
         </div>
       </div>
     )
@@ -179,52 +123,33 @@ export function Step3Goals({ goals, demographics, basicInfo, onNext, onBack, onS
     <div>
       <h1 className="text-2xl font-bold text-foreground mb-2">Step 3: ゴール・課題</h1>
       <p className="mb-5 text-[13px] text-muted-foreground">
-        {demographics.persona_name || 'ペルソナ'}が抱える目標・課題・購買行動を定義します
+        各ペルソナが抱える目標・課題・購買行動を定義します（課題は短い体言止め）。
       </p>
 
-      {!aiLoading && (
-        <div className="flex justify-start mb-3">
-          <Button variant="outline" size="sm" onClick={handleRegenerate} className="gap-1.5 text-xs">
-            <WandSparkles className="h-3.5 w-3.5" />
-            {data.primary_goals?.length > 0 ? 'AIに再提案してもらう' : 'AIに提案してもらう'}
-          </Button>
-        </div>
-      )}
+      <div className="flex justify-start mb-3">
+        <Button variant="outline" size="sm" onClick={() => setConfirmOpen(true)} className="gap-1.5 text-xs">
+          <WandSparkles className="h-3.5 w-3.5" /> AIに全件再提案
+        </Button>
+      </div>
 
       {aiError && (
         <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600 mb-4">
           {aiError}
-          <button onClick={fetchAISuggestion} className="ml-2 font-medium underline hover:no-underline">再試行</button>
+          <button onClick={() => generate(false)} className="ml-2 font-medium underline hover:no-underline">再試行</button>
         </div>
       )}
 
-      <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-        <CardContent className="p-5 space-y-6">
-          <ListSection label="主な目標" items={data.primary_goals} fieldKey="primary_goals" placeholder="例: 自社ブランドの認知度を高めたい" onAdd={addItem} onRemove={removeItem} onUpdate={updateItem} />
-          <ListSection label="課題・悩み" items={data.challenges} fieldKey="challenges" placeholder="例: ブランディングの知識が不足している" onAdd={addItem} onRemove={removeItem} onUpdate={updateItem} />
-          <ListSection label="ペインポイント" items={data.pain_points} fieldKey="pain_points" placeholder="例: 予算が限られている" onAdd={addItem} onRemove={removeItem} onUpdate={updateItem} />
+      <div className="space-y-4">
+        {personas.map((p, idx) => (
+          <GoalsForm
+            key={idx}
+            personaName={p.demographics.persona_name || `ペルソナ${idx + 1}`}
+            data={p.goals}
+            onChange={(next) => updateGoals(idx, next)}
+          />
+        ))}
+      </div>
 
-          <div>
-            <label className="text-sm font-bold text-gray-700 mb-2 block">購買の動機</label>
-            <Textarea value={data.buying_motivation} onChange={e => updateField('buying_motivation', e.target.value)} placeholder="何がきっかけで商品・サービスを検討するか" rows={2} className="text-sm" />
-          </div>
-
-          <ListSection label="購買の障壁" items={data.buying_barriers} fieldKey="buying_barriers" placeholder="例: 費用対効果が見えにくい" onAdd={addItem} onRemove={removeItem} onUpdate={updateItem} />
-          <ListSection label="意思決定の要因" items={data.decision_factors} fieldKey="decision_factors" placeholder="例: 実績・事例の豊富さ" onAdd={addItem} onRemove={removeItem} onUpdate={updateItem} />
-
-          <div>
-            <label className="text-sm font-bold text-gray-700 mb-2 block">ブランドへの期待</label>
-            <Textarea value={data.brand_expectations} onChange={e => updateField('brand_expectations', e.target.value)} placeholder="このブランドにどんな価値を期待するか" rows={2} className="text-sm" />
-          </div>
-
-          <div>
-            <label className="text-sm font-bold text-gray-700 mb-2 block">成功の定義</label>
-            <Textarea value={data.success_definition} onChange={e => updateField('success_definition', e.target.value)} placeholder="この人にとっての「成功」とは" rows={2} className="text-sm" />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* フッターナビゲーション */}
       <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 bg-background/80 backdrop-blur border-t border-border px-6 py-3 flex items-center justify-between">
         <Button variant="outline" onClick={onBack} className="gap-1">
           <ArrowLeft className="h-4 w-4" /> 戻る
@@ -239,11 +164,11 @@ export function Step3Goals({ goals, demographics, basicInfo, onNext, onBack, onS
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>確認</AlertDialogTitle>
-            <AlertDialogDescription>現在の内容が上書きされます。よろしいですか？</AlertDialogDescription>
+            <AlertDialogDescription>全ペルソナの課題をAIで再生成します。現在の内容は上書きされます。よろしいですか？</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>キャンセル</AlertDialogCancel>
-            <AlertDialogAction onClick={() => fetchAISuggestion()}>OK</AlertDialogAction>
+            <AlertDialogAction onClick={() => generate(false)}>OK</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -251,7 +176,51 @@ export function Step3Goals({ goals, demographics, basicInfo, onNext, onBack, onS
   )
 }
 
-// リスト入力セクション
+// 1ペルソナぶんの課題フォーム（controlled）
+function GoalsForm({ personaName, data, onChange }: {
+  personaName: string
+  data: GoalsData
+  onChange: (next: GoalsData) => void
+}) {
+  const set = <K extends keyof GoalsData>(key: K, value: GoalsData[K]) => onChange({ ...data, [key]: value })
+  const addItem = (key: keyof GoalsData) => {
+    const arr = data[key]; if (Array.isArray(arr)) set(key, [...arr, ''] as GoalsData[typeof key])
+  }
+  const removeItem = (key: keyof GoalsData, idx: number) => {
+    const arr = data[key]; if (Array.isArray(arr)) set(key, arr.filter((_, i) => i !== idx) as GoalsData[typeof key])
+  }
+  const updateItem = (key: keyof GoalsData, idx: number, value: string) => {
+    const arr = data[key]
+    if (Array.isArray(arr)) { const next = [...arr]; next[idx] = value; set(key, next as GoalsData[typeof key]) }
+  }
+
+  return (
+    <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+      <CardContent className="p-5 space-y-6">
+        <h3 className="text-sm font-bold text-gray-700">{personaName} の課題</h3>
+        <ListSection label="主な目標" items={data.primary_goals} fieldKey="primary_goals" placeholder="例: 本業に集中できる環境の確保" onAdd={addItem} onRemove={removeItem} onUpdate={updateItem} />
+        <ListSection label="課題・悩み" items={data.challenges} fieldKey="challenges" placeholder="例: IT専任者がいない" onAdd={addItem} onRemove={removeItem} onUpdate={updateItem} />
+        <ListSection label="ペインポイント" items={data.pain_points} fieldKey="pain_points" placeholder="例: 費用対効果が見えにくい" onAdd={addItem} onRemove={removeItem} onUpdate={updateItem} />
+
+        <div>
+          <label className="text-sm font-bold text-gray-700 mb-2 block">購買の動機</label>
+          <Textarea value={data.buying_motivation} onChange={e => set('buying_motivation', e.target.value)} placeholder="何がきっかけで検討するか" rows={2} className="text-sm" />
+        </div>
+        <ListSection label="購買の障壁" items={data.buying_barriers} fieldKey="buying_barriers" placeholder="例: 費用対効果が見えにくい" onAdd={addItem} onRemove={removeItem} onUpdate={updateItem} />
+        <ListSection label="意思決定の要因" items={data.decision_factors} fieldKey="decision_factors" placeholder="例: 実績・事例の豊富さ" onAdd={addItem} onRemove={removeItem} onUpdate={updateItem} />
+        <div>
+          <label className="text-sm font-bold text-gray-700 mb-2 block">ブランドへの期待</label>
+          <Textarea value={data.brand_expectations} onChange={e => set('brand_expectations', e.target.value)} placeholder="どんな価値を期待するか" rows={2} className="text-sm" />
+        </div>
+        <div>
+          <label className="text-sm font-bold text-gray-700 mb-2 block">成功の定義</label>
+          <Textarea value={data.success_definition} onChange={e => set('success_definition', e.target.value)} placeholder="この人にとっての成功とは" rows={2} className="text-sm" />
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
 function ListSection({ label, items, fieldKey, placeholder, onAdd, onRemove, onUpdate }: {
   label: string
   items: string[]
@@ -267,12 +236,7 @@ function ListSection({ label, items, fieldKey, placeholder, onAdd, onRemove, onU
       <div className="space-y-2">
         {(items || []).map((item, idx) => (
           <div key={idx} className="flex items-center gap-2">
-            <Input
-              value={item}
-              onChange={e => onUpdate(fieldKey, idx, e.target.value)}
-              placeholder={placeholder}
-              className="h-9 text-sm flex-1"
-            />
+            <Input value={item} onChange={e => onUpdate(fieldKey, idx, e.target.value)} placeholder={placeholder} className="h-9 text-sm flex-1" />
             <button onClick={() => onRemove(fieldKey, idx)} className="rounded p-1 hover:bg-gray-100">
               <X className="h-4 w-4 text-gray-400" />
             </button>

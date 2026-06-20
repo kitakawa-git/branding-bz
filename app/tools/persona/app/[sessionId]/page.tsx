@@ -12,6 +12,7 @@ import { Step2Demographics } from './components/Step2Demographics'
 import { Step3Goals } from './components/Step3Goals'
 import { Step4Journey } from './components/Step4Journey'
 import { Step5Result } from './components/Step5Result'
+import { type Persona, normalizePersonas } from './components/persona-types'
 
 // ペルソナセッションデータの型
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -19,9 +20,11 @@ interface PersonaSessionData {
   current_step: number
   basic_info: any
   target_info: any
-  demographics: any
-  goals: any
-  journey_map: any
+  personas?: Persona[]   // マルチの正
+  journey_map: any       // 単一のまま（スコープ外）
+  // 後方互換: 旧 demographics/goals（単一）が残るセッションは読込時に personas へ正規化
+  demographics?: any
+  goals?: any
   completed: boolean
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
@@ -155,6 +158,11 @@ export default function PersonaSessionPage() {
 
   const currentStep = session.current_step
   const sd = session.session_data
+  // 後方互換正規化: personas[] が正。旧単一 demographics/goals は1ペルソナへ。
+  const personas = normalizePersonas(sd)
+  // Step4(ジャーニー)・互換のため先頭ペルソナの demographics/goals を渡す
+  const firstDemographics = personas[0]?.demographics || sd.demographics || {}
+  const firstGoals = personas[0]?.goals || sd.goals || {}
 
   return (
     <div className="mx-auto max-w-4xl px-5 py-8">
@@ -175,29 +183,28 @@ export default function PersonaSessionPage() {
       )}
       {currentStep === 2 && (
         <Step2Demographics
-          demographics={sd.demographics || {}}
+          personas={personas}
           basicInfo={sd.basic_info || {}}
-          onNext={(data) => saveAndAdvance(3, { demographics: data })}
+          onNext={(data) => saveAndAdvance(3, { personas: data })}
           onBack={() => saveAndAdvance(1)}
-          onSaveField={(data) => saveField({ demographics: data })}
+          onSaveField={(data) => saveField({ personas: data })}
         />
       )}
       {currentStep === 3 && (
         <Step3Goals
-          goals={sd.goals || {}}
-          demographics={sd.demographics || {}}
+          personas={personas}
           basicInfo={sd.basic_info || {}}
-          onNext={(data) => saveAndAdvance(4, { goals: data })}
+          onNext={(data) => saveAndAdvance(4, { personas: data })}
           onBack={() => saveAndAdvance(2)}
-          onSaveField={(data) => saveField({ goals: data })}
+          onSaveField={(data) => saveField({ personas: data })}
         />
       )}
       {currentStep === 4 && (
         <Step4Journey
           journey={sd.journey_map || {}}
           basicInfo={sd.basic_info || {}}
-          demographics={sd.demographics || {}}
-          goals={sd.goals || {}}
+          demographics={firstDemographics as typeof firstDemographics & Record<string, unknown>}
+          goals={firstGoals as typeof firstGoals & Record<string, unknown>}
           onNext={(data) => saveAndAdvance(5, { journey_map: data })}
           onBack={() => saveAndAdvance(3)}
           onSaveField={(data) => saveField({ journey_map: data })}
@@ -206,10 +213,7 @@ export default function PersonaSessionPage() {
       {currentStep === 5 && (
         <Step5Result
           sessionId={sessionId}
-          basicInfo={sd.basic_info || {}}
-          demographics={sd.demographics || {}}
-          goals={sd.goals || {}}
-          journey={sd.journey_map || {}}
+          personas={personas}
           companyId={session.company_id}
           onBack={() => saveAndAdvance(4)}
         />

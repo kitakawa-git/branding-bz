@@ -33,84 +33,85 @@ export async function POST(request: NextRequest) {
     }
 
     const sessionData = session.session_data
-    const demographics = sessionData.demographics || {}
-    const goalsData = sessionData.goals || {}
     const journeyData = sessionData.journey_map || {}
 
-    // 2. brand_personas を更新/作成
-    const personaData = {
-      persona_name: demographics.persona_name || '',
-      age: demographics.age || null,
-      gender: demographics.gender || '',
-      occupation: demographics.occupation || '',
-      company_role: demographics.company_role || '',
-      company_size: demographics.company_size || '',
-      location: demographics.location || '',
-      annual_income: demographics.annual_income || '',
-      family: demographics.family || '',
-      education: demographics.education || '',
-      hobbies: demographics.hobbies || [],
-      media_channels: demographics.media_channels || [],
-      personality_traits: demographics.personality_traits || [],
-      daily_routine: demographics.daily_routine || '',
-      quote: demographics.quote || '',
-      goals: goalsData,
+    // マルチペルソナ: personas[] を正とする。無ければ旧 demographics/goals(単一) を1件として後方互換。
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const personas: Array<{ demographics: any; goals: any }> =
+      Array.isArray(sessionData.personas) && sessionData.personas.length > 0
+        ? sessionData.personas
+        : sessionData.demographics || sessionData.goals
+          ? [{ demographics: sessionData.demographics || {}, goals: sessionData.goals || {} }]
+          : []
+
+    // 1ペルソナぶんの書き込み値を作る（rich persona_data ＋ 離散カラム写像）。
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const buildValues = (p: { demographics: any; goals: any }, i: number) => {
+      const demographics = p.demographics || {}
+      const goalsData = p.goals || {}
+      const personaData = {
+        persona_name: demographics.persona_name || '',
+        age: demographics.age || null,
+        gender: demographics.gender || '',
+        occupation: demographics.occupation || '',
+        company_role: demographics.company_role || '',
+        company_size: demographics.company_size || '',
+        location: demographics.location || '',
+        hobbies: demographics.hobbies || [],
+        media_channels: demographics.media_channels || [],
+        personality_traits: demographics.personality_traits || [],
+        daily_routine: demographics.daily_routine || '',
+        quote: demographics.quote || '',
+        goals: goalsData,
+      }
+      // 離散カラム写像（pain_points/needs/age_range/occupation/description）。1ペルソナ分を渡す。
+      const mapped = mapSessionToPersonaColumns({ demographics, goals: goalsData })
+      // ジャーニーはスコープ外: 先頭ペルソナにのみ書く（他は空）。
+      const journeyMapData = i === 0 ? { stages: journeyData.stages || [] } : { stages: [] }
+      return {
+        name: demographics.persona_name || '',
+        sort_order: i,
+        persona_data: personaData,
+        journey_map_data: journeyMapData,
+        ...mapped,
+      }
     }
 
-    const journeyMapData = {
-      stages: journeyData.stages || [],
-    }
-
-    // 離散カラム（pain_points/needs ほか）への写像。rich な persona_data はそのまま温存。
-    // pain_points はコピーAIのインサイト抽出の起点。空でも壊さず [] を書く。
-    const mapped = mapSessionToPersonaColumns(sessionData)
-
-    // 既存レコード検索
+    // 既存レコード（sort_order順）を取得して sync（update/insert/delete・冪等）。
     const { data: existingPersonas } = await supabaseAdmin
       .from('brand_personas')
       .select('id, sort_order')
       .eq('company_id', companyId)
       .order('sort_order', { ascending: true })
+    const existing = existingPersonas || []
+    const N = personas.length
 
-    if (existingPersonas && existingPersonas.length > 0) {
-      // 最初のレコードを更新
-      const firstPersona = existingPersonas[0]
-      const { error: updateError } = await supabaseAdmin
-        .from('brand_personas')
-        .update({
-          name: demographics.persona_name || '',
-          persona_data: personaData,
-          journey_map_data: journeyMapData,
-          ...mapped, // 離散カラム pain_points/needs(+age_range/occupation/description) を追加書き込み
-        })
-        .eq('id', firstPersona.id)
-
-      if (updateError) {
-        console.error('[Persona Connect] 更新エラー:', updateError)
-        return NextResponse.json(
-          { error: 'ペルソナの更新に失敗しました' },
-          { status: 500 }
-        )
+    // 空セッションで既存を全消ししないようガード（書くものが無ければ触らない）。
+    if (N > 0) {
+      for (let i = 0; i < N; i++) {
+        const values = buildValues(personas[i], i)
+        if (existing[i]) {
+          const { error: upErr } = await supabaseAdmin.from('brand_personas').update(values).eq('id', existing[i].id)
+          if (upErr) {
+            console.error('[Persona Connect] 更新エラー:', upErr)
+            return NextResponse.json({ error: 'ペルソナの更新に失敗しました' }, { status: 500 })
+          }
+        } else {
+          const { error: insErr } = await supabaseAdmin.from('brand_personas').insert({ company_id: companyId, ...values })
+          if (insErr) {
+            console.error('[Persona Connect] 挿入エラー:', insErr)
+            return NextResponse.json({ error: 'ペルソナの作成に失敗しました' }, { status: 500 })
+          }
+        }
       }
-    } else {
-      // 新規作成
-      const { error: insertError } = await supabaseAdmin
-        .from('brand_personas')
-        .insert({
-          company_id: companyId,
-          name: demographics.persona_name || '',
-          sort_order: 0,
-          persona_data: personaData,
-          journey_map_data: journeyMapData,
-          ...mapped, // 離散カラム pain_points/needs(+age_range/occupation/description) を追加書き込み
-        })
-
-      if (insertError) {
-        console.error('[Persona Connect] 挿入エラー:', insertError)
-        return NextResponse.json(
-          { error: 'ペルソナの作成に失敗しました' },
-          { status: 500 }
-        )
+      // 余剰（sort_order >= N）を削除
+      if (existing.length > N) {
+        const surplusIds = existing.slice(N).map((r) => r.id)
+        const { error: delErr } = await supabaseAdmin.from('brand_personas').delete().in('id', surplusIds)
+        if (delErr) {
+          console.error('[Persona Connect] 余剰削除エラー:', delErr)
+          return NextResponse.json({ error: 'ペルソナの整理に失敗しました' }, { status: 500 })
+        }
       }
     }
 
