@@ -198,13 +198,13 @@ export function Step2Demographics({ demographics, basicInfo, onNext, onBack, onS
             <h3 className="text-sm font-bold mb-3 text-gray-700">基本プロフィール</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
-                <label className="text-xs text-gray-500 mb-1 block">名前</label>
-                <Input value={data.persona_name} onChange={e => updateField('persona_name', e.target.value)} placeholder="架空の名前" className="h-9 text-sm" />
+                <label className="text-xs text-gray-500 mb-1 block">呼称 / ペルソナ名称</label>
+                <Input value={data.persona_name} onChange={e => updateField('persona_name', e.target.value)} placeholder="例: 地方中小企業の経営者" className="h-9 text-sm" />
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="text-xs text-gray-500 mb-1 block">年齢</label>
-                  <Input type="number" value={data.age} onChange={e => updateField('age', e.target.value)} placeholder="35" className="h-9 text-sm" />
+                  <label className="text-xs text-gray-500 mb-1 block">年齢層</label>
+                  <Input type="text" value={data.age} onChange={e => updateField('age', e.target.value)} placeholder="例: 30-40歳" className="h-9 text-sm" />
                 </div>
                 <div>
                   <label className="text-xs text-gray-500 mb-1 block">性別</label>
