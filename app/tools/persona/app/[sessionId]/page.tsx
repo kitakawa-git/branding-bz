@@ -42,7 +42,7 @@ interface PersonaSession {
 
 const STEP_DEFINITIONS = [
   { label: '基本情報' },
-  { label: 'デモグラフィック' },
+  { label: 'ペルソナ生成' },
   { label: 'ゴール・課題' },
   { label: 'ジャーニーマップ' },
   { label: '確認・出力' },
@@ -160,9 +160,6 @@ export default function PersonaSessionPage() {
   const sd = session.session_data
   // 後方互換正規化: personas[] が正。旧単一 demographics/goals は1ペルソナへ。target_name はセグメントから補完。
   const personas = normalizePersonas(sd, sd.basic_info?.target_segments)
-  // Step4(ジャーニー)・互換のため先頭ペルソナの demographics/goals を渡す
-  const firstDemographics = personas[0]?.demographics || sd.demographics || {}
-  const firstGoals = personas[0]?.goals || sd.goals || {}
 
   return (
     <div className="mx-auto max-w-4xl px-5 py-8">
@@ -201,13 +198,11 @@ export default function PersonaSessionPage() {
       )}
       {currentStep === 4 && (
         <Step4Journey
-          journey={sd.journey_map || {}}
+          personas={personas}
           basicInfo={sd.basic_info || {}}
-          demographics={firstDemographics as typeof firstDemographics & Record<string, unknown>}
-          goals={firstGoals as typeof firstGoals & Record<string, unknown>}
-          onNext={(data) => saveAndAdvance(5, { journey_map: data })}
+          onNext={(data) => saveAndAdvance(5, { personas: data })}
           onBack={() => saveAndAdvance(3)}
-          onSaveField={(data) => saveField({ journey_map: data })}
+          onSaveField={(data) => saveField({ personas: data })}
         />
       )}
       {currentStep === 5 && (

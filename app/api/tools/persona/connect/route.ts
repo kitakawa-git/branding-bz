@@ -33,11 +33,12 @@ export async function POST(request: NextRequest) {
     }
 
     const sessionData = session.session_data
-    const journeyData = sessionData.journey_map || {}
+    // 後方互換: 旧・単一 journey_map（personas[i].journey_map 不在の先頭ペルソナ用フォールバック）
+    const legacyJourney = sessionData.journey_map || { stages: [] }
 
     // マルチペルソナ: personas[] を正とする。無ければ旧 demographics/goals(単一) を1件として後方互換。
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const personas: Array<{ target_name?: string; demographics: any; goals: any }> =
+    const personas: Array<{ target_name?: string; demographics: any; goals: any; journey_map?: any }> =
       Array.isArray(sessionData.personas) && sessionData.personas.length > 0
         ? sessionData.personas
         : sessionData.demographics || sessionData.goals
@@ -46,7 +47,7 @@ export async function POST(request: NextRequest) {
 
     // 1ペルソナぶんの書き込み値を作る（rich persona_data ＋ 離散カラム写像）。
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const buildValues = (p: { target_name?: string; demographics: any; goals: any }, i: number) => {
+    const buildValues = (p: { target_name?: string; demographics: any; goals: any; journey_map?: any }, i: number) => {
       const demographics = p.demographics || {}
       const goalsData = p.goals || {}
       const personaData = {
@@ -67,8 +68,11 @@ export async function POST(request: NextRequest) {
       }
       // 離散カラム写像（pain_points/needs/age_range/occupation/description）。1ペルソナ分を渡す。
       const mapped = mapSessionToPersonaColumns({ demographics, goals: goalsData })
-      // ジャーニーはスコープ外: 先頭ペルソナにのみ書く（他は空）。
-      const journeyMapData = i === 0 ? { stages: journeyData.stages || [] } : { stages: [] }
+      // 各ペルソナ自身の journey_map を書く（マルチペルソナ対応）。
+      // 後方互換: 先頭ペルソナに journey が無く旧・単一 journey_map がある場合のみフォールバック。
+      const journeyMapData = (i === 0 && !(p.journey_map?.stages?.length))
+        ? { stages: legacyJourney.stages || [] }
+        : { stages: p.journey_map?.stages || [] }
       return {
         name: demographics.persona_name || '',
         sort_order: i,
