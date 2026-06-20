@@ -10,7 +10,6 @@ import { StepProgressBar } from '@/components/shared/StepProgressBar'
 import { Step1BasicInfo } from './components/Step1BasicInfo'
 import { Step2Demographics } from './components/Step2Demographics'
 import { Step3Goals } from './components/Step3Goals'
-import { Step4Journey } from './components/Step4Journey'
 import { Step5Result } from './components/Step5Result'
 import { type Persona, normalizePersonas } from './components/persona-types'
 
@@ -44,7 +43,6 @@ const STEP_DEFINITIONS = [
   { label: '基本情報' },
   { label: 'デモグラフィック' },
   { label: 'ゴール・課題' },
-  { label: 'ジャーニーマップ' },
   { label: '確認・出力' },
 ]
 
@@ -156,13 +154,11 @@ export default function PersonaSessionPage() {
     )
   }
 
-  const currentStep = session.current_step
+  // 4ステップ化: 旧ジャーニー(4)/旧確認(5)の途中セッションは確認画面(新4)へクランプ
+  const currentStep = Math.min(session.current_step, 4)
   const sd = session.session_data
   // 後方互換正規化: personas[] が正。旧単一 demographics/goals は1ペルソナへ。target_name はセグメントから補完。
   const personas = normalizePersonas(sd, sd.basic_info?.target_segments)
-  // Step4(ジャーニー)・互換のため先頭ペルソナの demographics/goals を渡す
-  const firstDemographics = personas[0]?.demographics || sd.demographics || {}
-  const firstGoals = personas[0]?.goals || sd.goals || {}
 
   return (
     <div className="mx-auto max-w-4xl px-5 py-8">
@@ -200,23 +196,12 @@ export default function PersonaSessionPage() {
         />
       )}
       {currentStep === 4 && (
-        <Step4Journey
-          journey={sd.journey_map || {}}
-          basicInfo={sd.basic_info || {}}
-          demographics={firstDemographics as typeof firstDemographics & Record<string, unknown>}
-          goals={firstGoals as typeof firstGoals & Record<string, unknown>}
-          onNext={(data) => saveAndAdvance(5, { journey_map: data })}
-          onBack={() => saveAndAdvance(3)}
-          onSaveField={(data) => saveField({ journey_map: data })}
-        />
-      )}
-      {currentStep === 5 && (
         <Step5Result
           sessionId={sessionId}
           personas={personas}
           basicInfo={sd.basic_info || {}}
           companyId={session.company_id}
-          onBack={() => saveAndAdvance(4)}
+          onBack={() => saveAndAdvance(3)}
         />
       )}
     </div>
