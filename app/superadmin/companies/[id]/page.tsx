@@ -8,7 +8,7 @@ import { supabase } from '@/lib/supabase'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { ArrowLeft, ArrowRight, Check } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Check, Eye } from 'lucide-react'
 import { Fab, FabButton } from '@/components/ui/fab'
 import { type ValuePropositionRef } from './_sections/ProofPointsSection'
 import OntologySummaryHub from './_sections/OntologySummaryHub'
@@ -207,9 +207,17 @@ export default function CompanyDetailPage() {
         <ArrowLeft size={14} className="inline" /> 企業一覧に戻る
       </Link>
 
-      <h2 className="text-xl font-bold text-foreground mb-6">
-        {company.name}
-      </h2>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-xl font-bold text-foreground">
+          {company.name}
+        </h2>
+        <Link
+          href={`/superadmin/companies/${companyId}/view`}
+          className="inline-flex items-center gap-1.5 rounded-md border border-border bg-muted/50 px-3 py-1.5 text-sm font-medium text-foreground no-underline transition-colors hover:bg-muted"
+        >
+          <Eye size={14} /> この企業の状態を見る（閲覧）
+        </Link>
+      </div>
 
       {/* === アクセス解析サマリー === */}
       <div className="grid grid-cols-3 gap-4 mb-6">
