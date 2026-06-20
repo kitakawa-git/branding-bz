@@ -33,6 +33,7 @@ export async function POST(request: NextRequest) {
     }
 
     const sessionData = session.session_data
+    const journeyData = sessionData.journey_map || {}
 
     // マルチペルソナ: personas[] を正とする。無ければ旧 demographics/goals(単一) を1件として後方互換。
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -66,11 +67,13 @@ export async function POST(request: NextRequest) {
       }
       // 離散カラム写像（pain_points/needs/age_range/occupation/description）。1ペルソナ分を渡す。
       const mapped = mapSessionToPersonaColumns({ demographics, goals: goalsData })
-      // ジャーニーはビルダーから切り離し（4ステップ化）。journey_map_data は書かない（カラムは残置・無害な遺物）。
+      // ジャーニーはスコープ外: 先頭ペルソナにのみ書く（他は空）。
+      const journeyMapData = i === 0 ? { stages: journeyData.stages || [] } : { stages: [] }
       return {
         name: demographics.persona_name || '',
         sort_order: i,
         persona_data: personaData,
+        journey_map_data: journeyMapData,
         ...mapped,
       }
     }

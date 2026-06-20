@@ -5,8 +5,22 @@
 > Cowork: 直接読み書き
 > Claude Projects: ナレッジとしてアップロード（週1回推奨）
 
-**最終更新:** 2026-06-11
-**更新者:** Claude Code（STP分析 Step5 リニューアル）
+**最終更新:** 2026-06-20
+**更新者:** Cowork（コピーAI／ペルソナビルダーの開発状況を反映）
+
+---
+
+## 開発状態（ブランチ / マージ / デプロイ）
+
+> ⚠️ **コピーAI・ペルソナビルダーの一連は `feature/superadmin-company-view` ブランチ上で、main 未マージ・本番未デプロイ。** localhost（`npm run dev` port 3004・当該ブランチ）でのみ動作する。
+
+| 項目 | 状態 |
+|------|------|
+| 作業ブランチ | `feature/superadmin-company-view`（途中で `feature/lp-tools-vivid-cards` から移動） |
+| main へのマージ | **未**（北川さんの明示指示まで保留。ブランチ作成・切替・マージは勝手に行わない） |
+| 本番デプロイ | **未**（main 未反映のため Vercel に出ていない） |
+| 未コミットWIP | ジャーニー復元の作業（`suggest-journey`/`Step4Journey` 再追加・`connect`/`Step3`/`Step5`/`page`）＋並行セッションのLP系WIP が working tree に残存。**ステータス更新では触らない** |
+| 要判断（保留） | ①コピーAI＋ペルソナ一式の main 反映・デプロイ ②`lib/claude-api.ts` モデルhotfix（旧 `claude-sonnet-4-20250514`→`claude-sonnet-4-6`・本番AI復旧）の main 反映 |
 
 ---
 
@@ -46,6 +60,23 @@
 ---
 
 ## 3. 完了済み機能
+
+### 🆕 コピーAI（MVP・feature/superadmin-company-view・main未反映）
+- **7段階クリエイティブ・パイプライン**（診断→インサイト→切り口→生成→批評→リライト）。一発生成を禁止。
+- **尖り度マトリクス**（`lib/copy/role-matrix.ts`）: `copy_role`（hero_h1=狂犬100% / section_heading=70% / body_copy=40% / cta=0%）で態度表明・陳腐句ブロック・評価軸を動的切替。
+- **INTENT/FACT/RULES 3層分離**（`lib/copy/ontology-blocks.ts`）: 理念・バリュー=引用禁止（意味だけ翻訳）／proof_points=引用可／governance_rules=禁則。コピペ・平均値化を構造で防止。
+- **批評（インスペクター）**（`lib/copy/inspector.ts`/`metrics.ts`/`score.ts`）: 二値チェックリスト＋引用（点数はTS合成）、クリシェ密度・継承重複(containment)はコード計算、処方箋のみ返す（リライト本文は生成器へ再パス）。生成=`claude-sonnet-4-6`／批評=`claude-opus-4-8`。craft_score低×brand_fit高=赤旗→自動リライト送還（最大2回）。
+- **人間ゲート**: インサイトは pain_points 等へ接地（source_ref必須・捏造破棄）。クライアントは id のみ送信・サーバ再取得。
+- **ワークベンチUI**: `/superadmin/companies/[id]/copy`（superadmin専用）。
+- DB（本番適用済み）: `copy_projects`/`copy_insights`/`copy_angles`/`copy_drafts`/`copy_quality_reviews`（RLS superadmin_all＋member_select）。
+- 実証: before/after で「30%捏造→実データ42%引用」、退屈なbody_copy(craft46)→赤旗→自動リライト(craft88)、医療コンプラ禁則を狂犬モードでも遵守。
+
+### 🆕 ペルソナビルダー連続改修（feature/superadmin-company-view・main未反映）
+- discrete pain_points 写像（連携が `goals.pain_points→brand_personas.pain_points`、`primary_goals→needs` を書く）。
+- セグメント型粒度に統一（役割呼称・年齢層・短い体言止め課題）。年収/家族/学歴を削除、口癖・1日の過ごし方は任意。
+- マルチペルソナ化（`session_data.personas[]`・connectはN件sync・冪等）＋ターゲット別グルーピング（`target_name` を `persona_data` に格納）。
+- ジャーニー: maxTokens 8000＋堅牢パーサ、Step4任意化。一度撤去→北川さん判断で復元（5ステップ・`journey_map_data` 列は残置）。
+
 
 - スマート名刺 (/card/[slug]) — プロフィール＋企業ブランド＋MVV＋マイクロフィードバック
 - 管理画面 (/admin) — 企業情報・メンバー・ブランドガイドライン・お知らせ・名刺テンプレート
@@ -127,6 +158,15 @@
 ---
 
 ## 4. 残タスク
+
+### 🆕 コピーAI／ペルソナビルダー（feature ブランチ・main未反映）
+- [ ] **ジャーニーUIのシンプル化**: 3案（案1横グリッド／案2感情カーブ＋タイムライン／案3要点カード）を提示済み。北川さんが1案選定 → 採用案で差し替えの実装指示書をClaude Codeへ。
+- [ ] ジャーニーの対象範囲決定（現状は先頭ペルソナ1人のみ。候補: A=ペルソナ選択式／B=マルチ化／C=現状維持。※ジャーニーは下流から読まれない孤立データ）。
+- [ ] 実データでフルパイプライン一周（ID INC.でペルソナ作成→連携→コピーAI）を実施。
+- [ ] main 反映・本番デプロイの判断（§開発状態）。`lib/claude-api.ts` モデルhotfixの main 反映も保留中。
+- [ ] コピーAI: richなvoice注入（`persona_data` 口癖等を生成器へ）／body_copyトークン上限調整／クライアント画面への開放。
+- [ ] リィツメディカル【B】3件（取引施設数・対応スピード実測値・医師の声）を次回打合せで確認→管理画面から追加。
+
 
 ### 🔴 Phase 2（進行中）
 - [ ] タイムライン機能の完成
@@ -223,6 +263,12 @@
 | 2026-06-10 | **element_relations はポリモーフィック端点(kind+id)**。直接FK（proof_points.value_proposition_id等）は残し、跨ぐ関係のみ本テーブル。端点検証は SECURITY DEFINER トリガ（存在＋同一company）。トリガ関数は EXECUTE を anon/authenticated から剥奪（トリガは権限無しでも発火する）。`lib/brand/elements-catalog.ts` が5種を `{kind,id,label}` で返す共通取得 |
 | 2026-06-10 | **マイグレは必ずローカル.sql先行→適用**（`branding-bz/CLAUDE.md` 恒久ルール化）。MCP `apply_migration` 使用時も同一SQLを `supabase/migrations/<version>_<name>.sql` に保存し同コミットに含める（version はリモート `schema_migrations` 記録値に合わせる）。破壊的変更（DROP）は退避テーブルへ事前バックアップ。旧 iCloud フォルダ撤去→**正本は `~/dev/branding-bz`＋GitHub** |
 | 2026-06-10 | **AI判定の誤検知/ハルシネーション対策**: 1社1回のClaude呼び出し（ルート毎に呼ばない＝コスト/レート対策）、NG/OK例をfew-shot、「明確な違反のみ報告」指示、返却の quoted_text が原文に実在・rule_id/target_ref が実在することをコード側で検証し通らないものは破棄。プロンプトで `target_ref` と label を**別行**に（同一行だとAIがlabelをrefに混入させ全dropするバグ）。1チェック≒3,000〜6,000 tokens（sonnet） |
+| 2026-06-18 | **コピーAI設計の核**: ①事実は機械・語りはAI（craft採点はLLMでなくコードで合成）②生成器≠批評器（生成sonnet／批評opusの別モデル）。INTENT(引用禁止)/FACT(引用可)/RULES(禁則) を物理分離してプロンプト注入。クリシェ密度・継承重複(containment)・数値捏造は決定論計算、Tension/Stance/藁人形チェックのみLLM。批評は処方箋のみ返し本文は書かせない（先祖返り防止） |
+| 2026-06-18 | **コピーAI DB**: `copy_projects/insights/angles/drafts/quality_reviews`（RLS superadmin_all＋member_select）。人間ゲートはクライアントから id のみ受け、本文はサーバ再取得（改ざん防止）。インサイトは pain_points 等へ source_ref 接地必須・接地しない候補はコード破棄 |
+| 2026-06-18 | **ペルソナ粒度はセグメント型(役割アーキタイプ)に統一**＝オントロジー(discrete pain_points)に揃えるため。suggest-goals の課題は短い体言止め。rich profile(口癖等)は voice 素材として temporarily 任意保持。connect は company のペルソナを sync(上書き)するため既存ペルソナのある company でうかつに連携しない |
+| 2026-06-18 | **JSON生成の途中切れ対策**: suggest 系で maxTokens 不足だと長文出力が切れて `JSON.parse` 失敗。maxTokens 引き上げ＋「完結した最後のオブジェクトまでで配列を閉じる」救済パーサで復旧。継承重複は対称Jaccardでなく containment(|A∩B|/|A|) で測る（短いコピペを大コーパスで希釈しないため） |
+| 2026-06-20 | **ジャーニーは孤立データ**: 生成時は guardrails＋relations を注入する(入力はオントロジー参照)が、`journey_map_data` の出力は下流(コピーAI/オントロジー)から読まれない。コピーAIの起点は pain_points。ジャーニーUIシンプル化は3案提示中 |
+
 
 ---
 
