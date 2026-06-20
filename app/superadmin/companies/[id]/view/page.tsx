@@ -10,6 +10,8 @@ import { supabase } from '@/lib/supabase'
 import { Card, CardContent } from '@/components/ui/card'
 import { ArrowLeft, Eye } from 'lucide-react'
 
+type Row = Record<string, unknown> & { id: string }
+
 type ViewData = {
   company: Record<string, unknown>
   basics: {
@@ -19,12 +21,12 @@ type ViewData = {
     inviteLinkCount: number
   }
   brand: {
-    guidelines: Record<string, unknown>[]
-    valuePropositions: { id: string; title?: string | null }[]
-    personas: { id: string; name?: string | null }[]
-    personalities: Record<string, unknown>[]
-    visuals: Record<string, unknown>[]
-    terms: { id: string; term?: string | null }[]
+    guidelines: Row[]
+    valuePropositions: Row[]
+    personas: Row[]
+    personalities: Row[]
+    visuals: Row[]
+    terms: Row[]
   }
   metrics: {
     scoreSnapshots: { snapshot_date?: string; total_score?: number }[]
@@ -79,6 +81,62 @@ function s(v: unknown): string {
   if (v === null || v === undefined || v === '') return '—'
   if (typeof v === 'boolean') return v ? 'ON' : 'OFF'
   return String(v)
+}
+
+/* 文字列フィールドを取り出す（空なら null） */
+function field(row: Row, key: string): string | null {
+  const v = row[key]
+  if (v === null || v === undefined || v === '') return null
+  if (typeof v === 'string' || typeof v === 'number') return String(v)
+  return null
+}
+
+/* jsonb 配列を文字列配列として取り出す（文字列要素 or {label/name/title/hex} を拾う） */
+function strArr(row: Row, key: string): string[] {
+  const v = row[key]
+  if (!Array.isArray(v)) return []
+  return v
+    .map((x) => {
+      if (typeof x === 'string') return x
+      if (x && typeof x === 'object') {
+        const o = x as Record<string, unknown>
+        const cand = o.label ?? o.name ?? o.title ?? o.text ?? o.hex ?? o.value
+        return typeof cand === 'string' ? cand : null
+      }
+      return null
+    })
+    .filter((x): x is string => !!x)
+}
+
+/* ラベル＋本文（本文が無ければ何も描画しない） */
+function Line({ label, value }: { label: string; value: string | null | undefined }) {
+  if (!value) return null
+  return (
+    <div className="py-1">
+      <span className="text-[11px] text-muted-foreground">{label}</span>
+      <p className="whitespace-pre-wrap text-sm leading-relaxed">{value}</p>
+    </div>
+  )
+}
+
+/* チップ群（空なら何も描画しない） */
+function Chips({ label, items }: { label: string; items: string[] }) {
+  if (items.length === 0) return null
+  return (
+    <div className="py-1">
+      <span className="text-[11px] text-muted-foreground">{label}</span>
+      <div className="mt-1 flex flex-wrap gap-1.5">
+        {items.map((it, i) => (
+          <span key={i} className="rounded-full bg-muted px-2.5 py-0.5 text-xs">{it}</span>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/* 1件分の枠 */
+function ItemCard({ children }: { children: React.ReactNode }) {
+  return <div className="rounded-lg border border-border p-3">{children}</div>
 }
 
 export default function CompanyViewPage() {
@@ -249,15 +307,106 @@ export default function CompanyViewPage() {
           <Stat label="ビジュアル" value={data.brand.visuals.length} />
           <Stat label="用語" value={data.brand.terms.length} />
         </div>
+        {/* ガイドライン */}
+        {data.brand.guidelines.map((g) => (
+          <Card key={g.id} className="py-0">
+            <CardContent className="p-4">
+              <p className="mb-1 text-xs font-semibold text-muted-foreground">ガイドライン</p>
+              <Line label="スローガン" value={field(g, 'slogan')} />
+              <Line label="ブランドステートメント" value={field(g, 'brand_statement')} />
+              <Line label="ブランドストーリー" value={field(g, 'brand_story')} />
+              <Line label="パーソナリティ要約" value={field(g, 'personality_summary')} />
+              <Line label="ブランド動画URL" value={field(g, 'brand_video_url')} />
+            </CardContent>
+          </Card>
+        ))}
+
+        {/* 提供価値 */}
         {data.brand.valuePropositions.length > 0 && (
           <Card className="py-0">
+            <CardContent className="space-y-2 p-4">
+              <p className="text-xs font-semibold text-muted-foreground">提供価値</p>
+              {data.brand.valuePropositions.map((v) => (
+                <ItemCard key={v.id}>
+                  <p className="text-sm font-semibold">{s(field(v, 'title'))}</p>
+                  {field(v, 'description') && (
+                    <p className="mt-1 whitespace-pre-wrap text-sm text-muted-foreground">{field(v, 'description')}</p>
+                  )}
+                </ItemCard>
+              ))}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* ペルソナ */}
+        {data.brand.personas.length > 0 && (
+          <Card className="py-0">
+            <CardContent className="space-y-2 p-4">
+              <p className="text-xs font-semibold text-muted-foreground">ペルソナ</p>
+              {data.brand.personas.map((p) => (
+                <ItemCard key={p.id}>
+                  <p className="text-sm font-semibold">
+                    {s(field(p, 'name'))}
+                    {(field(p, 'age_range') || field(p, 'occupation')) && (
+                      <span className="ml-2 text-xs font-normal text-muted-foreground">
+                        {[field(p, 'age_range'), field(p, 'occupation')].filter(Boolean).join('・')}
+                      </span>
+                    )}
+                  </p>
+                  <Line label="ターゲット" value={field(p, 'target')} />
+                  <Line label="説明" value={field(p, 'description')} />
+                  <Chips label="ニーズ" items={strArr(p, 'needs')} />
+                  <Chips label="ペインポイント" items={strArr(p, 'pain_points')} />
+                </ItemCard>
+              ))}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* パーソナリティ */}
+        {data.brand.personalities.map((pe) => (
+          <Card key={pe.id} className="py-0">
             <CardContent className="p-4">
-              <p className="mb-2 text-xs font-semibold text-muted-foreground">提供価値</p>
-              <div className="flex flex-wrap gap-2">
-                {data.brand.valuePropositions.map((v) => (
-                  <span key={v.id} className="rounded-full bg-muted px-3 py-1 text-xs">{s(v.title)}</span>
-                ))}
-              </div>
+              <p className="mb-1 text-xs font-semibold text-muted-foreground">パーソナリティ</p>
+              <Line label="トーン・オブ・ボイス" value={field(pe, 'tone_of_voice')} />
+              <Line label="コミュニケーションスタイル" value={field(pe, 'communication_style')} />
+              <Chips label="アーキタイプ" items={strArr(pe, 'archetype')} />
+            </CardContent>
+          </Card>
+        ))}
+
+        {/* ビジュアル */}
+        {data.brand.visuals.map((vi) => (
+          <Card key={vi.id} className="py-0">
+            <CardContent className="p-4">
+              <p className="mb-1 text-xs font-semibold text-muted-foreground">ビジュアル</p>
+              <Line label="ロゴコンセプト" value={field(vi, 'logo_concept')} />
+              <Line label="ビジュアルガイドライン" value={field(vi, 'visual_guidelines')} />
+              <Line label="ロゴ使用ルール" value={field(vi, 'logo_usage_rules')} />
+              <Chips label="カラーパレット" items={strArr(vi, 'color_palette')} />
+            </CardContent>
+          </Card>
+        ))}
+
+        {/* 用語 */}
+        {data.brand.terms.length > 0 && (
+          <Card className="py-0">
+            <CardContent className="p-0">
+              <div className="border-b border-border px-4 py-2.5 text-xs font-semibold text-muted-foreground">用語ルール</div>
+              <table className="w-full text-sm">
+                <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
+                  <tr><th className="px-4 py-2">推奨</th><th className="px-4 py-2">避ける</th><th className="px-4 py-2">文脈・カテゴリ</th></tr>
+                </thead>
+                <tbody>
+                  {data.brand.terms.map((t) => (
+                    <tr key={t.id} className="border-t border-border">
+                      <td className="px-4 py-2 font-medium">{s(field(t, 'preferred_term'))}</td>
+                      <td className="px-4 py-2 text-muted-foreground">{s(field(t, 'avoided_term'))}</td>
+                      <td className="px-4 py-2 text-muted-foreground">{[field(t, 'context'), field(t, 'category')].filter(Boolean).join(' / ') || '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </CardContent>
           </Card>
         )}
