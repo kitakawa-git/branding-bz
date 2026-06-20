@@ -26,16 +26,23 @@ export default function ProjectSetup({
 
   useEffect(() => {
     let active = true
-    supabase
-      .from('brand_personas')
-      .select('id, name, pain_points')
-      .eq('company_id', companyId)
-      .order('sort_order', { ascending: true })
-      .then(({ data }) => {
+    // brand_personas は superadmin_all RLS が無く client直読みが0件になるため、
+    // service_role API（RLSバイパス）経由で取得する。
+    ;(async () => {
+      try {
+        const token = (await supabase.auth.getSession()).data.session?.access_token || ''
+        const res = await fetch(`/api/superadmin/copy/personas?companyId=${companyId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        const json = await res.json()
         if (!active) return
-        setPersonas((data as Persona[]) ?? [])
-        setLoading(false)
-      })
+        setPersonas(res.ok ? (json.personas as Persona[]) ?? [] : [])
+      } catch {
+        if (active) setPersonas([])
+      } finally {
+        if (active) setLoading(false)
+      }
+    })()
     return () => {
       active = false
     }

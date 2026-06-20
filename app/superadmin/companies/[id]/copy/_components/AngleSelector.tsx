@@ -16,12 +16,14 @@ export default function AngleSelector({
   hasSelectedInsight,
   onReload,
   onNeedInsight,
+  onAdvance,
 }: {
   projectId: string
   angles: CopyAngle[]
   hasSelectedInsight: boolean
   onReload: () => Promise<void>
   onNeedInsight: () => void
+  onAdvance: () => void
 }) {
   const [busy, setBusy] = useState(false)
   const token = async () => (await supabase.auth.getSession()).data.session?.access_token || ''
@@ -63,6 +65,7 @@ export default function AngleSelector({
       if (!res.ok) throw new Error(json.error || '選択に失敗しました')
       toast.success('この切り口で進みます')
       await onReload()
+      onAdvance() // ④生成へ進む
     } catch (err) {
       toast.error(err instanceof Error ? err.message : '選択に失敗しました')
     } finally {

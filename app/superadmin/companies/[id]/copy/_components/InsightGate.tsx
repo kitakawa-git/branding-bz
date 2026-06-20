@@ -14,10 +14,12 @@ export default function InsightGate({
   projectId,
   insights,
   onReload,
+  onAdvance,
 }: {
   projectId: string
   insights: CopyInsight[]
   onReload: () => Promise<void>
+  onAdvance: () => void
 }) {
   const [busy, setBusy] = useState(false)
   const [picked, setPicked] = useState<Set<string>>(
@@ -72,6 +74,7 @@ export default function InsightGate({
       if (!res.ok) throw new Error(json.error || '確定に失敗しました')
       toast.success('この心理で進みます')
       await onReload()
+      onAdvance() // ③切り口へ進む
     } catch (err) {
       toast.error(err instanceof Error ? err.message : '確定に失敗しました')
     } finally {

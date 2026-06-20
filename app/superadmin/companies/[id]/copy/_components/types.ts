@@ -59,7 +59,7 @@ export type CopyReview = {
   created_at: string
 }
 
-export type Persona = { id: string; name: string; pain_points: unknown }
+export type Persona = { id: string; name: string; painPointCount: number }
 
 export const PSYCH_LABELS: Record<string, string> = {
   hidden_anxiety: '隠れた不安',

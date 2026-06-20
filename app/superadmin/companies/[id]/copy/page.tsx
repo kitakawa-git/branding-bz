@@ -32,6 +32,7 @@ export default function CopyWorkbenchPage() {
   const companyId = params.id as string
 
   const [projects, setProjects] = useState<CopyProject[]>([])
+  const [personaNames, setPersonaNames] = useState<Record<string, string>>({})
   const [activeId, setActiveId] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
 
@@ -56,6 +57,29 @@ export default function CopyWorkbenchPage() {
   useEffect(() => {
     loadProjects()
   }, [loadProjects])
+
+  // persona_id→name 解決（brand_personas は superadmin_all RLS が無いため service_role API 経由）
+  useEffect(() => {
+    let active = true
+    ;(async () => {
+      try {
+        const token = (await supabase.auth.getSession()).data.session?.access_token || ''
+        const res = await fetch(`/api/superadmin/copy/personas?companyId=${companyId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        const json = await res.json()
+        if (!active || !res.ok) return
+        const map: Record<string, string> = {}
+        for (const p of json.personas ?? []) map[p.id] = p.name
+        setPersonaNames(map)
+      } catch {
+        /* 解決失敗時は未設定表示にフォールバック */
+      }
+    })()
+    return () => {
+      active = false
+    }
+  }, [companyId])
 
   const active = projects.find((p) => p.id === activeId) ?? null
 
@@ -161,6 +185,9 @@ export default function CopyWorkbenchPage() {
                 <div className="min-w-0">
                   <p className="truncate text-sm font-bold text-gray-900">{p.name}</p>
                   {p.brief && <p className="truncate text-[13px] text-muted-foreground">{p.brief}</p>}
+                  {p.persona_id && personaNames[p.persona_id] && (
+                    <p className="truncate text-[12px] text-muted-foreground">ペルソナ: {personaNames[p.persona_id]}</p>
+                  )}
                 </div>
                 {!p.persona_id && <Badge className="ml-2 shrink-0 bg-amber-100 text-amber-800 hover:bg-amber-100">ペルソナ未設定</Badge>}
               </button>
@@ -209,7 +236,9 @@ export default function CopyWorkbenchPage() {
           <CardContent className="p-5">
             <p className="text-sm font-bold mb-1">このプロジェクトの基本</p>
             <p className="text-[13px] text-muted-foreground">
-              ペルソナ: {active?.persona_id ? '設定済み' : <span className="text-amber-700">未設定（インサイト生成不可）</span>}
+              ペルソナ: {active?.persona_id
+                ? (personaNames[active.persona_id] ?? '設定済み')
+                : <span className="text-amber-700">未設定（インサイト生成不可）</span>}
             </p>
             <p className="mt-3 text-[13px] text-muted-foreground">
               次へ：左の「2. インサイト」から、現場の声に接地した本音を抽出します。
@@ -217,7 +246,7 @@ export default function CopyWorkbenchPage() {
           </CardContent>
         </Card>
       )}
-      {step === 2 && <InsightGate projectId={activeId} insights={insights} onReload={reload} />}
+      {step === 2 && <InsightGate projectId={activeId} insights={insights} onReload={reload} onAdvance={() => setStep(3)} />}
       {step === 3 && (
         <AngleSelector
           projectId={activeId}
@@ -225,6 +254,7 @@ export default function CopyWorkbenchPage() {
           hasSelectedInsight={completion.c2}
           onReload={reload}
           onNeedInsight={() => setStep(2)}
+          onAdvance={() => setStep(4)}
         />
       )}
       {step === 4 && <DraftWorkbench projectId={activeId} drafts={drafts} reviews={reviews} onReload={reload} onReview={openReview} />}
