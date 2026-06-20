@@ -3,6 +3,7 @@
 // セッションデータをbrand_personasテーブルに反映
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { mapSessionToPersonaColumns } from '@/lib/tools/persona-mapping'
 
 export async function POST(request: NextRequest) {
 
@@ -60,6 +61,10 @@ export async function POST(request: NextRequest) {
       stages: journeyData.stages || [],
     }
 
+    // 離散カラム（pain_points/needs ほか）への写像。rich な persona_data はそのまま温存。
+    // pain_points はコピーAIのインサイト抽出の起点。空でも壊さず [] を書く。
+    const mapped = mapSessionToPersonaColumns(sessionData)
+
     // 既存レコード検索
     const { data: existingPersonas } = await supabaseAdmin
       .from('brand_personas')
@@ -76,6 +81,7 @@ export async function POST(request: NextRequest) {
           name: demographics.persona_name || '',
           persona_data: personaData,
           journey_map_data: journeyMapData,
+          ...mapped, // 離散カラム pain_points/needs(+age_range/occupation/description) を追加書き込み
         })
         .eq('id', firstPersona.id)
 
@@ -96,6 +102,7 @@ export async function POST(request: NextRequest) {
           sort_order: 0,
           persona_data: personaData,
           journey_map_data: journeyMapData,
+          ...mapped, // 離散カラム pain_points/needs(+age_range/occupation/description) を追加書き込み
         })
 
       if (insertError) {
