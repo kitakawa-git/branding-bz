@@ -41,6 +41,55 @@ function formatBusinessDescriptions(basicInfo: Record<string, unknown>): string 
   return ''
 }
 
+// ジャーニーJSONの堅牢パース（途中切れ耐性）:
+// 1) ```json フェンスがあれば中身。2) 最初の { 〜最後の } を抽出。3) 失敗時は stages の完結要素までで復旧。
+function parseJourney(raw: string): { stages: unknown[] } | null {
+  let s = (raw || '').trim()
+  const fence = s.match(/```json\s*([\s\S]*?)\s*```/)
+  if (fence) s = fence[1]
+  const start = s.indexOf('{')
+  if (start < 0) return null
+  const end = s.lastIndexOf('}')
+  const candidate = end > start ? s.slice(start, end + 1) : s.slice(start)
+  try {
+    const v = JSON.parse(candidate)
+    if (v && Array.isArray(v.stages)) return v as { stages: unknown[] }
+  } catch { /* fall through to recovery */ }
+  // 救済: stages 配列から完結したオブジェクトだけを集めて配列を閉じる
+  const objs = recoverStageObjects(s)
+  return objs.length > 0 ? { stages: objs } : null
+}
+
+function recoverStageObjects(s: string): unknown[] {
+  const key = s.indexOf('"stages"')
+  if (key < 0) return []
+  const arrStart = s.indexOf('[', key)
+  if (arrStart < 0) return []
+  const out: unknown[] = []
+  let depth = 0, objStart = -1, inStr = false, esc = false
+  for (let i = arrStart + 1; i < s.length; i++) {
+    const c = s[i]
+    if (inStr) {
+      if (esc) esc = false
+      else if (c === '\\') esc = true
+      else if (c === '"') inStr = false
+      continue
+    }
+    if (c === '"') { inStr = true; continue }
+    if (c === '{') { if (depth === 0) objStart = i; depth++ }
+    else if (c === '}') {
+      depth--
+      if (depth === 0 && objStart >= 0) {
+        try { out.push(JSON.parse(s.slice(objStart, i + 1))) } catch { /* skip broken element */ }
+        objStart = -1
+      }
+    } else if (c === ']' && depth === 0) {
+      break // stages 配列の正常終端
+    }
+  }
+  return out
+}
+
 export async function POST(request: NextRequest) {
 
   try {
@@ -92,17 +141,11 @@ export async function POST(request: NextRequest) {
     const response = await callClaude({
       system,
       userMessage: parts.join('\n'),
-      maxTokens: 3000,
+      maxTokens: 8000, // ジャーニーは5段階×8項目で全suggge系の最大出力。途中切れ防止に十分確保
     })
 
-    let jsonStr = response.trim()
-    const jsonMatch = jsonStr.match(/```json\s*([\s\S]*?)\s*```/)
-    if (jsonMatch) jsonStr = jsonMatch[1]
-
-    let parsed: { stages: unknown[] }
-    try {
-      parsed = JSON.parse(jsonStr)
-    } catch {
+    const parsed = parseJourney(response)
+    if (!parsed) {
       console.error('[SuggestJourney] JSONパースエラー:', response.substring(0, 300))
       return NextResponse.json(
         { error: 'AIの応答を解析できませんでした。再度お試しください。' },

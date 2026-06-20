@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
     const response = await callClaude({
       system,
       userMessage: parts.join('\n'),
-      maxTokens: 2000,
+      maxTokens: 4000,
     })
 
     let jsonStr = response.trim()

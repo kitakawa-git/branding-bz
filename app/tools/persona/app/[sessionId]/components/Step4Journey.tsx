@@ -294,7 +294,7 @@ export function Step4Journey({ journey, basicInfo, demographics, goals, onNext, 
         <Button variant="outline" onClick={onBack} className="gap-1">
           <ArrowLeft className="h-4 w-4" /> 戻る
         </Button>
-        <Button onClick={handleNext} disabled={saving || data.stages.length === 0} className="gap-1">
+        <Button onClick={handleNext} disabled={saving} className="gap-1">
           {saving ? '保存中...' : '確認・出力へ'}
           {!saving && <ArrowRight className="h-4 w-4" />}
         </Button>
