@@ -154,6 +154,8 @@
   - **型付き関係グラフ `element_relations`**: 5種（philosophy_element/value_proposition/proof_point/governance_rule/persona）をポリモーフィック端点(kind+id)で結ぶ関係（guides/evidencedBy/promisedTo/communicatedAs/constrainedBy/conflictsWith）。端点存在＋同一company を SECURITY DEFINER トリガで担保（自己参照/重複はDB制約）。superadmin 企業詳細にオーサリングUI、AI草案生成6ルートへ関係要約を注入（`lib/brand/relations.ts`）。テックブリッジに実関係5件を投入し before/after でAI出力反映を実証
   - **整合性チェック**: ①決定論（`lib/brand/integrity.ts`・5チェック=証拠なき約束/孤立証拠/用語違反/矛盾明示/証拠鮮度）②AI判定（`lib/brand/integrity-ai.ts`・governance_rules の tone/claim/discouraged を Claude が実テキスト評価＋修正案。1社1回呼び出し・NG/OK例few-shot・引用バリデーションでハルシネーション防護）。superadmin 企業詳細に「チェック実行（決定論）」「AI判定を実行」パネル（**読み取り専用・自動修正なし**）
 - **デザインシステム管理機能（デザイントークンDB管理＋実測ビューア）**（2026-06-11・本番デプロイ済み、commit ee66a4f/f60c701/fde3b26/7dbcf63） — include-bz から移植し、`/superadmin/design-system`（スーパー管理者専用）でサービス全体の色をパレット管理。**①基盤色までDB化**: `design_tokens`（LP用 `--ds-*` ＋ shadcn基盤 `--primary`/`--foreground`/`--border` 等のHSL成分 ＋ アプリ青 `--ds-app-*`、計52トークン）を `getDesignTokensCss()`→`app/layout.tsx` の `<style id="design-tokens">` で :root 注入、`/api/revalidate` でタグ無効化。基盤色を変えると管理/ポータル/ツール全画面が一括追従（seed=現行値の透過コピーで**見た目不変**）。履歴 `design_token_history`＋ロールバック。RLSは superadmin_all＋SELECT公開（LP SSRがanon読み）。**②ハードコード青の全置換**: `blue-500/600/700` の text/bg/border/ring 165件＋recharts/SVG/inlineの青hex 8件を `--ds-app-*` へ（色1:1一致＝blue-600=accent/700=hover/500=soft）。淡色背景 `bg-blue-50` 等・PDF・ブランドカラーデータは据え置き。**③2階層タブ＋実測ビューア**: 上位＝ウェブサイト(LP)/サービス画面(アプリ)の下線型タブ、下位＝カラーパレット/タイポ/スペーシング/コンポーネント/レイアウト/レスポンシブ/ドキュメントの7タブ。タイポ等は対象ページ（website=公開LP群／service=管理ダッシュボード等）を不可視iframeで**実測**（ハードコードの転記表を持たない）。コンポーネントは実体描画＋使用色をトークン逆引き。**④ドキュメントタブ（design.md）**: 自動サマリー（DBトークン/実測タイポ・スペーシング/コンポーネント/@media）＋手書きメモ（`design_docs` テーブル・scope別・RLS superadmin）を結合し**コピー/.mdダウンロード**。編集UIは hex/rgba/HSL成分のマルチフォーマット対応（`hsl-color.ts` で双方向変換）。DB migration: 20260611130000/140000/150000。残: 淡色背景の青・gray系623件のトークン化は将来
+- **モバイルUX基準 v1.0 策定＋全画面サイジング是正（バッチ進行中）**（2026-06-16・本番デプロイ済み） — HIG(44pt)/Material(48dp)/WCAG AA(4.5:1)/iOS入力16px を `CLAUDE.md`「モバイルUX基準（確定版v1.0）」に恒久化（タップ44px/入力16px/コントラスト4.5:1/常用12px未満廃止/見出し二段階）。是正バッチ: ①フォーム系（ラベル・見出し`text-xs→text-sm`／入力`h-10→h-11`）`2563cba` ②検索入力`h-8 text-xs→h-11 16px`・フィルタ/期間ピル`text-xs→text-sm`・FABラベル/アイコン拡大`ff9cae7` ③FAB高さ`h-12→h-14`（fab.tsx・浮遊ボタンの例外XL）`4d8a179` ④§6 `--muted-foreground 45.1%→40%`（globals.css・全画面の薄グレー可読性）＋基準恒久化`235a48f` ⑤§3 タップ領域44px化＝いいね/コメント`min-h-11`(横並び維持・glyph20px)／…メニュー・コメント送信・KPI編集削除・目標編集`size-7/8/9→size-11`／サイドバー項目`h-10→h-11`／ヘッダーbell・トグル`size-10→size-11`／コメント入力`h-9→h-11`(16px)／画像削除`size-8→size-10` `f7b35dd`。**glyphは20-24px維持しヒット領域(padding/min-h)で44px確保**。残: batch3(メタ12px未満廃止)・batch4(カード/ダイアログtitle16-18px)・phase2(認証/名刺/管理)
+- **Web Push 通知 ブロック時の再許可案内UX**（2026-06-16・本番デプロイ済み、commit 4268e68） — 一度「許可しない」を選ぶと `Notification.requestPermission()` が再ダイアログを出さず行き止まりだった問題を解消。`components/pwa/PushToggle` が `permission==='denied'` を検知し、iPhone/PC それぞれの設定からの再許可手順を画面内に案内（旧・赤エラーの置換）。default（ダイアログ閉じ）と denied を区別
 
 ---
 
@@ -176,6 +178,13 @@
 ### 🟢 UI/導線（フォローアップ）
 - [x] ~~ブランドパーソナリティの人格(traits)編集を `/admin/brand/personality` に集約~~ ✅ traits をパーソナリティへ、トーンをバーバルへ移動して整理（2026-06-03）
 - [x] ~~ポータルメニュー「感じられ方」のリンク先を /portal/personality（独立ページ）へ確定する~~ ✅ サイドバーを /portal/verbal → **/portal/personality** に変更＋アクティブ判定追加、breadcrumb/dynamic-title に personality 登録、ダッシュボードに「らしさ」4象限概観カード設置。本番デプロイ済み（2026-06-03）
+
+### 🟣 モバイルUX是正（基準v1.0準拠・1バッチずつ verify→deploy）
+- [x] ~~batch1 基準確定＋グレー濃色化~~ ✅（235a48f）
+- [x] ~~batch2 §3タップ領域44px~~ ✅（f7b35dd）
+- [ ] batch3 §1メタ文字の12px未満廃止（`text-[10/11px]→text-xs`・日時14px）。survey5段階caption/KPI密集ウィジェットは幅制約ありで個別確認。例外据え置き＝通知数バッジ・アバター頭文字
+- [ ] batch4 カード/ダイアログの title 16-18px＋KPIセットアップ入力16px化
+- [ ] phase2 認証画面・スマート名刺(/card)・管理(/admin)を同基準で監査・是正
 
 ### 🟠 本番準備
 - [ ] RLSポリシー設定（全テーブル）
@@ -263,6 +272,9 @@
 | 2026-06-10 | **element_relations はポリモーフィック端点(kind+id)**。直接FK（proof_points.value_proposition_id等）は残し、跨ぐ関係のみ本テーブル。端点検証は SECURITY DEFINER トリガ（存在＋同一company）。トリガ関数は EXECUTE を anon/authenticated から剥奪（トリガは権限無しでも発火する）。`lib/brand/elements-catalog.ts` が5種を `{kind,id,label}` で返す共通取得 |
 | 2026-06-10 | **マイグレは必ずローカル.sql先行→適用**（`branding-bz/CLAUDE.md` 恒久ルール化）。MCP `apply_migration` 使用時も同一SQLを `supabase/migrations/<version>_<name>.sql` に保存し同コミットに含める（version はリモート `schema_migrations` 記録値に合わせる）。破壊的変更（DROP）は退避テーブルへ事前バックアップ。旧 iCloud フォルダ撤去→**正本は `~/dev/branding-bz`＋GitHub** |
 | 2026-06-10 | **AI判定の誤検知/ハルシネーション対策**: 1社1回のClaude呼び出し（ルート毎に呼ばない＝コスト/レート対策）、NG/OK例をfew-shot、「明確な違反のみ報告」指示、返却の quoted_text が原文に実在・rule_id/target_ref が実在することをコード側で検証し通らないものは破棄。プロンプトで `target_ref` と label を**別行**に（同一行だとAIがlabelをrefに混入させ全dropするバグ）。1チェック≒3,000〜6,000 tokens（sonnet） |
+| 2026-06-16 | **モバイルUX基準v1.0が判定基準**（`CLAUDE.md`「モバイルUX基準（確定版v1.0）」）。タップ44px（**glyphは20-24px維持し `padding`/`min-h-11` でヒット領域だけ44px確保**）・入力16px（iOSズーム防止）・コントラスト4.5:1・常用テキスト12px未満廃止・見出し二段階（タイトル16-18px/eyebrow14px）。是正は **token→共通コンポーネント→codemod→個別** の順、1バッチずつ実機/プレビュー確認後にデプロイ |
+| 2026-06-16 | **`--muted-foreground` を 45.1%→40%**（globals.css・白地で約4.7:1→約5.7:1）で日時/メタ/薄ラベルを全画面底上げ。これ以上薄いグレーを小文字に当てない。**FABは例外的に `h-14`(56px)**（fab.tsx・浮遊アクションボタン。インライン大は `h-12` のまま） |
+| 2026-06-16 | **作業フォルダ移転**: branding-bz 正本は **`~/dev/branding-bz`＋GitHub**。旧 `~/Documents/.../ID_bzサービス開発/branding-bz`(iCloud) は凍結＝新規作業しない。.md知識はリポ内（CLAUDE.md @import）、成果物はGoogle Drive、`.env.local` は各自手元。STATUSは `docs/BRD-PROJECT-STATUS.md`（repo内）へ移設済み。プレビューは作業ルートが ~/dev のセッションで行う |
 | 2026-06-18 | **コピーAI設計の核**: ①事実は機械・語りはAI（craft採点はLLMでなくコードで合成）②生成器≠批評器（生成sonnet／批評opusの別モデル）。INTENT(引用禁止)/FACT(引用可)/RULES(禁則) を物理分離してプロンプト注入。クリシェ密度・継承重複(containment)・数値捏造は決定論計算、Tension/Stance/藁人形チェックのみLLM。批評は処方箋のみ返し本文は書かせない（先祖返り防止） |
 | 2026-06-18 | **コピーAI DB**: `copy_projects/insights/angles/drafts/quality_reviews`（RLS superadmin_all＋member_select）。人間ゲートはクライアントから id のみ受け、本文はサーバ再取得（改ざん防止）。インサイトは pain_points 等へ source_ref 接地必須・接地しない候補はコード破棄 |
 | 2026-06-18 | **ペルソナ粒度はセグメント型(役割アーキタイプ)に統一**＝オントロジー(discrete pain_points)に揃えるため。suggest-goals の課題は短い体言止め。rich profile(口癖等)は voice 素材として temporarily 任意保持。connect は company のペルソナを sync(上書き)するため既存ペルソナのある company でうかつに連携しない |

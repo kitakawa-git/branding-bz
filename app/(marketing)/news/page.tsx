@@ -3,10 +3,11 @@ import Link from 'next/link'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import type { NewsItem, NewsCategory } from '@/lib/types/news'
 import { NEWS_CATEGORY_LABELS } from '@/lib/types/news'
+import { SoftwareApplicationSchema } from '@/components/seo/SoftwareApplicationSchema'
 
 export const metadata = {
-  title: 'ニュース | branding.bz',
-  description: 'branding.bz の最新ニュース・プレスリリース・サービスアップデート情報',
+  title: { absolute: 'お知らせ＆ブランディング Tips｜branding.bz' },
+  description: 'AIブランディングツール branding.bz のお知らせ。プロダクトアップデート・プレスリリースに加え、中小企業・スタートアップ向けのブランディング知見・Tipsを発信します。',
   alternates: {
     canonical: '/news',
   },
@@ -35,6 +36,7 @@ export default async function NewsListPage() {
 
   return (
     <>
+      <SoftwareApplicationSchema />
       {/* ヒーロー */}
       <section className="px-6 pt-[120px] pb-16 md:pt-[120px] md:pb-24 text-center">
         <div className="mx-auto max-w-4xl">
