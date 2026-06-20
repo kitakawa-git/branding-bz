@@ -162,9 +162,12 @@ export default function ColorsLandingPage() {
         </div>
       </section>
 
-      {/* カラーパレット例（マーキー）— 上のラッパー背景を共有 */}
-      <section className="relative pt-16 pb-5">
-        <h2 className="mb-8 text-center text-3xl font-bold tracking-tight md:text-4xl">
+      {/* カラーパレット例（マーキー）— 上のラッパー背景を共有
+          カード下の実質ギャップ＝マーキー下64px＋セクション下16px＝80px（他ツールと同じ） */}
+      <section className="relative pt-16 pb-4">
+        {/* マーキー側に上パディング24px（シャドウ確保）があるため、見出し下は8pxにして
+            見出し→カードの実質ギャップを他ツールと同じ32pxに揃える */}
+        <h2 className="mb-2 text-center text-3xl font-bold tracking-tight md:text-4xl">
           こんなカラーパレットが作れます
         </h2>
         <style>{`
