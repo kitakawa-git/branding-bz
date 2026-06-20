@@ -15,7 +15,7 @@ import {
   Check,
   Quote,
 } from 'lucide-react'
-import { GlowCard } from './_components/ui'
+import { GlowCard } from '@/components/lp/ui'
 
 /* ───────────────────────────────────────────────
    branding.bz トップページ（Framer風 / ダークテーマ）

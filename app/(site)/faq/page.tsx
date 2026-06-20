@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ArrowRight, Plus } from 'lucide-react'
-import { PageHero } from '../_components/ui'
+import { PageHero } from '@/components/lp/ui'
 
 export const metadata: Metadata = {
   title: 'よくある質問 | branding.bz',
@@ -136,7 +136,7 @@ export default function LpFaqPage() {
           ご不明な点がございましたら、お気軽にお問い合わせください。
         </p>
         <Link
-          href="/lp/contact"
+          href="/contact"
           className="inline-flex h-12 items-center gap-2 rounded-full bg-white px-8 text-base font-semibold text-black transition-transform hover:scale-105"
         >
           お問い合わせ <ArrowRight size={18} />

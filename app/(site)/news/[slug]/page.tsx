@@ -66,7 +66,7 @@ export default async function LpNewsDetailPage({ params }: { params: Promise<{ s
         )}
 
         <div className="mt-16 border-t border-white/10 pt-8">
-          <Link href="/lp/news" className="text-sm text-white/50 transition-colors hover:text-white">
+          <Link href="/news" className="text-sm text-white/50 transition-colors hover:text-white">
             ← ニュース一覧に戻る
           </Link>
         </div>

@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import type { NewsItem, NewsCategory } from '@/lib/types/news'
 import { NEWS_CATEGORY_LABELS } from '@/lib/types/news'
-import { PageHero } from '../_components/ui'
+import { PageHero } from '@/components/lp/ui'
 
 export const metadata = {
   title: 'ニュース | branding.bz',
@@ -43,7 +43,7 @@ export default async function LpNewsListPage() {
               {items.map((item) => (
                 <Link
                   key={item.id}
-                  href={`/lp/news/${item.slug}`}
+                  href={`/news/${item.slug}`}
                   className="group -mx-4 block rounded-xl px-4 py-6 transition-colors hover:bg-white/[0.03]"
                 >
                   <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">

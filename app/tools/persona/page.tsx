@@ -3,7 +3,7 @@
 // ペルソナビルダー ランディングページ（LPダークデザインに準拠）
 import Link from 'next/link'
 import { UserCircle, Route, CheckCircle2, Lightbulb, Download, Unplug, Target, ArrowRight, type LucideIcon } from 'lucide-react'
-import Nav from '../../lp/_components/Nav'
+import Nav from '@/components/lp/Nav'
 import Footer from '@/components/Footer'
 
 const PERSONA_CARDS = [

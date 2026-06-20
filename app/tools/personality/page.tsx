@@ -3,7 +3,7 @@
 // ブランドパーソナリティ診断 ランディングページ（LPダークデザインに準拠）
 import Link from 'next/link'
 import { Fingerprint, Radar, Drama, CheckCircle2, Sparkles, SlidersHorizontal, Download, Unplug, ArrowRight, type LucideIcon } from 'lucide-react'
-import Nav from '../../lp/_components/Nav'
+import Nav from '@/components/lp/Nav'
 import Footer from '@/components/Footer'
 
 const CONCEPT_CARDS = [

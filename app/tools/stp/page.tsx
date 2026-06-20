@@ -3,7 +3,7 @@
 // STP分析ツール ランディングページ（LPダークデザインに準拠）
 import Link from 'next/link'
 import { LayoutGrid, Target, MapPin, CheckCircle2, Lightbulb, SlidersHorizontal, Download, Unplug, ArrowRight, type LucideIcon } from 'lucide-react'
-import Nav from '../../lp/_components/Nav'
+import Nav from '@/components/lp/Nav'
 import Footer from '@/components/Footer'
 
 const STP_CARDS = [

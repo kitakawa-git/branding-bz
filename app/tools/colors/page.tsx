@@ -3,7 +3,7 @@
 // ブランドカラー定義 ランディングページ（LPダークデザインに準拠）
 import Link from 'next/link'
 import { Palette, WandSparkles, Download, CheckCircle2, Plug, ArrowRight, type LucideIcon } from 'lucide-react'
-import Nav from '../../lp/_components/Nav'
+import Nav from '@/components/lp/Nav'
 import Footer from '@/components/Footer'
 
 const EXAMPLE_PALETTES = [

@@ -13,7 +13,7 @@ import {
   ArrowRight,
   type LucideIcon,
 } from 'lucide-react'
-import { PageHero, GlowCard } from '../_components/ui'
+import { PageHero, GlowCard } from '@/components/lp/ui'
 
 export const metadata: Metadata = {
   title: '機能紹介 | branding.bz',
@@ -163,7 +163,7 @@ export default function LpFeaturesPage() {
             無料で始める <ArrowRight size={18} />
           </Link>
           <Link
-            href="/lp/plan"
+            href="/plan"
             className="inline-flex h-12 items-center rounded-full border border-white/15 bg-white/5 px-8 text-base font-semibold text-white transition-colors hover:bg-white/10"
           >
             料金プランを見る

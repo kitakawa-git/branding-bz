@@ -7,13 +7,13 @@ import { Menu, X, ChevronDown, Target, UserCircle, Palette, Fingerprint, type Lu
 /* 新デザイン（/lp 系）の共通ヘッダー。
    layout.tsx から全ページ共通で描画される。 */
 const linksBefore = [
-  { href: '/lp/news', label: 'ニュース' },
-  { href: '/lp/features', label: '機能' },
+  { href: '/news', label: 'ニュース' },
+  { href: '/features', label: '機能' },
 ]
 const linksAfter = [
-  { href: '/lp/plan', label: '料金' },
-  { href: '/lp/faq', label: 'よくある質問' },
-  { href: '/lp/contact', label: 'お問い合わせ' },
+  { href: '/plan', label: '料金' },
+  { href: '/faq', label: 'よくある質問' },
+  { href: '/contact', label: 'お問い合わせ' },
 ]
 
 const toolItems: { href: string; label: string; icon: LucideIcon }[] = [
@@ -33,7 +33,7 @@ export default function Nav() {
   return (
     <header className="fixed inset-x-0 top-0 z-50">
       <div className="relative flex h-16 w-full items-center justify-between px-6 backdrop-blur-xl md:px-10">
-        <Link href="/lp" className="shrink-0">
+        <Link href="/" className="shrink-0">
           <img
             src="/logo.svg"
             alt="branding.bz"

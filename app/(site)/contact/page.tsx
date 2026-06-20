@@ -66,7 +66,7 @@ export default function LpContactPage() {
             通常2営業日以内にお返事いたします。
           </p>
           <Link
-            href="/lp"
+            href="/"
             className="inline-flex h-12 items-center gap-2 rounded-full bg-white px-8 text-base font-semibold text-black transition-transform hover:scale-105"
           >
             トップに戻る <ArrowRight size={18} />

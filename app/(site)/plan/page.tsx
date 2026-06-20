@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Check, ArrowRight } from 'lucide-react'
-import { PageHero, GlowCard } from '../_components/ui'
+import { PageHero, GlowCard } from '@/components/lp/ui'
 
 export const metadata: Metadata = {
   title: '料金プラン | branding.bz',
@@ -99,7 +99,7 @@ const PLANS = [
       'KPI・Good Jobタイムライン',
     ],
     ctaLabel: 'フル機能で導入する',
-    ctaHref: '/lp/contact',
+    ctaHref: '/contact',
     ctaStyle: 'primary' as const,
     reference: 'コンサル浸透込み 年間500〜1,000万円 → 年間約72万円で1/10以下',
     isHighlight: false,
