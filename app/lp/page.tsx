@@ -1,13 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
 import {
   ArrowRight,
-  Menu,
-  X,
   Sparkles,
-  Compass,
   MessageSquareHeart,
   Activity,
   LayoutDashboard,
@@ -19,120 +15,19 @@ import {
   Check,
   Quote,
 } from 'lucide-react'
+import { GlowCard } from './_components/ui'
 
 /* ───────────────────────────────────────────────
    branding.bz トップページ（Framer風 / ダークテーマ）
-   - 構成は「ヒーロー → 3つの柱 → プロダクト → 導入 → 伴走 → 無料ツール → CTA → フッター」
+   - 構成は「ヒーロー → 3つの柱 → プロダクト → 導入 → 伴走 → 無料ツール → CTA」
+   - 共通ナビ／フッターは layout.tsx が描画する（ここでは本文セクションのみ）。
    - 文章・ロゴは branding.bz オリジナル。プロダクトUIはCSSで再現したモック。
 ─────────────────────────────────────────────── */
-
-/* ===== 共通: グラデーション縁取りカード ===== */
-function GlowCard({
-  children,
-  className = '',
-}: {
-  children: React.ReactNode
-  className?: string
-}) {
-  return (
-    <div
-      className={`relative rounded-3xl border border-white/10 bg-white/[0.03] overflow-hidden ${className}`}
-      style={{
-        boxShadow:
-          'inset 0 1px 0 0 rgba(255,255,255,0.06), 0 24px 60px -20px rgba(0,0,0,0.8)',
-      }}
-    >
-      {children}
-    </div>
-  )
-}
-
-/* ===== ナビゲーション ===== */
-function Nav() {
-  const [open, setOpen] = useState(false)
-  const links = [
-    { href: '/news', label: 'ニュース' },
-    { href: '#tools', label: '無料ツール' },
-    { href: '/plan', label: '料金・機能' },
-    { href: '/faq', label: 'よくある質問' },
-    { href: '/contact', label: 'お問い合わせ' },
-  ]
-  return (
-    <header className="fixed inset-x-0 top-0 z-50">
-      <div className="relative flex h-16 w-full items-center justify-between border-b border-white/10 bg-black/40 px-6 backdrop-blur-xl md:px-10">
-        <Link href="/lp" className="shrink-0">
-          <img
-            src="/logo.svg"
-            alt="branding.bz"
-            style={{ height: '18px', width: 'auto', filter: 'brightness(0) invert(1)' }}
-          />
-        </Link>
-
-        <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 md:flex">
-          {links.map((l) => (
-            <a
-              key={l.href}
-              href={l.href}
-              className="rounded-full px-3 py-1.5 text-sm font-medium text-white/70 transition-colors hover:bg-white/10 hover:text-white"
-            >
-              {l.label}
-            </a>
-          ))}
-        </nav>
-
-        <div className="hidden items-center gap-2 md:flex">
-          <Link
-            href="/portal/auth"
-            className="rounded-full px-4 py-1.5 text-sm font-medium text-white/70 transition-colors hover:text-white"
-          >
-            ログイン
-          </Link>
-          <Link
-            href="/signup"
-            className="rounded-full bg-white px-4 py-1.5 text-sm font-semibold text-black transition-transform hover:scale-105"
-          >
-            無料で始める
-          </Link>
-        </div>
-
-        <button
-          className="p-1.5 text-white md:hidden"
-          onClick={() => setOpen((v) => !v)}
-          aria-label="メニュー"
-        >
-          {open ? <X size={20} /> : <Menu size={20} />}
-        </button>
-      </div>
-
-      {open && (
-        <div className="mx-3 mt-2 rounded-2xl border border-white/10 bg-black/80 p-3 backdrop-blur-xl md:hidden">
-          {links.map((l) => (
-            <a
-              key={l.href}
-              href={l.href}
-              onClick={() => setOpen(false)}
-              className="block rounded-xl px-3 py-2.5 text-base font-medium text-white/80 hover:bg-white/10"
-            >
-              {l.label}
-            </a>
-          ))}
-          <div className="my-2 h-px bg-white/10" />
-          <Link href="/portal/auth" className="block rounded-xl px-3 py-2.5 text-base font-medium text-white/80 hover:bg-white/10">
-            ログイン
-          </Link>
-          <Link href="/signup" className="mt-1 block rounded-xl bg-white px-3 py-2.5 text-center text-base font-semibold text-black">
-            無料で始める
-          </Link>
-        </div>
-      )}
-    </header>
-  )
-}
 
 /* ===== ヒーロー ===== */
 function Hero() {
   return (
-    <section className="relative px-6 pt-28 pb-8 md:pt-32">
+    <section className="relative px-6 pt-32 pb-24 md:pt-36">
       {/* 背景グラデーション */}
       <div
         className="pointer-events-none absolute inset-0 -z-10"
@@ -152,13 +47,13 @@ function Hero() {
       />
 
       <div className="mx-auto max-w-4xl text-center">
-        <p className="mb-7 text-sm text-white/55">
-          AIガイドで、約5〜10分でブランドの土台ができる
+        <p className="mb-7 text-sm text-white">
+          AIガイドで、約5〜10分でブランドの土台ができる。
         </p>
 
         <h1 className="text-5xl font-bold leading-[1.05] tracking-[-0.03em] sm:text-6xl md:text-7xl">
           <span className="block md:whitespace-nowrap">AIでブランディングを</span>
-          <span className="block">加速させる</span>
+          <span className="block">加速させる。</span>
         </h1>
 
         <p className="mx-auto mt-8 max-w-2xl text-lg text-white/60 md:text-xl">
@@ -331,17 +226,19 @@ function Showcase() {
       <div
         className="relative h-[78vh] min-h-[620px] overflow-hidden"
         style={{
-          maskImage: 'linear-gradient(to bottom, black 88%, transparent)',
-          WebkitMaskImage: 'linear-gradient(to bottom, black 88%, transparent)',
+          maskImage: 'linear-gradient(to bottom, transparent, black 7%, black 88%, transparent)',
+          WebkitMaskImage: 'linear-gradient(to bottom, transparent, black 7%, black 88%, transparent)',
         }}
       >
         <div className="flex justify-center gap-3 px-3">
-          {showColumns.map((col, i) => (
+          {/* カード幅は固定。ワイド画面では列数を増やして全幅を埋める
+              （5列ぶんのデータを循環して描画し、はみ出した分は端で見切れる） */}
+          {Array.from({ length: 15 }, (_, i) => showColumns[i % showColumns.length]).map((col, i) => (
             <div
               key={i}
-              className="lp-col flex w-[clamp(200px,21vw,360px)] shrink-0 flex-col gap-3"
+              className="lp-col flex w-[272px] shrink-0 flex-col gap-3"
               style={{
-                animation: `${i % 2 === 0 ? 'lpScrollUp' : 'lpScrollDown'} ${34 + i * 5}s linear infinite`,
+                animation: `${i % 2 === 0 ? 'lpScrollUp' : 'lpScrollDown'} ${34 + (i % showColumns.length) * 5}s linear infinite`,
               }}
             >
               {[...col, ...col].map((card, j) => (
@@ -423,10 +320,12 @@ function Product() {
       <div className="mx-auto max-w-6xl">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="text-4xl font-bold tracking-tight md:text-5xl">
-            ツールを切り替えずに、ブランドを動かす。
+            掲示・運用・計測まで、
+            <br />
+            ひとつの画面で完結。
           </h2>
           <p className="mt-5 text-lg text-white/60">
-            掲示・運用・計測まで、ひとつの画面で完結。チームのブランド浸透が、数字で見えるようになります。
+            社外、社内のブランド浸透度が、数字で見えるようになります。
           </p>
         </div>
 
@@ -576,10 +475,38 @@ function Experts() {
 
 /* ===== 無料ツール ===== */
 const tools = [
-  { href: '/tools/stp', label: 'STP分析', icon: Target, d: 'セグメント・ターゲット・ポジションを整理' },
-  { href: '/tools/persona', label: 'ペルソナビルダー', icon: UserCircle, d: '届けたい相手像をAIと具体化' },
-  { href: '/tools/colors', label: 'ブランドカラー定義', icon: Palette, d: '"らしさ"を色で言語化' },
-  { href: '/tools/personality', label: 'パーソナリティ診断', icon: Fingerprint, d: 'ブランドの人格を10問で診断' },
+  {
+    href: '/tools/stp',
+    label: 'STP分析',
+    icon: Target,
+    d: 'セグメント・ターゲット・ポジションを整理',
+    color: 'linear-gradient(135deg,#1d4ed8 0%,#7c3aed 55%,#0ea5e9 100%)',
+    dark: false,
+  },
+  {
+    href: '/tools/persona',
+    label: 'ペルソナビルダー',
+    icon: UserCircle,
+    d: '届けたい相手像をAIと具体化',
+    color: 'linear-gradient(160deg,#0f172a,#312e81 60%,#a855f7)',
+    dark: false,
+  },
+  {
+    href: '/tools/colors',
+    label: 'ブランドカラー定義',
+    icon: Palette,
+    d: '"らしさ"を色で言語化',
+    color: 'conic-gradient(from 200deg at 60% 40%,#f43f5e,#8b5cf6,#22d3ee,#f43f5e)',
+    dark: false,
+  },
+  {
+    href: '/tools/personality',
+    label: 'パーソナリティ診断',
+    icon: Fingerprint,
+    d: 'ブランドの人格を10問で診断',
+    color: 'radial-gradient(120% 120% at 25% 20%,#10b981 0%,#0f172a 65%)',
+    dark: false,
+  },
 ]
 
 function Tools() {
@@ -595,16 +522,29 @@ function Tools() {
         <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {tools.map((t) => (
             <Link key={t.href} href={t.href}>
-              <GlowCard className="group h-full p-6 transition-transform hover:-translate-y-1">
-                <div className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/5">
-                  <t.icon size={20} className="text-blue-400" />
+              <div
+                className="group h-full rounded-3xl p-6 transition-transform hover:-translate-y-1"
+                style={{ background: t.color }}
+              >
+                <div
+                  className={`mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl border ${
+                    t.dark ? 'border-black/15 bg-black/10' : 'border-white/25 bg-white/15'
+                  }`}
+                >
+                  <t.icon size={20} className={t.dark ? 'text-black' : 'text-white'} />
                 </div>
-                <h3 className="text-base font-bold">{t.label}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-white/55">{t.d}</p>
-                <div className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-white/60 group-hover:text-white">
+                <h3 className={`text-base font-bold ${t.dark ? 'text-black' : 'text-white'}`}>{t.label}</h3>
+                <p className={`mt-2 text-sm leading-relaxed ${t.dark ? 'text-black/70' : 'text-white/80'}`}>
+                  {t.d}
+                </p>
+                <div
+                  className={`mt-4 inline-flex items-center gap-1 text-sm font-medium ${
+                    t.dark ? 'text-black/70 group-hover:text-black' : 'text-white/80 group-hover:text-white'
+                  }`}
+                >
                   試してみる <ArrowRight size={15} />
                 </div>
-              </GlowCard>
+              </div>
             </Link>
           ))}
         </div>
@@ -651,57 +591,10 @@ function FinalCta() {
   )
 }
 
-/* ===== フッター ===== */
-function FooterLp() {
-  const cols = [
-    { h: '機能', items: ['ブランド掲示', 'タイムライン', 'KPI・目標', 'ブランドスコア', 'スマート名刺'] },
-    { h: '無料ツール', items: ['STP分析', 'ペルソナビルダー', 'ブランドカラー定義', 'パーソナリティ診断'] },
-    { h: '会社情報', items: ['ID INC. について', 'ニュース', 'お問い合わせ', '採用'] },
-    { h: '規約', items: ['利用規約', 'プライバシーポリシー', '特定商取引法'] },
-  ]
-  return (
-    <footer className="border-t border-white/10 px-6 py-16">
-      <div className="mx-auto max-w-6xl">
-        <div className="grid gap-10 md:grid-cols-[1.5fr_repeat(4,1fr)]">
-          <div>
-            <img
-              src="/logo.svg"
-              alt="branding.bz"
-              style={{ height: '20px', width: 'auto', filter: 'brightness(0) invert(1)' }}
-            />
-            <p className="mt-4 max-w-xs text-sm leading-relaxed text-white/45">
-              AIで、ブランディングを加速させる。構築・浸透・発信をひとつのプラットフォームで。
-            </p>
-          </div>
-          {cols.map((c) => (
-            <div key={c.h}>
-              <div className="mb-4 text-sm font-semibold text-white/80">{c.h}</div>
-              <ul className="space-y-2.5">
-                {c.items.map((it) => (
-                  <li key={it}>
-                    <span className="cursor-pointer text-sm text-white/45 transition-colors hover:text-white/80">
-                      {it}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-        <div className="mt-14 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-8 text-sm text-white/40 sm:flex-row">
-          <span>© {new Date().getFullYear()} ID INC. All rights reserved.</span>
-          <span>branding.bz</span>
-        </div>
-      </div>
-    </footer>
-  )
-}
-
-/* ===== ページ本体 ===== */
+/* ===== ページ本体（共通ナビ／フッターは layout.tsx 側） ===== */
 export default function LpPage() {
   return (
-    <main className="min-h-screen bg-[#08080a] text-white">
-      <Nav />
+    <main>
       <Hero />
       <Showcase />
       <Features />
@@ -710,7 +603,6 @@ export default function LpPage() {
       <Experts />
       <Tools />
       <FinalCta />
-      <FooterLp />
     </main>
   )
 }
