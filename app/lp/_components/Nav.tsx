@@ -41,7 +41,7 @@ export default function Nav() {
           />
         </Link>
 
-        <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 md:flex">
+        <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 min-[1100px]:flex">
           {linksBefore.map((l) => (
             <a key={l.href} href={l.href} className={linkClass}>
               {l.label}
@@ -83,7 +83,8 @@ export default function Nav() {
           ))}
         </nav>
 
-        <div className="hidden items-center gap-2 md:flex">
+        {/* 右クラスタ：ログイン／無料で始める は常時表示。ハンバーガーは1100px未満のみ */}
+        <div className="flex items-center gap-2 sm:gap-3">
           <Link
             href="/portal/auth"
             className="rounded-full px-4 py-1.5 text-sm font-medium text-white/70 transition-colors hover:text-white"
@@ -96,19 +97,18 @@ export default function Nav() {
           >
             無料で始める
           </Link>
+          <button
+            className="p-1.5 text-white min-[1100px]:hidden"
+            onClick={() => setOpen((v) => !v)}
+            aria-label="メニュー"
+          >
+            {open ? <X size={20} /> : <Menu size={20} />}
+          </button>
         </div>
-
-        <button
-          className="p-1.5 text-white md:hidden"
-          onClick={() => setOpen((v) => !v)}
-          aria-label="メニュー"
-        >
-          {open ? <X size={20} /> : <Menu size={20} />}
-        </button>
       </div>
 
       {open && (
-        <div className="mx-3 mt-2 rounded-2xl border border-white/10 bg-black/80 p-3 backdrop-blur-xl md:hidden">
+        <div className="mx-3 mt-2 rounded-2xl border border-white/10 bg-black/80 p-3 backdrop-blur-xl min-[1100px]:hidden">
           {linksBefore.map((l) => (
             <a
               key={l.href}
