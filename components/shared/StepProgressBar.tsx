@@ -13,7 +13,8 @@ export function StepProgressBar({ steps, currentStep, className }: StepProgressB
   const progress = steps.length > 1 ? (currentStep - 1) / (steps.length - 1) : 0
 
   return (
-    <div className={cn('w-full', className)}>
+    // data-stepper: globals.css の「本文最低14px」底上げから除外するマーカー
+    <div data-stepper className={cn('w-full', className)}>
       <div className="relative">
         {/* ベースライン（グレー一本線：最初の丸中心〜最後の丸中心） */}
         <div className="absolute top-[15px] left-4 right-4 h-0.5 bg-gray-200" />

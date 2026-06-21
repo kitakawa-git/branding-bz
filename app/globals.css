@@ -192,3 +192,46 @@ body {
   color: hsl(var(--foreground));
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* ===== 本文の最低フォントサイズ 14px =====
+   text-xs / text-[9〜13px] / text-[0.8rem] を全ページで 14px に底上げする。
+   ただし UI 部品（ボタン・タブ・カプセル＝バッジやピル・アバター・ステッパー・SVG内テキスト）は
+   本文ではないため除外する。個別箇所を書き換える代わりにここで一括制御する。
+   除外の判定:
+   - button 配下 … ボタン・タブ（Radix の TabsTrigger は button）
+   - [role="tab"|"tablist"] 配下 … button 以外で実装されたタブ
+   - .rounded-full 配下 … ピル型カプセル・アバター
+   - .inline-flex.rounded-md … shadcn の Badge と buttonVariants を当てたリンク
+   - [data-stepper] 配下 … ステップ進捗バー（StepProgressBar 等）
+   - svg 配下 … チャート等の描画テキスト */
+:is(.text-xs, .text-\[9px\], .text-\[10px\], .text-\[11px\], .text-\[12px\], .text-\[13px\], .text-\[0\.8rem\]):not(
+  button, button *,
+  [role="tab"], [role="tab"] *, [role="tablist"], [role="tablist"] *,
+  .rounded-full, .rounded-full *,
+  .inline-flex.rounded-md, .inline-flex.rounded-md *,
+  [data-stepper], [data-stepper] *,
+  svg, svg *
+) {
+  font-size: 0.875rem; /* 14px（text-sm 相当） */
+  line-height: 1.25rem;
+}
+
+/* ===== カード内パディング 16px 統一（全ページ・全デバイス） =====
+   カード（border＋rounded-lg/xl）の均一パディング（p-3〜p-8）を 16px に統一する。
+   個別箇所を書き換える代わりにここで一括制御する。
+   - 対象1: カード自身に p-N を持つもの（border border-border rounded-lg p-3 等）
+   - 対象2: shadcn Card の直下スロット（CardHeader/CardContent/CardFooter の p-6、pt-0 は維持）
+   - 方向指定（pt-/pb-/px-/py-）を併用するカードは意図的な非対称設計として据え置き
+   - rounded-md（ポップオーバー・ドロップダウン等）と p-2 以下（チップ・アイコン枠）は対象外
+   - マーケLPのグラスモーフィズムカード（rounded-2xl・インラインstyleのborder）は別系統のため対象外 */
+:is(.rounded-lg, .rounded-xl).border:is(.p-3, .p-4, .p-5, .p-6, .p-8):not([class*="pt-"], [class*="pb-"], [class*="px-"], [class*="py-"]) {
+  padding: 1rem; /* 16px */
+}
+:is(.rounded-lg, .rounded-xl).border > :is(.p-3, .p-4, .p-5, .p-6):not([class*="pt-"], [class*="pb-"], [class*="px-"], [class*="py-"]) {
+  padding: 1rem;
+}
+/* CardContent / CardFooter の既定（p-6 pt-0）: 上0は維持して左右下のみ16px */
+:is(.rounded-lg, .rounded-xl).border > :is(.p-3, .p-4, .p-5, .p-6).pt-0:not([class*="pb-"], [class*="px-"], [class*="py-"]) {
+  padding: 1rem;
+  padding-top: 0;
+}
