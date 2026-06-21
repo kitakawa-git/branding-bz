@@ -44,6 +44,23 @@ function PortalAuthCallbackContent() {
           return
         }
 
+        // Googleログインは既存メンバー専用。未登録の孤児アカウントはここで弾く。
+        // （members / admin_users が無ければサーバ側で auth user を削除しメールを解放する）
+        // 認証は本人の cookie セッションで解決するため Authorization ヘッダは不要。
+        const res = await fetch('/api/portal/oauth-gate', { method: 'POST' })
+        if (cancelled) return
+        const gate = await res.json().catch(() => ({ orphan: false }))
+        if (gate.orphan) {
+          // 未登録 → サインアウトして「まず新規登録を」へ誘導
+          await supabase.auth.signOut()
+          if (cancelled) return
+          const errorUrl = from
+            ? `/portal/auth?from=${from}&error=not_registered`
+            : '/portal/auth?error=not_registered'
+          router.replace(errorUrl)
+          return
+        }
+
         if (from) {
           router.replace(`/portal/auth/select?from=${from}`)
         } else {

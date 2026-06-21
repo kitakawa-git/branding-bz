@@ -2,8 +2,19 @@
 // POST /api/signup
 // サービスロールキーを使用してAuth user + 企業 + admin_users + profiles を一括作成
 import { NextRequest, NextResponse } from 'next/server'
+import { Resend } from 'resend'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { generateRandomSlug } from '@/lib/generate-slug'
+
+// HTMLエスケープ（XSS対策）
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
 
 export async function POST(request: NextRequest) {
 
@@ -183,6 +194,34 @@ export async function POST(request: NextRequest) {
       )
     }
 
+
+    // 開発者へメール通知（失敗しても登録は成功扱い）
+    const resendApiKey = process.env.RESEND_API_KEY
+    const devEmail = process.env.SIGNUP_NOTIFICATION_EMAIL || process.env.CONTACT_NOTIFICATION_EMAIL
+    if (resendApiKey && devEmail) {
+      try {
+        const resend = new Resend(resendApiKey)
+        await resend.emails.send({
+          from: 'branding.bz <noreply@branding.bz>',
+          to: devEmail,
+          subject: `【branding.bz】新規アカウント登録: ${escapeHtml(companyName)}`,
+          html: `
+            <h2>新しいアカウントが登録されました</h2>
+            <table style="border-collapse:collapse;">
+              <tr><td style="padding:8px;font-weight:bold;">企業名</td><td style="padding:8px;">${escapeHtml(companyName)}</td></tr>
+              <tr><td style="padding:8px;font-weight:bold;">氏名</td><td style="padding:8px;">${escapeHtml(userName)}</td></tr>
+              <tr><td style="padding:8px;font-weight:bold;">メール</td><td style="padding:8px;">${escapeHtml(email)}</td></tr>
+              <tr><td style="padding:8px;font-weight:bold;">役職</td><td style="padding:8px;">${escapeHtml(position || '未入力')}</td></tr>
+              <tr><td style="padding:8px;font-weight:bold;">部署</td><td style="padding:8px;">${escapeHtml(department || '未入力')}</td></tr>
+            </table>
+            <hr />
+            <p><a href="https://branding.bz/superadmin">管理画面で確認する</a></p>
+          `,
+        })
+      } catch (emailError) {
+        console.error('[Signup] 開発者通知メール送信エラー:', emailError)
+      }
+    }
 
     return NextResponse.json({
       success: true,
