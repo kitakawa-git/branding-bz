@@ -52,7 +52,7 @@ function Hero() {
           AIガイドで、約5〜10分でブランドの土台ができる。
         </p>
 
-        <h1 className="text-5xl font-bold leading-[1.05] tracking-[-0.03em] sm:text-6xl md:text-7xl">
+        <h1 className="text-[42px] font-bold leading-[1.05] tracking-[-0.03em] sm:text-6xl md:text-7xl">
           <span className="block md:whitespace-nowrap">AIでブランディングを</span>
           <span className="block">加速させる。</span>
         </h1>
