@@ -13,7 +13,6 @@ import { toast } from 'sonner'
 
 export default function MapReviewPanel({ companyId }: { companyId: string }) {
   const [review, setReview] = useState<string | null>(null)
-  const [reviewAt, setReviewAt] = useState<string | null>(null)
   const [stale, setStale] = useState(false)
   const [reason, setReason] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -35,7 +34,6 @@ export default function MapReviewPanel({ companyId }: { companyId: string }) {
         return
       }
       setReview(json.review as string)
-      setReviewAt(json.generatedAt ? new Date(json.generatedAt as string).toLocaleString('ja-JP') : null)
       setStale(json.stale === true)
       setReason(null)
     } catch (err) {
@@ -73,11 +71,10 @@ export default function MapReviewPanel({ companyId }: { companyId: string }) {
   }
 
   return (
-    <div className="border border-violet-200 bg-violet-50/40 rounded-lg p-4">
-      <div className="flex flex-wrap items-center gap-1.5 mb-2 text-xs font-bold text-foreground">
-        <Sparkles size={14} />
-        AIレビュー
-        {reviewAt && <span className="font-normal text-muted-foreground">（生成: {reviewAt}）</span>}
+    <div className="rounded-lg border border-blue-100 bg-blue-50/30 p-4">
+      <div className="flex flex-wrap items-center gap-1.5 mb-2 text-xs font-bold text-ds-app-accent">
+        <Sparkles className="h-3.5 w-3.5" />
+        レビュー（AI生成）
         <span className="grow" />
         <Button
           type="button"
@@ -96,7 +93,7 @@ export default function MapReviewPanel({ companyId }: { companyId: string }) {
           データが更新されています。再生成をおすすめします
         </p>
       )}
-      <p className="text-[13px] text-foreground whitespace-pre-wrap break-words m-0">{review}</p>
+      <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap break-words m-0">{review}</p>
     </div>
   )
 }

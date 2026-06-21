@@ -298,39 +298,58 @@ export default function OntologyBuilderSection({
 
   return (
     <div>
-      {/* ステッパー */}
-      <div className="flex items-start gap-1 overflow-x-auto pb-1 mb-1">
-        {STEPS.map((s, i) => {
-          const done = stepDone(s.num)
-          const active = activeStep === s.num
-          return (
-            <div key={s.num} className="flex items-start shrink-0">
-              {i > 0 && <div className="h-px w-4 sm:w-7 bg-border mt-3.5" />}
-              <button
-                type="button"
-                onClick={() => setActiveStep(s.num)}
-                className="flex flex-col items-center gap-1 bg-transparent border-0 p-0 px-1 cursor-pointer group"
-              >
-                <span
-                  className={`inline-flex items-center justify-center size-7 rounded-full text-xs font-bold transition-colors ${
-                    done
-                      ? 'bg-green-600 text-white'
-                      : active
-                        ? 'bg-ds-app-accent text-white ring-2 ring-blue-200'
-                        : 'bg-gray-100 text-gray-500 group-hover:bg-gray-200'
-                  }`}
+      {/* ステッパー（/tools/personality の StepProgressBar と同じ装飾・全幅） */}
+      <div className="w-full mb-3">
+        <div className="relative">
+          {/* ベースライン（グレー一本線：最初の丸中心〜最後の丸中心） */}
+          <div className="absolute top-[15px] left-4 right-4 h-0.5 bg-gray-200" />
+
+          {/* 完了ライン（アクセント色：先頭から連続して完了している分だけ上書き） */}
+          {(() => {
+            const firstNotDone = STEPS.findIndex((s) => !stepDone(s.num))
+            const progress = firstNotDone === -1 ? 1 : firstNotDone / (STEPS.length - 1)
+            if (progress <= 0) return null
+            return (
+              <div
+                className="absolute top-[15px] left-4 h-0.5 bg-ds-app-accent transition-all"
+                style={{ width: `calc((100% - 32px) * ${progress})` }}
+              />
+            )
+          })()}
+
+          {/* ステップ丸（justify-between で均等配置） */}
+          <div className="relative flex justify-between">
+            {STEPS.map((s) => {
+              const done = stepDone(s.num)
+              const active = activeStep === s.num
+              return (
+                <button
+                  key={s.num}
+                  type="button"
+                  onClick={() => setActiveStep(s.num)}
+                  className="flex flex-col items-center bg-transparent border-0 p-0 cursor-pointer group"
                 >
-                  {done ? <Check size={14} /> : s.num}
-                </span>
-                <span
-                  className={`text-[11px] whitespace-nowrap ${active ? 'font-bold text-foreground' : 'text-muted-foreground'}`}
-                >
-                  {s.label}
-                </span>
-              </button>
-            </div>
-          )
-        })}
+                  <span
+                    className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition-colors ${
+                      done || active
+                        ? 'bg-ds-app-accent text-white'
+                        : 'bg-gray-200 text-gray-500 group-hover:bg-gray-300'
+                    } ${active ? 'ring-2 ring-blue-200' : ''}`}
+                  >
+                    {done ? '✓' : s.num}
+                  </span>
+                  <span
+                    className={`mt-1.5 text-[10px] font-medium whitespace-nowrap ${
+                      active ? 'font-bold text-gray-900' : done ? 'text-gray-900' : 'text-gray-400'
+                    }`}
+                  >
+                    {s.label}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        </div>
       </div>
 
       {/* 現在ステップのパネル */}
