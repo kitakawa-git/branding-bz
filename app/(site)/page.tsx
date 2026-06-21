@@ -49,7 +49,7 @@ function Hero() {
 
       <div className="mx-auto max-w-4xl text-center">
         <p className="mb-7 text-sm text-white">
-          AIガイドで、約5〜10分でブランドの土台ができる。
+          “つくっただけ”では、終わらせない。
         </p>
 
         <h1 className="text-[44px] font-bold leading-[1.05] tracking-[-0.03em] sm:text-6xl md:text-7xl">
