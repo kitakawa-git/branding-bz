@@ -80,7 +80,7 @@ export default function PersonalityLandingPage() {
         {/* ヒーロー */}
         <section className="relative overflow-hidden px-6 pt-32 pb-16 text-center md:pt-40">
           <div className="relative mx-auto max-w-5xl">
-            <p className="mb-7 text-sm text-white">10問・約5〜10分で診断</p>
+            <p className="mb-7 text-sm text-white">AIでブランディングを加速させる。</p>
             <h1 className="text-5xl font-bold leading-[1.05] tracking-[-0.03em] md:whitespace-nowrap md:text-7xl">ブランドパーソナリティ診断</h1>
             <p className="mx-auto mt-7 max-w-2xl text-lg text-white/80 md:text-xl">
               あなたのブランドが「人」だったら、どんな性格？

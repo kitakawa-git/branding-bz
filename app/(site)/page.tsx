@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import {
   ArrowRight,
@@ -91,7 +92,7 @@ const ux = (id: string, w = 640) =>
   `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${w}&q=80`
 
 type ShowCard =
-  | { kind: 'photo'; h: number; img: string; label?: string; title: string }
+  | { kind: 'photo'; h: number; img: string; label?: string; title: string; mark?: string }
   | { kind: 'editorial'; h: number; img: string; big: string; sub: string }
   | { kind: 'art'; h: number; grad: string; title: string; sub: string }
   | { kind: 'ui'; h: number; title: string; sub: string }
@@ -99,34 +100,46 @@ type ShowCard =
 
 const showColumns: ShowCard[][] = [
   [
-    { kind: 'art', h: 280, grad: 'linear-gradient(135deg,#1d4ed8 0%,#7c3aed 55%,#0ea5e9 100%)', title: 'Aoyama Studio', sub: 'ブランド設計' },
-    { kind: 'photo', h: 220, img: ux('1551434678-e076c223a692'), label: '採用', title: 'MIDORI 採用ブランディング' },
-    { kind: 'type', h: 240, bg: '#f97316', fg: '#0a0a0a', title: '大胆なビジョンを、確かなブランドへ。', foot: 'TADANO 物流' },
-    { kind: 'photo', h: 200, img: ux('1497032628192-86f99bcd76bc'), label: 'IT', title: 'CODEX 開発チーム' },
+    { kind: 'art', h: 280, grad: 'linear-gradient(135deg,#1d4ed8 0%,#7c3aed 55%,#0ea5e9 100%)', title: 'STP分析', sub: '構築ツール' },
+    { kind: 'photo', h: 220, img: '/marketing/images/showcase/showcase-10.jpg', label: '製造業 / 化学・素材', title: '新規事業ブランディング', mark: 'TABIE' },
+    { kind: 'type', h: 240, bg: '#f97316', fg: '#0a0a0a', title: '『誰に何を約束するか』が、STP分析とペルソナで一気にクリアに。社内の合意形成が驚くほど速くなりました。', foot: 'テックブリッジ' },
+    { kind: 'photo', h: 200, img: '/marketing/images/showcase/showcase-04.jpg', label: 'コンサルティング / ブランド・マーケティング', title: '人事評価 / ブランド評価軸', mark: 'ID INC.' },
   ],
   [
-    { kind: 'editorial', h: 340, img: ux('1517841905240-472988babdf9'), big: 'KIYO', sub: 'EDITORIAL' },
-    { kind: 'ui', h: 232, title: 'VOXA 音声AI', sub: '最速・高品質の音声プラットフォーム' },
-    { kind: 'photo', h: 210, img: ux('1506744038136-46273834b3fb'), label: '観光', title: 'SETO 地域ブランド' },
-    { kind: 'art', h: 250, grad: 'conic-gradient(from 200deg at 60% 40%,#f43f5e,#8b5cf6,#22d3ee,#f43f5e)', title: 'AURA', sub: 'コスメブランド' },
+    { kind: 'photo', h: 340, img: '/marketing/images/showcase/showcase-06.jpg', label: '金融・保険 / 保険', title: '新規事業ブランディング', mark: 'Solvvy' },
+    { kind: 'photo', h: 232, img: '/marketing/images/showcase/showcase-20.jpg', label: 'コンサルティング / ブランド・マーケティング', title: '人事評価 / ブランド評価軸', mark: 'ID INC.' },
+    { kind: 'photo', h: 210, img: '/marketing/images/showcase/showcase-08.jpg', label: 'その他 / 物流', title: 'ブランド研修', mark: '櫻井運輸' },
+    { kind: 'art', h: 250, grad: 'conic-gradient(from 200deg at 60% 40%,#f43f5e,#8b5cf6,#22d3ee,#f43f5e)', title: 'ブランドカラー定義', sub: '構築ツール' },
   ],
   [
-    { kind: 'photo', h: 240, img: ux('1517336714731-489689fd1ca8'), label: 'SaaS', title: 'ダッシュボードで浸透を可視化' },
-    { kind: 'art', h: 290, grad: 'radial-gradient(120% 120% at 25% 20%,#10b981 0%,#0f172a 65%)', title: 'PRISM', sub: 'デザインスタジオ' },
-    { kind: 'type', h: 222, bg: '#2563eb', fg: '#ffffff', title: 'NOVEL READING RETREATS', foot: 'BOOKERS' },
-    { kind: 'photo', h: 256, img: ux('1486312338219-ce68d2c6f44d'), label: 'プロダクト', title: 'LOOP 体験設計' },
+    { kind: 'photo', h: 240, img: '/marketing/images/showcase/showcase-19.jpg', label: '医療・ヘルスケア / 医療機器', title: 'コーポレート・リブランディング', mark: 'ritz medical' },
+    { kind: 'art', h: 290, grad: 'radial-gradient(120% 120% at 25% 20%,#10b981 0%,#0f172a 65%)', title: 'パーソナリティ診断', sub: '構築ツール' },
+    { kind: 'photo', h: 222, img: '/marketing/images/showcase/showcase-09.jpg', label: 'サービス業 / 教育', title: 'サービスブランディング', mark: 'クリエイト速読スクール' },
+    { kind: 'photo', h: 256, img: '/marketing/images/showcase/showcase-14.jpg', label: 'IT・テクノロジー / Web制作・開発', title: '社内 / 採用ブランディング', mark: 'テックブリッジ' },
   ],
   [
-    { kind: 'ui', h: 224, title: 'INSIGHT 分析基盤', sub: 'ブランド体験のデータを可視化' },
-    { kind: 'editorial', h: 320, img: ux('1488161628813-04466f872be2'), big: 'AOBA', sub: 'WORKS' },
-    { kind: 'photo', h: 230, img: ux('1464822759023-fed622ff2c3b'), label: 'アウトドア', title: 'YAMA ギアブランド' },
-    { kind: 'type', h: 210, bg: '#facc15', fg: '#0a0a0a', title: 'PAGE BREAK STUDIO', foot: 'EDITORIAL' },
+    { kind: 'photo', h: 224, img: '/marketing/images/showcase/showcase-16.jpg', label: '製造業 / 化学・素材', title: '新規事業ブランディング', mark: 'TABIE' },
+    { kind: 'photo', h: 320, img: '/marketing/images/showcase/showcase-05.jpg', label: '建設・不動産 / 不動産', title: 'クリエイション・ワークショップ', mark: 'CTD' },
+    { kind: 'photo', h: 230, img: '/marketing/images/showcase/showcase-11.jpg', label: '小売・流通 / 家電・雑貨', title: '新店舗ブランディング', mark: 'ナチュラルキッチン' },
+    { kind: 'type', h: 240, bg: '#facc15', fg: '#0a0a0a', title: 'ブランドの体現度をスコア機能で測っています。感覚ではなく数値で振り返れるので、次の一手が明確になりました。', foot: 'ritz medical' },
   ],
   [
-    { kind: 'art', h: 250, grad: 'linear-gradient(160deg,#0f172a,#312e81 60%,#a855f7)', title: 'NEBULA', sub: 'XRスタジオ' },
-    { kind: 'photo', h: 230, img: ux('1542744173-8e7e53415bb0'), label: 'コーポレート', title: 'KASUGA 事業ブランド' },
-    { kind: 'ui', h: 240, title: 'SIGNAL 名刺解析', sub: '発信の効果をリアルタイム計測' },
-    { kind: 'photo', h: 214, img: ux('1604079628040-94301bb21b91'), label: 'アート', title: 'HUE ギャラリー' },
+    { kind: 'art', h: 250, grad: 'linear-gradient(160deg,#0f172a,#312e81 60%,#a855f7)', title: 'ペルソナビルダー', sub: '構築ツール' },
+    { kind: 'photo', h: 230, img: '/marketing/images/showcase/showcase-12.jpg', label: '医療・ヘルスケア / 医療機器', title: 'コーポレート・リブランディング', mark: 'ritz medical' },
+    { kind: 'photo', h: 240, img: '/marketing/images/showcase/showcase-15.jpg', label: 'IT・テクノロジー / SaaS', title: 'サービスブランディング', mark: 'brandcommit' },
+    { kind: 'photo', h: 214, img: '/marketing/images/showcase/showcase-17.jpg', label: '医療・ヘルスケア / 医療機器', title: 'コーポレート・リブランディング', mark: 'ritz medical' },
+  ],
+  [
+    { kind: 'photo', h: 246, img: '/marketing/images/showcase/showcase-07.jpg', label: 'IT・テクノロジー / Web制作・開発', title: '社内 / 採用ブランディング', mark: 'テックブリッジ' },
+    { kind: 'art', h: 268, grad: 'linear-gradient(135deg,#f59e0b 0%,#ef4444 55%,#ec4899 100%)', title: 'コピーライティングAI', sub: '構築ツール' },
+    { kind: 'photo', h: 226, img: '/marketing/images/showcase/showcase-03.jpg', label: '医療・ヘルスケア / 医療機器', title: 'コーポレート・リブランディング', mark: 'ritz medical' },
+    { kind: 'photo', h: 218, img: '/marketing/images/showcase/showcase-13.jpg', label: 'サービス業 / 宿泊・観光', title: 'サービスブランディング', mark: '安心お宿' },
+  ],
+  [
+    { kind: 'photo', h: 330, img: '/marketing/images/showcase/showcase-01.jpg', label: 'サービス業 / 飲食', title: '新店舗ブランディング', mark: 'すしなす' },
+    { kind: 'type', h: 224, bg: '#16a34a', fg: '#06210f', title: '現場のスタッフまで“自社の価値”を自分の言葉で語れるようになった。研修後、社内の空気が変わったのを実感しています。', foot: '櫻井運輸' },
+    { kind: 'photo', h: 236, img: '/marketing/images/showcase/showcase-18.jpg', label: 'その他 / 物流', title: '新規事業ブランディング', mark: '櫻井運輸' },
+    { kind: 'photo', h: 242, img: '/marketing/images/showcase/showcase-02.jpg', label: '金融・保険 / 保険', title: '新規事業ブランディング', mark: 'Solvvy' },
   ],
 ]
 
@@ -135,18 +148,14 @@ function CardInner({ card }: { card: ShowCard }) {
     e.currentTarget.style.display = 'none'
   }
   if (card.kind === 'photo') {
-    const mark = card.title.split(' ')[0]
+    const mark = card.mark ?? card.title.split(' ')[0]
     return (
       <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#16161d]" style={{ height: card.h }}>
         <img src={card.img} alt="" loading="lazy" onError={hideOnError} className="absolute inset-0 h-full w-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/75" />
-        {/* サイトのナビ風ヘッダー（公開サイトに見せる） */}
-        <div className="absolute inset-x-3 top-3 flex items-center justify-between">
+        {/* 左上にブランド名の頭文字のみ表示 */}
+        <div className="absolute inset-x-3 top-3 flex items-center">
           <span className="text-xs font-bold tracking-tight text-white drop-shadow">{mark}</span>
-          <span className="flex gap-2 text-[9px] font-medium text-white/70 drop-shadow">
-            <span>Work</span>
-            <span>About</span>
-          </span>
         </div>
         {card.label && (
           <span className="absolute left-3 bottom-9 rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-medium text-white/90 backdrop-blur">
@@ -162,10 +171,9 @@ function CardInner({ card }: { card: ShowCard }) {
       <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#16161d]" style={{ height: card.h }}>
         <img src={card.img} alt="" loading="lazy" onError={hideOnError} className="absolute inset-0 h-full w-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-black/30" />
-        {/* サイトのナビ風ヘッダー */}
-        <div className="absolute inset-x-4 top-4 flex items-center justify-between">
+        {/* 左上にカテゴリ表記のみ */}
+        <div className="absolute inset-x-4 top-4 flex items-center">
           <span className="text-[11px] font-semibold tracking-[0.25em] text-white/85">{card.sub}</span>
-          <span className="text-[9px] font-medium text-white/60">Menu</span>
         </div>
         <div className="absolute bottom-3 left-4 text-5xl font-black tracking-tight text-white drop-shadow-lg">{card.big}</div>
       </div>
@@ -185,12 +193,7 @@ function CardInner({ card }: { card: ShowCard }) {
   if (card.kind === 'ui') {
     return (
       <div className="flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#101015] p-4" style={{ height: card.h }}>
-        <div className="flex items-center gap-2 text-xs font-medium text-white/45">
-          <span className="h-4 w-4 rounded-full bg-gradient-to-br from-blue-400 to-purple-400" />
-          {card.title}
-        </div>
-        <div className="mt-3 text-base font-bold text-white">{card.sub}</div>
-        <div className="mt-auto space-y-2">
+        <div className="space-y-2">
           <div className="h-2 rounded bg-white/10" />
           <div className="h-2 w-2/3 rounded bg-white/10" />
           <div className="mt-3 flex h-12 items-end gap-1.5">
@@ -198,6 +201,13 @@ function CardInner({ card }: { card: ShowCard }) {
               <div key={i} className="flex-1 rounded-t bg-gradient-to-t from-blue-500/40 to-blue-400" style={{ height: `${h}%` }} />
             ))}
           </div>
+        </div>
+        <div className="mt-auto pt-4">
+          <div className="flex items-center gap-2">
+            <span className="h-4 w-4 shrink-0 rounded-full bg-gradient-to-br from-blue-400 to-purple-400" />
+            <span className="text-lg font-bold text-white">{card.title}</span>
+          </div>
+          <div className="mt-1 text-xs text-white/70">{card.sub}</div>
         </div>
       </div>
     )
@@ -212,6 +222,18 @@ function CardInner({ card }: { card: ShowCard }) {
 }
 
 function Showcase() {
+  // 7つの列パターンの並び順。読み込みごとにシャッフルする。
+  // SSR / 初回レンダーは既定順（ハイドレーション不一致を避ける）→ マウント後にシャッフル。
+  const [order, setOrder] = useState<number[]>(() => showColumns.map((_, i) => i))
+  useEffect(() => {
+    const a = showColumns.map((_, i) => i)
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[a[i], a[j]] = [a[j], a[i]]
+    }
+    setOrder(a)
+  }, [])
+
   return (
     <section className="relative overflow-hidden">
       <style>{`
@@ -233,7 +255,7 @@ function Showcase() {
         <div className="flex justify-center gap-3 px-3">
           {/* カード幅は固定。ワイド画面では列数を増やして全幅を埋める
               （5列ぶんのデータを循環して描画し、はみ出した分は端で見切れる） */}
-          {Array.from({ length: 15 }, (_, i) => showColumns[i % showColumns.length]).map((col, i) => (
+          {Array.from({ length: 15 }, (_, i) => showColumns[order[i % order.length]]).map((col, i) => (
             <div
               key={i}
               className="lp-col flex w-[272px] shrink-0 flex-col gap-3"

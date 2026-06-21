@@ -80,7 +80,7 @@ export default function STPLandingPage() {
         {/* ヒーロー */}
         <section className="relative overflow-hidden px-6 pt-32 pb-16 text-center md:pt-40">
           <div className="relative mx-auto max-w-4xl">
-            <p className="mb-7 text-sm text-white">AIガイドで約10〜15分</p>
+            <p className="mb-7 text-sm text-white">AIでブランディングを加速させる。</p>
             <h1 className="text-5xl font-bold leading-[1.05] tracking-[-0.03em] md:text-7xl">STP分析ツール</h1>
             <p className="mx-auto mt-7 max-w-2xl text-lg text-white/80 md:text-xl">
               市場をどう分け、誰を狙い、どう差別化するか。

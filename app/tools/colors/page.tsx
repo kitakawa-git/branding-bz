@@ -142,7 +142,7 @@ export default function ColorsLandingPage() {
       {/* ヒーロー */}
       <section className="relative overflow-hidden px-6 pt-32 pb-16 text-center md:pt-40">
         <div className="relative mx-auto max-w-4xl">
-          <p className="mb-7 text-sm text-white">AIガイドで約5〜10分</p>
+          <p className="mb-7 text-sm text-white">AIでブランディングを加速させる。</p>
           <h1 className="text-5xl font-bold leading-[1.05] tracking-[-0.03em] md:text-7xl">
             ブランドカラー定義ツール
           </h1>

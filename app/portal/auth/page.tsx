@@ -20,8 +20,8 @@ const SUBTITLES: Record<string, string> = {
 export default function PortalAuthPage() {
   return (
     <Suspense fallback={
-      <div className="flex min-h-screen items-center justify-center font-sans">
-        <p className="text-sm text-gray-500">読み込み中...</p>
+      <div className="flex min-h-screen items-center justify-center bg-[#08080a] font-sans">
+        <p className="text-sm text-white/40">読み込み中...</p>
       </div>
     }>
       <PortalAuthContent />
@@ -43,8 +43,11 @@ function PortalAuthContent() {
 
   // エラーパラメータ検出
   useEffect(() => {
-    if (searchParams.get('error') === 'auth_failed') {
+    const err = searchParams.get('error')
+    if (err === 'auth_failed') {
       setError('ログインに失敗しました。もう一度お試しください。')
+    } else if (err === 'not_registered') {
+      setError('このGoogleアカウントはまだ登録されていません。\nご利用には新規登録が必要です。下の「新規登録」からお進みください。')
     }
   }, [searchParams])
 
@@ -119,59 +122,38 @@ function PortalAuthContent() {
   // セッションチェック中
   if (checkingSession) {
     return (
-      <div className="flex min-h-screen items-center justify-center font-sans">
-        <p className="text-sm text-gray-500">読み込み中...</p>
+      <div className="flex min-h-screen items-center justify-center bg-[#08080a] font-sans">
+        <p className="text-sm text-white/40">読み込み中...</p>
       </div>
     )
   }
 
-  const subtitle = from ? SUBTITLES[from] || 'branding.bz にログイン' : 'branding.bz にログイン'
+  const subtitle = from ? SUBTITLES[from] || '' : ''
 
   return (
     <div
-      className="flex min-h-screen flex-col items-center justify-center font-sans"
-      style={{
-        background: [
-          'radial-gradient(ellipse 180% 160% at 5% 20%, rgba(196, 181, 253, 0.5) 0%, transparent 55%)',
-          'radial-gradient(ellipse 160% 140% at 85% 10%, rgba(253, 186, 116, 0.4) 0%, transparent 55%)',
-          'radial-gradient(ellipse 150% 130% at 50% 90%, rgba(167, 243, 208, 0.45) 0%, transparent 55%)',
-          'radial-gradient(ellipse 130% 110% at 95% 65%, rgba(251, 207, 232, 0.4) 0%, transparent 55%)',
-          '#ffffff',
-        ].join(', '),
-      }}
+      className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-white font-sans text-white"
     >
       <div
-        className="relative w-full max-w-[400px] mx-5 rounded-2xl overflow-hidden"
+        className="relative z-10 w-full max-w-[400px] mx-5 rounded-3xl overflow-hidden border border-white/10 bg-[#0c0c11]"
         style={{
-          background: 'rgba(255, 255, 255, 0.7)',
-          backdropFilter: 'blur(12px) saturate(120%)',
-          WebkitBackdropFilter: 'blur(12px) saturate(120%)',
-          border: '1px solid rgba(255, 255, 255, 0.8)',
-          boxShadow: '0px 8px 24px 0 rgba(12, 74, 110, 0.12), inset 0px 0px 4px 2px rgba(255, 255, 255, 0.15)',
+          boxShadow: 'inset 0 1px 0 0 rgba(255,255,255,0.06), 0 24px 60px -20px rgba(0,0,0,0.45)',
         }}
       >
-        <div className="absolute inset-0 pointer-events-none rounded-2xl"
-          style={{ background: 'linear-gradient(to left top, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 50%)' }} />
-        <div className="absolute inset-0 pointer-events-none rounded-2xl"
-          style={{ background: 'linear-gradient(to bottom, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0) 100%)' }} />
+        <div className="absolute inset-0 pointer-events-none rounded-3xl"
+          style={{ background: 'linear-gradient(to bottom, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 45%)' }} />
 
         <div className="relative z-10 p-10">
-          <div className="mb-8 text-center">
-            {/* ロゴクリックでトップページへ遷移（相対パス＝現在のドメインのトップ） */}
-            <Link href="/" className="inline-block mb-3 transition-opacity hover:opacity-80">
-              <img
-                src="/logo.svg"
-                alt="branding.bz"
-                style={{ height: '40px', width: 'auto' }}
-              />
-            </Link>
-            <p className="m-0 text-base text-gray-500">
-              {subtitle}
-            </p>
-          </div>
+          {subtitle && (
+            <div className="mb-8 text-center">
+              <p className="m-0 text-base text-white/55">
+                {subtitle}
+              </p>
+            </div>
+          )}
 
           {error && (
-            <div className="mb-4 whitespace-pre-wrap break-words rounded-lg bg-red-50/80 px-4 py-3 text-sm text-red-600">
+            <div className="mb-4 whitespace-pre-wrap break-words rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
               {error}
             </div>
           )}
@@ -181,7 +163,7 @@ function PortalAuthContent() {
             type="button"
             onClick={handleGoogleLogin}
             disabled={googleLoading || loading}
-            className="flex w-full h-12 items-center justify-center gap-3 rounded-lg border border-gray-300 bg-white text-base font-medium text-gray-700 transition-all hover:bg-gray-50 hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex w-full h-12 items-center justify-center gap-3 rounded-full border border-white/15 bg-white/[0.06] text-base font-medium text-white transition-all hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <svg className="h-6 w-6" viewBox="0 0 24 24">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
@@ -195,28 +177,28 @@ function PortalAuthContent() {
           {/* セパレーター */}
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
+              <span className="w-full border-t border-white/10" />
             </div>
-            <div className="relative flex justify-center text-sm uppercase">
-              <span className="bg-white/70 px-2 text-muted-foreground">または</span>
+            <div className="relative flex justify-center text-sm">
+              <span className="rounded-full bg-[#0c0c11] px-3 text-white/40">または</span>
             </div>
           </div>
 
           <form onSubmit={handleLogin}>
             <div className="mb-5">
-              <h2 className="mb-1.5 text-base font-bold text-gray-700">メールアドレス</h2>
+              <h2 className="mb-1.5 text-sm font-semibold text-white/70">メールアドレス</h2>
               <Input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
                 required
-                className="h-12 text-base md:text-base bg-white/60 border-white/80 focus-visible:ring-gray-400"
+                className="h-12 text-base md:text-base bg-white/[0.04] border-white/15 text-white placeholder:text-white/30 focus-visible:ring-white/30"
               />
             </div>
 
             <div className="mb-5">
-              <h2 className="mb-1.5 text-base font-bold text-gray-700">パスワード</h2>
+              <h2 className="mb-1.5 text-sm font-semibold text-white/70">パスワード</h2>
               <Input
                 type="password"
                 value={password}
@@ -224,43 +206,47 @@ function PortalAuthContent() {
                 placeholder="パスワードを入力"
                 required
                 minLength={6}
-                className="h-12 text-base md:text-base bg-white/60 border-white/80 focus-visible:ring-gray-400"
+                className="h-12 text-base md:text-base bg-white/[0.04] border-white/15 text-white placeholder:text-white/30 focus-visible:ring-white/30"
               />
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="relative w-full h-12 rounded-full text-lg font-bold text-white overflow-hidden transition-all hover:scale-105 hover:shadow-2xl disabled:opacity-50 disabled:hover:scale-100"
-              style={{
-                background: 'rgba(0, 0, 0, 0.75)',
-                backdropFilter: 'blur(12px) saturate(120%)',
-                WebkitBackdropFilter: 'blur(12px) saturate(120%)',
-                border: '1px solid rgba(255, 255, 255, 0.15)',
-                boxShadow: '0px 8px 24px 0 rgba(0, 0, 0, 0.2), inset 0px 1px 0px 0px rgba(255, 255, 255, 0.15)',
-              }}
+              className="w-full h-12 rounded-full bg-white text-base font-semibold text-black transition-transform hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100"
             >
               {loading ? 'ログイン中...' : 'ログイン'}
             </button>
           </form>
 
           <p className="mb-0 mt-6 text-center text-sm">
-            <span className="text-gray-500">
+            <span className="text-white/55">
               アカウントをお持ちでない方は{' '}
               <button
                 onClick={() => router.push('/signup')}
-                className="font-bold text-ds-app-accent underline-offset-2 hover:underline bg-transparent border-0 cursor-pointer"
+                className="font-semibold text-white underline-offset-2 hover:underline bg-transparent border-0 cursor-pointer"
               >
                 新規登録
               </button>
             </span>
           </p>
 
-          <p className="mb-0 mt-3 text-center text-sm text-gray-500">
+          <p className="mb-0 mt-3 text-center text-sm text-white/40">
             すべてのツール・サービスで
             <br />
             同じアカウントをご利用いただけます
           </p>
+
+          {/* ロゴ（カード最下部）。クリックでトップページへ */}
+          <div className="mt-8 flex justify-center border-t border-white/10 pt-6">
+            <Link href="/" className="inline-block transition-opacity hover:opacity-80">
+              <img
+                src="/logo.svg"
+                alt="branding.bz"
+                style={{ height: '24px', width: 'auto', filter: 'brightness(0) invert(1)' }}
+              />
+            </Link>
+          </div>
         </div>
       </div>
     </div>
