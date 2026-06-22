@@ -378,7 +378,7 @@ export function Step4Journey({ personas: initialPersonas, basicInfo, onNext, onB
                       })}
                     </div>
                     {/* 選択ステージの詳細 */}
-                    <div key={`${selectedStageIdx}-${filterIdx}`} className="px-4 pb-4 pt-1 animate-in fade-in slide-in-from-top-1 duration-200">
+                    <div key={`${selectedStageIdx}-${filterIdx}`} className="px-4 pb-4 pt-0 animate-in fade-in slide-in-from-top-1 duration-200">
                       {members.length === 0 ? (
                         <p className="text-[13px] text-muted-foreground">このステージのデータがありません。</p>
                       ) : (
