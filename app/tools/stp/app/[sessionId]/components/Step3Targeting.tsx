@@ -504,7 +504,7 @@ export function Step3Targeting({
         <Button
           onClick={handleNext}
           disabled={saving || !mainTarget}
-          className="gap-1"
+          className="h-14 gap-2 px-6 text-base font-bold"
         >
           {saving ? '保存中...' : 'ポジショニングへ'}
           {!saving && <ArrowRight className="h-4 w-4" />}
