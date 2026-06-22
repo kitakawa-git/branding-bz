@@ -241,7 +241,7 @@ export function Step4Positioning({
     <div>
       {/* ヘッダー（AIボタンは見出し直下・左寄せ） */}
       <h1 className="text-2xl font-bold text-foreground mb-2">Step 4: ポジショニング</h1>
-      <p className="mb-4 text-[13px] text-muted-foreground">💡 チャート上の点を<b className="font-medium text-foreground">ドラッグ</b>で配置できます</p>
+      <p className="mb-4 text-[13px] leading-relaxed text-muted-foreground">2つの軸で競合と自社の立ち位置を可視化し、市場の中で狙うべき差別化ポジションを見つけるマップです。チャート上の点を<b className="font-medium text-foreground">ドラッグ</b>、または各要素の<b className="font-medium text-foreground">スライダー</b>で配置を調整できます。</p>
       {!aiLoading && (
         <div className="mb-6 flex justify-start">
           <AIButton size="sm" onClick={handleRegenerate} className="shrink-0">
