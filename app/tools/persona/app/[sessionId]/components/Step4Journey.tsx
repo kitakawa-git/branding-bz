@@ -663,7 +663,6 @@ function EmotionGraph({ personasInScope, stageNames, selectedStageIdx, onSelectS
         {selectedStageIdx >= 0 && selectedStageIdx < n && (
           <g pointerEvents="none">
             <circle cx={x(selectedStageIdx)} cy={y(0)} r={32} fill="none" stroke="var(--ds-app-accent)" strokeWidth={2} strokeDasharray="4 3" opacity={0.5} />
-            <text x={x(selectedStageIdx)} y={16} fill="var(--ds-app-accent)" fontSize={11} fontWeight={700} textAnchor="middle">↓ 選択中</text>
           </g>
         )}
         {/* ステージ単位のクリック領域（透明・列全幅） */}
@@ -682,27 +681,19 @@ function EmotionGraph({ personasInScope, stageNames, selectedStageIdx, onSelectS
         })}
       </svg>
 
-      {/* ステージ別の読み取りメモ */}
+      {/* ステージ別の読み取りメモ（クリックで詳細パネルへナビ＝選択chip兼用） */}
       <div className="mt-3 grid gap-2" style={{ gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))` }}>
-        {stageInfo.map(({ sName, i, tier, note }) => (
-          <div key={i} className={`rounded-md border p-2 text-[11.5px] leading-snug ${CARD_STYLE[tier]}`}>
-            <b className="font-bold">{i + 1} {sName}</b>：{note}
-          </div>
-        ))}
-      </div>
-
-      {/* ステージ選択chip（グラフ直下／詳細パネルへのナビ） */}
-      <div className="mt-3 flex flex-wrap justify-center gap-2">
-        {stageInfo.map(({ sName, i, entries }) => {
-          const avg = entries.length ? entries.reduce((s, e) => s + (e.stage.emotion_score ?? 0), 0) / entries.length : 0
+        {stageInfo.map(({ sName, i, tier, note }) => {
           const sel = selectedStageIdx === i
           return (
-            <button key={i} onClick={() => onSelectStage(i)}
-              className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
-                sel ? 'border-foreground bg-foreground text-background' : 'border-border bg-card text-muted-foreground hover:border-muted-foreground'}`}>
-              <span className={`h-2 w-2 rounded-full ${emoColor(avg)}`} />
-              {i + 1} {sName}
-            </button>
+            <div key={i} role="button" tabIndex={0}
+              aria-pressed={sel}
+              onClick={() => onSelectStage(i)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelectStage(i) } }}
+              className={`cursor-pointer rounded-md border p-2 text-[11.5px] leading-snug transition-all ${CARD_STYLE[tier]} ${
+                sel ? 'ring-2 ring-ds-app-accent shadow-md scale-[1.02]' : 'hover:shadow-sm hover:scale-[1.01]'}`}>
+              <b className="font-bold">{i + 1} {sName}</b>：{note}
+            </div>
           )
         })}
       </div>
