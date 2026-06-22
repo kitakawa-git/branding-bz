@@ -26,7 +26,7 @@ interface Props {
   className?: string
 }
 
-const WIDTH = 700
+const WIDTH = 875 // 5:3（横長・全幅表示で縦に間延びしないように）
 const HEIGHT = 525
 const PAD = 50
 const MAP_W = WIDTH - PAD * 2
@@ -81,7 +81,7 @@ export function InteractivePositioningMap({
         width="100%"
         className="select-none rounded-lg"
         style={{
-          aspectRatio: '4 / 3',
+          aspectRatio: '5 / 3',
           touchAction: 'none',
           WebkitUserSelect: 'none',
           userSelect: 'none',

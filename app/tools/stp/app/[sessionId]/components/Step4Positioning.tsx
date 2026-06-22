@@ -275,8 +275,8 @@ export function Step4Positioning({
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-[1.4fr_1fr]">
-          {/* 左：チャート＋軸設定オーバーレイ（ドラッグ操作） */}
+        <div className="space-y-4">
+          {/* チャート＋軸設定オーバーレイ（全幅・ドラッグ操作） */}
           <div className="relative rounded-lg border border-border bg-card p-3">
             {/* 軸設定オーバーレイ */}
             <div className="absolute left-3 right-3 top-3 z-10 space-y-1.5 rounded-md border border-border bg-white/95 p-2 text-xs shadow-sm">
@@ -304,11 +304,11 @@ export function Step4Positioning({
             />
           </div>
 
-          {/* 右：要素リスト */}
+          {/* 要素リスト（チャート下・全幅） */}
           <div className="space-y-2">
             <div className="mb-1 flex items-center justify-between text-xs font-semibold text-muted-foreground">
               <span>要素（{items.length}社）</span>
-              <span className="hidden md:inline">💡 点を<b className="font-bold">ドラッグ</b>で配置</span>
+              <span>💡 点を<b className="font-bold">ドラッグ</b>で配置</span>
             </div>
 
             {items.map((item, index) => (
@@ -356,9 +356,9 @@ export function Step4Positioning({
               要素を追加
             </Button>
 
-            {/* iPhone のみ：選択中要素の詳細スライダー */}
+            {/* 選択中要素の詳細スライダー（全デバイス）：ドラッグで大まか→スライダーで微調整 */}
             {selectedIdx !== null && items[selectedIdx] && (
-              <div className="mt-4 space-y-3 rounded-lg border border-ds-app-accent bg-ds-app-accent/5 p-3 md:hidden">
+              <div className="mt-4 space-y-3 rounded-lg border border-ds-app-accent bg-ds-app-accent/5 p-3">
                 <div className="text-xs font-bold text-ds-app-accent">編集中: {items[selectedIdx].name || `要素${selectedIdx + 1}`}</div>
                 <div className="space-y-1">
                   <div className="flex justify-between text-[11px] text-muted-foreground">
