@@ -799,11 +799,11 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
       </Card>
 
       {/* フッターナビゲーション */}
-      <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 bg-background/80 backdrop-blur border-t border-border px-6 py-3 flex justify-end">
+      <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 bg-background/80 backdrop-blur border-t border-border px-6 py-4 flex justify-end">
         <Button
           onClick={handleNext}
           disabled={saving || !isValid}
-          className="gap-1"
+          className="h-14 gap-2 px-6 text-base font-bold"
         >
           {saving ? '保存中...' : 'セグメンテーションへ'}
           {!saving && <ArrowRight className="h-4 w-4" />}

@@ -555,12 +555,12 @@ export function Step5Result({
       />
 
       {/* フッターナビゲーション */}
-      <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 bg-background/80 backdrop-blur border-t border-border px-6 py-3 flex items-center justify-between">
-        <Button variant="outline" onClick={onBack} className="gap-1">
+      <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 bg-background/80 backdrop-blur border-t border-border px-6 py-4 flex items-center justify-between">
+        <Button variant="outline" onClick={onBack} className="h-14 gap-2 px-6 text-base font-bold">
           <ArrowLeft className="h-4 w-4" />
           戻る
         </Button>
-        <Button onClick={handlePdfExport} disabled={pdfLoading} className="gap-1">
+        <Button onClick={handlePdfExport} disabled={pdfLoading} className="h-14 gap-2 px-6 text-base font-bold">
           {pdfLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
           {pdfLoading ? 'PDF生成中...' : 'PDFをダウンロード'}
         </Button>
