@@ -199,9 +199,9 @@ export function Step2Demographics({ personas: initialPersonas, basicInfo, onNext
                 )}
                 {members.map((e, k) => renderForm(e, k + 1))}
               </div>
-              <Button variant="outline" size="sm" onClick={() => addToSegment(seg)} disabled={addingIdx !== null} className="mt-3 gap-1.5">
-                <Plus className="h-4 w-4" /> このターゲットにペルソナを追加（AI生成）
-              </Button>
+              <AIButton size="sm" onClick={() => addToSegment(seg)} disabled={addingIdx !== null} className="mt-3" icon={<Plus className="w-3.5 h-3.5" />}>
+                このターゲットにペルソナを追加（AI生成）
+              </AIButton>
             </section>
           )
         })}
@@ -220,10 +220,10 @@ export function Step2Demographics({ personas: initialPersonas, basicInfo, onNext
       </div>
 
       <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 bg-background/80 backdrop-blur border-t border-border px-6 py-3 flex items-center justify-between">
-        <Button variant="outline" onClick={onBack} className="gap-1">
+        <Button variant="outline" onClick={onBack} className="h-14 gap-2 px-6 text-base font-bold">
           <ArrowLeft className="h-4 w-4" /> 戻る
         </Button>
-        <Button onClick={handleNext} disabled={saving || !isValid} className="gap-1">
+        <Button onClick={handleNext} disabled={saving || !isValid} className="h-14 gap-2 px-6 text-base font-bold">
           {saving ? '保存中...' : 'ゴール・課題へ'}
           {!saving && <ArrowRight className="h-4 w-4" />}
         </Button>

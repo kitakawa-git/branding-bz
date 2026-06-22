@@ -11,7 +11,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion'
-import { ArrowLeft, ArrowRight, WandSparkles, Plus, Trash2, X, ChevronDown, ChevronRight } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Plus, Trash2, X, ChevronDown, ChevronRight } from 'lucide-react'
+import { AIButton } from '@/components/shared/AIButton'
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip'
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -190,8 +191,8 @@ export function Step4Journey({ personas: initialPersonas, basicInfo, onNext, onB
         <h1 className="text-2xl font-bold text-foreground mb-2">Step 4: カスタマージャーニー</h1>
         <p className="text-[14px] text-muted-foreground">先にペルソナを作成してください（Step2）。</p>
         <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 bg-background/80 backdrop-blur border-t border-border px-6 py-3 flex items-center justify-between">
-          <Button variant="outline" onClick={onBack} className="gap-1"><ArrowLeft className="h-4 w-4" /> 戻る</Button>
-          <Button onClick={handleNext} disabled={saving} className="gap-1">確認・出力へ <ArrowRight className="h-4 w-4" /></Button>
+          <Button variant="outline" onClick={onBack} className="h-14 gap-2 px-6 text-base font-bold"><ArrowLeft className="h-4 w-4" /> 戻る</Button>
+          <Button onClick={handleNext} disabled={saving} className="h-14 gap-2 px-6 text-base font-bold">確認・出力へ <ArrowRight className="h-4 w-4" /></Button>
         </div>
       </div>
     )
@@ -270,17 +271,17 @@ export function Step4Journey({ personas: initialPersonas, basicInfo, onNext, onB
                     <span className="text-[14px] font-medium text-foreground truncate">{personaLabel(p, i)}</span>
                     <span className="text-[13px] text-muted-foreground shrink-0">{has ? `(${p.journey_map!.stages.length}ステージ生成済み)` : '(未生成)'}</span>
                   </div>
-                  <Button variant="outline" size="sm" onClick={() => handleGenerateClick(i)} disabled={anyLoading} className="gap-1.5 shrink-0">
-                    <WandSparkles className="h-4 w-4" />{aiLoading[i] ? '生成中...' : has ? 'ジャーニーを再生成' : 'ジャーニーを生成'}
-                  </Button>
+                  <AIButton size="sm" onClick={() => handleGenerateClick(i)} disabled={anyLoading} className="shrink-0">
+                    {aiLoading[i] ? '生成中...' : has ? 'ジャーニーを再生成' : 'ジャーニーを生成'}
+                  </AIButton>
                 </div>
               )
             })}
           </div>
           {data.length > 1 && (
-            <Button variant="outline" size="sm" onClick={generateAll} disabled={anyLoading} className="mt-3 gap-1.5">
-              <WandSparkles className="h-4 w-4" />{bulkLoading ? '一括生成中...' : '全ペルソナを一括生成'}
-            </Button>
+            <AIButton size="sm" onClick={generateAll} disabled={anyLoading} className="mt-3">
+              {bulkLoading ? '一括生成中...' : '全ペルソナを一括生成'}
+            </AIButton>
           )}
           {Object.entries(aiError).filter(([, v]) => v).map(([k, v]) => (
             <p key={k} className="mt-2 text-[13px] text-red-600">ペルソナ{Number(k) + 1}: {v}</p>
@@ -453,8 +454,8 @@ export function Step4Journey({ personas: initialPersonas, basicInfo, onNext, onB
       )}
 
       <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 bg-background/80 backdrop-blur border-t border-border px-6 py-3 flex items-center justify-between">
-        <Button variant="outline" onClick={onBack} className="gap-1"><ArrowLeft className="h-4 w-4" /> 戻る</Button>
-        <Button onClick={handleNext} disabled={saving} className="gap-1">{saving ? '保存中...' : '確認・出力へ'}{!saving && <ArrowRight className="h-4 w-4" />}</Button>
+        <Button variant="outline" onClick={onBack} className="h-14 gap-2 px-6 text-base font-bold"><ArrowLeft className="h-4 w-4" /> 戻る</Button>
+        <Button onClick={handleNext} disabled={saving} className="h-14 gap-2 px-6 text-base font-bold">{saving ? '保存中...' : '確認・出力へ'}{!saving && <ArrowRight className="h-4 w-4" />}</Button>
       </div>
 
       <AlertDialog open={confirmIdx !== null} onOpenChange={(o) => !o && setConfirmIdx(null)}>

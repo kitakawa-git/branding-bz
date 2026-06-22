@@ -8,7 +8,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { ArrowLeft, ArrowRight, WandSparkles, Plus, X } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Plus, X } from 'lucide-react'
+import { AIButton } from '@/components/shared/AIButton'
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -132,9 +133,9 @@ export function Step3Goals({ personas: initialPersonas, basicInfo, onNext, onBac
       </p>
 
       <div className="flex justify-start mb-3">
-        <Button variant="outline" size="sm" onClick={() => setConfirmOpen(true)} className="gap-1.5 text-xs">
-          <WandSparkles className="h-3.5 w-3.5" /> AIに全件再提案
-        </Button>
+        <AIButton onClick={() => setConfirmOpen(true)}>
+          AIに全件再提案
+        </AIButton>
       </div>
 
       {aiError && (
@@ -178,10 +179,10 @@ export function Step3Goals({ personas: initialPersonas, basicInfo, onNext, onBac
       </div>
 
       <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 bg-background/80 backdrop-blur border-t border-border px-6 py-3 flex items-center justify-between">
-        <Button variant="outline" onClick={onBack} className="gap-1">
+        <Button variant="outline" onClick={onBack} className="h-14 gap-2 px-6 text-base font-bold">
           <ArrowLeft className="h-4 w-4" /> 戻る
         </Button>
-        <Button onClick={handleNext} disabled={saving || !isValid} className="gap-1">
+        <Button onClick={handleNext} disabled={saving || !isValid} className="h-14 gap-2 px-6 text-base font-bold">
           {saving ? '保存中...' : 'ジャーニーマップへ'}
           {!saving && <ArrowRight className="h-4 w-4" />}
         </Button>
