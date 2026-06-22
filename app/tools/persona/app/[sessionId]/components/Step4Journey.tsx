@@ -11,7 +11,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion'
-import { ArrowLeft, ArrowRight, Plus, Trash2, X, ChevronDown, ChevronRight } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Plus, Trash2, X, ChevronDown, ChevronRight, RefreshCw, Check, Loader2 } from 'lucide-react'
 import { AIButton } from '@/components/shared/AIButton'
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip'
 import {
@@ -261,27 +261,46 @@ export function Step4Journey({ personas: initialPersonas, basicInfo, onNext, onB
       <Card className="bg-card border shadow-none mb-4">
         <CardContent>
           <h2 className="text-sm font-bold text-foreground mb-3">ペルソナ</h2>
-          <div className="space-y-2">
+          <div className="space-y-0.5">
             {data.map((p, i) => {
               const has = (p.journey_map?.stages?.length || 0) > 0
               return (
-                <div key={i} className="flex flex-col sm:flex-row sm:items-center gap-2 rounded-lg border border-border p-3">
-                  <div className="flex items-center gap-2 min-w-0 flex-1">
-                    <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: pColor(i).solid }} />
-                    <span className="text-[14px] font-medium text-foreground truncate">{personaLabel(p, i)}</span>
-                    <span className="text-[13px] text-muted-foreground shrink-0">{has ? `(${p.journey_map!.stages.length}ステージ生成済み)` : '(未生成)'}</span>
-                  </div>
-                  <AIButton size="sm" onClick={() => handleGenerateClick(i)} disabled={anyLoading} className="shrink-0">
-                    {aiLoading[i] ? '生成中...' : has ? 'ジャーニーを再生成' : 'ジャーニーを生成'}
-                  </AIButton>
+                <div key={i} className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/60 transition-colors">
+                  <span className="h-2.5 w-2.5 rounded-full flex-none" style={{ backgroundColor: pColor(i).solid }} />
+                  <span className="text-sm font-semibold text-foreground flex-1 min-w-0 truncate">{personaLabel(p, i)}</span>
+                  {has ? (
+                    <span className="inline-flex items-center gap-1 text-[11.5px] font-semibold text-emerald-600 mr-2 shrink-0">
+                      <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
+                      生成済み
+                    </span>
+                  ) : (
+                    <span className="text-[11.5px] text-muted-foreground mr-2 shrink-0">未生成</span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => handleGenerateClick(i)}
+                    disabled={anyLoading}
+                    title={has ? 'このペルソナだけ再生成' : 'このペルソナだけ生成'}
+                    className="inline-flex flex-none items-center justify-center h-8 w-8 rounded-lg border border-border bg-card text-muted-foreground transition-colors hover:border-violet-600 hover:bg-violet-50 hover:text-violet-600 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {aiLoading[i] ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                  </button>
                 </div>
               )
             })}
           </div>
           {data.length > 1 && (
-            <AIButton size="sm" onClick={generateAll} disabled={anyLoading} className="mt-3">
-              {bulkLoading ? '一括生成中...' : '全ペルソナを一括生成'}
-            </AIButton>
+            <>
+              <div className="my-2.5 h-px bg-border" />
+              <div className="mt-2 flex items-center justify-between gap-2">
+                <span className="text-[11.5px] text-muted-foreground">
+                  個別: <RefreshCw className="inline h-3 w-3 align-text-bottom" /> アイコンで再生成
+                </span>
+                <AIButton onClick={generateAll} disabled={anyLoading} className="shrink-0">
+                  {bulkLoading ? '生成中...' : '全ペルソナを一括生成'}
+                </AIButton>
+              </div>
+            </>
           )}
           {Object.entries(aiError).filter(([, v]) => v).map(([k, v]) => (
             <p key={k} className="mt-2 text-[13px] text-red-600">ペルソナ{Number(k) + 1}: {v}</p>
