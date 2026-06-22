@@ -23,10 +23,10 @@ import {
   ArrowRight,
   Plus,
   Trash2,
-  WandSparkles,
   ArrowLeftRight,
   ArrowUpDown,
 } from 'lucide-react'
+import { AIButton } from '@/components/shared/AIButton'
 
 // 型定義
 interface PositioningItem {
@@ -246,15 +246,9 @@ export function Step4Positioning({
       <div className="mb-6 flex items-start justify-between">
         <h1 className="text-2xl font-bold text-foreground">Step 4: ポジショニング</h1>
         {!aiLoading && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRegenerate}
-            className="shrink-0 gap-1.5 text-xs"
-          >
-            <WandSparkles className="h-3.5 w-3.5" />
+          <AIButton size="sm" onClick={handleRegenerate} className="shrink-0">
             AIに提案してもらう
-          </Button>
+          </AIButton>
         )}
       </div>
 

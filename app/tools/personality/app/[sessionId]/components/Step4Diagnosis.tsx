@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import { ArrowLeft, ArrowRight, Sparkles, Loader2 } from 'lucide-react'
+import { AIButton } from '@/components/shared/AIButton'
 
 interface Step4Props {
   sessionId: string
@@ -109,10 +110,9 @@ export function Step4Diagnosis({ sessionId, hasDiagnosis, onComplete, onBack }: 
                 </div>
               )}
               <div className="mt-6 flex flex-col items-center gap-3">
-                <Button onClick={runDiagnosis} className="gap-1.5">
-                  <Sparkles className="h-4 w-4" />
+                <AIButton onClick={runDiagnosis}>
                   {hasDiagnosis ? 'もう一度診断する' : 'AI診断を実行'}
-                </Button>
+                </AIButton>
                 {hasDiagnosis && (
                   <p className="text-xs text-muted-foreground">
                     再診断すると前回の結果は上書きされます

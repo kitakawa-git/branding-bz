@@ -5,7 +5,8 @@ import { toast } from 'sonner'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { ArrowLeft, ArrowRight, WandSparkles } from 'lucide-react'
+import { ArrowLeft, ArrowRight } from 'lucide-react'
+import { AIButton } from '@/components/shared/AIButton'
 import { PaletteCard } from '../../components/PaletteCard'
 import type { BrandColorProject, PaletteProposal } from '@/lib/types/color-tool'
 
@@ -155,9 +156,9 @@ export function Step3Proposals({
               <ArrowLeft className="mr-1 h-4 w-4" />
               戻る
             </Button>
-            <Button onClick={generateProposals}>
+            <AIButton onClick={generateProposals}>
               再生成する
-            </Button>
+            </AIButton>
             </div>
           </div>
           </CardContent>
@@ -175,15 +176,9 @@ export function Step3Proposals({
       {/* AI再提案ボタン（カード上・左寄せ） */}
       {!generating && (
         <div className="flex justify-start mb-3">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={generateProposals}
-            className="gap-1.5 text-xs"
-          >
-            <WandSparkles className="h-3.5 w-3.5" />
+          <AIButton size="sm" onClick={generateProposals}>
             AIに再提案してもらう
-          </Button>
+          </AIButton>
         </div>
       )}
 
@@ -211,14 +206,9 @@ export function Step3Proposals({
         </Button>
         <div className="flex items-center gap-2">
           {!generating && (
-            <Button
-              variant="outline"
-              onClick={generateProposals}
-              className="gap-1.5"
-            >
-              <WandSparkles className="h-3.5 w-3.5" />
+            <AIButton onClick={generateProposals}>
               AIに再提案してもらう
-            </Button>
+            </AIButton>
           )}
           <Button
             onClick={handleNext}

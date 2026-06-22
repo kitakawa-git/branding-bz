@@ -9,7 +9,8 @@ import { IndustrySelect } from '@/components/shared/IndustrySelect'
 import { TitleDescriptionList } from '@/components/shared/TitleDescriptionList'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
-import { ArrowRight, Plus, Trash2, WandSparkles, Loader2, ExternalLink, Check } from 'lucide-react'
+import { ArrowRight, Plus, Trash2, Loader2, ExternalLink, Check } from 'lucide-react'
+import { AIButton } from '@/components/shared/AIButton'
 import {
   Dialog,
   DialogContent,
@@ -679,21 +680,16 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
               <h2 className="text-xs font-bold">
                 ターゲット <span className="text-xs text-gray-400 font-normal">（任意）</span>
               </h2>
-              <Button
+              <AIButton
                 type="button"
-                variant="secondary"
                 size="sm"
                 onClick={handleSuggestTargets}
                 disabled={targetSuggesting || targetRemaining === 0}
-                className="shrink-0 text-sm"
+                className="shrink-0"
+                icon={targetSuggesting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : undefined}
               >
-                {targetSuggesting ? (
-                  <Loader2 size={14} className="animate-spin" />
-                ) : (
-                  <WandSparkles size={14} />
-                )}
                 {targetSuggesting ? 'AI提案中...' : 'AIで提案'}
-              </Button>
+              </AIButton>
             </div>
             <p className="text-[13px] text-muted-foreground mb-1">
               すでに決めているターゲットがある場合には内容を入力してください。
@@ -723,21 +719,16 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
               <h2 className="text-xs font-bold">
                 競合企業・サービス <span className="text-xs text-gray-400 font-normal">（任意）</span>
               </h2>
-              <Button
+              <AIButton
                 type="button"
-                variant="secondary"
                 size="sm"
                 onClick={handleSuggestCompetitors}
                 disabled={suggesting || (!suggestUnlimited && suggestRemaining === 0)}
-                className="shrink-0 text-sm"
+                className="shrink-0"
+                icon={suggesting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : undefined}
               >
-                {suggesting ? (
-                  <Loader2 size={14} className="animate-spin" />
-                ) : (
-                  <WandSparkles size={14} />
-                )}
                 {suggesting ? 'AI提案中...' : 'AIで競合を提案'}
-              </Button>
+              </AIButton>
             </div>
             <p className="text-[13px] text-muted-foreground mb-1">
               Step 4のポジショニングマップに競合を配置します。企業名に加えてURLやメモを入力すると、AIの分析精度が向上します。

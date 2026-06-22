@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { ArrowLeft, ArrowRight, Plus, Trash2, WandSparkles, Lightbulb, MapPin, Users, Heart, Activity } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Plus, Trash2, Lightbulb, MapPin, Users, Heart, Activity } from 'lucide-react'
+import { AIButton } from '@/components/shared/AIButton'
 import {
   Accordion,
   AccordionContent,
@@ -267,15 +268,9 @@ export function Step2Segmentation({
       {/* AI提案ボタン（カード右上） */}
       {!aiLoading && (
         <div className="flex justify-start mb-3">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRegenerate}
-            className="gap-1.5 text-xs"
-          >
-            <WandSparkles className="h-3.5 w-3.5" />
+          <AIButton size="sm" onClick={handleRegenerate}>
             {variables.length > 0 ? 'AIに再提案してもらう' : 'AIに提案してもらう'}
-          </Button>
+          </AIButton>
         </div>
       )}
 
@@ -472,14 +467,9 @@ export function Step2Segmentation({
 
         <div className="flex items-center gap-2">
           {!aiLoading && (
-            <Button
-              variant="outline"
-              onClick={handleRegenerate}
-              className="gap-1.5"
-            >
-              <WandSparkles className="h-3.5 w-3.5" />
+            <AIButton onClick={handleRegenerate}>
               AIに再提案してもらう
-            </Button>
+            </AIButton>
           )}
           <Button
             onClick={handleNext}
