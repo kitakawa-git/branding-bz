@@ -326,42 +326,60 @@ export function Step4Journey({ personas: initialPersonas, basicInfo, onNext, onB
                 personasInScope={scopeIdxs.map(i => ({ idx: i, name: personaLabel(data[i], i), color: pColor(i).solid, stages: data[i].journey_map?.stages || [] }))}
                 stageNames={stageNames}
                 selectedStageIdx={selectedStageIdx}
-                onSelectStage={setSelectedStageIdx}
               />
 
-              {/* 統合：選択中ステージの詳細パネル（旧ステージ詳細Accordionを移行） */}
+              {/* 統合カード：ステージナビ（タブ）＋ 選択ステージの詳細を1カードに */}
               {(() => {
                 const sName = stageNames[selectedStageIdx]
                 if (sName == null) return null
                 const members = scopeIdxs.filter(i => (data[i].journey_map?.stages?.[selectedStageIdx]))
-                const avg = members.length ? members.reduce((s, i) => s + (data[i].journey_map!.stages[selectedStageIdx].emotion_score ?? 0), 0) / members.length : 0
                 return (
-                  <div key={`${selectedStageIdx}-${filterIdx}`} className="mt-4 rounded-lg border border-border bg-muted/40 p-4 animate-in fade-in slide-in-from-top-1 duration-200">
-                    <div className="mb-3 flex items-center gap-2">
-                      <span className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">Stage {selectedStageIdx + 1}</span>
-                      <span className="text-sm font-bold text-foreground">{sName}</span>
-                      <span className="ml-auto text-[12px] text-muted-foreground">avg {(avg + 3).toFixed(1)}</span>
+                  <div className="mt-4 overflow-hidden rounded-lg border border-border bg-card">
+                    {/* タブ：ステージナビボタン（X＝ステージ位置）。カード背景に溶け込ませる（罫線・別背景なし） */}
+                    <div className="grid grid-cols-3 gap-2 p-2 sm:grid-cols-5">
+                      {stageNames.map((nm, i) => {
+                        const sel = selectedStageIdx === i
+                        const scoped = scopeIdxs.filter(k => data[k].journey_map?.stages?.[i])
+                        return (
+                          <button key={i} type="button" onClick={() => setSelectedStageIdx(i)} aria-pressed={sel}
+                            className={`relative flex flex-col items-center justify-center rounded-lg border px-3 py-2.5 text-center transition-all ${
+                              sel ? 'border-ds-app-accent bg-ds-app-accent/5 shadow-sm ring-1 ring-ds-app-accent' : 'border-border bg-card hover:border-muted-foreground hover:bg-muted/40'}`}>
+                            <span className={`text-sm font-bold ${sel ? 'text-ds-app-accent' : 'text-foreground'}`}>Stage {i + 1} {nm}</span>
+                            <span className="mt-1 flex items-center gap-1 text-[11px] font-semibold">
+                              {scoped.map((k, ki) => (
+                                <Fragment key={k}>
+                                  {ki > 0 && <span className="text-muted-foreground">/</span>}
+                                  <span style={{ color: pColor(k).solid }}>{((data[k].journey_map!.stages[i].emotion_score ?? 0) + 3).toFixed(1)}</span>
+                                </Fragment>
+                              ))}
+                            </span>
+                          </button>
+                        )
+                      })}
                     </div>
-                    {members.length === 0 ? (
-                      <p className="text-[13px] text-muted-foreground">このステージのデータがありません。</p>
-                    ) : (
-                      <Accordion type="multiple" defaultValue={[`p-${members[0]}`]} className="w-full space-y-2">
-                        {/* ペルソナ選択は上部「表示ペルソナ」フィルタに集約。各ペルソナの詳細はアコーディオンで開閉 */}
-                        {members.map(i => (
-                          <AccordionItem key={i} value={`p-${i}`} className="rounded-lg border border-border bg-card px-3">
-                            <AccordionTrigger className="py-3 text-[13px] hover:no-underline">
-                              <span className="flex items-center gap-1.5">
-                                <span className="h-2 w-2 rounded-full" style={{ backgroundColor: pColor(i).solid }} />
-                                <span className="font-semibold text-foreground">{personaLabel(data[i], i)}</span>
-                              </span>
-                            </AccordionTrigger>
-                            <AccordionContent>
-                              <StageDetail stage={data[i].journey_map!.stages[selectedStageIdx]} onChange={(patch) => mutateStage(i, selectedStageIdx, (s) => ({ ...s, ...patch }))} />
-                            </AccordionContent>
-                          </AccordionItem>
-                        ))}
-                      </Accordion>
-                    )}
+                    {/* 選択ステージの詳細 */}
+                    <div key={`${selectedStageIdx}-${filterIdx}`} className="px-4 pb-4 pt-1 animate-in fade-in slide-in-from-top-1 duration-200">
+                      {members.length === 0 ? (
+                        <p className="text-[13px] text-muted-foreground">このステージのデータがありません。</p>
+                      ) : (
+                        <Accordion type="multiple" defaultValue={[`p-${members[0]}`]} className="w-full space-y-2">
+                          {/* ペルソナ選択は上部「表示ペルソナ」フィルタに集約。各ペルソナの詳細はアコーディオンで開閉 */}
+                          {members.map(i => (
+                            <AccordionItem key={i} value={`p-${i}`} className="rounded-lg border border-border bg-card px-3">
+                              <AccordionTrigger className="py-3 text-[13px] hover:no-underline">
+                                <span className="flex items-center gap-1.5">
+                                  <span className="h-2 w-2 rounded-full" style={{ backgroundColor: pColor(i).solid }} />
+                                  <span className="font-semibold text-foreground">{personaLabel(data[i], i)}</span>
+                                </span>
+                              </AccordionTrigger>
+                              <AccordionContent>
+                                <StageDetail stage={data[i].journey_map!.stages[selectedStageIdx]} onChange={(patch) => mutateStage(i, selectedStageIdx, (s) => ({ ...s, ...patch }))} />
+                              </AccordionContent>
+                            </AccordionItem>
+                          ))}
+                        </Accordion>
+                      )}
+                    </div>
                   </div>
                 )
               })()}
@@ -574,9 +592,9 @@ const EMO_LEVELS: Array<{ score: number; label: string }> = [
   { score: -2, label: '不満' },
 ]
 
-function EmotionGraph({ personasInScope, stageNames, selectedStageIdx, onSelectStage }: {
+function EmotionGraph({ personasInScope, stageNames, selectedStageIdx }: {
   personasInScope: ScopePersona[]; stageNames: string[]
-  selectedStageIdx: number; onSelectStage: (i: number) => void
+  selectedStageIdx: number
 }) {
   const n = stageNames.length
   if (n === 0) return null
@@ -631,30 +649,6 @@ function EmotionGraph({ personasInScope, stageNames, selectedStageIdx, onSelectS
           )
         })()}
       </svg>
-
-      {/* ステージナビボタン（X軸＝ステージ位置。クリックで詳細パネル連動） */}
-      <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-5">
-        {stageNames.map((sName, i) => {
-          const sel = selectedStageIdx === i
-          const scoped = personasInScope.filter(p => p.stages[i])
-          return (
-            <button key={i} type="button" onClick={() => onSelectStage(i)}
-              aria-pressed={sel}
-              className={`relative flex flex-col items-center justify-center rounded-lg border px-3 py-2.5 text-center transition-all ${
-                sel ? 'border-ds-app-accent bg-ds-app-accent/5 shadow-sm ring-1 ring-ds-app-accent' : 'border-border bg-card hover:border-muted-foreground hover:bg-muted/40'}`}>
-              <span className={`text-sm font-bold ${sel ? 'text-ds-app-accent' : 'text-foreground'}`}>Stage {i + 1} {sName}</span>
-              <span className="mt-1 flex items-center gap-1 text-[11px] font-semibold">
-                {scoped.map((p, k) => (
-                  <Fragment key={p.idx}>
-                    {k > 0 && <span className="text-muted-foreground">/</span>}
-                    <span style={{ color: p.color }}>{((p.stages[i]?.emotion_score ?? 0) + 3).toFixed(1)}</span>
-                  </Fragment>
-                ))}
-              </span>
-            </button>
-          )
-        })}
-      </div>
     </div>
   )
 }
