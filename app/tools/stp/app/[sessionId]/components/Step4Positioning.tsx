@@ -276,7 +276,60 @@ export function Step4Positioning({
         </div>
       ) : (
         <div className="space-y-4">
-          {/* チャート＋軸設定オーバーレイ（全幅・ドラッグ操作） */}
+          {/* 1. 要素リスト（2カラム）：まず要素を確認・命名 */}
+          <div>
+            <div className="mb-2 flex items-center justify-between text-xs font-semibold text-muted-foreground">
+              <span>要素（{items.length}社）</span>
+              <span>💡 点を<b className="font-bold">ドラッグ</b>で配置</span>
+            </div>
+            <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+              {items.map((item, index) => (
+                <div
+                  key={index}
+                  onClick={() => setSelectedIdx(index)}
+                  className={`flex items-center gap-2 rounded-lg border p-2.5 transition-all cursor-pointer ${
+                    selectedIdx === index
+                      ? 'border-ds-app-accent bg-ds-app-accent/5 ring-1 ring-ds-app-accent'
+                      : 'border-border bg-card hover:border-muted-foreground'
+                  }`}
+                >
+                  <input
+                    type="color"
+                    value={item.color}
+                    onClick={(e) => e.stopPropagation()}
+                    onChange={(e) => updateItem(index, { color: e.target.value })}
+                    className="h-5 w-5 shrink-0 cursor-pointer rounded border border-gray-200 p-0.5"
+                  />
+                  <Input
+                    value={item.name}
+                    onClick={(e) => e.stopPropagation()}
+                    onChange={(e) => updateItem(index, { name: e.target.value })}
+                    placeholder="項目名"
+                    className="h-7 min-w-0 flex-1 text-xs"
+                  />
+                  <span className="whitespace-nowrap font-mono text-[10px] text-muted-foreground">x:{item.x} y:{item.y}</span>
+                  {item.is_self && (
+                    <span className="shrink-0 rounded bg-ds-app-accent/10 px-1.5 py-0.5 text-[10px] font-bold text-ds-app-accent">自社</span>
+                  )}
+                  {items.length > 2 && (
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); removeItem(index) }}
+                      className="shrink-0 text-gray-400 hover:text-red-500"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+            <Button variant="outline" onClick={addItem} className="mt-2 w-full gap-2">
+              <Plus className="h-4 w-4" />
+              要素を追加
+            </Button>
+          </div>
+
+          {/* 2. チャート＋軸設定オーバーレイ（全幅・ドラッグで配置） */}
           <div className="relative rounded-lg border border-border bg-card p-3">
             {/* 軸設定オーバーレイ */}
             <div className="absolute left-3 right-3 top-3 z-10 space-y-1.5 rounded-md border border-border bg-white/95 p-2 text-xs shadow-sm">
@@ -304,77 +357,24 @@ export function Step4Positioning({
             />
           </div>
 
-          {/* 要素リスト（チャート下・全幅） */}
-          <div className="space-y-2">
-            <div className="mb-1 flex items-center justify-between text-xs font-semibold text-muted-foreground">
-              <span>要素（{items.length}社）</span>
-              <span>💡 点を<b className="font-bold">ドラッグ</b>で配置</span>
+          {/* 3. 選択中要素の詳細スライダー（全デバイス）：ドラッグで大まか→スライダーで微調整 */}
+          {selectedIdx !== null && items[selectedIdx] && (
+            <div className="space-y-3 rounded-lg border border-ds-app-accent bg-ds-app-accent/5 p-3">
+              <div className="text-xs font-bold text-ds-app-accent">編集中: {items[selectedIdx].name || `要素${selectedIdx + 1}`}</div>
+              <div className="space-y-1">
+                <div className="flex justify-between text-[11px] text-muted-foreground">
+                  <span>{xAxis.left || 'X左'}</span><span>{xAxis.right || 'X右'}</span>
+                </div>
+                <Slider value={[items[selectedIdx].x]} onValueChange={([v]) => updateItem(selectedIdx, { x: v })} min={0} max={100} step={1} />
+              </div>
+              <div className="space-y-1">
+                <div className="flex justify-between text-[11px] text-muted-foreground">
+                  <span>{yAxis.bottom || 'Y下'}</span><span>{yAxis.top || 'Y上'}</span>
+                </div>
+                <Slider value={[items[selectedIdx].y]} onValueChange={([v]) => updateItem(selectedIdx, { y: v })} min={0} max={100} step={1} />
+              </div>
             </div>
-
-            {items.map((item, index) => (
-              <div
-                key={index}
-                onClick={() => setSelectedIdx(index)}
-                className={`flex items-center gap-2 rounded-lg border p-2.5 transition-all cursor-pointer ${
-                  selectedIdx === index
-                    ? 'border-ds-app-accent bg-ds-app-accent/5 ring-1 ring-ds-app-accent'
-                    : 'border-border bg-card hover:border-muted-foreground'
-                }`}
-              >
-                <input
-                  type="color"
-                  value={item.color}
-                  onClick={(e) => e.stopPropagation()}
-                  onChange={(e) => updateItem(index, { color: e.target.value })}
-                  className="h-5 w-5 shrink-0 cursor-pointer rounded border border-gray-200 p-0.5"
-                />
-                <Input
-                  value={item.name}
-                  onClick={(e) => e.stopPropagation()}
-                  onChange={(e) => updateItem(index, { name: e.target.value })}
-                  placeholder="項目名"
-                  className="h-7 min-w-0 flex-1 text-xs"
-                />
-                <span className="whitespace-nowrap font-mono text-[10px] text-muted-foreground">x:{item.x} y:{item.y}</span>
-                {item.is_self && (
-                  <span className="shrink-0 rounded bg-ds-app-accent/10 px-1.5 py-0.5 text-[10px] font-bold text-ds-app-accent">自社</span>
-                )}
-                {items.length > 2 && (
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); removeItem(index) }}
-                    className="shrink-0 text-gray-400 hover:text-red-500"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                )}
-              </div>
-            ))}
-
-            <Button variant="outline" onClick={addItem} className="w-full gap-2">
-              <Plus className="h-4 w-4" />
-              要素を追加
-            </Button>
-
-            {/* 選択中要素の詳細スライダー（全デバイス）：ドラッグで大まか→スライダーで微調整 */}
-            {selectedIdx !== null && items[selectedIdx] && (
-              <div className="mt-4 space-y-3 rounded-lg border border-ds-app-accent bg-ds-app-accent/5 p-3">
-                <div className="text-xs font-bold text-ds-app-accent">編集中: {items[selectedIdx].name || `要素${selectedIdx + 1}`}</div>
-                <div className="space-y-1">
-                  <div className="flex justify-between text-[11px] text-muted-foreground">
-                    <span>{xAxis.left || 'X左'}</span><span>{xAxis.right || 'X右'}</span>
-                  </div>
-                  <Slider value={[items[selectedIdx].x]} onValueChange={([v]) => updateItem(selectedIdx, { x: v })} min={0} max={100} step={1} />
-                </div>
-                <div className="space-y-1">
-                  <div className="flex justify-between text-[11px] text-muted-foreground">
-                    <span>{yAxis.bottom || 'Y下'}</span><span>{yAxis.top || 'Y上'}</span>
-                  </div>
-                  <Slider value={[items[selectedIdx].y]} onValueChange={([v]) => updateItem(selectedIdx, { y: v })} min={0} max={100} step={1} />
-                </div>
-              </div>
-            )}
-          </div>
+          )}
         </div>
       )}
 
