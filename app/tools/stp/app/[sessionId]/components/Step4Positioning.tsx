@@ -276,7 +276,7 @@ export function Step4Positioning({
           </p>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-4 rounded-lg border border-border bg-[hsl(0_0%_97%)] p-4">
           {/* 1. 要素リスト（2カラム）：まず要素を確認・命名 */}
           <div>
             <div className="mb-2 text-xs font-semibold text-muted-foreground">
