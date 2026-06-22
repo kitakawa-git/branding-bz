@@ -580,8 +580,8 @@ function EmotionGraph({ personasInScope, stageNames, selectedStageIdx, onSelectS
   const n = stageNames.length
   if (n === 0) return null
 
-  // SVG座標系（width:100% で可変描画）
-  const padL = 88, padR = 28, padT = 28, padB = 52
+  // SVG座標系（width:100% で可変描画）。X軸ラベルは下のボタン群に集約したので余白を詰める
+  const padL = 88, padR = 28, padT = 28, padB = 16
   const colW = 200
   const W = padL + padR + colW * n
   const chartTop = padT
@@ -590,32 +590,6 @@ function EmotionGraph({ personasInScope, stageNames, selectedStageIdx, onSelectS
   const H = chartBottom + padB
   const x = (i: number) => padL + colW * (i + 0.5)
   const y = (score: number) => chartTop + ((2 - Math.max(-2, Math.min(2, score))) / 4) * chartH
-
-  // ステージごとの集計（注釈カード＆avgサブラベル用）
-  const stageInfo = stageNames.map((sName, i) => {
-    const entries = personasInScope
-      .map(p => ({ name: p.name, color: p.color, stage: p.stages[i] }))
-      .filter((e): e is { name: string; color: string; stage: JourneyStage } => !!e.stage)
-    const scores = entries.map(e => e.stage.emotion_score ?? 0)
-    const min = scores.length ? Math.min(...scores) : 0
-    const worst = entries.length
-      ? entries.reduce((a, b) => ((b.stage.emotion_score ?? 0) < (a.stage.emotion_score ?? 0) ? b : a))
-      : null
-    const tier: 'bad' | 'warn' | 'good' = min < 0 ? 'bad' : min === 0 ? 'warn' : 'good'
-    let note: string
-    if (tier === 'good') note = '全員ポジティブ。強みとして活かせる接点。'
-    else {
-      const reason = worst?.stage.pain_points?.[0]?.trim() || worst?.stage.emotions?.trim() || '課題あり'
-      note = `${worst?.name}が低い：${reason}`
-    }
-    return { sName, i, entries, tier, note }
-  })
-
-  const CARD_STYLE: Record<'bad' | 'warn' | 'good', string> = {
-    bad: 'bg-red-50 border-red-200 text-red-800',
-    warn: 'bg-amber-50 border-amber-200 text-amber-800',
-    good: 'bg-emerald-50 border-emerald-200 text-emerald-800',
-  }
 
   return (
     <div>
@@ -642,58 +616,32 @@ function EmotionGraph({ personasInScope, stageNames, selectedStageIdx, onSelectS
             </g>
           )
         })}
-        {/* X軸ラベル（Stage N 名前）。avgは注釈チップ側へ統合 */}
-        {stageInfo.map(({ sName, i }) => (
-          <text key={i} x={x(i)} y={chartBottom + 28} textAnchor="middle" className="fill-foreground" fontSize={13} fontWeight={700}>
-            Stage {i + 1} {sName}
-          </text>
-        ))}
-        {/* 選択中ステージのハイライト（破線円＋「↓ 選択中」） */}
+        {/* 選択中ステージのハイライト（破線円） */}
         {selectedStageIdx >= 0 && selectedStageIdx < n && (
-          <g pointerEvents="none">
-            <circle cx={x(selectedStageIdx)} cy={y(0)} r={32} fill="none" stroke="var(--ds-app-accent)" strokeWidth={2} strokeDasharray="4 3" opacity={0.5} />
-          </g>
+          <circle cx={x(selectedStageIdx)} cy={y(0)} r={32} fill="none" stroke="var(--ds-app-accent)" strokeWidth={2} strokeDasharray="4 3" opacity={0.5} pointerEvents="none" />
         )}
-        {/* ステージ単位のクリック領域（透明・列全幅） */}
-        {stageNames.map((sName, i) => {
-          const w = colW - 10
-          const selected = selectedStageIdx === i
-          return (
-            <rect key={i} x={x(i) - w / 2} y={4} width={w} height={H - 8}
-              fill={selected ? 'rgba(37,99,235,0.04)' : 'transparent'} cursor="pointer"
-              onClick={() => onSelectStage(i)}
-              onMouseEnter={(e) => { if (!selected) e.currentTarget.setAttribute('fill', 'rgba(0,0,0,0.03)') }}
-              onMouseLeave={(e) => { if (!selected) e.currentTarget.setAttribute('fill', 'transparent') }}>
-              <title>{`Stage ${i + 1} ${sName}`}</title>
-            </rect>
-          )
-        })}
       </svg>
 
-      {/* ステージ別の読み取りメモ（クリックで詳細パネルへナビ＝選択chip兼用） */}
-      <div className="mt-3 grid gap-2" style={{ gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))` }}>
-        {stageInfo.map(({ sName, i, tier, note, entries }) => {
+      {/* ステージナビボタン（X軸＝ステージ位置。クリックで詳細パネル連動） */}
+      <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-5">
+        {stageNames.map((sName, i) => {
           const sel = selectedStageIdx === i
+          const scoped = personasInScope.filter(p => p.stages[i])
           return (
-            <div key={i} role="button" tabIndex={0}
+            <button key={i} type="button" onClick={() => onSelectStage(i)}
               aria-pressed={sel}
-              onClick={() => onSelectStage(i)}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelectStage(i) } }}
-              className={`cursor-pointer rounded-md border p-2 text-[11.5px] leading-snug transition-all ${CARD_STYLE[tier]} ${
-                sel ? 'ring-2 ring-ds-app-accent shadow-md scale-[1.02]' : 'hover:shadow-sm hover:scale-[1.01]'}`}>
-              <div className="mb-1 flex items-center justify-between gap-2">
-                <span className="font-bold">{i + 1} {sName}</span>
-                <span className="shrink-0 text-[10.5px] font-semibold">
-                  {entries.map((e, k) => (
-                    <Fragment key={k}>
-                      {k > 0 && <span className="opacity-50"> / </span>}
-                      <span style={{ color: e.color }}>{((e.stage.emotion_score ?? 0) + 3).toFixed(1)}</span>
-                    </Fragment>
-                  ))}
-                </span>
-              </div>
-              {note}
-            </div>
+              className={`relative flex flex-col items-center justify-center rounded-lg border px-3 py-2.5 text-center transition-all ${
+                sel ? 'border-ds-app-accent bg-ds-app-accent/5 shadow-sm ring-1 ring-ds-app-accent' : 'border-border bg-card hover:border-muted-foreground hover:bg-muted/40'}`}>
+              <span className={`text-sm font-bold ${sel ? 'text-ds-app-accent' : 'text-foreground'}`}>Stage {i + 1} {sName}</span>
+              <span className="mt-1 flex items-center gap-1 text-[11px] font-semibold">
+                {scoped.map((p, k) => (
+                  <Fragment key={p.idx}>
+                    {k > 0 && <span className="text-muted-foreground">/</span>}
+                    <span style={{ color: p.color }}>{((p.stages[i]?.emotion_score ?? 0) + 3).toFixed(1)}</span>
+                  </Fragment>
+                ))}
+              </span>
+            </button>
           )
         })}
       </div>
