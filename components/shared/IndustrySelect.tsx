@@ -43,7 +43,7 @@ export function IndustrySelect({
           onValueChange={handleCategoryChange}
           disabled={disabled}
         >
-          <SelectTrigger className="mt-1">
+          <SelectTrigger className="mt-1 bg-white">
             <SelectValue placeholder="選択してください" />
           </SelectTrigger>
           <SelectContent>
@@ -73,7 +73,7 @@ export function IndustrySelect({
             onValueChange={onSubcategoryChange}
             disabled={disabled || !category}
           >
-            <SelectTrigger className="mt-1">
+            <SelectTrigger className="mt-1 bg-white">
               <SelectValue placeholder={category ? '選択してください' : '大分類を先に選択'} />
             </SelectTrigger>
             <SelectContent>
