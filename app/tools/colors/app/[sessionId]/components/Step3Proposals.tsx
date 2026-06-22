@@ -157,7 +157,7 @@ export function Step3Proposals({
               戻る
             </Button>
             <AIButton onClick={generateProposals}>
-              再生成する
+              AIで再提案
             </AIButton>
             </div>
           </div>
@@ -177,7 +177,7 @@ export function Step3Proposals({
       {!generating && (
         <div className="flex justify-start mb-3">
           <AIButton size="sm" onClick={generateProposals}>
-            AIに再提案してもらう
+            AIで再提案
           </AIButton>
         </div>
       )}
@@ -207,7 +207,7 @@ export function Step3Proposals({
         <div className="flex items-center gap-2">
           {!generating && (
             <AIButton onClick={generateProposals}>
-              AIに再提案してもらう
+              AIで再提案
             </AIButton>
           )}
           <Button

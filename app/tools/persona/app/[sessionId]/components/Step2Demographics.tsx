@@ -173,7 +173,7 @@ export function Step2Demographics({ personas: initialPersonas, basicInfo, onNext
 
       <div className="flex justify-start mb-3">
         <AIButton onClick={() => setConfirmOpen(true)}>
-          AIに全件再提案
+          AIで一括生成
         </AIButton>
       </div>
 
@@ -200,7 +200,7 @@ export function Step2Demographics({ personas: initialPersonas, basicInfo, onNext
                 {members.map((e, k) => renderForm(e, k + 1))}
               </div>
               <AIButton onClick={() => addToSegment(seg)} disabled={addingIdx !== null} className="mt-3" icon={<Plus className="w-4 h-4" />}>
-                このターゲットにペルソナを追加（AI生成）
+                AIでペルソナを追加
               </AIButton>
             </section>
           )

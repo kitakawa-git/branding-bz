@@ -134,7 +134,7 @@ export function Step3Goals({ personas: initialPersonas, basicInfo, onNext, onBac
 
       <div className="flex justify-start mb-3">
         <AIButton onClick={() => setConfirmOpen(true)}>
-          AIに全件再提案
+          AIで一括生成
         </AIButton>
       </div>
 

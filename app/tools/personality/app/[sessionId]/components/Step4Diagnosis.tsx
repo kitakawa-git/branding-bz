@@ -111,7 +111,7 @@ export function Step4Diagnosis({ sessionId, hasDiagnosis, onComplete, onBack }: 
               )}
               <div className="mt-6 flex flex-col items-center gap-3">
                 <AIButton onClick={runDiagnosis}>
-                  {hasDiagnosis ? 'もう一度診断する' : 'AI診断を実行'}
+                  {hasDiagnosis ? 'AIで再診断' : 'AIで診断'}
                 </AIButton>
                 {hasDiagnosis && (
                   <p className="text-xs text-muted-foreground">

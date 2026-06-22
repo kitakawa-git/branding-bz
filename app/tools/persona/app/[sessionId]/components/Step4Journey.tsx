@@ -297,7 +297,7 @@ export function Step4Journey({ personas: initialPersonas, basicInfo, onNext, onB
                   個別: <RefreshCw className="inline h-3 w-3 align-text-bottom" /> アイコンで再生成
                 </span>
                 <AIButton onClick={generateAll} disabled={anyLoading} className="shrink-0">
-                  {bulkLoading ? '生成中...' : '全ペルソナを一括生成'}
+                  {bulkLoading ? '生成中…' : 'AIで一括生成'}
                 </AIButton>
               </div>
             </>

@@ -405,7 +405,7 @@ export function Step3Targeting({
                             disabled={aiLoading}
                             icon={aiLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : undefined}
                           >
-                            {aiLoading ? 'AI分析中...' : 'AIに提案してもらう'}
+                            {aiLoading ? '提案中…' : 'AIで提案'}
                           </AIButton>
                         </div>
 

@@ -247,7 +247,7 @@ export function Step4Positioning({
         <h1 className="text-2xl font-bold text-foreground">Step 4: ポジショニング</h1>
         {!aiLoading && (
           <AIButton size="sm" onClick={handleRegenerate} className="shrink-0">
-            AIに提案してもらう
+            AIで提案
           </AIButton>
         )}
       </div>

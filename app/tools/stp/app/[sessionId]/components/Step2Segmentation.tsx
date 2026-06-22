@@ -269,7 +269,7 @@ export function Step2Segmentation({
       {!aiLoading && (
         <div className="flex justify-start mb-3">
           <AIButton onClick={handleRegenerate}>
-            {variables.length > 0 ? 'AIに再提案してもらう' : 'AIに提案してもらう'}
+            {variables.length > 0 ? 'AIで再提案' : 'AIで提案'}
           </AIButton>
         </div>
       )}
@@ -468,7 +468,7 @@ export function Step2Segmentation({
         <div className="flex items-center gap-2">
           {!aiLoading && (
             <AIButton onClick={handleRegenerate}>
-              AIに再提案してもらう
+              AIで再提案
             </AIButton>
           )}
           <Button
