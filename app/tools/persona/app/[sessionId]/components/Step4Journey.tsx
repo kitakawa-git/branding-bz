@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion'
 import { ArrowLeft, ArrowRight, WandSparkles, Plus, Trash2, X, ChevronDown, ChevronRight } from 'lucide-react'
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip'
 import {
@@ -345,21 +345,22 @@ export function Step4Journey({ personas: initialPersonas, basicInfo, onNext, onB
                     {members.length === 0 ? (
                       <p className="text-[13px] text-muted-foreground">このステージのデータがありません。</p>
                     ) : (
-                      <Tabs defaultValue={String(members[0])} className="w-full">
-                        <TabsList className="flex-wrap h-auto">
-                          {members.map(i => (
-                            <TabsTrigger key={i} value={String(i)} className="text-[13px]">
-                              <span className="mr-1.5 h-1.5 w-1.5 rounded-full" style={{ backgroundColor: pColor(i).solid }} />
-                              {personaLabel(data[i], i)}
-                            </TabsTrigger>
-                          ))}
-                        </TabsList>
+                      <Accordion type="multiple" defaultValue={[`p-${members[0]}`]} className="w-full space-y-2">
+                        {/* ペルソナ選択は上部「表示ペルソナ」フィルタに集約。各ペルソナの詳細はアコーディオンで開閉 */}
                         {members.map(i => (
-                          <TabsContent key={i} value={String(i)}>
-                            <StageDetail stage={data[i].journey_map!.stages[selectedStageIdx]} onChange={(patch) => mutateStage(i, selectedStageIdx, (s) => ({ ...s, ...patch }))} />
-                          </TabsContent>
+                          <AccordionItem key={i} value={`p-${i}`} className="rounded-lg border border-border bg-card px-3">
+                            <AccordionTrigger className="py-3 text-[13px] hover:no-underline">
+                              <span className="flex items-center gap-1.5">
+                                <span className="h-2 w-2 rounded-full" style={{ backgroundColor: pColor(i).solid }} />
+                                <span className="font-semibold text-foreground">{personaLabel(data[i], i)}</span>
+                              </span>
+                            </AccordionTrigger>
+                            <AccordionContent>
+                              <StageDetail stage={data[i].journey_map!.stages[selectedStageIdx]} onChange={(patch) => mutateStage(i, selectedStageIdx, (s) => ({ ...s, ...patch }))} />
+                            </AccordionContent>
+                          </AccordionItem>
                         ))}
-                      </Tabs>
+                      </Accordion>
                     )}
                   </div>
                 )
@@ -616,10 +617,19 @@ function EmotionGraph({ personasInScope, stageNames, selectedStageIdx, onSelectS
             </g>
           )
         })}
-        {/* 選択中ステージのハイライト（破線円） */}
-        {selectedStageIdx >= 0 && selectedStageIdx < n && (
-          <circle cx={x(selectedStageIdx)} cy={y(0)} r={32} fill="none" stroke="var(--ds-app-accent)" strokeWidth={2} strokeDasharray="4 3" opacity={0.5} pointerEvents="none" />
-        )}
+        {/* 選択中ステージのハイライト（破線円＝そのステージの折れ線ポイント群を囲う） */}
+        {selectedStageIdx >= 0 && selectedStageIdx < n && (() => {
+          const ys = personasInScope
+            .filter(p => p.stages[selectedStageIdx])
+            .map(p => y(p.stages[selectedStageIdx].emotion_score ?? 0))
+          if (!ys.length) return null
+          const minY = Math.min(...ys), maxY = Math.max(...ys)
+          const midY = (minY + maxY) / 2
+          const r = Math.max(18, (maxY - minY) / 2 + 14)
+          return (
+            <circle cx={x(selectedStageIdx)} cy={midY} r={r} fill="none" stroke="var(--ds-app-accent)" strokeWidth={2} strokeDasharray="4 3" opacity={0.5} pointerEvents="none" />
+          )
+        })()}
       </svg>
 
       {/* ステージナビボタン（X軸＝ステージ位置。クリックで詳細パネル連動） */}
