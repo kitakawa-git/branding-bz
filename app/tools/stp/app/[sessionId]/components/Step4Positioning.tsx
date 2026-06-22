@@ -240,7 +240,8 @@ export function Step4Positioning({
   return (
     <div>
       {/* ヘッダー（AIボタンは見出し直下・左寄せ） */}
-      <h1 className="text-2xl font-bold text-foreground mb-3">Step 4: ポジショニング</h1>
+      <h1 className="text-2xl font-bold text-foreground mb-2">Step 4: ポジショニング</h1>
+      <p className="mb-4 text-[13px] text-muted-foreground">💡 チャート上の点を<b className="font-medium text-foreground">ドラッグ</b>で配置できます</p>
       {!aiLoading && (
         <div className="mb-6 flex justify-start">
           <AIButton size="sm" onClick={handleRegenerate} className="shrink-0">
@@ -278,9 +279,8 @@ export function Step4Positioning({
         <div className="space-y-4">
           {/* 1. 要素リスト（2カラム）：まず要素を確認・命名 */}
           <div>
-            <div className="mb-2 flex items-center justify-between text-xs font-semibold text-muted-foreground">
-              <span>要素（{items.length}社）</span>
-              <span>💡 点を<b className="font-bold">ドラッグ</b>で配置</span>
+            <div className="mb-2 text-xs font-semibold text-muted-foreground">
+              要素（{items.length}社）
             </div>
             <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
               {items.map((item, index) => (
