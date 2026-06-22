@@ -3,7 +3,7 @@
 // Step 4: カスタマージャーニー（全ペルソナ集約ビュー）
 // タブで1人ずつではなく、全ペルソナを一画面に集約：感情グラフ重ね描き＋(stage,name)集約のタッチポイント候補プール。
 // 表示フィルタ（全員/単体ペルソナ・感情）で3パネル（グラフ/プール/詳細）が連動。ジャーニーはペルソナごとに保持。
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect, useRef, Fragment } from 'react'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
@@ -581,7 +581,7 @@ function EmotionGraph({ personasInScope, stageNames, selectedStageIdx, onSelectS
   if (n === 0) return null
 
   // SVG座標系（width:100% で可変描画）
-  const padL = 88, padR = 28, padT = 28, padB = 76
+  const padL = 88, padR = 28, padT = 28, padB = 52
   const colW = 200
   const W = padL + padR + colW * n
   const chartTop = padT
@@ -642,20 +642,11 @@ function EmotionGraph({ personasInScope, stageNames, selectedStageIdx, onSelectS
             </g>
           )
         })}
-        {/* X軸ラベル（Stage N 名前）＋ avgサブラベル */}
-        {stageInfo.map(({ sName, i, entries }) => (
-          <g key={i}>
-            <text x={x(i)} y={chartBottom + 28} textAnchor="middle" className="fill-foreground" fontSize={13} fontWeight={700}>
-              Stage {i + 1} {sName}
-            </text>
-            <text x={x(i)} y={chartBottom + 48} textAnchor="middle" fontSize={11}>
-              {entries.map((e, k) => (
-                <tspan key={k} fill={e.color}>
-                  {k > 0 ? ' / ' : 'avg '}{((e.stage.emotion_score ?? 0) + 3).toFixed(1)}
-                </tspan>
-              ))}
-            </text>
-          </g>
+        {/* X軸ラベル（Stage N 名前）。avgは注釈チップ側へ統合 */}
+        {stageInfo.map(({ sName, i }) => (
+          <text key={i} x={x(i)} y={chartBottom + 28} textAnchor="middle" className="fill-foreground" fontSize={13} fontWeight={700}>
+            Stage {i + 1} {sName}
+          </text>
         ))}
         {/* 選択中ステージのハイライト（破線円＋「↓ 選択中」） */}
         {selectedStageIdx >= 0 && selectedStageIdx < n && (
@@ -681,7 +672,7 @@ function EmotionGraph({ personasInScope, stageNames, selectedStageIdx, onSelectS
 
       {/* ステージ別の読み取りメモ（クリックで詳細パネルへナビ＝選択chip兼用） */}
       <div className="mt-3 grid gap-2" style={{ gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))` }}>
-        {stageInfo.map(({ sName, i, tier, note }) => {
+        {stageInfo.map(({ sName, i, tier, note, entries }) => {
           const sel = selectedStageIdx === i
           return (
             <div key={i} role="button" tabIndex={0}
@@ -690,7 +681,18 @@ function EmotionGraph({ personasInScope, stageNames, selectedStageIdx, onSelectS
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelectStage(i) } }}
               className={`cursor-pointer rounded-md border p-2 text-[11.5px] leading-snug transition-all ${CARD_STYLE[tier]} ${
                 sel ? 'ring-2 ring-ds-app-accent shadow-md scale-[1.02]' : 'hover:shadow-sm hover:scale-[1.01]'}`}>
-              <b className="font-bold">{i + 1} {sName}</b>：{note}
+              <div className="mb-1 flex items-center justify-between gap-2">
+                <span className="font-bold">{i + 1} {sName}</span>
+                <span className="shrink-0 text-[10.5px] font-semibold">
+                  {entries.map((e, k) => (
+                    <Fragment key={k}>
+                      {k > 0 && <span className="opacity-50"> / </span>}
+                      <span style={{ color: e.color }}>{((e.stage.emotion_score ?? 0) + 3).toFixed(1)}</span>
+                    </Fragment>
+                  ))}
+                </span>
+              </div>
+              {note}
             </div>
           )
         })}
