@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { ArrowLeft, ArrowRight, WandSparkles, Plus, Trash2, X, ChevronDown, ChevronRight } from 'lucide-react'
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip'
@@ -124,6 +123,7 @@ export function Step4Journey({ personas: initialPersonas, basicInfo, onNext, onB
   const [confirmIdx, setConfirmIdx] = useState<number | null>(null)
   const [addOpen, setAddOpen] = useState(false)
   const [showLow, setShowLow] = useState(false)
+  const [selectedStageIdx, setSelectedStageIdx] = useState<number>(0) // 統合パネル：選択中ステージ
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const triggerAutoSave = useCallback((p: Persona[]) => {
@@ -327,46 +327,45 @@ export function Step4Journey({ personas: initialPersonas, basicInfo, onNext, onB
               <EmotionGraph
                 personasInScope={scopeIdxs.map(i => ({ idx: i, name: personaLabel(data[i], i), color: pColor(i).solid, stages: data[i].journey_map?.stages || [] }))}
                 stageNames={stageNames}
+                selectedStageIdx={selectedStageIdx}
+                onSelectStage={setSelectedStageIdx}
               />
-            </CardContent>
-          </Card>
 
-          {/* E. ステージ詳細（ペルソナ別サブタブ・感情カーブの編集元） */}
-          <Card className="bg-card border shadow-none mb-4">
-            <CardContent>
-              <h2 className="text-sm font-bold text-foreground mb-2">ステージ詳細</h2>
-              <Accordion type="multiple" className="w-full">
-                {stageNames.map((sName, stageIdx) => {
-                  const members = scopeIdxs.filter(i => (data[i].journey_map?.stages?.[stageIdx]))
-                  const avg = members.length ? members.reduce((s, i) => s + (data[i].journey_map!.stages[stageIdx].emotion_score ?? 0), 0) / members.length : 0
-                  return (
-                    <AccordionItem key={stageIdx} value={`stage-${stageIdx}`}>
-                      <AccordionTrigger className="text-[14px]">
-                        <span className="flex items-center gap-2">
-                          <span className={`h-2 w-2 rounded-full ${avg < 0 ? 'bg-red-500' : avg === 0 ? 'bg-amber-500' : 'bg-emerald-500'}`} />
-                          {stageIdx + 1} {sName}
-                        </span>
-                      </AccordionTrigger>
-                      <AccordionContent>
-                        {members.length === 0 ? (
-                          <p className="text-[13px] text-muted-foreground">このステージのデータがありません。</p>
-                        ) : (
-                          <Tabs defaultValue={String(members[0])} className="w-full">
-                            <TabsList className="flex-wrap h-auto">
-                              {members.map(i => <TabsTrigger key={i} value={String(i)} className="text-[13px]">{personaLabel(data[i], i)}</TabsTrigger>)}
-                            </TabsList>
-                            {members.map(i => (
-                              <TabsContent key={i} value={String(i)}>
-                                <StageDetail stage={data[i].journey_map!.stages[stageIdx]} onChange={(patch) => mutateStage(i, stageIdx, (s) => ({ ...s, ...patch }))} />
-                              </TabsContent>
-                            ))}
-                          </Tabs>
-                        )}
-                      </AccordionContent>
-                    </AccordionItem>
-                  )
-                })}
-              </Accordion>
+              {/* 統合：選択中ステージの詳細パネル（旧ステージ詳細Accordionを移行） */}
+              {(() => {
+                const sName = stageNames[selectedStageIdx]
+                if (sName == null) return null
+                const members = scopeIdxs.filter(i => (data[i].journey_map?.stages?.[selectedStageIdx]))
+                const avg = members.length ? members.reduce((s, i) => s + (data[i].journey_map!.stages[selectedStageIdx].emotion_score ?? 0), 0) / members.length : 0
+                return (
+                  <div key={`${selectedStageIdx}-${filterIdx}`} className="mt-4 rounded-lg border border-border bg-muted/40 p-4 animate-in fade-in slide-in-from-top-1 duration-200">
+                    <div className="mb-3 flex items-center gap-2">
+                      <span className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">Stage {selectedStageIdx + 1}</span>
+                      <span className="text-sm font-bold text-foreground">{sName}</span>
+                      <span className="ml-auto text-[12px] text-muted-foreground">avg {(avg + 3).toFixed(1)}</span>
+                    </div>
+                    {members.length === 0 ? (
+                      <p className="text-[13px] text-muted-foreground">このステージのデータがありません。</p>
+                    ) : (
+                      <Tabs defaultValue={String(members[0])} className="w-full">
+                        <TabsList className="flex-wrap h-auto">
+                          {members.map(i => (
+                            <TabsTrigger key={i} value={String(i)} className="text-[13px]">
+                              <span className="mr-1.5 h-1.5 w-1.5 rounded-full" style={{ backgroundColor: pColor(i).solid }} />
+                              {personaLabel(data[i], i)}
+                            </TabsTrigger>
+                          ))}
+                        </TabsList>
+                        {members.map(i => (
+                          <TabsContent key={i} value={String(i)}>
+                            <StageDetail stage={data[i].journey_map!.stages[selectedStageIdx]} onChange={(patch) => mutateStage(i, selectedStageIdx, (s) => ({ ...s, ...patch }))} />
+                          </TabsContent>
+                        ))}
+                      </Tabs>
+                    )}
+                  </div>
+                )
+              })()}
             </CardContent>
           </Card>
 
@@ -576,7 +575,10 @@ const EMO_LEVELS: Array<{ score: number; label: string }> = [
   { score: -2, label: '不満' },
 ]
 
-function EmotionGraph({ personasInScope, stageNames }: { personasInScope: ScopePersona[]; stageNames: string[] }) {
+function EmotionGraph({ personasInScope, stageNames, selectedStageIdx, onSelectStage }: {
+  personasInScope: ScopePersona[]; stageNames: string[]
+  selectedStageIdx: number; onSelectStage: (i: number) => void
+}) {
   const n = stageNames.length
   if (n === 0) return null
 
@@ -657,6 +659,27 @@ function EmotionGraph({ personasInScope, stageNames }: { personasInScope: ScopeP
             </text>
           </g>
         ))}
+        {/* 選択中ステージのハイライト（破線円＋「↓ 選択中」） */}
+        {selectedStageIdx >= 0 && selectedStageIdx < n && (
+          <g pointerEvents="none">
+            <circle cx={x(selectedStageIdx)} cy={y(0)} r={32} fill="none" stroke="var(--ds-app-accent)" strokeWidth={2} strokeDasharray="4 3" opacity={0.5} />
+            <text x={x(selectedStageIdx)} y={16} fill="var(--ds-app-accent)" fontSize={11} fontWeight={700} textAnchor="middle">↓ 選択中</text>
+          </g>
+        )}
+        {/* ステージ単位のクリック領域（透明・列全幅） */}
+        {stageNames.map((sName, i) => {
+          const w = colW - 10
+          const selected = selectedStageIdx === i
+          return (
+            <rect key={i} x={x(i) - w / 2} y={4} width={w} height={H - 8}
+              fill={selected ? 'rgba(37,99,235,0.04)' : 'transparent'} cursor="pointer"
+              onClick={() => onSelectStage(i)}
+              onMouseEnter={(e) => { if (!selected) e.currentTarget.setAttribute('fill', 'rgba(0,0,0,0.03)') }}
+              onMouseLeave={(e) => { if (!selected) e.currentTarget.setAttribute('fill', 'transparent') }}>
+              <title>{`Stage ${i + 1} ${sName}`}</title>
+            </rect>
+          )
+        })}
       </svg>
 
       {/* ステージ別の読み取りメモ */}
@@ -666,6 +689,22 @@ function EmotionGraph({ personasInScope, stageNames }: { personasInScope: ScopeP
             <b className="font-bold">{i + 1} {sName}</b>：{note}
           </div>
         ))}
+      </div>
+
+      {/* ステージ選択chip（グラフ直下／詳細パネルへのナビ） */}
+      <div className="mt-3 flex flex-wrap justify-center gap-2">
+        {stageInfo.map(({ sName, i, entries }) => {
+          const avg = entries.length ? entries.reduce((s, e) => s + (e.stage.emotion_score ?? 0), 0) / entries.length : 0
+          const sel = selectedStageIdx === i
+          return (
+            <button key={i} onClick={() => onSelectStage(i)}
+              className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                sel ? 'border-foreground bg-foreground text-background' : 'border-border bg-card text-muted-foreground hover:border-muted-foreground'}`}>
+              <span className={`h-2 w-2 rounded-full ${emoColor(avg)}`} />
+              {i + 1} {sName}
+            </button>
+          )
+        })}
       </div>
     </div>
   )
