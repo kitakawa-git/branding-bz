@@ -377,7 +377,7 @@ export function Step3Targeting({
                   >
                     {/* 選択状態バッジ（デザインシステムのBadgeに統一） */}
                     {isMain && (
-                      <Badge className="absolute top-3 right-3">メインターゲット</Badge>
+                      <Badge className="absolute top-3 right-3 bg-ds-app-accent text-white hover:bg-ds-app-accent-hover">メインターゲット</Badge>
                     )}
                     {isSub && (
                       <Badge variant="secondary" className="absolute top-3 right-3">サブターゲット</Badge>
