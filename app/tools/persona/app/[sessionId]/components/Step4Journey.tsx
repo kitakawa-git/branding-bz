@@ -12,7 +12,8 @@ import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
-import { ArrowLeft, ArrowRight, WandSparkles, Plus, Trash2, X } from 'lucide-react'
+import { ArrowLeft, ArrowRight, WandSparkles, Plus, Trash2, X, ChevronDown, ChevronRight } from 'lucide-react'
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip'
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -52,8 +53,41 @@ type TouchpointRow = {
   personas: PersonaTouch[]; priority: Tier; avgEmotion: number
 }
 
-const TIER_DOT: Record<Tier, string> = { High: 'bg-red-500', Mid: 'bg-amber-500', Low: 'bg-muted-foreground' }
 const TIER_RANK: Record<Tier, number> = { High: 0, Mid: 1, Low: 2 }
+
+// 優先度ティア配色（Layer3 ティア配色：ds-app-accent系は使わず red/amber/gray 直書き）
+const PRIORITY_STYLES: Record<Tier, { bar: string; badgeBg: string; text: string; label: string }> = {
+  High: { bar: 'bg-red-500', badgeBg: 'bg-red-500', text: 'text-red-600', label: '優先度高（全員カバー＋感情低い）' },
+  Mid: { bar: 'bg-amber-500', badgeBg: 'bg-amber-500', text: 'text-amber-600', label: '優先度中' },
+  Low: { bar: 'bg-gray-400', badgeBg: 'bg-gray-400', text: 'text-gray-500', label: '優先度低' },
+}
+
+// ペルソナ名の短縮（コンパクト行に収めるため。括弧以降を落として先頭6文字）
+function shortenPersonaName(name: string): string {
+  return name.replace(/[（(].*$/, '').slice(0, 6)
+}
+// 感情ドット色（emotion_score: -2〜2）
+function emoColor(score: number): string {
+  if (score <= -1) return 'bg-red-500'
+  if (score <= 0) return 'bg-amber-500'
+  if (score <= 1) return 'bg-gray-400'
+  return 'bg-emerald-500'
+}
+function emoLabel(score: number): string {
+  if (score <= -2) return '不満'
+  if (score <= -1) return 'もやもや'
+  if (score <= 0) return '普通'
+  if (score <= 1) return 'ポジ'
+  return '満足'
+}
+// 施策メモ（opportunities + pain_points を重複除去して上位3件）
+function buildOpportunityText(r: TouchpointRow): string {
+  return [...r.personas.flatMap(p => p.opportunities), ...r.personas.flatMap(p => p.pain_points)]
+    .map(v => (v || '').trim())
+    .filter((v, i, a) => v && a.indexOf(v) === i)
+    .slice(0, 3)
+    .join(' / ')
+}
 
 // 相対優先度: このジャーニー内の感情レンジで「最も低い×広く接触」を High、最も高いを Low に振る。
 // AIの感情カーブは粗く（-1/0/1/2 等）全ペルソナで同一になりがちで、絶対しきい値だと
@@ -89,6 +123,7 @@ export function Step4Journey({ personas: initialPersonas, basicInfo, onNext, onB
   const [saving, setSaving] = useState(false)
   const [confirmIdx, setConfirmIdx] = useState<number | null>(null)
   const [addOpen, setAddOpen] = useState(false)
+  const [showLow, setShowLow] = useState(false)
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const triggerAutoSave = useCallback((p: Persona[]) => {
@@ -279,15 +314,20 @@ export function Step4Journey({ personas: initialPersonas, basicInfo, onNext, onB
           {/* C. 感情グラフ（重ね描き） */}
           <Card className="bg-card border shadow-none mb-4">
             <CardContent>
-              <h2 className="text-sm font-bold text-foreground mb-3">感情カーブ（優先度の注釈）</h2>
-              <div className="mb-2 flex flex-wrap gap-3">
+              <h2 className="text-sm font-bold text-foreground mb-1">感情カーブ（優先度の注釈）</h2>
+              <p className="mb-3 text-[12px] text-muted-foreground">各ステージでペルソナごとの感情を線で重ね描き。<b className="font-semibold text-foreground">線が落ちている＝そのステージのタッチポイントに不満が多い</b>＝ブランド施策の打ち手が必要。</p>
+              <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-2">
                 {scopeIdxs.map(i => (
                   <span key={i} className="flex items-center gap-1.5 text-[13px] text-muted-foreground">
-                    <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: pColor(i).solid }} />{personaLabel(data[i], i)}
+                    <span className="inline-block h-[3px] w-[18px] rounded-full" style={{ backgroundColor: pColor(i).solid }} />{personaLabel(data[i], i)}
                   </span>
                 ))}
+                <span className="ml-auto text-[12px] text-muted-foreground">縦軸＝感情（不満→満足）、横軸＝ステージ</span>
               </div>
-              <EmotionGraph personasInScope={scopeIdxs.map(i => ({ idx: i, stages: data[i].journey_map?.stages || [] }))} stageNames={stageNames} />
+              <EmotionGraph
+                personasInScope={scopeIdxs.map(i => ({ idx: i, name: personaLabel(data[i], i), color: pColor(i).solid, stages: data[i].journey_map?.stages || [] }))}
+                stageNames={stageNames}
+              />
             </CardContent>
           </Card>
 
@@ -369,57 +409,27 @@ export function Step4Journey({ personas: initialPersonas, basicInfo, onNext, onB
               {rows.length === 0 ? (
                 <p className="text-[14px] text-muted-foreground">条件に合うタッチポイントがありません。</p>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-[14px] border-collapse">
-                    <thead>
-                      <tr className="border-b border-border text-left text-muted-foreground">
-                        <th className="py-2 pr-3 font-medium">優先度</th>
-                        <th className="py-2 pr-3 font-medium">タッチポイント</th>
-                        <th className="py-2 pr-3 font-medium">ステージ</th>
-                        <th className="py-2 pr-3 font-medium">接触ペルソナ</th>
-                        <th className="py-2 pr-3 font-medium">施策の機会</th>
-                        <th className="py-2 font-medium"></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {rows.map((r) => (
-                        <tr key={`${r.stageIdx}-${normTp(r.name)}`} className="border-b border-border/60 align-top">
-                          <td className="py-2 pr-3 whitespace-nowrap">
-                            <span className="inline-flex items-center gap-1.5"><span className={`h-2 w-2 rounded-full ${TIER_DOT[r.priority]}`} />{r.priority}</span>
-                          </td>
-                          <td className="py-2 pr-3 min-w-44">
-                            <Input value={r.name} onChange={(e) => renameTouchpoint(data, commit, r.stageIdx, r.name, e.target.value)} className="h-8" />
-                          </td>
-                          <td className="py-2 pr-3 whitespace-nowrap text-muted-foreground">{r.stageIdx + 1} {r.stage}</td>
-                          <td className="py-2 pr-3">
-                            <div className="flex flex-wrap gap-1">
-                              {r.personas.map(pe => (
-                                <button key={pe.idx} onClick={() => removePersonaFromTp(data, commit, pe.idx, r.stageIdx, r.name)}
-                                  title="クリックでこのペルソナを外す"
-                                  className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[13px]"
-                                  style={{ backgroundColor: pColor(pe.idx).soft, color: pColor(pe.idx).solid }}>
-                                  {pe.name}
-                                  <span className={`h-1.5 w-1.5 rounded-full ${pe.emotion_score < 0 ? 'bg-red-500' : pe.emotion_score === 0 ? 'bg-amber-500' : 'bg-emerald-500'}`} />
-                                  <X className="h-3 w-3" />
-                                </button>
-                              ))}
-                            </div>
-                          </td>
-                          <td className="py-2 pr-3 text-muted-foreground min-w-40">
-                            {[...new Set(r.personas.flatMap(pe => pe.opportunities))].slice(0, 2).join(' / ') || '—'}
-                          </td>
-                          <td className="py-2">
-                            <Button type="button" variant="outline" size="icon"
-                              onClick={() => deleteTouchpoint(data, commit, r.stageIdx, r.name)}
-                              className="size-8 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive">
-                              <Trash2 size={14} />
-                            </Button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                <TooltipProvider delayDuration={150}>
+                  <div className="rounded-lg border border-border overflow-hidden bg-card">
+                    {(['High', 'Mid', 'Low'] as Tier[]).map(tier => {
+                      const groupRows = rows.filter(r => r.priority === tier)
+                      if (groupRows.length === 0) return null
+                      const isLow = tier === 'Low'
+                      return (
+                        <div key={tier}>
+                          <GroupHeader priority={tier} count={groupRows.length}
+                            collapsible={isLow} collapsed={isLow && !showLow}
+                            onToggle={isLow ? () => setShowLow(v => !v) : undefined} />
+                          {(!isLow || showLow) && groupRows.map(r => (
+                            <CompactRow key={`${r.stageIdx}-${normTp(r.name)}`} row={r} priority={tier}
+                              onDelete={() => deleteTouchpoint(data, commit, r.stageIdx, r.name)}
+                              onRemovePersona={(pi) => removePersonaFromTp(data, commit, pi, r.stageIdx, r.name)} />
+                          ))}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </TooltipProvider>
               )}
             </CardContent>
           </Card>
@@ -448,14 +458,6 @@ export function Step4Journey({ personas: initialPersonas, basicInfo, onNext, onB
 }
 
 // ===== タッチポイント操作（全ペルソナ横断） =====
-function renameTouchpoint(data: Persona[], commit: (p: Persona[]) => void, stageIdx: number, oldName: string, newName: string) {
-  const key = normTp(oldName)
-  commit(data.map(p => {
-    const stages = p.journey_map?.stages; if (!stages?.[stageIdx]) return p
-    const next = stages.map((s, si) => si === stageIdx ? { ...s, touchpoints: (s.touchpoints || []).map(t => normTp(t) === key ? newName : t) } : s)
-    return { ...p, journey_map: { stages: next } }
-  }))
-}
 function deleteTouchpoint(data: Persona[], commit: (p: Persona[]) => void, stageIdx: number, name: string) {
   const key = normTp(name)
   commit(data.map(p => {
@@ -489,33 +491,183 @@ function FilterChip({ active, onClick, dot, children }: { active: boolean; onCli
   )
 }
 
-function EmotionGraph({ personasInScope, stageNames }: { personasInScope: Array<{ idx: number; stages: JourneyStage[] }>; stageNames: string[] }) {
-  const W = 520, H = 160, padL = 28, padR = 16, padT = 16, padB = 30
-  const n = stageNames.length
-  const innerW = W - padL - padR
-  const x = (i: number) => (n > 1 ? padL + (innerW * i) / (n - 1) : padL + innerW / 2)
-  const y = (score: number) => (padT + ((2 - score) / 4) * (H - padT - padB))
+// ===== タッチポイント候補プール（コンパクトリスト） =====
+function GroupHeader({ priority, count, collapsible, collapsed, onToggle }: {
+  priority: Tier; count: number
+  collapsible?: boolean; collapsed?: boolean; onToggle?: () => void
+}) {
+  const style = PRIORITY_STYLES[priority]
+  const badge = priority === 'High' ? 'HIGH' : priority === 'Mid' ? 'MID' : 'LOW'
+  const inner = (
+    <>
+      <span className={`inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-bold text-white ${style.badgeBg}`}>{badge}</span>
+      <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">{style.label} — {count}件</span>
+      {collapsible && (
+        <span className="ml-auto text-muted-foreground">
+          {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        </span>
+      )}
+    </>
+  )
+  const cls = 'flex items-center gap-2 px-4 py-2 bg-gray-50 border-b border-border'
+  return collapsible
+    ? <button type="button" onClick={onToggle} className={`${cls} w-full text-left hover:bg-gray-100 transition-colors`}>{inner}</button>
+    : <div className={cls}>{inner}</div>
+}
+
+function CompactRow({ row, priority, onDelete, onRemovePersona }: {
+  row: TouchpointRow; priority: Tier
+  onDelete: () => void; onRemovePersona: (personaIdx: number) => void
+}) {
+  const style = PRIORITY_STYLES[priority]
+  const oppText = buildOpportunityText(row)
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="感情カーブ">
-      {[2, 0, -2].map(sc => (
-        <g key={sc}>
-          <line x1={padL} y1={y(sc)} x2={W - padR} y2={y(sc)} stroke="currentColor" className="text-border" strokeWidth={1} />
-          <text x={2} y={y(sc) + 4} className="fill-muted-foreground" fontSize={10}>{sc === 2 ? '満足' : sc === 0 ? '普通' : '不満'}</text>
-        </g>
-      ))}
-      {personasInScope.map(({ idx, stages }) => {
-        if (!stages.length) return null
-        const pts = stageNames.map((_, i) => `${x(i)},${y(stages[i]?.emotion_score ?? 0)}`).join(' ')
-        const col = PERSONA_COLORS[idx % PERSONA_COLORS.length].solid
-        return (
-          <g key={idx}>
-            <polyline points={pts} fill="none" stroke={col} strokeWidth={2} strokeOpacity={0.85} />
-            {stageNames.map((_, i) => <circle key={i} cx={x(i)} cy={y(stages[i]?.emotion_score ?? 0)} r={3.5} fill={col} fillOpacity={0.85} />)}
+    <div className="relative flex flex-wrap items-center gap-x-3 gap-y-1.5 py-2.5 pl-5 pr-4 border-b border-border hover:bg-gray-50 transition-colors">
+      <span className={`absolute left-0 top-0 bottom-0 w-[3px] ${style.bar}`} />
+      {/* TP名＋ステージ */}
+      <div className="flex-none w-[200px] min-w-0">
+        <div className="font-bold text-sm text-foreground truncate" title={row.name}>{row.name}</div>
+        <div className="text-[11px] text-muted-foreground">{row.stageIdx + 1} {row.stage}</div>
+      </div>
+      {/* ペルソナピル（クリックで外す） */}
+      <div className="flex-none w-[180px] flex gap-1 flex-wrap">
+        {row.personas.map(pe => (
+          <button key={pe.idx} onClick={() => onRemovePersona(pe.idx)} title={`${pe.name}（クリックで外す）`}
+            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold"
+            style={{ background: pColor(pe.idx).soft, color: pColor(pe.idx).solid }}>
+            <span className="w-1.5 h-1.5 rounded-full" style={{ background: pColor(pe.idx).solid }} />
+            {shortenPersonaName(pe.name)}
+          </button>
+        ))}
+      </div>
+      {/* 感情ドット（ペルソナ順） */}
+      <div className="flex-none w-[120px] flex gap-1.5 items-center">
+        {row.personas.map(pe => (
+          <span key={pe.idx} className={`w-2 h-2 rounded-full ${emoColor(pe.emotion_score)}`}
+            title={`${pe.name}: ${emoLabel(pe.emotion_score)}`} />
+        ))}
+      </div>
+      {/* 施策メモ（1行省略＋ホバーで全文） */}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className="flex-1 min-w-[120px] text-xs text-muted-foreground truncate cursor-default">{oppText || '—'}</div>
+        </TooltipTrigger>
+        {oppText && (
+          <TooltipContent className="max-w-[400px] whitespace-pre-line text-xs">{oppText}</TooltipContent>
+        )}
+      </Tooltip>
+      {/* 削除 */}
+      <button type="button" onClick={onDelete} title="このタッチポイントを削除"
+        className="flex-none p-1.5 rounded hover:bg-red-50 text-red-500">
+        <Trash2 className="w-3.5 h-3.5" />
+      </button>
+    </div>
+  )
+}
+
+type ScopePersona = { idx: number; name: string; color: string; stages: JourneyStage[] }
+
+// 感情スコア(-2〜2)の5段グリッドラベル
+const EMO_LEVELS: Array<{ score: number; label: string }> = [
+  { score: 2, label: '満足' },
+  { score: 1, label: '好印象' },
+  { score: 0, label: '普通' },
+  { score: -1, label: 'もやもや' },
+  { score: -2, label: '不満' },
+]
+
+function EmotionGraph({ personasInScope, stageNames }: { personasInScope: ScopePersona[]; stageNames: string[] }) {
+  const n = stageNames.length
+  if (n === 0) return null
+
+  // SVG座標系（width:100% で可変描画）
+  const padL = 88, padR = 28, padT = 28, padB = 76
+  const colW = 200
+  const W = padL + padR + colW * n
+  const chartTop = padT
+  const chartH = 192
+  const chartBottom = chartTop + chartH
+  const H = chartBottom + padB
+  const x = (i: number) => padL + colW * (i + 0.5)
+  const y = (score: number) => chartTop + ((2 - Math.max(-2, Math.min(2, score))) / 4) * chartH
+
+  // ステージごとの集計（注釈カード＆avgサブラベル用）
+  const stageInfo = stageNames.map((sName, i) => {
+    const entries = personasInScope
+      .map(p => ({ name: p.name, color: p.color, stage: p.stages[i] }))
+      .filter((e): e is { name: string; color: string; stage: JourneyStage } => !!e.stage)
+    const scores = entries.map(e => e.stage.emotion_score ?? 0)
+    const min = scores.length ? Math.min(...scores) : 0
+    const worst = entries.length
+      ? entries.reduce((a, b) => ((b.stage.emotion_score ?? 0) < (a.stage.emotion_score ?? 0) ? b : a))
+      : null
+    const tier: 'bad' | 'warn' | 'good' = min < 0 ? 'bad' : min === 0 ? 'warn' : 'good'
+    let note: string
+    if (tier === 'good') note = '全員ポジティブ。強みとして活かせる接点。'
+    else {
+      const reason = worst?.stage.pain_points?.[0]?.trim() || worst?.stage.emotions?.trim() || '課題あり'
+      note = `${worst?.name}が低い：${reason}`
+    }
+    return { sName, i, entries, tier, note }
+  })
+
+  const CARD_STYLE: Record<'bad' | 'warn' | 'good', string> = {
+    bad: 'bg-red-50 border-red-200 text-red-800',
+    warn: 'bg-amber-50 border-amber-200 text-amber-800',
+    good: 'bg-emerald-50 border-emerald-200 text-emerald-800',
+  }
+
+  return (
+    <div>
+      <svg viewBox={`0 0 ${W} ${H}`} className="block w-full h-auto" role="img" aria-label="感情カーブ">
+        {/* 横ガイドライン＋Y軸ラベル */}
+        {EMO_LEVELS.map(({ score, label }) => (
+          <g key={score}>
+            <line x1={padL} y1={y(score)} x2={W - padR} y2={y(score)} stroke="currentColor" className="text-border" strokeWidth={1} />
+            <text x={padL - 12} y={y(score) + 4} textAnchor="end" className="fill-muted-foreground" fontSize={12}>{label}</text>
           </g>
-        )
-      })}
-      {stageNames.map((sName, i) => <text key={i} x={x(i)} y={H - 8} textAnchor="middle" className="fill-muted-foreground" fontSize={10}>{sName}</text>)}
-    </svg>
+        ))}
+        {/* ステージの縦区切り */}
+        {stageNames.map((_, i) => (
+          <line key={i} x1={x(i)} y1={chartTop} x2={x(i)} y2={chartBottom} stroke="currentColor" className="text-border/50" strokeWidth={1} />
+        ))}
+        {/* ペルソナの折れ線 */}
+        {personasInScope.map(({ idx, color, stages }) => {
+          if (!stages.length) return null
+          const pts = stageNames.map((_, i) => `${x(i)},${y(stages[i]?.emotion_score ?? 0)}`).join(' ')
+          return (
+            <g key={idx}>
+              <polyline points={pts} fill="none" stroke={color} strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" />
+              {stageNames.map((_, i) => stages[i] && <circle key={i} cx={x(i)} cy={y(stages[i].emotion_score ?? 0)} r={5} fill={color} />)}
+            </g>
+          )
+        })}
+        {/* X軸ラベル（Stage N 名前）＋ avgサブラベル */}
+        {stageInfo.map(({ sName, i, entries }) => (
+          <g key={i}>
+            <text x={x(i)} y={chartBottom + 28} textAnchor="middle" className="fill-foreground" fontSize={13} fontWeight={700}>
+              Stage {i + 1} {sName}
+            </text>
+            <text x={x(i)} y={chartBottom + 48} textAnchor="middle" fontSize={11}>
+              {entries.map((e, k) => (
+                <tspan key={k} fill={e.color}>
+                  {k > 0 ? ' / ' : 'avg '}{((e.stage.emotion_score ?? 0) + 3).toFixed(1)}
+                </tspan>
+              ))}
+            </text>
+          </g>
+        ))}
+      </svg>
+
+      {/* ステージ別の読み取りメモ */}
+      <div className="mt-3 grid gap-2" style={{ gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))` }}>
+        {stageInfo.map(({ sName, i, tier, note }) => (
+          <div key={i} className={`rounded-md border p-2 text-[11.5px] leading-snug ${CARD_STYLE[tier]}`}>
+            <b className="font-bold">{i + 1} {sName}</b>：{note}
+          </div>
+        ))}
+      </div>
+    </div>
   )
 }
 
