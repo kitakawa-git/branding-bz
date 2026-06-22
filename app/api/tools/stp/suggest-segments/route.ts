@@ -122,14 +122,22 @@ export async function POST(request: NextRequest) {
     const response = await callClaude({
       system,
       userMessage,
-      maxTokens: 2000,
+      // セグメンテーションは出力が最も大きい（複数変数×複数セグメント）。
+      // 2000では途中で切れて不正JSONになりパース失敗するため余裕を持たせる。
+      maxTokens: 4000,
     })
 
-    // JSONパース
+    // JSONパース。素の``` ```フェンスや前後の説明文にも耐えるよう、
+    // フェンス除去後に最外の {...} を切り出してからパースする。
     let jsonStr = response.trim()
-    const jsonMatch = jsonStr.match(/```json\s*([\s\S]*?)\s*```/)
-    if (jsonMatch) {
-      jsonStr = jsonMatch[1]
+    const fenceMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)\s*```/)
+    if (fenceMatch) {
+      jsonStr = fenceMatch[1].trim()
+    }
+    const objStart = jsonStr.indexOf('{')
+    const objEnd = jsonStr.lastIndexOf('}')
+    if (objStart >= 0 && objEnd > objStart) {
+      jsonStr = jsonStr.slice(objStart, objEnd + 1)
     }
 
     let parsed: { variables: unknown[] }

@@ -160,11 +160,17 @@ ${competitorsNote}`
       maxTokens: 1500,
     })
 
-    // JSONパース
+    // JSONパース。素の``` ```フェンスや前後の説明文に耐えるよう、
+    // フェンス除去後に最外の {...} を切り出してからパースする。
     let jsonStr = response.trim()
-    const jsonMatch = jsonStr.match(/```json\s*([\s\S]*?)\s*```/)
-    if (jsonMatch) {
-      jsonStr = jsonMatch[1]
+    const fenceMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)\s*```/)
+    if (fenceMatch) {
+      jsonStr = fenceMatch[1].trim()
+    }
+    const objStart = jsonStr.indexOf('{')
+    const objEnd = jsonStr.lastIndexOf('}')
+    if (objStart >= 0 && objEnd > objStart) {
+      jsonStr = jsonStr.slice(objStart, objEnd + 1)
     }
 
     let parsed: {
