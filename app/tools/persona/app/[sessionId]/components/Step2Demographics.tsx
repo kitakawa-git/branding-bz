@@ -219,7 +219,7 @@ export function Step2Demographics({ personas: initialPersonas, basicInfo, onNext
         )}
       </div>
 
-      <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 bg-background/80 backdrop-blur border-t border-border px-6 py-3 flex items-center justify-between">
+      <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 bg-background/80 backdrop-blur border-t border-border px-6 py-4 flex items-center justify-between">
         <Button variant="outline" onClick={onBack} className="h-14 gap-2 px-6 text-base font-bold">
           <ArrowLeft className="h-4 w-4" /> 戻る
         </Button>
