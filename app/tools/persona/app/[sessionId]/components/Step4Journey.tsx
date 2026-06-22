@@ -258,7 +258,7 @@ export function Step4Journey({ personas: initialPersonas, basicInfo, onNext, onB
       </p>
 
       {/* A. ペルソナ一覧＋AI生成 */}
-      <Card className="bg-card border shadow-none mb-4">
+      <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-4">
         <CardContent>
           <h2 className="text-sm font-bold text-foreground mb-3">ペルソナ</h2>
           <div className="space-y-0.5">
@@ -309,7 +309,7 @@ export function Step4Journey({ personas: initialPersonas, basicInfo, onNext, onB
       </Card>
 
       {/* B + C + D を1つのカードに統合 */}
-      <Card className="bg-card border shadow-none mb-4">
+      <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-4">
         <CardContent>
           {/* B. 表示ペルソナ */}
           <div className="space-y-2">
