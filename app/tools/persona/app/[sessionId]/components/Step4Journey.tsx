@@ -356,7 +356,7 @@ export function Step4Journey({ personas: initialPersonas, basicInfo, onNext, onB
                 return (
                   <div className="mt-4 overflow-hidden rounded-lg border border-border bg-card">
                     {/* タブ：ステージナビボタン（X＝ステージ位置）。カード背景に溶け込ませる（罫線・別背景なし） */}
-                    <div className="grid grid-cols-3 gap-2 p-2 sm:grid-cols-5">
+                    <div className="grid grid-cols-3 gap-2 p-4 sm:grid-cols-5">
                       {stageNames.map((nm, i) => {
                         const sel = selectedStageIdx === i
                         const scoped = scopeIdxs.filter(k => data[k].journey_map?.stages?.[i])
