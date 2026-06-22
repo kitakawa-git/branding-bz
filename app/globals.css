@@ -235,3 +235,25 @@ body {
   padding: 1rem;
   padding-top: 0;
 }
+
+/* ===== AIアクションボタン shimmer エフェクト ===== */
+.ai-action-button::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.22) 50%,
+    transparent 100%
+  );
+  transform: translateX(-100%);
+  transition: transform 0.5s ease;
+  pointer-events: none;
+}
+.ai-action-button:hover::before {
+  transform: translateX(100%);
+}
+.ai-action-button:disabled::before {
+  display: none;
+}

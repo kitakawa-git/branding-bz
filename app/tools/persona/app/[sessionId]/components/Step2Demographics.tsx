@@ -9,7 +9,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { ArrowLeft, ArrowRight, WandSparkles, Plus, X, Trash2 } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Plus, X, Trash2 } from 'lucide-react'
+import { AIButton } from '@/components/shared/AIButton'
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -171,9 +172,9 @@ export function Step2Demographics({ personas: initialPersonas, basicInfo, onNext
       </p>
 
       <div className="flex justify-start mb-3">
-        <Button variant="outline" size="sm" onClick={() => setConfirmOpen(true)} className="gap-1.5 text-xs">
-          <WandSparkles className="h-3.5 w-3.5" /> AIに全件再提案
-        </Button>
+        <AIButton onClick={() => setConfirmOpen(true)}>
+          AIに全件再提案
+        </AIButton>
       </div>
 
       {aiError && (
