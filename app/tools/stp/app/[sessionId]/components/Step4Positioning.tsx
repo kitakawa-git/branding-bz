@@ -329,7 +329,26 @@ export function Step4Positioning({
             </Button>
           </div>
 
-          {/* 2. チャート＋軸設定オーバーレイ（全幅・ドラッグで配置） */}
+          {/* 2. 選択中要素の詳細スライダー（要素のすぐ下・選択中のみ） */}
+          {selectedIdx !== null && items[selectedIdx] && (
+            <div className="space-y-3 rounded-lg border border-ds-app-accent bg-ds-app-accent/5 p-3">
+              <div className="text-xs font-bold text-ds-app-accent">編集中: {items[selectedIdx].name || `要素${selectedIdx + 1}`}</div>
+              <div className="space-y-1">
+                <div className="flex justify-between text-[11px] text-muted-foreground">
+                  <span>{xAxis.left || 'X左'}</span><span>{xAxis.right || 'X右'}</span>
+                </div>
+                <Slider value={[items[selectedIdx].x]} onValueChange={([v]) => updateItem(selectedIdx, { x: v })} min={0} max={100} step={1} />
+              </div>
+              <div className="space-y-1">
+                <div className="flex justify-between text-[11px] text-muted-foreground">
+                  <span>{yAxis.bottom || 'Y下'}</span><span>{yAxis.top || 'Y上'}</span>
+                </div>
+                <Slider value={[items[selectedIdx].y]} onValueChange={([v]) => updateItem(selectedIdx, { y: v })} min={0} max={100} step={1} />
+              </div>
+            </div>
+          )}
+
+          {/* 3. チャート＋軸設定オーバーレイ（全幅・ドラッグで配置） */}
           <div className="relative rounded-lg border border-border bg-card p-3">
             {/* 軸設定オーバーレイ */}
             <div className="absolute left-3 right-3 top-3 z-10 space-y-1.5 rounded-md border border-border bg-white/95 p-2 text-xs shadow-sm">
@@ -356,25 +375,6 @@ export function Step4Positioning({
               className="mt-[68px]"
             />
           </div>
-
-          {/* 3. 選択中要素の詳細スライダー（全デバイス）：ドラッグで大まか→スライダーで微調整 */}
-          {selectedIdx !== null && items[selectedIdx] && (
-            <div className="space-y-3 rounded-lg border border-ds-app-accent bg-ds-app-accent/5 p-3">
-              <div className="text-xs font-bold text-ds-app-accent">編集中: {items[selectedIdx].name || `要素${selectedIdx + 1}`}</div>
-              <div className="space-y-1">
-                <div className="flex justify-between text-[11px] text-muted-foreground">
-                  <span>{xAxis.left || 'X左'}</span><span>{xAxis.right || 'X右'}</span>
-                </div>
-                <Slider value={[items[selectedIdx].x]} onValueChange={([v]) => updateItem(selectedIdx, { x: v })} min={0} max={100} step={1} />
-              </div>
-              <div className="space-y-1">
-                <div className="flex justify-between text-[11px] text-muted-foreground">
-                  <span>{yAxis.bottom || 'Y下'}</span><span>{yAxis.top || 'Y上'}</span>
-                </div>
-                <Slider value={[items[selectedIdx].y]} onValueChange={([v]) => updateItem(selectedIdx, { y: v })} min={0} max={100} step={1} />
-              </div>
-            </div>
-          )}
         </div>
       )}
 
