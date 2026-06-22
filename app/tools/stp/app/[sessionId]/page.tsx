@@ -191,7 +191,7 @@ export default function STPSessionPage() {
   const currentStep = session.current_step
 
   return (
-    <div className={`mx-auto px-5 py-8 ${currentStep === 4 ? 'max-w-5xl' : 'max-w-4xl'}`}>
+    <div className="mx-auto max-w-4xl px-5 py-8">
       {/* プログレスバー */}
       <StepProgressBar
         steps={[
