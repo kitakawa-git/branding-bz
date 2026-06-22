@@ -205,11 +205,6 @@ export function Step3Proposals({
           戻る
         </Button>
         <div className="flex items-center gap-2">
-          {!generating && (
-            <AIButton onClick={generateProposals}>
-              AIで再提案
-            </AIButton>
-          )}
           <Button
             onClick={handleNext}
             disabled={!selectedId}

@@ -466,11 +466,6 @@ export function Step2Segmentation({
         </Button>
 
         <div className="flex items-center gap-2">
-          {!aiLoading && (
-            <AIButton onClick={handleRegenerate}>
-              AIで再提案
-            </AIButton>
-          )}
           <Button
             onClick={handleNext}
             disabled={saving || !hasSegment || aiLoading}

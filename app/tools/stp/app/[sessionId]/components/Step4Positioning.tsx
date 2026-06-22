@@ -242,15 +242,15 @@ export function Step4Positioning({
 
   return (
     <div>
-      {/* ヘッダー */}
-      <div className="mb-6 flex items-start justify-between">
-        <h1 className="text-2xl font-bold text-foreground">Step 4: ポジショニング</h1>
-        {!aiLoading && (
+      {/* ヘッダー（AIボタンは見出し直下・左寄せ） */}
+      <h1 className="text-2xl font-bold text-foreground mb-3">Step 4: ポジショニング</h1>
+      {!aiLoading && (
+        <div className="mb-6 flex justify-start">
           <AIButton size="sm" onClick={handleRegenerate} className="shrink-0">
             AIで提案
           </AIButton>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* AIエラー */}
       {aiError && (

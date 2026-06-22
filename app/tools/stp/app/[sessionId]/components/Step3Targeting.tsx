@@ -397,8 +397,8 @@ export function Step3Targeting({
                     <div className="overflow-hidden">
                       <div className="border-t border-blue-200 mx-4 mb-4 pt-4 space-y-4">
 
-                        {/* AIに提案してもらうボタン */}
-                        <div className="flex justify-end">
+                        {/* AI提案ボタン（見出し直下・左寄せ） */}
+                        <div className="flex justify-start">
                           <AIButton
                             size="sm"
                             onClick={handleAISuggestClick}
