@@ -314,15 +314,13 @@ export function Step4Journey({ personas: initialPersonas, basicInfo, onNext, onB
           {/* C. 感情グラフ（重ね描き） */}
           <Card className="bg-card border shadow-none mb-4">
             <CardContent>
-              <h2 className="text-sm font-bold text-foreground mb-1">感情カーブ（優先度の注釈）</h2>
-              <p className="mb-3 text-[12px] text-muted-foreground">各ステージでペルソナごとの感情を線で重ね描き。<b className="font-semibold text-foreground">線が落ちている＝そのステージのタッチポイントに不満が多い</b>＝ブランド施策の打ち手が必要。</p>
+              <h2 className="text-sm font-bold text-foreground mb-3">感情カーブ（優先度の注釈）</h2>
               <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-2">
                 {scopeIdxs.map(i => (
                   <span key={i} className="flex items-center gap-1.5 text-[13px] text-muted-foreground">
                     <span className="inline-block h-[3px] w-[18px] rounded-full" style={{ backgroundColor: pColor(i).solid }} />{personaLabel(data[i], i)}
                   </span>
                 ))}
-                <span className="ml-auto text-[12px] text-muted-foreground">縦軸＝感情（不満→満足）、横軸＝ステージ</span>
               </div>
               <EmotionGraph
                 personasInScope={scopeIdxs.map(i => ({ idx: i, name: personaLabel(data[i], i), color: pColor(i).solid, stages: data[i].journey_map?.stages || [] }))}
