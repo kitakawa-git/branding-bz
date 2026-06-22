@@ -308,8 +308,11 @@ export function Step4Journey({ personas: initialPersonas, basicInfo, onNext, onB
         </CardContent>
       </Card>
 
-      {/* B. 表示フィルタ */}
-      <div className="mb-4 space-y-2">
+      {/* B + C + D を1つのカードに統合 */}
+      <Card className="bg-card border shadow-none mb-4">
+        <CardContent>
+          {/* B. 表示ペルソナ */}
+          <div className="space-y-2">
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-[13px] text-muted-foreground">表示ペルソナ：</span>
           <FilterChip active={filterIdx === 'all'} onClick={() => setFilterIdx('all')}>全員</FilterChip>
@@ -325,15 +328,12 @@ export function Step4Journey({ personas: initialPersonas, basicInfo, onNext, onB
         )}
       </div>
 
-      {baseStages.length === 0 ? (
-        <Card className="bg-card border shadow-none">
-          <CardContent><p className="text-[14px] text-muted-foreground">まだジャーニーがありません。上の各ペルソナの「AI生成」を押してください。</p></CardContent>
-        </Card>
-      ) : (
-        <>
-          {/* C. 感情グラフ（重ね描き） */}
-          <Card className="bg-card border shadow-none mb-4">
-            <CardContent>
+          {baseStages.length === 0 ? (
+            <p className="mt-4 text-[14px] text-muted-foreground">まだジャーニーがありません。上の各ペルソナの「AI生成」を押してください。</p>
+          ) : (
+            <>
+              {/* C. 感情カーブ（優先度の注釈） */}
+              <div className="mt-5 border-t border-border pt-5">
               <h2 className="text-sm font-bold text-foreground mb-3">感情カーブ（優先度の注釈）</h2>
               <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-2">
                 {scopeIdxs.map(i => (
@@ -403,12 +403,10 @@ export function Step4Journey({ personas: initialPersonas, basicInfo, onNext, onB
                   </div>
                 )
               })()}
-            </CardContent>
-          </Card>
+              </div>
 
-          {/* D. タッチポイント候補プール */}
-          <Card className="bg-card border shadow-none mb-4">
-            <CardContent>
+              {/* D. タッチポイント候補プール */}
+              <div className="mt-5 border-t border-border pt-5">
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                 <h2 className="text-sm font-bold text-foreground">タッチポイント候補プール</h2>
                 <Button variant="outline" size="sm" onClick={() => setAddOpen(o => !o)} className="gap-1.5"><Plus className="h-4 w-4" /> タッチポイントを手動追加</Button>
@@ -467,10 +465,11 @@ export function Step4Journey({ personas: initialPersonas, basicInfo, onNext, onB
                   </div>
                 </TooltipProvider>
               )}
-            </CardContent>
-          </Card>
-        </>
-      )}
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
 
       <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 bg-background/80 backdrop-blur border-t border-border px-6 py-4 flex items-center justify-between">
         <Button variant="outline" onClick={onBack} className="h-14 gap-2 px-6 text-base font-bold"><ArrowLeft className="h-4 w-4" /> 戻る</Button>
