@@ -4,8 +4,10 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { AutoResizeTextarea } from '@/components/ui/auto-resize-textarea'
-import { ArrowLeft, ArrowRight, X, WandSparkles, Loader2 } from 'lucide-react'
+import { ArrowLeft, ArrowRight, X, Loader2 } from 'lucide-react'
+import { AIButton } from '@/components/shared/AIButton'
 import { toast } from 'sonner'
 import {
   AlertDialog,
@@ -373,16 +375,12 @@ export function Step3Targeting({
                     onClick={() => handleCardClick(seg.name)}
                     className="relative w-full p-4 text-left cursor-pointer"
                   >
-                    {/* 選択状態バッジ */}
+                    {/* 選択状態バッジ（デザインシステムのBadgeに統一） */}
                     {isMain && (
-                      <span className="absolute top-3 right-3 rounded-full bg-ds-app-accent-soft px-2.5 py-0.5 text-[10px] font-bold text-white">
-                        メインターゲット
-                      </span>
+                      <Badge className="absolute top-3 right-3">メインターゲット</Badge>
                     )}
                     {isSub && (
-                      <span className="absolute top-3 right-3 rounded-full bg-blue-100 px-2.5 py-0.5 text-[10px] font-bold text-ds-app-accent-hover">
-                        サブターゲット
-                      </span>
+                      <Badge variant="secondary" className="absolute top-3 right-3">サブターゲット</Badge>
                     )}
 
                     <span className="text-sm font-bold text-gray-900">{seg.name}</span>
@@ -401,20 +399,14 @@ export function Step3Targeting({
 
                         {/* AIに提案してもらうボタン */}
                         <div className="flex justify-end">
-                          <Button
-                            variant="outline"
+                          <AIButton
                             size="sm"
                             onClick={handleAISuggestClick}
                             disabled={aiLoading}
-                            className="gap-1.5 text-xs"
+                            icon={aiLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : undefined}
                           >
-                            {aiLoading ? (
-                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            ) : (
-                              <WandSparkles className="h-3.5 w-3.5" />
-                            )}
                             {aiLoading ? 'AI分析中...' : 'AIに提案してもらう'}
-                          </Button>
+                          </AIButton>
                         </div>
 
                         {/* 1. 購買決定要因（タグ入力） */}
