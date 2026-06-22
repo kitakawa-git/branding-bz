@@ -148,7 +148,7 @@ export function Step3Goals({ personas: initialPersonas, basicInfo, onNext, onBac
         {segments.map((seg) => {
           const members = indexed.filter(({ p }) => p.target_name === seg.name)
           return (
-            <section key={seg.name} className="rounded-xl border border-gray-200 bg-gray-50/50 p-4">
+            <section key={seg.name} className="rounded-xl border border-gray-200 bg-[hsl(0_0%_97%)] p-4">
               <div className="mb-3">
                 <h2 className="text-sm font-bold text-gray-800">{seg.name}</h2>
                 {seg.description && <p className="text-[12px] text-muted-foreground mt-0.5">{seg.description}</p>}
@@ -222,7 +222,7 @@ function GoalsForm({ personaName, data, onChange }: {
   }
 
   return (
-    <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+    <Card className="bg-white border shadow-none">
       <CardContent className="p-5 space-y-6">
         <h3 className="text-sm font-bold text-gray-700">{personaName} の課題</h3>
         <ListSection label="主な目標" items={data.primary_goals} fieldKey="primary_goals" placeholder="例: 本業に集中できる環境の確保" onAdd={addItem} onRemove={removeItem} onUpdate={updateItem} />

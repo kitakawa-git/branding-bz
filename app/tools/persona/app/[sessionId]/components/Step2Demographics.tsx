@@ -187,7 +187,7 @@ export function Step2Demographics({ personas: initialPersonas, basicInfo, onNext
         {segments.map((seg) => {
           const members = indexed.filter(({ p }) => p.target_name === seg.name)
           return (
-            <section key={seg.name} className="rounded-xl border border-gray-200 bg-gray-50/50 p-4">
+            <section key={seg.name} className="rounded-xl border border-gray-200 bg-[hsl(0_0%_97%)] p-4">
               <div className="mb-3">
                 <h2 className="text-sm font-bold text-gray-800">{seg.name}</h2>
                 {seg.description && <p className="text-[12px] text-muted-foreground mt-0.5">{seg.description}</p>}
