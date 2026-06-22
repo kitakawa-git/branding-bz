@@ -268,7 +268,7 @@ export function Step2Segmentation({
       {/* AI提案ボタン（カード右上） */}
       {!aiLoading && (
         <div className="flex justify-start mb-3">
-          <AIButton size="sm" onClick={handleRegenerate}>
+          <AIButton onClick={handleRegenerate}>
             {variables.length > 0 ? 'AIに再提案してもらう' : 'AIに提案してもらう'}
           </AIButton>
         </div>
