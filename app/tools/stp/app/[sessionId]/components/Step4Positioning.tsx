@@ -244,7 +244,7 @@ export function Step4Positioning({
       <p className="mb-4 text-[13px] leading-relaxed text-muted-foreground">2軸で競合と自社の立ち位置を可視化するマップ。点を<b className="font-medium text-foreground">ドラッグ</b>か<b className="font-medium text-foreground">スライダー</b>で配置できます。</p>
       {!aiLoading && (
         <div className="mb-6 flex justify-start">
-          <AIButton size="sm" onClick={handleRegenerate} className="shrink-0">
+          <AIButton onClick={handleRegenerate} className="shrink-0">
             AIで提案
           </AIButton>
         </div>
