@@ -6,18 +6,19 @@ import type { ButtonHTMLAttributes, ReactNode } from 'react'
 interface AIButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode
   icon?: ReactNode           // 省略時は Sparkles
-  size?: 'sm' | 'md' | 'lg'  // 既定: md
+  size?: 'sm' | 's' | 'lg'  // 既定: s（AIアクションの標準＝Sサイズ）
 }
 
-const sizeClasses: Record<'sm' | 'md' | 'lg', string> = {
+// Sサイズ = AIアクションボタンの標準サイズ（px-5 py-2.5 text-sm gap-2）
+const sizeClasses: Record<'sm' | 's' | 'lg', string> = {
   sm: 'px-3 py-1.5 text-xs gap-1.5',
-  md: 'px-5 py-2.5 text-sm gap-2',
+  s: 'px-5 py-2.5 text-sm gap-2',
   lg: 'px-6 py-3 text-base gap-2.5',
 }
 
-const iconSize: Record<'sm' | 'md' | 'lg', string> = {
+const iconSize: Record<'sm' | 's' | 'lg', string> = {
   sm: 'w-3.5 h-3.5',
-  md: 'w-4 h-4',
+  s: 'w-4 h-4',
   lg: 'w-5 h-5',
 }
 
@@ -29,11 +30,14 @@ const iconSize: Record<'sm' | 'md' | 'lg', string> = {
  *   文体: 「AIで{動作}」（例: AIで提案 / AIで再提案 / AIで一括生成 / AIで診断）
  *   ローディング: 「{動作}中…」（AIは付けない・全角…）
  *   動作語はツールの成果物で決める（STP/カラー=提案・ペルソナ=生成・パーソナリティ=診断）
+ *
+ * サイズ: 既定の s が「Sサイズ」＝AIアクションの標準（px-5 py-2.5 text-sm gap-2）。
+ *   sm は補助的な小ボタン、lg は大ボタン。
  */
 export function AIButton({
   children,
   icon,
-  size = 'md',
+  size = 's',
   className = '',
   ...props
 }: AIButtonProps) {
