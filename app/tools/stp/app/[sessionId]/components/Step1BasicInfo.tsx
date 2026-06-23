@@ -686,7 +686,7 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
                 className="shrink-0"
                 icon={targetSuggesting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : undefined}
               >
-                {targetSuggesting ? '提案中…' : 'AIで提案'}
+                {targetSuggesting ? '提案中…' : 'AIで提案生成'}
               </AIButton>
             </div>
             <p className="text-[13px] text-muted-foreground mb-1">
