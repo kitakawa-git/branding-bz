@@ -280,9 +280,9 @@ export function Step2Segmentation({
           {/* 切り口の選び方ヒント */}
           <Accordion type="single" collapsible className="mb-4">
             <AccordionItem value="guide" className="border-none">
-              <AccordionTrigger className="py-2 text-sm font-medium text-gray-600 hover:no-underline gap-1.5 [&>svg]:h-4 [&>svg]:w-4">
+              <AccordionTrigger className="py-2 text-sm font-medium text-ds-app-accent hover:no-underline gap-1.5 [&>svg]:h-4 [&>svg]:w-4">
                 <span className="flex items-center gap-1.5">
-                  <Lightbulb className="h-4 w-4 text-amber-500" />
+                  <Lightbulb className="h-4 w-4 text-ds-app-accent" />
                   切り口の選び方ヒント（例で見る）
                 </span>
               </AccordionTrigger>
@@ -393,7 +393,7 @@ export function Step2Segmentation({
                 {variable.segments.map((segment, segIndex) => (
                   <div
                     key={segIndex}
-                    className="flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-3"
+                    className="flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-3"
                   >
                     {/* セグメント内容 */}
                     <div className="flex-1 space-y-2">
