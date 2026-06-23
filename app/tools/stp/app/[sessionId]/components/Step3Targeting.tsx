@@ -400,7 +400,7 @@ export function Step3Targeting({
                         {/* AI提案ボタン（見出し直下・左寄せ） */}
                         <div className="flex justify-start">
                           <AIButton
-                            size="sm"
+                            size="s"
                             onClick={handleAISuggestClick}
                             disabled={aiLoading}
                             icon={aiLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : undefined}

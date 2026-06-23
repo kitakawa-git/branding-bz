@@ -680,7 +680,7 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
               </h2>
               <AIButton
                 type="button"
-                size="sm"
+                size="s"
                 onClick={handleSuggestTargets}
                 disabled={targetSuggesting || targetRemaining === 0}
                 className="shrink-0"
@@ -719,7 +719,7 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
               </h2>
               <AIButton
                 type="button"
-                size="sm"
+                size="s"
                 onClick={handleSuggestCompetitors}
                 disabled={suggesting || (!suggestUnlimited && suggestRemaining === 0)}
                 className="shrink-0"

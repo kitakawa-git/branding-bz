@@ -176,7 +176,7 @@ export function Step3Proposals({
       {/* AI再提案ボタン（カード上・左寄せ） */}
       {!generating && (
         <div className="flex justify-start mb-3">
-          <AIButton size="sm" onClick={generateProposals}>
+          <AIButton size="s" onClick={generateProposals}>
             AIで再提案
           </AIButton>
         </div>
