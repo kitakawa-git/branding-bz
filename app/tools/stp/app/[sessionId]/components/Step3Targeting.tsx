@@ -380,7 +380,7 @@ export function Step3Targeting({
                       <Badge className="absolute top-3 right-3 bg-ds-app-accent text-white hover:bg-ds-app-accent-hover">メインターゲット</Badge>
                     )}
                     {isSub && (
-                      <Badge variant="outline" className="absolute top-3 right-3 border-ds-app-accent bg-white text-ds-app-accent">サブターゲット</Badge>
+                      <Badge variant="outline" className="absolute top-3 right-3 border-ds-app-accent bg-transparent text-ds-app-accent">サブターゲット</Badge>
                     )}
 
                     <span className="text-sm font-bold text-gray-900">{seg.name}</span>
