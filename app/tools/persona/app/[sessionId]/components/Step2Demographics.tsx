@@ -200,7 +200,7 @@ export function Step2Demographics({ personas: initialPersonas, basicInfo, onNext
                 {members.map((e, k) => renderForm(e, k + 1))}
               </div>
               <AIButton onClick={() => addToSegment(seg)} disabled={addingIdx !== null} className="mt-3" icon={<Plus className="w-4 h-4" />}>
-                AIでペルソナを追加
+                AIでペルソナを追加生成
               </AIButton>
             </section>
           )
