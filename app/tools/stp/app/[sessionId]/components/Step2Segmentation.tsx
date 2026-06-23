@@ -393,10 +393,10 @@ export function Step2Segmentation({
                 {variable.segments.map((segment, segIndex) => (
                   <div
                     key={segIndex}
-                    className="flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-3"
+                    className="flex items-center gap-2"
                   >
                     {/* セグメント内容 */}
-                    <div className="flex-1 space-y-2">
+                    <div className="flex-1 space-y-2 rounded-lg border border-gray-200 bg-white p-3">
                       <Input
                         value={segment.name}
                         onChange={(e) =>
