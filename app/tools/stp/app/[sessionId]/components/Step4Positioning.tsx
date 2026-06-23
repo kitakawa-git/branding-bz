@@ -245,7 +245,7 @@ export function Step4Positioning({
       {!aiLoading && (
         <div className="mb-6 flex justify-start">
           <AIButton onClick={handleRegenerate} className="shrink-0">
-            AIで提案
+            AIで提案生成
           </AIButton>
         </div>
       )}
