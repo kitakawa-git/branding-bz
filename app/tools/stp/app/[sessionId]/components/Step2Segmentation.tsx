@@ -283,38 +283,42 @@ export function Step2Segmentation({
               <AccordionTrigger className="py-2 text-sm font-medium text-gray-600 hover:no-underline gap-1.5 [&>svg]:h-4 [&>svg]:w-4">
                 <span className="flex items-center gap-1.5">
                   <Lightbulb className="h-4 w-4 text-amber-500" />
-                  切り口の選び方ヒント
+                  切り口の選び方ヒント（例で見る）
                 </span>
               </AccordionTrigger>
               <AccordionContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div className="rounded-lg border border-blue-100 bg-blue-50 p-3">
+                  <div className="rounded-lg border border-blue-100 bg-white p-3">
                     <div className="flex items-center gap-1.5 mb-1">
                       <MapPin className="h-4 w-4 text-ds-app-accent" />
-                      <span className="text-sm font-semibold text-gray-800">地理的</span>
+                      <span className="text-sm font-semibold text-gray-800">場所で分ける（地理的）</span>
                     </div>
-                    <p className="text-xs text-gray-600 leading-relaxed">地域・都道府県・都市規模・気候など、場所に基づく分け方</p>
+                    <p className="text-xs text-gray-600 leading-relaxed">地域・都道府県・都市規模・気候など</p>
+                    <p className="mt-2 rounded-md bg-blue-50 px-2.5 py-2 text-[12px] leading-relaxed text-blue-700"><span className="font-medium">例：</span>「都心の若手経営者」「地方の老舗メーカー」</p>
                   </div>
-                  <div className="rounded-lg border border-blue-100 bg-blue-50 p-3">
+                  <div className="rounded-lg border border-blue-100 bg-white p-3">
                     <div className="flex items-center gap-1.5 mb-1">
                       <Users className="h-4 w-4 text-ds-app-accent" />
-                      <span className="text-sm font-semibold text-gray-800">属性（デモグラフィック）</span>
+                      <span className="text-sm font-semibold text-gray-800">属性で分ける（デモグラフィック）</span>
                     </div>
-                    <p className="text-xs text-gray-600 leading-relaxed">年齢・性別・職業・年収・企業規模・業種など、客観的な特徴</p>
+                    <p className="text-xs text-gray-600 leading-relaxed">年齢・性別・職業・年収・企業規模・業種など</p>
+                    <p className="mt-2 rounded-md bg-blue-50 px-2.5 py-2 text-[12px] leading-relaxed text-blue-700"><span className="font-medium">例：</span>「従業員50名以下のIT企業」「30代女性経営者」</p>
                   </div>
-                  <div className="rounded-lg border border-blue-100 bg-blue-50 p-3">
+                  <div className="rounded-lg border border-blue-100 bg-white p-3">
                     <div className="flex items-center gap-1.5 mb-1">
                       <Heart className="h-4 w-4 text-ds-app-accent" />
-                      <span className="text-sm font-semibold text-gray-800">価値観（サイコグラフィック）</span>
+                      <span className="text-sm font-semibold text-gray-800">価値観で分ける（サイコグラフィック）</span>
                     </div>
-                    <p className="text-xs text-gray-600 leading-relaxed">ライフスタイル・価値観・性格・関心ごとなど、内面的な特徴</p>
+                    <p className="text-xs text-gray-600 leading-relaxed">ライフスタイル・価値観・こだわり・関心ごと</p>
+                    <p className="mt-2 rounded-md bg-blue-50 px-2.5 py-2 text-[12px] leading-relaxed text-blue-700"><span className="font-medium">例：</span>「デザインに本気の経営者」「効率重視の現場主義」</p>
                   </div>
-                  <div className="rounded-lg border border-blue-100 bg-blue-50 p-3">
+                  <div className="rounded-lg border border-blue-100 bg-white p-3">
                     <div className="flex items-center gap-1.5 mb-1">
                       <Activity className="h-4 w-4 text-ds-app-accent" />
-                      <span className="text-sm font-semibold text-gray-800">行動</span>
+                      <span className="text-sm font-semibold text-gray-800">行動で分ける</span>
                     </div>
-                    <p className="text-xs text-gray-600 leading-relaxed">購買頻度・利用シーン・ブランドロイヤルティ・情報収集方法など</p>
+                    <p className="text-xs text-gray-600 leading-relaxed">購買頻度・利用シーン・ブランドロイヤルティ</p>
+                    <p className="mt-2 rounded-md bg-blue-50 px-2.5 py-2 text-[12px] leading-relaxed text-blue-700"><span className="font-medium">例：</span>「リピート率の高い既存客」「初回相談の見込み客」</p>
                   </div>
                 </div>
               </AccordionContent>
