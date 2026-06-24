@@ -279,21 +279,21 @@ const pillars = [
   {
     tag: 'つくる',
     icon: Sparkles,
-    title: 'ブランドの言語化を、対話型AIがサポート',
+    title: 'ブランドの言語化を、\n対話型AIがサポート',
     body: '「らしさは分かっているけど、言葉にできない」。理念・カラー・ターゲット戦略・ペルソナを、AIと壁打ちしながら形にします。',
     accent: 'from-blue-500/30',
   },
   {
     tag: 'ひろげる',
     icon: Activity,
-    title: 'ブランドの定着と可視化を、AIがサポート',
+    title: 'ブランドの定着と可視化を、\nAIがサポート',
     body: '掲示・タイムライン・KPIに加え、社員サーベイで浸透度をスコア化。部署別ヒートマップで打ち手が数字で見えます。',
     accent: 'from-emerald-500/30',
   },
   {
     tag: 'とどける',
     icon: MessageSquareHeart,
-    title: 'ブランドの発信を、スマート名刺がサポート',
+    title: 'ブランドの発信を、\nスマート名刺がサポート',
     body: 'QRコードから社員プロフィール＋企業ブランドページへ。社内で根づいた"らしさ"が、一人ひとりの名刺を通じて社外に届きます。',
     accent: 'from-purple-500/30',
   },
@@ -321,7 +321,7 @@ function Features() {
                   <p.icon size={20} className="text-white" />
                 </div>
                 <div className="mb-2 text-sm font-semibold text-blue-400">{p.tag}</div>
-                <h3 className="text-xl font-bold leading-snug">{p.title}</h3>
+                <h3 className="whitespace-pre-line text-xl font-bold leading-snug">{p.title}</h3>
                 <p className="mt-3 text-sm leading-relaxed text-white/55">{p.body}</p>
                 <div className="mt-5 inline-flex items-center gap-1 text-sm font-medium text-white/70 transition-colors hover:text-white">
                   詳しく見る <ArrowRight size={15} />
@@ -389,7 +389,7 @@ function Product() {
               <h3 className="text-lg font-bold">効果計測</h3>
             </div>
             <p className="mb-6 text-sm leading-relaxed text-white/55">
-              名刺の閲覧数・トレンド・メンバー別ランキングを自動集計。誰の発信が、いつ、どれだけ届いたかを把握できます。
+              名刺の閲覧数・トレンド・ランキングを自動集計。誰の発信が、いつ、どれだけ届いたかを把握できます。
             </p>
             <div className="space-y-3 rounded-2xl border border-white/10 bg-[#0d0d11] p-5">
               {[
@@ -424,7 +424,7 @@ function Testimonial() {
           <div className="pointer-events-none absolute inset-x-0 -top-10 mx-auto h-32 w-32 rounded-full bg-blue-500/20 blur-3xl" />
           <Quote size={32} className="mx-auto mb-6 text-blue-400" />
           <p className="relative text-balance text-2xl font-semibold leading-relaxed tracking-tight md:text-3xl">
-            「作って終わり」だったブランドが、毎日の行動として動き出した。
+            “作って終わり”だったブランドが、毎日の行動として動き出した。
             浸透度が数字で見えるから、次の一手に迷わなくなりました。
           </p>
           <div className="mt-8 text-sm text-white/50">
@@ -453,7 +453,7 @@ function Experts() {
               戦略策定からデザイン制作まで伴走します。
             </p>
             <ul className="mt-8 space-y-3">
-              {['ブランド戦略の壁打ち・設計', 'ビジュアル／バーバルIDの制作', '浸透施策の設計と定例支援'].map((t) => (
+              {['ブランド戦略の壁打ち・設計', 'ビジュアル / バーバルアイデンティティの構築', '浸透施策の設計と定例支援'].map((t) => (
                 <li key={t} className="flex items-center gap-3 text-white/80">
                   <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-blue-500/20">
                     <Check size={14} className="text-blue-400" />
@@ -591,7 +591,9 @@ function FinalCta() {
             さぁ、&ldquo;らしさ&rdquo;をひろげよう。
           </h2>
           <p className="mx-auto mt-6 max-w-xl text-lg text-white/60">
-            ブランドは、作った瞬間から走り出す。branding.bz で、その加速を始めませんか。
+            ブランドは、作った瞬間から走り出す。
+            <br />
+            branding.bz で、その加速を始めませんか。
           </p>
           <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link

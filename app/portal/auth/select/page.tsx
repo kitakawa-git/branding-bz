@@ -69,8 +69,8 @@ const SERVICES: ServiceCard[] = [
 export default function ServiceSelectPage() {
   return (
     <Suspense fallback={
-      <div className="flex min-h-screen items-center justify-center font-sans">
-        <p className="text-sm text-gray-500">読み込み中...</p>
+      <div className="flex min-h-screen items-center justify-center bg-[#08080a] font-sans">
+        <p className="text-sm text-white/40">読み込み中...</p>
       </div>
     }>
       <ServiceSelectContent />
@@ -130,79 +130,79 @@ function ServiceSelectContent() {
 
   if (checkingAuth) {
     return (
-      <div className="flex min-h-screen items-center justify-center font-sans">
-        <p className="text-sm text-gray-500">読み込み中...</p>
+      <div className="flex min-h-screen items-center justify-center bg-[#08080a] font-sans">
+        <p className="text-sm text-white/40">読み込み中...</p>
       </div>
     )
   }
 
   return (
     <div
-      className="flex min-h-screen flex-col items-center justify-center px-5 py-16 font-sans"
+      className="flex min-h-screen flex-col items-center justify-center overflow-hidden bg-[#08080a] px-5 py-16 font-sans text-white"
       style={{
         background: [
-          'radial-gradient(ellipse 180% 160% at 5% 20%, rgba(196, 181, 253, 0.8) 0%, transparent 55%)',
-          'radial-gradient(ellipse 160% 140% at 85% 10%, rgba(253, 186, 116, 0.7) 0%, transparent 55%)',
-          'radial-gradient(ellipse 150% 130% at 50% 90%, rgba(167, 243, 208, 0.65) 0%, transparent 55%)',
-          'radial-gradient(ellipse 130% 110% at 95% 65%, rgba(251, 207, 232, 0.6) 0%, transparent 55%)',
-          'linear-gradient(135deg, rgba(245, 243, 255, 1) 0%, rgba(255, 251, 245, 1) 50%, rgba(243, 255, 251, 1) 100%)',
+          'radial-gradient(ellipse 120% 90% at 12% 8%, rgba(49, 46, 129, 0.5) 0%, transparent 55%)',
+          'radial-gradient(ellipse 110% 90% at 88% 12%, rgba(168, 85, 247, 0.25) 0%, transparent 55%)',
+          'radial-gradient(ellipse 120% 100% at 50% 110%, rgba(37, 99, 235, 0.28) 0%, transparent 60%)',
+          '#08080a',
         ].join(', '),
       }}
     >
       <div className="mb-10 text-center">
-        <h1 className="mb-2 text-2xl font-bold text-gray-900">
-          branding.bz へようこそ！
+        <h1 className="mb-2 text-2xl font-bold tracking-tight text-white">
+          branding.bz へようこそ
         </h1>
-        <p className="m-0 text-sm text-gray-500">
+        <p className="m-0 text-sm text-white/55">
           利用したいサービスを選んでください
         </p>
       </div>
 
-      <div className="w-full max-w-[480px] space-y-4">
+      <div className="relative z-10 w-full max-w-[480px] space-y-4">
         {SERVICES.map((service) => {
           const isHighlighted = service.id === from
           return (
             <button
               key={service.id}
               onClick={() => handleCardClick(service)}
-              className={`
-                relative w-full rounded-2xl overflow-hidden text-left transition-all
-                hover:scale-[1.02] hover:shadow-2xl
-              `}
+              className={`group relative w-full overflow-hidden rounded-2xl border text-left transition-transform hover:scale-[1.02] ${
+                isHighlighted
+                  ? 'border-blue-400/40 bg-blue-500/10'
+                  : 'border-white/10 bg-white/[0.04] hover:bg-white/[0.07]'
+              }`}
               style={{
-                background: isHighlighted ? 'rgb(239, 246, 255)' : 'rgba(255, 255, 255, 0.7)',
-                backdropFilter: 'blur(12px) saturate(120%)',
-                WebkitBackdropFilter: 'blur(12px) saturate(120%)',
-                border: isHighlighted ? '1px solid rgb(219, 234, 254)' : '1px solid rgba(255, 255, 255, 0.8)',
                 boxShadow: isHighlighted
-                  ? '0px 8px 24px 0 rgba(59, 130, 246, 0.08)'
-                  : '0px 8px 24px 0 rgba(12, 74, 110, 0.08), inset 0px 0px 4px 2px rgba(255, 255, 255, 0.15)',
+                  ? 'inset 0 1px 0 0 rgba(255,255,255,0.06), 0 24px 60px -20px rgba(37,99,235,0.5)'
+                  : 'inset 0 1px 0 0 rgba(255,255,255,0.05), 0 24px 60px -24px rgba(0,0,0,0.8)',
               }}
             >
-              {/* リフレクション */}
-              <div className="absolute inset-0 pointer-events-none rounded-2xl"
-                style={{ background: 'linear-gradient(to left top, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 50%)' }} />
-
               <div className="relative z-10 flex items-center gap-4 p-5">
-                <div className="flex-shrink-0 flex items-center justify-center w-12 h-12">
-                  <service.Icon size={28} strokeWidth={1.5} className={isHighlighted ? 'text-ds-app-accent' : 'text-gray-900'} />
+                <div className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl border ${
+                  isHighlighted ? 'border-blue-400/30 bg-blue-500/15' : 'border-white/10 bg-white/5'
+                }`}>
+                  {service.id === 'platform' ? (
+                    /* branding.bz ロゴマーク（public/logo.svg のマーク部分を実寸で抽出） */
+                    <svg viewBox="0 25.791 112 69.2093" width={24} height={24} fill="currentColor" aria-hidden className={isHighlighted ? 'text-blue-400' : 'text-white/80'}>
+                      <path d="M69.2093 95L112 95L112 52.2093L69.2093 95Z" />
+                      <path d="M69.2093 25.791L0 25.791L0 95.0003L69.2093 25.791Z" />
+                    </svg>
+                  ) : (
+                    <service.Icon size={24} strokeWidth={1.5} className={isHighlighted ? 'text-blue-400' : 'text-white/80'} />
+                  )}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-bold text-gray-900 mb-0.5">
+                <div className="min-w-0 flex-1">
+                  <h3 className="mb-0.5 text-sm font-bold text-white">
                     {service.title}
                   </h3>
-                  <p className="text-xs text-gray-600 m-0 leading-relaxed">
+                  <p className="m-0 text-xs leading-relaxed text-white/55">
                     {service.description}
                   </p>
                 </div>
                 <div className="flex-shrink-0">
-                  <span className={`
-                    inline-flex items-center px-4 py-1.5 rounded-full text-xs font-bold transition-colors
-                    ${isHighlighted
-                      ? 'bg-ds-app-accent text-white'
-                      : 'bg-gray-100 text-gray-600 group-hover:bg-gray-200'
-                    }
-                  `}>
+                  <span className={`inline-flex items-center rounded-full px-4 py-1.5 text-xs font-bold transition-colors ${
+                    isHighlighted
+                      ? 'bg-white text-black'
+                      : 'bg-white/10 text-white/70 group-hover:bg-white/15'
+                  }`}>
                     {isHighlighted ? service.highlightButtonLabel : service.buttonLabel}
                     <span className="ml-1">→</span>
                   </span>
@@ -213,7 +213,7 @@ function ServiceSelectContent() {
         })}
       </div>
 
-      <p className="mt-8 text-xs text-gray-400">
+      <p className="relative z-10 mt-8 text-xs text-white/40">
         今後もツールが追加されます
       </p>
 
@@ -222,7 +222,7 @@ function ServiceSelectContent() {
           await supabase.auth.signOut()
           router.replace('/portal/auth')
         }}
-        className="mt-4 text-xs text-gray-400 hover:text-gray-600 transition-colors underline"
+        className="relative z-10 mt-4 text-xs text-white/40 underline transition-colors hover:text-white/70"
       >
         ログアウト
       </button>
