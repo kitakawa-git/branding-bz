@@ -343,7 +343,7 @@ export function Step3Targeting({
   return (
     <div>
       <h1 className="text-2xl font-bold text-foreground mb-2">Step 3: ターゲティング</h1>
-      <p className="mb-5 text-[13px] text-muted-foreground">
+      <p className="mb-4 text-[13px] text-muted-foreground">
         狙う市場を選び、ターゲットの特徴を深掘りします
       </p>
 
