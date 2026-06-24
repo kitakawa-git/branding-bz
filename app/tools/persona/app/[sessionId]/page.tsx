@@ -44,7 +44,7 @@ const STEP_DEFINITIONS = [
   { label: '基本情報' },
   { label: 'ペルソナ生成' },
   { label: 'ゴール・課題' },
-  { label: 'ジャーニーマップ' },
+  { label: 'ジャーニー／タッチポイント' },
   { label: '確認・出力' },
 ]
 
