@@ -298,14 +298,6 @@ export function Step4Journey({ personas: initialPersonas, basicInfo, onNext, onB
               )
             })}
           </div>
-          {data.length > 1 && (
-            <>
-              <div className="my-2.5 h-px bg-border" />
-              <p className="mt-2 text-[11.5px] text-muted-foreground">
-                個別: <RefreshCw className="inline h-3 w-3 align-text-bottom" /> アイコンで再生成
-              </p>
-            </>
-          )}
           {Object.entries(aiError).filter(([, v]) => v).map(([k, v]) => (
             <p key={k} className="mt-2 text-[13px] text-red-600">ペルソナ{Number(k) + 1}: {v}</p>
           ))}
