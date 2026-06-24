@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
       parts.push('')
       parts.push('## ゴール・課題')
       if (goals.primary_goals?.length) parts.push(`- 目標: ${goals.primary_goals.join('、')}`)
-      if (goals.challenges?.length) parts.push(`- 課題: ${goals.challenges.join('、')}`)
+      if (goals.pain_points?.length) parts.push(`- 課題: ${goals.pain_points.join('、')}`)
       if (goals.buying_motivation) parts.push(`- 購買動機: ${goals.buying_motivation}`)
       if (goals.buying_barriers?.length) parts.push(`- 購買障壁: ${goals.buying_barriers.join('、')}`)
     }

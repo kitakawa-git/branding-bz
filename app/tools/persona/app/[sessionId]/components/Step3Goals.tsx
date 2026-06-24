@@ -226,19 +226,17 @@ function GoalsForm({ personaName, data, onChange }: {
     <Card className="bg-white border shadow-none">
       <CardContent className="p-5 space-y-6">
         <h3 className="text-sm font-bold text-gray-700">{personaName} の課題</h3>
-        <ListSection label="主な目標" items={data.primary_goals} fieldKey="primary_goals" placeholder="例: 本業に集中できる環境の確保" onAdd={addItem} onRemove={removeItem} onUpdate={updateItem} />
-        <ListSection label="課題・悩み" items={data.challenges} fieldKey="challenges" placeholder="例: IT専任者がいない" onAdd={addItem} onRemove={removeItem} onUpdate={updateItem} />
-        <ListSection label="ペインポイント" items={data.pain_points} fieldKey="pain_points" placeholder="例: 費用対効果が見えにくい" onAdd={addItem} onRemove={removeItem} onUpdate={updateItem} />
-
-        <div>
-          <label className="text-sm font-bold text-gray-700 mb-2 block">購買の動機</label>
-          <Textarea value={data.buying_motivation} onChange={e => set('buying_motivation', e.target.value)} placeholder="何がきっかけで検討するか" rows={2} className="text-sm" />
-        </div>
-        <ListSection label="購買の障壁" items={data.buying_barriers} fieldKey="buying_barriers" placeholder="例: 費用対効果が見えにくい" onAdd={addItem} onRemove={removeItem} onUpdate={updateItem} />
+        <ListSection label="ニーズ" items={data.primary_goals} fieldKey="primary_goals" placeholder="例: 本業に集中できる環境の確保" onAdd={addItem} onRemove={removeItem} onUpdate={updateItem} />
+        <ListSection label="課題・ペインポイント" items={data.pain_points} fieldKey="pain_points" placeholder="例: 費用対効果が見えにくい" onAdd={addItem} onRemove={removeItem} onUpdate={updateItem} />
         <ListSection label="意思決定の要因" items={data.decision_factors} fieldKey="decision_factors" placeholder="例: 実績・事例の豊富さ" onAdd={addItem} onRemove={removeItem} onUpdate={updateItem} />
+        <ListSection label="購買の障壁" items={data.buying_barriers} fieldKey="buying_barriers" placeholder="例: 費用対効果が見えにくい" onAdd={addItem} onRemove={removeItem} onUpdate={updateItem} />
         <div>
           <label className="text-sm font-bold text-gray-700 mb-2 block">ブランドへの期待</label>
           <Textarea value={data.brand_expectations} onChange={e => set('brand_expectations', e.target.value)} placeholder="どんな価値を期待するか" rows={2} className="text-sm" />
+        </div>
+        <div>
+          <label className="text-sm font-bold text-gray-700 mb-2 block">購買の動機</label>
+          <Textarea value={data.buying_motivation} onChange={e => set('buying_motivation', e.target.value)} placeholder="何がきっかけで検討するか" rows={2} className="text-sm" />
         </div>
       </CardContent>
     </Card>

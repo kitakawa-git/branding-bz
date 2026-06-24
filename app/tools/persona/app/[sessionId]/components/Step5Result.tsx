@@ -127,9 +127,8 @@ export function Step5Result({ sessionId, personas, basicInfo, companyId, onBack 
                 <h3 className="text-sm font-bold text-gray-900">課題・購買行動</h3>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <TagList label="主な目標" items={p.goals.primary_goals} color="blue" />
-                <TagList label="課題・悩み" items={p.goals.challenges} color="red" />
-                <TagList label="ペインポイント" items={p.goals.pain_points} color="orange" />
+                <TagList label="ニーズ" items={p.goals.primary_goals} color="blue" />
+                <TagList label="課題・ペインポイント" items={p.goals.pain_points} color="orange" />
                 <TagList label="意思決定要因" items={p.goals.decision_factors} color="green" />
               </div>
             </CardContent>

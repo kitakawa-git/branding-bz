@@ -14,7 +14,6 @@ export interface Demographics {
 
 export interface GoalsData {
   primary_goals: string[]
-  challenges: string[]
   pain_points: string[]
   buying_motivation: string
   buying_barriers: string[]
@@ -60,7 +59,7 @@ export const EMPTY_DEMOGRAPHICS: Demographics = {
 }
 
 export const EMPTY_GOALS: GoalsData = {
-  primary_goals: [], challenges: [], pain_points: [],
+  primary_goals: [], pain_points: [],
   buying_motivation: '', buying_barriers: [], decision_factors: [],
   brand_expectations: '',
 }
@@ -78,6 +77,20 @@ export function narrowBasicInfoToSegment(basicInfo: BasicInfo, segment?: { name:
   return { ...basicInfo, target_segments: [segment] }
 }
 
+// 後方互換: 旧 goals.challenges（課題・悩み）を pain_points（課題・ペインポイント）へ統合。
+// pain_points が空なら challenges を採用、両方あれば結合して重複除去。型から challenges を消してもデータが落ちない。
+function normalizeGoals(raw: any): GoalsData {
+  const g = { ...EMPTY_GOALS, ...(raw || {}) } as GoalsData & { challenges?: string[] }
+  const challenges = Array.isArray(raw?.challenges) ? raw.challenges.filter((c: unknown): c is string => typeof c === 'string') : []
+  if (challenges.length) {
+    g.pain_points = g.pain_points?.length
+      ? Array.from(new Set([...g.pain_points, ...challenges]))
+      : challenges
+  }
+  delete g.challenges
+  return g
+}
+
 // 旧単一セッション（demographics/goals 単体）→ personas[] へ正規化（後方互換）。
 // target_name 欠落のペルソナには、配列インデックス対応の target_segments[i]?.name を割当て。
 export function normalizePersonas(sd: any, segments?: Array<{ name?: string }>): Persona[] {
@@ -89,7 +102,7 @@ export function normalizePersonas(sd: any, segments?: Array<{ name?: string }>):
     personas = sd.personas.map((p: any, i: number) => ({
       target_name: typeof p?.target_name === 'string' && p.target_name ? p.target_name : segName(i),
       demographics: { ...EMPTY_DEMOGRAPHICS, ...(p?.demographics || {}) },
-      goals: { ...EMPTY_GOALS, ...(p?.goals || {}) },
+      goals: normalizeGoals(p?.goals),
       journey_map: journeyOf(p),
     }))
   } else if (sd?.demographics || sd?.goals) {
@@ -97,7 +110,7 @@ export function normalizePersonas(sd: any, segments?: Array<{ name?: string }>):
     personas = [{
       target_name: segName(0),
       demographics: { ...EMPTY_DEMOGRAPHICS, ...(sd.demographics || {}) },
-      goals: { ...EMPTY_GOALS, ...(sd.goals || {}) },
+      goals: normalizeGoals(sd.goals),
       journey_map: undefined,
     }]
   } else {
