@@ -18,11 +18,8 @@ import {
 } from '@/components/ui/alert-dialog'
 import {
   type Demographics, type Persona, type BasicInfo,
-  EMPTY_DEMOGRAPHICS, emptyPersona, narrowBasicInfoToSegment,
+  EMPTY_DEMOGRAPHICS, emptyPersona, narrowBasicInfoToSegment, AVATAR_EMOJIS,
 } from './persona-types'
-
-// 顔アイコン候補（手動選択）。ビジネス想定の顔絵文字を中心に
-const AVATAR_EMOJIS = ['🧑‍💼', '👩‍💼', '👨‍💼', '🧓', '👴', '👵', '👨‍🦳', '👩‍🦰', '🧑', '🧑‍🦱', '👨', '👩']
 
 interface Step2Props {
   personas: Persona[]

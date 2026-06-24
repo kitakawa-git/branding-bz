@@ -212,6 +212,7 @@ export default function PersonaSessionPage() {
           basicInfo={sd.basic_info || {}}
           companyId={session.company_id}
           onBack={() => saveAndAdvance(4)}
+          onSaveField={(data) => saveField({ personas: data })}
         />
       )}
     </div>

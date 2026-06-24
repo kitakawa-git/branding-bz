@@ -12,8 +12,9 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion'
-import { ArrowLeft, Link as LinkIcon, RotateCcw, Loader2, UserCircle } from 'lucide-react'
-import { type Persona, type BasicInfo } from './persona-types'
+import { ToolConnectActions } from '@/components/shared/ToolConnectActions'
+import { ArrowLeft, RotateCcw, Loader2, UserCircle, Download } from 'lucide-react'
+import { type Persona, type BasicInfo, AVATAR_EMOJIS } from './persona-types'
 
 interface Step5Props {
   sessionId: string
@@ -21,14 +22,28 @@ interface Step5Props {
   basicInfo: BasicInfo
   companyId: string | null
   onBack: () => void
+  onSaveField?: (personas: Persona[]) => Promise<void>
 }
 
-export function Step5Result({ sessionId, personas, basicInfo, companyId, onBack }: Step5Props) {
+export function Step5Result({ sessionId, personas, basicInfo, companyId, onBack, onSaveField }: Step5Props) {
   const router = useRouter()
+  const [data, setData] = useState<Persona[]>(personas)
+  const [openAvatarIdx, setOpenAvatarIdx] = useState<number | null>(null)
   const [connecting, setConnecting] = useState(false)
   const [connected, setConnected] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [hasCompanyId, setHasCompanyId] = useState(!!companyId)
+  const [pdfLoading, setPdfLoading] = useState(false)
+
+  // 確認画面で顔アイコン（絵文字）を変更→セッション保存（連携時はサーバー側の保存データを参照）
+  const setAvatar = useCallback((idx: number, emoji: string) => {
+    setData(prev => {
+      const next = prev.map((pp, i) => (i === idx ? { ...pp, demographics: { ...pp.demographics, avatar_emoji: emoji } } : pp))
+      onSaveField?.(next)
+      return next
+    })
+    setOpenAvatarIdx(null)
+  }, [onSaveField])
 
   const connectToBrandingBz = useCallback(async () => {
     setConnecting(true)
@@ -68,11 +83,42 @@ export function Step5Result({ sessionId, personas, basicInfo, companyId, onBack 
 
   const handleNewSession = () => router.push('/tools/persona/app')
 
+  // PDF出力（STP/パーソナリティと同パターン）
+  const handlePdfExport = useCallback(async () => {
+    setPdfLoading(true)
+    try {
+      const res = await fetch('/api/tools/persona/export/pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId }),
+      })
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}))
+        toast.error(d.error || 'PDF生成に失敗しました')
+        return
+      }
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      const dateStr = new Date().toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '')
+      a.href = url
+      a.download = `persona-${basicInfo.company_name || 'report'}-${dateStr}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'PDF生成中にエラーが発生しました')
+    } finally {
+      setPdfLoading(false)
+    }
+  }, [sessionId, basicInfo.company_name])
+
   const segments = (basicInfo.target_segments || []).filter(s => s?.name?.trim())
   const segNames = new Set(segments.map(s => s.name))
-  const unclassified = personas.filter(p => !segNames.has(p.target_name))
+  const unclassified = data.filter(p => !segNames.has(p.target_name))
   const groups: Array<{ name: string; description?: string; members: Persona[] }> = [
-    ...segments.map(s => ({ name: s.name, description: s.description, members: personas.filter(p => p.target_name === s.name) })),
+    ...segments.map(s => ({ name: s.name, description: s.description, members: data.filter(p => p.target_name === s.name) })),
     ...(unclassified.length > 0 ? [{ name: '未分類', description: undefined, members: unclassified }] : []),
   ]
 
@@ -98,10 +144,33 @@ export function Step5Result({ sessionId, personas, basicInfo, companyId, onBack 
             <CardContent className="p-6 space-y-4">
               {/* ヘッダー：アバター＋名称のみ */}
               <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
-                  {p.demographics.avatar_emoji
-                    ? <span className="text-2xl leading-none" role="img" aria-label="顔アイコン">{p.demographics.avatar_emoji}</span>
-                    : <UserCircle className="h-8 w-8 text-gray-400" />}
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setOpenAvatarIdx(openAvatarIdx === data.indexOf(p) ? null : data.indexOf(p))}
+                    title="顔アイコンを変更"
+                    className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 transition hover:ring-2 hover:ring-ds-app-accent/40"
+                  >
+                    {p.demographics.avatar_emoji
+                      ? <span className="text-3xl leading-none" role="img" aria-label="顔アイコン">{p.demographics.avatar_emoji}</span>
+                      : <UserCircle className="h-10 w-10 text-gray-400" />}
+                  </button>
+                  {openAvatarIdx === data.indexOf(p) && (
+                    <div className="absolute left-0 top-14 z-20 w-56 rounded-lg border border-border bg-white p-2 shadow-lg">
+                      <div className="grid grid-cols-6 gap-1">
+                        {AVATAR_EMOJIS.map(em => (
+                          <button
+                            key={em}
+                            type="button"
+                            onClick={() => setAvatar(data.indexOf(p), p.demographics.avatar_emoji === em ? '' : em)}
+                            className={`flex h-8 w-8 items-center justify-center rounded text-lg hover:bg-muted ${p.demographics.avatar_emoji === em ? 'bg-ds-app-accent/5 ring-1 ring-ds-app-accent' : ''}`}
+                          >
+                            {em}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <h2 className="text-lg font-bold text-gray-900">{p.demographics.persona_name || `ペルソナ${idx + 1}`}</h2>
               </div>
@@ -151,27 +220,34 @@ export function Step5Result({ sessionId, personas, basicInfo, companyId, onBack 
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3 my-6">
-        {!connected ? (
-          <Button onClick={() => setConfirmOpen(true)} disabled={connecting || personas.length === 0} className="gap-2 flex-1">
-            {connecting ? <><Loader2 className="h-4 w-4 animate-spin" /> 連携中...</> : <><LinkIcon className="h-4 w-4" /> branding.bz に連携</>}
-          </Button>
-        ) : (
-          <Button variant="outline" onClick={handleNewSession} className="gap-2 flex-1">
-            <RotateCcw className="h-4 w-4" /> 新しいペルソナを作成
-          </Button>
-        )}
-      </div>
-
-      {connected && (
-        <div className="rounded-lg bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-700 mb-6">
-          ペルソナをbranding.bzに連携しました。管理画面の「ブランド戦略」からペルソナを確認できます。
-        </div>
+      {!connected ? (
+        <ToolConnectActions
+          isAdminUser
+          adminDescription="作成したペルソナをブランド管理プラットフォームに登録できます（既存ペルソナは置き換えられます）。"
+          onConnectClick={() => setConfirmOpen(true)}
+          connectLabel="branding.bz に連携"
+          onRestart={handleNewSession}
+        />
+      ) : (
+        <>
+          <div className="mt-4 rounded-lg bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-700">
+            ペルソナをbranding.bzに連携しました。管理画面の「ブランド戦略」からペルソナを確認できます。
+          </div>
+          <div className="mt-4 text-center">
+            <Button variant="ghost" size="sm" onClick={handleNewSession} className="text-xs text-gray-500">
+              <RotateCcw className="h-3 w-3 mr-1" /> 新しいペルソナを作成
+            </Button>
+          </div>
+        </>
       )}
 
       <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 bg-background/80 backdrop-blur border-t border-border px-6 py-4 flex items-center justify-between">
         <Button variant="outline" onClick={onBack} className="h-14 gap-2 px-6 text-base font-bold">
           <ArrowLeft className="h-4 w-4" /> 戻る
+        </Button>
+        <Button onClick={handlePdfExport} disabled={pdfLoading || personas.length === 0} className="h-14 gap-2 px-6 text-base font-bold">
+          {pdfLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+          {pdfLoading ? 'PDF生成中...' : 'PDFをダウンロード'}
         </Button>
       </div>
 
@@ -186,7 +262,9 @@ export function Step5Result({ sessionId, personas, basicInfo, companyId, onBack 
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>キャンセル</AlertDialogCancel>
-            <AlertDialogAction onClick={connectToBrandingBz}>連携する</AlertDialogAction>
+            <AlertDialogAction onClick={connectToBrandingBz} disabled={connecting} className="gap-1.5">
+              {connecting ? <><Loader2 className="h-4 w-4 animate-spin" /> 連携中...</> : '連携する'}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

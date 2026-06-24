@@ -20,6 +20,8 @@ export interface ToolConnectActionsProps {
   nonAdminDescription?: string
   /** 連携ボタンクリック */
   onConnectClick: () => void
+  /** 連携ボタンのラベル（省略時は「連携する項目を選ぶ」） */
+  connectLabel?: string
   /** 「最初からやり直す」ハンドラ。省略時は非表示 */
   onRestart?: () => void
 }
@@ -33,6 +35,7 @@ export function ToolConnectActions({
   adminDescription,
   nonAdminDescription = DEFAULT_NON_ADMIN_DESCRIPTION,
   onConnectClick,
+  connectLabel = '連携する項目を選ぶ',
   onRestart,
 }: ToolConnectActionsProps) {
   return (
@@ -46,7 +49,7 @@ export function ToolConnectActions({
                 <p className="text-xs text-muted-foreground mb-3">{adminDescription}</p>
                 <Button variant="outline" onClick={onConnectClick} className="gap-1.5">
                   <Unplug className="h-4 w-4" />
-                  連携する項目を選ぶ
+                  {connectLabel}
                 </Button>
               </>
             ) : (
