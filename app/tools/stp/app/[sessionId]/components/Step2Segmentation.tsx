@@ -261,13 +261,13 @@ export function Step2Segmentation({
   return (
     <div>
       <h1 className="text-2xl font-bold text-foreground mb-2">Step 2: セグメンテーション</h1>
-      <p className="mb-5 text-[13px] text-muted-foreground">
+      <p className="mb-4 text-[13px] text-muted-foreground">
         市場をどのような切り口で分けるかを定義し、各グループの特徴を整理します
       </p>
 
       {/* AI提案ボタン（カード右上） */}
       {!aiLoading && (
-        <div className="flex justify-start mb-3">
+        <div className="flex justify-start mb-4">
           <AIButton onClick={handleRegenerate}>
             {variables.length > 0 ? 'AIで再提案' : 'AIで提案生成'}
           </AIButton>
