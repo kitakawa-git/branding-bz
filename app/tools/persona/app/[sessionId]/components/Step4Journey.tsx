@@ -253,9 +253,18 @@ export function Step4Journey({ personas: initialPersonas, basicInfo, onNext, onB
   return (
     <div>
       <h1 className="text-2xl font-bold text-foreground mb-2">Step 4: カスタマージャーニー</h1>
-      <p className="mb-5 text-[14px] text-muted-foreground">
+      <p className="mb-4 text-[14px] text-muted-foreground">
         ブランド施策を当てる「タッチポイント」を全ペルソナ横断で洗い出します。感情カーブは優先度の注釈です。
       </p>
+
+      {/* 主要AIボタン（見出し直下・左寄せ。STP Step4と配置を統一） */}
+      {data.length > 1 && (
+        <div className="mb-4">
+          <AIButton onClick={generateAll} disabled={anyLoading}>
+            {bulkLoading ? '生成中…' : 'AIで一括生成'}
+          </AIButton>
+        </div>
+      )}
 
       {/* A. ペルソナ一覧＋AI生成 */}
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-4">
@@ -292,14 +301,9 @@ export function Step4Journey({ personas: initialPersonas, basicInfo, onNext, onB
           {data.length > 1 && (
             <>
               <div className="my-2.5 h-px bg-border" />
-              <div className="mt-2 flex items-center justify-between gap-2">
-                <span className="text-[11.5px] text-muted-foreground">
-                  個別: <RefreshCw className="inline h-3 w-3 align-text-bottom" /> アイコンで再生成
-                </span>
-                <AIButton onClick={generateAll} disabled={anyLoading} className="shrink-0">
-                  {bulkLoading ? '生成中…' : 'AIで一括生成'}
-                </AIButton>
-              </div>
+              <p className="mt-2 text-[11.5px] text-muted-foreground">
+                個別: <RefreshCw className="inline h-3 w-3 align-text-bottom" /> アイコンで再生成
+              </p>
             </>
           )}
           {Object.entries(aiError).filter(([, v]) => v).map(([k, v]) => (
