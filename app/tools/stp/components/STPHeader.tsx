@@ -15,9 +15,10 @@ export function STPHeader({ onSignOut, showSignOut = false }: STPHeaderProps) {
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-6">
         <Link
           href="/tools/stp"
-          className="text-lg font-bold text-gray-900 no-underline hover:opacity-80"
+          className="flex items-center no-underline hover:opacity-80"
         >
-          branding.bz
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.svg" alt="branding.bz" style={{ height: '22px', width: 'auto', position: 'relative', top: '-2px' }} />
           <span className="ml-2 text-sm font-normal text-gray-500">
             STP分析ツール
           </span>
