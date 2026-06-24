@@ -191,7 +191,8 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-foreground mb-4">Step 1: 基本情報</h1>
+      <h1 className="text-2xl font-bold text-foreground mb-2">Step 1: 基本情報</h1>
+      <p className="mb-4 text-[13px] text-muted-foreground">企業名・サービス名・個人名など、ブランディングの対象となる名称を入力してください</p>
 
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
         <CardContent className="p-5">
