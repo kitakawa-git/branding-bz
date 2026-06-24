@@ -132,7 +132,7 @@ export function Step3Goals({ personas: initialPersonas, basicInfo, onNext, onBac
         各ペルソナが抱える目標・課題・購買行動を定義します（課題は短い体言止め）。
       </p>
 
-      <div className="flex justify-start mb-3">
+      <div className="flex justify-start mb-4">
         <AIButton onClick={() => setConfirmOpen(true)}>
           AIで一括生成
         </AIButton>
