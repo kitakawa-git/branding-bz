@@ -368,7 +368,7 @@ export function Step5Result({
   return (
     <div>
       <h1 className="text-2xl font-bold text-foreground mb-2">Step 5: 確認・出力</h1>
-      <p className="mb-5 text-[13px] text-muted-foreground">
+      <p className="mb-4 text-[13px] text-muted-foreground">
         STP分析の結果を確認し、PDF出力や branding.bz への連携を行いましょう
       </p>
 
