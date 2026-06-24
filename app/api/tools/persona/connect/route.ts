@@ -62,8 +62,6 @@ export async function POST(request: NextRequest) {
         hobbies: demographics.hobbies || [],
         media_channels: demographics.media_channels || [],
         personality_traits: demographics.personality_traits || [],
-        daily_routine: demographics.daily_routine || '',
-        quote: demographics.quote || '',
         goals: goalsData,
       }
       // 離散カラム写像（pain_points/needs/age_range/occupation/description）。1ペルソナ分を渡す。

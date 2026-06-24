@@ -5,7 +5,6 @@
 // グループ単位で「このターゲットにペルソナを追加」（1ターゲット複数ペルソナ可）。
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -314,15 +313,6 @@ function DemographicsForm({ ordinal, data, generating, onChange, onRemove }: {
             <TagSection label="趣味・関心" items={data.hobbies || []} fieldKey="hobbies" placeholder="例: ランニング" onAdd={addTag} onRemove={removeTag} onUpdate={updateTag} />
             <TagSection label="情報収集チャネル" items={data.media_channels || []} fieldKey="media_channels" placeholder="例: X (Twitter)" onAdd={addTag} onRemove={removeTag} onUpdate={updateTag} />
             <TagSection label="性格特性" items={data.personality_traits || []} fieldKey="personality_traits" placeholder="例: 慎重派" onAdd={addTag} onRemove={removeTag} onUpdate={updateTag} />
-
-            <div>
-              <label className="text-xs text-gray-500 mb-1 block">1日の過ごし方（任意）</label>
-              <Textarea value={data.daily_routine} onChange={e => set('daily_routine', e.target.value)} placeholder="朝7時に起床、通勤中にニュースアプリをチェック..." rows={2} className="text-sm" />
-            </div>
-            <div>
-              <label className="text-xs text-gray-500 mb-1 block">口癖・座右の銘（任意）</label>
-              <Input value={data.quote} onChange={e => set('quote', e.target.value)} placeholder="「まずは数字で見せないと」" className="h-9 text-sm" />
-            </div>
           </>
         )}
       </CardContent>

@@ -86,7 +86,6 @@ export async function POST(request: NextRequest) {
     if (demographics.annual_income) parts.push(`- 年収: ${demographics.annual_income}`)
     if (demographics.family) parts.push(`- 家族構成: ${demographics.family}`)
     if (demographics.personality_traits?.length) parts.push(`- 性格: ${demographics.personality_traits.join('、')}`)
-    if (demographics.quote) parts.push(`- 口癖: 「${demographics.quote}」`)
 
     parts.push('')
     parts.push('上記のペルソナが抱える目標・課題・購買行動をJSON形式で提案してください。')

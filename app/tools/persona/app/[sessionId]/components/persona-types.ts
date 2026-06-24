@@ -12,8 +12,6 @@ export interface Demographics {
   hobbies: string[]
   media_channels: string[]
   personality_traits: string[]
-  daily_routine: string
-  quote: string
 }
 
 export interface GoalsData {
@@ -61,7 +59,7 @@ export interface BasicInfo {
 export const EMPTY_DEMOGRAPHICS: Demographics = {
   persona_name: '', age: '', gender: '', occupation: '', company_role: '',
   company_size: '', location: '',
-  hobbies: [], media_channels: [], personality_traits: [], daily_routine: '', quote: '',
+  hobbies: [], media_channels: [], personality_traits: [],
 }
 
 export const EMPTY_GOALS: GoalsData = {
