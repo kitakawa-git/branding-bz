@@ -11,6 +11,7 @@ export interface Demographics {
   company_size: string
   media_channels: string[]
   personality_traits: string[]
+  avatar_emoji?: string // 任意：顔アイコン（絵文字）。確認画面のアバター表示に使用
 }
 
 export interface GoalsData {
@@ -56,7 +57,7 @@ export interface BasicInfo {
 export const EMPTY_DEMOGRAPHICS: Demographics = {
   persona_name: '', age: '', gender: '', occupation: '', description: '', company_role: '',
   company_size: '',
-  media_channels: [], personality_traits: [],
+  media_channels: [], personality_traits: [], avatar_emoji: '',
 }
 
 export const EMPTY_GOALS: GoalsData = {

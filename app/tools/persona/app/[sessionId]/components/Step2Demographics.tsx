@@ -21,6 +21,9 @@ import {
   EMPTY_DEMOGRAPHICS, emptyPersona, narrowBasicInfoToSegment,
 } from './persona-types'
 
+// 顔アイコン候補（手動選択）。ビジネス想定の顔絵文字を中心に
+const AVATAR_EMOJIS = ['🧑‍💼', '👩‍💼', '👨‍💼', '🧓', '👴', '👵', '👨‍🦳', '👩‍🦰', '🧑', '🧑‍🦱', '👨', '👩']
+
 interface Step2Props {
   personas: Persona[]
   basicInfo: BasicInfo
@@ -279,6 +282,25 @@ function DemographicsForm({ ordinal, data, generating, onChange, onRemove }: {
           <div className="space-y-2"><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-2/3" /><p className="text-xs text-gray-400">AIが生成中...</p></div>
         ) : (
           <>
+            <div>
+              <label className="text-xs text-gray-500 mb-1 block">顔アイコン（任意）</label>
+              <div className="flex flex-wrap gap-1">
+                {AVATAR_EMOJIS.map(em => (
+                  <button
+                    key={em}
+                    type="button"
+                    onClick={() => set('avatar_emoji', data.avatar_emoji === em ? '' : em)}
+                    className={`flex h-9 w-9 items-center justify-center rounded-lg border text-xl transition-colors ${
+                      data.avatar_emoji === em
+                        ? 'border-ds-app-accent bg-ds-app-accent/5 ring-1 ring-ds-app-accent'
+                        : 'border-border bg-white hover:border-muted-foreground'
+                    }`}
+                  >
+                    {em}
+                  </button>
+                ))}
+              </div>
+            </div>
             <div>
               <label className="text-xs text-gray-500 mb-1 block">呼称 / ペルソナ名称</label>
               <Input value={data.persona_name} onChange={e => set('persona_name', e.target.value)} placeholder="例: 地方中小企業の経営者" className="h-9 text-sm" />

@@ -11,7 +11,8 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { ArrowLeft, Link as LinkIcon, RotateCcw, Loader2, UserCircle, Target } from 'lucide-react'
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion'
+import { ArrowLeft, Link as LinkIcon, RotateCcw, Loader2, UserCircle } from 'lucide-react'
 import { type Persona, type BasicInfo } from './persona-types'
 
 interface Step5Props {
@@ -82,7 +83,8 @@ export function Step5Result({ sessionId, personas, basicInfo, companyId, onBack 
         作成した{personas.length}件のペルソナを確認し、branding.bzに連携できます
       </p>
 
-      <div className="space-y-8">
+      <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4">
+        <div className="space-y-8">
         {groups.map((group) => (
           <div key={group.name}>
             <div className="mb-2">
@@ -93,57 +95,52 @@ export function Step5Result({ sessionId, personas, basicInfo, companyId, onBack 
               {group.members.length === 0 && <p className="text-[13px] text-muted-foreground">このターゲットのペルソナはありません。</p>}
               {group.members.map((p, idx) => (
           <Card key={idx} className="border shadow-none">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3 mb-5">
+            <CardContent className="p-6 space-y-4">
+              {/* ヘッダー：アバター＋名称のみ */}
+              <div className="flex items-center gap-3">
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
-                  <UserCircle className="h-8 w-8 text-gray-400" />
+                  {p.demographics.avatar_emoji
+                    ? <span className="text-2xl leading-none" role="img" aria-label="顔アイコン">{p.demographics.avatar_emoji}</span>
+                    : <UserCircle className="h-8 w-8 text-gray-400" />}
                 </div>
-                <div>
-                  <h2 className="text-lg font-bold text-gray-900">{p.demographics.persona_name || `ペルソナ${idx + 1}`}</h2>
-                  <p className="text-sm text-gray-500">
-                    {p.demographics.age || ''} {p.demographics.gender} / {p.demographics.occupation}
-                    {p.demographics.company_role ? ` / ${p.demographics.company_role}` : ''}
-                  </p>
-                </div>
+                <h2 className="text-lg font-bold text-gray-900">{p.demographics.persona_name || `ペルソナ${idx + 1}`}</h2>
               </div>
 
-              {p.demographics.description && (
-                <div className="mb-4">
-                  <span className="text-xs font-bold text-gray-500 mb-1 block">説明</span>
-                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{p.demographics.description}</p>
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-4">
-                <InfoItem label="勤務先規模" value={p.demographics.company_size} />
+              {/* 年齢層・職業（管理画面と同じ2カラム） */}
+              <div className="grid grid-cols-2 gap-4">
+                <Field label="年齢層" value={String(p.demographics.age || '')} />
+                <Field label="職業" value={p.demographics.occupation} />
               </div>
 
-              {p.demographics.personality_traits?.length > 0 && (
-                <div className="mb-4">
-                  <span className="text-xs font-bold text-gray-500 mb-1 block">性格特性</span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {p.demographics.personality_traits.map((t, i) => (
-                      <span key={i} className="rounded-full bg-blue-50 border border-blue-100 px-2.5 py-0.5 text-xs text-ds-app-accent-hover">{t}</span>
-                    ))}
-                  </div>
-                </div>
-              )}
+              {/* 説明（全幅・任意） */}
+              <TextBlock label="説明" value={p.demographics.description} />
 
-              <div className="flex items-center gap-2 mb-2 mt-4">
-                <Target className="h-4 w-4 text-gray-600" />
-                <h3 className="text-sm font-bold text-gray-900">課題・購買行動</h3>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <TagList label="ニーズ" items={p.goals.primary_goals} color="blue" />
-                <TagList label="課題・ペインポイント" items={p.goals.pain_points} color="orange" />
-                <TagList label="意思決定要因" items={p.goals.decision_factors} color="green" />
-                <TagList label="購買障壁" items={p.goals.buying_barriers} color="red" />
-              </div>
-              {p.goals.brand_expectations && (
-                <div className="mt-4">
-                  <span className="text-xs font-bold text-gray-500 mb-1 block">ブランドへの期待</span>
-                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{p.goals.brand_expectations}</p>
-                </div>
+              {/* 課題・購買行動（管理画面順・全幅・中立チップ） */}
+              <ChipList label="ニーズ" items={p.goals.primary_goals} color="blue" />
+              <ChipList label="課題・ペインポイント" items={p.goals.pain_points} color="orange" />
+              <ChipList label="意思決定要因" items={p.goals.decision_factors} color="green" />
+              <ChipList label="購買障壁" items={p.goals.buying_barriers} color="red" />
+              <TextBlock label="ブランドへの期待" value={p.goals.brand_expectations} />
+
+              {/* 詳細（補足）：管理画面フォームに無い項目を折りたたみで分離 */}
+              {(p.demographics.gender || p.demographics.company_role || p.demographics.company_size
+                || p.demographics.media_channels?.length || p.demographics.personality_traits?.length
+                || p.goals.buying_motivation) && (
+                <Accordion type="single" collapsible>
+                  <AccordionItem value="extra" className="rounded-lg border px-3">
+                    <AccordionTrigger className="py-3 text-sm font-bold text-gray-600">詳細（補足）</AccordionTrigger>
+                    <AccordionContent className="space-y-4 pb-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <Field label="性別" value={p.demographics.gender} />
+                        <Field label="役職" value={p.demographics.company_role} />
+                        <Field label="勤務先規模" value={p.demographics.company_size} />
+                      </div>
+                      <ChipList label="情報収集チャネル" items={p.demographics.media_channels} />
+                      <ChipList label="性格特性" items={p.demographics.personality_traits} />
+                      <TextBlock label="購買の動機" value={p.goals.buying_motivation} />
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
               )}
             </CardContent>
           </Card>
@@ -151,6 +148,7 @@ export function Step5Result({ sessionId, personas, basicInfo, companyId, onBack 
             </div>
           </div>
         ))}
+        </div>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3 my-6">
@@ -196,31 +194,46 @@ export function Step5Result({ sessionId, personas, basicInfo, companyId, onBack 
   )
 }
 
-function InfoItem({ label, value }: { label: string; value: string }) {
-  if (!value) return null
+// ラベル付き単一値フィールド（管理画面フォーム準拠・中立表示）
+function Field({ label, value }: { label: string; value?: string }) {
+  if (!value?.trim?.()) return null
   return (
     <div>
-      <span className="text-xs font-bold text-gray-500">{label}</span>
+      <span className="text-xs font-bold text-gray-500 mb-1 block">{label}</span>
       <p className="text-sm text-gray-700">{value}</p>
     </div>
   )
 }
 
-function TagList({ label, items, color }: { label: string; items: string[]; color: string }) {
-  if (!items?.length) return null
-  const colorMap: Record<string, string> = {
-    blue: 'bg-blue-50 border-blue-100 text-ds-app-accent-hover',
-    red: 'bg-red-50 border-red-100 text-red-700',
-    orange: 'bg-orange-50 border-orange-100 text-orange-700',
-    green: 'bg-green-50 border-green-100 text-green-700',
-  }
-  const cls = colorMap[color] || colorMap.blue
+// ラベル＋本文（説明・ブランドへの期待・購買の動機など）。空なら非表示。
+function TextBlock({ label, value }: { label: string; value?: string }) {
+  if (!value?.trim()) return null
   return (
     <div>
       <span className="text-xs font-bold text-gray-500 mb-1 block">{label}</span>
-      <div className="flex flex-wrap gap-1">
-        {items.filter(i => i.trim()).map((item, idx) => (
-          <span key={idx} className={`rounded-full border px-2 py-0.5 text-xs ${cls}`}>{item}</span>
+      <p className="text-sm text-gray-700 whitespace-pre-wrap">{value}</p>
+    </div>
+  )
+}
+
+// ラベル上＋チップ。color でカテゴリ別の色分け（既定は中立gray）。空なら非表示。
+function ChipList({ label, items, color = 'gray' }: { label: string; items?: string[]; color?: string }) {
+  const list = (items || []).filter(i => i?.trim())
+  if (!list.length) return null
+  const colorMap: Record<string, string> = {
+    gray: 'bg-gray-50 border-gray-200 text-gray-700',
+    blue: 'bg-blue-50 border-blue-100 text-ds-app-accent-hover',
+    orange: 'bg-orange-50 border-orange-100 text-orange-700',
+    green: 'bg-green-50 border-green-100 text-green-700',
+    red: 'bg-red-50 border-red-100 text-red-700',
+  }
+  const cls = colorMap[color] || colorMap.gray
+  return (
+    <div>
+      <span className="text-xs font-bold text-gray-500 mb-1 block">{label}</span>
+      <div className="flex flex-wrap gap-1.5">
+        {list.map((item, idx) => (
+          <span key={idx} className={`rounded-full border px-2.5 py-0.5 text-xs ${cls}`}>{item}</span>
         ))}
       </div>
     </div>
