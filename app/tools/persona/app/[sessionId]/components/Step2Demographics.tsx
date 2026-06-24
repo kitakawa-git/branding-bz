@@ -171,7 +171,7 @@ export function Step2Demographics({ personas: initialPersonas, basicInfo, onNext
         ターゲットごとにペルソナを定義します。1つのターゲットに複数のペルソナを追加できます。
       </p>
 
-      <div className="flex justify-start mb-3">
+      <div className="flex justify-start mb-4">
         <AIButton onClick={() => setConfirmOpen(true)}>
           AIで一括生成
         </AIButton>
