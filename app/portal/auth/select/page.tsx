@@ -3,7 +3,7 @@
 // サービス選択ページ
 // ログイン後にツールLP経由（from パラメータあり）で到達した場合に表示
 // from に対応するカードを強調表示する
-import { Suspense, useEffect, useState } from 'react'
+import { Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Palette, BarChart3, UserCircle, Fingerprint, Building2 } from 'lucide-react'
@@ -66,6 +66,15 @@ const SERVICES: ServiceCard[] = [
   },
 ]
 
+// 各ツールのカード背景（トップページの無料ツールカードと同配色）。platform はダーク。
+const CARD_BG: Record<string, string> = {
+  stp: 'linear-gradient(135deg,#1d4ed8 0%,#7c3aed 55%,#0ea5e9 100%)',
+  persona: 'linear-gradient(160deg,#0f172a,#312e81 60%,#a855f7)',
+  colors: 'conic-gradient(from 200deg at 60% 40%,#f43f5e,#8b5cf6,#22d3ee,#f43f5e)',
+  personality: 'radial-gradient(120% 120% at 25% 20%,#10b981 0%,#0f172a 65%)',
+  platform: 'linear-gradient(135deg, #16181f 0%, #0a0b10 100%)',
+}
+
 export default function ServiceSelectPage() {
   return (
     <Suspense fallback={
@@ -84,6 +93,13 @@ function ServiceSelectContent() {
   const from = searchParams.get('from')
   const [checkingAuth, setCheckingAuth] = useState(true)
   const [hasPortalAccess, setHasPortalAccess] = useState(false)
+  // ホバー中のカードを実効アクティブにする（ホバー中はそれを優先、無ければ from）
+  const [hoveredId, setHoveredId] = useState<string | null>(null)
+  const activeId = hoveredId ?? from
+  // マジックムーブ用：単一のハイライト枠をアクティブカードの位置へスライドさせる
+  const listRef = useRef<HTMLDivElement>(null)
+  const cardRefs = useRef<Record<string, HTMLButtonElement | null>>({})
+  const [hl, setHl] = useState<{ top: number; height: number; ready: boolean }>({ top: 0, height: 0, ready: false })
 
   // 認証チェック + ポータルアクセス権チェック
   useEffect(() => {
@@ -114,6 +130,21 @@ function ServiceSelectContent() {
     check()
   }, [from, router])
 
+  // アクティブカードの位置を測ってハイライト枠を移動（リサイズ時も再計測）
+  useLayoutEffect(() => {
+    const measure = () => {
+      const el = activeId ? cardRefs.current[activeId] : null
+      if (el && listRef.current) {
+        setHl({ top: el.offsetTop, height: el.offsetHeight, ready: true })
+      } else {
+        setHl((h) => ({ ...h, ready: false }))
+      }
+    }
+    measure()
+    window.addEventListener('resize', measure)
+    return () => window.removeEventListener('resize', measure)
+  }, [activeId, checkingAuth])
+
   const handleCardClick = (service: ServiceCard) => {
     // プラットフォームカードの場合、アクセス権に応じて遷移先を変える
     if (service.id === 'platform') {
@@ -140,64 +171,6 @@ function ServiceSelectContent() {
     <div
       className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-white px-5 py-16 font-sans text-white"
     >
-      {/* 背景：ポータルのダッシュボードを「ブランク状態」で再現したモックをぼかして霞ませる（実データなし・操作不可の装飾） */}
-      <div className="pointer-events-none absolute inset-0 select-none overflow-hidden" aria-hidden="true">
-        <div className="absolute inset-0 origin-center scale-[1.12] opacity-95 blur-[13px]">
-          <div className="flex h-full w-full bg-gray-50">
-            {/* サイドバー */}
-            <div className="hidden w-60 shrink-0 flex-col border-r border-gray-200 bg-white p-4 md:flex">
-              <div className="mb-7 flex items-center gap-2 px-2">
-                <div className="h-7 w-7 rounded-lg bg-gray-900" />
-                <div className="h-4 w-24 rounded bg-gray-300" />
-              </div>
-              <div className="space-y-2">
-                <div className="h-9 rounded-lg bg-blue-100" />
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="h-9 rounded-lg bg-gray-100" />
-                ))}
-              </div>
-              <div className="mt-auto flex items-center gap-2 rounded-xl bg-gray-100 p-2.5">
-                <div className="h-8 w-8 rounded-full bg-gray-300" />
-                <div className="space-y-1.5">
-                  <div className="h-2.5 w-16 rounded bg-gray-300" />
-                  <div className="h-2 w-24 rounded bg-gray-200" />
-                </div>
-              </div>
-            </div>
-            {/* メイン */}
-            <div className="flex-1 overflow-hidden p-8">
-              <div className="mb-6 flex items-center justify-between">
-                <div className="space-y-2">
-                  <div className="h-6 w-44 rounded bg-gray-300" />
-                  <div className="h-3 w-28 rounded bg-gray-200" />
-                </div>
-                <div className="h-9 w-9 rounded-full bg-gray-200" />
-              </div>
-              <div className="mb-6 h-20 rounded-2xl bg-gradient-to-r from-blue-100 to-indigo-100" />
-              <div className="mb-6 grid grid-cols-3 gap-5">
-                {[['#3b82f6'], ['#10b981'], ['#a855f7']].map(([c], i) => (
-                  <div key={i} className="rounded-2xl border border-gray-200 bg-white p-5">
-                    <div className="mb-4 h-4 w-20 rounded bg-gray-200" />
-                    <div className="flex h-24 items-end gap-1.5">
-                      {Array.from({ length: 7 }).map((_, j) => (
-                        <div key={j} className="flex-1 rounded-t" style={{ height: `${30 + ((i * 7 + j) % 6) * 12}%`, background: c, opacity: 0.85 }} />
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="grid grid-cols-3 gap-5">
-                <div className="col-span-2 h-60 rounded-2xl border border-gray-200 bg-white" />
-                <div className="h-60 rounded-2xl border border-gray-200 bg-white" />
-              </div>
-            </div>
-          </div>
-        </div>
-        {/* 白のすりガラス＋周辺フェード */}
-        <div className="absolute inset-0 bg-white/55 backdrop-blur-xl" />
-        <div className="absolute inset-0" style={{ background: 'radial-gradient(125% 95% at 50% 30%, transparent 0%, rgba(255,255,255,0.3) 60%, rgba(255,255,255,0.8) 100%)' }} />
-      </div>
-
       <div className="relative z-10 mb-10 text-center">
         <h1 className="mb-2 text-2xl font-bold tracking-tight text-gray-900">
           branding.bz へようこそ
@@ -207,53 +180,67 @@ function ServiceSelectContent() {
         </p>
       </div>
 
-      <div className="relative z-10 w-full max-w-[480px] space-y-4">
+      <div ref={listRef} onMouseLeave={() => setHoveredId(null)} className="relative z-10 w-full max-w-[480px] space-y-4">
+        {/* マジックムーブのハイライト枠：カーソル先のカードへスライド移動する（カラフルカードでも視認できる白リング） */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute left-0 right-0 z-20 rounded-[20px] border-2 border-blue-400 transition-all duration-300 ease-out"
+          style={{
+            top: hl.top,
+            height: hl.height,
+            opacity: hl.ready ? 1 : 0,
+            boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.55), 0 0 0 1px rgba(255,255,255,0.25), 0 0 26px -2px rgba(59,130,246,0.9)',
+          }}
+        />
         {SERVICES.map((service) => {
-          const isHighlighted = service.id === from
+          const isActive = service.id === activeId
           return (
             <button
               key={service.id}
+              ref={(el) => { cardRefs.current[service.id] = el }}
               onClick={() => handleCardClick(service)}
-              className={`group relative w-full overflow-hidden rounded-2xl border text-left transition-transform hover:scale-[1.02] ${
-                isHighlighted
-                  ? 'border-blue-400/40 bg-[#0d1326]'
-                  : 'border-white/10 bg-[#0c0c11] hover:border-white/20'
-              }`}
+              onMouseEnter={() => setHoveredId(service.id)}
+              className="group relative w-full overflow-hidden rounded-[20px] border border-white/15 text-left"
               style={{
-                boxShadow: isHighlighted
-                  ? 'inset 0 1px 0 0 rgba(255,255,255,0.06), 0 18px 40px -16px rgba(37,99,235,0.45)'
-                  : 'inset 0 1px 0 0 rgba(255,255,255,0.05), 0 18px 40px -20px rgba(0,0,0,0.45)',
+                background: 'linear-gradient(135deg, rgba(20,22,32,0.92) 0%, rgba(8,9,14,0.96) 100%)',
+                backdropFilter: 'blur(22px) saturate(180%)',
+                WebkitBackdropFilter: 'blur(22px) saturate(180%)',
+                boxShadow: 'inset 0 1px 0 0 rgba(255,255,255,0.3), 0 18px 44px -20px rgba(0,0,0,0.5)',
               }}
             >
+              {/* アクティブ時だけツール配色が点灯（クロスフェード） */}
+              <div
+                className="pointer-events-none absolute inset-0 rounded-[20px] transition-opacity duration-300"
+                style={{ background: CARD_BG[service.id], opacity: isActive ? 1 : 0 }}
+              />
+              {/* スペキュラ（液体ガラスの艶） */}
+              <div className="pointer-events-none absolute inset-0 rounded-[20px]" style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0) 42%)' }} />
+              <div className="pointer-events-none absolute inset-x-0 top-0 h-px rounded-t-[20px]" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent)' }} />
               <div className="relative z-10 flex items-center gap-4 p-5">
-                <div className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl border ${
-                  isHighlighted ? 'border-blue-400/30 bg-blue-500/15' : 'border-white/10 bg-white/5'
-                }`}>
+                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl border border-white/25 bg-white/15 backdrop-blur-md" style={{ boxShadow: 'inset 0 1px 0 0 rgba(255,255,255,0.35)' }}>
                   {service.id === 'platform' ? (
                     /* branding.bz ロゴマーク（public/logo.svg のマーク部分を実寸で抽出） */
-                    <svg viewBox="0 25.791 112 69.2093" width={24} height={24} fill="currentColor" aria-hidden className={isHighlighted ? 'text-blue-400' : 'text-white/80'}>
+                    <svg viewBox="0 25.791 112 69.2093" width={24} height={24} fill="currentColor" aria-hidden className="text-white">
                       <path d="M69.2093 95L112 95L112 52.2093L69.2093 95Z" />
                       <path d="M69.2093 25.791L0 25.791L0 95.0003L69.2093 25.791Z" />
                     </svg>
                   ) : (
-                    <service.Icon size={24} strokeWidth={1.5} className={isHighlighted ? 'text-blue-400' : 'text-white/80'} />
+                    <service.Icon size={24} strokeWidth={1.5} className="text-white" />
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
                   <h3 className="mb-0.5 text-sm font-bold text-white">
                     {service.title}
                   </h3>
-                  <p className="m-0 text-xs leading-relaxed text-white/55">
+                  <p className="m-0 text-xs leading-relaxed text-white/80">
                     {service.description}
                   </p>
                 </div>
                 <div className="flex-shrink-0">
-                  <span className={`inline-flex items-center rounded-full px-4 py-1.5 text-xs font-bold transition-colors ${
-                    isHighlighted
-                      ? 'bg-white text-black'
-                      : 'bg-white/10 text-white/70 group-hover:bg-white/15'
+                  <span className={`inline-flex items-center rounded-full px-4 py-1.5 text-xs font-bold transition-colors duration-300 ${
+                    isActive ? 'bg-white text-black' : 'bg-white/20 text-white'
                   }`}>
-                    {isHighlighted ? service.highlightButtonLabel : service.buttonLabel}
+                    {isActive ? service.highlightButtonLabel : service.buttonLabel}
                     <span className="ml-1">→</span>
                   </span>
                 </div>

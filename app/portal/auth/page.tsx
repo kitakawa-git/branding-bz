@@ -135,13 +135,19 @@ function PortalAuthContent() {
       className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-white font-sans text-white"
     >
       <div
-        className="relative z-10 w-full max-w-[400px] mx-5 rounded-3xl overflow-hidden border border-white/10 bg-[#0c0c11]"
+        className="relative z-10 w-full max-w-[400px] mx-5 rounded-3xl overflow-hidden border border-white/15"
         style={{
-          boxShadow: 'inset 0 1px 0 0 rgba(255,255,255,0.06), 0 24px 60px -20px rgba(0,0,0,0.45)',
+          background: 'linear-gradient(135deg, rgba(18,20,29,0.88) 0%, rgba(5,6,10,0.93) 100%)',
+          backdropFilter: 'blur(22px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(22px) saturate(180%)',
+          boxShadow: 'inset 0 1px 0 0 rgba(255,255,255,0.38), inset 0 -8px 24px -8px rgba(255,255,255,0.05), 0 24px 60px -20px rgba(0,0,0,0.5)',
         }}
       >
+        {/* スペキュラ（液体ガラスの艶） */}
         <div className="absolute inset-0 pointer-events-none rounded-3xl"
-          style={{ background: 'linear-gradient(to bottom, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 45%)' }} />
+          style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0) 42%)' }} />
+        <div className="absolute inset-x-0 top-0 h-px pointer-events-none"
+          style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent)' }} />
 
         <div className="relative z-10 p-10">
           {subtitle && (
