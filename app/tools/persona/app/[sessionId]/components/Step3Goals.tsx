@@ -183,7 +183,7 @@ export function Step3Goals({ personas: initialPersonas, basicInfo, onNext, onBac
           <ArrowLeft className="h-4 w-4" /> 戻る
         </Button>
         <Button onClick={handleNext} disabled={saving || !isValid} className="h-14 gap-2 px-6 text-base font-bold">
-          {saving ? '保存中...' : 'ジャーニー／タッチポイントへ'}
+          {saving ? '保存中...' : 'ジャーニー設計へ'}
           {!saving && <ArrowRight className="h-4 w-4" />}
         </Button>
       </div>

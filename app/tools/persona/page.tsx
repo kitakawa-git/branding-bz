@@ -31,7 +31,7 @@ const STEPS = [
   { icon: '1', title: '基本情報入力', description: '企業情報とターゲットの選択' },
   { icon: '2', title: 'ペルソナ生成', description: 'AIがペルソナの属性を提案' },
   { icon: '3', title: '課題・購買行動', description: '目標や悩み、購買行動を深掘り' },
-  { icon: '4', title: 'ジャーニー／タッチポイント', description: 'AIが5段階のカスタマージャーニーを生成' },
+  { icon: '4', title: 'ジャーニー設計', description: 'AIが5段階のカスタマージャーニーを生成' },
   { icon: '5', title: '確認・出力', description: 'ペルソナシートとジャーニーマップをPDF出力' },
 ]
 

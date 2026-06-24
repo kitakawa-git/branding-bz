@@ -1,6 +1,6 @@
 'use client'
 
-// Step 4: ジャーニー／タッチポイント（全ペルソナ集約ビュー）
+// Step 4: ジャーニー設計（全ペルソナ集約ビュー）
 // タブで1人ずつではなく、全ペルソナを一画面に集約：感情グラフ重ね描き＋(stage,name)集約のタッチポイント候補プール。
 // 表示フィルタ（全員/単体ペルソナ・感情）で3パネル（グラフ/プール/詳細）が連動。ジャーニーはペルソナごとに保持。
 import { useState, useCallback, useEffect, useRef, Fragment } from 'react'
@@ -188,7 +188,7 @@ export function Step4Journey({ personas: initialPersonas, basicInfo, onNext, onB
   if (data.length === 0) {
     return (
       <div>
-        <h1 className="text-2xl font-bold text-foreground mb-2">Step 4: ジャーニー／タッチポイント</h1>
+        <h1 className="text-2xl font-bold text-foreground mb-2">Step 4: ジャーニー設計</h1>
         <p className="text-[14px] text-muted-foreground">先にペルソナを作成してください（Step2）。</p>
         <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 bg-background/80 backdrop-blur border-t border-border px-6 py-4 flex items-center justify-between">
           <Button variant="outline" onClick={onBack} className="h-14 gap-2 px-6 text-base font-bold"><ArrowLeft className="h-4 w-4" /> 戻る</Button>
@@ -252,7 +252,7 @@ export function Step4Journey({ personas: initialPersonas, basicInfo, onNext, onB
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-foreground mb-2">Step 4: ジャーニー／タッチポイント</h1>
+      <h1 className="text-2xl font-bold text-foreground mb-2">Step 4: ジャーニー設計</h1>
       <p className="mb-4 text-[14px] text-muted-foreground">
         ブランド施策を当てる「タッチポイント」を全ペルソナ横断で洗い出します。感情カーブは優先度の注釈です。
       </p>
