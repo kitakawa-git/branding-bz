@@ -6,21 +6,18 @@
 > Claude Projects: ナレッジとしてアップロード（週1回推奨）
 
 **最終更新:** 2026-06-24
-**更新者:** Cowork（ジャーニーUI差し替え一連の方針転換・Lv2語彙体系・Step2改名を追記）
+**更新者:** Claude Code（開発状態を main 直接運用・本番デプロイ済み `073747a` に更新。今セッションのリリース＝ペルソナ保存止血／Tier1離散カラム化／voice・孤立フィールド撤去／Step4改名 を反映）
 
 ---
 
 ## 開発状態（ブランチ / マージ / デプロイ）
 
-> ⚠️ **コピーAI・ペルソナビルダーの一連は `feature/superadmin-company-view` ブランチ上で、main 未マージ・本番未デプロイ。** localhost（`npm run dev` port 3004・当該ブランチ）でのみ動作する。
-
 | 項目 | 状態 |
 |------|------|
-| 作業ブランチ | `feature/superadmin-company-view`（途中で `feature/lp-tools-vivid-cards` から移動） |
-| main へのマージ | **未**（北川さんの明示指示まで保留。ブランチ作成・切替・マージは勝手に行わない） |
-| 本番デプロイ | **未**（main 未反映のため Vercel に出ていない） |
-| 未コミットWIP | ジャーニー復元の作業（`suggest-journey`/`Step4Journey` 再追加・`connect`/`Step3`/`Step5`/`page`）＋並行セッションのLP系WIP が working tree に残存。**ステータス更新では触らない** |
-| 要判断（保留） | ①コピーAI＋ペルソナ一式の main 反映・デプロイ ②`lib/claude-api.ts` モデルhotfix（旧 `claude-sonnet-4-20250514`→`claude-sonnet-4-6`・本番AI復旧）の main 反映 |
+| 作業ブランチ | `main`（直接コミット運用。ブランチ作成・切替・マージは北川さんの明示指示まで行わない） |
+| 本番デプロイ | **済み** — 最新 `073747a`（2026-06-24）。Vercel 自動デプロイ Ready |
+| 今セッションのリリース（2026-06-24） | ①管理画面ペルソナ保存を id保持sync 化（`persona_data`/`journey_map_data`/persona端点 element_relations の消失を止血）②ペルソナTier1パラメータ（意思決定要因・購買障壁・ブランドへの期待）を離散カラム化＋管理画面で編集可能に（DB migration `20260624094921` 本番適用済み）③ペルソナビルダーから未使用voice（1日の過ごし方・口癖）＋孤立フィールド（居住地・趣味関心・成功の定義）を撤去 ④Step4名称を「ジャーニー／タッチポイント」に統一 |
+| 未コミットWIP | 並行セッションのLP系WIP（`app/(site)/page.tsx`）＋ `scripts/verify-copy-*.ts` が working tree に残存。**ステータス更新では触らない** |
 
 ---
 
