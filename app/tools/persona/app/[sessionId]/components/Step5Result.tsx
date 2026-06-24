@@ -78,7 +78,7 @@ export function Step5Result({ sessionId, personas, basicInfo, companyId, onBack 
   return (
     <div>
       <h1 className="text-2xl font-bold text-foreground mb-2">Step 5: 確認・出力</h1>
-      <p className="mb-6 text-[13px] text-muted-foreground">
+      <p className="mb-4 text-[13px] text-muted-foreground">
         作成した{personas.length}件のペルソナを確認し、branding.bzに連携できます
       </p>
 

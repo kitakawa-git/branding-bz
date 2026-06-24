@@ -128,7 +128,7 @@ export function Step3Goals({ personas: initialPersonas, basicInfo, onNext, onBac
   return (
     <div>
       <h1 className="text-2xl font-bold text-foreground mb-2">Step 3: ゴール・課題</h1>
-      <p className="mb-5 text-[13px] text-muted-foreground">
+      <p className="mb-4 text-[13px] text-muted-foreground">
         各ペルソナが抱える目標・課題・購買行動を定義します（課題は短い体言止め）。
       </p>
 

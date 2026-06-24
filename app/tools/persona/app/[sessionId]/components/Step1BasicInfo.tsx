@@ -191,7 +191,7 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-foreground mb-6">Step 1: 基本情報</h1>
+      <h1 className="text-2xl font-bold text-foreground mb-4">Step 1: 基本情報</h1>
 
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
         <CardContent className="p-5">

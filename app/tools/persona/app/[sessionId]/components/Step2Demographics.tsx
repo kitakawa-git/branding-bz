@@ -167,7 +167,7 @@ export function Step2Demographics({ personas: initialPersonas, basicInfo, onNext
   return (
     <div>
       <h1 className="text-2xl font-bold text-foreground mb-2">Step 2: ペルソナ生成</h1>
-      <p className="mb-5 text-[13px] text-muted-foreground">
+      <p className="mb-4 text-[13px] text-muted-foreground">
         ターゲットごとにペルソナを定義します。1つのターゲットに複数のペルソナを追加できます。
       </p>
 
