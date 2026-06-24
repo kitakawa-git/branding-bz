@@ -33,6 +33,10 @@ type PersonaItem = {
   description: string
   needs: string[]
   pain_points: string[]
+  // Tier1 離散カラム（Persona Builder の goals 由来。persona_data には残しつつ正本は離散カラム）
+  decision_factors: string[]
+  buying_barriers: string[]
+  brand_expectations: string
 }
 
 type TargetSegment = {
@@ -69,6 +73,9 @@ const emptyPersona = (): PersonaItem => ({
   description: '',
   needs: [],
   pain_points: [],
+  decision_factors: [],
+  buying_barriers: [],
+  brand_expectations: '',
 })
 
 const emptyMapData = (): PositioningMapData => ({
@@ -189,6 +196,9 @@ export default function BrandStrategyPage() {
           description: (d.description as string) || '',
           needs: (d.needs as string[]) || [],
           pain_points: (d.pain_points as string[]) || [],
+          decision_factors: (d.decision_factors as string[]) || [],
+          buying_barriers: (d.buying_barriers as string[]) || [],
+          brand_expectations: (d.brand_expectations as string) || '',
         }))
 
         // 主なターゲット: companies.target_segments（概要文とは別管理）
@@ -400,6 +410,29 @@ export default function BrandStrategyPage() {
     setPersonas(updated)
   }
 
+  // Tier1 配列項目（意思決定要因・購買障壁）の汎用操作。needs/pain_points と同じ要領。
+  type PersonaListField = 'decision_factors' | 'buying_barriers'
+  const addPersonaListItem = (personaIndex: number, field: PersonaListField) => {
+    const updated = [...personas]
+    updated[personaIndex] = { ...updated[personaIndex], [field]: [...updated[personaIndex][field], ''] }
+    setPersonas(updated)
+  }
+  const updatePersonaListItem = (personaIndex: number, field: PersonaListField, itemIndex: number, value: string) => {
+    const updated = [...personas]
+    const list = [...updated[personaIndex][field]]
+    list[itemIndex] = value
+    updated[personaIndex] = { ...updated[personaIndex], [field]: list }
+    setPersonas(updated)
+  }
+  const removePersonaListItem = (personaIndex: number, field: PersonaListField, itemIndex: number) => {
+    const updated = [...personas]
+    updated[personaIndex] = {
+      ...updated[personaIndex],
+      [field]: updated[personaIndex][field].filter((_, i) => i !== itemIndex),
+    }
+    setPersonas(updated)
+  }
+
   // ポジショニングマップ操作
   const initializeMap = () => {
     setPositioningMapData(emptyMapData())
@@ -506,6 +539,9 @@ export default function BrandStrategyPage() {
         description: p.description || null,
         needs: p.needs.filter(n => n.trim() !== ''),
         pain_points: p.pain_points.filter(pp => pp.trim() !== ''),
+        decision_factors: p.decision_factors.filter(d => d.trim() !== ''),
+        buying_barriers: p.buying_barriers.filter(b => b.trim() !== ''),
+        brand_expectations: p.brand_expectations.trim() || null,
         sort_order: i,
         target: i === 0 ? (overviewText || null) : null,
         positioning_map_data: i === 0 ? (positioningMapData || null) : null,
@@ -920,6 +956,80 @@ export default function BrandStrategyPage() {
                     >
                       <Plus size={16} />課題を追加
                     </Button>
+                  </div>
+
+                  <div className="mt-5">
+                    <h2 className="text-xs font-bold mb-3">意思決定要因</h2>
+                    {persona.decision_factors.map((item, itemIndex) => (
+                      <div key={itemIndex} className="flex gap-2 mb-2">
+                        <Input
+                          type="text"
+                          value={item}
+                          onChange={(e) => updatePersonaListItem(index, 'decision_factors', itemIndex, e.target.value)}
+                          placeholder={`意思決定要因 ${itemIndex + 1}`}
+                          className="h-10 flex-1"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          onClick={() => removePersonaListItem(index, 'decision_factors', itemIndex)}
+                          className="size-9 shrink-0 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+                        >
+                          <Trash2 size={14} />
+                        </Button>
+                      </div>
+                    ))}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => addPersonaListItem(index, 'decision_factors')}
+                      className="py-1.5 px-3 text-xs"
+                    >
+                      <Plus size={16} />意思決定要因を追加
+                    </Button>
+                  </div>
+
+                  <div className="mt-5">
+                    <h2 className="text-xs font-bold mb-3">購買障壁</h2>
+                    {persona.buying_barriers.map((item, itemIndex) => (
+                      <div key={itemIndex} className="flex gap-2 mb-2">
+                        <Input
+                          type="text"
+                          value={item}
+                          onChange={(e) => updatePersonaListItem(index, 'buying_barriers', itemIndex, e.target.value)}
+                          placeholder={`購買障壁 ${itemIndex + 1}`}
+                          className="h-10 flex-1"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          onClick={() => removePersonaListItem(index, 'buying_barriers', itemIndex)}
+                          className="size-9 shrink-0 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+                        >
+                          <Trash2 size={14} />
+                        </Button>
+                      </div>
+                    ))}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => addPersonaListItem(index, 'buying_barriers')}
+                      className="py-1.5 px-3 text-xs"
+                    >
+                      <Plus size={16} />購買障壁を追加
+                    </Button>
+                  </div>
+
+                  <div className="mt-5">
+                    <h2 className="text-xs font-bold mb-3">ブランドへの期待</h2>
+                    <AutoResizeTextarea
+                      value={persona.brand_expectations}
+                      onChange={(e) => updatePersona(index, 'brand_expectations', e.target.value)}
+                      placeholder="このペルソナがブランドに期待する価値"
+                      className="min-h-[60px]"
+                    />
                   </div>
                 </div>
               ))}
