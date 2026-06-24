@@ -109,7 +109,6 @@ export function Step5Result({ sessionId, personas, basicInfo, companyId, onBack 
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-4">
                 <InfoItem label="勤務先規模" value={p.demographics.company_size} />
-                <InfoItem label="居住地" value={p.demographics.location} />
               </div>
 
               {p.demographics.personality_traits?.length > 0 && (

@@ -8,8 +8,6 @@ export interface Demographics {
   occupation: string
   company_role: string
   company_size: string
-  location: string
-  hobbies: string[]
   media_channels: string[]
   personality_traits: string[]
 }
@@ -22,7 +20,6 @@ export interface GoalsData {
   buying_barriers: string[]
   decision_factors: string[]
   brand_expectations: string
-  success_definition: string
 }
 
 // カスタマージャーニー（ペルソナごとに保持。タッチポイント候補の抽出元）
@@ -58,14 +55,14 @@ export interface BasicInfo {
 
 export const EMPTY_DEMOGRAPHICS: Demographics = {
   persona_name: '', age: '', gender: '', occupation: '', company_role: '',
-  company_size: '', location: '',
-  hobbies: [], media_channels: [], personality_traits: [],
+  company_size: '',
+  media_channels: [], personality_traits: [],
 }
 
 export const EMPTY_GOALS: GoalsData = {
   primary_goals: [], challenges: [], pain_points: [],
   buying_motivation: '', buying_barriers: [], decision_factors: [],
-  brand_expectations: '', success_definition: '',
+  brand_expectations: '',
 }
 
 export const emptyPersona = (target_name = ''): Persona => ({

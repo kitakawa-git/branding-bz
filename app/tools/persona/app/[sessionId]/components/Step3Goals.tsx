@@ -240,10 +240,6 @@ function GoalsForm({ personaName, data, onChange }: {
           <label className="text-sm font-bold text-gray-700 mb-2 block">ブランドへの期待</label>
           <Textarea value={data.brand_expectations} onChange={e => set('brand_expectations', e.target.value)} placeholder="どんな価値を期待するか" rows={2} className="text-sm" />
         </div>
-        <div>
-          <label className="text-sm font-bold text-gray-700 mb-2 block">成功の定義</label>
-          <Textarea value={data.success_definition} onChange={e => set('success_definition', e.target.value)} placeholder="この人にとっての成功とは" rows={2} className="text-sm" />
-        </div>
       </CardContent>
     </Card>
   )

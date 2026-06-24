@@ -58,8 +58,6 @@ export async function POST(request: NextRequest) {
         occupation: demographics.occupation || '',
         company_role: demographics.company_role || '',
         company_size: demographics.company_size || '',
-        location: demographics.location || '',
-        hobbies: demographics.hobbies || [],
         media_channels: demographics.media_channels || [],
         personality_traits: demographics.personality_traits || [],
         goals: goalsData,

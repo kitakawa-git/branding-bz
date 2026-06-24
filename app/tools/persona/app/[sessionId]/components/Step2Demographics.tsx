@@ -253,7 +253,7 @@ function DemographicsForm({ ordinal, data, generating, onChange, onRemove }: {
   onRemove?: () => void
 }) {
   const set = <K extends keyof Demographics>(key: K, value: Demographics[K]) => onChange({ ...data, [key]: value })
-  type TagKey = 'hobbies' | 'media_channels' | 'personality_traits'
+  type TagKey = 'media_channels' | 'personality_traits'
   const addTag = (key: TagKey) => set(key, [...(data[key] || []), ''])
   const removeTag = (key: TagKey, i: number) => set(key, (data[key] || []).filter((_, j) => j !== i))
   const updateTag = (key: TagKey, i: number, v: string) => {
@@ -304,13 +304,8 @@ function DemographicsForm({ ordinal, data, generating, onChange, onRemove }: {
                 <label className="text-xs text-gray-500 mb-1 block">勤務先規模</label>
                 <Input value={data.company_size} onChange={e => set('company_size', e.target.value)} placeholder="50〜100名" className="h-9 text-sm" />
               </div>
-              <div>
-                <label className="text-xs text-gray-500 mb-1 block">居住地</label>
-                <Input value={data.location} onChange={e => set('location', e.target.value)} placeholder="地方都市 / 都市部" className="h-9 text-sm" />
-              </div>
             </div>
 
-            <TagSection label="趣味・関心" items={data.hobbies || []} fieldKey="hobbies" placeholder="例: ランニング" onAdd={addTag} onRemove={removeTag} onUpdate={updateTag} />
             <TagSection label="情報収集チャネル" items={data.media_channels || []} fieldKey="media_channels" placeholder="例: X (Twitter)" onAdd={addTag} onRemove={removeTag} onUpdate={updateTag} />
             <TagSection label="性格特性" items={data.personality_traits || []} fieldKey="personality_traits" placeholder="例: 慎重派" onAdd={addTag} onRemove={removeTag} onUpdate={updateTag} />
           </>
@@ -323,11 +318,11 @@ function DemographicsForm({ ordinal, data, generating, onChange, onRemove }: {
 function TagSection({ label, items, fieldKey, placeholder, onAdd, onRemove, onUpdate }: {
   label: string
   items: string[]
-  fieldKey: 'hobbies' | 'media_channels' | 'personality_traits'
+  fieldKey: 'media_channels' | 'personality_traits'
   placeholder: string
-  onAdd: (key: 'hobbies' | 'media_channels' | 'personality_traits') => void
-  onRemove: (key: 'hobbies' | 'media_channels' | 'personality_traits', idx: number) => void
-  onUpdate: (key: 'hobbies' | 'media_channels' | 'personality_traits', idx: number, value: string) => void
+  onAdd: (key: 'media_channels' | 'personality_traits') => void
+  onRemove: (key: 'media_channels' | 'personality_traits', idx: number) => void
+  onUpdate: (key: 'media_channels' | 'personality_traits', idx: number, value: string) => void
 }) {
   return (
     <div>

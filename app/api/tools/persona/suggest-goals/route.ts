@@ -21,8 +21,7 @@ const SYSTEM_PROMPT = `あなたはブランドマーケティングの専門家
   "buying_motivation": "購買の動機（2〜3文）",
   "buying_barriers": ["購買の障壁1", "購買の障壁2", "購買の障壁3"],
   "decision_factors": ["意思決定要因1", "意思決定要因2", "意思決定要因3"],
-  "brand_expectations": "このブランドに期待すること（2〜3文）",
-  "success_definition": "この人にとっての成功とは（1〜2文）"
+  "brand_expectations": "このブランドに期待すること（2〜3文）"
 }`
 
 // 構造化データをプロンプト用テキストに変換
@@ -82,7 +81,6 @@ export async function POST(request: NextRequest) {
     if (demographics.gender) parts.push(`- 性別: ${demographics.gender}`)
     if (demographics.occupation) parts.push(`- 職業: ${demographics.occupation}`)
     if (demographics.company_role) parts.push(`- 役職: ${demographics.company_role}`)
-    if (demographics.location) parts.push(`- 居住地: ${demographics.location}`)
     if (demographics.annual_income) parts.push(`- 年収: ${demographics.annual_income}`)
     if (demographics.family) parts.push(`- 家族構成: ${demographics.family}`)
     if (demographics.personality_traits?.length) parts.push(`- 性格: ${demographics.personality_traits.join('、')}`)
