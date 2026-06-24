@@ -5,7 +5,7 @@
 > Cowork: 直接読み書き
 > Claude Projects: ナレッジとしてアップロード（週1回推奨）
 
-**最終更新:** 2026-06-21
+**最終更新:** 2026-06-24
 **更新者:** Cowork（ジャーニーUI差し替え一連の方針転換・Lv2語彙体系・Step2改名を追記）
 
 ---
@@ -156,10 +156,18 @@
 - **デザインシステム管理機能（デザイントークンDB管理＋実測ビューア）**（2026-06-11・本番デプロイ済み、commit ee66a4f/f60c701/fde3b26/7dbcf63） — include-bz から移植し、`/superadmin/design-system`（スーパー管理者専用）でサービス全体の色をパレット管理。**①基盤色までDB化**: `design_tokens`（LP用 `--ds-*` ＋ shadcn基盤 `--primary`/`--foreground`/`--border` 等のHSL成分 ＋ アプリ青 `--ds-app-*`、計52トークン）を `getDesignTokensCss()`→`app/layout.tsx` の `<style id="design-tokens">` で :root 注入、`/api/revalidate` でタグ無効化。基盤色を変えると管理/ポータル/ツール全画面が一括追従（seed=現行値の透過コピーで**見た目不変**）。履歴 `design_token_history`＋ロールバック。RLSは superadmin_all＋SELECT公開（LP SSRがanon読み）。**②ハードコード青の全置換**: `blue-500/600/700` の text/bg/border/ring 165件＋recharts/SVG/inlineの青hex 8件を `--ds-app-*` へ（色1:1一致＝blue-600=accent/700=hover/500=soft）。淡色背景 `bg-blue-50` 等・PDF・ブランドカラーデータは据え置き。**③2階層タブ＋実測ビューア**: 上位＝ウェブサイト(LP)/サービス画面(アプリ)の下線型タブ、下位＝カラーパレット/タイポ/スペーシング/コンポーネント/レイアウト/レスポンシブ/ドキュメントの7タブ。タイポ等は対象ページ（website=公開LP群／service=管理ダッシュボード等）を不可視iframeで**実測**（ハードコードの転記表を持たない）。コンポーネントは実体描画＋使用色をトークン逆引き。**④ドキュメントタブ（design.md）**: 自動サマリー（DBトークン/実測タイポ・スペーシング/コンポーネント/@media）＋手書きメモ（`design_docs` テーブル・scope別・RLS superadmin）を結合し**コピー/.mdダウンロード**。編集UIは hex/rgba/HSL成分のマルチフォーマット対応（`hsl-color.ts` で双方向変換）。DB migration: 20260611130000/140000/150000。残: 淡色背景の青・gray系623件のトークン化は将来
 - **モバイルUX基準 v1.0 策定＋全画面サイジング是正（バッチ進行中）**（2026-06-16・本番デプロイ済み） — HIG(44pt)/Material(48dp)/WCAG AA(4.5:1)/iOS入力16px を `CLAUDE.md`「モバイルUX基準（確定版v1.0）」に恒久化（タップ44px/入力16px/コントラスト4.5:1/常用12px未満廃止/見出し二段階）。是正バッチ: ①フォーム系（ラベル・見出し`text-xs→text-sm`／入力`h-10→h-11`）`2563cba` ②検索入力`h-8 text-xs→h-11 16px`・フィルタ/期間ピル`text-xs→text-sm`・FABラベル/アイコン拡大`ff9cae7` ③FAB高さ`h-12→h-14`（fab.tsx・浮遊ボタンの例外XL）`4d8a179` ④§6 `--muted-foreground 45.1%→40%`（globals.css・全画面の薄グレー可読性）＋基準恒久化`235a48f` ⑤§3 タップ領域44px化＝いいね/コメント`min-h-11`(横並び維持・glyph20px)／…メニュー・コメント送信・KPI編集削除・目標編集`size-7/8/9→size-11`／サイドバー項目`h-10→h-11`／ヘッダーbell・トグル`size-10→size-11`／コメント入力`h-9→h-11`(16px)／画像削除`size-8→size-10` `f7b35dd`。**glyphは20-24px維持しヒット領域(padding/min-h)で44px確保**。残: batch3(メタ12px未満廃止)・batch4(カード/ダイアログtitle16-18px)・phase2(認証/名刺/管理)
 - **Web Push 通知 ブロック時の再許可案内UX**（2026-06-16・本番デプロイ済み、commit 4268e68） — 一度「許可しない」を選ぶと `Notification.requestPermission()` が再ダイアログを出さず行き止まりだった問題を解消。`components/pwa/PushToggle` が `permission==='denied'` を検知し、iPhone/PC それぞれの設定からの再許可手順を画面内に案内（旧・赤エラーの置換）。default（ダイアログ閉じ）と denied を区別
+- **管理サイドバー再編＋メニュー整理**（2026-06-24・本番デプロイ済み、commit 827a9a6/33e65a6） — ①「ブランド基本情報」→「**基本情報**」改称（サイドバー/動的タイトル/レイアウト/パンくず4箇所統一）しユーザーメニュー（アバターのドロップダウン）内へ移動 ②「アカウント管理」→「**アカウント**」に改称しユーザーメニューへ移動 ③ダッシュボードのタブで「タイムライン分析」が `timeline_enabled=false` 企業に出ない不具合を修正（brand-score と揃えて常時表示）④ラーニングの「視聴分析」タブを**ダッシュボードのタブへ移設**（新ルート `/admin/analytics/learning`）⑤サイドバーに**「構築」グループ**（STP分析/ペルソナビルダー/ブランドカラー定義＝各ツールの `/tools/*/app` へ）と**「浸透」グループ**（サーベイ管理/理解度テスト/ラーニング）を新設＝3レイヤー構造に整合 ⑥業種マスタに大分類「**コンサルティング**」追加（中分類: 経営・戦略/人事・組織/IT・DX/財務・会計/ブランド・マーケティング/その他）⑦行動指針の説明文を改行可（AutoResizeTextarea）＋D&D並べ替え対応
+- **同業者対策：利用規約に競合排除条項＋運用ポリシー＋テストデータ整理**（2026-06-24・本番デプロイ済み、commit 7d2df63／DB削除済み） — 同業者（ブランディング・デザイン関連事業者）の利用を防ぐ。①利用規約 `/terms` に「**第4条（同業者の利用制限）**」新設（第3条 利用登録の不承認事由・第12条 登録抹消事由にも該当を追記、条番号繰り下げ・最終更新日更新）②運用ルールを `docs/competitor-screening-policy.md` に策定（審査基準クロ/グレー/シロ・北川一次審査1営業日・**ブランディング系は一律クロ**・却下文面・遡及審査手順）③**既存12社を遡及棚卸し**＝実在の外部登録に同業者なし（branding系3社は example.com のデモ/シード、ID INC.は運営）。要確認は atelier Kiitos（業種未確認）④**テスト3社をDB削除**（テスト株式会社/株式会社あいうえお/トヨタファイナンス＝著名社名を個人gmailで登録）＋auth ユーザー4件。CASCADE/NO ACTION のFK構造を確認しアトミックなトランザクションで削除（CTD＝北川さんのdots.bz、atelier Kiitos は残置）。**残: 承認制ゲート・AI同業判定の実装は別タスク**
 
 ---
 
 ## 4. 残タスク
+
+- 🆕【調査済み・要対応】管理画面のペルソナ入力項目が Persona Builder の出力に追いついていない（不足フィールド多数）（2026-06-24 調査） — **状況**: 管理画面 `/admin/brand/strategy` のペルソナ編集は discrete 6項目のみ（`PersonaItem` ＝ name / age_range(年齢層) / occupation(職業) / description(説明) / needs(ニーズ) / pain_points(課題・ペインポイント)）。一方 Persona Builder ツールの最終出力（`app/tools/persona/app/[sessionId]/components/persona-types.ts` の `Demographics` ＋ `GoalsData` ＋ `JourneyMap`）はもっと多い。
+  - **ツール出力にあって管理画面に入力欄が無いフィールド**: 勤務先規模(company_size) / 居住地(location) / 性格特性(personality_traits) / 主な目標(primary_goals) / 課題・悩み(challenges ※pain_points とは別) / 意思決定要因(decision_factors) / 購買動機(buying_motivation) / 購買障壁(buying_barriers) / ブランド期待(brand_expectations) / 成功定義(success_definition) / 性別(gender) / 役職(company_role) / 趣味(hobbies) / 利用メディア(media_channels) / 日常(daily_routine) / 口癖(quote) / カスタマージャーニー(journey_map)。
+  - **重要**: これらは連携 `/api/tools/persona/connect` で `brand_personas` の **`persona_data`(jsonb) ＋ `journey_map_data`** に**保存はされている**が、管理画面UIが**表示も編集もしていない**＝ツールで作ったリッチな内容が branding.bz 側では見えない／欠落して見える。discrete列への写像は `lib/tools/persona-mapping.ts`（needs / pain_points / age_range / occupation / description）。
+  - **要対応（判断ポイント）**: ①管理画面のペルソナ編集に不足フィールドを追加し `persona_data` を表示・編集可能にする か ②連携で来たリッチ情報は「読み取り専用表示」に留める か。まず①②どちらの方針かを北川さんに確認 → 実装。
+  - **関連ファイル**: 管理=`app/admin/brand/strategy/page.tsx`（`PersonaItem` 型・fetch・handleSubmit）／ ツール型=`app/tools/persona/app/[sessionId]/components/persona-types.ts`／ 連携=`app/api/tools/persona/connect/route.ts` ＋ `lib/tools/persona-mapping.ts`／ DB=`brand_personas`（discrete列 ＋ `persona_data` jsonb ＋ `journey_map_data`）。
 
 ### 🆕 コピーAI／ペルソナビルダー（feature ブランチ・main未反映）
 
