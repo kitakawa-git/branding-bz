@@ -15,9 +15,10 @@ export function PersonaHeader({ onSignOut, showSignOut = false }: PersonaHeaderP
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-6">
         <Link
           href="/tools/persona"
-          className="text-lg font-bold text-gray-900 no-underline hover:opacity-80"
+          className="flex items-center no-underline hover:opacity-80"
         >
-          branding.bz
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.svg" alt="branding.bz" style={{ height: '22px', width: 'auto' }} />
           <span className="ml-2 text-sm font-normal text-gray-500">
             ペルソナビルダー
           </span>
