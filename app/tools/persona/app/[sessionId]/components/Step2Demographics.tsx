@@ -223,7 +223,7 @@ export function Step2Demographics({ personas: initialPersonas, basicInfo, onNext
           <ArrowLeft className="h-4 w-4" /> 戻る
         </Button>
         <Button onClick={handleNext} disabled={saving || !isValid} className="h-14 gap-2 px-6 text-base font-bold">
-          {saving ? '保存中...' : 'ゴール・課題へ'}
+          {saving ? '保存中...' : '課題・購買行動へ'}
           {!saving && <ArrowRight className="h-4 w-4" />}
         </Button>
       </div>

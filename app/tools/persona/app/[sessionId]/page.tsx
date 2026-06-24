@@ -43,7 +43,7 @@ interface PersonaSession {
 const STEP_DEFINITIONS = [
   { label: '基本情報' },
   { label: 'ペルソナ生成' },
-  { label: 'ゴール・課題' },
+  { label: '課題・購買行動' },
   { label: 'ジャーニー／タッチポイント' },
   { label: '確認・出力' },
 ]

@@ -124,7 +124,7 @@ export function Step5Result({ sessionId, personas, basicInfo, companyId, onBack 
 
               <div className="flex items-center gap-2 mb-2 mt-4">
                 <Target className="h-4 w-4 text-gray-600" />
-                <h3 className="text-sm font-bold text-gray-900">ゴール・課題</h3>
+                <h3 className="text-sm font-bold text-gray-900">課題・購買行動</h3>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <TagList label="主な目標" items={p.goals.primary_goals} color="blue" />

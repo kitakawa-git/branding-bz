@@ -1,6 +1,6 @@
 'use client'
 
-// Step 3: ゴール・課題（マルチペルソナ・ペルソナ単位）
+// Step 3: 課題・購買行動（マルチペルソナ・ペルソナ単位）
 // 各ペルソナの demographics で suggest-goals を呼び、persona.goals に格納。
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { Input } from '@/components/ui/input'
@@ -111,7 +111,7 @@ export function Step3Goals({ personas: initialPersonas, basicInfo, onNext, onBac
   if (aiLoading) {
     return (
       <div>
-        <h1 className="text-2xl font-bold text-foreground mb-6">Step 3: ゴール・課題</h1>
+        <h1 className="text-2xl font-bold text-foreground mb-6">Step 3: 課題・購買行動</h1>
         <div className="space-y-4">
           {[1, 2].map(i => (
             <div key={i} className="rounded-xl border bg-white p-5">
@@ -127,7 +127,7 @@ export function Step3Goals({ personas: initialPersonas, basicInfo, onNext, onBac
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-foreground mb-2">Step 3: ゴール・課題</h1>
+      <h1 className="text-2xl font-bold text-foreground mb-2">Step 3: 課題・購買行動</h1>
       <p className="mb-4 text-[13px] text-muted-foreground">
         各ペルソナが抱える目標・課題・購買行動を定義します（課題は短い体言止め）。
       </p>
@@ -183,7 +183,7 @@ export function Step3Goals({ personas: initialPersonas, basicInfo, onNext, onBac
           <ArrowLeft className="h-4 w-4" /> 戻る
         </Button>
         <Button onClick={handleNext} disabled={saving || !isValid} className="h-14 gap-2 px-6 text-base font-bold">
-          {saving ? '保存中...' : 'ジャーニーマップへ'}
+          {saving ? '保存中...' : 'ジャーニー／タッチポイントへ'}
           {!saving && <ArrowRight className="h-4 w-4" />}
         </Button>
       </div>
