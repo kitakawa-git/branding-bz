@@ -25,6 +25,8 @@ import { TARGET_SUGGEST_MONTHLY_LIMIT } from '@/lib/constants/ai-limits'
 import type { PositioningMapData, PositioningMapItem, PositioningMapSize } from '@/lib/types/positioning-map'
 
 type PersonaItem = {
+  // id は保存時の id保持sync 用（既存行はUPDATE・新規はINSERT）。新規入力時は未定義。
+  id?: string
   name: string
   age_range: string
   occupation: string
@@ -180,6 +182,7 @@ export default function BrandStrategyPage() {
         // セグメンテーション（STP連携データ）: brand_personas[0].segmentation_data
         const parsedSegmentation = (first.segmentation_data as SegmentationData) || null
         const parsedPersonas = data.map((d: Record<string, unknown>) => ({
+          id: (d.id as string) || undefined,
           name: (d.name as string) || '',
           age_range: (d.age_range as string) || '',
           occupation: (d.occupation as string) || '',
@@ -472,70 +475,96 @@ export default function BrandStrategyPage() {
     const overviewText = targetOverview.trim()
 
     try {
-      // 1. 既存を全削除
-      const delRes = await fetch(`${supabaseUrl}/rest/v1/brand_personas?company_id=eq.${companyId}`, {
-        method: 'DELETE',
-        headers,
-      })
-      if (!delRes.ok) {
-        const body = await delRes.text()
-        throw new Error(`削除エラー: HTTP ${delRes.status}: ${body}`)
-      }
-
-      // 2. 現在のリストを全INSERT
+      // ペルソナ保存: id保持sync（提供価値 value_propositions と同方式）。
+      // 旧実装は company単位で全DELETE→全INSERT していたが、これだと
+      //  (1) persona_data / journey_map_data（Persona Builder のリッチ出力・ジャーニー全体）が
+      //      INSERTペイロードに無いため保存のたびに消える、
+      //  (2) persona id が変わり、削除時トリガ cleanup_element_relations_on_delete が
+      //      persona を端点に持つ element_relations を道連れに消す（エッジ消失）。
+      // → 既存id→PATCH（フォーム6項目＋row0特有列のみ。persona_data/journey_map_data は触れず温存）
+      //    / 新規→POST / 実際に削除された分のみ DELETE、に変更する。
       const cleanedPersonas = personas.filter(p =>
         p.name.trim() !== '' || p.age_range.trim() !== '' || p.occupation.trim() !== ''
       )
 
+      // 既存ペルソナ id（sort_order順）
+      const pExRes = await fetch(`${supabaseUrl}/rest/v1/brand_personas?company_id=eq.${companyId}&select=id&order=sort_order`, { headers })
+      if (!pExRes.ok) {
+        throw new Error(`ペルソナの既存取得エラー: HTTP ${pExRes.status}: ${await pExRes.text()}`)
+      }
+      const pExistingIds = ((await pExRes.json()) as { id: string }[]).map(r => r.id)
+      const pExistingIdSet = new Set(pExistingIds)
+      const pKept = new Set<string>()
+      const savedPersonas: PersonaItem[] = []
+
+      // 1ペルソナ分の書き込み値。persona_data / journey_map_data は含めない＝既存値を温存。
+      // target / positioning_map_data / segmentation_data は従来どおり先頭行(row0)にのみ載せる。
+      const buildPersonaPayload = (p: PersonaItem, i: number) => ({
+        name: p.name,
+        age_range: p.age_range || null,
+        occupation: p.occupation || null,
+        description: p.description || null,
+        needs: p.needs.filter(n => n.trim() !== ''),
+        pain_points: p.pain_points.filter(pp => pp.trim() !== ''),
+        sort_order: i,
+        target: i === 0 ? (overviewText || null) : null,
+        positioning_map_data: i === 0 ? (positioningMapData || null) : null,
+        segmentation_data: i === 0 ? (segmentationData || null) : null,
+      })
+
       if (cleanedPersonas.length > 0) {
-        const insertData = cleanedPersonas.map((p, i) => ({
-          company_id: companyId,
-          name: p.name,
-          age_range: p.age_range || null,
-          occupation: p.occupation || null,
-          description: p.description || null,
-          needs: p.needs.filter(n => n.trim() !== ''),
-          pain_points: p.pain_points.filter(pp => pp.trim() !== ''),
-          sort_order: i,
-          target: i === 0 ? (overviewText || null) : null,
-          positioning_map_url: null,
-          positioning_map_data: i === 0 ? (positioningMapData || null) : null,
-          // STP連携のセグメンテーションは全削除→全INSERTで消えないよう維持
-          segmentation_data: i === 0 ? (segmentationData || null) : null,
-        }))
-
-        const insRes = await fetch(`${supabaseUrl}/rest/v1/brand_personas`, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify(insertData),
-        })
-        if (!insRes.ok) {
-          const body = await insRes.text()
-          throw new Error(`挿入エラー: HTTP ${insRes.status}: ${body}`)
-        }
-      } else {
-        // ペルソナがなくてもtarget概要等を保存するためダミーレコードを作成
-        if (overviewText || positioningMapData || segmentationData) {
-          const insertData = [{
-            company_id: companyId,
-            name: '',
-            sort_order: 0,
-            target: overviewText || null,
-            positioning_map_url: null,
-            positioning_map_data: positioningMapData || null,
-            segmentation_data: segmentationData || null,
-          }]
-
-          const insRes = await fetch(`${supabaseUrl}/rest/v1/brand_personas`, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify(insertData),
-          })
-          if (!insRes.ok) {
-            const body = await insRes.text()
-            throw new Error(`挿入エラー: HTTP ${insRes.status}: ${body}`)
+        for (let i = 0; i < cleanedPersonas.length; i++) {
+          const p = cleanedPersonas[i]
+          const payload = buildPersonaPayload(p, i)
+          if (p.id && pExistingIdSet.has(p.id)) {
+            const res = await fetch(`${supabaseUrl}/rest/v1/brand_personas?id=eq.${p.id}`, {
+              method: 'PATCH', headers, body: JSON.stringify(payload),
+            })
+            if (!res.ok) throw new Error(`ペルソナの更新エラー: HTTP ${res.status}: ${await res.text()}`)
+            pKept.add(p.id)
+            savedPersonas.push({ ...p, id: p.id })
+          } else {
+            const res = await fetch(`${supabaseUrl}/rest/v1/brand_personas`, {
+              method: 'POST', headers: { ...headers, 'Prefer': 'return=representation' },
+              body: JSON.stringify({ company_id: companyId, ...payload }),
+            })
+            if (!res.ok) throw new Error(`ペルソナの挿入エラー: HTTP ${res.status}: ${await res.text()}`)
+            const inserted = (await res.json()) as { id: string }[]
+            const nid = inserted[0]?.id
+            if (nid) pKept.add(nid)
+            savedPersonas.push({ ...p, id: nid })
           }
         }
+      } else if (overviewText || positioningMapData || segmentationData) {
+        // ペルソナは無いが概要/ポジショニング/セグメンテーションを保持するため row0 を1件維持。
+        const dummyPayload = {
+          name: '',
+          sort_order: 0,
+          target: overviewText || null,
+          positioning_map_data: positioningMapData || null,
+          segmentation_data: segmentationData || null,
+        }
+        if (pExistingIds.length > 0) {
+          const res = await fetch(`${supabaseUrl}/rest/v1/brand_personas?id=eq.${pExistingIds[0]}`, {
+            method: 'PATCH', headers, body: JSON.stringify(dummyPayload),
+          })
+          if (!res.ok) throw new Error(`ペルソナ概要の更新エラー: HTTP ${res.status}: ${await res.text()}`)
+          pKept.add(pExistingIds[0])
+        } else {
+          const res = await fetch(`${supabaseUrl}/rest/v1/brand_personas`, {
+            method: 'POST', headers, body: JSON.stringify({ company_id: companyId, ...dummyPayload }),
+          })
+          if (!res.ok) throw new Error(`ペルソナ概要の挿入エラー: HTTP ${res.status}: ${await res.text()}`)
+        }
+      }
+
+      // 実際に削除されたペルソナのみ DELETE（ここだけ削除時トリガでエッジ整理が正しく起きる）
+      const pToDelete = pExistingIds.filter(id => !pKept.has(id))
+      if (pToDelete.length > 0) {
+        const delRes = await fetch(`${supabaseUrl}/rest/v1/brand_personas?id=in.(${pToDelete.join(',')})`, {
+          method: 'DELETE', headers,
+        })
+        if (!delRes.ok) throw new Error(`ペルソナの削除エラー: HTTP ${delRes.status}: ${await delRes.text()}`)
       }
 
       // 提供価値（value_propositions）保存: id保持sync。
@@ -598,9 +627,9 @@ export default function BrandStrategyPage() {
       })
       setPortalSubtitlesData(updatedSubtitles)
 
-      setPersonas(cleanedPersonas)
-      setTargetSegments(validSegments)
       // 保存で確定した id を状態へ反映（reload無しの再保存で新規行が重複INSERTされないように）
+      setPersonas(savedPersonas)
+      setTargetSegments(validSegments)
       setProvidedValues(savedValues)
       // 保存内容でページキャッシュを更新（他ページ往復で消える問題の防止）
       setPageCache<StrategyCache>(cacheKey, {
@@ -608,7 +637,7 @@ export default function BrandStrategyPage() {
         targetSegments: validSegments,
         segmentationData,
         providedValues: savedValues,
-        personas: cleanedPersonas,
+        personas: savedPersonas,
         positioningMapData,
         portalSubtitle: portalSubtitle.trim(),
         portalSubtitlesData: updatedSubtitles,
