@@ -73,7 +73,9 @@ export function mapSessionToPersonaColumns(sessionData: unknown): MappedPersonaC
   if (age) cols.age_range = age
   const occupation = str(demo.occupation) || str(demo.company_role)
   if (occupation) cols.occupation = occupation
-  const description = [occupation, str(demo.company_size)].filter(Boolean).join('・')
+  // description: 入力された説明文を優先（コピーAI ontology が「状況: {description}」として読む）。
+  // 空のときだけ従来の occupation・company_size 連結にフォールバック（後方互換）。
+  const description = str(demo.description) || [occupation, str(demo.company_size)].filter(Boolean).join('・')
   if (description) cols.description = description
   const brandExpectations = str(goals.brand_expectations)
   if (brandExpectations) cols.brand_expectations = brandExpectations

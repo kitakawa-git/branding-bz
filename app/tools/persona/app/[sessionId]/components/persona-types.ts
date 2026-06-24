@@ -6,6 +6,7 @@ export interface Demographics {
   age: number | string
   gender: string
   occupation: string
+  description: string // このペルソナ（セグメント）の状況を1〜2文で。connect で brand_personas.description へ
   company_role: string
   company_size: string
   media_channels: string[]
@@ -53,7 +54,7 @@ export interface BasicInfo {
 }
 
 export const EMPTY_DEMOGRAPHICS: Demographics = {
-  persona_name: '', age: '', gender: '', occupation: '', company_role: '',
+  persona_name: '', age: '', gender: '', occupation: '', description: '', company_role: '',
   company_size: '',
   media_channels: [], personality_traits: [],
 }

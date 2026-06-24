@@ -56,6 +56,7 @@ export async function POST(request: NextRequest) {
         age: demographics.age || null,
         gender: demographics.gender || '',
         occupation: demographics.occupation || '',
+        description: demographics.description || '',
         company_role: demographics.company_role || '',
         company_size: demographics.company_size || '',
         media_channels: demographics.media_channels || [],

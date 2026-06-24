@@ -107,6 +107,13 @@ export function Step5Result({ sessionId, personas, basicInfo, companyId, onBack 
                 </div>
               </div>
 
+              {p.demographics.description && (
+                <div className="mb-4">
+                  <span className="text-xs font-bold text-gray-500 mb-1 block">説明</span>
+                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{p.demographics.description}</p>
+                </div>
+              )}
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-4">
                 <InfoItem label="勤務先規模" value={p.demographics.company_size} />
               </div>
@@ -130,7 +137,14 @@ export function Step5Result({ sessionId, personas, basicInfo, companyId, onBack 
                 <TagList label="ニーズ" items={p.goals.primary_goals} color="blue" />
                 <TagList label="課題・ペインポイント" items={p.goals.pain_points} color="orange" />
                 <TagList label="意思決定要因" items={p.goals.decision_factors} color="green" />
+                <TagList label="購買障壁" items={p.goals.buying_barriers} color="red" />
               </div>
+              {p.goals.brand_expectations && (
+                <div className="mt-4">
+                  <span className="text-xs font-bold text-gray-500 mb-1 block">ブランドへの期待</span>
+                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{p.goals.brand_expectations}</p>
+                </div>
+              )}
             </CardContent>
           </Card>
               ))}

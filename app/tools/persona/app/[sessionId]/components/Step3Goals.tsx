@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion'
 import { ArrowLeft, ArrowRight, Plus, X } from 'lucide-react'
 import { AIButton } from '@/components/shared/AIButton'
 import {
@@ -234,10 +235,18 @@ function GoalsForm({ personaName, data, onChange }: {
           <label className="text-sm font-bold text-gray-700 mb-2 block">ブランドへの期待</label>
           <Textarea value={data.brand_expectations} onChange={e => set('brand_expectations', e.target.value)} placeholder="どんな価値を期待するか" rows={2} className="text-sm" />
         </div>
-        <div>
-          <label className="text-sm font-bold text-gray-700 mb-2 block">購買の動機</label>
-          <Textarea value={data.buying_motivation} onChange={e => set('buying_motivation', e.target.value)} placeholder="何がきっかけで検討するか" rows={2} className="text-sm" />
-        </div>
+
+        <Accordion type="single" collapsible>
+          <AccordionItem value="details" className="rounded-lg border px-3">
+            <AccordionTrigger className="py-3 text-sm font-bold text-gray-700">詳細設定（任意）</AccordionTrigger>
+            <AccordionContent className="pb-4">
+              <div>
+                <label className="text-sm font-bold text-gray-700 mb-2 block">購買の動機</label>
+                <Textarea value={data.buying_motivation} onChange={e => set('buying_motivation', e.target.value)} placeholder="何がきっかけで検討するか" rows={2} className="text-sm" />
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </CardContent>
     </Card>
   )
