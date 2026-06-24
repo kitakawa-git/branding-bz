@@ -17,20 +17,20 @@ const PERSONA_CARDS = [
     label: 'なぜ必要？',
     icon: Target,
     title: 'チーム全員の共通認識に',
-    description: '「30代女性」では曖昧すぎる。ペルソナがあれば、デザイン・コピー・施策の判断基準が明確になります。',
+    description: '「30代女性」では曖昧すぎる。ペルソナがあれば、デザイン・コピー・施策の判断基準が誰の目にも明確になります。',
   },
   {
     label: 'ジャーニーマップ',
     icon: Route,
     title: '顧客体験を可視化',
-    description: '認知から購入、リピートまでの5段階を可視化。各タッチポイントでの感情や課題が一目でわかります。',
+    description: '認知から購入、リピートまでの5段階を可視化。各タッチポイントでの感情や課題がひと目ではっきりわかります。',
   },
 ]
 
 const STEPS = [
-  { icon: '1', title: '基本情報入力', description: '企業情報とターゲットの選択' },
-  { icon: '2', title: 'ペルソナ生成', description: 'AIがペルソナの属性を提案' },
-  { icon: '3', title: '課題・購買行動', description: '目標や悩み、購買行動を深掘り' },
+  { icon: '1', title: '基本情報入力', description: '企業の基本情報と狙うべきターゲットの選択' },
+  { icon: '2', title: 'ペルソナ生成', description: 'AIがペルソナの属性や行動・人物像を提案' },
+  { icon: '3', title: '課題・購買行動', description: '顧客の目標や悩み、購買行動の傾向を深掘り' },
   { icon: '4', title: 'ジャーニー設計', description: 'AIが5段階のカスタマージャーニーを生成' },
   { icon: '5', title: '確認・出力', description: 'ペルソナシートとジャーニーマップをPDF出力' },
 ]
@@ -40,7 +40,7 @@ const HIGHLIGHTS = [
     label: 'AI提案',
     icon: Lightbulb,
     title: ['AIが属性を', '自動提案'],
-    description: 'ターゲット情報をもとに、年齢・職業・趣味・行動パターンまでAIが具体的なペルソナ像を提案します。',
+    description: 'ターゲット情報をもとに、年齢・職業・趣味・行動パターンまでAIがペルソナを提案します。',
   },
   {
     label: 'ジャーニー',
@@ -52,7 +52,7 @@ const HIGHLIGHTS = [
     label: '出力',
     icon: Download,
     title: ['PDF・画像を', 'ワンクリック出力'],
-    description: 'ペルソナシートとジャーニーマップをPDFでワンクリックダウンロード。社内共有にそのまま使えます。',
+    description: 'ペルソナシートとジャーニーマップをPDFでワンクリック出力。社内共有にすぐに使えます。',
   },
   {
     label: '連携',
@@ -205,7 +205,7 @@ export default function PersonaLandingPage() {
               今すぐペルソナを作成する
             </h2>
             <p className="mx-auto mt-6 max-w-xl text-lg text-white/60">
-              ブランドは、作った瞬間から走り出す。branding.bz で、その加速を始めませんか。
+              ブランドは、作った瞬間から走り出す。<br />branding.bz で、その加速を始めませんか。
             </p>
             <div className="mt-10">
               <Link

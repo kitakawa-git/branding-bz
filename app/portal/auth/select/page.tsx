@@ -23,7 +23,7 @@ const SERVICES: ServiceCard[] = [
     id: 'stp',
     Icon: BarChart3,
     title: 'STP分析ツール',
-    description: 'AIがセグメンテーション・ターゲティング・ポジショニングを支援',
+    description: 'AIがセグメンテーション・ターゲティング・ポジショニングまでを一貫支援',
     href: '/tools/stp/app',
     buttonLabel: '始める',
     highlightButtonLabel: '続ける',
@@ -32,7 +32,7 @@ const SERVICES: ServiceCard[] = [
     id: 'persona',
     Icon: UserCircle,
     title: 'ペルソナビルダー',
-    description: 'AIがターゲット顧客の人物像とカスタマージャーニーを生成',
+    description: 'AIがターゲット顧客の人物像とカスタマージャーニーまでを自動で生成',
     href: '/tools/persona/app',
     buttonLabel: '始める',
     highlightButtonLabel: '続ける',
@@ -41,7 +41,7 @@ const SERVICES: ServiceCard[] = [
     id: 'colors',
     Icon: Palette,
     title: 'ブランドカラー定義ツール',
-    description: 'AIがブランドに最適なカラーパレットを3案提案します',
+    description: 'AIがブランドに最適なカラーパレットを3案まとめてご提案します',
     href: '/tools/colors/app',
     buttonLabel: '始める',
     highlightButtonLabel: '続ける',
@@ -50,7 +50,7 @@ const SERVICES: ServiceCard[] = [
     id: 'personality',
     Icon: Fingerprint,
     title: 'ブランドパーソナリティ診断',
-    description: '10問の質問からAIがブランドの人格をスコア・タイプで診断',
+    description: '10問の質問からAIがブランドの人格をスコアとタイプの両面で診断',
     href: '/tools/personality/app',
     buttonLabel: '始める',
     highlightButtonLabel: '続ける',
@@ -59,7 +59,7 @@ const SERVICES: ServiceCard[] = [
     id: 'platform',
     Icon: Building2,
     title: 'ブランド管理プラットフォーム',
-    description: 'ブランド掲示・名刺・KPI管理を一元管理',
+    description: 'ブランドの掲示・スマート名刺・浸透KPIまでを一つの画面で一元管理',
     href: '/portal',
     buttonLabel: '詳しく見る',
     highlightButtonLabel: 'ダッシュボードへ',
@@ -138,21 +138,71 @@ function ServiceSelectContent() {
 
   return (
     <div
-      className="flex min-h-screen flex-col items-center justify-center overflow-hidden bg-[#08080a] px-5 py-16 font-sans text-white"
-      style={{
-        background: [
-          'radial-gradient(ellipse 120% 90% at 12% 8%, rgba(49, 46, 129, 0.5) 0%, transparent 55%)',
-          'radial-gradient(ellipse 110% 90% at 88% 12%, rgba(168, 85, 247, 0.25) 0%, transparent 55%)',
-          'radial-gradient(ellipse 120% 100% at 50% 110%, rgba(37, 99, 235, 0.28) 0%, transparent 60%)',
-          '#08080a',
-        ].join(', '),
-      }}
+      className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-white px-5 py-16 font-sans text-white"
     >
-      <div className="mb-10 text-center">
-        <h1 className="mb-2 text-2xl font-bold tracking-tight text-white">
+      {/* 背景：ポータルのダッシュボードを「ブランク状態」で再現したモックをぼかして霞ませる（実データなし・操作不可の装飾） */}
+      <div className="pointer-events-none absolute inset-0 select-none overflow-hidden" aria-hidden="true">
+        <div className="absolute inset-0 origin-center scale-[1.12] opacity-95 blur-[13px]">
+          <div className="flex h-full w-full bg-gray-50">
+            {/* サイドバー */}
+            <div className="hidden w-60 shrink-0 flex-col border-r border-gray-200 bg-white p-4 md:flex">
+              <div className="mb-7 flex items-center gap-2 px-2">
+                <div className="h-7 w-7 rounded-lg bg-gray-900" />
+                <div className="h-4 w-24 rounded bg-gray-300" />
+              </div>
+              <div className="space-y-2">
+                <div className="h-9 rounded-lg bg-blue-100" />
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="h-9 rounded-lg bg-gray-100" />
+                ))}
+              </div>
+              <div className="mt-auto flex items-center gap-2 rounded-xl bg-gray-100 p-2.5">
+                <div className="h-8 w-8 rounded-full bg-gray-300" />
+                <div className="space-y-1.5">
+                  <div className="h-2.5 w-16 rounded bg-gray-300" />
+                  <div className="h-2 w-24 rounded bg-gray-200" />
+                </div>
+              </div>
+            </div>
+            {/* メイン */}
+            <div className="flex-1 overflow-hidden p-8">
+              <div className="mb-6 flex items-center justify-between">
+                <div className="space-y-2">
+                  <div className="h-6 w-44 rounded bg-gray-300" />
+                  <div className="h-3 w-28 rounded bg-gray-200" />
+                </div>
+                <div className="h-9 w-9 rounded-full bg-gray-200" />
+              </div>
+              <div className="mb-6 h-20 rounded-2xl bg-gradient-to-r from-blue-100 to-indigo-100" />
+              <div className="mb-6 grid grid-cols-3 gap-5">
+                {[['#3b82f6'], ['#10b981'], ['#a855f7']].map(([c], i) => (
+                  <div key={i} className="rounded-2xl border border-gray-200 bg-white p-5">
+                    <div className="mb-4 h-4 w-20 rounded bg-gray-200" />
+                    <div className="flex h-24 items-end gap-1.5">
+                      {Array.from({ length: 7 }).map((_, j) => (
+                        <div key={j} className="flex-1 rounded-t" style={{ height: `${30 + ((i * 7 + j) % 6) * 12}%`, background: c, opacity: 0.85 }} />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="grid grid-cols-3 gap-5">
+                <div className="col-span-2 h-60 rounded-2xl border border-gray-200 bg-white" />
+                <div className="h-60 rounded-2xl border border-gray-200 bg-white" />
+              </div>
+            </div>
+          </div>
+        </div>
+        {/* 白のすりガラス＋周辺フェード */}
+        <div className="absolute inset-0 bg-white/55 backdrop-blur-xl" />
+        <div className="absolute inset-0" style={{ background: 'radial-gradient(125% 95% at 50% 30%, transparent 0%, rgba(255,255,255,0.3) 60%, rgba(255,255,255,0.8) 100%)' }} />
+      </div>
+
+      <div className="relative z-10 mb-10 text-center">
+        <h1 className="mb-2 text-2xl font-bold tracking-tight text-gray-900">
           branding.bz へようこそ
         </h1>
-        <p className="m-0 text-sm text-white/55">
+        <p className="m-0 text-sm text-gray-500">
           利用したいサービスを選んでください
         </p>
       </div>
@@ -166,13 +216,13 @@ function ServiceSelectContent() {
               onClick={() => handleCardClick(service)}
               className={`group relative w-full overflow-hidden rounded-2xl border text-left transition-transform hover:scale-[1.02] ${
                 isHighlighted
-                  ? 'border-blue-400/40 bg-blue-500/10'
-                  : 'border-white/10 bg-white/[0.04] hover:bg-white/[0.07]'
+                  ? 'border-blue-400/40 bg-[#0d1326]'
+                  : 'border-white/10 bg-[#0c0c11] hover:border-white/20'
               }`}
               style={{
                 boxShadow: isHighlighted
-                  ? 'inset 0 1px 0 0 rgba(255,255,255,0.06), 0 24px 60px -20px rgba(37,99,235,0.5)'
-                  : 'inset 0 1px 0 0 rgba(255,255,255,0.05), 0 24px 60px -24px rgba(0,0,0,0.8)',
+                  ? 'inset 0 1px 0 0 rgba(255,255,255,0.06), 0 18px 40px -16px rgba(37,99,235,0.45)'
+                  : 'inset 0 1px 0 0 rgba(255,255,255,0.05), 0 18px 40px -20px rgba(0,0,0,0.45)',
               }}
             >
               <div className="relative z-10 flex items-center gap-4 p-5">
@@ -213,7 +263,7 @@ function ServiceSelectContent() {
         })}
       </div>
 
-      <p className="relative z-10 mt-8 text-xs text-white/40">
+      <p className="relative z-10 mt-8 text-xs text-gray-400">
         今後もツールが追加されます
       </p>
 
@@ -222,7 +272,7 @@ function ServiceSelectContent() {
           await supabase.auth.signOut()
           router.replace('/portal/auth')
         }}
-        className="relative z-10 mt-4 text-xs text-white/40 underline transition-colors hover:text-white/70"
+        className="relative z-10 mt-4 text-xs text-gray-400 underline transition-colors hover:text-gray-600"
       >
         ログアウト
       </button>

@@ -14,17 +14,17 @@ const CONCEPT_CARDS = [
 
 const STEPS = [
   { icon: '1', title: '基本情報入力', description: '業種・事業内容と診断タイプの選択' },
-  { icon: '2', title: '診断質問（前半）', description: '言われたい姿・距離感など5問' },
-  { icon: '3', title: '診断質問（後半）', description: '価値観・語り口など5問' },
-  { icon: '4', title: 'AI診断', description: 'AIがブランドの人格を生成' },
-  { icon: '5', title: '結果・出力', description: '微調整してPDF出力・本体連携' },
+  { icon: '2', title: '診断質問（前半）', description: 'ブランドの言われたい姿・距離感など5問' },
+  { icon: '3', title: '診断質問（後半）', description: '自社が大切にする価値観・語り口など5問' },
+  { icon: '4', title: 'AI診断', description: 'AIが回答をもとにブランドの人格を生成' },
+  { icon: '5', title: '結果・出力', description: '結果を微調整してPDF出力・本体に連携' },
 ]
 
 const HIGHLIGHTS = [
-  { label: 'AI診断', icon: Sparkles, title: ['10問の回答から', 'AIが人格を生成'], description: '選択式中心の10問に答えるだけ。スコアもタイプも1回の診断で同時に算出し、タブで切り替えて見られます。' },
-  { label: '微調整', icon: SlidersHorizontal, title: ['スコアを', '自分の感覚で調整'], description: 'AIの診断結果はスライダーで微調整可能。「ここはもう少し誠実寄り」という肌感覚を反映できます。' },
+  { label: 'AI診断', icon: Sparkles, title: ['10問の回答から', 'AIが人格を生成'], description: '選択式中心の10問に答えるだけ。スコアもタイプも1回で同時に算出し、タブで切り替えられます。' },
+  { label: '微調整', icon: SlidersHorizontal, title: ['スコアを', '自分の感覚で調整'], description: '診断結果はスライダーで微調整可能。「ここは少し誠実寄り」という肌感覚を反映できます。' },
   { label: '出力', icon: Download, title: ['診断結果を', 'PDFでダウンロード'], description: '人格スコア・タイプカード・トーンオブボイスをまとめたレポートをワンクリックでPDF出力。' },
-  { label: '連携', icon: Unplug, title: ['ワンクリックで', 'branding.bz に連携'], description: '確定した人格をブランディングプラットフォームに登録。トーン・期待タグまでブランド運用に即反映。' },
+  { label: '連携', icon: Unplug, title: ['ワンクリックで', 'branding.bz に連携'], description: '確定した人格をブランディングプラットフォームに登録。トーン・期待タグも運用に即反映。' },
 ]
 
 /* LP準拠のダークグラスカード */
@@ -162,7 +162,7 @@ export default function PersonalityLandingPage() {
             </div>
             <h2 className="text-balance text-3xl font-bold tracking-tight md:text-5xl">今すぐブランドの人格を診断する</h2>
             <p className="mx-auto mt-6 max-w-xl text-lg text-white/60">
-              ブランドは、作った瞬間から走り出す。branding.bz で、その加速を始めませんか。
+              ブランドは、作った瞬間から走り出す。<br />branding.bz で、その加速を始めませんか。
             </p>
             <div className="mt-10">
               <Link

@@ -7,9 +7,9 @@ import Nav from '@/components/lp/Nav'
 import Footer from '@/components/Footer'
 
 const STP_CARDS = [
-  { label: 'S（Segmentation）', icon: LayoutGrid, title: '市場を細分化する', description: '顧客の特性や行動パターンから、市場を意味のあるグループに分類します。' },
-  { label: 'T（Targeting）', icon: Target, title: '狙う市場を決める', description: 'セグメントを評価し、自社が最も価値を提供できるターゲットを選定します。' },
-  { label: 'P（Positioning）', icon: MapPin, title: '独自のポジションを築く', description: '競合との差別化ポイントを明確にし、ポジショニングマップで可視化します。' },
+  { label: 'S（Segmentation）', icon: LayoutGrid, title: '市場を細分化する', description: '顧客の年齢・価値観・購買行動などの特性をもとに、市場を意味のある複数のグループへ細かく分類していきます。' },
+  { label: 'T（Targeting）', icon: Target, title: '狙う市場を決める', description: '細分化した各セグメントの市場規模や魅力度を評価し、自社が最も大きな価値を提供できるターゲットを選定します。' },
+  { label: 'P（Positioning）', icon: MapPin, title: '独自のポジションを築く', description: '競合にはない自社独自の差別化ポイントを明確にし、市場の立ち位置をポジショニングマップで明快に可視化します。' },
 ]
 
 const STEPS = [
@@ -22,7 +22,7 @@ const STEPS = [
 
 const HIGHLIGHTS = [
   { label: 'AI提案', icon: Lightbulb, title: ['AI自動', 'セグメント提案'], description: '業種や商品特性をもとに、最適なセグメント変数をAIが自動提案。市場分析を大幅に短縮します。' },
-  { label: 'マップ', icon: SlidersHorizontal, title: ['インタラクティブ', 'ポジショニングマップ'], description: 'スライダーで直感的に自社・競合をマップ上に配置。ポジショニングの空白地帯が一目でわかります。' },
+  { label: 'マップ', icon: SlidersHorizontal, title: ['インタラクティブ', 'ポジショニングマップ'], description: 'スライダーで直感的に自社・競合を配置。ポジショニングの空白地帯が一目でわかります。' },
   { label: '出力', icon: Download, title: ['PDF・画像を', 'ワンクリック出力'], description: '分析結果をPDFでワンクリックダウンロード。ポジショニングマップも画像で保存できます。' },
   { label: '連携', icon: Unplug, title: ['ワンクリックで', 'branding.bz に連携'], description: '確定したSTP分析をブランディングプラットフォームに登録。ブランド戦略に即反映。' },
 ]
@@ -92,7 +92,7 @@ export default function STPLandingPage() {
                 href="/portal/auth?from=stp"
                 className="inline-flex h-12 items-center gap-2 rounded-full bg-white px-8 text-base font-semibold text-black transition-transform hover:scale-105"
               >
-                無料でSTP分析を始める <ArrowRight size={18} />
+                無料で始める <ArrowRight size={18} />
               </Link>
             </div>
           </div>
@@ -162,14 +162,14 @@ export default function STPLandingPage() {
             </div>
             <h2 className="text-balance text-3xl font-bold tracking-tight md:text-5xl">今すぐSTP分析を始める</h2>
             <p className="mx-auto mt-6 max-w-xl text-lg text-white/60">
-              ブランドは、作った瞬間から走り出す。branding.bz で、その加速を始めませんか。
+              ブランドは、作った瞬間から走り出す。<br />branding.bz で、その加速を始めませんか。
             </p>
             <div className="mt-10">
               <Link
                 href="/portal/auth?from=stp"
                 className="inline-flex h-12 items-center gap-2 rounded-full bg-white px-10 text-base font-semibold text-black transition-transform hover:scale-105"
               >
-                無料でSTP分析を始める <ArrowRight size={18} />
+                無料で始める <ArrowRight size={18} />
               </Link>
             </div>
           </div>

@@ -156,7 +156,7 @@ export default function ColorsLandingPage() {
               href="/portal/auth?from=colors"
               className="inline-flex h-12 items-center gap-2 rounded-full bg-white px-8 text-base font-semibold text-black transition-transform hover:scale-105"
             >
-              無料でカラーを作る <ArrowRight size={18} />
+              無料で始める <ArrowRight size={18} />
             </Link>
           </div>
         </div>
@@ -257,14 +257,14 @@ export default function ColorsLandingPage() {
             </div>
             <h2 className="text-balance text-3xl font-bold tracking-tight md:text-5xl">今すぐカラーパレットを作成</h2>
             <p className="mx-auto mt-6 max-w-xl text-lg text-white/60">
-              ブランドは、作った瞬間から走り出す。branding.bz で、その加速を始めませんか。
+              ブランドは、作った瞬間から走り出す。<br />branding.bz で、その加速を始めませんか。
             </p>
             <div className="mt-10">
               <Link
                 href="/portal/auth?from=colors"
                 className="inline-flex h-12 items-center gap-2 rounded-full bg-white px-10 text-base font-semibold text-black transition-transform hover:scale-105"
               >
-                無料でカラーを作る <ArrowRight size={18} />
+                無料で始める <ArrowRight size={18} />
               </Link>
             </div>
           </div>
