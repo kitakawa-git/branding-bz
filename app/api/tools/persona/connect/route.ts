@@ -57,6 +57,7 @@ export async function POST(request: NextRequest) {
         gender: demographics.gender || '',
         occupation: demographics.occupation || '',
         description: demographics.description || '',
+        avatar_emoji: demographics.avatar_emoji || '',
         company_role: demographics.company_role || '',
         company_size: demographics.company_size || '',
         media_channels: demographics.media_channels || [],
@@ -73,6 +74,7 @@ export async function POST(request: NextRequest) {
       return {
         name: demographics.persona_name || '',
         sort_order: i,
+        avatar_emoji: demographics.avatar_emoji || '', // 離散カラム（管理画面・ポータルが参照）
         persona_data: personaData,
         journey_map_data: journeyMapData,
         ...mapped,

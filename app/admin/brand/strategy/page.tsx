@@ -17,7 +17,8 @@ import { type PortalSubtitles } from '@/lib/portal-subtitles'
 import { Label } from '@/components/ui/label'
 import { Slider } from '@/components/ui/slider'
 import { PositioningMap } from '@/components/PositioningMap'
-import { Plus, Trash2, Check, WandSparkles, Loader2 } from 'lucide-react'
+import { Plus, Trash2, Check, WandSparkles, Loader2, UserCircle } from 'lucide-react'
+import { AVATAR_EMOJIS } from '@/lib/persona/avatars'
 import { Fab, FabButton } from '@/components/ui/fab'
 import { TitleDescriptionList } from '@/components/shared/TitleDescriptionList'
 import { TargetSuggestDialog, type TargetSuggestion } from '@/components/brand/TargetSuggestDialog'
@@ -28,6 +29,7 @@ type PersonaItem = {
   // id は保存時の id保持sync 用（既存行はUPDATE・新規はINSERT）。新規入力時は未定義。
   id?: string
   name: string
+  avatar_emoji: string // 顔アイコン（絵文字）。Persona Builder→connect で来る・ここで編集
   age_range: string
   occupation: string
   description: string
@@ -68,6 +70,7 @@ type ProvidedValueItem = {
 
 const emptyPersona = (): PersonaItem => ({
   name: '',
+  avatar_emoji: '',
   age_range: '',
   occupation: '',
   description: '',
@@ -117,6 +120,7 @@ export default function BrandStrategyPage() {
   const [segmentationData, setSegmentationData] = useState<SegmentationData | null>(cached?.segmentationData ?? null)
   const [providedValues, setProvidedValues] = useState<ProvidedValueItem[]>(cached?.providedValues ?? [])
   const [personas, setPersonas] = useState<PersonaItem[]>(cached?.personas ?? [])
+  const [openAvatarIdx, setOpenAvatarIdx] = useState<number | null>(null)
   const [positioningMapData, setPositioningMapData] = useState<PositioningMapData | null>(cached?.positioningMapData ?? null)
   const [loading, setLoading] = useState(!cached)
   const [fetchError, setFetchError] = useState('')
@@ -191,6 +195,7 @@ export default function BrandStrategyPage() {
         const parsedPersonas = data.map((d: Record<string, unknown>) => ({
           id: (d.id as string) || undefined,
           name: (d.name as string) || '',
+          avatar_emoji: (d.avatar_emoji as string) || '',
           age_range: (d.age_range as string) || '',
           occupation: (d.occupation as string) || '',
           description: (d.description as string) || '',
@@ -534,6 +539,7 @@ export default function BrandStrategyPage() {
       // target / positioning_map_data / segmentation_data は従来どおり先頭行(row0)にのみ載せる。
       const buildPersonaPayload = (p: PersonaItem, i: number) => ({
         name: p.name,
+        avatar_emoji: p.avatar_emoji || null,
         age_range: p.age_range || null,
         occupation: p.occupation || null,
         description: p.description || null,
@@ -848,6 +854,38 @@ export default function BrandStrategyPage() {
                     >
                       <Trash2 size={14} />
                     </Button>
+                  </div>
+
+                  <div className="mb-5">
+                    <h2 className="text-xs font-bold mb-3">顔アイコン</h2>
+                    <div className="relative w-fit">
+                      <button
+                        type="button"
+                        onClick={() => setOpenAvatarIdx(openAvatarIdx === index ? null : index)}
+                        title="顔アイコンを変更"
+                        className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 transition hover:ring-2 hover:ring-ds-app-accent/40"
+                      >
+                        {persona.avatar_emoji
+                          ? <span className="text-3xl leading-none" role="img" aria-label="顔アイコン">{persona.avatar_emoji}</span>
+                          : <UserCircle className="h-10 w-10 text-gray-400" />}
+                      </button>
+                      {openAvatarIdx === index && (
+                        <div className="absolute left-0 top-14 z-20 w-56 rounded-lg border border-border bg-white p-2 shadow-lg">
+                          <div className="grid grid-cols-6 gap-1">
+                            {AVATAR_EMOJIS.map(em => (
+                              <button
+                                key={em}
+                                type="button"
+                                onClick={() => { updatePersona(index, 'avatar_emoji', persona.avatar_emoji === em ? '' : em); setOpenAvatarIdx(null) }}
+                                className={`flex h-8 w-8 items-center justify-center rounded text-lg hover:bg-muted ${persona.avatar_emoji === em ? 'bg-ds-app-accent/5 ring-1 ring-ds-app-accent' : ''}`}
+                              >
+                                {em}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div className="mb-5">
