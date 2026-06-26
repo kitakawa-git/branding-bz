@@ -10,6 +10,7 @@ import { BrandFontLoader } from '@/components/BrandFontLoader'
 import { getCssFontFamily } from '@/lib/brand-fonts'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { PersonaCarousel } from './PersonaCarousel'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
 import { BrandPageTracker } from '@/components/analytics/BrandPageTracker'
 import {
@@ -22,11 +23,13 @@ import type { PositioningMapData } from '@/lib/types/positioning-map'
 
 type Persona = {
   name: string
+  avatar_emoji: string | null
   age_range: string | null
   occupation: string | null
   description: string | null
   needs: string[]
   pain_points: string[]
+  brand_expectations: string | null
 }
 
 // 主なターゲット（管理画面で編集する companies.target_segments）
@@ -79,7 +82,7 @@ export default function PortalStrategyPage() {
       fetchWithRetry(() =>
         supabase
           .from('brand_personas')
-          .select('name, age_range, occupation, description, needs, pain_points, target, positioning_map_url, positioning_map_data, segmentation_data, sort_order')
+          .select('name, avatar_emoji, age_range, occupation, description, needs, pain_points, brand_expectations, target, positioning_map_url, positioning_map_data, segmentation_data, sort_order')
           .eq('company_id', companyId)
           .order('sort_order')
       ),
@@ -129,11 +132,13 @@ export default function PortalStrategyPage() {
         parsedSegmentation = (first.segmentation_data as SegmentationData) || null
         parsedPersonas = data.map((rec) => ({
           name: (rec.name as string) || '',
+          avatar_emoji: (rec.avatar_emoji as string) || null,
           age_range: (rec.age_range as string) || null,
           occupation: (rec.occupation as string) || null,
           description: (rec.description as string) || null,
           needs: (rec.needs as string[]) || [],
           pain_points: (rec.pain_points as string[]) || [],
+          brand_expectations: (rec.brand_expectations as string) || null,
         }))
       }
       setTarget(parsedTarget)
@@ -261,19 +266,30 @@ export default function PortalStrategyPage() {
               {validPersonas.length > 0 && (
                 <div>
                   <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">ペルソナ</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <PersonaCarousel>
                 {validPersonas.map((persona, i) => (
-                  <div key={i} className="rounded-lg border border-border bg-background p-5">
+                  <div key={i} className="rounded-lg border border-border bg-background p-5 h-full">
                   <div className="mb-3">
-                    <p className="text-base font-bold text-foreground mb-0.5 m-0">
-                      {persona.name}
-                    </p>
+                    <div className="flex items-center gap-3 mb-1">
+                      {persona.avatar_emoji && (
+                        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-muted text-2xl leading-none" role="img" aria-label="顔アイコン">
+                          {persona.avatar_emoji}
+                        </span>
+                      )}
+                      <p className="text-base font-bold text-foreground m-0 min-w-0">
+                        {persona.name}
+                      </p>
+                    </div>
                     <p className="text-base sm:text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0">
                       {[persona.age_range, persona.occupation].filter(Boolean).join(' / ')}
                     </p>
                   </div>
 
-                  {persona.description && (
+                  {/* 説明は実文のみ表示。連携時に説明が空だと persona-mapping が「職業・規模」を
+                      description に充てるため、メタ行の職業と重複する。その種のフォールバックは出さない。 */}
+                  {persona.description
+                    && persona.description !== persona.occupation
+                    && !(persona.occupation && persona.description.startsWith(persona.occupation + '・')) && (
                     <p className="text-base sm:text-sm text-muted-foreground leading-relaxed mb-4 m-0">
                       {persona.description}
                     </p>
@@ -304,9 +320,18 @@ export default function PortalStrategyPage() {
                       </div>
                     </div>
                   )}
+
+                  {persona.brand_expectations && (
+                    <div className="mt-3">
+                      <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2 m-0">ブランドへの期待</p>
+                      <p className="text-base sm:text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap m-0">
+                        {persona.brand_expectations}
+                      </p>
+                    </div>
+                  )}
                   </div>
                 ))}
-              </div>
+              </PersonaCarousel>
                 </div>
               )}
             </CardContent>
