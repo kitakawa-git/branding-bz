@@ -23,11 +23,15 @@ const buttonVariants = cva(
           "border border-destructive/30 text-destructive bg-background shadow-sm hover:bg-destructive/10",
       },
       size: {
-        // 大中小（モバイル基準）: default(h-9)=小・入力欄と整列 / sm=小(h-9に統一) / lg=大(h-12)
-        // 中(h-11)・大(h-12)は主要ボタンで className/size を明示して使う
+        // サイズ体系（モバイル基準）:
+        //   sm      = 小（h-9 / text-xs）
+        //   default = 標準（h-9 / 入力欄と整列）
+        //   lg ＝ L（大）… 本システムの主要CTA標準サイズ:
+        //         高さ48px(h-12) / 文字16px(text-base) / semibold / 丸ピル(rounded-full) / px-8
+        //         （全幅にしたい場合は使用側で w-full を付与）
         default: "h-9 px-4 py-2",
         sm: "h-9 rounded-full px-3 text-xs",
-        lg: "h-12 rounded-full px-8",
+        lg: "h-12 rounded-full px-8 text-base font-semibold",
         icon: "h-9 w-9",
       },
     },

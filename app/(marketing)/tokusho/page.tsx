@@ -74,42 +74,42 @@ export default function TokushoPage() {
       {/* ヒーロー */}
       <section className="px-6 pt-[120px] pb-16 md:pt-[120px] md:pb-24 text-center">
         <div className="mx-auto max-w-4xl">
-          <p className="text-xs font-semibold tracking-[0.25em] text-gray-400 uppercase mb-4">
+          <p className="text-xs font-semibold tracking-[0.25em] text-white/40 uppercase mb-4">
             Legal
           </p>
-          <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-gray-900 leading-snug md:leading-snug">
+          <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-white leading-snug md:leading-snug">
             特定商取引法に基づく表記
           </h1>
-          <p className="mt-6 text-lg md:text-xl text-gray-700 leading-relaxed max-w-2xl mx-auto">
+          <p className="mt-6 text-lg md:text-xl text-white/50 leading-relaxed max-w-2xl mx-auto">
             最終更新日：2026年3月10日
           </p>
         </div>
       </section>
 
       {/* テーブル */}
-      <section className="bg-white px-6 pb-16 md:pb-24">
+      <section className="px-6 pb-16 md:pb-24">
         <div className="mx-auto max-w-4xl">
-        <div className="border border-gray-200 rounded-xl overflow-hidden">
+        <div className="border border-white/10 rounded-xl overflow-hidden">
           <table className="w-full text-sm">
             <tbody>
               {rows.map((row, i) => (
                 <tr
                   key={row.label}
-                  className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
+                  className={i % 2 === 0 ? 'bg-transparent' : 'bg-white/5'}
                 >
-                  <th className="w-40 md:w-52 px-5 py-4 text-left font-semibold text-gray-700 align-top whitespace-nowrap border-b border-gray-100">
+                  <th className="w-40 md:w-52 px-5 py-4 text-left font-semibold text-white/80 align-top whitespace-nowrap border-b border-white/10">
                     {row.label}
                   </th>
-                  <td className="px-5 py-4 text-gray-600 leading-relaxed border-b border-gray-100">
+                  <td className="px-5 py-4 text-white/70 leading-relaxed border-b border-white/10">
                     {row.link ? (
-                      <a href={row.link} className="text-blue-600 hover:underline">
+                      <a href={row.link} className="text-blue-400 hover:text-blue-300 hover:underline">
                         {row.value}
                       </a>
                     ) : (
                       <>
                         {row.value}
                         {row.href && (
-                          <a href={row.href} className="ml-3 text-blue-600 hover:underline text-xs">
+                          <a href={row.href} className="ml-3 text-blue-400 hover:text-blue-300 hover:underline text-xs">
                             {row.hrefLabel} →
                           </a>
                         )}
@@ -122,9 +122,9 @@ export default function TokushoPage() {
           </table>
         </div>
 
-        <p className="mt-8 text-xs text-gray-400 leading-relaxed">
+        <p className="mt-8 text-xs text-white/40 leading-relaxed">
           ※ 本表記は特定商取引に関する法律第11条に基づき掲載しています。
-          お問い合わせは <a href="mailto:bz@include.bz" className="text-blue-600 hover:underline">bz@include.bz</a> までご連絡ください。
+          お問い合わせは <a href="mailto:bz@include.bz" className="text-blue-400 hover:text-blue-300 hover:underline">bz@include.bz</a> までご連絡ください。
         </p>
         </div>
       </section>

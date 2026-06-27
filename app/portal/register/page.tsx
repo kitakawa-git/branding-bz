@@ -13,7 +13,7 @@ import { ShieldAlert } from 'lucide-react'
 export default function PortalRegisterPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-white flex items-center justify-center font-sans text-muted-foreground">
+      <div className="min-h-screen bg-[#08080a] flex items-center justify-center font-sans text-white/55">
         読み込み中...
       </div>
     }>
@@ -120,7 +120,7 @@ function PortalRegisterContent() {
   // トークン検証中
   if (tokenValid === null) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center font-sans text-muted-foreground">
+      <div className="min-h-screen bg-[#08080a] flex items-center justify-center font-sans text-white/55">
         招待リンクを確認中...
       </div>
     )
@@ -129,16 +129,19 @@ function PortalRegisterContent() {
   // 無効なトークン
   if (tokenValid === false) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center font-sans">
-        <Card className="max-w-[400px] w-full mx-5 bg-[hsl(0_0%_97%)] border shadow-none">
+      <div className="min-h-screen bg-[#08080a] flex items-center justify-center font-sans text-white">
+        <Card
+          className="max-w-[400px] w-full mx-5 border border-white/10 shadow-none"
+          style={{ background: '#0c0c11', boxShadow: 'inset 0 1px 0 0 rgba(255,255,255,0.06), 0 24px 60px -20px rgba(0,0,0,0.45)' }}
+        >
           <CardContent className="p-10 text-center">
-            <div className="mb-4 flex justify-center text-muted-foreground">
+            <div className="mb-4 flex justify-center text-white/55">
               <ShieldAlert size={48} />
             </div>
-            <h2 className="text-xl font-bold text-foreground mb-3">
+            <h2 className="text-xl font-bold text-white mb-3">
               無効な招待リンク
             </h2>
-            <p className="text-base sm:text-sm text-muted-foreground m-0 leading-relaxed">
+            <p className="text-base sm:text-sm text-white/55 m-0 leading-relaxed">
               この招待リンクは無効または期限切れです。管理者に新しいリンクを発行してもらってください。
             </p>
           </CardContent>
@@ -149,14 +152,27 @@ function PortalRegisterContent() {
 
   // 登録フォーム
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center font-sans">
-      <Card className="w-full max-w-[400px] mx-5 bg-[hsl(0_0%_97%)] border shadow-none">
+    <div
+      className="min-h-screen flex items-center justify-center font-sans text-white"
+      style={{
+        background: [
+          'radial-gradient(ellipse 120% 90% at 12% 8%, rgba(49,46,129,0.5) 0%, transparent 55%)',
+          'radial-gradient(ellipse 110% 90% at 88% 12%, rgba(168,85,247,0.25) 0%, transparent 55%)',
+          'radial-gradient(ellipse 120% 100% at 50% 110%, rgba(37,99,235,0.28) 0%, transparent 60%)',
+          '#08080a',
+        ].join(', '),
+      }}
+    >
+      <Card
+        className="w-full max-w-[400px] mx-5 border border-white/10 shadow-none"
+        style={{ background: '#0c0c11', boxShadow: 'inset 0 1px 0 0 rgba(255,255,255,0.06), 0 24px 60px -20px rgba(0,0,0,0.45)' }}
+      >
         <CardContent className="p-10">
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-foreground mb-2">
+            <h1 className="text-2xl font-bold text-white mb-2">
               branding.bz
             </h1>
-            <p className="text-sm text-muted-foreground m-0">
+            <p className="text-sm text-white/55 m-0">
               メンバー登録
             </p>
             {companyName && (
@@ -167,38 +183,38 @@ function PortalRegisterContent() {
           </div>
 
           {error && (
-            <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg text-sm mb-4">
+            <div className="border border-red-500/30 bg-red-500/10 text-red-300 px-4 py-3 rounded-lg text-sm mb-4">
               {error}
             </div>
           )}
 
           <form onSubmit={handleRegister}>
             <div className="mb-5">
-              <Label className="mb-1.5 font-bold">表示名</Label>
+              <Label className="mb-1.5 text-sm font-semibold text-white/70">表示名</Label>
               <Input
                 type="text"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 placeholder="山田太郎"
                 required
-                className="h-11"
+                className="h-11 bg-white/[0.04] border-white/15 text-white placeholder:text-white/30 focus-visible:ring-white/30"
               />
             </div>
 
             <div className="mb-5">
-              <Label className="mb-1.5 font-bold">メールアドレス</Label>
+              <Label className="mb-1.5 text-sm font-semibold text-white/70">メールアドレス</Label>
               <Input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="member@example.com"
                 required
-                className="h-11"
+                className="h-11 bg-white/[0.04] border-white/15 text-white placeholder:text-white/30 focus-visible:ring-white/30"
               />
             </div>
 
             <div className="mb-5">
-              <Label className="mb-1.5 font-bold">パスワード（8文字以上）</Label>
+              <Label className="mb-1.5 text-sm font-semibold text-white/70">パスワード（8文字以上）</Label>
               <Input
                 type="password"
                 value={password}
@@ -206,26 +222,26 @@ function PortalRegisterContent() {
                 placeholder="パスワードを入力"
                 required
                 minLength={8}
-                className="h-11"
+                className="h-11 bg-white/[0.04] border-white/15 text-white placeholder:text-white/30 focus-visible:ring-white/30"
               />
             </div>
 
             <div className="mb-5">
-              <Label className="mb-1.5 font-bold">パスワード確認</Label>
+              <Label className="mb-1.5 text-sm font-semibold text-white/70">パスワード確認</Label>
               <Input
                 type="password"
                 value={passwordConfirm}
                 onChange={(e) => setPasswordConfirm(e.target.value)}
                 placeholder="もう一度入力"
                 required
-                className="h-11"
+                className="h-11 bg-white/[0.04] border-white/15 text-white placeholder:text-white/30 focus-visible:ring-white/30"
               />
             </div>
 
             <Button
               type="submit"
               disabled={loading}
-              className="w-full h-11 text-base font-bold"
+              className="w-full h-11 rounded-full text-base font-bold text-black bg-white transition-transform hover:scale-[1.02] disabled:opacity-50"
             >
               {loading ? '登録中...' : '登録する'}
             </Button>

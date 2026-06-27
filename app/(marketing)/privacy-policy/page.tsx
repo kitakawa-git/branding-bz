@@ -11,21 +11,21 @@ export default function PrivacyPolicyPage() {
       {/* ヒーロー */}
       <section className="px-6 pt-[120px] pb-16 md:pt-[120px] md:pb-24 text-center">
         <div className="mx-auto max-w-4xl">
-          <p className="text-xs font-semibold tracking-[0.25em] text-gray-400 uppercase mb-4">
+          <p className="text-xs font-semibold tracking-[0.25em] text-white/40 uppercase mb-4">
             Privacy Policy
           </p>
-          <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-gray-900 leading-snug md:leading-snug">
+          <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-white leading-snug md:leading-snug">
             プライバシーポリシー
           </h1>
-          <p className="mt-6 text-lg md:text-xl text-gray-700 leading-relaxed max-w-2xl mx-auto">
+          <p className="mt-6 text-lg md:text-xl text-white/50 leading-relaxed max-w-2xl mx-auto">
             最終更新日：2026年3月10日
           </p>
         </div>
       </section>
 
       {/* 本文 */}
-      <section className="bg-white px-6 pb-16 md:pb-24">
-        <div className="mx-auto max-w-4xl space-y-10 text-sm leading-relaxed text-gray-700">
+      <section className="px-6 pb-16 md:pb-24">
+        <div className="mx-auto max-w-4xl space-y-10 text-sm leading-relaxed text-white/70">
 
           <p>
             ID INC.（アイディー株式会社、以下「当社」といいます。）は、当社が運営するブランディング支援プラットフォーム
@@ -134,10 +134,10 @@ export default function PrivacyPolicyPage() {
 
           <Section title="第12条（お問い合わせ窓口）">
             <p>本ポリシーに関するお問い合わせは、以下の窓口までお願いいたします。</p>
-            <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-6 space-y-1">
-              <p className="font-semibold text-gray-900">ID INC.（アイディー株式会社）</p>
-              <p>メール：<a href="mailto:bz@include.bz" className="text-blue-600 hover:underline">bz@include.bz</a></p>
-              <p>電話：<a href="tel:0442813088" className="text-blue-600 hover:underline">044-281-3088</a></p>
+            <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] p-6 space-y-1">
+              <p className="font-semibold text-white">ID INC.（アイディー株式会社）</p>
+              <p>メール：<a href="mailto:bz@include.bz" className="text-blue-400 hover:text-blue-300 hover:underline">bz@include.bz</a></p>
+              <p>電話：<a href="tel:0442813088" className="text-blue-400 hover:text-blue-300 hover:underline">044-281-3088</a></p>
             </div>
           </Section>
 
@@ -151,7 +151,7 @@ export default function PrivacyPolicyPage() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section>
-      <h2 className="text-base font-bold text-gray-900 mb-3 pb-2 border-b border-gray-200">{title}</h2>
+      <h2 className="text-base font-bold text-white mb-3 pb-2 border-b border-white/10">{title}</h2>
       <div className="space-y-2">{children}</div>
     </section>
   )
@@ -159,7 +159,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 function Ol({ children }: { children: React.ReactNode }) {
   return (
-    <ol className="ml-4 list-decimal space-y-2 marker:text-gray-400">
+    <ol className="ml-4 list-decimal space-y-2 marker:text-white/40">
       {children}
     </ol>
   )

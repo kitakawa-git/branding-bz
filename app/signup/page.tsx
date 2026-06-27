@@ -186,45 +186,35 @@ export default function SignupPage() {
 
   return (
     <div
-      className="flex min-h-screen flex-col items-center justify-center font-sans px-5 py-16"
+      className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden font-sans text-white px-5 py-16"
       style={{
         background: [
-          'radial-gradient(ellipse 180% 160% at 5% 20%, rgba(196, 181, 253, 0.5) 0%, transparent 55%)',
-          'radial-gradient(ellipse 160% 140% at 85% 10%, rgba(253, 186, 116, 0.4) 0%, transparent 55%)',
-          'radial-gradient(ellipse 150% 130% at 50% 90%, rgba(167, 243, 208, 0.45) 0%, transparent 55%)',
-          'radial-gradient(ellipse 130% 110% at 95% 65%, rgba(251, 207, 232, 0.4) 0%, transparent 55%)',
-          '#ffffff',
+          'radial-gradient(ellipse 120% 90% at 12% 8%, rgba(49,46,129,0.5) 0%, transparent 55%)',
+          'radial-gradient(ellipse 110% 90% at 88% 12%, rgba(168,85,247,0.25) 0%, transparent 55%)',
+          'radial-gradient(ellipse 120% 100% at 50% 110%, rgba(37,99,235,0.28) 0%, transparent 60%)',
+          '#08080a',
         ].join(', '),
       }}
     >
       <div
-        className="relative w-full max-w-[460px] rounded-2xl overflow-hidden"
+        className="relative w-full max-w-[460px] rounded-3xl overflow-hidden border border-white/15"
         style={{
-          background: 'rgba(255, 255, 255, 0.7)',
-          backdropFilter: 'blur(12px) saturate(120%)',
-          WebkitBackdropFilter: 'blur(12px) saturate(120%)',
-          border: '1px solid rgba(255, 255, 255, 0.8)',
-          boxShadow: '0px 8px 24px 0 rgba(12, 74, 110, 0.12), inset 0px 0px 4px 2px rgba(255, 255, 255, 0.15)',
+          background: 'linear-gradient(135deg, rgba(18,20,29,0.88) 0%, rgba(5,6,10,0.93) 100%)',
+          backdropFilter: 'blur(22px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(22px) saturate(180%)',
+          boxShadow: 'inset 0 1px 0 0 rgba(255,255,255,0.38), inset 0 -8px 24px -8px rgba(255,255,255,0.05), 0 24px 60px -20px rgba(0,0,0,0.5)',
         }}
       >
-        {/* リフレクション */}
-        <div className="absolute inset-0 pointer-events-none rounded-2xl"
-          style={{ background: 'linear-gradient(to left top, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 50%)' }} />
-        <div className="absolute inset-0 pointer-events-none rounded-2xl"
-          style={{ background: 'linear-gradient(to bottom, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0) 100%)' }} />
+        {/* スペキュラ（液体ガラスの艶） */}
+        <div className="absolute inset-0 pointer-events-none rounded-3xl"
+          style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0) 42%)' }} />
+        <div className="absolute inset-x-0 top-0 h-px pointer-events-none"
+          style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent)' }} />
 
         <div className="relative z-10 p-10">
           {/* タイトル */}
           <div className="text-center mb-6">
-            {/* ロゴクリックでトップページへ遷移（相対パス＝現在のドメインのトップ） */}
-            <Link href="/" className="inline-block mb-3 no-underline transition-opacity hover:opacity-80">
-              <img
-                src="/logo.svg"
-                alt="branding.bz"
-                style={{ height: '40px', width: 'auto' }}
-              />
-            </Link>
-            <p className="text-base text-gray-500 m-0">
+            <p className="text-base text-white m-0">
               無料アカウント登録
             </p>
           </div>
@@ -241,17 +231,17 @@ export default function SignupPage() {
                     <div
                       className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
                       style={{
-                        backgroundColor: isDone || isActive ? 'var(--ds-app-accent)' : 'rgba(0,0,0,0.06)',
-                        color: isDone || isActive ? '#fff' : 'rgba(0,0,0,0.4)',
+                        backgroundColor: isDone || isActive ? 'var(--ds-app-accent)' : 'rgba(255,255,255,0.1)',
+                        color: isDone || isActive ? '#fff' : 'rgba(255,255,255,0.5)',
                       }}
                     >
                       {isDone ? '✓' : stepNum}
                     </div>
-                    <span className={`text-xs ${isActive ? 'text-gray-900 font-bold' : 'text-gray-400'}`}>
+                    <span className={`whitespace-nowrap text-xs ${isActive ? 'text-white font-bold' : 'text-white/40'}`}>
                       {label}
                     </span>
                     {i < stepLabels.length - 1 && (
-                      <div className="w-6 h-px bg-gray-200 ml-1" />
+                      <div className="w-4 h-px shrink-0 bg-white/15 ml-1" />
                     )}
                   </div>
                 )
@@ -261,7 +251,7 @@ export default function SignupPage() {
 
           {/* エラー */}
           {error && (
-            <div className="mb-4 whitespace-pre-wrap break-words rounded-lg bg-red-50/80 px-4 py-3 text-sm text-red-600">
+            <div className="mb-4 whitespace-pre-wrap break-words rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
               {error}
             </div>
           )}
@@ -271,29 +261,22 @@ export default function SignupPage() {
             {step === 1 && (
               <>
                 <div className="mb-5">
-                  <h2 className="mb-1.5 text-base font-bold text-gray-700">メールアドレス <span className="text-red-500">*</span></h2>
-                  <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="admin@example.com" required className="h-12 text-base md:text-base bg-white/60 border-white/80 focus-visible:ring-gray-400" />
+                  <h2 className="mb-1.5 text-sm font-semibold text-white/70">メールアドレス <span className="text-red-400">*</span></h2>
+                  <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="admin@example.com" required className="h-12 text-base md:text-base bg-white/[0.04] border-white/15 text-white placeholder:text-white/30 focus-visible:ring-white/30" />
                 </div>
                 <div className="mb-5">
-                  <h2 className="mb-1.5 text-base font-bold text-gray-700">パスワード <span className="text-red-500">*</span></h2>
-                  <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="6文字以上" required minLength={6} className="h-12 text-base md:text-base bg-white/60 border-white/80 focus-visible:ring-gray-400" />
+                  <h2 className="mb-1.5 text-sm font-semibold text-white/70">パスワード <span className="text-red-400">*</span></h2>
+                  <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="6文字以上" required minLength={6} className="h-12 text-base md:text-base bg-white/[0.04] border-white/15 text-white placeholder:text-white/30 focus-visible:ring-white/30" />
                 </div>
                 <div className="mb-5">
-                  <h2 className="mb-1.5 text-base font-bold text-gray-700">パスワード（確認） <span className="text-red-500">*</span></h2>
-                  <Input type="password" value={passwordConfirm} onChange={(e) => setPasswordConfirm(e.target.value)} placeholder="パスワードを再入力" required minLength={6} className="h-12 text-base md:text-base bg-white/60 border-white/80 focus-visible:ring-gray-400" />
+                  <h2 className="mb-1.5 text-sm font-semibold text-white/70">パスワード（確認） <span className="text-red-400">*</span></h2>
+                  <Input type="password" value={passwordConfirm} onChange={(e) => setPasswordConfirm(e.target.value)} placeholder="パスワードを再入力" required minLength={6} className="h-12 text-base md:text-base bg-white/[0.04] border-white/15 text-white placeholder:text-white/30 focus-visible:ring-white/30" />
                 </div>
                 <button
                   type="button"
                   onClick={handleStep1Next}
                   disabled={checkingDomain}
-                  className="relative w-full h-14 rounded-full text-lg font-bold text-white overflow-hidden transition-all hover:scale-105 hover:shadow-2xl disabled:opacity-50 disabled:hover:scale-100"
-                  style={{
-                    background: 'rgba(0, 0, 0, 0.75)',
-                    backdropFilter: 'blur(12px) saturate(120%)',
-                    WebkitBackdropFilter: 'blur(12px) saturate(120%)',
-                    border: '1px solid rgba(255, 255, 255, 0.15)',
-                    boxShadow: '0px 8px 24px 0 rgba(0, 0, 0, 0.2), inset 0px 1px 0px 0px rgba(255, 255, 255, 0.15)',
-                  }}
+                  className="relative w-full h-12 rounded-full text-base font-semibold text-black bg-white overflow-hidden transition-transform hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100"
                 >
                   {checkingDomain ? '確認中...' : '次へ'}
                 </button>
@@ -304,13 +287,13 @@ export default function SignupPage() {
             {step === 1.5 && (
               <>
                 <div className="text-center mb-5">
-                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 mb-3">
-                    <Building2 className="h-6 w-6 text-blue-600" />
+                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-500/15 mb-3">
+                    <Building2 className="h-6 w-6 text-blue-400" />
                   </div>
-                  <h2 className="text-lg font-bold text-gray-900 mb-1">
+                  <h2 className="text-lg font-bold text-white mb-1">
                     企業が見つかりました
                   </h2>
-                  <p className="text-sm text-gray-500 m-0">
+                  <p className="text-sm text-white/55 m-0">
                     同じメールドメインの企業が登録されています
                   </p>
                 </div>
@@ -321,21 +304,21 @@ export default function SignupPage() {
                       key={company.id}
                       type="button"
                       onClick={() => handleJoinCompany(company.id)}
-                      className="w-full flex items-center gap-3 p-4 rounded-xl border border-white/80 bg-white/60 hover:border-blue-300 hover:bg-blue-50/50 transition-colors text-left"
+                      className="w-full flex items-center gap-3 p-4 rounded-xl border border-white/10 bg-white/[0.04] hover:border-blue-400/40 hover:bg-blue-500/10 transition-colors text-left"
                     >
-                      <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center shrink-0 overflow-hidden">
+                      <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center shrink-0 overflow-hidden">
                         {company.logo_url ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={company.logo_url} alt="" className="w-full h-full object-cover" />
                         ) : (
-                          <Building2 className="h-5 w-5 text-gray-400" />
+                          <Building2 className="h-5 w-5 text-white/40" />
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-gray-900 m-0 truncate">
+                        <p className="text-sm font-bold text-white m-0 truncate">
                           {company.name}
                         </p>
-                        <p className="text-xs text-gray-500 m-0">
+                        <p className="text-xs text-white/55 m-0">
                           この企業に参加リクエストを送る
                         </p>
                       </div>
@@ -345,24 +328,24 @@ export default function SignupPage() {
 
                 <div className="relative mb-5">
                   <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t" />
+                    <span className="w-full border-t border-white/10" />
                   </div>
                   <div className="relative flex justify-center text-xs">
-                    <span className="bg-white/70 px-3 text-gray-400">または</span>
+                    <span className="bg-[#0c0c11] px-3 text-white/40">または</span>
                   </div>
                 </div>
 
                 <button
                   type="button"
                   onClick={handleCreateNew}
-                  className="flex w-full h-14 items-center justify-center gap-2 rounded-full border border-gray-300 bg-white/60 font-bold text-base text-gray-700 transition-all hover:bg-white hover:shadow-sm"
+                  className="flex w-full h-12 items-center justify-center gap-2 rounded-full border border-white/15 bg-white/5 font-semibold text-base text-white transition-all hover:bg-white/10"
                 >
                   <Plus className="h-4 w-4" />
                   別の企業として新規登録
                 </button>
 
                 <div className="mt-4 text-center">
-                  <button type="button" onClick={handleBack} className="text-xs text-gray-400 hover:text-gray-600 transition-colors bg-transparent border-0 cursor-pointer">
+                  <button type="button" onClick={handleBack} className="text-xs text-white/40 hover:text-white/70 transition-colors bg-transparent border-0 cursor-pointer">
                     ← 戻る
                   </button>
                 </div>
@@ -373,29 +356,22 @@ export default function SignupPage() {
             {step === 2 && (
               <>
                 <div className="mb-5">
-                  <h2 className="mb-1.5 text-base font-bold text-gray-700">企業名またはブランド名 <span className="text-red-500">*</span></h2>
-                  <Input type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="株式会社○○ / ブランド名" required className="h-12 text-base md:text-base bg-white/60 border-white/80 focus-visible:ring-gray-400" />
-                  <p className="text-xs text-gray-400 mt-1.5 m-0">後から管理画面で詳細情報を追加できます</p>
+                  <h2 className="mb-1.5 text-sm font-semibold text-white/70">企業名またはブランド名 <span className="text-red-400">*</span></h2>
+                  <Input type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="株式会社○○ / ブランド名" required className="h-12 text-base md:text-base bg-white/[0.04] border-white/15 text-white placeholder:text-white/30 focus-visible:ring-white/30" />
+                  <p className="text-xs text-white/40 mt-1.5 m-0">後から管理画面で詳細情報を追加できます</p>
                 </div>
                 <div className="flex gap-3">
                   <button
                     type="button"
                     onClick={handleBack}
-                    className="flex-1 h-14 rounded-full text-lg font-bold text-gray-700 bg-white/60 border border-gray-300 transition-all hover:bg-white hover:shadow-sm"
+                    className="flex-1 h-12 rounded-full text-base font-semibold border border-white/15 bg-white/5 text-white transition-all hover:bg-white/10"
                   >
                     戻る
                   </button>
                   <button
                     type="button"
                     onClick={handleNext}
-                    className="relative flex-1 h-14 rounded-full text-lg font-bold text-white overflow-hidden transition-all hover:scale-105 hover:shadow-2xl"
-                    style={{
-                      background: 'rgba(0, 0, 0, 0.75)',
-                      backdropFilter: 'blur(12px) saturate(120%)',
-                      WebkitBackdropFilter: 'blur(12px) saturate(120%)',
-                      border: '1px solid rgba(255, 255, 255, 0.15)',
-                      boxShadow: '0px 8px 24px 0 rgba(0, 0, 0, 0.2), inset 0px 1px 0px 0px rgba(255, 255, 255, 0.15)',
-                    }}
+                    className="relative flex-1 h-12 rounded-full text-base font-semibold text-black bg-white overflow-hidden transition-transform hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100"
                   >
                     次へ
                   </button>
@@ -407,47 +383,40 @@ export default function SignupPage() {
             {step === 3 && (
               <>
                 {registrationMode === 'join' && selectedCompanyId && (
-                  <div className="flex items-center gap-3 p-3 rounded-xl bg-blue-50/80 border border-blue-200/60 mb-5">
-                    <Building2 className="h-5 w-5 text-blue-600 shrink-0" />
+                  <div className="flex items-center gap-3 p-3 rounded-xl bg-blue-500/10 border border-blue-400/30 mb-5">
+                    <Building2 className="h-5 w-5 text-blue-400 shrink-0" />
                     <div>
-                      <p className="text-xs text-blue-600 m-0">参加先</p>
-                      <p className="text-sm font-bold text-gray-900 m-0">
+                      <p className="text-xs text-blue-400 m-0">参加先</p>
+                      <p className="text-sm font-bold text-white m-0">
                         {matchedCompanies.find(c => c.id === selectedCompanyId)?.name}
                       </p>
                     </div>
                   </div>
                 )}
                 <div className="mb-5">
-                  <h2 className="mb-1.5 text-base font-bold text-gray-700">氏名 <span className="text-red-500">*</span></h2>
-                  <Input type="text" value={userName} onChange={(e) => setUserName(e.target.value)} placeholder="山田太郎" required className="h-12 text-base md:text-base bg-white/60 border-white/80 focus-visible:ring-gray-400" />
+                  <h2 className="mb-1.5 text-sm font-semibold text-white/70">氏名 <span className="text-red-400">*</span></h2>
+                  <Input type="text" value={userName} onChange={(e) => setUserName(e.target.value)} placeholder="山田太郎" required className="h-12 text-base md:text-base bg-white/[0.04] border-white/15 text-white placeholder:text-white/30 focus-visible:ring-white/30" />
                 </div>
                 <div className="mb-5">
-                  <h2 className="mb-1.5 text-base font-bold text-gray-700">役職</h2>
-                  <Input type="text" value={position} onChange={(e) => setPosition(e.target.value)} placeholder="代表取締役（任意）" className="h-12 text-base md:text-base bg-white/60 border-white/80 focus-visible:ring-gray-400" />
+                  <h2 className="mb-1.5 text-sm font-semibold text-white/70">役職</h2>
+                  <Input type="text" value={position} onChange={(e) => setPosition(e.target.value)} placeholder="代表取締役（任意）" className="h-12 text-base md:text-base bg-white/[0.04] border-white/15 text-white placeholder:text-white/30 focus-visible:ring-white/30" />
                 </div>
                 <div className="mb-5">
-                  <h2 className="mb-1.5 text-base font-bold text-gray-700">部署</h2>
-                  <Input type="text" value={department} onChange={(e) => setDepartment(e.target.value)} placeholder="経営企画部（任意）" className="h-12 text-base md:text-base bg-white/60 border-white/80 focus-visible:ring-gray-400" />
+                  <h2 className="mb-1.5 text-sm font-semibold text-white/70">部署</h2>
+                  <Input type="text" value={department} onChange={(e) => setDepartment(e.target.value)} placeholder="経営企画部（任意）" className="h-12 text-base md:text-base bg-white/[0.04] border-white/15 text-white placeholder:text-white/30 focus-visible:ring-white/30" />
                 </div>
                 <div className="flex gap-3">
                   <button
                     type="button"
                     onClick={handleBack}
-                    className="flex-1 h-14 rounded-full text-lg font-bold text-gray-700 bg-white/60 border border-gray-300 transition-all hover:bg-white hover:shadow-sm"
+                    className="flex-1 h-12 rounded-full text-base font-semibold border border-white/15 bg-white/5 text-white transition-all hover:bg-white/10"
                   >
                     戻る
                   </button>
                   <button
                     type="submit"
                     disabled={loading}
-                    className="relative flex-1 h-14 rounded-full text-lg font-bold text-white overflow-hidden transition-all hover:scale-105 hover:shadow-2xl disabled:opacity-50 disabled:hover:scale-100"
-                    style={{
-                      background: 'rgba(0, 0, 0, 0.75)',
-                      backdropFilter: 'blur(12px) saturate(120%)',
-                      WebkitBackdropFilter: 'blur(12px) saturate(120%)',
-                      border: '1px solid rgba(255, 255, 255, 0.15)',
-                      boxShadow: '0px 8px 24px 0 rgba(0, 0, 0, 0.2), inset 0px 1px 0px 0px rgba(255, 255, 255, 0.15)',
-                    }}
+                    className="relative flex-1 h-12 rounded-full text-base font-semibold text-black bg-white overflow-hidden transition-transform hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100"
                   >
                     {loading ? '登録中...' : registrationMode === 'join' ? '参加リクエストを送信' : '登録する'}
                   </button>
@@ -458,19 +427,19 @@ export default function SignupPage() {
             {/* ステップ4: 承認待ち画面 */}
             {step === 4 && (
               <div className="text-center py-4">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-50 mb-4">
-                  <Clock className="h-8 w-8 text-amber-500" />
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-500/15 mb-4">
+                  <Clock className="h-8 w-8 text-amber-400" />
                 </div>
-                <h2 className="text-lg font-bold text-gray-900 mb-2">
+                <h2 className="text-lg font-bold text-white mb-2">
                   参加リクエストを送信しました
                 </h2>
-                <p className="text-sm text-gray-500 mb-6">
+                <p className="text-sm text-white/60 mb-6">
                   {success || '企業の管理者が承認するまでお待ちください。承認されるとログインできるようになります。'}
                 </p>
                 <Link href="/portal/auth">
                   <button
                     type="button"
-                    className="h-14 px-8 rounded-full text-lg font-bold text-gray-700 bg-white/60 border border-gray-300 transition-all hover:bg-white hover:shadow-sm"
+                    className="h-12 px-8 rounded-full text-base font-semibold border border-white/15 bg-white/5 text-white transition-all hover:bg-white/10"
                   >
                     ログインページへ
                   </button>
@@ -480,13 +449,24 @@ export default function SignupPage() {
           </form>
 
           {step !== 4 && (
-            <p className="text-center text-xs text-gray-500 mt-6 mb-0">
+            <p className="text-center text-xs text-white/55 mt-6 mb-0">
               既にアカウントをお持ちの方は{' '}
-              <Link href="/portal/auth" className="text-blue-600 no-underline font-bold hover:underline">
+              <Link href="/portal/auth" className="text-white font-semibold no-underline hover:underline">
                 ログイン
               </Link>
             </p>
           )}
+
+          {/* ロゴ（カード最下部）。クリックでトップページへ */}
+          <div className="mt-8 flex justify-center border-t border-white/10 pt-6">
+            <Link href="/" className="inline-block transition-opacity hover:opacity-80">
+              <img
+                src="/logo.svg"
+                alt="branding.bz"
+                style={{ height: '24px', width: 'auto', filter: 'brightness(0) invert(1)' }}
+              />
+            </Link>
+          </div>
         </div>
       </div>
     </div>

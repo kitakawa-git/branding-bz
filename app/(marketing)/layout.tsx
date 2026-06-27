@@ -1,7 +1,7 @@
 'use client'
 
-import Header from '@/components/Header'
-import Footer from '@/components/Footer'
+import Nav from '@/components/lp/Nav'
+import Footer from '@/components/lp/Footer'
 
 export default function MarketingLayout({
   children,
@@ -9,8 +9,8 @@ export default function MarketingLayout({
   children: React.ReactNode
 }) {
   return (
-    <div>
-      <Header />
+    <div className="min-h-screen bg-[#08080a] text-white antialiased">
+      <Nav />
       <main>{children}</main>
       <Footer />
     </div>

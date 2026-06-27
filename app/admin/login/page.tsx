@@ -1,20 +1,18 @@
 'use client'
 
-// ログインページ — ダークモード リキッドグラス
+// 管理画面ログイン — /portal/auth のデザインに統一（白背景＋ダークのリキッドグラスカード）
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
 import { Suspense } from 'react'
 
 export default function LoginPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center font-sans"
-        style={{ background: 'linear-gradient(135deg, #0f0f1a 0%, #141425 50%, #0d0d1a 100%)' }}>
-        <p className="text-sm text-white/50">読み込み中...</p>
+      <div className="flex min-h-screen items-center justify-center bg-[#08080a] font-sans">
+        <p className="text-sm text-white/40">読み込み中...</p>
       </div>
     }>
       <LoginContent />
@@ -93,67 +91,64 @@ function LoginContent() {
     }
   }
 
-  /* ── グラスモーフィズム共通スタイル ── */
-  const glassCard: React.CSSProperties = {
-    background: 'rgba(255, 255, 255, 0.06)',
-    backdropFilter: 'blur(24px) saturate(140%)',
-    WebkitBackdropFilter: 'blur(24px) saturate(140%)',
-    border: '1px solid rgba(255, 255, 255, 0.10)',
-    boxShadow: '0 24px 64px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08)',
+  /* /portal/auth と統一したカード／スペキュラ */
+  const cardStyle: React.CSSProperties = {
+    background: 'linear-gradient(135deg, rgba(18,20,29,0.88) 0%, rgba(5,6,10,0.93) 100%)',
+    backdropFilter: 'blur(22px) saturate(180%)',
+    WebkitBackdropFilter: 'blur(22px) saturate(180%)',
+    boxShadow: 'inset 0 1px 0 0 rgba(255,255,255,0.38), inset 0 -8px 24px -8px rgba(255,255,255,0.05), 0 24px 60px -20px rgba(0,0,0,0.5)',
   }
 
-  const glassInput: React.CSSProperties = {
-    background: 'rgba(255, 255, 255, 0.06)',
-    backdropFilter: 'blur(8px)',
-    WebkitBackdropFilter: 'blur(8px)',
-    border: '1px solid rgba(255, 255, 255, 0.10)',
-  }
+  const Specular = () => (
+    <>
+      <div className="absolute inset-0 pointer-events-none rounded-3xl"
+        style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0) 42%)' }} />
+      <div className="absolute inset-x-0 top-0 h-px pointer-events-none"
+        style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent)' }} />
+    </>
+  )
 
-  /* ── 背景グラデーション ── */
-  const bgStyle: React.CSSProperties = {
-    background: [
-      'radial-gradient(ellipse 120% 100% at 10% 20%, rgba(99, 102, 241, 0.25) 0%, transparent 50%)',
-      'radial-gradient(ellipse 100% 80% at 90% 80%, rgba(139, 92, 246, 0.20) 0%, transparent 50%)',
-      'radial-gradient(ellipse 80% 60% at 50% 50%, rgba(59, 130, 246, 0.12) 0%, transparent 50%)',
-      'linear-gradient(135deg, #0f0f1a 0%, #141425 50%, #0d0d1a 100%)',
-    ].join(', '),
-  }
+  const BottomLogo = () => (
+    <div className="mt-8 flex justify-center border-t border-white/10 pt-6">
+      <Link href="/" className="inline-block transition-opacity hover:opacity-80">
+        <img
+          src="/logo.svg"
+          alt="branding.bz"
+          style={{ height: '24px', width: 'auto', filter: 'brightness(0) invert(1)' }}
+        />
+      </Link>
+    </div>
+  )
 
   // スーパー管理者用の遷移先選択画面
   if (loggedIn && isSuperAdmin) {
     return (
-      <div className="min-h-screen flex items-center justify-center font-sans px-5" style={bgStyle}>
-        <div className="w-full max-w-[420px] rounded-2xl p-10 relative overflow-hidden" style={glassCard}>
-          {/* リフレクション */}
-          <div className="absolute inset-0 pointer-events-none rounded-2xl"
-            style={{ background: 'linear-gradient(to bottom, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 40%)' }} />
-
-          <div className="relative">
-            <div className="text-center mb-8">
-              <img
-                src="/logo.svg"
-                alt="branding.bz"
-                className="mx-auto mb-3"
-                style={{ height: '40px', width: 'auto', filter: 'brightness(0) invert(1)' }}
-              />
-              <p className="text-base text-white/50 m-0">
+      <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-white font-sans text-white">
+        <div className="relative z-10 w-full max-w-[400px] mx-5 rounded-3xl overflow-hidden border border-white/15" style={cardStyle}>
+          <Specular />
+          <div className="relative z-10 p-10">
+            <div className="mb-8 text-center">
+              <p className="m-0 text-base text-white/55">
                 ログイン成功 — 遷移先を選択
               </p>
             </div>
 
             <div className="flex flex-col gap-3">
-              <Button asChild className="h-12 text-[15px] font-bold rounded-xl bg-white text-gray-900 hover:bg-white/90 shadow-lg">
-                <Link href="/superadmin/companies">
-                  スーパー管理画面
-                </Link>
-              </Button>
-              <Button asChild className="h-12 text-[15px] font-bold rounded-xl text-white hover:bg-white/10"
-                style={glassInput}>
-                <Link href="/admin/members">
-                  通常管理画面
-                </Link>
-              </Button>
+              <Link
+                href="/superadmin/companies"
+                className="flex h-12 w-full items-center justify-center rounded-full bg-white text-base font-semibold text-black transition-transform hover:scale-[1.02]"
+              >
+                スーパー管理画面
+              </Link>
+              <Link
+                href="/admin/members"
+                className="flex h-12 w-full items-center justify-center rounded-full border border-white/15 bg-white/5 text-base font-semibold text-white transition-colors hover:bg-white/10"
+              >
+                通常管理画面
+              </Link>
             </div>
+
+            <BottomLogo />
           </div>
         </div>
       </div>
@@ -161,30 +156,19 @@ function LoginContent() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center font-sans px-5" style={bgStyle}>
-      <div className="w-full max-w-[420px] rounded-2xl p-10 relative overflow-hidden" style={glassCard}>
-        {/* リフレクション */}
-        <div className="absolute inset-0 pointer-events-none rounded-2xl"
-          style={{ background: 'linear-gradient(to bottom, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 40%)' }} />
+    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-white font-sans text-white">
+      <div className="relative z-10 w-full max-w-[400px] mx-5 rounded-3xl overflow-hidden border border-white/15" style={cardStyle}>
+        <Specular />
 
-        <div className="relative">
-          <div className="text-center mb-8">
-            {/* ロゴクリックでトップページへ遷移（相対パス＝現在のドメインのトップ） */}
-            <Link href="/" className="inline-block mb-3 transition-opacity hover:opacity-80">
-              <img
-                src="/logo.svg"
-                alt="branding.bz"
-                style={{ height: '40px', width: 'auto', filter: 'brightness(0) invert(1)' }}
-              />
-            </Link>
-            <p className="text-base text-white/50 m-0">
+        <div className="relative z-10 p-10">
+          <div className="mb-8 text-center">
+            <p className="m-0 text-base text-white/55">
               管理画面にログイン
             </p>
           </div>
 
           {error && (
-            <div className="px-4 py-3 rounded-xl text-sm mb-5 whitespace-pre-wrap break-words text-red-300"
-              style={{ background: 'rgba(220, 38, 38, 0.15)', border: '1px solid rgba(220, 38, 38, 0.25)' }}>
+            <div className="mb-4 whitespace-pre-wrap break-words rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
               {error}
             </div>
           )}
@@ -194,7 +178,7 @@ function LoginContent() {
             type="button"
             onClick={handleGoogleLogin}
             disabled={googleLoading || loading}
-            className="flex w-full h-14 items-center justify-center gap-3 rounded-lg border border-gray-300 bg-white text-base font-medium text-gray-700 transition-all hover:bg-gray-50 hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed mb-6"
+            className="flex w-full h-12 items-center justify-center gap-3 rounded-full border border-white/15 bg-white/[0.06] text-base font-medium text-white transition-all hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <svg className="h-6 w-6" viewBox="0 0 24 24">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
@@ -206,67 +190,63 @@ function LoginContent() {
           </button>
 
           {/* セパレーター */}
-          <div className="relative mb-6">
+          <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
               <span className="w-full border-t border-white/10" />
             </div>
-            <div className="relative flex justify-center text-sm uppercase">
-              <span className="px-3 text-white/30" style={{ background: 'rgba(15, 15, 26, 0.8)' }}>または</span>
+            <div className="relative flex justify-center text-sm">
+              <span className="rounded-full bg-[#0c0c11] px-3 text-white/40">または</span>
             </div>
           </div>
 
           <form onSubmit={handleLogin}>
             <div className="mb-5">
-              <label className="block text-base font-semibold mb-2 text-white/60 tracking-wide">
-                メールアドレス
-              </label>
+              <h2 className="mb-1.5 text-sm font-semibold text-white/70">メールアドレス</h2>
               <Input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="admin@example.com"
                 required
-                className="h-12 text-base md:text-base rounded-xl text-white placeholder:text-white/30 focus-visible:ring-blue-500/50 focus-visible:ring-offset-0 focus-visible:border-blue-400/40"
-                style={glassInput}
+                className="h-12 text-base md:text-base bg-white/[0.04] border-white/15 text-white placeholder:text-white/30 focus-visible:ring-white/30"
               />
             </div>
 
-            <div className="mb-6">
-              <label className="block text-base font-semibold mb-2 text-white/60 tracking-wide">
-                パスワード
-              </label>
+            <div className="mb-5">
+              <h2 className="mb-1.5 text-sm font-semibold text-white/70">パスワード</h2>
               <Input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="パスワードを入力"
                 required
-                className="h-12 text-base md:text-base rounded-xl text-white placeholder:text-white/30 focus-visible:ring-blue-500/50 focus-visible:ring-offset-0 focus-visible:border-blue-400/40"
-                style={glassInput}
+                className="h-12 text-base md:text-base bg-white/[0.04] border-white/15 text-white placeholder:text-white/30 focus-visible:ring-white/30"
               />
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="relative w-full h-14 rounded-full text-lg font-bold text-gray-900 bg-white overflow-hidden transition-all hover:scale-105 hover:shadow-2xl hover:bg-white/90 shadow-lg disabled:opacity-50 disabled:hover:scale-100"
+              className="w-full h-12 rounded-full bg-white text-base font-semibold text-black transition-transform hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100"
             >
               {loading ? 'ログイン中...' : 'ログイン'}
             </button>
           </form>
 
-          <p className="text-center text-sm mt-6 mb-0">
-            <Link href="/portal/auth" className="text-blue-300/80 no-underline hover:text-blue-200 hover:underline transition-colors">
+          <p className="mb-0 mt-6 text-center text-sm">
+            <Link href="/portal/auth" className="font-semibold text-white underline-offset-2 hover:underline">
               メンバーログインはこちら
             </Link>
           </p>
-          <p className="text-center text-sm text-white/40 mt-3 mb-0">
+          <p className="mb-0 mt-3 text-center text-sm text-white/55">
             アカウントをお持ちでない方は{' '}
-            <Link href="/signup" className="text-blue-300/80 no-underline font-bold hover:text-blue-200 hover:underline transition-colors">
+            <Link href="/signup" className="font-semibold text-white underline-offset-2 hover:underline">
               こちら
             </Link>
             {' '}から登録
           </p>
+
+          <BottomLogo />
         </div>
       </div>
     </div>
