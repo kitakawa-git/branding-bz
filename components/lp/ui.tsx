@@ -41,12 +41,16 @@ export function PageHero({
 export function GlowCard({
   children,
   className = '',
+  id,
 }: {
   children: React.ReactNode
   className?: string
+  /* ページ内アンカー用 */
+  id?: string
 }) {
   return (
     <div
+      id={id}
       className={`relative rounded-3xl border border-white/10 bg-white/[0.03] overflow-hidden ${className}`}
       style={{
         boxShadow:

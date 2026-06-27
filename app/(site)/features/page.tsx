@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     'branding.bz の機能紹介。ブランド掲示・Good Jobタイムライン・KPI・スマート名刺・ブランドスコアなど、ブランドの構築・浸透・発信を支える機能をまとめて紹介します。',
 }
 
-type Feature = { title: string; description: string; icon: LucideIcon; tag: string }
+type Feature = { id?: string; title: string; description: string; icon: LucideIcon; tag: string }
 
 const groups: { layer: string; lead: string; features: Feature[] }[] = [
   {
@@ -35,6 +35,7 @@ const groups: { layer: string; lead: string; features: Feature[] }[] = [
     lead: '日々の行動と数字で、ブランドを根づかせる。',
     features: [
       {
+        id: 'feature-brand',
         tag: '浸透',
         title: 'ブランド掲示',
         description:
@@ -49,6 +50,7 @@ const groups: { layer: string; lead: string; features: Feature[] }[] = [
         icon: LayoutDashboard,
       },
       {
+        id: 'feature-timeline',
         tag: '浸透',
         title: 'Good Job タイムライン',
         description:
@@ -56,6 +58,7 @@ const groups: { layer: string; lead: string; features: Feature[] }[] = [
         icon: MessageSquareHeart,
       },
       {
+        id: 'feature-kpi',
         tag: '浸透',
         title: '個人目標と KPI',
         description:
@@ -70,6 +73,7 @@ const groups: { layer: string; lead: string; features: Feature[] }[] = [
         icon: Bell,
       },
       {
+        id: 'feature-score',
         tag: '浸透',
         title: 'ブランドスコア',
         description:
@@ -83,6 +87,7 @@ const groups: { layer: string; lead: string; features: Feature[] }[] = [
     lead: '社内で根づいた"らしさ"を、社外へ届ける。',
     features: [
       {
+        id: 'feature-card',
         tag: '発信',
         title: 'スマート名刺',
         description:
@@ -115,7 +120,7 @@ const groups: { layer: string; lead: string; features: Feature[] }[] = [
 
 function FeatureCard({ f }: { f: Feature }) {
   return (
-    <GlowCard className="p-7">
+    <GlowCard id={f.id} className="p-7">
       <div className="mb-5 inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/5">
         <f.icon size={20} className="text-blue-400" />
       </div>
