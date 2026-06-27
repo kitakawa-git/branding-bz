@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { AutoResizeTextarea } from '@/components/ui/auto-resize-textarea'
+import { Slider } from '@/components/ui/slider'
 import { ArrowLeft, ArrowRight, X, Loader2 } from 'lucide-react'
 import { AIButton } from '@/components/shared/AIButton'
 import { toast } from 'sonner'
@@ -44,6 +45,28 @@ interface CompetitorAnalysis {
   traits: string
 }
 
+// ターゲット適合マップ（顧客側軸＋ターゲット点＋自社カバー範囲楕円）
+interface TargetFitMap {
+  x_axis: { left: string; right: string }
+  y_axis: { bottom: string; top: string }
+  axis_rationale: string
+  coverage: {
+    center_x: number
+    center_y: number
+    width: number
+    height: number
+    rationale: string
+  }
+  targets: Array<{
+    name: string
+    role: 'main' | 'sub'
+    x: number
+    y: number
+    in_coverage: boolean
+  }>
+  consistency_status: 'green' | 'yellow' | 'red'
+}
+
 // 後方互換のため evaluations フィールドは残す（UIからは使わない）
 interface TargetingData {
   evaluations: Array<{ segment_name: string; attractiveness: number; competitiveness: number; priority: string }>
@@ -54,6 +77,7 @@ interface TargetingData {
   strengths?: string
   competitor_traits?: string  // 後方互換（旧フィールド）
   competitors_analysis?: CompetitorAnalysis[]
+  target_fit_map?: TargetFitMap | null
 }
 
 interface BasicInfo {
@@ -115,6 +139,12 @@ export function Step3Targeting({
   const [buyingFactors, setBuyingFactors] = useState<string[]>(targeting.buying_factors || [])
   const [strengths, setStrengths] = useState(targeting.strengths || '')
 
+  // ターゲット適合マップ（顧客側軸・自社カバー範囲楕円）
+  const [fitMap, setFitMap] = useState<TargetFitMap | null>(targeting.target_fit_map || null)
+  const [fitMapLoading, setFitMapLoading] = useState(false)
+  const fitMapDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const fitMapInitRef = useRef(false)
+
   // 競合分析: セッションから復元 or 空で初期化
   const [competitorsAnalysis, setCompetitorsAnalysis] = useState<CompetitorAnalysis[]>(() => {
     const saved = targeting.competitors_analysis
@@ -175,8 +205,9 @@ export function Step3Targeting({
       buying_factors: buyingFactors,
       strengths,
       competitors_analysis: competitorsAnalysis,
+      target_fit_map: fitMap,
     }),
-    [mainTarget, subTargets, mainSegDescription, buyingFactors, strengths, competitorsAnalysis]
+    [mainTarget, subTargets, mainSegDescription, buyingFactors, strengths, competitorsAnalysis, fitMap]
   )
 
   // オートセーブ（1秒デバウンス）
@@ -194,7 +225,7 @@ export function Step3Targeting({
       if (debounceRef.current) clearTimeout(debounceRef.current)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mainTarget, subTargets, mainSegDescription, buyingFactors, strengths, competitorsAnalysis])
+  }, [mainTarget, subTargets, mainSegDescription, buyingFactors, strengths, competitorsAnalysis, fitMap])
 
   // mainTarget / subTargets が現在のセグメントに存在するかチェック
   useEffect(() => {
@@ -321,6 +352,54 @@ export function Step3Targeting({
       setAiLoading(false)
     }
   }, [mainTarget, allSegments, basicInfo, segmentation])
+
+  // ターゲット適合マップを生成（ターゲット選定が変わるたびに自動再生成）
+  const fetchTargetFitMap = useCallback(async () => {
+    if (!mainTarget) return
+    setFitMapLoading(true)
+    try {
+      const res = await fetch('/api/tools/stp/suggest-target-fit-map', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          basic_info: basicInfo,
+          segmentation,
+          targeting: {
+            main_target: mainTarget,
+            sub_targets: subTargets,
+            target_description: mainSegDescription,
+            strengths,
+            buying_factors: buyingFactors,
+          },
+        }),
+      })
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}))
+        toast.error((d as { error?: string }).error || 'マップの生成に失敗しました')
+        return
+      }
+      const data = await res.json()
+      setFitMap(data)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'マップの生成中にエラーが発生しました')
+    } finally {
+      setFitMapLoading(false)
+    }
+  }, [mainTarget, subTargets, mainSegDescription, strengths, buyingFactors, basicInfo, segmentation])
+
+  // ターゲット選定が変わるたびに 1.5秒 debounce で自動再生成。初回はマップ未生成のときのみ。
+  useEffect(() => {
+    if (!mainTarget) return
+    if (!fitMapInitRef.current) {
+      fitMapInitRef.current = true
+      if (!fitMap) fetchTargetFitMap()
+      return
+    }
+    if (fitMapDebounceRef.current) clearTimeout(fitMapDebounceRef.current)
+    fitMapDebounceRef.current = setTimeout(() => { fetchTargetFitMap() }, 1500)
+    return () => { if (fitMapDebounceRef.current) clearTimeout(fitMapDebounceRef.current) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mainTarget, subTargets.join('|')])
 
   // セグメントが0個の場合
   if (allSegments.length === 0) {
@@ -494,6 +573,46 @@ export function Step3Targeting({
         </CardContent>
       </Card>
 
+      {/* ② ターゲット適合マップ */}
+      {mainTarget && (
+        <div className="mb-6 mt-6">
+          <div className="mb-2 flex items-center gap-2 flex-wrap">
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-foreground text-xs font-medium text-background">2</span>
+            <h3 className="text-sm font-medium">狙いの妥当性を確認する</h3>
+            <span className="text-xs text-muted-foreground">— 選んだターゲットが自社のカバー範囲に入っているかを自動チェック</span>
+          </div>
+          {/* 整合性ステータスバー */}
+          <ConsistencyStatusBar
+            status={fitMap?.consistency_status || 'green'}
+            targetCount={1 + subTargets.length}
+            outCount={fitMap ? fitMap.targets.filter(t => !t.in_coverage).length : 0}
+          />
+          {/* マップ本体 */}
+          {fitMapLoading && !fitMap && (
+            <div className="mt-3 flex h-[200px] items-center justify-center rounded-lg border border-dashed border-border bg-white text-sm text-muted-foreground">
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> ターゲット適合マップを生成中...
+            </div>
+          )}
+          {fitMap && (
+            <TargetFitMapView
+              fitMap={fitMap}
+              onCoverageChange={(coverage) => setFitMap({ ...fitMap, coverage })}
+            />
+          )}
+          {/* AI再生成ボタン */}
+          <div className="mt-3 flex justify-start">
+            <AIButton
+              size="sm"
+              onClick={fetchTargetFitMap}
+              disabled={fitMapLoading}
+              icon={fitMapLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : undefined}
+            >
+              {fitMapLoading ? '生成中…' : fitMap ? 'マップを再生成' : 'AIでマップを生成'}
+            </AIButton>
+          </div>
+        </div>
+      )}
+
       {/* フッターナビゲーション */}
       <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 bg-background/80 backdrop-blur border-t border-border px-6 py-4 flex items-center justify-between">
         <Button variant="outline" onClick={onBack} className="h-14 gap-2 px-6 text-base font-bold">
@@ -526,6 +645,91 @@ export function Step3Targeting({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+    </div>
+  )
+}
+
+// 整合性ステータスバー（緑/黄/赤）
+function ConsistencyStatusBar({ status, targetCount, outCount }: {
+  status: 'green' | 'yellow' | 'red'
+  targetCount: number
+  outCount: number
+}) {
+  const conf = {
+    green: { bar: 'bg-emerald-500', wrap: 'bg-emerald-50 border-emerald-200 text-emerald-700', text: `✓ ${targetCount} ターゲット全員がカバー範囲内` },
+    yellow: { bar: 'bg-amber-500', wrap: 'bg-amber-50 border-amber-200 text-amber-700', text: '⚠ 一部のターゲットがカバー範囲の端に位置' },
+    red: { bar: 'bg-red-500', wrap: 'bg-red-50 border-red-200 text-red-700', text: `✗ ${outCount} 個のターゲットがカバー範囲外（要再検討）` },
+  }[status]
+  return (
+    <div className={`flex items-center gap-2 rounded-md border px-3 py-2 text-xs font-medium ${conf.wrap}`}>
+      <span className={`inline-block h-2.5 w-2.5 shrink-0 rounded-full ${conf.bar}`} />
+      {conf.text}
+    </div>
+  )
+}
+
+// ターゲット適合マップ描画（自社カバー範囲＝楕円、ターゲット＝色付き点）。横幅・縦幅はスライダーで調整。
+const FIT_PAD = 44
+const FIT_W = 500
+const FIT_H = 300
+const FIT_MAP_W = FIT_W - FIT_PAD * 2
+const FIT_MAP_H = FIT_H - FIT_PAD * 2
+const TARGET_COLORS = ['#10B981', '#8B5CF6', '#F59E0B'] // サブ用（メインは青固定）
+
+function TargetFitMapView({ fitMap, onCoverageChange }: {
+  fitMap: TargetFitMap
+  onCoverageChange: (coverage: TargetFitMap['coverage']) => void
+}) {
+  const toX = (x: number) => FIT_PAD + (x / 100) * FIT_MAP_W
+  const toY = (y: number) => FIT_PAD + ((100 - y) / 100) * FIT_MAP_H
+  const cov = fitMap.coverage
+  const cx = toX(cov.center_x)
+  const cy = toY(cov.center_y)
+  const rx = (cov.width / 100) * FIT_MAP_W / 2
+  const ry = (cov.height / 100) * FIT_MAP_H / 2
+  let subIdx = -1
+  return (
+    <div className="mt-3 rounded-lg border border-border bg-white p-3">
+      <svg viewBox={`0 0 ${FIT_W} ${FIT_H}`} width="100%" className="rounded-lg" style={{ aspectRatio: '5 / 3' }}>
+        {/* XY軸 */}
+        <line x1={FIT_PAD + FIT_MAP_W / 2} y1={FIT_PAD} x2={FIT_PAD + FIT_MAP_W / 2} y2={FIT_PAD + FIT_MAP_H} stroke="#e5e7eb" strokeWidth={1} />
+        <line x1={FIT_PAD} y1={FIT_PAD + FIT_MAP_H / 2} x2={FIT_PAD + FIT_MAP_W} y2={FIT_PAD + FIT_MAP_H / 2} stroke="#e5e7eb" strokeWidth={1} />
+        {/* 自社カバー範囲（破線・半透明） */}
+        <ellipse cx={cx} cy={cy} rx={rx} ry={ry} fill="#3B82F6" fillOpacity={0.08} stroke="#3B82F6" strokeOpacity={0.5} strokeWidth={1.5} strokeDasharray="6 4" />
+        <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle" fontSize="10" fill="#3B82F6" fillOpacity={0.7}>自社カバー範囲</text>
+        {/* 軸ラベル */}
+        <text x={FIT_PAD - 6} y={FIT_PAD + FIT_MAP_H / 2} textAnchor="end" dominantBaseline="middle" fontSize="11" fill="#6b7280">{fitMap.x_axis.left}</text>
+        <text x={FIT_PAD + FIT_MAP_W + 6} y={FIT_PAD + FIT_MAP_H / 2} textAnchor="start" dominantBaseline="middle" fontSize="11" fill="#6b7280">{fitMap.x_axis.right}</text>
+        <text x={FIT_PAD + FIT_MAP_W / 2} y={FIT_PAD - 12} textAnchor="middle" fontSize="11" fill="#6b7280">{fitMap.y_axis.top}</text>
+        <text x={FIT_PAD + FIT_MAP_W / 2} y={FIT_PAD + FIT_MAP_H + 20} textAnchor="middle" fontSize="11" fill="#6b7280">{fitMap.y_axis.bottom}</text>
+        {/* ターゲット点 */}
+        {fitMap.targets.map((t, i) => {
+          const color = t.role === 'main' ? '#3B82F6' : TARGET_COLORS[(subIdx = subIdx + 1) % TARGET_COLORS.length]
+          const px = toX(t.x)
+          const py = toY(t.y)
+          return (
+            <g key={i}>
+              <circle cx={px} cy={py} r={6} fill={color} stroke="#fff" strokeWidth={2} opacity={t.in_coverage ? 1 : 0.95} />
+              {!t.in_coverage && <circle cx={px} cy={py} r={10} fill="none" stroke="#ef4444" strokeWidth={1.5} strokeDasharray="3 2" />}
+              <text x={px + 9} y={py + 4} fontSize="11" fill="#0f172a" fontWeight={t.role === 'main' ? 700 : 400}>{t.name}</text>
+            </g>
+          )
+        })}
+      </svg>
+      {fitMap.axis_rationale && (
+        <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">軸選定の根拠: {fitMap.axis_rationale}</p>
+      )}
+      {/* カバー範囲スライダー（横幅・縦幅） */}
+      <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div>
+          <div className="mb-1 flex justify-between text-[11px] text-muted-foreground"><span>カバー範囲の横幅</span><span>{cov.width}</span></div>
+          <Slider value={[cov.width]} min={20} max={100} step={1} onValueChange={([v]) => onCoverageChange({ ...cov, width: v })} />
+        </div>
+        <div>
+          <div className="mb-1 flex justify-between text-[11px] text-muted-foreground"><span>カバー範囲の縦幅</span><span>{cov.height}</span></div>
+          <Slider value={[cov.height]} min={20} max={100} step={1} onValueChange={([v]) => onCoverageChange({ ...cov, height: v })} />
+        </div>
+      </div>
     </div>
   )
 }
