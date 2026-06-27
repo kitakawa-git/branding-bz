@@ -551,7 +551,7 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
         return
       }
       if (!res.ok) {
-        toast.error('ターゲットの提案に失敗しました。時間をおいて再度お試しください')
+        toast.error('顧客層の提案に失敗しました。時間をおいて再度お試しください')
         return
       }
 
@@ -560,7 +560,7 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
 
       const list: TargetSuggestion[] = Array.isArray(data.suggestions) ? data.suggestions : []
       if (list.length === 0) {
-        toast.info('新たなターゲット候補は見つかりませんでした')
+        toast.info('新たな顧客層候補は見つかりませんでした')
         return
       }
       setTargetSuggestions(list)
@@ -672,11 +672,11 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
             />
           </div>
 
-          {/* ターゲット（構造化入力） */}
+          {/* 現状の顧客層（構造化入力） */}
           <div className="mb-5">
             <div className="flex items-center justify-between gap-2 mb-1.5">
               <h2 className="text-xs font-bold">
-                ターゲット <span className="text-xs text-gray-400 font-normal">（任意）</span>
+                現状の顧客層 <span className="text-xs text-gray-400 font-normal">（任意）</span>
               </h2>
               <AIButton
                 type="button"
@@ -686,11 +686,11 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
                 className="shrink-0"
                 icon={targetSuggesting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : undefined}
               >
-                {targetSuggesting ? '提案中…' : 'AIで提案生成'}
+                {targetSuggesting ? '提案中…' : 'AIで顧客層を提案'}
               </AIButton>
             </div>
             <p className="text-[13px] text-muted-foreground mb-1">
-              すでに決めているターゲットがある場合には内容を入力してください。
+              現在ビジネスをしている顧客像を入力してください。これは分析の出発点であり、最終ターゲットではありません（最終ターゲットは Step 3 で決めます）。
             </p>
             <p className="text-xs text-muted-foreground mb-3">
               {targetRemaining === 0
@@ -705,9 +705,9 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
               onChange={(newItems) => {
                 setTargetSegments(newItems.map(item => ({ name: item.title, description: item.description })))
               }}
-              addButtonLabel="ターゲットを追加"
-              titlePlaceholder="ターゲット名（例: 中小企業の経営者）"
-              descriptionPlaceholder="ターゲットの説明"
+              addButtonLabel="顧客層を追加"
+              titlePlaceholder="顧客層の名称（例: 中堅医療機器商社）"
+              descriptionPlaceholder="顧客像の説明"
             />
           </div>
 

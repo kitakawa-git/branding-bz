@@ -34,12 +34,32 @@ interface PositioningItem {
   y: number
   color: string
   is_self: boolean
+  reasoning?: string  // AIによる配置根拠（1文）
+  confidence?: 'high' | 'medium' | 'low'  // 配置の確からしさ
 }
 
 interface PositioningData {
   x_axis: { left: string; right: string }
   y_axis: { bottom: string; top: string }
   items: PositioningItem[]
+  axis_rationale?: string  // なぜこの2軸を選んだか（1〜2文）
+}
+
+// セグメンテーション（Step2 / Step3Targeting と同型。軸選定ヒントとして positioning へ渡す）
+interface SegmentSource {
+  name: string
+  description: string
+  size_hint: '大' | '中' | '小'
+  priorities?: string
+  selected: boolean
+}
+interface VariableSource {
+  name: string
+  segments: SegmentSource[]
+}
+interface SegmentationData {
+  mode: 'ai' | 'manual'
+  variables: VariableSource[]
 }
 
 interface BasicInfo {
@@ -70,6 +90,7 @@ interface Step4Props {
   positioning: PositioningData
   basicInfo: BasicInfo
   targeting: TargetingData
+  segmentation: SegmentationData
   onNext: (data: PositioningData) => Promise<boolean>
   onBack: () => void
   onSaveField: (data: PositioningData) => Promise<void>
@@ -94,6 +115,7 @@ export function Step4Positioning({
   positioning,
   basicInfo,
   targeting,
+  segmentation,
   onNext,
   onBack,
   onSaveField,
@@ -105,6 +127,7 @@ export function Step4Positioning({
   const [xAxis, setXAxis] = useState(positioning.x_axis || { left: '', right: '' })
   const [yAxis, setYAxis] = useState(positioning.y_axis || { bottom: '', top: '' })
   const [items, setItems] = useState<PositioningItem[]>(positioning.items || [])
+  const [axisRationale, setAxisRationale] = useState(positioning.axis_rationale || '')
   const [aiLoading, setAiLoading] = useState(false)
   const [aiError, setAiError] = useState('')
   const [saving, setSaving] = useState(false)
@@ -117,7 +140,8 @@ export function Step4Positioning({
     x_axis: xAxis,
     y_axis: yAxis,
     items,
-  }), [xAxis, yAxis, items])
+    axis_rationale: axisRationale || undefined,
+  }), [xAxis, yAxis, items, axisRationale])
 
   // オートセーブ（1秒デバウンス）
   const triggerAutoSave = useCallback(() => {
@@ -146,7 +170,7 @@ export function Step4Positioning({
       const res = await fetch('/api/tools/stp/suggest-positioning', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ basic_info: basicInfo, targeting }),
+        body: JSON.stringify({ basic_info: basicInfo, targeting, segmentation }),
       })
       if (!res.ok) {
         const data = await res.json()
@@ -157,12 +181,13 @@ export function Step4Positioning({
       setXAxis(data.x_axis)
       setYAxis(data.y_axis)
       setItems(data.items)
+      setAxisRationale(data.axis_rationale || '')
     } catch (err) {
       setAiError(err instanceof Error ? err.message : 'エラーが発生しました')
     } finally {
       setAiLoading(false)
     }
-  }, [basicInfo, targeting])
+  }, [basicInfo, targeting, segmentation])
 
   // 初回自動リクエスト（データなしの場合のみ）
   useEffect(() => {
@@ -311,6 +336,11 @@ export function Step4Positioning({
                   {item.is_self && (
                     <span className="shrink-0 rounded bg-ds-app-accent/10 px-1.5 py-0.5 text-[10px] font-bold text-ds-app-accent">自社</span>
                   )}
+                  {item.confidence === 'low' && (
+                    <span className="shrink-0 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-700">
+                      データ不足
+                    </span>
+                  )}
                   {items.length > 2 && (
                     <button
                       type="button"
@@ -333,6 +363,11 @@ export function Step4Positioning({
           {selectedIdx !== null && items[selectedIdx] && (
             <div className="space-y-3 rounded-lg border border-ds-app-accent bg-ds-app-accent/5 p-3">
               <div className="text-xs font-bold text-ds-app-accent">編集中: {items[selectedIdx].name || `要素${selectedIdx + 1}`}</div>
+              {items[selectedIdx].reasoning && (
+                <div className="text-[11px] text-muted-foreground leading-relaxed">
+                  AIの配置根拠: {items[selectedIdx].reasoning}
+                </div>
+              )}
               <div className="space-y-1">
                 <div className="flex justify-between text-[11px] text-muted-foreground">
                   <span>{xAxis.left || 'X左'}</span><span>{xAxis.right || 'X右'}</span>
@@ -345,6 +380,13 @@ export function Step4Positioning({
                 </div>
                 <Slider value={[items[selectedIdx].y]} onValueChange={([v]) => updateItem(selectedIdx, { y: v })} min={0} max={100} step={1} />
               </div>
+            </div>
+          )}
+
+          {/* 軸選定の根拠（AI生成・チャートの上） */}
+          {axisRationale && (
+            <div className="rounded-md bg-muted/40 px-3 py-2 text-[11px] leading-relaxed text-muted-foreground">
+              軸選定の根拠: {axisRationale}
             </div>
           )}
 
@@ -366,13 +408,16 @@ export function Step4Positioning({
               </div>
             </div>
 
+            {/* 軸設定オーバーレイ(高さ~78px,top-3,下端~90px)の下端〜図の上端の間隔を、
+                図の下端〜枠(p-3)と同じ12pxに。SVG内ラベルも上下対称(端から30px)なので、
+                上の余白＝下の余白＝(12 + 30×表示倍率) がどの画面幅でも成立する。 */}
             <InteractivePositioningMap
               items={items}
               axes={{ x_axis: xAxis, y_axis: yAxis }}
               selectedIdx={selectedIdx}
               onItemMove={handleItemMove}
               onItemSelect={setSelectedIdx}
-              className="mt-[68px]"
+              className="mt-[90px]"
             />
           </div>
         </div>

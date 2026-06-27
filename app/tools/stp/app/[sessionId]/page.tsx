@@ -13,8 +13,45 @@ import { Step3Targeting } from './components/Step3Targeting'
 import { Step4Positioning } from './components/Step4Positioning'
 import { Step5Result } from './components/Step5Result'
 
+// ターゲット適合マップ（Step3・顧客側軸＋ターゲット点＋自社カバー範囲楕円）
+export interface TargetFitMap {
+  x_axis: { left: string; right: string }
+  y_axis: { bottom: string; top: string }
+  axis_rationale: string
+  coverage: {
+    center_x: number
+    center_y: number
+    width: number
+    height: number
+    rationale: string
+  }
+  targets: Array<{
+    name: string
+    role: 'main' | 'sub'
+    x: number
+    y: number
+    in_coverage: boolean
+  }>
+  consistency_status: 'green' | 'yellow' | 'red'
+}
+
+// 自社の立ち位置（Step5・ターゲット別ポジショニング文）
+export interface BrandStanceStatement {
+  target_name: string
+  target_role: 'main' | 'sub'
+  statement: string
+  rationale: string
+  generated_at: string
+}
+
+// 戦略整合性スコア（Step5・5項目の自動チェック）
+export interface ConsistencyScore {
+  total: number
+  items: Array<{ key: string; passed: boolean; reason?: string }>
+}
+
 // STPセッションデータの型
-interface STPSessionData {
+export interface STPSessionData {
   current_step: number
   basic_info: {
     company_name: string
@@ -54,6 +91,9 @@ interface STPSessionData {
     buying_factors?: string[]
     strengths?: string
     competitors_analysis?: Array<{ name: string; traits: string }>
+    target_summary?: string
+    // 新規: ターゲット適合マップ（Step3）
+    target_fit_map?: TargetFitMap | null
   }
   positioning: {
     x_axis: { left: string; right: string }
@@ -64,8 +104,14 @@ interface STPSessionData {
       y: number
       color: string
       is_self: boolean
+      reasoning?: string
+      confidence?: 'high' | 'medium' | 'low'
     }>
+    axis_rationale?: string
   }
+  // 新規: 自社の立ち位置（Step5）／戦略整合性スコア（Step5）
+  brand_stance_statements?: { statements: BrandStanceStatement[] } | null
+  consistency_score?: ConsistencyScore | null
   completed: boolean
 }
 
@@ -237,6 +283,7 @@ export default function STPSessionPage() {
           positioning={session.session_data.positioning}
           basicInfo={session.session_data.basic_info}
           targeting={session.session_data.targeting}
+          segmentation={session.session_data.segmentation}
           onNext={(data) => saveAndAdvance(5, { positioning: data })}
           onBack={() => saveAndAdvance(3)}
           onSaveField={(data) => saveField({ positioning: data })}

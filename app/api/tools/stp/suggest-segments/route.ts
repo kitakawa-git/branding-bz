@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
     } else if (basic_info.products) {
       parts.push(`- 事業内容: ${basic_info.products}`)
     }
-    // ターゲット顧客層（構造化データ or 旧テキスト形式に対応）
+    // 現状の主要顧客（構造化データ or 旧テキスト形式に対応）
     if (basic_info.target_segments && Array.isArray(basic_info.target_segments)) {
       const segments = basic_info.target_segments
         .filter((ts: { name: string; description: string }) => ts.name?.trim())
@@ -78,10 +78,10 @@ export async function POST(request: NextRequest) {
         })
         .join('\n')
       if (segments) {
-        parts.push(`- ターゲット顧客層:\n${segments}`)
+        parts.push(`- 現状の主要顧客:\n${segments}`)
       }
     } else if (basic_info.current_customers) {
-      parts.push(`- 現在の主な顧客層: ${basic_info.current_customers}`)
+      parts.push(`- 現状の主要顧客: ${basic_info.current_customers}`)
     }
     // 競合情報（メモ付き構造化データ or 旧テキスト形式に対応）
     if (basic_info.competitors) {

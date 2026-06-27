@@ -5,7 +5,7 @@ import type { PositioningMapData, PositioningMapSize } from '@/lib/types/positio
 const SIZE_RADIUS: Record<PositioningMapSize, number> = {
   sm: 4,
   md: 6,
-  lg: 10,
+  lg: 7, // 自社ドット。Step4 編集マップの自社点(r7)に合わせる
   custom: 6,
 }
 
@@ -15,7 +15,8 @@ type PositioningMapProps = {
 }
 
 export function PositioningMap({ data, className }: PositioningMapProps) {
-  const PAD = 50
+  // 軸ラベルを全てプロット内側に置くため余白を最小化し、描画域いっぱいにプロットを拡大（旧 PAD=50→28）
+  const PAD = 16
   const WIDTH = 700
   const HEIGHT = 525
   const MAP_W = WIDTH - PAD * 2
@@ -60,49 +61,48 @@ export function PositioningMap({ data, className }: PositioningMapProps) {
           )
         })}
 
-        {/* 軸ラベル */}
+        {/* 軸ラベル。X軸の左右ラベルはプロット端の内側・軸線の少し上に置く
+            （余白外＝viewBox境界で半分クリップされる問題の解消） */}
         {data.x_axis.left && (
           <text
-            x={PAD - 8}
-            y={centerY}
-            textAnchor="end"
-            dominantBaseline="middle"
+            x={PAD + 4}
+            y={centerY - 8}
+            textAnchor="start"
             fontSize="12"
-            fill="#6b7280"
+            fill="#9ca3af"
           >
             {data.x_axis.left}
           </text>
         )}
         {data.x_axis.right && (
           <text
-            x={PAD + MAP_W + 8}
-            y={centerY}
-            textAnchor="start"
-            dominantBaseline="middle"
+            x={PAD + MAP_W - 4}
+            y={centerY - 8}
+            textAnchor="end"
             fontSize="12"
-            fill="#6b7280"
+            fill="#9ca3af"
           >
             {data.x_axis.right}
           </text>
         )}
         {data.y_axis.top && (
           <text
-            x={centerX}
-            y={PAD - 14}
-            textAnchor="middle"
+            x={centerX + 8}
+            y={PAD + 14}
+            textAnchor="start"
             fontSize="12"
-            fill="#6b7280"
+            fill="#9ca3af"
           >
             {data.y_axis.top}
           </text>
         )}
         {data.y_axis.bottom && (
           <text
-            x={centerX}
-            y={PAD + MAP_H + 22}
-            textAnchor="middle"
+            x={centerX + 8}
+            y={PAD + MAP_H - 14}
+            textAnchor="start"
             fontSize="12"
-            fill="#6b7280"
+            fill="#9ca3af"
           >
             {data.y_axis.bottom}
           </text>
@@ -112,10 +112,16 @@ export function PositioningMap({ data, className }: PositioningMapProps) {
         {data.items.map((item, i) => {
           const cx = toSvgX(item.x)
           const cy = toSvgY(item.y)
+          // 自社は size='lg'（STP連携で is_self→lg）。Step4 編集マップの自社ドットに装飾を合わせる：
+          // 小さめの点(r7)＋薄い同色ハロー(r18)＋ラベルは点の右にボールド。競合は従来どおり点の下。
+          const isSelf = item.size === 'lg'
           const r = item.size === 'custom' && item.customSize ? item.customSize : SIZE_RADIUS[item.size || 'md']
           return (
             <g key={i} className="cursor-pointer">
               <title>{`${item.name} (X: ${item.x}, Y: ${item.y})`}</title>
+              {isSelf && (
+                <circle cx={cx} cy={cy} r={r + 11} fill={item.color} opacity={0.15} />
+              )}
               <circle
                 cx={cx}
                 cy={cy}
@@ -125,16 +131,29 @@ export function PositioningMap({ data, className }: PositioningMapProps) {
                 stroke="white"
                 strokeWidth={2}
               />
-              <text
-                x={cx}
-                y={cy + r + 10}
-                textAnchor="middle"
-                fontSize="11"
-                fill="#374151"
-                fontWeight="500"
-              >
-                {item.name}
-              </text>
+              {isSelf ? (
+                <text
+                  x={cx + 10}
+                  y={cy + 5}
+                  textAnchor="start"
+                  fontSize="14"
+                  fill="#0f172a"
+                  fontWeight="700"
+                >
+                  {item.name}
+                </text>
+              ) : (
+                <text
+                  x={cx}
+                  y={cy + r + 10}
+                  textAnchor="middle"
+                  fontSize="11"
+                  fill="#374151"
+                  fontWeight="500"
+                >
+                  {item.name}
+                </text>
+              )}
             </g>
           )
         })}
