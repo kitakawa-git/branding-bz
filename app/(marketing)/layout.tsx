@@ -2,6 +2,7 @@
 
 import Nav from '@/components/lp/Nav'
 import Footer from '@/components/Footer'
+import PageTransition from '@/components/lp/PageTransition'
 
 export default function MarketingLayout({
   children,
@@ -11,7 +12,9 @@ export default function MarketingLayout({
   return (
     <div className="min-h-screen bg-[#08080a] text-white antialiased">
       <Nav />
-      <main>{children}</main>
+      <PageTransition>
+        <main>{children}</main>
+      </PageTransition>
       <Footer />
     </div>
   )

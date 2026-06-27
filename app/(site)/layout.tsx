@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Nav from '@/components/lp/Nav'
 import Footer from '@/components/Footer'
+import PageTransition from '@/components/lp/PageTransition'
 
 export const metadata: Metadata = {
   title: {
@@ -27,7 +28,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
   return (
     <div className="min-h-screen bg-[#08080a] text-white antialiased">
       <Nav />
-      {children}
+      <PageTransition>{children}</PageTransition>
       <Footer />
     </div>
   )

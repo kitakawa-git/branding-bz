@@ -587,13 +587,11 @@ function FinalCta() {
               'radial-gradient(80% 120% at 50% 0%, rgba(37,99,235,0.4) 0%, rgba(8,8,10,0) 60%), #0d0d11',
           }}
         >
-          <h2 className="text-balance text-4xl font-bold tracking-tight md:text-6xl">
-            さぁ、&ldquo;らしさ&rdquo;をひろげよう。
+          <h2 className="text-balance text-3xl font-bold tracking-tight md:text-4xl">
+            必要なすべてを、ひとつのプラットフォームに。
           </h2>
           <p className="mx-auto mt-6 max-w-xl text-lg text-white/60">
-            ブランドは、作った瞬間から走り出す。
-            <br />
-            branding.bz で、その加速を始めませんか。
+            まずは無料で、ブランディングの第一歩を。
           </p>
           <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link

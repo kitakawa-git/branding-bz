@@ -193,6 +193,41 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* ===== ページ内リンク（#アンカー）のスムーズスクロール =====
+   固定ヘッダー(h-16=64px)に隠れないよう、アンカー対象に scroll-margin を確保。 */
+html {
+  scroll-behavior: smooth;
+}
+:target,
+[id] {
+  scroll-margin-top: 5rem; /* 80px ≒ 固定ナビ64px + 余白 */
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* ===== LP 画面遷移のふわっとフェードイン ===== */
+@keyframes lpFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.lp-fade-in {
+  animation: lpFadeIn 0.45s ease-out both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lp-fade-in {
+    animation: none;
+  }
+}
+
 /* ===== 本文の最低フォントサイズ 14px =====
    text-xs / text-[9〜13px] / text-[0.8rem] を全ページで 14px に底上げする。
    ただし UI 部品（ボタン・タブ・カプセル＝バッジやピル・アバター・ステッパー・SVG内テキスト）は
