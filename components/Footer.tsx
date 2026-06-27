@@ -5,11 +5,11 @@ import { Mail, Calendar } from 'lucide-react'
 // 注意: URL は一部仮設定（北川さん確認後に差し替え予定）
 const footerLinks = {
   features: [
-    { href: '/#feature-brand', label: 'ブランド掲示' },
-    { href: '/#feature-timeline', label: 'タイムライン' },
-    { href: '/#feature-kpi', label: 'KPI・目標' },
-    { href: '/#feature-score', label: 'ブランドスコア' },
-    { href: '/#feature-card', label: 'スマート名刺' },
+    { href: '/features', label: 'ブランド掲示' },
+    { href: '/features', label: 'タイムライン' },
+    { href: '/features', label: 'KPI・目標' },
+    { href: '/features', label: 'ブランドスコア' },
+    { href: '/features', label: 'スマート名刺' },
   ],
   tools: [
     { href: '/tools/stp', label: 'STP分析' },
