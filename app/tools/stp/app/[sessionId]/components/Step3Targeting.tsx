@@ -9,6 +9,7 @@ import { AutoResizeTextarea } from '@/components/ui/auto-resize-textarea'
 import { Slider } from '@/components/ui/slider'
 import { ArrowLeft, ArrowRight, X, Loader2 } from 'lucide-react'
 import { AIButton } from '@/components/shared/AIButton'
+import { FieldSubLabel } from '@/components/shared/FieldHeading'
 import { toast } from 'sonner'
 import {
   AlertDialog,
@@ -141,7 +142,8 @@ export function Step3Targeting({
 
   // ターゲット適合マップ（顧客側軸・自社カバー範囲楕円）
   const [fitMap, setFitMap] = useState<TargetFitMap | null>(targeting.target_fit_map || null)
-  const [fitMapLoading, setFitMapLoading] = useState(false)
+  const [fitMapLoading, setFitMapLoading] = useState(false)   // API fetch中
+  const [fitMapPending, setFitMapPending] = useState(false)    // ターゲット変更〜1.5sのdebounce待機中
   const fitMapDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const fitMapInitRef = useRef(false)
 
@@ -395,8 +397,13 @@ export function Step3Targeting({
       if (!fitMap) fetchTargetFitMap()
       return
     }
+    // ターゲット変更を検知 → 即座に「変更を反映中」表示。1.5s後にfetch開始。
+    setFitMapPending(true)
     if (fitMapDebounceRef.current) clearTimeout(fitMapDebounceRef.current)
-    fitMapDebounceRef.current = setTimeout(() => { fetchTargetFitMap() }, 1500)
+    fitMapDebounceRef.current = setTimeout(() => {
+      setFitMapPending(false)
+      fetchTargetFitMap()
+    }, 1500)
     return () => { if (fitMapDebounceRef.current) clearTimeout(fitMapDebounceRef.current) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mainTarget, subTargets.join('|')])
@@ -423,16 +430,13 @@ export function Step3Targeting({
     <div>
       <h1 className="text-2xl font-bold text-foreground mb-2">Step 3: ターゲティング</h1>
       <p className="mb-4 text-[13px] text-muted-foreground">
-        狙う市場を選び、ターゲットの特徴を深掘りします
+        狙う市場を選び、ターゲットの特徴をしっかりと深掘りします。カードをクリックしてメインターゲット（1つ）とサブターゲット（最大2つ）を選んでください。
       </p>
 
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
         <CardContent className="p-5">
 
           {/* グループ一覧（カードクリックで選択） */}
-          <p className="mb-3 text-xs text-gray-500">
-            カードをクリックしてメインターゲット（1つ）とサブターゲット（最大2つ）を選んでください
-          </p>
           <div className="space-y-3">
             {allSegments.map((seg) => {
               const isMain = mainTarget === seg.name
@@ -452,7 +456,7 @@ export function Step3Targeting({
                   <button
                     type="button"
                     onClick={() => handleCardClick(seg.name)}
-                    className="relative w-full p-4 text-left cursor-pointer"
+                    className="relative w-full px-3 py-2.5 text-left cursor-pointer"
                   >
                     {/* 選択状態バッジ（デザインシステムのBadgeに統一） */}
                     {isMain && (
@@ -490,7 +494,7 @@ export function Step3Targeting({
 
                         {/* 1. 購買決定要因（タグ入力） */}
                         <div>
-                          <label className="text-[11px] text-gray-500 mb-1 block">購買決定要因 <span className="text-red-500">*</span></label>
+                          <FieldSubLabel>購買決定要因 <span className="text-red-500">*</span></FieldSubLabel>
                           <div className="flex flex-wrap gap-1.5 rounded-md border border-gray-200 bg-white p-2 min-h-[36px] focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-1">
                             {buyingFactors.map((tag, i) => (
                               <span
@@ -519,7 +523,7 @@ export function Step3Targeting({
 
                         {/* 2. 自社の強み */}
                         <div>
-                          <label className="text-[11px] text-gray-500 mb-1 block">自社の強み <span className="text-red-500">*</span></label>
+                          <FieldSubLabel>自社の強み <span className="text-red-500">*</span></FieldSubLabel>
                           <AutoResizeTextarea
                             value={strengths}
                             onChange={(e) => setStrengths(e.target.value)}
@@ -532,13 +536,13 @@ export function Step3Targeting({
                         {/* 3. 競合分析（任意） — 競合ごとの個別カード */}
                         <div>
                           <div className="flex items-center gap-1.5 mb-1">
-                            <label className="text-[11px] text-gray-500">競合分析</label>
+                            <FieldSubLabel className="mb-0">競合分析</FieldSubLabel>
                             <span className="text-[10px] text-gray-400">（任意）</span>
                           </div>
                           {competitorCards.length > 0 ? (
                             <div className="space-y-2">
                               {competitorCards.map((comp) => (
-                                <div key={comp.name} className="rounded-md border border-gray-200 bg-white p-3">
+                                <div key={comp.name} className="rounded-md border border-gray-200 bg-white px-3 py-2.5">
                                   <div className="flex items-center gap-2 mb-1.5">
                                     <span className="text-xs font-bold text-gray-900">{comp.name}</span>
                                     {comp.notes && (
@@ -581,33 +585,46 @@ export function Step3Targeting({
             <h3 className="text-sm font-medium">狙いの妥当性を確認する</h3>
             <span className="text-xs text-muted-foreground">— 選んだターゲットが自社のカバー範囲に入っているかを自動チェック</span>
           </div>
-          {/* 整合性ステータスバー */}
-          <ConsistencyStatusBar
-            status={fitMap?.consistency_status || 'green'}
-            targetCount={1 + subTargets.length}
-            outCount={fitMap ? fitMap.targets.filter(t => !t.in_coverage).length : 0}
-          />
-          {/* マップ本体 */}
-          {fitMapLoading && !fitMap && (
+          {/* 整合性ステータスバー（更新中は過去状態として薄く） */}
+          <div className={`transition-opacity ${(fitMapPending || fitMapLoading) ? 'opacity-50' : 'opacity-100'}`}>
+            <ConsistencyStatusBar
+              status={fitMap?.consistency_status || 'green'}
+              targetCount={1 + subTargets.length}
+              outCount={fitMap ? fitMap.targets.filter(t => !t.in_coverage).length : 0}
+            />
+          </div>
+          {/* マップ本体（更新中はオーバーレイ） */}
+          {fitMapLoading && !fitMap ? (
             <div className="mt-3 flex h-[200px] items-center justify-center rounded-lg border border-dashed border-border bg-white text-sm text-muted-foreground">
               <Loader2 className="mr-2 h-4 w-4 animate-spin" /> ターゲット適合マップを生成中...
             </div>
-          )}
-          {fitMap && (
-            <TargetFitMapView
-              fitMap={fitMap}
-              onCoverageChange={(coverage) => setFitMap({ ...fitMap, coverage })}
-            />
-          )}
+          ) : fitMap ? (
+            <div className="relative mt-3">
+              <TargetFitMapView
+                fitMap={fitMap}
+                onCoverageChange={(coverage) => setFitMap({ ...fitMap, coverage })}
+              />
+              {(fitMapPending || fitMapLoading) && (
+                <div className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-background/70 backdrop-blur-[2px] pointer-events-none">
+                  <div className="flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 shadow-sm">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin text-ds-app-accent" />
+                    <span className="text-xs font-medium text-foreground">
+                      {fitMapPending ? '変更を反映中...' : 'AIで適合マップを更新中...'}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : null}
           {/* AI再生成ボタン */}
           <div className="mt-3 flex justify-start">
             <AIButton
               size="sm"
               onClick={fetchTargetFitMap}
-              disabled={fitMapLoading}
-              icon={fitMapLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : undefined}
+              disabled={fitMapLoading || fitMapPending}
+              icon={(fitMapLoading || fitMapPending) ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : undefined}
             >
-              {fitMapLoading ? '生成中…' : fitMap ? 'マップを再生成' : 'AIでマップを生成'}
+              {fitMapLoading ? '更新中…' : fitMapPending ? '反映待機中…' : fitMap ? 'マップを再生成' : 'AIでマップを生成'}
             </AIButton>
           </div>
         </div>

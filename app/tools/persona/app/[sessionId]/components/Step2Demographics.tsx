@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { FieldHeading, FieldSubLabel } from '@/components/shared/FieldHeading'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ArrowLeft, ArrowRight, Plus, X, Trash2 } from 'lucide-react'
 import { AIButton } from '@/components/shared/AIButton'
@@ -279,7 +280,7 @@ function DemographicsForm({ ordinal, data, generating, onChange, onRemove }: {
         ) : (
           <>
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">顔アイコン（任意）</label>
+              <FieldSubLabel>顔アイコン（任意）</FieldSubLabel>
               <div className="flex flex-wrap gap-1">
                 {AVATAR_EMOJIS.map(em => (
                   <button
@@ -298,35 +299,35 @@ function DemographicsForm({ ordinal, data, generating, onChange, onRemove }: {
               </div>
             </div>
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">呼称 / ペルソナ名称</label>
+              <FieldSubLabel>呼称 / ペルソナ名称</FieldSubLabel>
               <Input value={data.persona_name} onChange={e => set('persona_name', e.target.value)} placeholder="例: 地方中小企業の経営者" className="h-9 text-sm" />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs text-gray-500 mb-1 block">年齢層</label>
+                <FieldSubLabel>年齢層</FieldSubLabel>
                 <Input type="text" value={data.age} onChange={e => set('age', e.target.value)} placeholder="例: 30-40歳" className="h-9 text-sm" />
               </div>
               <div>
-                <label className="text-xs text-gray-500 mb-1 block">職業</label>
+                <FieldSubLabel>職業</FieldSubLabel>
                 <Input value={data.occupation} onChange={e => set('occupation', e.target.value)} placeholder="中小企業経営者" className="h-9 text-sm" />
               </div>
             </div>
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">説明</label>
+              <FieldSubLabel>説明</FieldSubLabel>
               <Textarea value={data.description} onChange={e => set('description', e.target.value)} placeholder="このペルソナの背景・状況・課題感を1〜2文で" rows={2} className="text-sm" />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs text-gray-500 mb-1 block">性別</label>
+                <FieldSubLabel>性別</FieldSubLabel>
                 <Input value={data.gender} onChange={e => set('gender', e.target.value)} placeholder="男性 / 女性" className="h-9 text-sm" />
               </div>
               <div>
-                <label className="text-xs text-gray-500 mb-1 block">役職</label>
+                <FieldSubLabel>役職</FieldSubLabel>
                 <Input value={data.company_role} onChange={e => set('company_role', e.target.value)} placeholder="代表取締役" className="h-9 text-sm" />
               </div>
               <div>
-                <label className="text-xs text-gray-500 mb-1 block">勤務先規模</label>
+                <FieldSubLabel>勤務先規模</FieldSubLabel>
                 <Input value={data.company_size} onChange={e => set('company_size', e.target.value)} placeholder="50〜100名" className="h-9 text-sm" />
               </div>
             </div>
@@ -350,7 +351,7 @@ function TagSection({ label, items, fieldKey, placeholder, onAdd, onRemove, onUp
 }) {
   return (
     <div>
-      <h3 className="text-sm font-bold mb-2 text-gray-700">{label}</h3>
+      <FieldHeading className="mb-2">{label}</FieldHeading>
       <div className="flex flex-wrap gap-2 mb-2">
         {items.map((item, idx) => (
           <div key={idx} className="flex items-center gap-1 rounded-full border border-gray-200 bg-white pl-3 pr-1 py-1">

@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
+import { FieldHeading } from '@/components/shared/FieldHeading'
 import { ArrowLeft, ArrowRight, Plus, Trash2 } from 'lucide-react'
 
 import { KeywordSelector } from '../../components/KeywordSelector'
@@ -172,13 +173,11 @@ export function Step2ImageInput({ project, onNext, onBack }: Step2Props) {
           {/* 共通の追加質問 */}
           {showAdditional && (
             <div className="mt-5 space-y-5 rounded-lg border border-gray-200 bg-white p-4">
-              <h2 className="text-xs font-bold mb-3">追加の質問（任意）</h2>
+              <FieldHeading optional className="mb-3">追加の質問</FieldHeading>
 
               {/* 避けたい色 */}
               <div>
-                <h2 className="text-xs font-bold mb-3">
-                  避けたい色はありますか？
-                </h2>
+                <FieldHeading className="mb-3">避けたい色はありますか？</FieldHeading>
                 <div className="space-y-2">
                   {avoidColors.map((color, i) => (
                     <div key={i} className="flex items-center gap-2">
@@ -212,9 +211,7 @@ export function Step2ImageInput({ project, onNext, onBack }: Step2Props) {
 
               {/* 参考ブランド */}
               <div>
-                <h2 className="text-xs font-bold mb-3">
-                  参考にしたいブランドがあれば教えてください
-                </h2>
+                <FieldHeading className="mb-3">参考にしたいブランドがあれば教えてください</FieldHeading>
                 <div className="space-y-2">
                   {referenceBrands.map((brand, i) => (
                     <div key={i} className="flex items-center gap-2">

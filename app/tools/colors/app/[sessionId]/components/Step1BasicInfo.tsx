@@ -8,6 +8,7 @@ import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent } from '@/components/ui/card'
 import { IndustrySelect } from '@/components/shared/IndustrySelect'
+import { FieldHeading } from '@/components/shared/FieldHeading'
 import { ColorPicker } from '../../components/ColorPicker'
 import { Plus, Trash2, ArrowRight } from 'lucide-react'
 import {
@@ -252,9 +253,7 @@ export function Step1BasicInfo({ project, onNext, onSaveField }: Step1Props) {
         <CardContent className="p-5">
           {/* 企業名またはブランド名 */}
           <div className="mb-5">
-            <h2 className="text-xs font-bold mb-3">
-              企業名またはブランド名 <span className="text-xs text-red-500 font-normal">*</span>
-            </h2>
+            <FieldHeading required className="mb-3">企業名またはブランド名</FieldHeading>
             <Input
               value={brandName}
               onChange={(e) => setBrandName(e.target.value)}
@@ -273,9 +272,7 @@ export function Step1BasicInfo({ project, onNext, onSaveField }: Step1Props) {
 
           {/* 業種 */}
           <div className="mb-5">
-            <h2 className="text-xs font-bold mb-3">
-              業種 <span className="text-xs text-red-500 font-normal">*</span>
-            </h2>
+            <FieldHeading required className="mb-3">業種</FieldHeading>
             <IndustrySelect
               category={industryCategory}
               subcategory={industrySubcategory}
@@ -298,9 +295,7 @@ export function Step1BasicInfo({ project, onNext, onSaveField }: Step1Props) {
 
           {/* ブランドステージ */}
           <div className="mb-5">
-            <h2 className="text-xs font-bold mb-3">
-              ブランドステージ <span className="text-xs text-red-500 font-normal">*</span>
-            </h2>
+            <FieldHeading required className="mb-3">ブランドステージ</FieldHeading>
             <Select
               value={brandStage || ''}
               onValueChange={(val) => {
@@ -324,7 +319,7 @@ export function Step1BasicInfo({ project, onNext, onSaveField }: Step1Props) {
           {/* 既存カラー */}
           <div className="mb-5">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-xs font-bold">既存のブランドカラーがある</h2>
+              <FieldHeading>既存のブランドカラーがある</FieldHeading>
               <Switch
                 checked={hasExistingColors}
                 onCheckedChange={setHasExistingColors}
@@ -373,13 +368,11 @@ export function Step1BasicInfo({ project, onNext, onSaveField }: Step1Props) {
 
           {/* 競合カラー */}
           <div className="mb-5">
-            <h2 className="text-xs font-bold mb-3">
-              競合企業・サービスのブランドカラー <span className="text-xs text-gray-400 font-normal">（任意）</span>
-            </h2>
+            <FieldHeading optional className="mb-3">競合企業・サービスのブランドカラー</FieldHeading>
             {competitorColors.length > 0 && (
               <div className="space-y-3 mb-3">
                 {competitorColors.map((comp, i) => (
-                  <div key={i} className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white p-3">
+                  <div key={i} className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2.5">
                     <Input
                       value={comp.name}
                       onChange={(e) => updateCompetitor(i, 'name', e.target.value)}

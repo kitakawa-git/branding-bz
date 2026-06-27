@@ -211,6 +211,38 @@ export function Step5Result({
     return checkConsistency(data)
   }, [segmentation, targeting, positioning, brandStance])
 
+  // スコア値に応じた配色・判定文・説明文
+  const consistencyStyle = (() => {
+    if (consistency.total >= 5) {
+      return {
+        label: '完全',
+        description: 'S→T→Pの各段階で矛盾なく接続されています。このまま出力できます。',
+        bgClass: 'bg-emerald-50 border-emerald-200',
+        textClass: 'text-emerald-700',
+        circleBorderClass: 'border-emerald-600',
+        circleTextClass: 'text-emerald-700',
+      }
+    }
+    if (consistency.total >= 3) {
+      return {
+        label: '要確認',
+        description: '一部のステップで整合性が確認できていません。未充足項目を見直してください。',
+        bgClass: 'bg-amber-50 border-amber-200',
+        textClass: 'text-amber-700',
+        circleBorderClass: 'border-amber-600',
+        circleTextClass: 'text-amber-700',
+      }
+    }
+    return {
+      label: '要再検討',
+      description: '戦略の整合性に重要な課題があります。前のステップに戻って見直しを推奨します。',
+      bgClass: 'bg-red-50 border-red-200',
+      textClass: 'text-red-700',
+      circleBorderClass: 'border-red-600',
+      circleTextClass: 'text-red-700',
+    }
+  })()
+
   // ターゲット概要文をAI生成（再生成にも使う）
   const generateTargetSummary = useCallback(async () => {
     if (!targeting.main_target) return
@@ -425,24 +457,41 @@ export function Step5Result({
       </p>
 
       {/* 戦略整合性スコア */}
-      <div className="mb-4 rounded-lg border border-gray-200 bg-white p-4">
-        <div className="mb-2 flex items-center justify-between gap-2">
-          <h3 className="text-sm font-bold text-gray-900">戦略整合性スコア</h3>
-          <span className={`text-lg font-bold ${consistency.total >= 4 ? 'text-emerald-600' : consistency.total >= 2 ? 'text-amber-600' : 'text-red-600'}`}>
-            {consistency.total}/5
-          </span>
+      <div className={`mb-4 rounded-xl border p-4 ${consistencyStyle.bgClass}`}>
+        <div className="flex items-center gap-4">
+          {/* 円形スコアバッジ */}
+          <div className={`flex h-16 w-16 flex-shrink-0 flex-col items-center justify-center rounded-full border-2 bg-white ${consistencyStyle.circleBorderClass}`}>
+            <div className={`text-xl font-bold leading-none ${consistencyStyle.circleTextClass}`}>
+              {consistency.total}/5
+            </div>
+            <div className={`mt-0.5 text-[10px] ${consistencyStyle.textClass}`}>スコア</div>
+          </div>
+          {/* タイトル＋説明＋チェックピル */}
+          <div className="min-w-0 flex-1">
+            <div className={`text-sm font-bold ${consistencyStyle.textClass}`}>
+              戦略整合性: {consistencyStyle.label}
+            </div>
+            <div className="mt-0.5 text-xs text-muted-foreground">
+              {consistencyStyle.description}
+            </div>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {consistency.items.map((it) => (
+                <span
+                  key={it.key}
+                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-medium ${
+                    it.passed
+                      ? 'bg-white ' + consistencyStyle.textClass
+                      : 'bg-white text-gray-400'
+                  }`}
+                  title={!it.passed && it.reason ? it.reason : undefined}
+                >
+                  <span aria-hidden>{it.passed ? '✓' : '○'}</span>
+                  <span>{it.label}</span>
+                </span>
+              ))}
+            </div>
+          </div>
         </div>
-        <ul className="space-y-1">
-          {consistency.items.map((it) => (
-            <li key={it.key} className="flex items-start gap-2 text-xs">
-              <span className={it.passed ? 'text-emerald-600' : 'text-gray-300'}>{it.passed ? '✓' : '○'}</span>
-              <span className={it.passed ? 'text-gray-700' : 'text-gray-500'}>
-                {it.label}
-                {!it.passed && it.reason && <span className="text-gray-400">（{it.reason}）</span>}
-              </span>
-            </li>
-          ))}
-        </ul>
       </div>
 
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">

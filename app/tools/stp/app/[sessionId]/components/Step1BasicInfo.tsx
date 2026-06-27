@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { IndustrySelect } from '@/components/shared/IndustrySelect'
 import { TitleDescriptionList } from '@/components/shared/TitleDescriptionList'
+import { FieldHeading } from '@/components/shared/FieldHeading'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import { ArrowRight, Plus, Trash2, Loader2, ExternalLink, Check } from 'lucide-react'
@@ -29,7 +30,7 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from '@/components/ui/alert-dialog'
-import { COMPETITOR_SUGGEST_MONTHLY_LIMIT, TARGET_SUGGEST_MONTHLY_LIMIT } from '@/lib/constants/ai-limits'
+import { COMPETITOR_SUGGEST_MONTHLY_LIMIT } from '@/lib/constants/ai-limits'
 import { TargetSuggestDialog, type TargetSuggestion } from '@/components/brand/TargetSuggestDialog'
 
 interface Competitor {
@@ -174,7 +175,7 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
   // AIターゲット提案
   const [targetSuggesting, setTargetSuggesting] = useState(false)
   const [targetRemaining, setTargetRemaining] = useState<number | null>(null)
-  const [targetResetsAt, setTargetResetsAt] = useState<string | null>(null)
+  const [, setTargetResetsAt] = useState<string | null>(null)
   const [targetSuggestOpen, setTargetSuggestOpen] = useState(false)
   const [targetSuggestions, setTargetSuggestions] = useState<TargetSuggestion[]>([])
 
@@ -614,15 +615,13 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
   return (
     <div>
       <h1 className="text-2xl font-bold text-foreground mb-2">Step 1: 基本情報</h1>
-      <p className="mb-4 text-[13px] text-muted-foreground">企業名・サービス名・個人名など、ブランディングの対象となる名称を入力してください</p>
+      <p className="mb-4 text-[13px] text-muted-foreground">企業名・サービス名・個人名など、ブランディングの対象となる名称を入力してください。</p>
 
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
         <CardContent className="p-5">
           {/* 企業名またはブランド名 */}
           <div className="mb-5">
-            <h2 className="text-xs font-bold mb-3">
-              企業名またはブランド名 <span className="text-xs text-red-500 font-normal">*</span>
-            </h2>
+            <FieldHeading required className="mb-3">企業名またはブランド名</FieldHeading>
             <Input
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
@@ -637,9 +636,7 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
 
           {/* 業種 */}
           <div className="mb-5">
-            <h2 className="text-xs font-bold mb-3">
-              業種 <span className="text-xs text-red-500 font-normal">*</span>
-            </h2>
+            <FieldHeading required className="mb-3">業種</FieldHeading>
             <IndustrySelect
               category={industryCategory}
               subcategory={industrySubcategory}
@@ -660,14 +657,14 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
 
           {/* 事業内容（構造化入力） */}
           <div className="mb-5">
+            <FieldHeading required className="mb-3">事業内容</FieldHeading>
             <TitleDescriptionList
-              label="事業内容"
+              label=""
               items={businessDescriptions}
               onChange={setBusinessDescriptions}
               addButtonLabel="事業内容を追加"
               titlePlaceholder="事業タイトル"
               descriptionPlaceholder="事業の説明"
-              required
               error={errors.businessDescriptions}
             />
           </div>
@@ -675,9 +672,7 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
           {/* 現状の顧客層（構造化入力） */}
           <div className="mb-5">
             <div className="flex items-center justify-between gap-2 mb-1.5">
-              <h2 className="text-xs font-bold">
-                現状の顧客層 <span className="text-xs text-gray-400 font-normal">（任意）</span>
-              </h2>
+              <FieldHeading optional>現状の顧客層</FieldHeading>
               <AIButton
                 type="button"
                 size="s"
@@ -691,13 +686,6 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
             </div>
             <p className="text-[13px] text-muted-foreground mb-1">
               現在ビジネスをしている顧客像を入力してください。これは分析の出発点であり、最終ターゲットではありません（最終ターゲットは Step 3 で決めます）。
-            </p>
-            <p className="text-xs text-muted-foreground mb-3">
-              {targetRemaining === 0
-                ? `AI提案は今月の利用上限に達しました（${formatResetDate(targetResetsAt)}にリセット）`
-                : targetRemaining !== null
-                  ? `AIによる提案は月${TARGET_SUGGEST_MONTHLY_LIMIT}回まで・今月あと ${targetRemaining} 回`
-                  : `AIによる提案は月${TARGET_SUGGEST_MONTHLY_LIMIT}回まで`}
             </p>
             <TitleDescriptionList
               label=""
@@ -714,9 +702,7 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
           {/* 競合企業・サービス */}
           <div className="mb-5">
             <div className="flex items-center justify-between gap-2 mb-1.5">
-              <h2 className="text-xs font-bold">
-                競合企業・サービス <span className="text-xs text-gray-400 font-normal">（任意）</span>
-              </h2>
+              <FieldHeading optional>競合企業・サービス</FieldHeading>
               <AIButton
                 type="button"
                 size="s"

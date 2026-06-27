@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion'
+import { FieldHeading } from '@/components/shared/FieldHeading'
 import { ArrowLeft, ArrowRight, Plus, X } from 'lucide-react'
 import { AIButton } from '@/components/shared/AIButton'
 import {
@@ -232,7 +233,7 @@ function GoalsForm({ personaName, data, onChange }: {
         <ListSection label="意思決定の要因" items={data.decision_factors} fieldKey="decision_factors" placeholder="例: 実績・事例の豊富さ" onAdd={addItem} onRemove={removeItem} onUpdate={updateItem} />
         <ListSection label="購買の障壁" items={data.buying_barriers} fieldKey="buying_barriers" placeholder="例: 費用対効果が見えにくい" onAdd={addItem} onRemove={removeItem} onUpdate={updateItem} />
         <div>
-          <label className="text-sm font-bold text-gray-700 mb-2 block">ブランドへの期待</label>
+          <FieldHeading className="mb-2">ブランドへの期待</FieldHeading>
           <Textarea value={data.brand_expectations} onChange={e => set('brand_expectations', e.target.value)} placeholder="どんな価値を期待するか" rows={2} className="text-sm" />
         </div>
 
@@ -241,7 +242,7 @@ function GoalsForm({ personaName, data, onChange }: {
             <AccordionTrigger className="py-3 text-sm font-bold text-gray-700">詳細設定（任意）</AccordionTrigger>
             <AccordionContent className="pb-4">
               <div>
-                <label className="text-sm font-bold text-gray-700 mb-2 block">購買の動機</label>
+                <FieldHeading className="mb-2">購買の動機</FieldHeading>
                 <Textarea value={data.buying_motivation} onChange={e => set('buying_motivation', e.target.value)} placeholder="何がきっかけで検討するか" rows={2} className="text-sm" />
               </div>
             </AccordionContent>
@@ -263,7 +264,7 @@ function ListSection({ label, items, fieldKey, placeholder, onAdd, onRemove, onU
 }) {
   return (
     <div>
-      <h3 className="text-sm font-bold mb-2 text-gray-700">{label}</h3>
+      <FieldHeading className="mb-2">{label}</FieldHeading>
       <div className="space-y-2">
         {(items || []).map((item, idx) => (
           <div key={idx} className="flex items-center gap-2">

@@ -34,8 +34,8 @@ const PAD = 16
 const MAP_W = WIDTH - PAD * 2
 const MAP_H = HEIGHT - PAD * 2
 // SIZE: 自社 lg=7 / 競合 md=6（PositioningMap と一致）
-const SELF_R = 7
-const OTHER_R = 6
+const SELF_R = 11
+const OTHER_R = 8
 
 export function InteractivePositioningMap({
   items, axes, selectedIdx, onItemMove, onItemSelect, className,
@@ -136,7 +136,7 @@ export function InteractivePositioningMap({
             <g key={idx}>
               {/* 自社は常に、編集中(選択)の要素も同色ハローで強調（PositioningMapの自社ハローと同方式） */}
               {(isSelf || isSelected) && (
-                <circle cx={cx} cy={cy} r={r + 11} fill={item.color} opacity={0.15} pointerEvents="none" />
+                <circle cx={cx} cy={cy} r={r + 14} fill={item.color} opacity={0.20} pointerEvents="none" />
               )}
               {/* 透明ヒット領域（タップ精度確保・半径22px） */}
               <circle
@@ -150,13 +150,19 @@ export function InteractivePositioningMap({
               />
               {/* 見える点（PositioningMap と同じ：opacity0.85・白縁2px） */}
               <circle cx={cx} cy={cy} r={r} fill={item.color} opacity={0.85} stroke="#fff" strokeWidth={2} pointerEvents="none" />
-              {/* 名前ラベル：自社は点の右にボールド、競合は点の下に中央（PositioningMap と一致） */}
+              {/* 自社の中心に白抜き「自社」（半径9以上のときのみ） */}
+              {isSelf && r >= 9 && (
+                <text x={cx} y={cy + 3} textAnchor="middle" fontSize="9" fill="#fff" fontWeight={700} pointerEvents="none">
+                  自社
+                </text>
+              )}
+              {/* 名前ラベル：自社は点の右にボールド、競合は点の真下に中央 */}
               {isSelf ? (
-                <text x={cx + 10} y={cy + 5} textAnchor="start" fontSize="14" fill="#0f172a" fontWeight={700} pointerEvents="none">
+                <text x={cx + 16} y={cy + 5} textAnchor="start" fontSize="14" fill="#0f172a" fontWeight={700} pointerEvents="none">
                   {item.name}
                 </text>
               ) : (
-                <text x={cx} y={cy + r + 10} textAnchor="middle" fontSize="11" fill="#374151" fontWeight={500} pointerEvents="none">
+                <text x={cx} y={cy + r + 12} textAnchor="middle" fontSize="11" fill={item.color} fontWeight={600} pointerEvents="none">
                   {item.name}
                 </text>
               )}

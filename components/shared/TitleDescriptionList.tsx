@@ -5,6 +5,7 @@
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { AutoResizeTextarea } from '@/components/ui/auto-resize-textarea'
+import { FieldHeading } from '@/components/shared/FieldHeading'
 import { Plus, Trash2 } from 'lucide-react'
 
 interface TitleDescriptionItem {
@@ -65,19 +66,14 @@ export function TitleDescriptionList({
   return (
     <div>
       {label && (
-        <div className="mb-2 flex items-center gap-1.5">
-          <label className="text-sm font-bold text-gray-700">{label}</label>
-          {required ? (
-            <span className="text-xs text-red-500">*</span>
-          ) : (
-            <span className="text-xs text-gray-400">（任意）</span>
-          )}
-        </div>
+        <FieldHeading required={required} optional={!required} className="mb-2">
+          {label}
+        </FieldHeading>
       )}
 
       <div className="space-y-2">
         {items.map((item, index) => (
-          <div key={index} className="border border-border rounded-lg p-3 bg-background">
+          <div key={index} className="border border-border rounded-lg px-3 py-2.5 bg-background">
             <div className="flex gap-2 mb-2 items-center">
               <Input
                 value={item.title}
@@ -114,7 +110,7 @@ export function TitleDescriptionList({
             type="button"
             variant="outline"
             onClick={addItem}
-            className="py-2 px-4 text-[13px]"
+            className="!mt-3 py-2 px-4 text-[13px]"
             disabled={disabled}
           >
             <Plus size={16} />

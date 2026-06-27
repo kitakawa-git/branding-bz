@@ -287,14 +287,29 @@ function PdfPositioningMap({
         {positioning.items.map((item, i) => {
           const cx = PAD + (item.x / 100) * (W - 2 * PAD)
           const cy = (H - PAD) - (item.y / 100) * (H - 2 * PAD)
-          const r = item.is_self ? 10 : 7
+          const isSelf = item.is_self
+          const r = isSelf ? 11 : 9
+          if (isSelf) {
+            return (
+              <G key={i}>
+                <Circle cx={cx} cy={cy} r={r + 14} fill={item.color} opacity={0.20} />
+                <Circle cx={cx} cy={cy} r={r} fill={item.color} opacity={0.85} />
+                <Text x={cx} y={cy + 3} style={{ fontSize: 7, fontFamily: FONT, color: '#FFFFFF', textAnchor: 'middle' as unknown as undefined }}>
+                  自社
+                </Text>
+                <Text x={cx + 16} y={cy + 4} style={{ fontSize: 8, fontFamily: FONT, color: '#0F172A', textAnchor: 'start' as unknown as undefined }}>
+                  {item.name}
+                </Text>
+              </G>
+            )
+          }
           return (
             <G key={i}>
               <Circle cx={cx} cy={cy} r={r} fill={item.color} opacity={0.85} />
               <Text
                 x={cx}
                 y={cy + r + 10}
-                style={{ fontSize: 7, fontFamily: FONT, color: '#374151', textAnchor: 'middle' as unknown as undefined }}
+                style={{ fontSize: 7, fontFamily: FONT, color: item.color, textAnchor: 'middle' as unknown as undefined }}
               >
                 {item.name}
               </Text>

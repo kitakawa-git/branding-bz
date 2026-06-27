@@ -4,6 +4,7 @@
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { INDUSTRY_CATEGORIES } from '@/lib/constants/industries'
+import { FieldSubLabel } from '@/components/shared/FieldHeading'
 
 interface IndustrySelectProps {
   category: string
@@ -37,13 +38,13 @@ export function IndustrySelect({
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {/* 大分類 */}
       <div>
-        <label className="text-sm font-bold text-gray-700">業種（大分類）</label>
+        <FieldSubLabel>業種（大分類）</FieldSubLabel>
         <Select
           value={category}
           onValueChange={handleCategoryChange}
           disabled={disabled}
         >
-          <SelectTrigger className="mt-1 bg-white">
+          <SelectTrigger className="bg-white">
             <SelectValue placeholder="選択してください" />
           </SelectTrigger>
           <SelectContent>
@@ -58,10 +59,10 @@ export function IndustrySelect({
 
       {/* 中分類 */}
       <div>
-        <label className="text-sm font-bold text-gray-700">業種（中分類）</label>
+        <FieldSubLabel>業種（中分類）</FieldSubLabel>
         {isOtherCategory ? (
           <Input
-            className="mt-1 h-10"
+            className="h-10"
             placeholder="業種を入力してください"
             value={subcategory}
             onChange={(e) => onSubcategoryChange(e.target.value)}
@@ -73,7 +74,7 @@ export function IndustrySelect({
             onValueChange={onSubcategoryChange}
             disabled={disabled || !category}
           >
-            <SelectTrigger className="mt-1 bg-white">
+            <SelectTrigger className="bg-white">
               <SelectValue placeholder={category ? '選択してください' : '大分類を先に選択'} />
             </SelectTrigger>
             <SelectContent>

@@ -3,10 +3,10 @@
 import type { PositioningMapData, PositioningMapSize } from '@/lib/types/positioning-map'
 
 const SIZE_RADIUS: Record<PositioningMapSize, number> = {
-  sm: 4,
-  md: 6,
-  lg: 7, // 自社ドット。Step4 編集マップの自社点(r7)に合わせる
-  custom: 6,
+  sm: 5,
+  md: 8,
+  lg: 11, // 自社ドット。Step4 編集マップの自社点(r11)に合わせる
+  custom: 8,
 }
 
 type PositioningMapProps = {
@@ -120,7 +120,7 @@ export function PositioningMap({ data, className }: PositioningMapProps) {
             <g key={i} className="cursor-pointer">
               <title>{`${item.name} (X: ${item.x}, Y: ${item.y})`}</title>
               {isSelf && (
-                <circle cx={cx} cy={cy} r={r + 11} fill={item.color} opacity={0.15} />
+                <circle cx={cx} cy={cy} r={r + 14} fill={item.color} opacity={0.20} />
               )}
               <circle
                 cx={cx}
@@ -131,9 +131,14 @@ export function PositioningMap({ data, className }: PositioningMapProps) {
                 stroke="white"
                 strokeWidth={2}
               />
+              {isSelf && r >= 9 && (
+                <text x={cx} y={cy + 3} textAnchor="middle" fontSize="9" fill="#fff" fontWeight="700">
+                  自社
+                </text>
+              )}
               {isSelf ? (
                 <text
-                  x={cx + 10}
+                  x={cx + 16}
                   y={cy + 5}
                   textAnchor="start"
                   fontSize="14"
@@ -145,11 +150,11 @@ export function PositioningMap({ data, className }: PositioningMapProps) {
               ) : (
                 <text
                   x={cx}
-                  y={cy + r + 10}
+                  y={cy + r + 12}
                   textAnchor="middle"
                   fontSize="11"
-                  fill="#374151"
-                  fontWeight="500"
+                  fill={item.color}
+                  fontWeight="600"
                 >
                   {item.name}
                 </text>

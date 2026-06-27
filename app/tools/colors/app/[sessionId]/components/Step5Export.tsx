@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { FieldHeading } from '@/components/shared/FieldHeading'
 import { ArrowLeft } from 'lucide-react'
 import { PalettePreview } from '../../components/PalettePreview'
 import { AccessibilityBadge } from '../../components/AccessibilityBadge'
@@ -199,7 +200,7 @@ export function Step5Export({
           {/* 出力オプション */}
           {confirmed && (
             <div className="mt-5 space-y-3">
-              <h2 className="text-xs font-bold mb-3">出力・連携</h2>
+              <FieldHeading className="mb-3">出力・連携</FieldHeading>
               <div className="grid gap-3 sm:grid-cols-3">
                 {/* PDF */}
                 <button

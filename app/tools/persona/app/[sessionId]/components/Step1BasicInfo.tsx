@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { IndustrySelect } from '@/components/shared/IndustrySelect'
+import { FieldHeading } from '@/components/shared/FieldHeading'
 import { TitleDescriptionList } from '@/components/shared/TitleDescriptionList'
 import { supabase } from '@/lib/supabase'
 import { ArrowRight } from 'lucide-react'
@@ -198,9 +199,7 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
         <CardContent className="p-5">
           {/* 企業名 */}
           <div className="mb-5">
-            <h2 className="text-xs font-bold mb-3">
-              企業名またはブランド名 <span className="text-xs text-red-500 font-normal">*</span>
-            </h2>
+            <FieldHeading required className="mb-3">企業名またはブランド名</FieldHeading>
             <Input
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
@@ -213,9 +212,7 @@ export function Step1BasicInfo({ basicInfo, onNext, onSaveField }: Step1Props) {
 
           {/* 業種 */}
           <div className="mb-5">
-            <h2 className="text-xs font-bold mb-3">
-              業種 <span className="text-xs text-red-500 font-normal">*</span>
-            </h2>
+            <FieldHeading required className="mb-3">業種</FieldHeading>
             <IndustrySelect
               category={industryCategory}
               subcategory={industrySubcategory}
