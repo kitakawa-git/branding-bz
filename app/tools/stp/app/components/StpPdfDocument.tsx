@@ -1,5 +1,5 @@
 // STP分析レポート PDFテンプレート（@react-pdf/renderer）
-import { Document, Page, View, Text, StyleSheet, Font, Svg, Circle, Line, G } from '@react-pdf/renderer'
+import { Document, Page, View, Text, StyleSheet, Font, Svg, Circle, Ellipse, Line, G } from '@react-pdf/renderer'
 import path from 'path'
 
 // NotoSansJP フォント登録
@@ -62,6 +62,15 @@ interface StpPdfData {
     y_axis: { bottom: string; top: string }
     items: PositioningItem[]
   }
+  targetFitMap?: {
+    x_axis: { left: string; right: string }
+    y_axis: { bottom: string; top: string }
+    coverage: { center_x: number; center_y: number; width: number; height: number }
+    targets: Array<{ name: string; role: 'main' | 'sub'; x: number; y: number; in_coverage: boolean }>
+    consistency_status: 'green' | 'yellow' | 'red'
+  } | null
+  brandStance?: Array<{ target_name: string; target_role: 'main' | 'sub'; statement: string; rationale: string }>
+  consistency?: { total: number; items: Array<{ label: string; passed: boolean; reason?: string }> } | null
 }
 
 const styles = StyleSheet.create({
@@ -297,6 +306,46 @@ function PdfPositioningMap({
   )
 }
 
+const SUB_COLORS_PDF = ['#10B981', '#8B5CF6', '#F59E0B']
+
+function PdfTargetFitMap({ fitMap }: { fitMap: NonNullable<StpPdfData['targetFitMap']> }) {
+  const W = 400
+  const H = 260
+  const PAD = 40
+  const toX = (x: number) => PAD + (x / 100) * (W - 2 * PAD)
+  const toY = (y: number) => (H - PAD) - (y / 100) * (H - 2 * PAD)
+  const cov = fitMap.coverage
+  const cx = toX(cov.center_x)
+  const cy = toY(cov.center_y)
+  const rx = (cov.width / 100) * (W - 2 * PAD) / 2
+  const ry = (cov.height / 100) * (H - 2 * PAD) / 2
+  let subIdx = -1
+  return (
+    <Svg width={W} height={H} viewBox={`0 0 ${W} ${H}`}>
+      <G>
+        <Line x1={PAD} y1={H / 2} x2={W - PAD} y2={H / 2} stroke="#E5E7EB" strokeWidth={1} />
+        <Line x1={W / 2} y1={PAD} x2={W / 2} y2={H - PAD} stroke="#E5E7EB" strokeWidth={1} />
+        <Ellipse cx={cx} cy={cy} rx={rx} ry={ry} fill="#3B82F6" fillOpacity={0.08} stroke="#3B82F6" strokeWidth={1.5} strokeDasharray="5 3" />
+        <Text x={PAD} y={H / 2 - 8} style={{ fontSize: 8, fontFamily: FONT, color: '#9CA3AF' }}>{fitMap.x_axis.left}</Text>
+        <Text x={W - PAD - 2} y={H / 2 - 8} style={{ fontSize: 8, fontFamily: FONT, color: '#9CA3AF', textAnchor: 'end' as unknown as undefined }}>{fitMap.x_axis.right}</Text>
+        <Text x={W / 2 + 4} y={PAD + 4} style={{ fontSize: 8, fontFamily: FONT, color: '#9CA3AF' }}>{fitMap.y_axis.top}</Text>
+        <Text x={W / 2 + 4} y={H - PAD + 12} style={{ fontSize: 8, fontFamily: FONT, color: '#9CA3AF' }}>{fitMap.y_axis.bottom}</Text>
+        {fitMap.targets.map((t, i) => {
+          const color = t.role === 'main' ? '#3B82F6' : SUB_COLORS_PDF[(subIdx = subIdx + 1) % SUB_COLORS_PDF.length]
+          const px = toX(t.x)
+          const py = toY(t.y)
+          return (
+            <G key={i}>
+              <Circle cx={px} cy={py} r={6} fill={color} opacity={t.in_coverage ? 0.9 : 1} />
+              <Text x={px + 8} y={py + 3} style={{ fontSize: 7, fontFamily: FONT, color: '#0F172A' }}>{t.name}</Text>
+            </G>
+          )
+        })}
+      </G>
+    </Svg>
+  )
+}
+
 export function StpPdfDocument({ data }: { data: StpPdfData }) {
   const today = new Date().toLocaleDateString('ja-JP', {
     year: 'numeric',
@@ -436,6 +485,63 @@ export function StpPdfDocument({ data }: { data: StpPdfData }) {
           <Text style={styles.footerText}>Powered by branding.bz</Text>
         </View>
       </Page>
+
+      {/* ページ3: ターゲット適合マップ＋自社の立ち位置＋整合性スコア */}
+      {(data.targetFitMap || (data.brandStance && data.brandStance.length > 0) || data.consistency) && (
+        <Page size="A4" style={styles.page}>
+          {/* 整合性スコア */}
+          {data.consistency && (
+            <View style={{ marginBottom: 16, borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 6, padding: 12 }}>
+              <Text style={{ fontSize: 11, fontFamily: FONT, color: '#111827', marginBottom: 6 }}>
+                戦略整合性スコア: {data.consistency.total}/5
+              </Text>
+              {data.consistency.items.map((it, i) => (
+                <Text key={i} style={{ fontSize: 8, fontFamily: FONT, color: it.passed ? '#374151' : '#9CA3AF', marginBottom: 2 }}>
+                  {it.passed ? '✓' : '○'} {it.label}{!it.passed && it.reason ? `（${it.reason}）` : ''}
+                </Text>
+              ))}
+            </View>
+          )}
+
+          {/* ターゲット適合マップ */}
+          {data.targetFitMap && (
+            <View style={{ marginBottom: 16 }}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>ターゲット適合マップ</Text>
+              </View>
+              <View style={{ alignItems: 'center', marginTop: 8 }}>
+                <PdfTargetFitMap fitMap={data.targetFitMap} />
+              </View>
+            </View>
+          )}
+
+          {/* 自社の立ち位置 */}
+          {data.brandStance && data.brandStance.length > 0 && (
+            <View>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>自社の立ち位置</Text>
+              </View>
+              {data.brandStance.map((s, i) => (
+                <View key={i} style={{ marginTop: 8, borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 6, padding: 10 }}>
+                  <Text style={{ fontSize: 8, fontFamily: FONT, color: '#6B7280', marginBottom: 3 }}>
+                    {s.target_role === 'main' ? 'メイン' : 'サブ'}: {s.target_name}
+                  </Text>
+                  <Text style={{ fontSize: 10, fontFamily: FONT, color: '#1F2937', lineHeight: 1.5 }}>{s.statement}</Text>
+                  {s.rationale ? (
+                    <Text style={{ fontSize: 8, fontFamily: FONT, color: '#9CA3AF', marginTop: 3 }}>なぜなら: {s.rationale}</Text>
+                  ) : null}
+                </View>
+              ))}
+            </View>
+          )}
+
+          {/* フッター */}
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>Page 3</Text>
+            <Text style={styles.footerText}>Powered by branding.bz</Text>
+          </View>
+        </Page>
+      )}
     </Document>
   )
 }

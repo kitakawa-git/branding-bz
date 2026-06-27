@@ -4,6 +4,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { renderToBuffer } from '@react-pdf/renderer'
 import { StpPdfDocument } from '@/app/tools/stp/app/components/StpPdfDocument'
+import { checkConsistency } from '@/lib/stp/consistency-check'
+import type { STPSessionData } from '@/app/tools/stp/app/[sessionId]/page'
 
 export async function POST(request: NextRequest) {
   try {
@@ -45,6 +47,9 @@ export async function POST(request: NextRequest) {
             y_axis: { bottom: '', top: '' },
             items: [],
           },
+          targetFitMap: sd.targeting?.target_fit_map || null,
+          brandStance: sd.brand_stance_statements?.statements || [],
+          consistency: checkConsistency(sd as STPSessionData),
         },
       })
     )
