@@ -3,6 +3,7 @@
 // Step 2: セグメンテーション
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { Input } from '@/components/ui/input'
+import { AutoResizeTextarea } from '@/components/ui/auto-resize-textarea'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -66,6 +67,14 @@ interface Step2Props {
   onBack: () => void
   onSaveField: (data: SegmentationData) => Promise<void>
 }
+
+// 切り口（A/B/C/D）の番号バッジ配色。5つ目以降はグレー
+const VAR_BADGE_COLORS = [
+  'bg-blue-100 text-blue-700',
+  'bg-emerald-100 text-emerald-700',
+  'bg-purple-100 text-purple-700',
+  'bg-amber-100 text-amber-700',
+]
 
 export function Step2Segmentation({
   segmentation,
@@ -366,6 +375,12 @@ export function Step2Segmentation({
                 >
                   {/* 変数名ヘッダー */}
                   <div className="mb-1 flex items-center gap-2">
+                    <span
+                      aria-hidden
+                      className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold ${VAR_BADGE_COLORS[varIndex] ?? 'bg-gray-100 text-gray-600'}`}
+                    >
+                      {String.fromCharCode(65 + varIndex)}
+                    </span>
                     <Input
                       value={variable.name}
                       onChange={(e) => updateVariableName(varIndex, e.target.value)}
@@ -388,15 +403,25 @@ export function Step2Segmentation({
                   )}
                   {!variable.reason && <div className="mb-3" />}
 
-              {/* セグメントカード一覧 */}
-              <div className="space-y-3">
+              {/* セグメントカード一覧（2列グリッド） */}
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
                 {variable.segments.map((segment, segIndex) => (
                   <div
                     key={segIndex}
-                    className="flex items-center gap-2"
+                    className="relative space-y-2 rounded-lg border border-gray-200 bg-white px-3 py-2.5"
                   >
-                    {/* セグメント内容 */}
-                    <div className="flex-1 space-y-2 rounded-lg border border-gray-200 bg-white p-3">
+                    {/* 削除ボタン（右上） */}
+                    <button
+                      type="button"
+                      onClick={() => removeSegment(varIndex, segIndex)}
+                      className="absolute right-1.5 top-1.5 text-gray-300 hover:text-red-500"
+                      title="グループを削除"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+
+                    {/* グループ名＋規模感バッジ */}
+                    <div className="flex items-center gap-2 pr-6">
                       <Input
                         value={segment.name}
                         onChange={(e) =>
@@ -405,27 +430,45 @@ export function Step2Segmentation({
                         placeholder="グループ名"
                         className="h-8 flex-1 text-sm font-medium"
                       />
-                      <Input
-                        value={segment.description}
-                        onChange={(e) =>
-                          updateSegment(varIndex, segIndex, 'description', e.target.value)
-                        }
-                        placeholder="説明（50字以内）"
-                        maxLength={50}
-                        className="h-8 text-xs text-gray-600"
-                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const next = segment.size_hint === '大' ? '中' : segment.size_hint === '中' ? '小' : '大'
+                          updateSegment(varIndex, segIndex, 'size_hint', next)
+                        }}
+                        className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium transition-colors ${
+                          segment.size_hint === '大'
+                            ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
+                            : segment.size_hint === '中'
+                            ? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                        title="規模感（クリックで切替）"
+                      >
+                        規模: {segment.size_hint}
+                      </button>
                     </div>
 
-                    {/* 削除ボタン */}
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => removeSegment(varIndex, segIndex)}
-                      className="size-9 shrink-0 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
-                      title="グループを削除"
-                    >
-                      <Trash2 size={14} />
-                    </Button>
+                    {/* 説明 */}
+                    <AutoResizeTextarea
+                      value={segment.description}
+                      onChange={(e) =>
+                        updateSegment(varIndex, segIndex, 'description', e.target.value)
+                      }
+                      placeholder="説明（50字以内）"
+                      maxLength={50}
+                      className="text-xs min-h-[34px]"
+                    />
+
+                    {/* 重視すること */}
+                    <AutoResizeTextarea
+                      value={segment.priorities || ''}
+                      onChange={(e) =>
+                        updateSegment(varIndex, segIndex, 'priorities', e.target.value)
+                      }
+                      placeholder="重視すること（例: スピード、低コスト）"
+                      className="text-[11px] min-h-[34px]"
+                    />
                   </div>
                 ))}
               </div>
