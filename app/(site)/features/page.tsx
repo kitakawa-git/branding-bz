@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import {
   LayoutDashboard,
   MessageSquareHeart,
@@ -10,10 +9,12 @@ import {
   BarChart3,
   Activity,
   Headset,
-  ArrowRight,
   type LucideIcon,
 } from 'lucide-react'
 import { PageHero, GlowCard } from '@/components/lp/ui'
+import { tools } from '@/components/lp/tools'
+import ToolCard from '@/components/lp/ToolCard'
+import FinalCta from '@/components/lp/FinalCta'
 
 export const metadata: Metadata = {
   title: '機能紹介 | branding.bz',
@@ -27,20 +28,19 @@ const groups: { layer: string; lead: string; features: Feature[] }[] = [
   {
     layer: '構築',
     lead: 'ブランドの"らしさ"を、全社の拠りどころに。',
-    features: [
-      {
-        tag: '構築',
-        title: 'ブランド掲示',
-        description:
-          '方針・戦略・ビジュアルID・バーバルID・提供価値を全社に掲示。いつでも"らしさ"を参照できる、ブランドの拠りどころです。',
-        icon: Compass,
-      },
-    ],
+    features: [],
   },
   {
     layer: '浸透',
     lead: '日々の行動と数字で、ブランドを根づかせる。',
     features: [
+      {
+        tag: '浸透',
+        title: 'ブランド掲示',
+        description:
+          '方針・戦略・ビジュアルID・バーバルID・提供価値を全社に掲示。いつでも"らしさ"を参照できる、ブランドの拠りどころです。',
+        icon: Compass,
+      },
       {
         tag: '浸透',
         title: 'ダッシュボード',
@@ -140,36 +140,29 @@ export default function LpFeaturesPage() {
               <h2 className="text-2xl font-bold tracking-tight">{g.layer}</h2>
               <p className="text-sm text-white/50">{g.lead}</p>
             </div>
-            <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-              {g.features.map((f) => (
-                <FeatureCard key={f.title} f={f} />
-              ))}
-            </div>
+            {g.features.length > 0 && (
+              <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+                {g.features.map((f) => (
+                  <FeatureCard key={f.title} f={f} />
+                ))}
+              </div>
+            )}
+
+            {/* 「構築」レイヤーには、すぐ試せる無料の構築ツールカードも併置する */}
+            {g.layer === '構築' && (
+              <div className={g.features.length > 0 ? 'mt-10' : ''}>
+                <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                  {tools.map((t) => (
+                    <ToolCard key={t.href} tool={t} />
+                  ))}
+                </div>
+              </div>
+            )}
           </section>
         ))}
       </div>
 
-      {/* CTA */}
-      <section className="px-6 pb-24 text-center">
-        <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-          必要なすべてを、ひとつのプラットフォームに。
-        </h2>
-        <p className="mt-6 text-lg text-white/60">まずは無料で、ブランディングの第一歩を。</p>
-        <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <Link
-            href="/signup"
-            className="inline-flex h-12 items-center gap-2 rounded-full bg-white px-8 text-base font-semibold text-black transition-transform hover:scale-105"
-          >
-            無料で始める <ArrowRight size={18} />
-          </Link>
-          <Link
-            href="/plan"
-            className="inline-flex h-12 items-center rounded-full border border-white/15 bg-white/5 px-8 text-base font-semibold text-white transition-colors hover:bg-white/10"
-          >
-            料金プランを見る
-          </Link>
-        </div>
-      </section>
+      <FinalCta secondary={{ href: '/plan', label: '料金プランを見る' }} />
     </main>
   )
 }

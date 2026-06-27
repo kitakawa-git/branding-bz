@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { PageHero } from '@/components/lp/ui'
 
 export const metadata: Metadata = {
   title: 'プライバシーポリシー',
@@ -8,20 +9,7 @@ export const metadata: Metadata = {
 export default function PrivacyPolicyPage() {
   return (
     <>
-      {/* ヒーロー */}
-      <section className="px-6 pt-[120px] pb-16 md:pt-[120px] md:pb-24 text-center">
-        <div className="mx-auto max-w-4xl">
-          <p className="text-xs font-semibold tracking-[0.25em] text-white/40 uppercase mb-4">
-            Privacy Policy
-          </p>
-          <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-white leading-snug md:leading-snug">
-            プライバシーポリシー
-          </h1>
-          <p className="mt-6 text-lg md:text-xl text-white/50 leading-relaxed max-w-2xl mx-auto">
-            最終更新日：2026年3月10日
-          </p>
-        </div>
-      </section>
+      <PageHero eyebrow="Privacy Policy" title="プライバシーポリシー">最終更新日：2026年3月10日</PageHero>
 
       {/* 本文 */}
       <section className="px-6 pb-16 md:pb-24">

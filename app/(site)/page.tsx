@@ -9,14 +9,13 @@ import {
   Activity,
   LayoutDashboard,
   BarChart3,
-  Target,
-  UserCircle,
-  Palette,
-  Fingerprint,
   Check,
   Quote,
 } from 'lucide-react'
 import { GlowCard } from '@/components/lp/ui'
+import { tools } from '@/components/lp/tools'
+import ToolCard from '@/components/lp/ToolCard'
+import FinalCta from '@/components/lp/FinalCta'
 
 /* ───────────────────────────────────────────────
    branding.bz トップページ（Framer風 / ダークテーマ）
@@ -72,12 +71,20 @@ function Hero() {
           >
             無料で始める
           </Link>
-          <Link
+          <a
             href="#features"
+            onClick={(e) => {
+              const target = document.getElementById('features')
+              if (target) {
+                e.preventDefault()
+                target.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                history.replaceState(null, '', '#features')
+              }
+            }}
             className="inline-flex h-12 items-center justify-center rounded-full border border-white/15 bg-white/5 px-7 text-base font-semibold text-white backdrop-blur transition-colors hover:bg-white/10"
           >
             AIではじめる
-          </Link>
+          </a>
         </div>
       </div>
     </section>
@@ -496,41 +503,6 @@ function Experts() {
 }
 
 /* ===== 無料ツール ===== */
-const tools = [
-  {
-    href: '/tools/stp',
-    label: 'STP分析',
-    icon: Target,
-    d: 'セグメント・ターゲット・ポジションを整理',
-    color: 'linear-gradient(135deg,#1d4ed8 0%,#7c3aed 55%,#0ea5e9 100%)',
-    dark: false,
-  },
-  {
-    href: '/tools/persona',
-    label: 'ペルソナビルダー',
-    icon: UserCircle,
-    d: '届けたい相手像をAIと具体化',
-    color: 'linear-gradient(160deg,#0f172a,#312e81 60%,#a855f7)',
-    dark: false,
-  },
-  {
-    href: '/tools/colors',
-    label: 'ブランドカラー定義',
-    icon: Palette,
-    d: '"らしさ"を色で言語化',
-    color: 'conic-gradient(from 200deg at 60% 40%,#f43f5e,#8b5cf6,#22d3ee,#f43f5e)',
-    dark: false,
-  },
-  {
-    href: '/tools/personality',
-    label: 'パーソナリティ診断',
-    icon: Fingerprint,
-    d: 'ブランドの人格を10問で診断',
-    color: 'radial-gradient(120% 120% at 25% 20%,#10b981 0%,#0f172a 65%)',
-    dark: false,
-  },
-]
-
 function Tools() {
   return (
     <section id="tools" className="px-6 py-24">
@@ -543,70 +515,8 @@ function Tools() {
         </div>
         <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {tools.map((t) => (
-            <Link key={t.href} href={t.href}>
-              <div
-                className="group h-full rounded-3xl p-6 transition-transform hover:-translate-y-1"
-                style={{ background: t.color }}
-              >
-                <div
-                  className={`mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl border ${
-                    t.dark ? 'border-black/15 bg-black/10' : 'border-white/25 bg-white/15'
-                  }`}
-                >
-                  <t.icon size={20} className={t.dark ? 'text-black' : 'text-white'} />
-                </div>
-                <h3 className={`text-base font-bold ${t.dark ? 'text-black' : 'text-white'}`}>{t.label}</h3>
-                <p className={`mt-2 text-sm leading-relaxed ${t.dark ? 'text-black/70' : 'text-white/80'}`}>
-                  {t.d}
-                </p>
-                <div
-                  className={`mt-4 inline-flex items-center gap-1 text-sm font-medium ${
-                    t.dark ? 'text-black/70 group-hover:text-black' : 'text-white/80 group-hover:text-white'
-                  }`}
-                >
-                  試してみる <ArrowRight size={15} />
-                </div>
-              </div>
-            </Link>
+            <ToolCard key={t.href} tool={t} />
           ))}
-        </div>
-      </div>
-    </section>
-  )
-}
-
-/* ===== 最終CTA ===== */
-function FinalCta() {
-  return (
-    <section className="px-6 py-24">
-      <div className="mx-auto max-w-5xl">
-        <div
-          className="relative overflow-hidden rounded-[2rem] border border-white/10 px-8 py-20 text-center"
-          style={{
-            background:
-              'radial-gradient(80% 120% at 50% 0%, rgba(37,99,235,0.4) 0%, rgba(8,8,10,0) 60%), #0d0d11',
-          }}
-        >
-          <h2 className="text-balance text-3xl font-bold tracking-tight md:text-4xl">
-            必要なすべてを、ひとつのプラットフォームに。
-          </h2>
-          <p className="mx-auto mt-6 max-w-xl text-lg text-white/60">
-            まずは無料で、ブランディングの第一歩を。
-          </p>
-          <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Link
-              href="/signup"
-              className="inline-flex h-12 items-center gap-2 rounded-full bg-white px-8 text-base font-semibold text-black transition-transform hover:scale-105"
-            >
-              無料で始める <ArrowRight size={18} />
-            </Link>
-            <Link
-              href="/contact"
-              className="inline-flex h-12 items-center rounded-full border border-white/15 bg-white/5 px-8 text-base font-semibold text-white backdrop-blur transition-colors hover:bg-white/10"
-            >
-              お問い合わせ
-            </Link>
-          </div>
         </div>
       </div>
     </section>
