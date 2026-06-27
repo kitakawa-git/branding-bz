@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Nav from '@/components/lp/Nav'
-import Footer from '@/components/lp/Footer'
+import Footer from '@/components/Footer'
 
 export const metadata: Metadata = {
   title: {

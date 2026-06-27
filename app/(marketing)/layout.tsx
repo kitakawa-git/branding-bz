@@ -1,7 +1,7 @@
 'use client'
 
 import Nav from '@/components/lp/Nav'
-import Footer from '@/components/lp/Footer'
+import Footer from '@/components/Footer'
 
 export default function MarketingLayout({
   children,

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { CheckCircle2, ArrowRight } from 'lucide-react'
+import { PageHero } from '@/components/lp/ui'
 
 export default function LpContactPage() {
   const [loading, setLoading] = useState(false)
@@ -81,22 +82,9 @@ export default function LpContactPage() {
 
   return (
     <main>
-      <section className="relative px-6 pt-36 pb-12 text-center md:pt-44">
-        <div
-          className="pointer-events-none absolute inset-0 -z-10"
-          style={{
-            background:
-              'radial-gradient(55% 45% at 50% 0%, rgba(37,99,235,0.28) 0%, rgba(37,99,235,0) 70%)',
-          }}
-        />
-        <div className="mx-auto max-w-3xl">
-          <p className="mb-4 text-xs font-semibold tracking-[0.25em] text-blue-400">Contact</p>
-          <h1 className="text-4xl font-bold tracking-tight md:text-6xl">お問い合わせ</h1>
-          <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-white/60">
-            ご質問・ご相談・お申し込みなど、お気軽にお問い合わせください。
-          </p>
-        </div>
-      </section>
+      <PageHero eyebrow="Contact" title="お問い合わせ">
+        ご質問・ご相談・お申し込みなど、お気軽にお問い合わせください。
+      </PageHero>
 
       <section className="px-6 pb-24">
         <form onSubmit={handleSubmit} className="mx-auto max-w-2xl space-y-6">

@@ -12,7 +12,7 @@ export function PageHero({
   children?: React.ReactNode
 }) {
   return (
-    <section className="relative px-6 pt-36 pb-12 text-center md:pt-44 md:pb-16">
+    <section className="relative px-6 pt-28 pb-16 text-center md:pt-36 md:pb-20">
       <div
         className="pointer-events-none absolute inset-0 -z-10"
         style={{
