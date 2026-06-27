@@ -4,9 +4,13 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
+import { AIButton } from '@/components/shared/AIButton'
 import { Card, CardContent } from '@/components/ui/card'
 import { PositioningMap } from '@/components/PositioningMap'
 import type { PositioningMapData } from '@/lib/types/positioning-map'
+import { checkConsistency } from '@/lib/stp/consistency-check'
+import type { STPSessionData, TargetFitMap, BrandStanceStatement } from '../page'
+import { TargetFitMapStatic } from '@/components/TargetFitMapStatic'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import { ConnectModal } from './ConnectModal'
@@ -65,6 +69,7 @@ interface TargetingData {
   target_summary?: string
   buying_factors?: string[]
   strengths?: string
+  target_fit_map?: TargetFitMap | null
 }
 
 interface PositioningItem {
@@ -102,6 +107,7 @@ interface Step5Props {
   targeting: TargetingData
   positioning: PositioningData
   companyId: string | null
+  brandStance?: BrandStanceStatement[]
   onBack: () => void
 }
 
@@ -149,6 +155,7 @@ export function Step5Result({
   targeting,
   positioning,
   companyId,
+  brandStance: initialBrandStance,
   onBack,
 }: Step5Props) {
   const router = useRouter()
@@ -158,6 +165,51 @@ export function Step5Result({
   const [checkingAdmin, setCheckingAdmin] = useState(true)
   const [targetSummary, setTargetSummary] = useState<string>(targeting.target_summary || '')
   const [summaryLoading, setSummaryLoading] = useState(false)
+
+  // 自社の立ち位置（ターゲット別ポジショニング文）
+  const [brandStance, setBrandStance] = useState<BrandStanceStatement[]>(initialBrandStance || [])
+  const [stanceLoading, setStanceLoading] = useState(false)
+
+  const generateBrandStance = useCallback(async () => {
+    if (!targeting.main_target) return
+    setStanceLoading(true)
+    try {
+      const res = await fetch('/api/tools/stp/suggest-brand-stance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ basic_info: basicInfo, targeting, positioning }),
+      })
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}))
+        toast.error((d as { error?: string }).error || '自社の立ち位置の生成に失敗しました')
+        return
+      }
+      const data = await res.json()
+      const statements: BrandStanceStatement[] = data.statements || []
+      setBrandStance(statements)
+      // セッションへ保存（連携時に読まれる）
+      await fetch(`/api/tools/stp/sessions/${sessionId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionData: { brand_stance_statements: { statements } } }),
+      }).catch(() => {})
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '生成中にエラーが発生しました')
+    } finally {
+      setStanceLoading(false)
+    }
+  }, [sessionId, basicInfo, targeting, positioning])
+
+  // 戦略整合性スコア（5項目）。props＋生成済み立ち位置から算出。
+  const consistency = useMemo(() => {
+    const data = {
+      segmentation,
+      targeting,
+      positioning,
+      brand_stance_statements: brandStance.length > 0 ? { statements: brandStance } : null,
+    } as unknown as STPSessionData
+    return checkConsistency(data)
+  }, [segmentation, targeting, positioning, brandStance])
 
   // ターゲット概要文をAI生成（再生成にも使う）
   const generateTargetSummary = useCallback(async () => {
@@ -372,6 +424,27 @@ export function Step5Result({
         STP分析の結果を確認し、PDF出力や branding.bz への連携を行いましょう
       </p>
 
+      {/* 戦略整合性スコア */}
+      <div className="mb-4 rounded-lg border border-gray-200 bg-white p-4">
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <h3 className="text-sm font-bold text-gray-900">戦略整合性スコア</h3>
+          <span className={`text-lg font-bold ${consistency.total >= 4 ? 'text-emerald-600' : consistency.total >= 2 ? 'text-amber-600' : 'text-red-600'}`}>
+            {consistency.total}/5
+          </span>
+        </div>
+        <ul className="space-y-1">
+          {consistency.items.map((it) => (
+            <li key={it.key} className="flex items-start gap-2 text-xs">
+              <span className={it.passed ? 'text-emerald-600' : 'text-gray-300'}>{it.passed ? '✓' : '○'}</span>
+              <span className={it.passed ? 'text-gray-700' : 'text-gray-500'}>
+                {it.label}
+                {!it.passed && it.reason && <span className="text-gray-400">（{it.reason}）</span>}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
         <CardContent className="p-5">
           {/* ===== S — セグメンテーション ===== */}
@@ -470,6 +543,29 @@ export function Step5Result({
           </div>
         )}
 
+        {/* ターゲット適合マップ（サムネイル） */}
+        {targeting.target_fit_map && (
+          <div className="mt-4 rounded-lg border border-gray-200 bg-white p-3">
+            <p className="mb-2 text-xs font-bold text-gray-700">ターゲット適合マップ</p>
+            <TargetFitMapStatic fitMap={targeting.target_fit_map} maxHeight={200} />
+            <div className="mt-2">
+              {(() => {
+                const st = targeting.target_fit_map.consistency_status
+                const conf = st === 'green'
+                  ? { bar: 'bg-emerald-500', wrap: 'bg-emerald-50 text-emerald-700', text: '✓ ターゲット全員がカバー範囲内' }
+                  : st === 'yellow'
+                    ? { bar: 'bg-amber-500', wrap: 'bg-amber-50 text-amber-700', text: '⚠ 一部がカバー範囲の端' }
+                    : { bar: 'bg-red-500', wrap: 'bg-red-50 text-red-700', text: '✗ カバー範囲外のターゲットあり' }
+                return (
+                  <div className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-[11px] font-medium ${conf.wrap}`}>
+                    <span className={`inline-block h-2 w-2 rounded-full ${conf.bar}`} />{conf.text}
+                  </div>
+                )
+              })()}
+            </div>
+          </div>
+        )}
+
         {/* ターゲット概要文（AI生成） */}
         <div className="mt-4 rounded-lg border border-blue-100 bg-blue-50/30 p-4">
           <div className="mb-2 flex items-center justify-between gap-2">
@@ -539,6 +635,43 @@ export function Step5Result({
             </div>
           ))}
         </div>
+
+        {/* 自社の立ち位置（ターゲット別×3） */}
+        <div className="mt-5 border-t border-gray-100 pt-4">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <p className="text-sm font-bold text-gray-900">自社の立ち位置</p>
+            <AIButton
+              size="sm"
+              onClick={generateBrandStance}
+              disabled={stanceLoading || !targeting.main_target}
+              icon={stanceLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : undefined}
+            >
+              {stanceLoading ? '生成中…' : brandStance.length > 0 ? 'AIで再生成' : 'AIで自社の立ち位置を生成'}
+            </AIButton>
+          </div>
+          {brandStance.length === 0 ? (
+            <p className="text-xs text-muted-foreground">ターゲット別のポジショニング文を生成できます。</p>
+          ) : (
+            <div className="space-y-2">
+              {brandStance.map((s, i) => {
+                const border = s.target_role === 'main'
+                  ? 'border-2 border-blue-500'
+                  : i === 1 ? 'border-[0.5px] border-emerald-400' : 'border-[0.5px] border-purple-400'
+                return (
+                  <div key={i} className={`rounded-lg ${border} bg-white p-3`}>
+                    <p className="mb-1 text-[11px] font-bold text-gray-500">
+                      {s.target_role === 'main' ? 'メイン' : 'サブ'}: {s.target_name}
+                    </p>
+                    <p className="text-sm leading-relaxed text-gray-800 whitespace-pre-wrap">{s.statement}</p>
+                    {s.rationale && (
+                      <p className="mt-1 text-[11px] text-muted-foreground leading-relaxed">なぜなら: {s.rationale}</p>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
       </div>
 
         </CardContent>
@@ -574,6 +707,8 @@ export function Step5Result({
           segmentation={segmentation}
           targeting={targeting}
           positioning={positioning}
+          hasTargetFitMap={!!targeting.target_fit_map}
+          hasBrandStance={brandStance.length > 0}
           open={connectModalOpen}
           onOpenChange={setConnectModalOpen}
           onConnected={handleConnected}

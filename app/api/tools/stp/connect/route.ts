@@ -55,12 +55,16 @@ interface Selections {
   segmentation?: boolean
   targeting?: boolean
   positioning?: boolean
+  target_fit_map?: boolean         // 新規
+  brand_stance_statements?: boolean // 新規
 }
 
 interface Confirm {
   overwriteSegmentation?: boolean
   overwriteTargeting?: boolean
   overwritePositioning?: boolean
+  overwriteTargetFitMap?: boolean        // 新規
+  overwriteBrandStance?: boolean          // 新規
 }
 
 function hasPositioningContent(d: unknown): boolean {
@@ -144,9 +148,12 @@ export async function POST(request: NextRequest) {
       segmentation: selectionsRaw?.segmentation ?? true,
       targeting: selectionsRaw?.targeting ?? true,
       positioning: selectionsRaw?.positioning ?? true,
+      target_fit_map: selectionsRaw?.target_fit_map ?? true,
+      brand_stance_statements: selectionsRaw?.brand_stance_statements ?? true,
     }
 
-    if (!selections.segmentation && !selections.targeting && !selections.positioning) {
+    if (!selections.segmentation && !selections.targeting && !selections.positioning
+        && !selections.target_fit_map && !selections.brand_stance_statements) {
       return NextResponse.json({ error: '連携する項目が選択されていません' }, { status: 400 })
     }
 
@@ -192,7 +199,7 @@ export async function POST(request: NextRequest) {
     const [{ data: existingPersonas }, { data: existingCompany }] = await Promise.all([
       supabaseAdmin
         .from('brand_personas')
-        .select('id, sort_order, segmentation_data, target, positioning_map_data')
+        .select('id, sort_order, segmentation_data, target, positioning_map_data, target_fit_map_data, brand_stance_statements')
         .eq('company_id', companyId)
         .order('sort_order', { ascending: true }),
       supabaseAdmin
@@ -227,6 +234,20 @@ export async function POST(request: NextRequest) {
         { status: 409 }
       )
     }
+    const hasExistingFitMap = !!(first?.target_fit_map_data && (first.target_fit_map_data as { x_axis?: { left?: string } })?.x_axis?.left)
+    if (first && selections.target_fit_map && hasExistingFitMap && !confirm.overwriteTargetFitMap) {
+      return NextResponse.json(
+        { error: '既存のターゲット適合マップがあります。上書き確認が必要です。', needsConfirm: 'target_fit_map' },
+        { status: 409 }
+      )
+    }
+    const hasExistingStance = !!((first?.brand_stance_statements as { statements?: unknown[] })?.statements?.length)
+    if (first && selections.brand_stance_statements && hasExistingStance && !confirm.overwriteBrandStance) {
+      return NextResponse.json(
+        { error: '既存の自社の立ち位置があります。上書き確認が必要です。', needsConfirm: 'brand_stance_statements' },
+        { status: 409 }
+      )
+    }
 
     // 5. brand_personas[0] 更新内容を組み立て
     const personaUpdates: Record<string, unknown> = {}
@@ -238,6 +259,12 @@ export async function POST(request: NextRequest) {
         || null
     }
     if (selections.positioning) personaUpdates.positioning_map_data = positioningMapData
+    if (selections.target_fit_map && targeting.target_fit_map) {
+      personaUpdates.target_fit_map_data = targeting.target_fit_map
+    }
+    if (selections.brand_stance_statements && sessionData.brand_stance_statements) {
+      personaUpdates.brand_stance_statements = sessionData.brand_stance_statements
+    }
 
     if (Object.keys(personaUpdates).length > 0) {
       if (first) {

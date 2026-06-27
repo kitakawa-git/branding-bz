@@ -297,6 +297,7 @@ export default function STPSessionPage() {
           targeting={session.session_data.targeting}
           positioning={session.session_data.positioning}
           companyId={session.company_id}
+          brandStance={session.session_data.brand_stance_statements?.statements || []}
           onBack={() => saveAndAdvance(4)}
         />
       )}

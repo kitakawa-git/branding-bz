@@ -70,6 +70,8 @@ interface ConnectModalProps {
   segmentation: SegmentationData
   targeting: TargetingData
   positioning: PositioningData
+  hasTargetFitMap?: boolean
+  hasBrandStance?: boolean
   open: boolean
   onOpenChange: (open: boolean) => void
   onConnected?: () => void
@@ -85,6 +87,8 @@ interface Selections {
   segmentation: boolean
   targeting: boolean
   positioning: boolean
+  target_fit_map: boolean
+  brand_stance_statements: boolean
 }
 
 function ToggleRow({ checked, onToggle, title, children }: {
@@ -112,6 +116,8 @@ export function ConnectModal({
   segmentation,
   targeting,
   positioning,
+  hasTargetFitMap = false,
+  hasBrandStance = false,
   open,
   onOpenChange,
   onConnected,
@@ -119,11 +125,13 @@ export function ConnectModal({
   const [existing, setExisting] = useState<PreflightExisting | null>(null)
   const [loadingPreflight, setLoadingPreflight] = useState(false)
   const [connecting, setConnecting] = useState(false)
-  const [confirmTarget, setConfirmTarget] = useState<{ segmentation: boolean; targeting: boolean; positioning: boolean } | null>(null)
+  const [confirmTarget, setConfirmTarget] = useState<{ segmentation: boolean; targeting: boolean; positioning: boolean; target_fit_map: boolean; brand_stance_statements: boolean } | null>(null)
   const [selections, setSelections] = useState<Selections>({
     segmentation: true,
     targeting: true,
     positioning: true,
+    target_fit_map: true,
+    brand_stance_statements: true,
   })
 
   useEffect(() => {
@@ -159,8 +167,9 @@ export function ConnectModal({
   const selfItem = (positioning.items || []).find(i => i.is_self)
 
   const hasSelection = selections.segmentation || selections.targeting || selections.positioning
+    || (hasTargetFitMap && selections.target_fit_map) || (hasBrandStance && selections.brand_stance_statements)
 
-  const executeConnect = useCallback(async (confirm: { overwriteSegmentation?: boolean; overwriteTargeting?: boolean; overwritePositioning?: boolean }) => {
+  const executeConnect = useCallback(async (confirm: { overwriteSegmentation?: boolean; overwriteTargeting?: boolean; overwritePositioning?: boolean; overwriteTargetFitMap?: boolean; overwriteBrandStance?: boolean }) => {
     setConnecting(true)
     try {
       const res = await fetch('/api/tools/stp/connect', {
@@ -175,6 +184,8 @@ export function ConnectModal({
           segmentation: data.needsConfirm === 'segmentation',
           targeting: data.needsConfirm === 'targeting',
           positioning: data.needsConfirm === 'positioning',
+          target_fit_map: data.needsConfirm === 'target_fit_map',
+          brand_stance_statements: data.needsConfirm === 'brand_stance_statements',
         })
         return
       }
@@ -198,9 +209,10 @@ export function ConnectModal({
     const needsTgtConfirm = selections.targeting && !!existing?.hasTarget
     const needsPosConfirm = selections.positioning && !!existing?.hasPositioning
     if (needsSegConfirm || needsTgtConfirm || needsPosConfirm) {
-      setConfirmTarget({ segmentation: needsSegConfirm, targeting: needsTgtConfirm, positioning: needsPosConfirm })
+      setConfirmTarget({ segmentation: needsSegConfirm, targeting: needsTgtConfirm, positioning: needsPosConfirm, target_fit_map: false, brand_stance_statements: false })
       return
     }
+    // 適合マップ・立ち位置の既存上書き確認は POST の 409(needsConfirm) で行う
     executeConnect({})
   }
 
@@ -209,6 +221,8 @@ export function ConnectModal({
       overwriteSegmentation: confirmTarget?.segmentation || undefined,
       overwriteTargeting: confirmTarget?.targeting || undefined,
       overwritePositioning: confirmTarget?.positioning || undefined,
+      overwriteTargetFitMap: confirmTarget?.target_fit_map || undefined,
+      overwriteBrandStance: confirmTarget?.brand_stance_statements || undefined,
     }
     setConfirmTarget(null)
     executeConnect(confirm)
@@ -218,6 +232,8 @@ export function ConnectModal({
   if (confirmTarget?.segmentation) overwriteParts.push('セグメンテーション')
   if (confirmTarget?.targeting) overwriteParts.push('ターゲット')
   if (confirmTarget?.positioning) overwriteParts.push('ポジショニングマップ')
+  if (confirmTarget?.target_fit_map) overwriteParts.push('ターゲット適合マップ')
+  if (confirmTarget?.brand_stance_statements) overwriteParts.push('自社の立ち位置')
 
   return (
     <>
@@ -315,6 +331,30 @@ export function ConnectModal({
                 </p>
               )}
             </ToggleRow>
+
+            {hasTargetFitMap && (
+              <ToggleRow
+                checked={selections.target_fit_map}
+                onToggle={() => setSelections(p => ({ ...p, target_fit_map: !p.target_fit_map }))}
+                title="ターゲット適合マップ → 顧客側軸＋カバー範囲"
+              >
+                <p className="text-xs text-muted-foreground">
+                  狙ったターゲットが自社のカバー範囲に入るかの分析結果を本体に保存します。
+                </p>
+              </ToggleRow>
+            )}
+
+            {hasBrandStance && (
+              <ToggleRow
+                checked={selections.brand_stance_statements}
+                onToggle={() => setSelections(p => ({ ...p, brand_stance_statements: !p.brand_stance_statements }))}
+                title="自社の立ち位置 → ターゲット別ポジショニング文"
+              >
+                <p className="text-xs text-muted-foreground">
+                  ターゲット別の立ち位置（ポジショニング・ステートメント）を本体に保存します。
+                </p>
+              </ToggleRow>
+            )}
           </div>
 
           <div className="mt-2 flex justify-end gap-2">
