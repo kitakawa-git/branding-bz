@@ -70,6 +70,8 @@ export interface STPSessionData {
     mode: 'ai' | 'manual'
     variables: Array<{
       name: string
+      reason?: string
+      axis_type?: 'ordinal' | 'categorical'  // 順序型/カテゴリ型（適合マップの軸候補フィルタに使用）
       segments: Array<{
         name: string
         description: string

@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
       : ''
     const system = [SYSTEM_PROMPT, guardrails].filter(Boolean).join('\n\n')
 
-    const response = await callClaude({ system, userMessage, maxTokens: 2000 })
+    const response = await callClaude({ system, userMessage, maxTokens: 2000, temperature: 0 })
 
     // JSONパース（既存パターン）
     let jsonStr = response.trim()

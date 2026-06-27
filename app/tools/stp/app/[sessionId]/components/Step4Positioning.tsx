@@ -24,8 +24,10 @@ import {
   Trash2,
   ArrowLeftRight,
   ArrowUpDown,
+  X,
 } from 'lucide-react'
 import { AIButton } from '@/components/shared/AIButton'
+import { FieldHeading, FieldSubLabel } from '@/components/shared/FieldHeading'
 
 // 型定義
 interface PositioningItem {
@@ -266,14 +268,7 @@ export function Step4Positioning({
     <div>
       {/* ヘッダー（AIボタンは見出し直下・左寄せ） */}
       <h1 className="text-2xl font-bold text-foreground mb-2">Step 4: ポジショニング</h1>
-      <p className="mb-4 text-[13px] leading-relaxed text-muted-foreground">2軸で競合と自社の立ち位置を可視化するマップ。点を<b className="font-medium text-foreground">ドラッグ</b>か<b className="font-medium text-foreground">スライダー</b>で配置できます。</p>
-      {!aiLoading && (
-        <div className="mb-4 flex justify-start">
-          <AIButton size="s" onClick={handleRegenerate} className="shrink-0">
-            AIで提案生成
-          </AIButton>
-        </div>
-      )}
+      <p className="mb-4 text-[13px] leading-relaxed text-muted-foreground">競合と自社を同じ2軸の上に並べることで、自社だけが立てる独自のポジションを見つけます。AIが提案した軸と配置を確認し、点をドラッグまたはスライダーで動かしながら、差別化できる立ち位置を探りましょう。</p>
 
       {/* AIエラー */}
       {aiError && (
@@ -302,11 +297,15 @@ export function Step4Positioning({
         </div>
       ) : (
         <div className="space-y-4 rounded-lg border border-border bg-[hsl(0_0%_97%)] p-4">
+          <div className="flex items-center justify-between gap-2">
+            <FieldHeading>自社・競合の一覧</FieldHeading>
+            <AIButton size="s" onClick={handleRegenerate} className="shrink-0">
+              AIで提案生成
+            </AIButton>
+          </div>
           {/* 1. 要素リスト（2カラム）：まず要素を確認・命名 */}
           <div>
-            <div className="mb-2 text-xs font-semibold text-muted-foreground">
-              要素（{items.length}社）
-            </div>
+            <FieldSubLabel>要素（{items.length}社）</FieldSubLabel>
             <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
               {items.map((item, index) => (
                 <div
@@ -353,43 +352,13 @@ export function Step4Positioning({
                 </div>
               ))}
             </div>
-            <Button variant="outline" onClick={addItem} className="mt-2 w-full gap-2">
+            <Button variant="outline" onClick={addItem} className="mt-3 w-full gap-2">
               <Plus className="h-4 w-4" />
               要素を追加
             </Button>
           </div>
 
-          {/* 2. 選択中要素の詳細スライダー（要素のすぐ下・選択中のみ） */}
-          {selectedIdx !== null && items[selectedIdx] && (
-            <div className="space-y-3 rounded-lg border border-ds-app-accent bg-ds-app-accent/5 p-3">
-              <div className="text-xs font-bold text-ds-app-accent">編集中: {items[selectedIdx].name || `要素${selectedIdx + 1}`}</div>
-              {items[selectedIdx].reasoning && (
-                <div className="text-[11px] text-muted-foreground leading-relaxed">
-                  AIの配置根拠: {items[selectedIdx].reasoning}
-                </div>
-              )}
-              <div className="space-y-1">
-                <div className="flex justify-between text-[11px] text-muted-foreground">
-                  <span>{xAxis.left || 'X左'}</span><span>{xAxis.right || 'X右'}</span>
-                </div>
-                <Slider value={[items[selectedIdx].x]} onValueChange={([v]) => updateItem(selectedIdx, { x: v })} min={0} max={100} step={1} />
-              </div>
-              <div className="space-y-1">
-                <div className="flex justify-between text-[11px] text-muted-foreground">
-                  <span>{yAxis.bottom || 'Y下'}</span><span>{yAxis.top || 'Y上'}</span>
-                </div>
-                <Slider value={[items[selectedIdx].y]} onValueChange={([v]) => updateItem(selectedIdx, { y: v })} min={0} max={100} step={1} />
-              </div>
-            </div>
-          )}
-
-          {/* 軸選定の根拠（AI生成・チャートの上） */}
-          {axisRationale && (
-            <div className="rounded-md bg-muted/40 px-3 py-2 text-[11px] leading-relaxed text-muted-foreground">
-              軸選定の根拠: {axisRationale}
-            </div>
-          )}
-
+          <FieldHeading className="!mt-8">ポジショニングマップ</FieldHeading>
           {/* 3. チャート＋軸設定オーバーレイ（全幅・ドラッグで配置） */}
           <div className="relative rounded-lg border border-border bg-card p-3">
             {/* 軸設定オーバーレイ */}
@@ -408,17 +377,72 @@ export function Step4Positioning({
               </div>
             </div>
 
-            {/* 軸設定オーバーレイ(高さ~78px,top-3,下端~90px)の下端〜図の上端の間隔を、
-                図の下端〜枠(p-3)と同じ12pxに。SVG内ラベルも上下対称(端から30px)なので、
-                上の余白＝下の余白＝(12 + 30×表示倍率) がどの画面幅でも成立する。 */}
-            <InteractivePositioningMap
-              items={items}
-              axes={{ x_axis: xAxis, y_axis: yAxis }}
-              selectedIdx={selectedIdx}
-              onItemMove={handleItemMove}
-              onItemSelect={setSelectedIdx}
-              className="mt-[90px]"
-            />
+            {/* 軸選定の根拠（AI生成・軸設定オーバーレイの下、マップの上）。
+                オーバーレイは absolute(top-3, 高さ~78px) なので mt-[90px] でその下に流す。 */}
+            {axisRationale && (
+              <div className="mt-[90px] rounded-md bg-muted/40 px-3 py-2 text-[11px] leading-relaxed text-muted-foreground">
+                軸選定の根拠: {axisRationale}
+              </div>
+            )}
+
+            {/* relativeラッパーはSVGと同寸（width100%・aspect4/3）なので、%指定でSVG座標と一致する。 */}
+            <div className={`relative ${axisRationale ? 'mt-3' : 'mt-[90px]'}`}>
+              <InteractivePositioningMap
+                items={items}
+                axes={{ x_axis: xAxis, y_axis: yAxis }}
+                selectedIdx={selectedIdx}
+                onItemMove={handleItemMove}
+                onItemSelect={setSelectedIdx}
+              />
+
+              {/* 選択中要素の編集フローティングウインドウ（マップ上・選択点の隣に表示） */}
+              {selectedIdx !== null && items[selectedIdx] && (() => {
+                const sel = items[selectedIdx]
+                // InteractivePositioningMap の定数（WIDTH700 HEIGHT525 PAD16）と一致させて点の位置を%換算
+                const leftPct = (16 + (sel.x / 100) * 668) / 700 * 100
+                const topPct = Math.min(85, Math.max(15, (16 + ((100 - sel.y) / 100) * 493) / 525 * 100))
+                const toLeft = sel.x > 55  // 点が右寄りならパネルは点の左側へ
+                return (
+                  <div
+                    className="absolute z-20 w-60 max-w-[72%] space-y-2.5 rounded-lg border border-ds-app-accent bg-white p-3 shadow-lg"
+                    style={{
+                      left: `${leftPct}%`,
+                      top: `${topPct}%`,
+                      transform: `translate(${toLeft ? 'calc(-100% - 32px)' : '32px'}, -50%)`,
+                    }}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="text-xs font-bold text-ds-app-accent">{sel.name || `要素${selectedIdx + 1}`}</div>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedIdx(null)}
+                        className="shrink-0 text-gray-400 hover:text-gray-600"
+                        aria-label="閉じる"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                    {sel.reasoning && (
+                      <div className="text-[11px] leading-relaxed text-muted-foreground">
+                        AIの配置根拠: {sel.reasoning}
+                      </div>
+                    )}
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-[11px] text-muted-foreground">
+                        <span>{xAxis.left || 'X左'}</span><span>{xAxis.right || 'X右'}</span>
+                      </div>
+                      <Slider value={[sel.x]} onValueChange={([v]) => updateItem(selectedIdx, { x: v })} min={0} max={100} step={1} />
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-[11px] text-muted-foreground">
+                        <span>{yAxis.bottom || 'Y下'}</span><span>{yAxis.top || 'Y上'}</span>
+                      </div>
+                      <Slider value={[sel.y]} onValueChange={([v]) => updateItem(selectedIdx, { y: v })} min={0} max={100} step={1} />
+                    </div>
+                  </div>
+                )
+              })()}
+            </div>
           </div>
         </div>
       )}

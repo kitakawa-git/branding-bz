@@ -38,6 +38,7 @@ interface Segment {
 interface Variable {
   name: string
   reason?: string
+  axis_type?: 'ordinal' | 'categorical'  // 順序型/カテゴリ型（適合マップの軸候補フィルタに使用）
   segments: Segment[]
 }
 
@@ -140,9 +141,10 @@ export function Step2Segmentation({
       const { variables: suggestedVars } = await res.json()
       // selected: true をデフォルトで付与
       const withSelected: Variable[] = suggestedVars.map(
-        (v: { name: string; reason?: string; segments: Array<{ name: string; description: string; size_hint: string; priorities?: string }> }) => ({
+        (v: { name: string; reason?: string; axis_type?: 'ordinal' | 'categorical'; segments: Array<{ name: string; description: string; size_hint: string; priorities?: string }> }) => ({
           name: v.name,
           reason: v.reason || '',
+          axis_type: v.axis_type,
           segments: v.segments.map(
             (s: { name: string; description: string; size_hint: string; priorities?: string }) => ({
               ...s,
@@ -271,68 +273,68 @@ export function Step2Segmentation({
     <div>
       <h1 className="text-2xl font-bold text-foreground mb-2">Step 2: セグメンテーション</h1>
       <p className="mb-4 text-[13px] text-muted-foreground">
-        市場をどのような切り口で分けるかを定義し、各グループの特徴を整理します
+        市場を意味のあるまとまりに分けることで、狙うべき相手を絞り込みやすくします。AIが提案した切り口（分け方の軸）とグループを確認し、必要に応じて編集しながら、各グループの特徴を整理しましょう。
       </p>
 
-      {/* AI提案ボタン（カード右上） */}
-      {!aiLoading && (
-        <div className="flex justify-start mb-4">
-          <AIButton onClick={handleRegenerate}>
-            {variables.length > 0 ? 'AIで再提案' : 'AIで提案生成'}
-          </AIButton>
-        </div>
-      )}
+      {/* 切り口の選び方ヒント（再提案ボタンの上） */}
+      <Accordion type="single" collapsible className="mb-4">
+        <AccordionItem value="guide" className="border-none">
+          <AccordionTrigger className="py-2 text-sm font-medium text-ds-app-accent hover:no-underline gap-1.5 [&>svg]:h-4 [&>svg]:w-4">
+            <span className="flex items-center gap-1.5">
+              <Lightbulb className="h-4 w-4 text-ds-app-accent" />
+              切り口の選び方ヒント（例で見る）
+            </span>
+          </AccordionTrigger>
+          <AccordionContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="rounded-lg border border-blue-100 bg-blue-50 p-3">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <MapPin className="h-4 w-4 text-ds-app-accent" />
+                  <span className="text-sm font-semibold text-gray-800">場所で分ける（地理的）</span>
+                </div>
+                <p className="text-xs text-gray-600 leading-relaxed">地域・都道府県・都市規模・気候など</p>
+                <p className="mt-2 rounded-md bg-blue-100 px-2.5 py-2 text-[12px] leading-relaxed text-blue-700"><span className="font-medium">例：</span>「都心の若手経営者」「地方の老舗メーカー」</p>
+              </div>
+              <div className="rounded-lg border border-blue-100 bg-blue-50 p-3">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Users className="h-4 w-4 text-ds-app-accent" />
+                  <span className="text-sm font-semibold text-gray-800">属性で分ける（デモグラフィック）</span>
+                </div>
+                <p className="text-xs text-gray-600 leading-relaxed">年齢・性別・職業・年収・企業規模・業種など</p>
+                <p className="mt-2 rounded-md bg-blue-100 px-2.5 py-2 text-[12px] leading-relaxed text-blue-700"><span className="font-medium">例：</span>「従業員50名以下のIT企業」「30代女性経営者」</p>
+              </div>
+              <div className="rounded-lg border border-blue-100 bg-blue-50 p-3">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Heart className="h-4 w-4 text-ds-app-accent" />
+                  <span className="text-sm font-semibold text-gray-800">価値観で分ける（サイコグラフィック）</span>
+                </div>
+                <p className="text-xs text-gray-600 leading-relaxed">ライフスタイル・価値観・こだわり・関心ごと</p>
+                <p className="mt-2 rounded-md bg-blue-100 px-2.5 py-2 text-[12px] leading-relaxed text-blue-700"><span className="font-medium">例：</span>「デザインに本気の経営者」「効率重視の現場主義」</p>
+              </div>
+              <div className="rounded-lg border border-blue-100 bg-blue-50 p-3">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Activity className="h-4 w-4 text-ds-app-accent" />
+                  <span className="text-sm font-semibold text-gray-800">行動で分ける</span>
+                </div>
+                <p className="text-xs text-gray-600 leading-relaxed">購買頻度・利用シーン・ブランドロイヤルティ</p>
+                <p className="mt-2 rounded-md bg-blue-100 px-2.5 py-2 text-[12px] leading-relaxed text-blue-700"><span className="font-medium">例：</span>「リピート率の高い既存客」「初回相談の見込み客」</p>
+              </div>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
 
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
         <CardContent className="p-5">
-
-          {/* 切り口の選び方ヒント */}
-          <Accordion type="single" collapsible className="mb-4">
-            <AccordionItem value="guide" className="border-none">
-              <AccordionTrigger className="py-2 text-sm font-medium text-ds-app-accent hover:no-underline gap-1.5 [&>svg]:h-4 [&>svg]:w-4">
-                <span className="flex items-center gap-1.5">
-                  <Lightbulb className="h-4 w-4 text-ds-app-accent" />
-                  切り口の選び方ヒント（例で見る）
-                </span>
-              </AccordionTrigger>
-              <AccordionContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div className="rounded-lg border border-blue-100 bg-white p-3">
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <MapPin className="h-4 w-4 text-ds-app-accent" />
-                      <span className="text-sm font-semibold text-gray-800">場所で分ける（地理的）</span>
-                    </div>
-                    <p className="text-xs text-gray-600 leading-relaxed">地域・都道府県・都市規模・気候など</p>
-                    <p className="mt-2 rounded-md bg-blue-50 px-2.5 py-2 text-[12px] leading-relaxed text-blue-700"><span className="font-medium">例：</span>「都心の若手経営者」「地方の老舗メーカー」</p>
-                  </div>
-                  <div className="rounded-lg border border-blue-100 bg-white p-3">
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <Users className="h-4 w-4 text-ds-app-accent" />
-                      <span className="text-sm font-semibold text-gray-800">属性で分ける（デモグラフィック）</span>
-                    </div>
-                    <p className="text-xs text-gray-600 leading-relaxed">年齢・性別・職業・年収・企業規模・業種など</p>
-                    <p className="mt-2 rounded-md bg-blue-50 px-2.5 py-2 text-[12px] leading-relaxed text-blue-700"><span className="font-medium">例：</span>「従業員50名以下のIT企業」「30代女性経営者」</p>
-                  </div>
-                  <div className="rounded-lg border border-blue-100 bg-white p-3">
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <Heart className="h-4 w-4 text-ds-app-accent" />
-                      <span className="text-sm font-semibold text-gray-800">価値観で分ける（サイコグラフィック）</span>
-                    </div>
-                    <p className="text-xs text-gray-600 leading-relaxed">ライフスタイル・価値観・こだわり・関心ごと</p>
-                    <p className="mt-2 rounded-md bg-blue-50 px-2.5 py-2 text-[12px] leading-relaxed text-blue-700"><span className="font-medium">例：</span>「デザインに本気の経営者」「効率重視の現場主義」</p>
-                  </div>
-                  <div className="rounded-lg border border-blue-100 bg-white p-3">
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <Activity className="h-4 w-4 text-ds-app-accent" />
-                      <span className="text-sm font-semibold text-gray-800">行動で分ける</span>
-                    </div>
-                    <p className="text-xs text-gray-600 leading-relaxed">購買頻度・利用シーン・ブランドロイヤルティ</p>
-                    <p className="mt-2 rounded-md bg-blue-50 px-2.5 py-2 text-[12px] leading-relaxed text-blue-700"><span className="font-medium">例：</span>「リピート率の高い既存客」「初回相談の見込み客」</p>
-                  </div>
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
+          {/* 見出し＋AI提案ボタン（同じ行・右端） */}
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <h2 className="text-sm font-bold text-gray-800">市場の切り口</h2>
+            {!aiLoading && (
+              <AIButton size="sm" onClick={handleRegenerate} className="shrink-0">
+                {variables.length > 0 ? 'AIで再提案' : 'AIで提案生成'}
+              </AIButton>
+            )}
+          </div>
 
       {/* AIエラー表示 */}
       {aiError && (

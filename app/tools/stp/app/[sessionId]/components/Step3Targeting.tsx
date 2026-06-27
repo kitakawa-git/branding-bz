@@ -9,7 +9,7 @@ import { AutoResizeTextarea } from '@/components/ui/auto-resize-textarea'
 import { Slider } from '@/components/ui/slider'
 import { ArrowLeft, ArrowRight, X, Loader2 } from 'lucide-react'
 import { AIButton } from '@/components/shared/AIButton'
-import { FieldSubLabel } from '@/components/shared/FieldHeading'
+import { FieldHeading, FieldSubLabel } from '@/components/shared/FieldHeading'
 import { toast } from 'sonner'
 import {
   AlertDialog,
@@ -33,6 +33,8 @@ interface SegmentSource {
 
 interface VariableSource {
   name: string
+  reason?: string
+  axis_type?: 'ordinal' | 'categorical'  // 順序型/カテゴリ型（適合マップの軸候補フィルタに使用）
   segments: SegmentSource[]
 }
 
@@ -106,14 +108,15 @@ interface Step3Props {
 // Step2から全セグメントを抽出（名前があるもののみ）
 function extractSegments(
   segmentation: SegmentationData
-): Array<{ name: string; description: string }> {
-  const segments: Array<{ name: string; description: string }> = []
+): Array<{ name: string; description: string; size_hint: '大' | '中' | '小' }> {
+  const segments: Array<{ name: string; description: string; size_hint: '大' | '中' | '小' }> = []
   for (const variable of segmentation.variables || []) {
     for (const seg of variable.segments || []) {
       if (seg.name.trim()) {
         segments.push({
           name: seg.name,
           description: seg.description,
+          size_hint: seg.size_hint || '中',
         })
       }
     }
@@ -430,23 +433,24 @@ export function Step3Targeting({
     <div>
       <h1 className="text-2xl font-bold text-foreground mb-2">Step 3: ターゲティング</h1>
       <p className="mb-4 text-[13px] text-muted-foreground">
-        狙う市場を選び、ターゲットの特徴をしっかりと深掘りします。カードをクリックしてメインターゲット（1つ）とサブターゲット（最大2つ）を選んでください。
+        前のステップで洗い出した市場候補の中から、自社が狙うべきターゲット市場を見極めます。カードをクリックしてメインターゲット（１つ）とサブターゲット（最大２つ）を選ぶと、市場の中の顧客像を深掘りできます。
       </p>
 
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
         <CardContent className="p-5">
 
-          {/* グループ一覧（カードクリックで選択） */}
-          <div className="space-y-3">
+          <FieldHeading className="mb-3">ターゲット市場候補</FieldHeading>
+          {/* グループ一覧（カードクリックで選択・2カラム／メインは全幅展開） */}
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             {allSegments.map((seg) => {
               const isMain = mainTarget === seg.name
               const isSub = subTargets.includes(seg.name)
               return (
                 <div
                   key={seg.name}
-                  className={`relative rounded-lg border transition-all ${
+                  className={`relative rounded-lg border transition-all duration-300 ease-in-out ${
                     isMain
-                      ? 'border-ds-app-accent-soft bg-blue-50/50'
+                      ? 'border-ds-app-accent-soft bg-blue-50/50 md:col-span-2'
                       : isSub
                         ? 'border-blue-300 bg-blue-50/30'
                         : 'border-gray-200 bg-white hover:border-gray-300'
@@ -460,17 +464,44 @@ export function Step3Targeting({
                   >
                     {/* 選択状態バッジ（デザインシステムのBadgeに統一） */}
                     {isMain && (
-                      <Badge className="absolute top-3 right-3 bg-ds-app-accent text-white hover:bg-ds-app-accent-hover">メインターゲット</Badge>
+                      <Badge className="absolute -top-[12px] left-[2px] text-[10px] bg-ds-app-accent text-white hover:bg-ds-app-accent-hover">メインターゲット</Badge>
                     )}
                     {isSub && (
-                      <Badge variant="outline" className="absolute top-3 right-3 border-blue-300 bg-transparent text-blue-300">サブターゲット</Badge>
+                      <Badge variant="outline" className="absolute -top-[12px] left-[2px] text-[10px] border-blue-300 bg-white text-blue-300">サブターゲット</Badge>
                     )}
 
-                    <span className="text-sm font-bold text-gray-900">{seg.name}</span>
+                    <div className="flex items-center gap-2 pr-24">
+                      <span className="text-sm font-bold text-gray-900">{seg.name}</span>
+                      <span
+                        className={`inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                          seg.size_hint === '大'
+                            ? 'bg-emerald-100 text-emerald-700'
+                            : seg.size_hint === '中'
+                            ? 'bg-amber-100 text-amber-700'
+                            : 'bg-gray-100 text-gray-600'
+                        }`}
+                      >
+                        規模: {seg.size_hint}
+                      </span>
+                    </div>
                     {seg.description && (
                       <p className="mt-1 text-sm text-gray-600">{seg.description}</p>
                     )}
                   </button>
+
+                  {/* AI提案ボタン（メインカード右上）。AIButtonは内部relativeのためdivで絶対配置 */}
+                  {isMain && (
+                    <div className="absolute top-3 right-3 z-10">
+                      <AIButton
+                        size="sm"
+                        onClick={handleAISuggestClick}
+                        disabled={aiLoading}
+                        icon={aiLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : undefined}
+                      >
+                        {aiLoading ? '提案中…' : 'AIで提案生成'}
+                      </AIButton>
+                    </div>
+                  )}
 
                   {/* メインターゲット深掘り（カード内展開） */}
                   <div
@@ -478,19 +509,7 @@ export function Step3Targeting({
                     style={{ gridTemplateRows: isMain ? '1fr' : '0fr' }}
                   >
                     <div className="overflow-hidden">
-                      <div className="border-t border-blue-200 mx-4 mb-4 pt-4 space-y-4">
-
-                        {/* AI提案ボタン（見出し直下・左寄せ） */}
-                        <div className="flex justify-start">
-                          <AIButton
-                            size="s"
-                            onClick={handleAISuggestClick}
-                            disabled={aiLoading}
-                            icon={aiLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : undefined}
-                          >
-                            {aiLoading ? '提案中…' : 'AIで提案生成'}
-                          </AIButton>
-                        </div>
+                      <div className="border-t border-blue-200 mx-4 mb-4 pt-4 space-y-4 max-w-3xl">
 
                         {/* 1. 購買決定要因（タグ入力） */}
                         <div>
@@ -579,11 +598,22 @@ export function Step3Targeting({
 
       {/* ② ターゲット適合マップ */}
       {mainTarget && (
-        <div className="mb-6 mt-6">
-          <div className="mb-2 flex items-center gap-2 flex-wrap">
-            <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-foreground text-xs font-medium text-background">2</span>
-            <h3 className="text-sm font-medium">狙いの妥当性を確認する</h3>
-            <span className="text-xs text-muted-foreground">— 選んだターゲットが自社のカバー範囲に入っているかを自動チェック</span>
+        <Card className="mb-6 mt-6 bg-[hsl(0_0%_97%)] border shadow-none">
+          <CardContent className="p-5">
+          <div className="mb-3 flex items-start justify-between gap-2">
+            <div>
+              <FieldHeading>ターゲット適合マップ</FieldHeading>
+              <p className="mt-1 text-[13px] text-muted-foreground">選んだターゲットが自社のカバー範囲に入っているかを自動チェックします。</p>
+            </div>
+            <AIButton
+              size="sm"
+              onClick={fetchTargetFitMap}
+              disabled={fitMapLoading || fitMapPending}
+              icon={(fitMapLoading || fitMapPending) ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : undefined}
+              className="shrink-0"
+            >
+              {fitMapLoading ? '更新中…' : fitMapPending ? '反映待機中…' : fitMap ? 'マップを再生成' : 'AIでマップを生成'}
+            </AIButton>
           </div>
           {/* 整合性ステータスバー（更新中は過去状態として薄く） */}
           <div className={`transition-opacity ${(fitMapPending || fitMapLoading) ? 'opacity-50' : 'opacity-100'}`}>
@@ -616,18 +646,8 @@ export function Step3Targeting({
               )}
             </div>
           ) : null}
-          {/* AI再生成ボタン */}
-          <div className="mt-3 flex justify-start">
-            <AIButton
-              size="sm"
-              onClick={fetchTargetFitMap}
-              disabled={fitMapLoading || fitMapPending}
-              icon={(fitMapLoading || fitMapPending) ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : undefined}
-            >
-              {fitMapLoading ? '更新中…' : fitMapPending ? '反映待機中…' : fitMap ? 'マップを再生成' : 'AIでマップを生成'}
-            </AIButton>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* フッターナビゲーション */}
@@ -673,7 +693,7 @@ function ConsistencyStatusBar({ status, targetCount, outCount }: {
   outCount: number
 }) {
   const conf = {
-    green: { bar: 'bg-emerald-500', wrap: 'bg-emerald-50 border-emerald-200 text-emerald-700', text: `✓ ${targetCount} ターゲット全員がカバー範囲内` },
+    green: { bar: 'bg-emerald-500', wrap: 'bg-emerald-50 border-emerald-200 text-emerald-700', text: `${targetCount} ターゲット全員がカバー範囲内` },
     yellow: { bar: 'bg-amber-500', wrap: 'bg-amber-50 border-amber-200 text-amber-700', text: '⚠ 一部のターゲットがカバー範囲の端に位置' },
     red: { bar: 'bg-red-500', wrap: 'bg-red-50 border-red-200 text-red-700', text: `✗ ${outCount} 個のターゲットがカバー範囲外（要再検討）` },
   }[status]
@@ -686,9 +706,11 @@ function ConsistencyStatusBar({ status, targetCount, outCount }: {
 }
 
 // ターゲット適合マップ描画（自社カバー範囲＝楕円、ターゲット＝色付き点）。横幅・縦幅はスライダーで調整。
-const FIT_PAD = 44
-const FIT_W = 500
-const FIT_H = 300
+const FIT_PAD = 16 // PositioningMapと同じ（軸ラベルを内側に置くため余白を最小化）
+// ビューボックスはPositioningMapと同じ尺度（幅700）に合わせる＝同じfontSize/ドット径が同じ見た目になる。
+// アスペクト比は5:3を維持（700:420 = 500:300 = 5/3）。
+const FIT_W = 700
+const FIT_H = 420
 const FIT_MAP_W = FIT_W - FIT_PAD * 2
 const FIT_MAP_H = FIT_H - FIT_PAD * 2
 const TARGET_COLORS = ['#10B981', '#8B5CF6', '#F59E0B'] // サブ用（メインは青固定）
@@ -704,31 +726,57 @@ function TargetFitMapView({ fitMap, onCoverageChange }: {
   const cy = toY(cov.center_y)
   const rx = (cov.width / 100) * FIT_MAP_W / 2
   const ry = (cov.height / 100) * FIT_MAP_H / 2
+  // プロット中心（軸・目盛り・軸ラベル用）。PositioningMapと同じ装飾に合わせる
+  const plotCx = FIT_PAD + FIT_MAP_W / 2
+  const plotCy = FIT_PAD + FIT_MAP_H / 2
   let subIdx = -1
   return (
     <div className="mt-3 rounded-lg border border-border bg-white p-3">
       <svg viewBox={`0 0 ${FIT_W} ${FIT_H}`} width="100%" className="rounded-lg" style={{ aspectRatio: '5 / 3' }}>
-        {/* XY軸 */}
-        <line x1={FIT_PAD + FIT_MAP_W / 2} y1={FIT_PAD} x2={FIT_PAD + FIT_MAP_W / 2} y2={FIT_PAD + FIT_MAP_H} stroke="#e5e7eb" strokeWidth={1} />
-        <line x1={FIT_PAD} y1={FIT_PAD + FIT_MAP_H / 2} x2={FIT_PAD + FIT_MAP_W} y2={FIT_PAD + FIT_MAP_H / 2} stroke="#e5e7eb" strokeWidth={1} />
-        {/* 自社カバー範囲（破線・半透明） */}
+        {/* XY軸（PositioningMapと同色） */}
+        <line x1={plotCx} y1={FIT_PAD} x2={plotCx} y2={FIT_PAD + FIT_MAP_H} stroke="#d1d5db" strokeWidth={1} />
+        <line x1={FIT_PAD} y1={plotCy} x2={FIT_PAD + FIT_MAP_W} y2={plotCy} stroke="#d1d5db" strokeWidth={1} />
+        {/* 目盛り（細め・短め） */}
+        {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100].map((val) => {
+          const t = val % 10 === 0 ? 4 : 2
+          return (
+            <g key={`tick-${val}`}>
+              <line x1={toX(val)} y1={plotCy - t} x2={toX(val)} y2={plotCy + t} stroke="#d1d5db" strokeWidth={0.75} />
+              <line x1={plotCx - t} y1={toY(val)} x2={plotCx + t} y2={toY(val)} stroke="#d1d5db" strokeWidth={0.75} />
+            </g>
+          )
+        })}
+        {/* 自社カバー範囲（破線・半透明）— 適合マップ固有 */}
         <ellipse cx={cx} cy={cy} rx={rx} ry={ry} fill="#3B82F6" fillOpacity={0.08} stroke="#3B82F6" strokeOpacity={0.5} strokeWidth={1.5} strokeDasharray="6 4" />
-        <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle" fontSize="10" fill="#3B82F6" fillOpacity={0.7}>自社カバー範囲</text>
-        {/* 軸ラベル */}
-        <text x={FIT_PAD - 6} y={FIT_PAD + FIT_MAP_H / 2} textAnchor="end" dominantBaseline="middle" fontSize="11" fill="#6b7280">{fitMap.x_axis.left}</text>
-        <text x={FIT_PAD + FIT_MAP_W + 6} y={FIT_PAD + FIT_MAP_H / 2} textAnchor="start" dominantBaseline="middle" fontSize="11" fill="#6b7280">{fitMap.x_axis.right}</text>
-        <text x={FIT_PAD + FIT_MAP_W / 2} y={FIT_PAD - 12} textAnchor="middle" fontSize="11" fill="#6b7280">{fitMap.y_axis.top}</text>
-        <text x={FIT_PAD + FIT_MAP_W / 2} y={FIT_PAD + FIT_MAP_H + 20} textAnchor="middle" fontSize="11" fill="#6b7280">{fitMap.y_axis.bottom}</text>
-        {/* ターゲット点 */}
+        <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle" fontSize="13" fill="#3B82F6" fillOpacity={0.7}>自社カバー範囲</text>
+        {/* 軸ラベル（PositioningMapと同位置・同色・fontSize12。プロット内側に配置） */}
+        {fitMap.x_axis.left && (
+          <text x={FIT_PAD + 4} y={plotCy - 8} textAnchor="start" fontSize="12" fill="#9ca3af">{fitMap.x_axis.left}</text>
+        )}
+        {fitMap.x_axis.right && (
+          <text x={FIT_PAD + FIT_MAP_W - 4} y={plotCy - 8} textAnchor="end" fontSize="12" fill="#9ca3af">{fitMap.x_axis.right}</text>
+        )}
+        {fitMap.y_axis.top && (
+          <text x={plotCx + 8} y={FIT_PAD + 14} textAnchor="start" fontSize="12" fill="#9ca3af">{fitMap.y_axis.top}</text>
+        )}
+        {fitMap.y_axis.bottom && (
+          <text x={plotCx + 8} y={FIT_PAD + FIT_MAP_H - 14} textAnchor="start" fontSize="12" fill="#9ca3af">{fitMap.y_axis.bottom}</text>
+        )}
+        {/* ターゲット点（PositioningMap準拠：r8・opacity0.85・白縁2px。メイン＝右にボールド濃色、サブ＝下中央にドット色） */}
         {fitMap.targets.map((t, i) => {
-          const color = t.role === 'main' ? '#3B82F6' : TARGET_COLORS[(subIdx = subIdx + 1) % TARGET_COLORS.length]
+          const isMain = t.role === 'main'
+          const color = isMain ? '#3B82F6' : TARGET_COLORS[(subIdx = subIdx + 1) % TARGET_COLORS.length]
           const px = toX(t.x)
           const py = toY(t.y)
           return (
             <g key={i}>
-              <circle cx={px} cy={py} r={6} fill={color} stroke="#fff" strokeWidth={2} opacity={t.in_coverage ? 1 : 0.95} />
-              {!t.in_coverage && <circle cx={px} cy={py} r={10} fill="none" stroke="#ef4444" strokeWidth={1.5} strokeDasharray="3 2" />}
-              <text x={px + 9} y={py + 4} fontSize="11" fill="#0f172a" fontWeight={t.role === 'main' ? 700 : 400}>{t.name}</text>
+              <circle cx={px} cy={py} r={8} fill={color} opacity={0.85} stroke="#fff" strokeWidth={2} />
+              {!t.in_coverage && <circle cx={px} cy={py} r={12} fill="none" stroke="#ef4444" strokeWidth={1.5} strokeDasharray="3 2" />}
+              {isMain ? (
+                <text x={px + 13} y={py + 5} textAnchor="start" fontSize="14" fill="#0f172a" fontWeight={700}>{t.name}</text>
+              ) : (
+                <text x={px} y={py + 20} textAnchor="middle" fontSize="11" fill={color} fontWeight={600}>{t.name}</text>
+              )}
             </g>
           )
         })}

@@ -197,6 +197,7 @@ export async function POST(request: NextRequest) {
       system,
       userMessage,
       maxTokens: 1500,
+      temperature: 0,
     })
 
     // JSONパース。素の``` ```フェンスや前後の説明文に耐えるよう、

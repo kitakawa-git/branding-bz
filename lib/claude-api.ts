@@ -37,6 +37,7 @@ export async function callClaude(options: {
   userMessage: string
   maxTokens?: number
   model?: string // 既定＝生成器モデル。インスペクター等が claude-opus-4-8 を渡せる（出題者≠採点者）
+  temperature?: number // 0〜1。未指定時はAPI側デフォルト(1.0)。決定論的に近づけるなら0
 }): Promise<string> {
   const client = getClient()
 
@@ -45,6 +46,7 @@ export async function callClaude(options: {
     max_tokens: options.maxTokens || 4096,
     system: options.system,
     messages: [{ role: 'user', content: options.userMessage }],
+    ...(options.temperature !== undefined ? { temperature: options.temperature } : {}),
   })
 
   // テキストブロックの内容を結合して返す

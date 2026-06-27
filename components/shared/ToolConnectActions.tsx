@@ -47,7 +47,7 @@ export function ToolConnectActions({
             {isAdminUser ? (
               <>
                 <p className="text-xs text-muted-foreground mb-3">{adminDescription}</p>
-                <Button variant="outline" onClick={onConnectClick} className="gap-1.5">
+                <Button variant="outline" onClick={onConnectClick} className="h-auto gap-2 px-5 py-2.5 text-sm">
                   <Unplug className="h-4 w-4" />
                   {connectLabel}
                 </Button>

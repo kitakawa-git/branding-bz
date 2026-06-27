@@ -5,7 +5,9 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { AIButton } from '@/components/shared/AIButton'
+import { FieldSubLabel } from '@/components/shared/FieldHeading'
 import { Card, CardContent } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { PositioningMap } from '@/components/PositioningMap'
 import type { PositioningMapData } from '@/lib/types/positioning-map'
 import { checkConsistency } from '@/lib/stp/consistency-check'
@@ -453,7 +455,7 @@ export function Step5Result({
     <div>
       <h1 className="text-2xl font-bold text-foreground mb-2">Step 5: 確認・出力</h1>
       <p className="mb-4 text-[13px] text-muted-foreground">
-        STP分析の結果を確認し、PDF出力や branding.bz への連携を行いましょう
+        これまで作成したセグメント・ターゲット・ポジショニングの分析結果を一覧で確認します。内容に問題がなければ、PDFとして保存したり、branding.bz に連携してブランド構築のデータとして活用しましょう。
       </p>
 
       {/* 戦略整合性スコア */}
@@ -497,23 +499,20 @@ export function Step5Result({
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
         <CardContent className="p-5">
           {/* ===== S — セグメンテーション ===== */}
+          <div className="mb-4 flex items-center gap-2">
+            <LayoutGrid className="h-5 w-5 text-ds-app-accent" />
+            <h2 className="text-sm font-bold text-gray-900">
+              S - セグメンテーション
+            </h2>
+          </div>
           <div className="mb-5 rounded-lg border border-gray-200 bg-white p-5">
-        <div className="mb-4 flex items-center gap-2">
-          <LayoutGrid className="h-5 w-5 text-ds-app-accent" />
-          <h3 className="text-base font-bold text-gray-900">
-            S — セグメンテーション
-          </h3>
-        </div>
-
         <div className="space-y-4">
           {(segmentation.variables || []).map((variable, vi) => {
             const selectedSegments = variable.segments.filter((s) => s.selected)
             if (selectedSegments.length === 0) return null
             return (
               <div key={vi}>
-                <p className="mb-2 text-sm font-bold text-gray-700">
-                  {variable.name}
-                </p>
+                <FieldSubLabel>{variable.name}</FieldSubLabel>
                 <div className="flex flex-wrap gap-2">
                   {selectedSegments.map((seg, si) => (
                     <SegmentBadge
@@ -530,17 +529,17 @@ export function Step5Result({
       </div>
 
           {/* ===== T — ターゲティング ===== */}
+          <div className="mb-4 flex items-center gap-2">
+            <Target className="h-5 w-5 text-ds-app-accent" />
+            <h2 className="text-sm font-bold text-gray-900">
+              T - ターゲティング
+            </h2>
+          </div>
           <div className="mb-5 rounded-lg border border-gray-200 bg-white p-5">
-        <div className="mb-4 flex items-center gap-2">
-          <Target className="h-5 w-5 text-ds-app-accent" />
-          <h3 className="text-base font-bold text-gray-900">
-            T — ターゲティング
-          </h3>
-        </div>
-
-        {/* メインターゲット */}
-        <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
-          <p className="mb-1 text-xs font-bold text-ds-app-accent">メインターゲット</p>
+        <FieldSubLabel>ターゲット</FieldSubLabel>
+        {/* メインターゲット（Step3のカード・バッジ表現に統一） */}
+        <div className="relative mb-3 mt-4 rounded-lg border border-ds-app-accent-soft bg-blue-50/50 px-3 py-2.5">
+          <Badge className="absolute -top-[12px] left-[2px] text-[10px] bg-ds-app-accent text-white hover:bg-ds-app-accent-hover">メインターゲット</Badge>
           <p className="text-sm font-bold text-gray-900">
             {targeting.main_target || '未選択'}
           </p>
@@ -561,17 +560,15 @@ export function Step5Result({
           )}
         </div>
 
-        {/* サブターゲット */}
+        {/* サブターゲット（Step3のカード・バッジ表現に統一） */}
         {subEvals.length > 0 ? (
-          <div className="space-y-2">
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
             {subEvals.map((sub, i) => (
               <div
                 key={i}
-                className="rounded-lg border border-gray-200 bg-gray-50 p-3"
+                className="relative rounded-lg border border-blue-300 bg-blue-50/30 px-3 py-2.5"
               >
-                <p className="mb-0.5 text-xs font-bold text-gray-500">
-                  サブターゲット {i + 1}
-                </p>
+                <Badge variant="outline" className="absolute -top-[12px] left-[2px] text-[10px] border-blue-300 bg-white text-blue-300">サブターゲット</Badge>
                 <p className="text-sm font-bold text-gray-700">{sub.name}</p>
                 {sub.eval && (
                   <div className="mt-1 flex items-center gap-4 text-xs text-gray-500">
@@ -587,16 +584,17 @@ export function Step5Result({
             ))}
           </div>
         ) : (
-          <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+          <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5">
             <p className="text-sm text-gray-400">サブターゲット: なし</p>
           </div>
         )}
 
         {/* ターゲット適合マップ（サムネイル） */}
         {targeting.target_fit_map && (
-          <div className="mt-4 rounded-lg border border-gray-200 bg-white p-3">
-            <p className="mb-2 text-xs font-bold text-gray-700">ターゲット適合マップ</p>
-            <TargetFitMapStatic fitMap={targeting.target_fit_map} maxHeight={200} />
+          <div className="mt-4">
+            <FieldSubLabel>ターゲット適合マップ</FieldSubLabel>
+            <div className="rounded-lg border border-gray-200 bg-white p-3">
+            <TargetFitMapStatic fitMap={targeting.target_fit_map} />
             <div className="mt-2">
               {(() => {
                 const st = targeting.target_fit_map.consistency_status
@@ -611,6 +609,7 @@ export function Step5Result({
                   </div>
                 )
               })()}
+            </div>
             </div>
           </div>
         )}
@@ -654,14 +653,13 @@ export function Step5Result({
       </div>
 
           {/* ===== P — ポジショニング ===== */}
+          <div className="mb-4 flex items-center gap-2">
+            <MapPin className="h-5 w-5 text-ds-app-accent" />
+            <h2 className="text-sm font-bold text-gray-900">
+              P - ポジショニング
+            </h2>
+          </div>
           <div className="mb-5 rounded-lg border border-gray-200 bg-white p-5">
-        <div className="mb-4 flex items-center gap-2">
-          <MapPin className="h-5 w-5 text-ds-app-accent" />
-          <h3 className="text-base font-bold text-gray-900">
-            P — ポジショニング
-          </h3>
-        </div>
-
         {/* マップ */}
         <div className="rounded-lg border bg-white p-3">
           <PositioningMap data={toMapData(positioning)} />
