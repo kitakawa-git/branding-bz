@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion'
 import { ToolConnectActions } from '@/components/shared/ToolConnectActions'
+import { Step4Journey } from './Step4Journey'
 import { ArrowLeft, RotateCcw, Loader2, UserCircle, Download } from 'lucide-react'
 import { type Persona, type BasicInfo, AVATAR_EMOJIS } from './persona-types'
 
@@ -211,6 +212,7 @@ export function Step5Result({ sessionId, personas, basicInfo, companyId, onBack,
                   </AccordionItem>
                 </Accordion>
               )}
+
             </CardContent>
           </Card>
               ))}
@@ -219,6 +221,17 @@ export function Step5Result({ sessionId, personas, basicInfo, companyId, onBack,
         ))}
         </div>
       </div>
+
+      {/* ジャーニー設計（Step4の実ビューを読み取り専用で表示）。連携対象外＝PDF出力のみ反映。 */}
+      {data.some(p => p.journey_map?.stages?.some(s => s?.name?.trim())) && (
+        <div className="mt-8">
+          <h2 className="mb-3 text-sm font-bold tracking-wide text-foreground">ジャーニー設計</h2>
+          <Step4Journey personas={data} basicInfo={basicInfo} readOnly />
+          <p className="mt-2 text-[12px] text-muted-foreground">
+            ※ ジャーニー設計は連携の対象に含まれません（branding.bz には反映されません）。「PDFをダウンロード」のみに反映されます。
+          </p>
+        </div>
+      )}
 
       {!connected ? (
         <ToolConnectActions
@@ -259,6 +272,9 @@ export function Step5Result({ sessionId, personas, basicInfo, companyId, onBack,
               {personas.length}件のペルソナをbranding.bzに連携します（既存ペルソナは置き換えられます）。
               {!hasCompanyId && '（企業アカウントが必要です）'}
             </AlertDialogDescription>
+            <div className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              ※ <span className="font-bold">ジャーニー設計は現在、連携の対象に含まれません</span>（branding.bz には反映されません）。ジャーニー設計は「PDFをダウンロード」のみに反映されます。
+            </div>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>キャンセル</AlertDialogCancel>

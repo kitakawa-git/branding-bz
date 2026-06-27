@@ -20,12 +20,21 @@ Font.registerHyphenationCallback((word) => [word])
 
 const FONT = 'NotoSansJP'
 
+export interface PersonaPdfJourneyStage {
+  name: string
+  emotions?: string
+  description?: string
+  touchpoints?: string[]
+  pains?: string[]
+  opportunities?: string[]
+}
 export interface PersonaPdfMember {
   name: string
   meta: string // 年齢層 / 性別 / 職業 などを連結した1行
   needs: string[]
   pains: string[]
   decisionFactors: string[]
+  journey?: PersonaPdfJourneyStage[] // ジャーニー設計（連携対象外・PDFのみ反映）
 }
 export interface PersonaPdfGroup {
   name: string
@@ -53,6 +62,9 @@ const styles = StyleSheet.create({
   tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
   tag: { fontSize: 8, color: '#1E3A8A', backgroundColor: '#EFF6FF', borderWidth: 1, borderColor: '#DBEAFE', borderRadius: 999, paddingVertical: 2, paddingHorizontal: 6 },
   empty: { fontSize: 8, color: '#9CA3AF' },
+  journeyStage: { marginTop: 4, paddingLeft: 6, borderLeftWidth: 2, borderLeftColor: '#E5E7EB' },
+  journeyStageName: { fontSize: 9, fontWeight: 700, color: '#374151' },
+  journeyMeta: { fontSize: 8, color: '#6B7280', marginTop: 1 },
 })
 
 function TagSection({ label, items }: { label: string; items: string[] }) {
@@ -91,6 +103,20 @@ export function PersonaPdfDocument({ data }: { data: PersonaPdfData }) {
                 <TagSection label="ニーズ" items={m.needs} />
                 <TagSection label="課題・ペインポイント" items={m.pains} />
                 <TagSection label="意思決定要因" items={m.decisionFactors} />
+                {m.journey && m.journey.length > 0 ? (
+                  <View>
+                    <Text style={styles.fieldLabel}>ジャーニー設計</Text>
+                    {m.journey.map((st, si) => (
+                      <View key={si} style={styles.journeyStage}>
+                        <Text style={styles.journeyStageName}>{st.emotions ? `${st.name}（${st.emotions}）` : st.name}</Text>
+                        {st.description ? <Text style={styles.journeyMeta}>{st.description}</Text> : null}
+                        {st.touchpoints && st.touchpoints.length > 0 ? <Text style={styles.journeyMeta}>タッチポイント: {st.touchpoints.join('、')}</Text> : null}
+                        {st.pains && st.pains.length > 0 ? <Text style={styles.journeyMeta}>課題: {st.pains.join('、')}</Text> : null}
+                        {st.opportunities && st.opportunities.length > 0 ? <Text style={styles.journeyMeta}>機会: {st.opportunities.join('、')}</Text> : null}
+                      </View>
+                    ))}
+                  </View>
+                ) : null}
               </View>
             ))}
           </View>

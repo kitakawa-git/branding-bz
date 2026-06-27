@@ -5,8 +5,8 @@
 > Cowork: 直接読み書き
 > Claude Projects: ナレッジとしてアップロード（週1回推奨）
 
-**最終更新:** 2026-06-24
-**更新者:** Claude Code（開発状態を main 直接運用・本番デプロイ済み `073747a` に更新。今セッションのリリース＝ペルソナ保存止血／Tier1離散カラム化／voice・孤立フィールド撤去／Step4改名 を反映）
+**最終更新:** 2026-06-26
+**更新者:** Cowork（ペルソナビルダー↔管理画面の呼応に加え、Step5にジャーニー設計を読み取り埋め込み／PDFにジャーニー反映／連携ダイアログで「ジャーニーは連携対象外＝PDFのみ反映」を明示／ポータル「接し方」のペルソナ表示を改善（2.5枚スライダー・顔アイコン・ブランドへの期待・課題色をビルダーと統一・ニーズ/課題3件＋もっと見る・職業重複の抑制）／Step2のTier2を常時表示に。avatar＝cb1b212・ポータルスライダー初版＝e488551 はpush済、今回の追加分は本コミットで反映）
 
 ---
 
@@ -154,13 +154,14 @@
 - **モバイルUX基準 v1.0 策定＋全画面サイジング是正（バッチ進行中）**（2026-06-16・本番デプロイ済み） — HIG(44pt)/Material(48dp)/WCAG AA(4.5:1)/iOS入力16px を `CLAUDE.md`「モバイルUX基準（確定版v1.0）」に恒久化（タップ44px/入力16px/コントラスト4.5:1/常用12px未満廃止/見出し二段階）。是正バッチ: ①フォーム系（ラベル・見出し`text-xs→text-sm`／入力`h-10→h-11`）`2563cba` ②検索入力`h-8 text-xs→h-11 16px`・フィルタ/期間ピル`text-xs→text-sm`・FABラベル/アイコン拡大`ff9cae7` ③FAB高さ`h-12→h-14`（fab.tsx・浮遊ボタンの例外XL）`4d8a179` ④§6 `--muted-foreground 45.1%→40%`（globals.css・全画面の薄グレー可読性）＋基準恒久化`235a48f` ⑤§3 タップ領域44px化＝いいね/コメント`min-h-11`(横並び維持・glyph20px)／…メニュー・コメント送信・KPI編集削除・目標編集`size-7/8/9→size-11`／サイドバー項目`h-10→h-11`／ヘッダーbell・トグル`size-10→size-11`／コメント入力`h-9→h-11`(16px)／画像削除`size-8→size-10` `f7b35dd`。**glyphは20-24px維持しヒット領域(padding/min-h)で44px確保**。残: batch3(メタ12px未満廃止)・batch4(カード/ダイアログtitle16-18px)・phase2(認証/名刺/管理)
 - **Web Push 通知 ブロック時の再許可案内UX**（2026-06-16・本番デプロイ済み、commit 4268e68） — 一度「許可しない」を選ぶと `Notification.requestPermission()` が再ダイアログを出さず行き止まりだった問題を解消。`components/pwa/PushToggle` が `permission==='denied'` を検知し、iPhone/PC それぞれの設定からの再許可手順を画面内に案内（旧・赤エラーの置換）。default（ダイアログ閉じ）と denied を区別
 - **管理サイドバー再編＋メニュー整理**（2026-06-24・本番デプロイ済み、commit 827a9a6/33e65a6） — ①「ブランド基本情報」→「**基本情報**」改称（サイドバー/動的タイトル/レイアウト/パンくず4箇所統一）しユーザーメニュー（アバターのドロップダウン）内へ移動 ②「アカウント管理」→「**アカウント**」に改称しユーザーメニューへ移動 ③ダッシュボードのタブで「タイムライン分析」が `timeline_enabled=false` 企業に出ない不具合を修正（brand-score と揃えて常時表示）④ラーニングの「視聴分析」タブを**ダッシュボードのタブへ移設**（新ルート `/admin/analytics/learning`）⑤サイドバーに**「構築」グループ**（STP分析/ペルソナビルダー/ブランドカラー定義＝各ツールの `/tools/*/app` へ）と**「浸透」グループ**（サーベイ管理/理解度テスト/ラーニング）を新設＝3レイヤー構造に整合 ⑥業種マスタに大分類「**コンサルティング**」追加（中分類: 経営・戦略/人事・組織/IT・DX/財務・会計/ブランド・マーケティング/その他）⑦行動指針の説明文を改行可（AutoResizeTextarea）＋D&D並べ替え対応
+- **ペルソナビルダー ↔ 管理画面ペルソナの呼応（5ステップ維持版）**（2026-06-25・Stage1 commit 022164d は push済／Stage2'＋Step5レイアウトは実装済み・未コミット） — Persona Builder ツールの出力構造を管理画面 `/admin/brand/strategy` のペルソナ入力に揃えた。**Stage1**: GoalsData の「課題・悩み(challenges)」を「課題・ペインポイント(pain_points)」1欄に統合（管理画面が1欄のため。旧challengesは normalize で pain_points へ移送＝後方互換）、「主な目標(primary_goals)」を「ニーズ」表記（管理画面 needs と一致）。suggest-goals/suggest-journey の参照も pain_points に一本化。**Stage2'**: Step2に「説明(description)」欄を追加しAI生成（1〜2文の状況説明）→ description列へ（**copyAIが personaBlock の `状況:` として読む生きた入力**＝従来の「職業・規模」自動連結より太る）。connect/persona-mapping の description写像を「入力値優先・空なら連結フォールバック」に。Tier2（性別・役職・勤務先規模・媒体・性格特性・購買動機）は「詳細設定」アコーディオンに退避。Step2/Step3/Step5を管理画面の項目順（名称→年齢層・職業→説明→ニーズ→課題・ペインポイント→意思決定要因→購買障壁→ブランドへの期待）に。Step5は色分けタグの2カラム要約をやめ管理画面と同じ縦一列の読み取りビューに作り替え。**方針判断**: 当初「案3＝1枚統合カード（必然的に4ステップ）」で着手したが、北川さんが「ステップを減らしたくない」→**5ステップ維持・統合せず**に確定（統合カード Step2Persona.tsx は破棄、Step2/3は別ステップのまま管理画面レイアウトに揃える）。**追加（2026-06-26）**: ①Step2の「詳細設定」アコーディオンを廃し Tier2 を常時表示に ②Step5に **Step4Journey を `readOnly` で読み取り埋め込み**（見出し/説明/ペルソナ一覧カード/編集UI/フッターを隠した実ビュー＝感情カーブ＋タッチポイント候補プール）③**PDF出力にジャーニー設計を反映**（`PersonaPdfDocument`/export route）④連携ダイアログに **「ジャーニー設計は連携対象外＝branding.bz未反映・PDFのみ反映」** の注記。⑤**ポータル「接し方」**のペルソナ表示を改善（`PersonaCarousel`＝2.5枚スライダー／顔アイコン表示／`brand_expectations` 表示／課題チップ色をビルダーと統一(orange)＋ラベル「課題・ペインポイント」／ニーズ・課題は3件＋「もっと見る」展開アニメ／年齢層・職業を改行＋`min-h`でニーズ位置揃え／職業フォールバック説明の重複抑制）。**判断メモ**: セグメント説明文をペルソナ「説明」欄へ転化する案は、セグメント=集団の括り／説明=個人の背景で性質が違うため**不採用**。**残**: 実機E2E（使い捨て企業でconnect→管理画面反映：説明＝入力文章が入る／課題・ペイン統合が効く）。
 - **同業者対策：利用規約に競合排除条項＋運用ポリシー＋テストデータ整理**（2026-06-24・本番デプロイ済み、commit 7d2df63／DB削除済み） — 同業者（ブランディング・デザイン関連事業者）の利用を防ぐ。①利用規約 `/terms` に「**第4条（同業者の利用制限）**」新設（第3条 利用登録の不承認事由・第12条 登録抹消事由にも該当を追記、条番号繰り下げ・最終更新日更新）②運用ルールを `docs/competitor-screening-policy.md` に策定（審査基準クロ/グレー/シロ・北川一次審査1営業日・**ブランディング系は一律クロ**・却下文面・遡及審査手順）③**既存12社を遡及棚卸し**＝実在の外部登録に同業者なし（branding系3社は example.com のデモ/シード、ID INC.は運営）。要確認は atelier Kiitos（業種未確認）④**テスト3社をDB削除**（テスト株式会社/株式会社あいうえお/トヨタファイナンス＝著名社名を個人gmailで登録）＋auth ユーザー4件。CASCADE/NO ACTION のFK構造を確認しアトミックなトランザクションで削除（CTD＝北川さんのdots.bz、atelier Kiitos は残置）。**残: 承認制ゲート・AI同業判定の実装は別タスク**
 
 ---
 
 ## 4. 残タスク
 
-- 🆕【調査済み・要対応】管理画面のペルソナ入力項目が Persona Builder の出力に追いついていない（不足フィールド多数）（2026-06-24 調査） — **状況**: 管理画面 `/admin/brand/strategy` のペルソナ編集は discrete 6項目のみ（`PersonaItem` ＝ name / age_range(年齢層) / occupation(職業) / description(説明) / needs(ニーズ) / pain_points(課題・ペインポイント)）。一方 Persona Builder ツールの最終出力（`app/tools/persona/app/[sessionId]/components/persona-types.ts` の `Demographics` ＋ `GoalsData` ＋ `JourneyMap`）はもっと多い。
+- ✅【対応済み 2026-06-25・方針①採用】管理画面のペルソナ入力項目が Persona Builder の出力に追いついていない（不足フィールド多数）（2026-06-24 調査 → 2026-06-25 実装） — **対応**: 方針①（管理画面に不足フィールドを追加＋ビルダーを管理画面レイアウトに呼応）で実装。①Tier1（意思決定要因/購買障壁/ブランドへの期待）を離散カラム化＋管理画面で編集可（commit 891f854・本番反映済）②ビルダーを管理画面に呼応＝課題・悩み＋ペインを「課題・ペインポイント」1欄に統合（Stage1 022164d）、主な目標→ニーズ表記、説明欄追加でcopyAIの`状況:`入力を強化、Tier2は詳細設定アコーディオン、Step2/3/5を管理画面の項目順に（Stage2'・実装済み未コミット）。**5ステップ維持**（1枚統合カード＝4ステップ化は北川さん判断で不採用）。**残**: 実機E2E（使い捨て企業でconnect→brand_personas→管理画面反映の通し確認）。 — **当初状況**: 管理画面 `/admin/brand/strategy` のペルソナ編集は discrete 6項目のみ（`PersonaItem` ＝ name / age_range(年齢層) / occupation(職業) / description(説明) / needs(ニーズ) / pain_points(課題・ペインポイント)）。一方 Persona Builder ツールの最終出力（`app/tools/persona/app/[sessionId]/components/persona-types.ts` の `Demographics` ＋ `GoalsData` ＋ `JourneyMap`）はもっと多い。
   - **ツール出力にあって管理画面に入力欄が無いフィールド**: 勤務先規模(company_size) / 居住地(location) / 性格特性(personality_traits) / 主な目標(primary_goals) / 課題・悩み(challenges ※pain_points とは別) / 意思決定要因(decision_factors) / 購買動機(buying_motivation) / 購買障壁(buying_barriers) / ブランド期待(brand_expectations) / 成功定義(success_definition) / 性別(gender) / 役職(company_role) / 趣味(hobbies) / 利用メディア(media_channels) / 日常(daily_routine) / 口癖(quote) / カスタマージャーニー(journey_map)。
   - **重要**: これらは連携 `/api/tools/persona/connect` で `brand_personas` の **`persona_data`(jsonb) ＋ `journey_map_data`** に**保存はされている**が、管理画面UIが**表示も編集もしていない**＝ツールで作ったリッチな内容が branding.bz 側では見えない／欠落して見える。discrete列への写像は `lib/tools/persona-mapping.ts`（needs / pain_points / age_range / occupation / description）。
   - **要対応（判断ポイント）**: ①管理画面のペルソナ編集に不足フィールドを追加し `persona_data` を表示・編集可能にする か ②連携で来たリッチ情報は「読み取り専用表示」に留める か。まず①②どちらの方針かを北川さんに確認 → 実装。
@@ -176,7 +177,8 @@
 - [x] ~~suggest-journey: 「短い共通ラベル」プロンプトに変更（cov集約が効くように）~~ ✅
 - [x] ~~「感情：すべて/ネガのみ」フィルタ削除（相対優先度Highと重複のため）~~ ✅
 - [ ] **Lv2タッチポイント分類体系**（`lib/persona/touchpoint-vocabulary.ts` 新設・12カテゴリ・90ラベル前後・**brand_creative カテゴリでID INC.発注機会の間接導線を組み込む**）— 指示書作成済み（`outputs/260620_ペルソナビルダー_Lv2_タッチポイント分類体系_指示書.md`）→ Claude Code に渡す
-- [ ] **Step2「デモグラフィック」→「ペルソナ生成」改名**（UI文言のみ・page.tsx の STEP_DEFINITIONS、Step2Demographics.tsx 見出し、breadcrumb／dynamic-title。内部型 Demographics はそのまま）
+- [x] ~~**Step2「デモグラフィック」→「ペルソナ生成」改名**~~ ✅（ステッパー＝基本情報/ペルソナ生成/課題・購買行動/ジャーニー設計/確認・出力。2026-06-25 時点で反映済み）
+- [x] ~~**管理画面ペルソナとの呼応**~~ ✅（2026-06-25・§3「ペルソナビルダー↔管理画面ペルソナの呼応」参照。Stage1 push済／Stage2'＋Step5は未コミット。5ステップ維持で確定）
 
 #### 元の残タスク
 - [ ] 実データでフルパイプライン一周（ID INC.でペルソナ作成→連携→コピーAI）を実施。
@@ -303,6 +305,8 @@
 | 2026-06-23 | **AIボタンの文言・配置ルールを策定し4ツール統一**（`docs/260622_AIボタン文言ルール_v1.md`）。文体「AIで{動作}」（動作語＝STP/カラー=提案→「提案生成」・ペルソナ=生成・パーソナリティ=診断）、ローディング「{動作}中…」、配置＝見出し直下・左寄せ（下部ナビ内に置かない／二重配置しない）。見出し下リード余白は全ステップ16px(`mb-4`)に統一 |
 | 2026-06-23 | **STP Step4 ポジショニングをドラッグ操作型に改修**（`InteractivePositioningMap`新設：Pointer Events・`touch-action:none`・ヒット領域22px・`setPointerCapture`・viewBox 5:3全幅・1カラム＝リスト→詳細スライダー→チャート）。表示専用 `PositioningMap`・`PositioningData`・APIは不変。**ペルソナ Step4（ジャーニー設計）は 表示フィルタ＋感情カーブ＋タッチポイント候補プールを1カードに統合**（感情グラフ＝ステージナビ＋ペルソナ別詳細アコーディオン、ペルソナ選択は上部フィルタに集約）。4ツールのヘッダーロゴを LP と同じ `/logo.svg`(top -2px) に統一（本番デプロイ済み） |
 | 2026-06-23 | **git運用の教訓**：`git add <file> && git commit` は**インデックス全体**をコミットするため、並列セッションがステージ済みの変更（旧 `Step2Demographics`/`Step3Goals` の削除・再作成）を**巻き込んで誤コミット**した。対策＝**`git commit -m "…" -- <path>` のパス指定コミット**で自分の変更だけを確定する（`git add -A` 同様に巻き込み注意） |
+| 2026-06-25 | **ペルソナbuilder↔管理画面の呼応＝Tier整理**: 管理画面ペルソナフォームが正＝Tier1（discrete: needs/pain_points/decision_factors/buying_barriers/brand_expectations）＋本人基本（name/age_range/occupation/description）。ビルダーのTier2（性別・役職・勤務先規模・媒体・性格特性・購買動機）は `persona_data` 止まりで管理画面非表示＝「詳細設定」アコーディオンへ。**description はオントロジー(graph)の端点ではないが copyAI が personaBlock の `状況:` として読む生きた入力**（`lib/copy/ontology-blocks.ts`／`insights.ts`／personality診断も参照）＝消さず、自動連結より入力文章を優先。孤立フィールド（居住地/趣味/成功定義/1日の過ごし方/口癖）は consumer 無し＝撤去。**「案3＝1枚統合カード」は Step2+3 を1枚にする＝必然的に4ステップ化するため、ステップ数を保ちたい要件では統合せず各ステップを管理画面レイアウトに揃える（5ステップ維持）方が合う** |
+| 2026-06-26 | **ジャーニーの扱い＋ポータル接し方の表示改善**: ジャーニー設計は branding.bz 連携の対象外（`brand_personas.journey_map_data` には書くが管理/ポータルで表示しない）＝**PDFのみ反映**と決定。Step5に `Step4Journey` を `readOnly` で埋め込み（編集UI/AI生成/フッター/見出し/ペルソナ一覧カードを隠した実ビュー）、PDFテンプレにジャーニー節を追加、連携ダイアログに注記。ポータル「接し方」＝`PersonaCarousel`(2.5枚 scroll-snap)・顔アイコン・brand_expectations・課題色をビルダーと統一(orange)・ニーズ/課題3件＋もっと見る(grid 0fr→1frアニメ)。**判断**: セグメント説明文をペルソナ「説明」へ転化する案は性質が違う（集団の括り≠個人の背景）ため不採用。**運用教訓**: 提案でも懸念は実装前に率直に指摘する（黙って実装しない）。**git**: 並行セッションが `components/*PositioningMap.tsx` を編集中＝パス明示コミットで巻き込み回避 |
 
 
 ---

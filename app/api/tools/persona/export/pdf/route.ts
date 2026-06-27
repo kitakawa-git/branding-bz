@@ -19,6 +19,16 @@ interface PersonaLike {
     pain_points?: string[]
     decision_factors?: string[]
   }
+  journey_map?: {
+    stages?: Array<{
+      name?: string
+      emotions?: string
+      description?: string
+      touchpoints?: string[]
+      pain_points?: string[]
+      opportunities?: string[]
+    }>
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -58,12 +68,23 @@ export async function POST(request: NextRequest) {
       const d = p.demographics || {}
       const meta = [d.age ? String(d.age) : '', d.gender, d.occupation, d.company_role]
         .map(v => (v || '').trim()).filter(Boolean).join(' / ')
+      const journey = (p.journey_map?.stages || [])
+        .filter(s => s?.name?.trim())
+        .map(s => ({
+          name: (s.name || '').trim(),
+          emotions: s.emotions,
+          description: s.description,
+          touchpoints: s.touchpoints || [],
+          pains: s.pain_points || [],
+          opportunities: s.opportunities || [],
+        }))
       return {
         name: d.persona_name?.trim() || `ペルソナ${idx + 1}`,
         meta,
         needs: p.goals?.primary_goals || [],
         pains: p.goals?.pain_points || [],
         decisionFactors: p.goals?.decision_factors || [],
+        journey,
       }
     }
     const groups: PersonaPdfGroup[] = [

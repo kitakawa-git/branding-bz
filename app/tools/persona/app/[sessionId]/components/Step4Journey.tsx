@@ -23,9 +23,10 @@ import { type Persona, type BasicInfo, type JourneyStage } from './persona-types
 interface Step4Props {
   personas: Persona[]
   basicInfo: BasicInfo
-  onNext: (personas: Persona[]) => Promise<boolean>
-  onBack: () => void
-  onSaveField: (personas: Persona[]) => Promise<void>
+  onNext?: (personas: Persona[]) => Promise<boolean>
+  onBack?: () => void
+  onSaveField?: (personas: Persona[]) => Promise<void>
+  readOnly?: boolean // Step5（確認・出力）に読み取り専用で埋め込むとき true：編集UI・AI生成・フッターを隠す
 }
 
 // ペルソナ識別色（Layer3＝項目の区別。ds-app-accentではなくこのパレット）
@@ -112,7 +113,7 @@ function assignPriorities(rows: TouchpointRow[]): void {
     r.priority = tier
   }
 }
-export function Step4Journey({ personas: initialPersonas, basicInfo, onNext, onBack, onSaveField }: Step4Props) {
+export function Step4Journey({ personas: initialPersonas, basicInfo, onNext, onBack, onSaveField, readOnly = false }: Step4Props) {
   const [data, setData] = useState<Persona[]>(initialPersonas)
   const [filterIdx, setFilterIdx] = useState<number | 'all'>('all')
   const [coverageOnly, setCoverageOnly] = useState(false)
@@ -129,7 +130,7 @@ export function Step4Journey({ personas: initialPersonas, basicInfo, onNext, onB
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const triggerAutoSave = useCallback((p: Persona[]) => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => { onSaveField(p) }, 1000)
+    debounceRef.current = setTimeout(() => { onSaveField?.(p) }, 1000)
   }, [onSaveField])
   useEffect(() => () => { if (debounceRef.current) clearTimeout(debounceRef.current) }, [])
 
@@ -182,7 +183,7 @@ export function Step4Journey({ personas: initialPersonas, basicInfo, onNext, onB
   const handleNext = async () => {
     setSaving(true)
     if (debounceRef.current) clearTimeout(debounceRef.current)
-    const ok = await onNext(data); if (!ok) setSaving(false)
+    const ok = await onNext?.(data); if (!ok) setSaving(false)
   }
 
   if (data.length === 0) {
@@ -190,10 +191,12 @@ export function Step4Journey({ personas: initialPersonas, basicInfo, onNext, onB
       <div>
         <h1 className="text-2xl font-bold text-foreground mb-2">Step 4: ジャーニー設計</h1>
         <p className="text-[14px] text-muted-foreground">先にペルソナを作成してください（Step2）。</p>
-        <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 bg-background/80 backdrop-blur border-t border-border px-6 py-4 flex items-center justify-between">
-          <Button variant="outline" onClick={onBack} className="h-14 gap-2 px-6 text-base font-bold"><ArrowLeft className="h-4 w-4" /> 戻る</Button>
-          <Button onClick={handleNext} disabled={saving} className="h-14 gap-2 px-6 text-base font-bold">確認・出力へ <ArrowRight className="h-4 w-4" /></Button>
-        </div>
+        {!readOnly && (
+          <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 bg-background/80 backdrop-blur border-t border-border px-6 py-4 flex items-center justify-between">
+            <Button variant="outline" onClick={onBack} className="h-14 gap-2 px-6 text-base font-bold"><ArrowLeft className="h-4 w-4" /> 戻る</Button>
+            <Button onClick={handleNext} disabled={saving} className="h-14 gap-2 px-6 text-base font-bold">確認・出力へ <ArrowRight className="h-4 w-4" /></Button>
+          </div>
+        )}
       </div>
     )
   }
@@ -252,13 +255,17 @@ export function Step4Journey({ personas: initialPersonas, basicInfo, onNext, onB
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-foreground mb-2">Step 4: ジャーニー設計</h1>
-      <p className="mb-4 text-[14px] text-muted-foreground">
-        ブランド施策を当てる「タッチポイント」を全ペルソナ横断で洗い出します。感情カーブは優先度の注釈です。
-      </p>
+      {!readOnly && (
+        <>
+          <h1 className="text-2xl font-bold text-foreground mb-2">Step 4: ジャーニー設計</h1>
+          <p className="mb-4 text-[14px] text-muted-foreground">
+            ブランド施策を当てる「タッチポイント」を全ペルソナ横断で洗い出します。感情カーブは優先度の注釈です。
+          </p>
+        </>
+      )}
 
       {/* 主要AIボタン（見出し直下・左寄せ。STP Step4と配置を統一） */}
-      {data.length > 1 && (
+      {!readOnly && data.length > 1 && (
         <div className="mb-4">
           <AIButton onClick={generateAll} disabled={anyLoading}>
             {bulkLoading ? '生成中…' : 'AIで一括生成'}
@@ -266,7 +273,8 @@ export function Step4Journey({ personas: initialPersonas, basicInfo, onNext, onB
         </div>
       )}
 
-      {/* A. ペルソナ一覧＋AI生成 */}
+      {/* A. ペルソナ一覧＋AI生成（readOnly＝Step5埋め込み時は重複のため非表示） */}
+      {!readOnly && (
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-4">
         <CardContent className="p-4">
           <h2 className="text-sm font-bold text-foreground mb-3">ペルソナ</h2>
@@ -285,24 +293,27 @@ export function Step4Journey({ personas: initialPersonas, basicInfo, onNext, onB
                   ) : (
                     <span className="text-[11.5px] text-muted-foreground mr-2 shrink-0">未生成</span>
                   )}
-                  <button
-                    type="button"
-                    onClick={() => handleGenerateClick(i)}
-                    disabled={anyLoading}
-                    title={has ? 'このペルソナだけ再生成' : 'このペルソナだけ生成'}
-                    className="inline-flex flex-none items-center justify-center h-8 w-8 rounded-lg border border-border bg-card text-muted-foreground transition-colors hover:border-violet-600 hover:bg-violet-50 hover:text-violet-600 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {aiLoading[i] ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
-                  </button>
+                  {!readOnly && (
+                    <button
+                      type="button"
+                      onClick={() => handleGenerateClick(i)}
+                      disabled={anyLoading}
+                      title={has ? 'このペルソナだけ再生成' : 'このペルソナだけ生成'}
+                      className="inline-flex flex-none items-center justify-center h-8 w-8 rounded-lg border border-border bg-card text-muted-foreground transition-colors hover:border-violet-600 hover:bg-violet-50 hover:text-violet-600 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {aiLoading[i] ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                    </button>
+                  )}
                 </div>
               )
             })}
           </div>
-          {Object.entries(aiError).filter(([, v]) => v).map(([k, v]) => (
+          {!readOnly && Object.entries(aiError).filter(([, v]) => v).map(([k, v]) => (
             <p key={k} className="mt-2 text-[13px] text-red-600">ペルソナ{Number(k) + 1}: {v}</p>
           ))}
         </CardContent>
       </Card>
+      )}
 
       {/* B + C + D を1つのカードに統合 */}
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-4">
@@ -389,7 +400,7 @@ export function Step4Journey({ personas: initialPersonas, basicInfo, onNext, onB
                                 </span>
                               </AccordionTrigger>
                               <AccordionContent>
-                                <StageDetail stage={data[i].journey_map!.stages[selectedStageIdx]} onChange={(patch) => mutateStage(i, selectedStageIdx, (s) => ({ ...s, ...patch }))} />
+                                <StageDetail stage={data[i].journey_map!.stages[selectedStageIdx]} readOnly={readOnly} onChange={(patch) => mutateStage(i, selectedStageIdx, (s) => ({ ...s, ...patch }))} />
                               </AccordionContent>
                             </AccordionItem>
                           ))}
@@ -405,7 +416,9 @@ export function Step4Journey({ personas: initialPersonas, basicInfo, onNext, onB
               <div className="mt-5 border-t border-border pt-5">
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                 <h2 className="text-sm font-bold text-foreground">タッチポイント候補プール</h2>
-                <Button variant="outline" size="sm" onClick={() => setAddOpen(o => !o)} className="gap-1.5"><Plus className="h-4 w-4" /> タッチポイントを手動追加</Button>
+                {!readOnly && (
+                  <Button variant="outline" size="sm" onClick={() => setAddOpen(o => !o)} className="gap-1.5"><Plus className="h-4 w-4" /> タッチポイントを手動追加</Button>
+                )}
               </div>
 
               <div className="mb-3 flex flex-wrap gap-1.5">
@@ -419,7 +432,7 @@ export function Step4Journey({ personas: initialPersonas, basicInfo, onNext, onB
                 )}
               </div>
 
-              {addOpen && (
+              {!readOnly && addOpen && (
                 <AddTouchpointPanel
                   data={data} stageNames={stageNames}
                   onAdd={(stageIdx, name, personaIdxs) => {
@@ -451,7 +464,7 @@ export function Step4Journey({ personas: initialPersonas, basicInfo, onNext, onB
                             collapsible={isLow} collapsed={isLow && !showLow}
                             onToggle={isLow ? () => setShowLow(v => !v) : undefined} />
                           {(!isLow || showLow) && groupRows.map(r => (
-                            <CompactRow key={`${r.stageIdx}-${normTp(r.name)}`} row={r} priority={tier}
+                            <CompactRow key={`${r.stageIdx}-${normTp(r.name)}`} row={r} priority={tier} readOnly={readOnly}
                               onDelete={() => deleteTouchpoint(data, commit, r.stageIdx, r.name)}
                               onRemovePersona={(pi) => removePersonaFromTp(data, commit, pi, r.stageIdx, r.name)} />
                           ))}
@@ -467,10 +480,12 @@ export function Step4Journey({ personas: initialPersonas, basicInfo, onNext, onB
         </CardContent>
       </Card>
 
-      <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 bg-background/80 backdrop-blur border-t border-border px-6 py-4 flex items-center justify-between">
-        <Button variant="outline" onClick={onBack} className="h-14 gap-2 px-6 text-base font-bold"><ArrowLeft className="h-4 w-4" /> 戻る</Button>
-        <Button onClick={handleNext} disabled={saving} className="h-14 gap-2 px-6 text-base font-bold">{saving ? '保存中...' : '確認・出力へ'}{!saving && <ArrowRight className="h-4 w-4" />}</Button>
-      </div>
+      {!readOnly && (
+        <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 bg-background/80 backdrop-blur border-t border-border px-6 py-4 flex items-center justify-between">
+          <Button variant="outline" onClick={onBack} className="h-14 gap-2 px-6 text-base font-bold"><ArrowLeft className="h-4 w-4" /> 戻る</Button>
+          <Button onClick={handleNext} disabled={saving} className="h-14 gap-2 px-6 text-base font-bold">{saving ? '保存中...' : '確認・出力へ'}{!saving && <ArrowRight className="h-4 w-4" />}</Button>
+        </div>
+      )}
 
       <AlertDialog open={confirmIdx !== null} onOpenChange={(o) => !o && setConfirmIdx(null)}>
         <AlertDialogContent>
@@ -546,9 +561,10 @@ function GroupHeader({ priority, count, collapsible, collapsed, onToggle }: {
     : <div className={cls}>{inner}</div>
 }
 
-function CompactRow({ row, priority, onDelete, onRemovePersona }: {
+function CompactRow({ row, priority, onDelete, onRemovePersona, readOnly = false }: {
   row: TouchpointRow; priority: Tier
   onDelete: () => void; onRemovePersona: (personaIdx: number) => void
+  readOnly?: boolean
 }) {
   const style = PRIORITY_STYLES[priority]
   const oppText = buildOpportunityText(row)
@@ -560,16 +576,23 @@ function CompactRow({ row, priority, onDelete, onRemovePersona }: {
         <div className="font-bold text-sm text-foreground truncate" title={row.name}>{row.name}</div>
         <div className="text-[11px] text-muted-foreground">{row.stageIdx + 1} {row.stage}</div>
       </div>
-      {/* ペルソナピル（クリックで外す） */}
+      {/* ペルソナピル（編集時はクリックで外す／読み取り時は表示のみ） */}
       <div className="flex-none w-[180px] flex gap-1 flex-wrap">
-        {row.personas.map(pe => (
-          <button key={pe.idx} onClick={() => onRemovePersona(pe.idx)} title={`${pe.name}（クリックで外す）`}
-            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold"
-            style={{ background: pColor(pe.idx).soft, color: pColor(pe.idx).solid }}>
-            <span className="w-1.5 h-1.5 rounded-full" style={{ background: pColor(pe.idx).solid }} />
-            {shortenPersonaName(pe.name)}
-          </button>
-        ))}
+        {row.personas.map(pe => {
+          const pill = (
+            <>
+              <span className="w-1.5 h-1.5 rounded-full" style={{ background: pColor(pe.idx).solid }} />
+              {shortenPersonaName(pe.name)}
+            </>
+          )
+          const cls = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold'
+          const st = { background: pColor(pe.idx).soft, color: pColor(pe.idx).solid }
+          return readOnly ? (
+            <span key={pe.idx} className={cls} style={st} title={pe.name}>{pill}</span>
+          ) : (
+            <button key={pe.idx} onClick={() => onRemovePersona(pe.idx)} title={`${pe.name}（クリックで外す）`} className={cls} style={st}>{pill}</button>
+          )
+        })}
       </div>
       {/* 感情ドット（ペルソナ順） */}
       <div className="flex-none w-[120px] flex gap-1.5 items-center">
@@ -587,11 +610,13 @@ function CompactRow({ row, priority, onDelete, onRemovePersona }: {
           <TooltipContent className="max-w-[400px] whitespace-pre-line text-xs">{oppText}</TooltipContent>
         )}
       </Tooltip>
-      {/* 削除 */}
-      <button type="button" onClick={onDelete} title="このタッチポイントを削除"
-        className="flex-none p-1.5 rounded hover:bg-red-50 text-red-500">
-        <Trash2 className="w-3.5 h-3.5" />
-      </button>
+      {/* 削除（編集時のみ） */}
+      {!readOnly && (
+        <button type="button" onClick={onDelete} title="このタッチポイントを削除"
+          className="flex-none p-1.5 rounded hover:bg-red-50 text-red-500">
+          <Trash2 className="w-3.5 h-3.5" />
+        </button>
+      )}
     </div>
   )
 }
@@ -668,7 +693,39 @@ function EmotionGraph({ personasInScope, stageNames, selectedStageIdx }: {
   )
 }
 
-function StageDetail({ stage, onChange }: { stage: JourneyStage; onChange: (patch: Partial<JourneyStage>) => void }) {
+function StageDetail({ stage, onChange, readOnly = false }: { stage: JourneyStage; onChange: (patch: Partial<JourneyStage>) => void; readOnly?: boolean }) {
+  if (readOnly) {
+    const listRO = (key: 'pain_points' | 'opportunities', label: string) => {
+      const items = (stage[key] || []).map(v => (v || '').trim()).filter(Boolean)
+      if (!items.length) return null
+      return (
+        <div>
+          <label className="text-[13px] font-medium text-muted-foreground mb-1 block">{label}</label>
+          <ul className="list-disc space-y-0.5 pl-5">
+            {items.map((v, i) => <li key={i} className="text-[14px] text-foreground">{v}</li>)}
+          </ul>
+        </div>
+      )
+    }
+    return (
+      <div className="space-y-4 pt-1">
+        {stage.description?.trim() && (
+          <div>
+            <label className="text-[13px] font-medium text-muted-foreground mb-1 block">説明</label>
+            <p className="m-0 whitespace-pre-wrap text-[14px] text-foreground">{stage.description}</p>
+          </div>
+        )}
+        {stage.emotions?.trim() && (
+          <div>
+            <label className="text-[13px] font-medium text-muted-foreground mb-1 block">感情（心情）</label>
+            <p className="m-0 whitespace-pre-wrap text-[14px] text-foreground">{stage.emotions}</p>
+          </div>
+        )}
+        {listRO('pain_points', '課題（pain points）')}
+        {listRO('opportunities', '提供価値・施策機会（opportunities）')}
+      </div>
+    )
+  }
   const listEdit = (key: 'pain_points' | 'opportunities', label: string) => (
     <div>
       <label className="text-[13px] font-medium text-muted-foreground mb-1 block">{label}</label>
