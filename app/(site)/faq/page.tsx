@@ -1,7 +1,8 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { ArrowRight, Plus } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { PageHero } from '@/components/lp/ui'
+import FaqItem from '@/components/lp/FaqItem'
 
 export const metadata: Metadata = {
   title: 'よくある質問 | branding.bz',
@@ -108,21 +109,7 @@ export default function LpFaqPage() {
               </h2>
               <div className="space-y-3">
                 {category.items.map((item, i) => (
-                  <details
-                    key={i}
-                    className="group rounded-2xl border border-white/10 bg-white/[0.03] px-5 [&_summary::-webkit-details-marker]:hidden"
-                  >
-                    <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-4 text-sm font-medium text-white">
-                      {item.q}
-                      <Plus
-                        size={18}
-                        className="shrink-0 text-white/40 transition-transform group-open:rotate-45"
-                      />
-                    </summary>
-                    <p className="pb-5 text-sm leading-relaxed text-white/55">
-                      {item.a}
-                    </p>
-                  </details>
+                  <FaqItem key={i} q={item.q} a={item.a} />
                 ))}
               </div>
             </div>

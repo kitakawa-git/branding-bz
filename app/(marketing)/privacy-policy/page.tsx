@@ -12,7 +12,7 @@ export default function PrivacyPolicyPage() {
       <PageHero eyebrow="Privacy Policy" title="プライバシーポリシー">最終更新日：2026年3月10日</PageHero>
 
       {/* 本文 */}
-      <section className="px-6 pb-16 md:pb-24">
+      <section className="px-6 pt-6 pb-16 md:pb-24">
         <div className="mx-auto max-w-4xl space-y-10 text-sm leading-relaxed text-white/70">
 
           <p>

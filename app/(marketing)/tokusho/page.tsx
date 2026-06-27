@@ -75,7 +75,7 @@ export default function TokushoPage() {
       <PageHero eyebrow="Legal" title="特定商取引法に基づく表記">最終更新日：2026年3月10日</PageHero>
 
       {/* テーブル */}
-      <section className="px-6 pb-16 md:pb-24">
+      <section className="px-6 pt-6 pb-16 md:pb-24">
         <div className="mx-auto max-w-4xl">
         <div className="border border-white/10 rounded-xl overflow-hidden">
           <table className="w-full text-sm">

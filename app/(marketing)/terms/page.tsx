@@ -12,7 +12,7 @@ export default function TermsPage() {
       <PageHero eyebrow="Terms of Service" title="利用規約">最終更新日：2026年6月24日</PageHero>
 
       {/* 本文 */}
-      <section className="px-6 pb-16 md:pb-24">
+      <section className="px-6 pt-6 pb-16 md:pb-24">
         <div className="prose prose-invert prose-gray mx-auto max-w-4xl space-y-10 text-sm leading-relaxed text-white/70">
 
           <p>
