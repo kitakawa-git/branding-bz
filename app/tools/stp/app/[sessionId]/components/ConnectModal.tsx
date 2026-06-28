@@ -81,6 +81,8 @@ interface PreflightExisting {
   hasSegmentation: boolean
   hasTarget: boolean
   hasPositioning: boolean
+  hasTargetFitMap?: boolean
+  hasBrandStance?: boolean
 }
 
 interface Selections {
@@ -214,16 +216,24 @@ export function ConnectModal({
   }, [sessionId, companyId, selections, onOpenChange, onConnected])
 
   const handleConnectClick = () => {
-    const needsSegConfirm = selections.segmentation && !!existing?.hasSegmentation
-    const needsTgtConfirm = selections.targeting && !!existing?.hasTarget
-    const needsPosConfirm = selections.positioning && !!existing?.hasPositioning
+    // 全項目の既存上書きを事前にまとめて判定し、1回の確認ダイアログで済ませる
+    const needsSegConfirm = !!(selections.segmentation && existing?.hasSegmentation)
+    const needsTgtConfirm = !!(selections.targeting && existing?.hasTarget)
+    const needsPosConfirm = !!(selections.positioning && existing?.hasPositioning)
+    const needsFitMapConfirm = !!(selections.target_fit_map && existing?.hasTargetFitMap)
+    const needsStanceConfirm = !!(selections.brand_stance_statements && existing?.hasBrandStance)
     // 新規連携の開始: 累積した確認フラグをリセット
     setAccumulatedConfirm({})
-    if (needsSegConfirm || needsTgtConfirm || needsPosConfirm) {
-      setConfirmTarget({ segmentation: needsSegConfirm, targeting: needsTgtConfirm, positioning: needsPosConfirm, target_fit_map: false, brand_stance_statements: false })
+    if (needsSegConfirm || needsTgtConfirm || needsPosConfirm || needsFitMapConfirm || needsStanceConfirm) {
+      setConfirmTarget({
+        segmentation: needsSegConfirm,
+        targeting: needsTgtConfirm,
+        positioning: needsPosConfirm,
+        target_fit_map: needsFitMapConfirm,
+        brand_stance_statements: needsStanceConfirm,
+      })
       return
     }
-    // 適合マップ・立ち位置の既存上書き確認は POST の 409(needsConfirm) で行う
     executeConnect({})
   }
 

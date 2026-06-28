@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
     const [{ data: rows }, { data: companyRow }] = await Promise.all([
       supabaseAdmin
         .from('brand_personas')
-        .select('segmentation_data, target, positioning_map_data, sort_order')
+        .select('segmentation_data, target, positioning_map_data, target_fit_map_data, brand_stance_statements, sort_order')
         .eq('company_id', companyId)
         .order('sort_order', { ascending: true }),
       supabaseAdmin
@@ -111,12 +111,16 @@ export async function GET(request: NextRequest) {
     const companyTargets = (companyRow?.target_segments as Array<{ name?: string }> | null) || []
     const hasTargetOverview = !!(first?.target && String(first.target).trim().length > 0)
     const hasMainTargets = Array.isArray(companyTargets) && companyTargets.some(t => (t?.name || '').trim().length > 0)
+    const hasTargetFitMap = !!((first?.target_fit_map_data as { x_axis?: { left?: string } })?.x_axis?.left)
+    const hasBrandStance = !!((first?.brand_stance_statements as { statements?: unknown[] })?.statements?.length)
 
     return NextResponse.json({
       existing: {
         hasSegmentation: hasSegmentationContent(first?.segmentation_data),
         hasTarget: hasTargetOverview || hasMainTargets,
         hasPositioning: hasPositioningContent(first?.positioning_map_data),
+        hasTargetFitMap,
+        hasBrandStance,
       },
     })
   } catch (err) {
