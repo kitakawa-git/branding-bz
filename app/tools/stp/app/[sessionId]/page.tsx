@@ -13,6 +13,9 @@ import { Step3Targeting } from './components/Step3Targeting'
 import { Step4Positioning } from './components/Step4Positioning'
 import { Step5Result } from './components/Step5Result'
 
+// 軸選定方針（C案: 推奨を即生成、他はユーザー操作で遅延生成＋キャッシュ）
+export type StrategyType = 'strategic_vs_dispersion' | 'strengths_vs_dispersion' | 'dispersion_only'
+
 // ターゲット適合マップ（Step3・顧客側軸＋ターゲット点＋自社カバー範囲楕円）
 export interface TargetFitMap {
   x_axis: { left: string; right: string }
@@ -33,6 +36,10 @@ export interface TargetFitMap {
     in_coverage: boolean
   }>
   consistency_status: 'green' | 'yellow' | 'red'
+  // APIレスポンスに付与（軸選定方針）
+  strategy_type: StrategyType
+  label: string
+  recommended: boolean
 }
 
 // 自社の立ち位置（Step5・ターゲット別ポジショニング文）
@@ -72,6 +79,7 @@ export interface STPSessionData {
       name: string
       reason?: string
       axis_type?: 'ordinal' | 'categorical'  // 順序型/カテゴリ型（適合マップの軸候補フィルタに使用）
+      axis_endpoints?: { low_label: string; high_label: string } | null  // 順序型の軸両端ラベル
       segments: Array<{
         name: string
         description: string
@@ -94,7 +102,10 @@ export interface STPSessionData {
     strengths?: string
     competitors_analysis?: Array<{ name: string; traits: string }>
     target_summary?: string
-    // 新規: ターゲット適合マップ（Step3）
+    // ターゲット適合マップ（Step3・C案）。方針ごとに生成済みをキャッシュ＋選択中の方針。
+    target_fit_map_cache?: Partial<Record<StrategyType, TargetFitMap>> | null
+    target_fit_map_selected_strategy?: StrategyType  // デフォルト 'strategic_vs_dispersion'
+    // 後方互換: 選択中のコピー（cache[selected_strategy] と同期）
     target_fit_map?: TargetFitMap | null
   }
   positioning: {

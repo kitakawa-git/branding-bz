@@ -6,9 +6,24 @@ import { callClaude } from '@/lib/claude-api'
 import { getAdminContext } from '@/lib/learning/auth'
 import { getGuardrailsPromptForCompany } from '@/lib/brand/guardrails'
 
-const SYSTEM_PROMPT = `あなたはブランドマーケティングの専門家です。STP分析のターゲット適合マップ（顧客側軸＋ターゲット点＋自社カバー範囲）を提案してください。
-
+const SYSTEM_PROMPT = `あなたはブランドマーケティングの専門家です。STP分析のターゲット適合マップ（顧客側軸＋ターゲット点＋自社カバー範囲）を、**指定された軸選定方針（strategy_type）で1つだけ**生成してください。
 このマップの目的は「狙ったターゲットに本当に自社が刺さるか」をセルフチェックすることです。
+
+## 軸選定方針（リクエストの strategy_type に従う）
+### strategic_vs_dispersion（戦略 × 分散）★推奨
+- X軸: ターゲットの**購買決定要因（buying_factors）に最も直結する**順序型の切り口
+- Y軸: メイン＋サブの**ターゲット群を最も鮮明に分離できる**順序型の切り口
+- label="戦略 × 分散" / recommended=true
+### strengths_vs_dispersion（強み × 分散）
+- X軸: 自社の強み（strengths）が**最も活きる**順序型の切り口
+- Y軸: メイン＋サブの**ターゲット群を最も鮮明に分離できる**順序型の切り口
+- label="強み × 分散" / recommended=false
+### dispersion_only（分散 × 分散）
+- X軸: ターゲットを最も分離できる順序型の切り口（1つ目）
+- Y軸: ターゲットを最も分離できる順序型の切り口（2つ目、X軸とは異なる切り口）
+- label="分散 × 分散" / recommended=false
+
+出力には、指定された strategy_type・対応する label・recommended を必ず含めること。
 
 重要: 軸選定のルール（最優先）
 1. X軸とY軸の軸ラベル（x_axis.left/right, y_axis.bottom/top）は、ユーザーから提供されたセグメンテーションの **切り口の名前と、その切り口に含まれるセグメント名** からそのまま使ってください。新しい軸名を自由に考案してはいけません。
@@ -18,6 +33,11 @@ const SYSTEM_PROMPT = `あなたはブランドマーケティングの専門家
    - 例: 切り口「組織のブランド課題フェーズ」を採用する場合、X軸 left=「ゼロイチ創業期」、X軸 right=「再定義・ピボット期」のように、セグメント名をそのまま端ラベルとして使う
 3. axis_rationale には「なぜこの切り口を採用したか・なぜこの対極を選んだか」を1〜2文で説明する
 4. 同じ入力（同じセグメンテーション・同じターゲット選定）に対しては、**同じ軸を選ぶこと**（決定論的に判断する）
+
+重要: 軸ラベルは axis_endpoints から取得すること
+選んだ切り口（順序型）に axis_endpoints が定義されている場合、軸ラベル（x_axis.left/right, y_axis.bottom/top）には **必ず axis_endpoints.low_label / high_label をそのまま使う** こと（low_label を left/bottom、high_label を right/top に対応させる）。セグメント名を両端ラベルとして使ってはいけません。
+例: 切り口「ブランド課題フェーズ」を採用、axis_endpoints = { low_label: "新規構築期", high_label: "再構築期" } の場合 → x_axis = { left: "新規構築期", right: "再構築期" }。セグメント名「ゼロイチ創業期」「再定義・ピボット期」は両端ラベルに使わない。
+axis_endpoints が未定義の切り口（旧データなど）の場合のみ、AIが両端ラベルを動的に生成する: 必ず対称的・並列形のペア（「低 ↔ 高」「初期 ↔ 後期」など）にし、セグメント名をそのまま両端に使わず、8文字以内にすること。
 
 重要: 軸として使える切り口の制約（順序型のみ）
 軸として使うのは、**順序的に並べられる切り口**（時間的推移・程度の高低・量の大小など、連続性のあるもの）に限定してください。**カテゴリ型の切り口**（別カテゴリーが並列するだけで連続性がないもの）は軸として使ってはいけません。
@@ -51,8 +71,11 @@ const SYSTEM_PROMPT = `あなたはブランドマーケティングの専門家
 
 回答はJSON形式のみで、前後に説明文やマークダウンのコードブロックを含めないでください。
 
-出力JSONスキーマ:
+出力JSONスキーマ（マップは1つだけ・candidates 配列にしない）:
 {
+  "strategy_type": "strategic_vs_dispersion",
+  "label": "戦略 × 分散",
+  "recommended": true,
   "x_axis": { "left": "左端ラベル", "right": "右端ラベル" },
   "y_axis": { "bottom": "下端ラベル", "top": "上端ラベル" },
   "axis_rationale": "なぜこの2軸を選んだか（1〜2文）",
@@ -80,9 +103,20 @@ const SYSTEM_PROMPT = `あなたはブランドマーケティングの専門家
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { basic_info, segmentation, targeting } = body
+    const { basic_info, segmentation, targeting, strategy_type } = body
     if (!targeting?.main_target) {
       return NextResponse.json({ error: 'main_target が必要です' }, { status: 400 })
+    }
+    // 軸選定方針（未指定・不正値は推奨にフォールバック）
+    const STRATEGIES = ['strategic_vs_dispersion', 'strengths_vs_dispersion', 'dispersion_only'] as const
+    type StrategyType = typeof STRATEGIES[number]
+    const selectedStrategy: StrategyType = STRATEGIES.includes(strategy_type)
+      ? strategy_type
+      : 'strategic_vs_dispersion'
+    const STRATEGY_LABEL: Record<StrategyType, string> = {
+      strategic_vs_dispersion: '戦略 × 分散',
+      strengths_vs_dispersion: '強み × 分散',
+      dispersion_only: '分散 × 分散',
     }
 
     const parts: string[] = []
@@ -113,7 +147,7 @@ export async function POST(request: NextRequest) {
     parts.push('以下の4つの切り口の中から2つを選び、各切り口のセグメント名を端ラベルとして使ってください。新しい軸名を考案しないこと。')
     parts.push('')
     if (segmentation?.variables) {
-      segmentation.variables.forEach((v: { name?: string; reason?: string; axis_type?: 'ordinal' | 'categorical'; segments?: Array<{ name?: string; description?: string; selected?: boolean; priorities?: string }> }, vi: number) => {
+      segmentation.variables.forEach((v: { name?: string; reason?: string; axis_type?: 'ordinal' | 'categorical'; axis_endpoints?: { low_label?: string; high_label?: string } | null; segments?: Array<{ name?: string; description?: string; selected?: boolean; priorities?: string }> }, vi: number) => {
         if (!v?.name?.trim()) return
         const axisMark = v.axis_type === 'ordinal'
           ? '【軸候補◯】'
@@ -121,8 +155,13 @@ export async function POST(request: NextRequest) {
           ? '【軸候補✗（カテゴリ型）】'
           : '【軸候補△（タイプ未判定）】'
         parts.push(`### 切り口 ${String.fromCharCode(65 + vi)}: ${v.name} ${axisMark}`)
+        if (v.axis_endpoints?.low_label && v.axis_endpoints?.high_label) {
+          parts.push(`軸両端ラベル: ${v.axis_endpoints.low_label} ↔ ${v.axis_endpoints.high_label}（これを軸ラベルにそのまま使う）`)
+        } else if (v.axis_type === 'ordinal') {
+          parts.push('軸両端ラベル: 未定義（対称・並列形でAIが動的生成）')
+        }
         if (v.reason) parts.push(`理由: ${v.reason}`)
-        parts.push('セグメント（端ラベル候補）:')
+        parts.push('セグメント（座標判定用。両端ラベルには使わない）:')
         for (const s of v.segments || []) {
           if (!s?.name?.trim()) continue
           const mark = s.selected ? '★' : ''
@@ -148,7 +187,8 @@ export async function POST(request: NextRequest) {
     }
 
     parts.push('')
-    parts.push('上記の情報をもとに、ターゲット適合マップをJSON形式で提案してください。')
+    parts.push(`## 今回の軸選定方針: ${selectedStrategy}（${STRATEGY_LABEL[selectedStrategy]}）`)
+    parts.push('上記の方針に基づいて、ターゲット適合マップを1つだけJSON形式で生成してください。')
     const userMessage = parts.join('\n')
 
     const guardrailCtx = await getAdminContext()
@@ -167,7 +207,7 @@ export async function POST(request: NextRequest) {
     const objEnd = jsonStr.lastIndexOf('}')
     if (objStart >= 0 && objEnd > objStart) jsonStr = jsonStr.slice(objStart, objEnd + 1)
 
-    let parsed: unknown
+    let parsed: Record<string, unknown>
     try {
       parsed = JSON.parse(jsonStr)
     } catch {
@@ -177,6 +217,25 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       )
     }
+
+    // 単一候補（必須フィールド）を検証
+    const valid =
+      typeof parsed.x_axis === 'object' && parsed.x_axis !== null &&
+      typeof parsed.y_axis === 'object' && parsed.y_axis !== null &&
+      typeof parsed.coverage === 'object' && parsed.coverage !== null &&
+      Array.isArray(parsed.targets) &&
+      typeof parsed.consistency_status === 'string'
+    if (!valid) {
+      console.error('[SuggestTargetFitMap] 応答形式エラー:', response.substring(0, 300))
+      return NextResponse.json(
+        { error: 'AIの応答形式が不正です。再度お試しください。' },
+        { status: 500 }
+      )
+    }
+    // strategy_type / label / recommended はリクエスト方針で確定（AI出力に依存しない）
+    parsed.strategy_type = selectedStrategy
+    parsed.label = STRATEGY_LABEL[selectedStrategy]
+    parsed.recommended = selectedStrategy === 'strategic_vs_dispersion'
     return NextResponse.json(parsed)
   } catch (err) {
     console.error('[SuggestTargetFitMap] エラー:', err)

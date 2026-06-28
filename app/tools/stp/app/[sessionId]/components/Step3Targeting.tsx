@@ -10,6 +10,13 @@ import { Slider } from '@/components/ui/slider'
 import { ArrowLeft, ArrowRight, X, Loader2 } from 'lucide-react'
 import { AIButton } from '@/components/shared/AIButton'
 import { FieldHeading, FieldSubLabel } from '@/components/shared/FieldHeading'
+import { StepProgressLoader } from '@/components/stp/StepProgressLoader'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { toast } from 'sonner'
 import {
   AlertDialog,
@@ -35,6 +42,7 @@ interface VariableSource {
   name: string
   reason?: string
   axis_type?: 'ordinal' | 'categorical'  // 順序型/カテゴリ型（適合マップの軸候補フィルタに使用）
+  axis_endpoints?: { low_label: string; high_label: string } | null  // 順序型の軸両端ラベル
   segments: SegmentSource[]
 }
 
@@ -47,6 +55,21 @@ interface CompetitorAnalysis {
   name: string
   traits: string
 }
+
+// 軸選定方針（C案: 推奨を即生成、他は遅延生成＋キャッシュ）
+type StrategyType = 'strategic_vs_dispersion' | 'strengths_vs_dispersion' | 'dispersion_only'
+
+const STRATEGY_LABELS: Record<StrategyType, string> = {
+  strategic_vs_dispersion: '戦略 × 分散',
+  strengths_vs_dispersion: '強み × 分散',
+  dispersion_only: '分散 × 分散',
+}
+const STRATEGY_DESCRIPTIONS: Record<StrategyType, string> = {
+  strategic_vs_dispersion: 'X軸=購買決定要因 / Y軸=ターゲット分離',
+  strengths_vs_dispersion: 'X軸=自社の強み / Y軸=ターゲット分離',
+  dispersion_only: 'X軸=ターゲット分離 / Y軸=ターゲット分離',
+}
+const ALL_STRATEGIES: StrategyType[] = ['strategic_vs_dispersion', 'strengths_vs_dispersion', 'dispersion_only']
 
 // ターゲット適合マップ（顧客側軸＋ターゲット点＋自社カバー範囲楕円）
 interface TargetFitMap {
@@ -68,6 +91,9 @@ interface TargetFitMap {
     in_coverage: boolean
   }>
   consistency_status: 'green' | 'yellow' | 'red'
+  strategy_type: StrategyType
+  label: string
+  recommended: boolean
 }
 
 // 後方互換のため evaluations フィールドは残す（UIからは使わない）
@@ -80,7 +106,9 @@ interface TargetingData {
   strengths?: string
   competitor_traits?: string  // 後方互換（旧フィールド）
   competitors_analysis?: CompetitorAnalysis[]
-  target_fit_map?: TargetFitMap | null
+  target_fit_map_cache?: Partial<Record<StrategyType, TargetFitMap>> | null
+  target_fit_map_selected_strategy?: StrategyType
+  target_fit_map?: TargetFitMap | null  // 後方互換: 選択中のコピー
 }
 
 interface BasicInfo {
@@ -143,12 +171,36 @@ export function Step3Targeting({
   const [buyingFactors, setBuyingFactors] = useState<string[]>(targeting.buying_factors || [])
   const [strengths, setStrengths] = useState(targeting.strengths || '')
 
-  // ターゲット適合マップ（顧客側軸・自社カバー範囲楕円）
-  const [fitMap, setFitMap] = useState<TargetFitMap | null>(targeting.target_fit_map || null)
+  // ターゲット適合マップ（C案）: 推奨を即生成、他はユーザー操作で遅延生成＋キャッシュ。
+  // 後方互換: 旧 target_fit_map 単体は、その strategy（無ければ推奨）のキャッシュとして取り込む。
+  const [cache, setCache] = useState<Partial<Record<StrategyType, TargetFitMap>>>(() => {
+    if (targeting.target_fit_map_cache && Object.keys(targeting.target_fit_map_cache).length > 0) {
+      return targeting.target_fit_map_cache
+    }
+    if (targeting.target_fit_map) {
+      const t = targeting.target_fit_map
+      const s = t.strategy_type || 'strategic_vs_dispersion'
+      return { [s]: { ...t, strategy_type: s, label: t.label || STRATEGY_LABELS[s], recommended: t.recommended ?? (s === 'strategic_vs_dispersion') } }
+    }
+    return {}
+  })
+  const [selectedStrategy, setSelectedStrategy] = useState<StrategyType>(
+    targeting.target_fit_map_selected_strategy ?? 'strategic_vs_dispersion'
+  )
+  const fitMap: TargetFitMap | null = cache[selectedStrategy] ?? null
   const [fitMapLoading, setFitMapLoading] = useState(false)   // API fetch中
   const [fitMapPending, setFitMapPending] = useState(false)    // ターゲット変更〜1.5sのdebounce待機中
   const fitMapDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const fitMapInitRef = useRef(false)
+
+  // 選択中マップの coverage を更新（スライダー用）
+  const updateSelectedCoverage = useCallback((coverage: TargetFitMap['coverage']) => {
+    setCache((prev) => {
+      const cur = prev[selectedStrategy]
+      if (!cur) return prev
+      return { ...prev, [selectedStrategy]: { ...cur, coverage } }
+    })
+  }, [selectedStrategy])
 
   // 競合分析: セッションから復元 or 空で初期化
   const [competitorsAnalysis, setCompetitorsAnalysis] = useState<CompetitorAnalysis[]>(() => {
@@ -210,9 +262,11 @@ export function Step3Targeting({
       buying_factors: buyingFactors,
       strengths,
       competitors_analysis: competitorsAnalysis,
-      target_fit_map: fitMap,
+      target_fit_map_cache: cache,
+      target_fit_map_selected_strategy: selectedStrategy,
+      target_fit_map: fitMap,  // 後方互換: 選択中のコピー
     }),
-    [mainTarget, subTargets, mainSegDescription, buyingFactors, strengths, competitorsAnalysis, fitMap]
+    [mainTarget, subTargets, mainSegDescription, buyingFactors, strengths, competitorsAnalysis, cache, selectedStrategy, fitMap]
   )
 
   // オートセーブ（1秒デバウンス）
@@ -230,7 +284,19 @@ export function Step3Targeting({
       if (debounceRef.current) clearTimeout(debounceRef.current)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mainTarget, subTargets, mainSegDescription, buyingFactors, strengths, competitorsAnalysis, fitMap])
+  }, [mainTarget, subTargets, mainSegDescription, buyingFactors, strengths, competitorsAnalysis, cache, selectedStrategy])
+
+  // アンマウント時に保留中のオートセーブを即時 flush（離脱時の取りこぼし＝戻る→再生成の原因を防ぐ）。
+  // 最新の onSaveField / getCurrentData を ref 経由で参照（空deps effect の stale closure 回避）。
+  const flushSaveRef = useRef<() => void>(() => {})
+  flushSaveRef.current = () => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current)
+      debounceRef.current = null
+      onSaveField(getCurrentData())
+    }
+  }
+  useEffect(() => () => flushSaveRef.current(), [])
 
   // mainTarget / subTargets が現在のセグメントに存在するかチェック
   useEffect(() => {
@@ -279,6 +345,14 @@ export function Step3Targeting({
 
   const removeTag = (index: number) => {
     setBuyingFactors((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  // 戻る: 保留中の autosave を確定し、現在の targeting（生成済みマップ含む）を保存してから戻る。
+  // これがないと「戻る→Step3」で未保存のままになり再生成される。
+  const handleBack = () => {
+    if (debounceRef.current) { clearTimeout(debounceRef.current); debounceRef.current = null }
+    onSaveField(getCurrentData())
+    onBack()
   }
 
   const handleNext = async () => {
@@ -358,9 +432,14 @@ export function Step3Targeting({
     }
   }, [mainTarget, allSegments, basicInfo, segmentation])
 
-  // ターゲット適合マップを生成（ターゲット選定が変わるたびに自動再生成）
-  const fetchTargetFitMap = useCallback(async () => {
+  // 指定方針のマップを生成（既にキャッシュ済みなら fetch せず即切替）。
+  const fetchStrategy = useCallback(async (strategy: StrategyType, force = false) => {
     if (!mainTarget) return
+    if (!force && cache[strategy]) {
+      setSelectedStrategy(strategy)  // キャッシュ済み → 即切替（API呼出なし）
+      return
+    }
+    setSelectedStrategy(strategy)
     setFitMapLoading(true)
     try {
       const res = await fetch('/api/tools/stp/suggest-target-fit-map', {
@@ -376,6 +455,7 @@ export function Step3Targeting({
             strengths,
             buying_factors: buyingFactors,
           },
+          strategy_type: strategy,
         }),
       })
       if (!res.ok) {
@@ -383,29 +463,40 @@ export function Step3Targeting({
         toast.error((d as { error?: string }).error || 'マップの生成に失敗しました')
         return
       }
-      const data = await res.json()
-      setFitMap(data)
+      const data = await res.json() as TargetFitMap
+      const newCache = { ...cache, [strategy]: data }
+      setCache(newCache)
+      // 生成完了時は debounce を待たず即保存（リロード前の取りこぼし＝再生成バグを防ぐ）。
+      // getCurrentData() は生成前 state を返すため、マップ関連3フィールドだけ最新値で上書き。
+      onSaveField({
+        ...getCurrentData(),
+        target_fit_map_cache: newCache,
+        target_fit_map_selected_strategy: strategy,
+        target_fit_map: data,
+      })
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'マップの生成中にエラーが発生しました')
     } finally {
       setFitMapLoading(false)
     }
-  }, [mainTarget, subTargets, mainSegDescription, strengths, buyingFactors, basicInfo, segmentation])
+  }, [cache, mainTarget, subTargets, mainSegDescription, strengths, buyingFactors, basicInfo, segmentation, getCurrentData, onSaveField])
 
-  // ターゲット選定が変わるたびに 1.5秒 debounce で自動再生成。初回はマップ未生成のときのみ。
+  // 初回はAI推奨のみ生成。ターゲット変更時は 1.5秒 debounce でキャッシュ全クリア＋推奨を再生成。
   useEffect(() => {
     if (!mainTarget) return
     if (!fitMapInitRef.current) {
       fitMapInitRef.current = true
-      if (!fitMap) fetchTargetFitMap()
+      if (!cache.strategic_vs_dispersion) fetchStrategy('strategic_vs_dispersion')
       return
     }
-    // ターゲット変更を検知 → 即座に「変更を反映中」表示。1.5s後にfetch開始。
+    // ターゲット変更を検知 → 即座に「変更を反映中」表示。1.5s後にキャッシュクリア＋推奨再生成。
     setFitMapPending(true)
     if (fitMapDebounceRef.current) clearTimeout(fitMapDebounceRef.current)
     fitMapDebounceRef.current = setTimeout(() => {
       setFitMapPending(false)
-      fetchTargetFitMap()
+      setCache({})
+      setSelectedStrategy('strategic_vs_dispersion')
+      fetchStrategy('strategic_vs_dispersion')
     }, 1500)
     return () => { if (fitMapDebounceRef.current) clearTimeout(fitMapDebounceRef.current) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -464,10 +555,10 @@ export function Step3Targeting({
                   >
                     {/* 選択状態バッジ（デザインシステムのBadgeに統一） */}
                     {isMain && (
-                      <Badge className="absolute -top-[12px] left-[2px] text-[10px] bg-ds-app-accent text-white hover:bg-ds-app-accent-hover">メインターゲット</Badge>
+                      <Badge className="absolute -top-[9px] left-[6px] rounded-full px-1.5 py-0 text-[10px] bg-ds-app-accent text-white hover:bg-ds-app-accent-hover">メインターゲット</Badge>
                     )}
                     {isSub && (
-                      <Badge variant="outline" className="absolute -top-[12px] left-[2px] text-[10px] border-blue-300 bg-white text-blue-300">サブターゲット</Badge>
+                      <Badge variant="outline" className="absolute -top-[9px] left-[6px] rounded-full px-1.5 py-0 text-[10px] border-blue-300 bg-white text-blue-300">サブターゲット</Badge>
                     )}
 
                     <div className="flex items-center gap-2 pr-24">
@@ -607,7 +698,7 @@ export function Step3Targeting({
             </div>
             <AIButton
               size="sm"
-              onClick={fetchTargetFitMap}
+              onClick={() => fetchStrategy(selectedStrategy, true)}
               disabled={fitMapLoading || fitMapPending}
               icon={(fitMapLoading || fitMapPending) ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : undefined}
               className="shrink-0"
@@ -623,36 +714,75 @@ export function Step3Targeting({
               outCount={fitMap ? fitMap.targets.filter(t => !t.in_coverage).length : 0}
             />
           </div>
-          {/* マップ本体（更新中はオーバーレイ） */}
-          {fitMapLoading && !fitMap ? (
-            <div className="mt-3 flex h-[200px] items-center justify-center rounded-lg border border-dashed border-border bg-white text-sm text-muted-foreground">
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> ターゲット適合マップを生成中...
+          {/* マップ本体（生成・更新中はステップ進捗ローダーでマップごと隠す） */}
+          {(fitMapPending || fitMapLoading) ? (
+            <div className="mt-3 flex min-h-[300px] items-center justify-center rounded-lg border border-border bg-white px-6 py-8">
+              <StepProgressLoader
+                steps={[
+                  { label: '軸を選定' },
+                  { label: 'ターゲット位置を判定中' },
+                  { label: 'カバー範囲を計算' },
+                  { label: '整合性を判定' },
+                ]}
+                stepDuration={1500}
+                done={false}
+              />
             </div>
           ) : fitMap ? (
-            <div className="relative mt-3">
+            <div className="mt-3">
               <TargetFitMapView
                 fitMap={fitMap}
-                onCoverageChange={(coverage) => setFitMap({ ...fitMap, coverage })}
+                onCoverageChange={updateSelectedCoverage}
               />
-              {(fitMapPending || fitMapLoading) && (
-                <div className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-background/70 backdrop-blur-[2px] pointer-events-none">
-                  <div className="flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 shadow-sm">
-                    <Loader2 className="h-3.5 w-3.5 animate-spin text-ds-app-accent" />
-                    <span className="text-xs font-medium text-foreground">
-                      {fitMapPending ? '変更を反映中...' : 'AIで適合マップを更新中...'}
-                    </span>
-                  </div>
-                </div>
-              )}
             </div>
           ) : null}
+          {/* 軸の選び方セレクター（マップ表示時のみ・コンパクト）。他方針は遅延生成＋キャッシュで即切替 */}
+          {fitMap && !fitMapLoading && !fitMapPending && (
+            <div className="mt-3 flex items-center justify-between gap-2 text-xs">
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground">軸の選び方:</span>
+                <span className="font-medium text-foreground">{STRATEGY_LABELS[selectedStrategy]}</span>
+                {selectedStrategy === 'strategic_vs_dispersion' && (
+                  <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700">★AI推奨</span>
+                )}
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="font-medium text-ds-app-accent hover:underline">他の軸も試す</button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-72">
+                  {ALL_STRATEGIES.map((s) => (
+                    <DropdownMenuItem
+                      key={s}
+                      disabled={s === selectedStrategy}
+                      onClick={() => fetchStrategy(s)}
+                      className="cursor-pointer"
+                    >
+                      <div className="flex w-full items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="text-sm font-medium">{STRATEGY_LABELS[s]}</div>
+                          <div className="text-[11px] text-muted-foreground">{STRATEGY_DESCRIPTIONS[s]}</div>
+                        </div>
+                        <div className="flex shrink-0 items-center gap-1">
+                          {s === 'strategic_vs_dispersion' && <span className="text-[10px] font-bold text-emerald-600">★</span>}
+                          {cache[s]
+                            ? <span className="text-[10px] text-emerald-600">⚡ 即切替</span>
+                            : <span className="text-[10px] text-muted-foreground">⏱ 生成</span>}
+                        </div>
+                      </div>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          )}
           </CardContent>
         </Card>
       )}
 
       {/* フッターナビゲーション */}
       <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 bg-background/80 backdrop-blur border-t border-border px-6 py-4 flex items-center justify-between">
-        <Button variant="outline" onClick={onBack} className="h-14 gap-2 px-6 text-base font-bold">
+        <Button variant="outline" onClick={handleBack} className="h-14 gap-2 px-6 text-base font-bold">
           <ArrowLeft className="h-4 w-4" />
           戻る
         </Button>

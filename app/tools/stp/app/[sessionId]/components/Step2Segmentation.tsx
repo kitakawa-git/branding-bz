@@ -39,6 +39,7 @@ interface Variable {
   name: string
   reason?: string
   axis_type?: 'ordinal' | 'categorical'  // 順序型/カテゴリ型（適合マップの軸候補フィルタに使用）
+  axis_endpoints?: { low_label: string; high_label: string } | null  // 順序型の軸両端ラベル
   segments: Segment[]
 }
 
@@ -141,10 +142,11 @@ export function Step2Segmentation({
       const { variables: suggestedVars } = await res.json()
       // selected: true をデフォルトで付与
       const withSelected: Variable[] = suggestedVars.map(
-        (v: { name: string; reason?: string; axis_type?: 'ordinal' | 'categorical'; segments: Array<{ name: string; description: string; size_hint: string; priorities?: string }> }) => ({
+        (v: { name: string; reason?: string; axis_type?: 'ordinal' | 'categorical'; axis_endpoints?: { low_label: string; high_label: string } | null; segments: Array<{ name: string; description: string; size_hint: string; priorities?: string }> }) => ({
           name: v.name,
           reason: v.reason || '',
           axis_type: v.axis_type,
+          axis_endpoints: v.axis_endpoints,
           segments: v.segments.map(
             (s: { name: string; description: string; size_hint: string; priorities?: string }) => ({
               ...s,
