@@ -193,6 +193,22 @@ export function Step3Targeting({
   const fitMapDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const fitMapInitRef = useRef(false)
 
+  // 【一時診断】マウント時の props/state を本番コンソールで確認（切り分け後に削除）
+  useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const t = targeting as any
+    console.log('[Step3 mount diagnostic]', {
+      has_cache_in_props: !!t?.target_fit_map_cache,
+      cache_keys_in_props: Object.keys(t?.target_fit_map_cache ?? {}),
+      cache_recommended_has_x_axis: !!t?.target_fit_map_cache?.strategic_vs_dispersion?.x_axis,
+      selected_strategy_in_props: t?.target_fit_map_selected_strategy,
+      state_cache_keys: Object.keys(cache),
+      state_selected_strategy: selectedStrategy,
+      fit_map_value: fitMap ? 'truthy' : 'null',
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // 選択中マップの coverage を更新（スライダー用）
   const updateSelectedCoverage = useCallback((coverage: TargetFitMap['coverage']) => {
     setCache((prev) => {
