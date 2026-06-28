@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Check, Loader2, Circle } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 interface Step {
   label: string
@@ -83,6 +84,34 @@ export function StepProgressLoader({
           )
         })}
       </div>
+    </div>
+  )
+}
+
+interface StepProgressPanelProps extends StepProgressLoaderProps {
+  /** パネルの最低高さ（px）。レイアウトジャンプ防止用。デフォルト300 */
+  minHeight?: number
+}
+
+/**
+ * StepProgressLoader を枠つきボックスで包んだ共通パネル。
+ * 各Stepの「AI生成中」表示として使い回す（steps を差し替えるだけ）。
+ * 外側余白（mt-3 など）は className で呼び出し側から渡す。
+ */
+export function StepProgressPanel({
+  minHeight = 300,
+  className,
+  ...loaderProps
+}: StepProgressPanelProps) {
+  return (
+    <div
+      className={cn(
+        'flex items-center justify-center rounded-lg border border-border bg-white px-6 py-8',
+        className,
+      )}
+      style={{ minHeight }}
+    >
+      <StepProgressLoader {...loaderProps} />
     </div>
   )
 }
