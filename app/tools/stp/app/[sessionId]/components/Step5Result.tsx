@@ -4,8 +4,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { AIButton } from '@/components/shared/AIButton'
-import { FieldSubLabel } from '@/components/shared/FieldHeading'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { PositioningMap } from '@/components/PositioningMap'
@@ -168,39 +166,8 @@ export function Step5Result({
   const [targetSummary, setTargetSummary] = useState<string>(targeting.target_summary || '')
   const [summaryLoading, setSummaryLoading] = useState(false)
 
-  // 自社の立ち位置（ターゲット別ポジショニング文）
-  const [brandStance, setBrandStance] = useState<BrandStanceStatement[]>(initialBrandStance || [])
-  const [stanceLoading, setStanceLoading] = useState(false)
-
-  const generateBrandStance = useCallback(async () => {
-    if (!targeting.main_target) return
-    setStanceLoading(true)
-    try {
-      const res = await fetch('/api/tools/stp/suggest-brand-stance', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ basic_info: basicInfo, targeting, positioning }),
-      })
-      if (!res.ok) {
-        const d = await res.json().catch(() => ({}))
-        toast.error((d as { error?: string }).error || '自社の立ち位置の生成に失敗しました')
-        return
-      }
-      const data = await res.json()
-      const statements: BrandStanceStatement[] = data.statements || []
-      setBrandStance(statements)
-      // セッションへ保存（連携時に読まれる）
-      await fetch(`/api/tools/stp/sessions/${sessionId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionData: { brand_stance_statements: { statements } } }),
-      }).catch(() => {})
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : '生成中にエラーが発生しました')
-    } finally {
-      setStanceLoading(false)
-    }
-  }, [sessionId, basicInfo, targeting, positioning])
+  // 自社の立ち位置（ターゲット別ポジショニング文）。生成はStep4で行い、ここは表示のみ。
+  const brandStance = useMemo(() => initialBrandStance || [], [initialBrandStance])
 
   // 戦略整合性スコア（5項目）。props＋生成済み立ち位置から算出。
   const consistency = useMemo(() => {
@@ -326,14 +293,28 @@ export function Step5Result({
     [targeting]
   )
 
-  // サブターゲット評価データ
+  // セグメント名 → 説明文（Step2セグメンテーション由来）。サブターゲットの説明表示に使う。
+  const segDescByName = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const v of segmentation.variables || []) {
+      for (const s of v.segments || []) {
+        if (s.name?.trim() && s.description?.trim() && !map.has(s.name)) {
+          map.set(s.name, s.description)
+        }
+      }
+    }
+    return map
+  }, [segmentation])
+
+  // サブターゲット評価データ（説明文も付与）
   const subEvals = useMemo(
     () =>
       targeting.sub_targets.map((name) => ({
         name,
+        description: segDescByName.get(name) || '',
         eval: targeting.evaluations.find((e) => e.segment_name === name),
       })),
-    [targeting]
+    [targeting, segDescByName]
   )
 
   // PDF出力
@@ -512,7 +493,7 @@ export function Step5Result({
             if (selectedSegments.length === 0) return null
             return (
               <div key={vi}>
-                <FieldSubLabel>{variable.name}</FieldSubLabel>
+                <h2 className="mb-3 text-sm font-bold text-gray-900">{variable.name}</h2>
                 <div className="flex flex-wrap gap-2">
                   {selectedSegments.map((seg, si) => (
                     <SegmentBadge
@@ -536,10 +517,10 @@ export function Step5Result({
             </h2>
           </div>
           <div className="mb-5 rounded-lg border border-gray-200 bg-white p-5">
-        <FieldSubLabel>ターゲット</FieldSubLabel>
+        <h2 className="mb-3 text-sm font-bold text-gray-900">ターゲット</h2>
         {/* メインターゲット（Step3のカード・バッジ表現に統一） */}
-        <div className="relative mb-3 mt-4 rounded-lg border border-ds-app-accent-soft bg-blue-50/50 px-3 py-2.5">
-          <Badge className="absolute -top-[12px] left-[2px] text-[10px] bg-ds-app-accent text-white hover:bg-ds-app-accent-hover">メインターゲット</Badge>
+        <div className="relative mb-3.5 mt-4 rounded-lg border border-ds-app-accent-soft bg-blue-50/50 px-3 py-2.5">
+          <Badge className="absolute -top-[9px] left-[6px] rounded-full px-1.5 py-0 text-[10px] bg-ds-app-accent text-white hover:bg-ds-app-accent-hover">メインターゲット</Badge>
           <p className="text-sm font-bold text-gray-900">
             {targeting.main_target || '未選択'}
           </p>
@@ -562,14 +543,17 @@ export function Step5Result({
 
         {/* サブターゲット（Step3のカード・バッジ表現に統一） */}
         {subEvals.length > 0 ? (
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2">
             {subEvals.map((sub, i) => (
               <div
                 key={i}
                 className="relative rounded-lg border border-blue-300 bg-blue-50/30 px-3 py-2.5"
               >
-                <Badge variant="outline" className="absolute -top-[12px] left-[2px] text-[10px] border-blue-300 bg-white text-blue-300">サブターゲット</Badge>
+                <Badge variant="outline" className="absolute -top-[9px] left-[6px] rounded-full px-1.5 py-0 text-[10px] border-blue-300 bg-white text-blue-300">サブターゲット</Badge>
                 <p className="text-sm font-bold text-gray-700">{sub.name}</p>
+                {sub.description && (
+                  <p className="mt-1 text-sm text-gray-600 leading-relaxed">{sub.description}</p>
+                )}
                 {sub.eval && (
                   <div className="mt-1 flex items-center gap-4 text-xs text-gray-500">
                     <span>
@@ -592,7 +576,7 @@ export function Step5Result({
         {/* ターゲット適合マップ（サムネイル） */}
         {targeting.target_fit_map && (
           <div className="mt-4">
-            <FieldSubLabel>ターゲット適合マップ</FieldSubLabel>
+            <h2 className="mb-3 text-sm font-bold text-gray-900">ターゲット適合マップ</h2>
             <div className="rounded-lg border border-gray-200 bg-white p-3">
             <TargetFitMapStatic fitMap={targeting.target_fit_map} />
             <div className="mt-2">
@@ -660,56 +644,39 @@ export function Step5Result({
             </h2>
           </div>
           <div className="mb-5 rounded-lg border border-gray-200 bg-white p-5">
+        <h2 className="mb-3 text-sm font-bold text-gray-900">ポジショニングマップ</h2>
         {/* マップ */}
         <div className="rounded-lg border bg-white p-3">
           <PositioningMap data={toMapData(positioning)} />
         </div>
 
-        {/* 凡例 */}
-        <div className="mt-3 flex flex-wrap gap-3">
-          {(positioning.items || []).map((item, i) => (
-            <div key={i} className="flex items-center gap-1.5">
-              <div
-                className="h-3 w-3 rounded-full"
-                style={{ backgroundColor: item.color }}
-              />
-              <span className="text-xs text-gray-700">
-                {item.name}
-                {item.is_self && (
-                  <span className="ml-1 text-ds-app-accent">（自社）</span>
-                )}
-              </span>
-            </div>
-          ))}
-        </div>
-
         {/* 自社の立ち位置（ターゲット別×3） */}
         <div className="mt-5 border-t border-gray-100 pt-4">
-          <div className="mb-2 flex items-center justify-between gap-2">
+          <div className="mb-3 flex items-center justify-between gap-2">
             <p className="text-sm font-bold text-gray-900">自社の立ち位置</p>
-            <AIButton
-              size="sm"
-              onClick={generateBrandStance}
-              disabled={stanceLoading || !targeting.main_target}
-              icon={stanceLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : undefined}
-            >
-              {stanceLoading ? '生成中…' : brandStance.length > 0 ? 'AIで再生成' : 'AIで自社の立ち位置を生成'}
-            </AIButton>
           </div>
           {brandStance.length === 0 ? (
-            <p className="text-xs text-muted-foreground">ターゲット別のポジショニング文を生成できます。</p>
+            <p className="text-xs text-muted-foreground">ターゲット別の立ち位置は Step4（ポジショニング）で生成されます。</p>
           ) : (
-            <div className="space-y-2">
+            <div className="mt-3 space-y-3.5">
               {brandStance.map((s, i) => {
-                const border = s.target_role === 'main'
-                  ? 'border-2 border-blue-500'
-                  : i === 1 ? 'border-[0.5px] border-emerald-400' : 'border-[0.5px] border-purple-400'
+                const isMain = s.target_role === 'main'
                 return (
-                  <div key={i} className={`rounded-lg ${border} bg-white p-3`}>
-                    <p className="mb-1 text-[11px] font-bold text-gray-500">
-                      {s.target_role === 'main' ? 'メイン' : 'サブ'}: {s.target_name}
-                    </p>
-                    <p className="text-sm leading-relaxed text-gray-800 whitespace-pre-wrap">{s.statement}</p>
+                  <div
+                    key={i}
+                    className={`relative rounded-lg px-3 py-2.5 ${
+                      isMain
+                        ? 'border border-ds-app-accent-soft bg-blue-50/50'
+                        : 'border border-blue-300 bg-blue-50/30'
+                    }`}
+                  >
+                    {isMain ? (
+                      <Badge className="absolute -top-[9px] left-[6px] rounded-full px-1.5 py-0 text-[10px] bg-ds-app-accent text-white hover:bg-ds-app-accent-hover">メインターゲット</Badge>
+                    ) : (
+                      <Badge variant="outline" className="absolute -top-[9px] left-[6px] rounded-full px-1.5 py-0 text-[10px] border-blue-300 bg-white text-blue-300">サブターゲット</Badge>
+                    )}
+                    <p className={`text-sm font-bold ${isMain ? 'text-gray-900' : 'text-gray-700'}`}>{s.target_name}</p>
+                    <p className="mt-1 text-sm leading-relaxed text-gray-800 whitespace-pre-wrap">{s.statement}</p>
                     {s.rationale && (
                       <p className="mt-1 text-[11px] text-muted-foreground leading-relaxed">なぜなら: {s.rationale}</p>
                     )}

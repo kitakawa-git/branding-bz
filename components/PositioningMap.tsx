@@ -115,18 +115,20 @@ export function PositioningMap({ data, className }: PositioningMapProps) {
           // 自社は size='lg'（STP連携で is_self→lg）。Step4 編集マップの自社ドットに装飾を合わせる：
           // 小さめの点(r7)＋薄い同色ハロー(r18)＋ラベルは点の右にボールド。競合は従来どおり点の下。
           const isSelf = item.size === 'lg'
+          // 自社ドットはメインターゲットのバッジ背景色（--ds-app-accent）に合わせる
+          const dotColor = isSelf ? '#2563eb' : item.color
           const r = item.size === 'custom' && item.customSize ? item.customSize : SIZE_RADIUS[item.size || 'md']
           return (
             <g key={i} className="cursor-pointer">
               <title>{`${item.name} (X: ${item.x}, Y: ${item.y})`}</title>
               {isSelf && (
-                <circle cx={cx} cy={cy} r={r + 14} fill={item.color} opacity={0.20} />
+                <circle cx={cx} cy={cy} r={r + 14} fill={dotColor} opacity={0.20} />
               )}
               <circle
                 cx={cx}
                 cy={cy}
                 r={r}
-                fill={item.color}
+                fill={dotColor}
                 opacity={0.85}
                 stroke="white"
                 strokeWidth={2}

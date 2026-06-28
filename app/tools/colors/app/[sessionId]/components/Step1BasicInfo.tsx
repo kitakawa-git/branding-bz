@@ -319,7 +319,7 @@ export function Step1BasicInfo({ project, onNext, onSaveField }: Step1Props) {
           {/* 既存カラー */}
           <div className="mb-5">
             <div className="flex items-center justify-between mb-3">
-              <FieldHeading>既存のブランドカラーがある</FieldHeading>
+              <FieldHeading className="mb-0">既存のブランドカラーがある</FieldHeading>
               <Switch
                 checked={hasExistingColors}
                 onCheckedChange={setHasExistingColors}

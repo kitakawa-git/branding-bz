@@ -5,8 +5,8 @@
 > Cowork: 直接読み書き
 > Claude Projects: ナレッジとしてアップロード（週1回推奨）
 
-**最終更新:** 2026-06-27
-**更新者:** Claude Code（STP分析ツールを再設計＝ポジショニングマップの装飾統一・一貫性スコアカード刷新・ターゲット適合マップ／ブランドスタンス／PDF拡張・Step1「ターゲット」→「現状の顧客層」改称。あわせて構築ツール全体のフォーム見出し／サブラベルを共通コンポーネント（FieldHeading／FieldSubLabel）へ統一）
+**最終更新:** 2026-06-28
+**更新者:** Claude Code（STP分析ツールの一連の改修：段階1 AI生成の決定論化（temperature=0・軸両端ラベル）、ターゲット適合マップを「推奨即生成＋遅延切替＋キャッシュ」のC案へ、ステップ①＝死蔵データ（適合マップ・自社の立ち位置）の表示UI追加、ステップ②＝STP分析の根拠データ（強み・競合分析・購買決定要因・配置根拠）を本体へ保存・表示、ConnectModal の上書き確認累積バグ修正。前回 2026-06-27 の再設計＋共通コンポーネント統一を継承）
 
 ---
 
@@ -15,8 +15,8 @@
 | 項目 | 状態 |
 |------|------|
 | 作業ブランチ | `main`（直接コミット運用。ブランチ作成・切替・マージは北川さんの明示指示まで行わない） |
-| 本番デプロイ | **済み** — 2026-06-27 リリース分まで反映。Vercel 自動デプロイ Ready |
-| 今セッションのリリース（2026-06-27） | **STP分析ツール再設計**①ポジショニングマップの装飾を表示用／編集用で統一（自社＝同色ハロー＋中心「自社」白抜き、競合＝ドット直下に同色ラベル、ドット拡大）②一貫性スコアカードを刷新（色分けカード＋円バッジ＋ピル）③ターゲット適合マップ・ブランドスタンス・PDF拡張に対応④Step1「ターゲット」→「現状の顧客層」へ改称。**構築ツール共通UI**⑤フォーム見出し／サブラベルを共通コンポーネント（FieldHeading／FieldSubLabel）へ統一し、4ツール全Step1＋STP Step3・ペルソナ Step2/3・カラー Step2/5へ展開（共有 IndustrySelect／TitleDescriptionList 経由で全ツール波及） |
+| 本番デプロイ | **済み** — 2026-06-28 リリース分まで反映。Vercel 自動デプロイ Ready |
+| 今セッションのリリース（2026-06-27〜28） | **STP分析ツールの一連の改修**①**段階1の決定論化**＝`callClaude` に `temperature` を追加し適合マップ／ポジショニング／ブランドスタンスの提案を `temperature:0`、軸候補は Step2 の順序尺度切り口に限定＋セグメント側で `axis_endpoints`（両端ラベル）を生成して対称軸に使用②**ターゲット適合マップ＝C案**（推奨を即生成→他軸は遅延生成、`targeting.target_fit_map_cache` にキャッシュして即切替、リロードで再生成しない）。3候補一括生成は撤回し単一候補API＋ドロップダウン選択へ③**ステップ①＝死蔵データの表示**：保存されていたが表示されていなかった「ターゲット適合マップ」「自社の立ち位置(brand_stance)」を `/admin/brand/strategy` と `/portal/strategy`（立ち位置のみ）に読み取り専用で表示④**ステップ②＝根拠データを本体へ**：`companies` に `strengths`/`competitors_analysis` を追加、連携で `buying_factors→decision_factors`・強み・競合分析・`axis_rationale`/`reasoning`/`confidence` を保存し管理画面（全件）／ポータル（強みのみ）に表示⑤**ConnectModal の上書き確認累積バグ修正**（複数項目の上書き確認で 409 ループ→`accumulatedConfirm` で確認済みフラグを累積） |
 | 前回リリース（2026-06-24） | ①管理画面ペルソナ保存を id保持sync 化②ペルソナTier1パラメータを離散カラム化＋編集可能に③未使用voice／孤立フィールド撤去④Step4名称を「ジャーニー／タッチポイント」に統一 |
 | 未コミットWIP | 並行セッションのLP系WIP（`app/(site)/page.tsx`）＋ news系（`app/(site)/news/[slug]/page.tsx`・`app/superadmin/news/_components/NewsForm.tsx`）＋ `package.json`／`scripts/verify-copy-*.ts` が working tree に残存。**ステータス更新では触らない** |
 
@@ -59,6 +59,49 @@
 
 ## 3. 完了済み機能
 
+### 🆕 STP分析ツール 2026-06-27〜28 改修まとめ（本番デプロイ済み）
+
+> コミット: `bb7f270` / `db92b55` / `4decc2a` / `c05ac80` / `a8bb706` / `d81404f` / `5f16906` / `2fb3ff3`
+
+1. **AI生成の安定化**
+   - `temperature=0` で決定論化（適合マップ／ポジショニング／ブランドスタンスの提案）
+   - 軸候補を Step2 セグメンテーションの切り口に限定
+   - 切り口に `axis_endpoints`（軸両端ラベル）を生成し、適合マップ軸に対称表現で採用
+   - `axis_type='ordinal'` のみを軸候補に限定（カテゴリ型は禁止）
+
+2. **C案実装（推奨即生成＋遅延切替）**
+   - AI推奨候補（戦略×分散）のみ即時生成
+   - 「他の軸も試す」ドロップダウンで 強み×分散・分散×分散 を遅延生成＋キャッシュ
+   - 生成済み候補は **⚡即切替**、未生成は **⏱再生成** を識別表示
+   - キャッシュ・選択中ストラテジーを session（`targeting.target_fit_map_cache` / `_selected_strategy`）に永続化
+
+3. **キャッシュ永続化バグの完全解消（4層）**
+   - 保存側: 空 `{}` 経由の書き込み防止・debounce を待たず即保存・初回マウントの空セーブをスキップ
+   - 復元側: `useState` lazy initializer で props から復元
+   - effect発火: `lastTargetsRef` でターゲット実値を追跡（配列参照の変化に騙されない）
+   - UI: ステップ進捗ローダー（`StepProgressLoader`／`StepProgressPanel`）
+
+4. **死蔵カラム表示UI追加（ステップ①）**
+   - 管理画面 `/admin/brand/strategy`: ターゲット適合マップ（軸根拠付き）＋自社の立ち位置×N本カード
+   - 社員ポータル `/portal/strategy`: 自社の立ち位置×N本カード（適合マップは社員向け非表示）
+   - 既存 `TargetFitMapStatic` を流用・データ無ければ非表示の条件レンダー
+
+5. **STP根拠データの本体保存・表示（ステップ②）**
+   - `companies` テーブル拡張: `strengths(text)` / `competitors_analysis(jsonb)`（migration `20260628050011_*`・本番適用済み）
+   - 連携API改修で5データを保存:
+     - `targeting.buying_factors` → `brand_personas.decision_factors`
+     - `targeting.strengths` → `companies.strengths`
+     - `targeting.competitors_analysis` → `companies.competitors_analysis`
+     - `positioning.axis_rationale` ＋ `items[].reasoning/confidence` → `positioning_map_data` に埋め込み
+   - 管理画面: 自社の強み・競合分析・ポジショニング根拠（軸選定の根拠＋各企業の配置根拠＋確信度バッジ）を表示
+   - ポータル: 自社の強みのみ表示
+   - `ConnectModal`: 上書き確認の**累積処理パターン**（`accumulatedConfirm`）で新規5項目同時連携時の 409 ループバグを解消
+
+6. **オントロジー統合の方針決定（やらない）**
+   - 「自社の立ち位置」≠ Value Proposition と概念整理
+   - STPの立ち位置は「ポジショニングマップへの分析メモ・考察」として位置づけ
+   - `value_propositions` テーブルへの自動投入はしない（手動入力 or 将来の別ツール）
+
 ### 🆕 コピーAI（MVP・feature/superadmin-company-view・main未反映）
 - **7段階クリエイティブ・パイプライン**（診断→インサイト→切り口→生成→批評→リライト）。一発生成を禁止。
 - **尖り度マトリクス**（`lib/copy/role-matrix.ts`）: `copy_role`（hero_h1=狂犬100% / section_heading=70% / body_copy=40% / cta=0%）で態度表明・陳腐句ブロック・評価軸を動的切替。
@@ -80,7 +123,7 @@
 - 管理画面 (/admin) — 企業情報・メンバー・ブランドガイドライン・お知らせ・名刺テンプレート
 - ポータル (/portal) — メンバー向けブランド掲示・タイムライン・KPI・サーベイ回答
 - Brand Score (/admin/brand-score) — インナー＋アウター＋マイクロフィードバック
-- STP分析ツール (/tools/stp) — 5ステップAI提案＋PDF出力＋branding.bz連携＋自動保存インジケーター
+- STP分析ツール (/tools/stp) — 5ステップAI提案＋PDF出力＋branding.bz連携＋自動保存インジケーター。**再設計後の最終形**：Step2 セグメンテーション（A/B/C/D 切り口バッジ・規模感・重視点・axis_endpoints 両端ラベル）／Step3 ターゲティング（購買決定要因・自社の強み・競合分析の入力＋**ターゲット適合マップ C案**＝推奨即生成・他軸遅延生成・キャッシュ即切替）／Step4 ドラッグ操作型ポジショニング（軸選定の根拠・配置根拠・確信度をAI生成）／Step5 ConnectModal（項目別チェック＋上書き確認の累積処理）。段階1の提案は temperature=0 で決定論化。**連携データの本体反映**：適合マップ・自社の立ち位置・自社の強み・競合分析・購買決定要因・ポジショニング根拠まで `brand_personas`/`companies` に保存し、管理画面（全件）／ポータル（強み・立ち位置のみ）に読み取り表示
 - カラー定義ツール (/tools/colors) — 5ステップAIパレット＋PDF出力＋branding.bz連携＋自動保存インジケーター
 - ペルソナビルダー (/tools/persona) — 5ステップAIペルソナ＋ジャーニーマップ＋連携＋自動保存インジケーター
 - スーパー管理画面 (/superadmin) — 企業管理・ニュース管理・企業削除（カスケード）・管理者メール/名前表示
@@ -309,6 +352,10 @@
 | 2026-06-25 | **ペルソナbuilder↔管理画面の呼応＝Tier整理**: 管理画面ペルソナフォームが正＝Tier1（discrete: needs/pain_points/decision_factors/buying_barriers/brand_expectations）＋本人基本（name/age_range/occupation/description）。ビルダーのTier2（性別・役職・勤務先規模・媒体・性格特性・購買動機）は `persona_data` 止まりで管理画面非表示＝「詳細設定」アコーディオンへ。**description はオントロジー(graph)の端点ではないが copyAI が personaBlock の `状況:` として読む生きた入力**（`lib/copy/ontology-blocks.ts`／`insights.ts`／personality診断も参照）＝消さず、自動連結より入力文章を優先。孤立フィールド（居住地/趣味/成功定義/1日の過ごし方/口癖）は consumer 無し＝撤去。**「案3＝1枚統合カード」は Step2+3 を1枚にする＝必然的に4ステップ化するため、ステップ数を保ちたい要件では統合せず各ステップを管理画面レイアウトに揃える（5ステップ維持）方が合う** |
 | 2026-06-26 | **ジャーニーの扱い＋ポータル接し方の表示改善**: ジャーニー設計は branding.bz 連携の対象外（`brand_personas.journey_map_data` には書くが管理/ポータルで表示しない）＝**PDFのみ反映**と決定。Step5に `Step4Journey` を `readOnly` で埋め込み（編集UI/AI生成/フッター/見出し/ペルソナ一覧カードを隠した実ビュー）、PDFテンプレにジャーニー節を追加、連携ダイアログに注記。ポータル「接し方」＝`PersonaCarousel`(2.5枚 scroll-snap)・顔アイコン・brand_expectations・課題色をビルダーと統一(orange)・ニーズ/課題3件＋もっと見る(grid 0fr→1frアニメ)。**判断**: セグメント説明文をペルソナ「説明」へ転化する案は性質が違う（集団の括り≠個人の背景）ため不採用。**運用教訓**: 提案でも懸念は実装前に率直に指摘する（黙って実装しない）。**git**: 並行セッションが `components/*PositioningMap.tsx` を編集中＝パス明示コミットで巻き込み回避 |
 | 2026-06-26 | **STP Step2セグメンテーションのUI改善**: AIが出力済みなのに画面に出ていなかった `size_hint`/`priorities` を表面化（Step3ターゲット選定の判断材料の取りこぼし解消）。切り口に **A/B/C/D 番号バッジ**（色分け・5つ目以降グレー）、各セグメントに **規模感バッジ**（大=緑/中=黄/小=灰、クリックで循環）、**「重視すること」入力欄**、**2列グリッド**化＋削除ボタンをカード右上に。型・API・プロンプトは不変。**運用**: 並行セッションが同フォルダで大規模リファクタを実時間編集中だったため、本Step2のみをパス指定コミット(`697ecfd`)＆push＝検証済みの自分の変更だけを安全に出荷（リファクタ確定後に別途出荷） |
+| 2026-06-27 | **並列セッション環境ではローカル `tsc` が本番ビルドと一致しない**: 別チャットがローカルにのみ存在する編集（例：`StepProgressLoader` に新 export を追加）を入れた状態だと、自分の `npx tsc --noEmit` は**ローカルの未コミットファイルを参照して通る**が、Vercel は origin のコミット済みツリーでビルドするため `has no exported member` で落ちる。**対策**＝push 前に「自分が import している先（例: `components/stp/StepProgressLoader.tsx` の `StepProgressPanel` export）がコミット済みか」を確認する。インポート依存が未コミットなら、その export だけ追加コミットで先に出す（実際 `StepProgressPanel` の追加コミットでデプロイ復旧）。`git status`／`git diff origin/main -- <dep>` で依存の同期状態を見る、または `next build` でローカル本番ビルドを通してから push するのが安全 |
+| 2026-06-27 | **React useEffect の deps は「配列の参照」で発火する罠**: `setSubTargets(prev => prev.filter(...))` は中身が同じでも**毎回新しい配列**を返すため、それを依存に持つ autosave/再生成 effect が無限に再発火し、適合マップが「リロードのたびに再生成」される事故になった。**対策2点**＝①フィルタ結果が同一なら**同じ参照を返す**（`filtered.length===prev.length ? prev : filtered`）②effect の発火判定は配列参照ではなく**実値を正規化した文字列を ref に保持して比較**（`lastTargetsRef` 方式：`${mainTarget}|${[...subTargets].sort().join('|')}` を前回値と比較し、変化時のみ再生成）。マウント直後は初回フラグで skip、生成中は busy ref で autosave を抑止。さらにハードリロードは unmount cleanup が走らないため、デバウンス保存ではなく**生成完了時に即時保存**する |
+| 2026-06-28 | **上書き確認の累積処理パターン**: サーバーが複数項目の上書き確認を `409 needsConfirm` で**1項目ずつ順番に**返す設計だと、クライアントが「今回確認した項目だけ」を送ると前ラウンドの確認が毎回失われ、サーバーが先頭項目で再び 409 → **無限ループ**になる。**対策**＝確認済み overwrite フラグを `accumulatedConfirm` state に**累積**し、各ラウンドで `{...accumulatedConfirm, 今回分:true}` の `newConfirm` を作って**直接** `executeConnect(newConfirm)` に渡す（state 更新の遅延に依存しない）。リセットは**成功時・キャンセル時・新規開始時**の3箇所。`ConnectModal.tsx` で適用 |
+| 2026-06-28 | **STP「死蔵データ／届かない情報」の双方向是正**: 監査で①保存されるが表示されないカラム（`target_fit_map_data`・`brand_stance_statements`）と②ユーザー入力/AI生成だが連携で1ビットも本体に届かないデータ（`buying_factors`・`strengths`・`competitors_analysis`・`axis_rationale`・items の `reasoning`/`confidence`）を特定。**ステップ①**＝①を `/admin`・`/portal` に読み取り表示（DB変更なし、既存カラムを読むだけ）。**ステップ②**＝`companies` に `strengths(text)`/`competitors_analysis(jsonb)` を追加し、`connect/route.ts` の保存マッピングを拡張（購買決定要因→`brand_personas.decision_factors`、強み・競合分析→`companies`、軸/配置根拠→`positioning_map_data` に埋め込み）、管理画面は全件・ポータルは強みのみ表示。**教訓**＝連携APIは「ツールで作った値の出口」なので、新フィールドを足したら connect の保存マッピングと表示側の両方を同時に追わないと死蔵カラムが生まれる |
 
 
 ---

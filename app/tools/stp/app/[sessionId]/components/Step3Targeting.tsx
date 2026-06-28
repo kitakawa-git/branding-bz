@@ -553,7 +553,7 @@ export function Step3Targeting({
 
           <FieldHeading className="mb-3">ターゲット市場候補</FieldHeading>
           {/* グループ一覧（カードクリックで選択・2カラム／メインは全幅展開） */}
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2">
             {allSegments.map((seg) => {
               const isMain = mainTarget === seg.name
               const isSub = subTargets.includes(seg.name)
@@ -714,7 +714,7 @@ export function Step3Targeting({
           <CardContent className="p-5">
           <div className="mb-3 flex items-start justify-between gap-2">
             <div>
-              <FieldHeading>ターゲット適合マップ</FieldHeading>
+              <FieldHeading className="mb-0">ターゲット適合マップ</FieldHeading>
               <p className="mt-1 text-[13px] text-muted-foreground">選んだターゲットが自社のカバー範囲に入っているかを自動チェックします。</p>
             </div>
             <AIButton
@@ -915,7 +915,8 @@ function TargetFitMapView({ fitMap, onCoverageChange }: {
         {/* ターゲット点（PositioningMap準拠：r8・opacity0.85・白縁2px。メイン＝右にボールド濃色、サブ＝下中央にドット色） */}
         {fitMap.targets.map((t, i) => {
           const isMain = t.role === 'main'
-          const color = isMain ? '#3B82F6' : TARGET_COLORS[(subIdx = subIdx + 1) % TARGET_COLORS.length]
+          // メイン点はメインターゲットのバッジ背景色（--ds-app-accent）に合わせる
+          const color = isMain ? '#2563eb' : TARGET_COLORS[(subIdx = subIdx + 1) % TARGET_COLORS.length]
           const px = toX(t.x)
           const py = toY(t.y)
           return (

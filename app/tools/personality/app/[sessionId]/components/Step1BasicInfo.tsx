@@ -228,7 +228,7 @@ export function Step1BasicInfo({ basicInfo, framework, onNext, onSaveField }: St
 
       {/* フレームワーク選択 */}
       <div className="mt-6">
-        <FieldHeading required className="mb-1">診断タイプ</FieldHeading>
+        <FieldHeading required className="mb-0">診断タイプ</FieldHeading>
         <p className="text-xs text-muted-foreground mb-3">
           質問は共通の10問。診断後、もう一方の見せ方にも切り替えられます。
         </p>

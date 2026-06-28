@@ -5,7 +5,7 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Slider } from '@/components/ui/slider'
-import { Skeleton } from '@/components/ui/skeleton'
+import { StepProgressPanel } from '@/components/stp/StepProgressLoader'
 import { InteractivePositioningMap } from '@/components/InteractivePositioningMap'
 import {
   AlertDialog,
@@ -25,9 +25,13 @@ import {
   ArrowLeftRight,
   ArrowUpDown,
   X,
+  Loader2,
 } from 'lucide-react'
 import { AIButton } from '@/components/shared/AIButton'
 import { FieldHeading, FieldSubLabel } from '@/components/shared/FieldHeading'
+import { Badge } from '@/components/ui/badge'
+import { toast } from 'sonner'
+import type { BrandStanceStatement } from '../page'
 
 // 型定義
 interface PositioningItem {
@@ -89,10 +93,12 @@ interface TargetingData {
 }
 
 interface Step4Props {
+  sessionId: string
   positioning: PositioningData
   basicInfo: BasicInfo
   targeting: TargetingData
   segmentation: SegmentationData
+  brandStance?: BrandStanceStatement[]
   onNext: (data: PositioningData) => Promise<boolean>
   onBack: () => void
   onSaveField: (data: PositioningData) => Promise<void>
@@ -114,10 +120,12 @@ function getRandomColor(existingColors: string[]): string {
 }
 
 export function Step4Positioning({
+  sessionId,
   positioning,
   basicInfo,
   targeting,
   segmentation,
+  brandStance: initialBrandStance,
   onNext,
   onBack,
   onSaveField,
@@ -134,8 +142,13 @@ export function Step4Positioning({
   const [aiError, setAiError] = useState('')
   const [saving, setSaving] = useState(false)
 
+  // 自社の立ち位置（ターゲット別ポジショニング文）。Step4で生成し、Step5は表示のみ。
+  const [brandStance, setBrandStance] = useState<BrandStanceStatement[]>(initialBrandStance || [])
+  const [stanceLoading, setStanceLoading] = useState(false)
+
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const aiRequestedRef = useRef(false)
+  const stanceRequestedRef = useRef(false)
 
   // 現在のデータ
   const getCurrentData = useCallback((): PositioningData => ({
@@ -144,6 +157,54 @@ export function Step4Positioning({
     items,
     axis_rationale: axisRationale || undefined,
   }), [xAxis, yAxis, items, axisRationale])
+
+  // 自社の立ち位置を生成（現在のポジショニングを踏まえる）。セッションへ保存し、Step5で表示される。
+  const generateBrandStance = useCallback(async () => {
+    if (!targeting.main_target) return
+    setStanceLoading(true)
+    try {
+      const res = await fetch('/api/tools/stp/suggest-brand-stance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ basic_info: basicInfo, targeting, positioning: getCurrentData() }),
+      })
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}))
+        toast.error((d as { error?: string }).error || '自社の立ち位置の生成に失敗しました')
+        return
+      }
+      const data = await res.json()
+      const statements: BrandStanceStatement[] = data.statements || []
+      setBrandStance(statements)
+      // セッションへ保存（Step5の表示・連携時に読まれる）
+      await fetch(`/api/tools/stp/sessions/${sessionId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionData: { brand_stance_statements: { statements } } }),
+      }).catch(() => {})
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '生成中にエラーが発生しました')
+    } finally {
+      setStanceLoading(false)
+    }
+  }, [sessionId, basicInfo, targeting, getCurrentData])
+
+  // Step4表示時の自動生成: ポジショニングが揃い、未生成なら一度だけ自動生成
+  useEffect(() => {
+    const positioningReady = items.length >= 2 && !!xAxis.left && !!yAxis.top
+    if (
+      positioningReady &&
+      brandStance.length === 0 &&
+      !!targeting.main_target &&
+      !stanceRequestedRef.current &&
+      !aiLoading &&
+      !stanceLoading
+    ) {
+      stanceRequestedRef.current = true
+      generateBrandStance()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items.length, xAxis.left, yAxis.top, aiLoading])
 
   // オートセーブ（1秒デバウンス）
   const triggerAutoSave = useCallback(() => {
@@ -283,23 +344,23 @@ export function Step4Positioning({
         </div>
       )}
 
-      {/* ローディング */}
+      {/* ローディング（共通のステップ進捗パネル） */}
       {aiLoading ? (
-        <div className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-          </div>
-          <Skeleton className="aspect-[4/3] w-full rounded-xl" />
-          <p className="text-center text-sm text-gray-400">
-            AIがポジショニングを分析中...
-          </p>
-        </div>
+        <StepProgressPanel
+          steps={[
+            { label: '軸を選定' },
+            { label: '競合の特徴を分析' },
+            { label: '配置を決定' },
+            { label: '配置根拠を生成' },
+          ]}
+          stepDuration={1500}
+          done={false}
+        />
       ) : (
         <div className="space-y-4 rounded-lg border border-border bg-[hsl(0_0%_97%)] p-4">
           <div className="flex items-center justify-between gap-2">
-            <FieldHeading>自社・競合の一覧</FieldHeading>
-            <AIButton size="s" onClick={handleRegenerate} className="shrink-0">
+            <FieldHeading className="mb-0">自社・競合の一覧</FieldHeading>
+            <AIButton size="sm" onClick={handleRegenerate} className="shrink-0">
               AIで提案生成
             </AIButton>
           </div>
@@ -358,22 +419,27 @@ export function Step4Positioning({
             </Button>
           </div>
 
-          <FieldHeading className="!mt-8">ポジショニングマップ</FieldHeading>
+          <FieldHeading className="!mt-8 mb-3">ポジショニングマップ</FieldHeading>
           {/* 3. チャート＋軸設定オーバーレイ（全幅・ドラッグで配置） */}
           <div className="relative rounded-lg border border-border bg-card p-3">
             {/* 軸設定オーバーレイ */}
             <div className="absolute left-3 right-3 top-3 z-10 space-y-1.5 rounded-md border border-border bg-white/95 p-2 text-xs shadow-sm">
-              <div className="flex items-center gap-1.5">
-                <ArrowLeftRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                <Input value={xAxis.left} onChange={(e) => setXAxis((prev) => ({ ...prev, left: e.target.value }))} placeholder="左端" className="h-7 min-w-0 flex-1 text-xs" />
+              {/* grid-cols-[1fr_auto_1fr] で中央の矢印をカード中心に固定（先頭アイコンは左セル内に格納） */}
+              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-1.5">
+                <div className="flex min-w-0 items-center gap-1.5">
+                  <ArrowLeftRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                  <Input value={xAxis.left} onChange={(e) => setXAxis((prev) => ({ ...prev, left: e.target.value }))} placeholder="左端" className="h-7 min-w-0 flex-1 text-xs" />
+                </div>
                 <span className="text-muted-foreground">↔</span>
-                <Input value={xAxis.right} onChange={(e) => setXAxis((prev) => ({ ...prev, right: e.target.value }))} placeholder="右端" className="h-7 min-w-0 flex-1 text-xs" />
+                <Input value={xAxis.right} onChange={(e) => setXAxis((prev) => ({ ...prev, right: e.target.value }))} placeholder="右端" className="h-7 min-w-0 text-xs" />
               </div>
-              <div className="flex items-center gap-1.5">
-                <ArrowUpDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                <Input value={yAxis.bottom} onChange={(e) => setYAxis((prev) => ({ ...prev, bottom: e.target.value }))} placeholder="下端" className="h-7 min-w-0 flex-1 text-xs" />
+              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-1.5">
+                <div className="flex min-w-0 items-center gap-1.5">
+                  <ArrowUpDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                  <Input value={yAxis.bottom} onChange={(e) => setYAxis((prev) => ({ ...prev, bottom: e.target.value }))} placeholder="下端" className="h-7 min-w-0 flex-1 text-xs" />
+                </div>
                 <span className="text-muted-foreground">↕</span>
-                <Input value={yAxis.top} onChange={(e) => setYAxis((prev) => ({ ...prev, top: e.target.value }))} placeholder="上端" className="h-7 min-w-0 flex-1 text-xs" />
+                <Input value={yAxis.top} onChange={(e) => setYAxis((prev) => ({ ...prev, top: e.target.value }))} placeholder="上端" className="h-7 min-w-0 text-xs" />
               </div>
             </div>
 
@@ -444,11 +510,70 @@ export function Step4Positioning({
               })()}
             </div>
           </div>
+
+          {/* 自社の立ち位置（ターゲット別×N。Step4で生成→Step5は表示のみ）。ポジショニングマップと同じカード内に括る */}
+          <div className="mt-2 border-t border-gray-200 pt-4">
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <FieldHeading className="mb-0">自社の立ち位置</FieldHeading>
+          <AIButton
+            size="sm"
+            onClick={generateBrandStance}
+            disabled={stanceLoading || !targeting.main_target || !isValid}
+            icon={stanceLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : undefined}
+          >
+            {stanceLoading ? '生成中…' : brandStance.length > 0 ? 'AIで再生成' : 'AIで自社の立ち位置を生成'}
+          </AIButton>
+        </div>
+        <p className="mb-3 text-[13px] leading-relaxed text-muted-foreground">
+          このポジショニングをもとに、各ターゲットに対して自社が何者として刺さるかを言語化します（確認・出力ステップに反映されます）。
+        </p>
+        {stanceLoading && brandStance.length === 0 ? (
+          <StepProgressPanel
+            steps={[
+              { label: 'ターゲットを整理' },
+              { label: '立ち位置を言語化' },
+              { label: '根拠をまとめる' },
+            ]}
+            stepDuration={1500}
+            done={false}
+            minHeight={160}
+          />
+        ) : brandStance.length === 0 ? (
+          <p className="text-xs text-muted-foreground">ポジショニングが整うと、ターゲット別の立ち位置を自動生成します。</p>
+        ) : (
+          <div className="mt-3 space-y-3.5">
+            {brandStance.map((s, i) => {
+              const isMain = s.target_role === 'main'
+              return (
+                <div
+                  key={i}
+                  className={`relative rounded-lg px-3 py-2.5 ${
+                    isMain
+                      ? 'border border-ds-app-accent-soft bg-blue-50/50'
+                      : 'border border-blue-300 bg-blue-50/30'
+                  }`}
+                >
+                  {isMain ? (
+                    <Badge className="absolute -top-[9px] left-[6px] rounded-full px-1.5 py-0 text-[10px] bg-ds-app-accent text-white hover:bg-ds-app-accent-hover">メインターゲット</Badge>
+                  ) : (
+                    <Badge variant="outline" className="absolute -top-[9px] left-[6px] rounded-full px-1.5 py-0 text-[10px] border-blue-300 bg-white text-blue-300">サブターゲット</Badge>
+                  )}
+                  <p className={`text-sm font-bold ${isMain ? 'text-gray-900' : 'text-gray-700'}`}>{s.target_name}</p>
+                  <p className="mt-1 text-sm leading-relaxed text-gray-800 whitespace-pre-wrap">{s.statement}</p>
+                  {s.rationale && (
+                    <p className="mt-1 text-[11px] text-muted-foreground leading-relaxed">なぜなら: {s.rationale}</p>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
+          </div>
         </div>
       )}
 
-      {/* フッターナビゲーション */}
-      <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 bg-background/80 backdrop-blur border-t border-border px-6 py-4 flex items-center justify-between">
+      {/* フッターナビゲーション（軸設定オーバーレイ z-10 より前面に。z-20） */}
+      <div className="sticky bottom-0 z-20 -mx-6 -mb-6 mt-6 bg-background/80 backdrop-blur border-t border-border px-6 py-4 flex items-center justify-between">
         <Button variant="outline" onClick={onBack} className="h-14 gap-2 px-6 text-base font-bold">
           <ArrowLeft className="h-4 w-4" />
           戻る

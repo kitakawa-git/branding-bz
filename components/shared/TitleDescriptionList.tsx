@@ -66,7 +66,7 @@ export function TitleDescriptionList({
   return (
     <div>
       {label && (
-        <FieldHeading required={required} optional={!required} className="mb-2">
+        <FieldHeading required={required} optional={!required} className="mb-3">
           {label}
         </FieldHeading>
       )}

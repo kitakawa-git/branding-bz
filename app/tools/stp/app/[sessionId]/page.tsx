@@ -293,10 +293,12 @@ export default function STPSessionPage() {
       )}
       {currentStep === 4 && (
         <Step4Positioning
+          sessionId={sessionId}
           positioning={session.session_data.positioning}
           basicInfo={session.session_data.basic_info}
           targeting={session.session_data.targeting}
           segmentation={session.session_data.segmentation}
+          brandStance={session.session_data.brand_stance_statements?.statements || []}
           onNext={(data) => saveAndAdvance(5, { positioning: data })}
           onBack={() => saveAndAdvance(3)}
           onSaveField={(data) => saveField({ positioning: data })}

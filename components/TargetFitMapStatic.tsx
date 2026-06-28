@@ -56,7 +56,8 @@ export function TargetFitMapStatic({ fitMap, maxHeight }: { fitMap: TargetFitMap
       {/* ターゲット点（PositioningMap準拠：r8・opacity0.85・白縁2px。メイン＝右にボールド濃色、サブ＝下中央にドット色） */}
       {fitMap.targets.map((t, i) => {
         const isMain = t.role === 'main'
-        const color = isMain ? '#3B82F6' : SUB_COLORS[(subIdx = subIdx + 1) % SUB_COLORS.length]
+        // メイン点はメインターゲットのバッジ背景色（--ds-app-accent）に合わせる
+        const color = isMain ? '#2563eb' : SUB_COLORS[(subIdx = subIdx + 1) % SUB_COLORS.length]
         const px = toX(t.x)
         const py = toY(t.y)
         return (
