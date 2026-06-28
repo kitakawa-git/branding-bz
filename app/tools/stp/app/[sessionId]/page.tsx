@@ -17,6 +17,14 @@ import { Step5Result } from './components/Step5Result'
 export type StrategyType = 'strategic_vs_dispersion' | 'strengths_vs_dispersion' | 'dispersion_only'
 
 // ターゲット適合マップ（Step3・顧客側軸＋ターゲット点＋自社カバー範囲楕円）
+// 適合マップ 全セグメント配置（順序型切り口の全セグメントを軸上に推定配置）
+export interface TargetFitMapSegment {
+  name: string
+  variable_name: string
+  x: number
+  y: number
+}
+
 // 適合マップ 代替候補（カバー範囲外ターゲットの差し替え提案）
 export interface TargetFitMapAlternative {
   name: string
@@ -52,6 +60,8 @@ export interface TargetFitMap {
   recommended: boolean
   // カバー範囲外ターゲットの代替候補（red/yellow時）
   alternative_suggestions?: TargetFitMapAlternative[]
+  // 順序型切り口の全セグメント配置（未選択セグメントのグレー表示用）
+  all_segments?: TargetFitMapSegment[]
   // 軸ロック状態（per-instance・クライアント保持＋session永続化）
   axes_locked?: boolean
 }

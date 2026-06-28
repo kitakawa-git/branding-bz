@@ -73,8 +73,8 @@ axis_endpoints が未定義の切り口（旧データなど）の場合のみ�
 2. ターゲット（メイン1＋サブ最大2）を点でプロットしてください。
 3. 自社は点ではなく**楕円（カバー範囲）**で表現します。中心座標＋横幅＋縦幅を返してください。
 4. 全ターゲットが楕円の中に入るかを判定し、consistency_status を返してください。
-   - green: 全ターゲットが楕円内
-   - yellow: 全ターゲット内だが一部が端（カバー中心から70%以上の距離）
+   - green: 全ターゲットがカバー中心から85%以内の距離（楕円内）
+   - yellow: 全ターゲット内だが1つ以上がカバー中心から85%以上の距離（楕円の境界線にかなり近い・要注意）
    - red: 1つ以上のターゲットが楕円外
 
 回答はJSON形式のみで、前後に説明文やマークダウンのコードブロックを含めないでください。
@@ -100,6 +100,9 @@ axis_endpoints が未定義の切り口（旧データなど）の場合のみ�
     { "name": "成長拡大組織", "role": "sub", "x": 50, "y": 70, "in_coverage": true }
   ],
   "consistency_status": "green",
+  "all_segments": [
+    { "name": "安定成長期", "variable_name": "組織のブランド課題フェーズ", "x": 75, "y": 35 }
+  ],
   "alternative_suggestions": []
 }
 
@@ -126,7 +129,20 @@ axis_endpoints が未定義の切り口（旧データなど）の場合のみ�
    - x_estimate, y_estimate: 現在の x_axis / y_axis 上での推定位置（0〜100）
    - fit_reason: なぜカバー範囲に合うか（1文・選択時の判断材料）
 
-consistency_status が "green" の場合は alternative_suggestions を空配列にしてください。`
+consistency_status が "green" の場合は alternative_suggestions を空配列にしてください。
+
+## 全セグメント配置（all_segments）
+
+selected の有無に関係なく、**順序型（axis_type='ordinal'）切り口に含まれる全セグメント**を、現在の x_axis / y_axis 上に推定配置して all_segments 配列で返してください。
+
+ルール:
+1. **対象**: axis_type === 'ordinal' の切り口に含まれる全セグメント。カテゴリ型切り口（意思決定者属性・業種等）のセグメントは対象外（軸上に位置づけられないため）
+2. **位置推定**: 各セグメントの description と priorities から、現在の軸上のおおよその位置 (x, y) を 0〜100 で推定
+3. **形式**: { name, variable_name, x, y } の配列
+4. **重複**: targets[] に含まれるセグメント（メイン・サブ）も all_segments[] に含める（クライアント側で重複排除する）
+5. **軸ロックモードでも同様に出力**: 軸を固定したまま全セグメントの位置を確定する
+
+これは未選択セグメントをマップ上にグレースケールで表示し、ユーザーが「全市場を見渡しながらサブを試行錯誤する」機能のために必要なデータです。`
 
 export async function POST(request: NextRequest) {
   try {

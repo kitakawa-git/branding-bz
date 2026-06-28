@@ -72,6 +72,13 @@ const STRATEGY_DESCRIPTIONS: Record<StrategyType, string> = {
 const ALL_STRATEGIES: StrategyType[] = ['strategic_vs_dispersion', 'strengths_vs_dispersion', 'dispersion_only']
 
 // ターゲット適合マップ（顧客側軸＋ターゲット点＋自社カバー範囲楕円）
+interface TargetFitMapSegment {
+  name: string
+  variable_name: string
+  x: number
+  y: number
+}
+
 interface TargetFitMapAlternative {
   name: string
   variable_name: string
@@ -104,6 +111,7 @@ interface TargetFitMap {
   label: string
   recommended: boolean
   alternative_suggestions?: TargetFitMapAlternative[]
+  all_segments?: TargetFitMapSegment[]
   axes_locked?: boolean
 }
 
@@ -372,6 +380,35 @@ export function Step3Targeting({
     // 想定外: replaces 名が見つからない
     toast.error('置き換え対象のターゲットが見つかりませんでした')
   }
+
+  // マップのグレーセグメントをクリック → サブを置換/追加（メインは変更しない）
+  const handleSegmentClick = useCallback((segmentName: string) => {
+    // メインは絶対変えない / 既にサブなら何もしない
+    if (mainTarget === segmentName) return
+    if (subTargets.includes(segmentName)) return
+    // サブが2個未満なら単純追加
+    if (subTargets.length < 2) {
+      setSubTargets((prev) => [...prev, segmentName])
+      return
+    }
+    // サブ満タン: クリック位置から最も遠い（戦略から外れた）サブを置換
+    const clicked = fitMap?.all_segments?.find((s) => s.name === segmentName)
+    if (!clicked) {
+      toast.error('セグメント座標が取得できませんでした')
+      return
+    }
+    const subWithDistance = subTargets.map((subName) => {
+      const sub = fitMap?.targets.find((t) => t.name === subName)
+      if (!sub) return { name: subName, distance: Infinity }
+      const dx = sub.x - clicked.x
+      const dy = sub.y - clicked.y
+      return { name: subName, distance: Math.sqrt(dx * dx + dy * dy) }
+    })
+    // 最も遠い（戦略から外れている）サブを置換する（近いサブは既に合致しているため）
+    const farthest = subWithDistance.reduce((max, cur) => (cur.distance > max.distance ? cur : max))
+    setSubTargets((prev) => prev.map((s) => (s === farthest.name ? segmentName : s)))
+    toast.success(`${farthest.name} → ${segmentName} に置き換え`)
+  }, [mainTarget, subTargets, fitMap])
 
   // タグ入力ハンドラ
   const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -779,6 +816,12 @@ export function Step3Targeting({
               status={fitMap?.consistency_status || 'green'}
               targetCount={1 + subTargets.length}
               outCount={fitMap ? fitMap.targets.filter(t => !t.in_coverage).length : 0}
+              edgeTargets={fitMap ? fitMap.targets.filter(t => {
+                const c = fitMap.coverage
+                const ndx = c.width ? (t.x - c.center_x) / (c.width / 2) : 0
+                const ndy = c.height ? (t.y - c.center_y) / (c.height / 2) : 0
+                return t.in_coverage && Math.sqrt(ndx * ndx + ndy * ndy) > 0.85
+              }).map(t => t.name) : []}
             />
             {/* 代替候補（red時のみ・カバー範囲内に合うターゲットを提案→クリックで差し替え） */}
             {!fitMapPending && !fitMapLoading &&
@@ -841,6 +884,9 @@ export function Step3Targeting({
               <TargetFitMapView
                 fitMap={fitMap}
                 onCoverageChange={updateSelectedCoverage}
+                onSegmentClick={handleSegmentClick}
+                mainTarget={mainTarget}
+                subTargets={subTargets}
               />
             </div>
           ) : null}
@@ -955,14 +1001,15 @@ export function Step3Targeting({
 }
 
 // 整合性ステータスバー（緑/黄/赤）
-function ConsistencyStatusBar({ status, targetCount, outCount }: {
+function ConsistencyStatusBar({ status, targetCount, outCount, edgeTargets = [] }: {
   status: 'green' | 'yellow' | 'red'
   targetCount: number
   outCount: number
+  edgeTargets?: string[]
 }) {
   const conf = {
     green: { bar: 'bg-emerald-500', wrap: 'bg-emerald-50 border-emerald-200 text-emerald-700', text: `${targetCount} ターゲット全員がカバー範囲内` },
-    yellow: { bar: 'bg-amber-500', wrap: 'bg-amber-50 border-amber-200 text-amber-700', text: '⚠ 一部のターゲットがカバー範囲の端に位置' },
+    yellow: { bar: 'bg-amber-500', wrap: 'bg-amber-50 border-amber-200 text-amber-700', text: edgeTargets.length > 0 ? `⚠ ${edgeTargets.join('・')} がカバー範囲の端に近いです` : '⚠ 一部のターゲットがカバー範囲の端に位置' },
     red: { bar: 'bg-red-500', wrap: 'bg-red-50 border-red-200 text-red-700', text: `${outCount} 個のターゲットがカバー範囲外（要再検討）` },
   }[status]
   return (
@@ -983,9 +1030,12 @@ const FIT_MAP_W = FIT_W - FIT_PAD * 2
 const FIT_MAP_H = FIT_H - FIT_PAD * 2
 const TARGET_COLORS = ['#10B981', '#8B5CF6', '#F59E0B'] // サブ用（メインは青固定）
 
-function TargetFitMapView({ fitMap, onCoverageChange }: {
+function TargetFitMapView({ fitMap, onCoverageChange, onSegmentClick, mainTarget, subTargets }: {
   fitMap: TargetFitMap
   onCoverageChange: (coverage: TargetFitMap['coverage']) => void
+  onSegmentClick?: (segmentName: string) => void
+  mainTarget: string
+  subTargets: string[]
 }) {
   const toX = (x: number) => FIT_PAD + (x / 100) * FIT_MAP_W
   const toY = (y: number) => FIT_PAD + ((100 - y) / 100) * FIT_MAP_H
@@ -1030,6 +1080,43 @@ function TargetFitMapView({ fitMap, onCoverageChange }: {
         {fitMap.y_axis.bottom && (
           <text x={plotCx + 8} y={FIT_PAD + FIT_MAP_H - 14} textAnchor="start" fontSize="12" fill="#9ca3af">{fitMap.y_axis.bottom}</text>
         )}
+        {/* 未選択セグメント（背景・グレー・クリックでサブ置換）。ホバーで名前表示 */}
+        {fitMap.all_segments
+          ?.filter((seg) => seg.name !== mainTarget && !subTargets.includes(seg.name))
+          .map((seg, i) => (
+            <g
+              key={`gray-${i}`}
+              className="group"
+              onClick={() => onSegmentClick?.(seg.name)}
+              style={{ cursor: 'pointer' }}
+            >
+              {/* 透明ヒット領域（タップ精度確保） */}
+              <circle cx={toX(seg.x)} cy={toY(seg.y)} r={14} fill="transparent" />
+              {/* 見える点 */}
+              <circle
+                cx={toX(seg.x)}
+                cy={toY(seg.y)}
+                r={5}
+                fill="#9ca3af"
+                stroke="#fff"
+                strokeWidth={1.5}
+                pointerEvents="none"
+                className="opacity-50 transition-opacity group-hover:opacity-90"
+              />
+              {/* ホバー時のラベル */}
+              <text
+                x={toX(seg.x)}
+                y={toY(seg.y) + 18}
+                textAnchor="middle"
+                fontSize="10"
+                fill="#6b7280"
+                pointerEvents="none"
+                className="opacity-0 transition-opacity group-hover:opacity-100"
+              >
+                {seg.name}
+              </text>
+            </g>
+          ))}
         {/* ターゲット点（PositioningMap準拠：r8・opacity0.85・白縁2px。メイン＝右にボールド濃色、サブ＝下中央にドット色） */}
         {fitMap.targets.map((t, i) => {
           const isMain = t.role === 'main'
@@ -1052,6 +1139,11 @@ function TargetFitMapView({ fitMap, onCoverageChange }: {
       </svg>
       {fitMap.axis_rationale && (
         <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">軸選定の根拠: {fitMap.axis_rationale}</p>
+      )}
+      {fitMap.all_segments?.some((s) => s.name !== mainTarget && !subTargets.includes(s.name)) && (
+        <p className="mt-2 text-[10px] text-muted-foreground">
+          💡 グレーのセグメントをクリックすると、最も近いサブターゲットと置き換わります
+        </p>
       )}
       {/* カバー範囲スライダー（横幅・縦幅） */}
       <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
