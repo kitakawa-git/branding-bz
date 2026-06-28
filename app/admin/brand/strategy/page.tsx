@@ -111,6 +111,8 @@ type StrategyCache = {
   positioningMapData: PositioningMapData | null
   targetFitMapData: TargetFitMap | null
   brandStanceStatements: { statements: BrandStanceStatement[] } | null
+  strengths: string
+  competitorsAnalysis: Array<{ name: string; traits: string }>
   portalSubtitle: string
   portalSubtitlesData: PortalSubtitles | null
 }
@@ -128,6 +130,8 @@ export default function BrandStrategyPage() {
   const [positioningMapData, setPositioningMapData] = useState<PositioningMapData | null>(cached?.positioningMapData ?? null)
   const [targetFitMapData, setTargetFitMapData] = useState<TargetFitMap | null>(cached?.targetFitMapData ?? null)
   const [brandStanceStatements, setBrandStanceStatements] = useState<{ statements: BrandStanceStatement[] } | null>(cached?.brandStanceStatements ?? null)
+  const [strengths, setStrengths] = useState<string>(cached?.strengths ?? '')
+  const [competitorsAnalysis, setCompetitorsAnalysis] = useState<Array<{ name: string; traits: string }>>(cached?.competitorsAnalysis ?? [])
   const [loading, setLoading] = useState(!cached)
   const [fetchError, setFetchError] = useState('')
   const [saving, setSaving] = useState(false)
@@ -170,7 +174,7 @@ export default function BrandStrategyPage() {
       try {
         const { data: cd } = await supabase
           .from('companies')
-          .select('portal_subtitles, target_segments')
+          .select('portal_subtitles, target_segments, strengths, competitors_analysis')
           .eq('id', companyId)
           .single()
         companyData = cd as Record<string, unknown> | null
@@ -190,6 +194,13 @@ export default function BrandStrategyPage() {
       const companyTargetSegments = rawTs
         .filter(ts => ts && ts.name)
         .map(ts => ({ name: ts.name || '', description: ts.description || '' }))
+      // STP連携: 自社の強み・競合分析（companies）
+      const parsedStrengths = (companyData?.strengths as string) || ''
+      const parsedCompetitorsAnalysis = ((companyData?.competitors_analysis as Array<{ name?: string; traits?: string }>) || [])
+        .filter(c => c?.name?.trim())
+        .map(c => ({ name: (c.name as string).trim(), traits: (c.traits || '').trim() }))
+      setStrengths(parsedStrengths)
+      setCompetitorsAnalysis(parsedCompetitorsAnalysis)
 
       if (data && data.length > 0) {
         const first = data[0] as Record<string, unknown>
@@ -232,6 +243,8 @@ export default function BrandStrategyPage() {
           positioningMapData: parsedMapData,
           targetFitMapData: parsedFitMap,
           brandStanceStatements: parsedStance,
+          strengths: parsedStrengths,
+          competitorsAnalysis: parsedCompetitorsAnalysis,
           portalSubtitle: fetchedSubtitle,
           portalSubtitlesData: fetchedSubtitlesData,
         })
@@ -696,6 +709,8 @@ export default function BrandStrategyPage() {
         positioningMapData,
         targetFitMapData,
         brandStanceStatements,
+        strengths,
+        competitorsAnalysis,
         portalSubtitle: portalSubtitle.trim(),
         portalSubtitlesData: updatedSubtitles,
       })
@@ -1273,6 +1288,34 @@ export default function BrandStrategyPage() {
                 <div>
                   <h3 className="text-[13px] font-bold text-muted-foreground mb-2">プレビュー</h3>
                   <PositioningMap data={positioningMapData} />
+                  {positioningMapData?.axis_rationale && (
+                    <div className="mt-4 rounded-md bg-gray-50 p-3 text-xs text-gray-700 leading-relaxed">
+                      <span className="font-bold text-gray-900">軸選定の根拠: </span>
+                      {positioningMapData.axis_rationale}
+                    </div>
+                  )}
+                  {positioningMapData?.items?.some(item => item.reasoning) && (
+                    <details className="mt-3 rounded-md border border-gray-200">
+                      <summary className="cursor-pointer p-3 text-xs font-medium text-gray-700">各企業の配置根拠を見る</summary>
+                      <div className="border-t border-gray-200 p-3 space-y-2">
+                        {positioningMapData.items.filter(item => item.reasoning).map((item, i) => (
+                          <div key={i} className="text-xs">
+                            <span className="font-bold text-gray-900">{item.name}: </span>
+                            <span className="text-gray-600">{item.reasoning}</span>
+                            {item.confidence && (
+                              <span className={`ml-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                                item.confidence === 'high' ? 'bg-emerald-100 text-emerald-700' :
+                                item.confidence === 'medium' ? 'bg-amber-100 text-amber-700' :
+                                'bg-gray-100 text-gray-600'
+                              }`}>
+                                確信度 {item.confidence === 'high' ? '高' : item.confidence === 'medium' ? '中' : '低'}
+                              </span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </details>
+                  )}
                 </div>
 
                 {/* マップ削除 */}
@@ -1360,6 +1403,36 @@ export default function BrandStrategyPage() {
                     </div>
                   )
                 })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Card 2.7: 自社の強み（STP連携・読み取り表示） */}
+        {strengths && strengths.trim() && (
+          <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+            <CardContent className="p-5">
+              <h2 className="text-xs font-bold mb-3">自社の強み（STP分析）</h2>
+              <p className="text-sm leading-relaxed text-gray-700 whitespace-pre-wrap">{strengths}</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Card 2.8: 競合分析（STP連携・読み取り表示） */}
+        {competitorsAnalysis.length > 0 && (
+          <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+            <CardContent className="p-5">
+              <h2 className="text-xs font-bold mb-3">競合分析（STP分析）</h2>
+              <p className="mb-4 text-[13px] text-muted-foreground">各競合の特徴と、自社との差別化ポイント</p>
+              <div className="space-y-3">
+                {competitorsAnalysis.map((comp, i) => (
+                  <div key={i} className="rounded-lg border border-gray-200 bg-white p-4">
+                    <div className="mb-2 text-sm font-bold text-gray-900">{comp.name}</div>
+                    {comp.traits && (
+                      <p className="text-xs text-gray-600 leading-relaxed whitespace-pre-wrap">{comp.traits}</p>
+                    )}
+                  </div>
+                ))}
               </div>
             </CardContent>
           </Card>

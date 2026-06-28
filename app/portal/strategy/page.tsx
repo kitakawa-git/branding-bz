@@ -62,6 +62,7 @@ export default function PortalStrategyPage() {
     positioningMapUrl: string
     positioningMapData: PositioningMapData | null
     brandStanceStatements: { statements: BrandStanceStatement[] } | null
+    strengths: string
   }
   const cacheKey = `portal-strategy-${companyId}`
   const cached = companyId ? getPageCache<StrategyCache>(cacheKey) : null
@@ -74,6 +75,7 @@ export default function PortalStrategyPage() {
   const [positioningMapUrl, setPositioningMapUrl] = useState(cached?.positioningMapUrl ?? '')
   const [positioningMapData, setPositioningMapData] = useState<PositioningMapData | null>(cached?.positioningMapData ?? null)
   const [brandStanceStatements, setBrandStanceStatements] = useState<{ statements: BrandStanceStatement[] } | null>(cached?.brandStanceStatements ?? null)
+  const [strengths, setStrengths] = useState<string>(cached?.strengths ?? '')
   const [loading, setLoading] = useState(!cached)
   const [modalOpen, setModalOpen] = useState(false)
 
@@ -91,7 +93,7 @@ export default function PortalStrategyPage() {
       ),
       // 主なターゲット（companies.target_segments）
       fetchWithRetry(() =>
-        supabase.from('companies').select('target_segments').eq('id', companyId).maybeSingle()
+        supabase.from('companies').select('target_segments, strengths').eq('id', companyId).maybeSingle()
       ),
       // 提供価値（value_propositions テーブル。管理画面 ブランド戦略で編集）
       fetchWithRetry(() =>
@@ -111,6 +113,9 @@ export default function PortalStrategyPage() {
         .filter(s => s && s.name)
         .map(s => ({ name: s.name || '', description: s.description || '' }))
       setTargetSegments(parsedSegments)
+      // STP連携: 自社の強み（companies.strengths）
+      const parsedStrengths = (companyData?.strengths as string) || ''
+      setStrengths(parsedStrengths)
 
       // 提供価値（value_propositions のみ。レガシー companies.provided_values は廃止し business_content へ移行済み）
       const parsedProvidedValues: ProvidedValueItem[] = []
@@ -161,6 +166,7 @@ export default function PortalStrategyPage() {
         positioningMapUrl: parsedMapUrl,
         positioningMapData: parsedMapData,
         brandStanceStatements: parsedStance,
+        strengths: parsedStrengths,
         personas: parsedPersonas,
       })
       setLoading(false)
@@ -409,6 +415,18 @@ export default function PortalStrategyPage() {
                   )
                 })}
               </div>
+            </CardContent>
+          </Card>
+        </section>
+      )}
+
+      {/* 私たちの強み（STP連携・読み取り表示。空なら非表示） */}
+      {strengths && strengths.trim() && (
+        <section>
+          <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+            <CardContent className="p-4 sm:p-5">
+              <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">私たちの強み</h2>
+              <p className="text-sm leading-relaxed text-gray-700 whitespace-pre-wrap">{strengths}</p>
             </CardContent>
           </Card>
         </section>

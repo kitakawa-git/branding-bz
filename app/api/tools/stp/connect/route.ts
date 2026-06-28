@@ -176,22 +176,27 @@ export async function POST(request: NextRequest) {
     const positioning = sessionData.positioning || {}
     const segmentation = sessionData.segmentation || {}
 
-    // 2. positioning_map_data 変換
+    // 2. positioning_map_data 変換（軸根拠・配置根拠・確信度も連携）
     const positioningMapData = {
       x_axis: positioning.x_axis || { left: '', right: '' },
       y_axis: positioning.y_axis || { bottom: '', top: '' },
+      axis_rationale: positioning.axis_rationale || '',
       items: (positioning.items || []).map((item: {
         name: string
         color: string
         x: number
         y: number
         is_self: boolean
+        reasoning?: string
+        confidence?: 'high' | 'medium' | 'low'
       }) => ({
         name: item.name,
         color: item.color,
         x: item.x,
         y: item.y,
         size: item.is_self ? 'lg' : 'md',
+        reasoning: item.reasoning || '',
+        confidence: item.confidence || 'medium',
       })),
     }
 
@@ -257,6 +262,10 @@ export async function POST(request: NextRequest) {
       personaUpdates.target = (targeting.target_summary && String(targeting.target_summary).trim())
         || (targeting.target_description && String(targeting.target_description).trim())
         || null
+      // 購買決定要因 → 既存の brand_personas.decision_factors（JSONB array）に連携
+      if (Array.isArray(targeting.buying_factors)) {
+        personaUpdates.decision_factors = targeting.buying_factors
+      }
     }
     if (selections.positioning) personaUpdates.positioning_map_data = positioningMapData
     if (selections.target_fit_map && targeting.target_fit_map) {
@@ -300,16 +309,30 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 6. companies.target_segments を更新（主なターゲット一覧）
+    // 6. companies を更新（主なターゲット一覧＋自社の強み＋競合分析）
     if (selections.targeting) {
       const newTargetSegments = buildTargetSegments(targeting, segmentation)
+      const companyUpdates: Record<string, unknown> = {
+        target_segments: newTargetSegments.length > 0 ? newTargetSegments : null,
+      }
+      // 自社の強み
+      if (typeof targeting.strengths === 'string' && targeting.strengths.trim()) {
+        companyUpdates.strengths = targeting.strengths.trim()
+      }
+      // 競合分析（[{name, traits}]）
+      if (Array.isArray(targeting.competitors_analysis)) {
+        const cleaned = (targeting.competitors_analysis as Array<{ name?: string; traits?: string }>)
+          .filter((c) => c.name?.trim())
+          .map((c) => ({ name: (c.name as string).trim(), traits: (c.traits || '').trim() }))
+        companyUpdates.competitors_analysis = cleaned.length > 0 ? cleaned : []
+      }
       const { error: companyError } = await supabaseAdmin
         .from('companies')
-        .update({ target_segments: newTargetSegments.length > 0 ? newTargetSegments : null })
+        .update(companyUpdates)
         .eq('id', companyId)
 
       if (companyError) {
-        console.error('[STP Connect] companies.target_segments更新エラー:', companyError)
+        console.error('[STP Connect] companies更新エラー:', companyError)
         // ここで失敗してもターゲット概要は反映済みなので warning のみ
       }
     }

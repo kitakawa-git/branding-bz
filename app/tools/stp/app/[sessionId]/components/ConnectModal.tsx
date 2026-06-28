@@ -126,6 +126,14 @@ export function ConnectModal({
   const [loadingPreflight, setLoadingPreflight] = useState(false)
   const [connecting, setConnecting] = useState(false)
   const [confirmTarget, setConfirmTarget] = useState<{ segmentation: boolean; targeting: boolean; positioning: boolean; target_fit_map: boolean; brand_stance_statements: boolean } | null>(null)
+  // 上書き確認は 409 で1項目ずつ返るため、確認済みフラグを累積して毎回まとめて送る（無限ループ防止）
+  const [accumulatedConfirm, setAccumulatedConfirm] = useState<{
+    overwriteSegmentation?: boolean
+    overwriteTargeting?: boolean
+    overwritePositioning?: boolean
+    overwriteTargetFitMap?: boolean
+    overwriteBrandStance?: boolean
+  }>({})
   const [selections, setSelections] = useState<Selections>({
     segmentation: true,
     targeting: true,
@@ -195,6 +203,7 @@ export function ConnectModal({
       }
 
       toast.success('branding.bz に連携しました')
+      setAccumulatedConfirm({})
       onOpenChange(false)
       onConnected?.()
     } catch {
@@ -208,6 +217,8 @@ export function ConnectModal({
     const needsSegConfirm = selections.segmentation && !!existing?.hasSegmentation
     const needsTgtConfirm = selections.targeting && !!existing?.hasTarget
     const needsPosConfirm = selections.positioning && !!existing?.hasPositioning
+    // 新規連携の開始: 累積した確認フラグをリセット
+    setAccumulatedConfirm({})
     if (needsSegConfirm || needsTgtConfirm || needsPosConfirm) {
       setConfirmTarget({ segmentation: needsSegConfirm, targeting: needsTgtConfirm, positioning: needsPosConfirm, target_fit_map: false, brand_stance_statements: false })
       return
@@ -217,15 +228,18 @@ export function ConnectModal({
   }
 
   const handleConfirmedConnect = () => {
-    const confirm = {
-      overwriteSegmentation: confirmTarget?.segmentation || undefined,
-      overwriteTargeting: confirmTarget?.targeting || undefined,
-      overwritePositioning: confirmTarget?.positioning || undefined,
-      overwriteTargetFitMap: confirmTarget?.target_fit_map || undefined,
-      overwriteBrandStance: confirmTarget?.brand_stance_statements || undefined,
+    // 今回確認した項目を累積に積み増し、毎回まとめてサーバーへ送る
+    const newConfirm = {
+      ...accumulatedConfirm,
+      overwriteSegmentation: confirmTarget?.segmentation ? true : accumulatedConfirm.overwriteSegmentation,
+      overwriteTargeting: confirmTarget?.targeting ? true : accumulatedConfirm.overwriteTargeting,
+      overwritePositioning: confirmTarget?.positioning ? true : accumulatedConfirm.overwritePositioning,
+      overwriteTargetFitMap: confirmTarget?.target_fit_map ? true : accumulatedConfirm.overwriteTargetFitMap,
+      overwriteBrandStance: confirmTarget?.brand_stance_statements ? true : accumulatedConfirm.overwriteBrandStance,
     }
+    setAccumulatedConfirm(newConfirm)
     setConfirmTarget(null)
-    executeConnect(confirm)
+    executeConnect(newConfirm)
   }
 
   const overwriteParts: string[] = []
@@ -358,7 +372,7 @@ export function ConnectModal({
           </div>
 
           <div className="mt-2 flex justify-end gap-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={connecting}>
+            <Button variant="outline" onClick={() => { setAccumulatedConfirm({}); onOpenChange(false) }} disabled={connecting}>
               キャンセル
             </Button>
             <Button onClick={handleConnectClick} disabled={connecting || loadingPreflight || !hasSelection} className="gap-1.5">
@@ -379,7 +393,7 @@ export function ConnectModal({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>キャンセル</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setAccumulatedConfirm({})}>キャンセル</AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirmedConnect}>上書きして連携する</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
