@@ -7,7 +7,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { AutoResizeTextarea } from '@/components/ui/auto-resize-textarea'
 import { Slider } from '@/components/ui/slider'
-import { ArrowLeft, ArrowRight, X, Loader2 } from 'lucide-react'
+import { ArrowLeft, ArrowRight, X, Loader2, Lock, Unlock } from 'lucide-react'
 import { AIButton } from '@/components/shared/AIButton'
 import { FieldHeading, FieldSubLabel } from '@/components/shared/FieldHeading'
 import { StepProgressPanel } from '@/components/stp/StepProgressLoader'
@@ -72,6 +72,15 @@ const STRATEGY_DESCRIPTIONS: Record<StrategyType, string> = {
 const ALL_STRATEGIES: StrategyType[] = ['strategic_vs_dispersion', 'strengths_vs_dispersion', 'dispersion_only']
 
 // ターゲット適合マップ（顧客側軸＋ターゲット点＋自社カバー範囲楕円）
+interface TargetFitMapAlternative {
+  name: string
+  variable_name: string
+  replaces: string
+  x_estimate: number
+  y_estimate: number
+  fit_reason: string
+}
+
 interface TargetFitMap {
   x_axis: { left: string; right: string }
   y_axis: { bottom: string; top: string }
@@ -94,6 +103,8 @@ interface TargetFitMap {
   strategy_type: StrategyType
   label: string
   recommended: boolean
+  alternative_suggestions?: TargetFitMapAlternative[]
+  axes_locked?: boolean
 }
 
 // 後方互換のため evaluations フィールドは残す（UIからは使わない）
@@ -345,6 +356,23 @@ export function Step3Targeting({
     }
   }
 
+  // 代替候補で範囲外ターゲットを差し替え（→ lastTargetsRef検知で1.5秒後に自動再生成）
+  const handleReplaceTarget = (alt: TargetFitMapAlternative) => {
+    const targetToRemove = alt.replaces
+    // メインターゲットが範囲外 → メインを置換
+    if (mainTarget === targetToRemove) {
+      setMainTarget(alt.name)
+      return
+    }
+    // サブターゲットが範囲外 → 同じ位置で入れ替え
+    if (subTargets.includes(targetToRemove)) {
+      setSubTargets((prev) => prev.map((s) => (s === targetToRemove ? alt.name : s)))
+      return
+    }
+    // 想定外: replaces 名が見つからない
+    toast.error('置き換え対象のターゲットが見つかりませんでした')
+  }
+
   // タグ入力ハンドラ
   const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if ((e.key === 'Enter' || e.key === ',') && tagInput.trim()) {
@@ -459,6 +487,11 @@ export function Step3Targeting({
     setSelectedStrategy(strategy)
     setFitMapLoading(true)
     try {
+      // 既存マップがロック中なら軸を固定して再計算（座標・カバー範囲のみ更新）
+      const existing = cache[strategy]
+      const lockedAxes = existing?.axes_locked
+        ? { x_axis: existing.x_axis, y_axis: existing.y_axis }
+        : null
       const res = await fetch('/api/tools/stp/suggest-target-fit-map', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -473,6 +506,7 @@ export function Step3Targeting({
             buying_factors: buyingFactors,
           },
           strategy_type: strategy,
+          locked_axes: lockedAxes,
         }),
       })
       if (!res.ok) {
@@ -481,6 +515,8 @@ export function Step3Targeting({
         return
       }
       const data = await res.json() as TargetFitMap
+      // ロック状態はクライアント保持（API応答に含まれないため、固定継続なら付与）
+      if (existing?.axes_locked) data.axes_locked = true
       const newCache: Partial<Record<StrategyType, TargetFitMap>> = replaceAll ? { [strategy]: data } : { ...cache, [strategy]: data }
       setCache(newCache)
       // 生成完了時は debounce を待たず即保存（リロード前の取りこぼし＝再生成バグを防ぐ）。
@@ -497,6 +533,16 @@ export function Step3Targeting({
       setFitMapLoading(false)
     }
   }, [cache, mainTarget, subTargets, mainSegDescription, strengths, buyingFactors, basicInfo, segmentation, getCurrentData, onSaveField])
+
+  // 軸ロックの切替（per-strategy。cache変更→既存autosaveでsession永続化）
+  const toggleAxisLock = useCallback(() => {
+    if (!fitMap) return
+    setCache((prev) => {
+      const cur = prev[selectedStrategy]
+      if (!cur) return prev
+      return { ...prev, [selectedStrategy]: { ...cur, axes_locked: !cur.axes_locked } }
+    })
+  }, [fitMap, selectedStrategy])
 
   // ターゲットの「実値」が変わった時だけ再生成。マウント直後やremount・新配列での再発火は無視。
   useEffect(() => {
@@ -545,7 +591,7 @@ export function Step3Targeting({
     <div>
       <h1 className="text-2xl font-bold text-foreground mb-2">Step 3: ターゲティング</h1>
       <p className="mb-4 text-[13px] text-muted-foreground">
-        前のステップで洗い出した市場候補の中から、自社が狙うべきターゲット市場を見極めます。カードをクリックしてメインターゲット（１つ）とサブターゲット（最大２つ）を選ぶと、市場の中の顧客像を深掘りできます。
+        前ステップの市場候補から、狙うべきターゲットを見極めます。カードでメイン1つ・サブ最大2つを選びましょう。
       </p>
 
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
@@ -734,6 +780,42 @@ export function Step3Targeting({
               targetCount={1 + subTargets.length}
               outCount={fitMap ? fitMap.targets.filter(t => !t.in_coverage).length : 0}
             />
+            {/* 代替候補（red時のみ・カバー範囲内に合うターゲットを提案→クリックで差し替え） */}
+            {!fitMapPending && !fitMapLoading &&
+              fitMap?.consistency_status === 'red' &&
+              fitMap.alternative_suggestions &&
+              fitMap.alternative_suggestions.length > 0 && (
+              <div className="mt-2 rounded-lg border border-red-200 bg-red-50/50 p-3">
+                <div className="mb-2 text-xs font-medium text-red-700">
+                  代替候補（カバー範囲内に合うターゲット）
+                </div>
+                <div className="space-y-1.5">
+                  {fitMap.alternative_suggestions.map((alt, i) => (
+                    <div
+                      key={i}
+                      className="flex items-start gap-2 rounded-md border border-red-100 bg-white p-2"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-medium text-gray-900">{alt.name}</span>
+                          <span className="text-[10px] text-gray-500">{alt.replaces} の代替</span>
+                        </div>
+                        <div className="mt-1 text-xs text-muted-foreground leading-relaxed">
+                          {alt.fit_reason}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleReplaceTarget(alt)}
+                        className="shrink-0 rounded-md bg-ds-app-accent px-3 py-1.5 text-xs font-medium text-white hover:bg-ds-app-accent-hover"
+                      >
+                        差し替え
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
           {/* マップ本体（生成・更新中はステップ進捗ローダーでマップごと隠す） */}
           {(fitMapPending || fitMapLoading) ? (
@@ -749,7 +831,13 @@ export function Step3Targeting({
               done={false}
             />
           ) : fitMap ? (
-            <div className="mt-3">
+            <div className="relative mt-3">
+              {fitMap.axes_locked && (
+                <div className="absolute right-3 top-3 z-10 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-1 text-[10px] font-bold text-amber-700 shadow-sm">
+                  <Lock className="h-3 w-3" />
+                  軸固定中
+                </div>
+              )}
               <TargetFitMapView
                 fitMap={fitMap}
                 onCoverageChange={updateSelectedCoverage}
@@ -759,41 +847,71 @@ export function Step3Targeting({
           {/* 軸の選び方セレクター（マップ表示時のみ・コンパクト）。他方針は遅延生成＋キャッシュで即切替 */}
           {fitMap && !fitMapLoading && !fitMapPending && (
             <div className="mt-3 flex items-center justify-between gap-2 text-xs">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-muted-foreground">軸の選び方:</span>
                 <span className="font-medium text-foreground">{STRATEGY_LABELS[selectedStrategy]}</span>
                 {selectedStrategy === 'strategic_vs_dispersion' && (
                   <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700">★AI推奨</span>
                 )}
+                {fitMap.axes_locked && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700">
+                    <Lock className="h-3 w-3" />
+                    軸固定中
+                  </span>
+                )}
               </div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="font-medium text-ds-app-accent hover:underline">他の軸も試す</button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-72">
-                  {ALL_STRATEGIES.map((s) => (
-                    <DropdownMenuItem
-                      key={s}
-                      disabled={s === selectedStrategy}
-                      onClick={() => fetchStrategy(s)}
-                      className="cursor-pointer"
-                    >
-                      <div className="flex w-full items-center justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="text-sm font-medium">{STRATEGY_LABELS[s]}</div>
-                          <div className="text-[11px] text-muted-foreground">{STRATEGY_DESCRIPTIONS[s]}</div>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={toggleAxisLock}
+                  className={`inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+                    fitMap.axes_locked
+                      ? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                  title={fitMap.axes_locked ? 'ロック解除' : '軸を確定（以後の再生成で軸が変わらなくなる）'}
+                >
+                  {fitMap.axes_locked ? (
+                    <><Unlock className="h-3 w-3" />ロック解除</>
+                  ) : (
+                    <><Lock className="h-3 w-3" />軸を確定</>
+                  )}
+                </button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="font-medium text-ds-app-accent hover:underline">他の軸も試す</button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-72">
+                    {ALL_STRATEGIES.map((s) => (
+                      <DropdownMenuItem
+                        key={s}
+                        disabled={s === selectedStrategy || (!!fitMap.axes_locked && s !== selectedStrategy)}
+                        onClick={() => fetchStrategy(s)}
+                        className="cursor-pointer"
+                      >
+                        <div className="flex w-full items-center justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="text-sm font-medium">{STRATEGY_LABELS[s]}</div>
+                            <div className="text-[11px] text-muted-foreground">{STRATEGY_DESCRIPTIONS[s]}</div>
+                          </div>
+                          <div className="flex shrink-0 items-center gap-1">
+                            {fitMap.axes_locked && s !== selectedStrategy ? (
+                              <span className="text-[10px] text-amber-600">軸ロック中・解除が必要</span>
+                            ) : (
+                              <>
+                                {s === 'strategic_vs_dispersion' && <span className="text-[10px] font-bold text-emerald-600">★</span>}
+                                {cache[s]
+                                  ? <span className="text-[10px] text-emerald-600">⚡ 即切替</span>
+                                  : <span className="text-[10px] text-muted-foreground">⏱ 生成</span>}
+                              </>
+                            )}
+                          </div>
                         </div>
-                        <div className="flex shrink-0 items-center gap-1">
-                          {s === 'strategic_vs_dispersion' && <span className="text-[10px] font-bold text-emerald-600">★</span>}
-                          {cache[s]
-                            ? <span className="text-[10px] text-emerald-600">⚡ 即切替</span>
-                            : <span className="text-[10px] text-muted-foreground">⏱ 生成</span>}
-                        </div>
-                      </div>
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
           )}
           </CardContent>
@@ -845,7 +963,7 @@ function ConsistencyStatusBar({ status, targetCount, outCount }: {
   const conf = {
     green: { bar: 'bg-emerald-500', wrap: 'bg-emerald-50 border-emerald-200 text-emerald-700', text: `${targetCount} ターゲット全員がカバー範囲内` },
     yellow: { bar: 'bg-amber-500', wrap: 'bg-amber-50 border-amber-200 text-amber-700', text: '⚠ 一部のターゲットがカバー範囲の端に位置' },
-    red: { bar: 'bg-red-500', wrap: 'bg-red-50 border-red-200 text-red-700', text: `✗ ${outCount} 個のターゲットがカバー範囲外（要再検討）` },
+    red: { bar: 'bg-red-500', wrap: 'bg-red-50 border-red-200 text-red-700', text: `${outCount} 個のターゲットがカバー範囲外（要再検討）` },
   }[status]
   return (
     <div className={`flex items-center gap-2 rounded-md border px-3 py-2 text-xs font-medium ${conf.wrap}`}>

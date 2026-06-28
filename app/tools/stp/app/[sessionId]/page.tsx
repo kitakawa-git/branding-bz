@@ -17,6 +17,16 @@ import { Step5Result } from './components/Step5Result'
 export type StrategyType = 'strategic_vs_dispersion' | 'strengths_vs_dispersion' | 'dispersion_only'
 
 // ターゲット適合マップ（Step3・顧客側軸＋ターゲット点＋自社カバー範囲楕円）
+// 適合マップ 代替候補（カバー範囲外ターゲットの差し替え提案）
+export interface TargetFitMapAlternative {
+  name: string
+  variable_name: string
+  replaces: string  // 置き換える範囲外ターゲット名（targets[].in_coverage=false の name と一致）
+  x_estimate: number
+  y_estimate: number
+  fit_reason: string
+}
+
 export interface TargetFitMap {
   x_axis: { left: string; right: string }
   y_axis: { bottom: string; top: string }
@@ -40,6 +50,10 @@ export interface TargetFitMap {
   strategy_type: StrategyType
   label: string
   recommended: boolean
+  // カバー範囲外ターゲットの代替候補（red/yellow時）
+  alternative_suggestions?: TargetFitMapAlternative[]
+  // 軸ロック状態（per-instance・クライアント保持＋session永続化）
+  axes_locked?: boolean
 }
 
 // 自社の立ち位置（Step5・ターゲット別ポジショニング文）

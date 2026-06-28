@@ -9,6 +9,14 @@ import { getGuardrailsPromptForCompany } from '@/lib/brand/guardrails'
 const SYSTEM_PROMPT = `あなたはブランドマーケティングの専門家です。STP分析のターゲット適合マップ（顧客側軸＋ターゲット点＋自社カバー範囲）を、**指定された軸選定方針（strategy_type）で1つだけ**生成してください。
 このマップの目的は「狙ったターゲットに本当に自社が刺さるか」をセルフチェックすることです。
 
+## 軸ロックモード（locked_axes が指定された場合）
+リクエストに locked_axes が指定された場合、以下のルールで動作してください:
+1. **軸選定をスキップ**: x_axis / y_axis / axis_endpoints の選定を行わず、locked_axes の値をそのまま x_axis / y_axis に使う
+2. **座標とカバー範囲のみ再計算**: 与えられた軸の上で、targets[].x/y と coverage を再計算する
+3. **axis_rationale**: 「（軸ロック中）この軸での配置を再計算しました」とシンプルに返す
+4. **alternative_suggestions**: ロックモードでも range外を検出したら出してOK（軸は固定だが、別ターゲットの提案は意味がある）
+locked_axes が指定されていない場合は、以下の軸選定方針に従って AI で軸を選定する。
+
 ## 軸選定方針（リクエストの strategy_type に従う）
 ### strategic_vs_dispersion（戦略 × 分散）★推奨
 - X軸: ターゲットの**購買決定要因（buying_factors）に最も直結する**順序型の切り口
@@ -91,22 +99,49 @@ axis_endpoints が未定義の切り口（旧データなど）の場合のみ�
     { "name": "急成長スタートアップ", "role": "sub", "x": 25, "y": 30, "in_coverage": true },
     { "name": "成長拡大組織", "role": "sub", "x": 50, "y": 70, "in_coverage": true }
   ],
-  "consistency_status": "green"
+  "consistency_status": "green",
+  "alternative_suggestions": []
 }
 
 注意:
 - x, y, center_x, center_y は 0〜100 の数値（50が中央）
 - width, height は 20〜100 の数値
 - targets は targeting.main_target と sub_targets[] の名前を使う
-- 各ターゲットが楕円 ((x-center_x)/width*2)^2 + ((y-center_y)/height*2)^2 <= 1 を満たすか判定して in_coverage を返す`
+- 各ターゲットが楕円 ((x-center_x)/width*2)^2 + ((y-center_y)/height*2)^2 <= 1 を満たすか判定して in_coverage を返す
+
+## 代替候補サジェスト（consistency_status が "red" または "yellow" のとき）
+
+ターゲットが1つ以上カバー範囲外（in_coverage=false）になった場合、以下のルールで alternative_suggestions を返してください:
+
+1. **対象**: Step 2 のセグメンテーション全切り口の全セグメントから、現在 main/sub に選ばれていないもの（★印が付いていないセグメント＝代替候補プール）
+2. **絞り込み**:
+   - 同じ顧客側軸を採用しているため、各セグメントを現在の x_axis / y_axis 上に推定配置する
+   - カバー範囲（楕円）内に入りそうなものを優先
+   - 範囲外ターゲットの「代わりになりやすい」（同じ切り口・隣接段階）を優先
+3. **件数**: 最大3つ、優先度順
+4. **各候補に必須**:
+   - name: セグメント名
+   - variable_name: そのセグメントが含まれる切り口の名前
+   - replaces: どの範囲外ターゲット名の代わりか（targets[] の in_coverage=false のいずれかの name と完全一致させる）
+   - x_estimate, y_estimate: 現在の x_axis / y_axis 上での推定位置（0〜100）
+   - fit_reason: なぜカバー範囲に合うか（1文・選択時の判断材料）
+
+consistency_status が "green" の場合は alternative_suggestions を空配列にしてください。`
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { basic_info, segmentation, targeting, strategy_type } = body
+    const { basic_info, segmentation, targeting, strategy_type, locked_axes } = body
     if (!targeting?.main_target) {
       return NextResponse.json({ error: 'main_target が必要です' }, { status: 400 })
     }
+    // 軸ロックモード（locked_axes が揃っているときのみ。軸選定をスキップして座標・カバー範囲のみ再計算）
+    const hasLockedAxes = !!(
+      locked_axes?.x_axis?.left &&
+      locked_axes?.x_axis?.right &&
+      locked_axes?.y_axis?.bottom &&
+      locked_axes?.y_axis?.top
+    )
     // 軸選定方針（未指定・不正値は推奨にフォールバック）
     const STRATEGIES = ['strategic_vs_dispersion', 'strengths_vs_dispersion', 'dispersion_only'] as const
     type StrategyType = typeof STRATEGIES[number]
@@ -171,7 +206,7 @@ export async function POST(request: NextRequest) {
         parts.push('')
       })
     }
-    parts.push('※ ★印は Step 3 で選択中のターゲットです。')
+    parts.push('※ ★印は Step 3 で選択中のターゲットです。★印が付いていないセグメントは「代替候補プール」です。consistency_status が red/yellow のとき、ここから alternative_suggestions を提案してください。')
     parts.push('※ 軸として使えるのは【軸候補◯】の切り口のみです。【軸候補✗】は軸に使わないこと。【軸候補△】は判断材料が乏しいので、順序的に並べられるかをまず確認し、自然に並べられないなら使わないでください。')
     parts.push('※ 顧客側の切り口（成長段階・規模・課題タイプ等）から軸を選んでください。供給側（手法・サービス範囲）は使わないこと。')
 
@@ -186,9 +221,20 @@ export async function POST(request: NextRequest) {
       parts.push(`- 購買決定要因: ${targeting.buying_factors.join('、')}`)
     }
 
+    if (hasLockedAxes) {
+      parts.push('')
+      parts.push('## 🔒 軸ロックモード')
+      parts.push('以下の軸を**固定**で使ってください。新たに軸を選定しないこと:')
+      parts.push(`- X軸: ${locked_axes.x_axis.left} ↔ ${locked_axes.x_axis.right}`)
+      parts.push(`- Y軸: ${locked_axes.y_axis.bottom} ↔ ${locked_axes.y_axis.top}`)
+      parts.push('座標 (targets[].x/y) とカバー範囲 (coverage) のみ再計算してください。')
+    }
+
     parts.push('')
     parts.push(`## 今回の軸選定方針: ${selectedStrategy}（${STRATEGY_LABEL[selectedStrategy]}）`)
-    parts.push('上記の方針に基づいて、ターゲット適合マップを1つだけJSON形式で生成してください。')
+    parts.push(hasLockedAxes
+      ? '※ ただし軸ロックモードのため、上記の固定軸を使い、座標とカバー範囲のみ再計算してください。'
+      : '上記の方針に基づいて、ターゲット適合マップを1つだけJSON形式で生成してください。')
     const userMessage = parts.join('\n')
 
     const guardrailCtx = await getAdminContext()
