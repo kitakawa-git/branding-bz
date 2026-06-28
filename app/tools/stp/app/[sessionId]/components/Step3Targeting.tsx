@@ -10,7 +10,7 @@ import { Slider } from '@/components/ui/slider'
 import { ArrowLeft, ArrowRight, X, Loader2 } from 'lucide-react'
 import { AIButton } from '@/components/shared/AIButton'
 import { FieldHeading, FieldSubLabel } from '@/components/shared/FieldHeading'
-import { StepProgressLoader } from '@/components/stp/StepProgressLoader'
+import { StepProgressPanel } from '@/components/stp/StepProgressLoader'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -269,16 +269,27 @@ export function Step3Targeting({
     [mainTarget, subTargets, mainSegDescription, buyingFactors, strengths, competitorsAnalysis, cache, selectedStrategy, fitMap]
   )
 
+  // 生成中（cacheが一時的に空になり得る）かどうかを最新値で参照するref
+  const fitMapBusyRef = useRef(false)
+  fitMapBusyRef.current = fitMapLoading || fitMapPending
+
   // オートセーブ（1秒デバウンス）
   const triggerAutoSave = useCallback(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(() => {
+      // 生成中は cache が空の瞬間があるため保存しない（生成結果は fetchStrategy の即保存で永続化される）
+      if (fitMapBusyRef.current) return
       onSaveField(getCurrentData())
     }, 1000)
   }, [getCurrentData, onSaveField])
 
-  // 値変更時にオートセーブ
+  // 値変更時にオートセーブ。初回マウントはスキップ（DBと同内容＝空キャッシュを書き込む隙を作らない）。
+  const autosaveMountedRef = useRef(false)
   useEffect(() => {
+    if (!autosaveMountedRef.current) {
+      autosaveMountedRef.current = true
+      return
+    }
     triggerAutoSave()
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current)
@@ -304,7 +315,11 @@ export function Step3Targeting({
     if (mainTarget && !segNames.has(mainTarget)) {
       setMainTarget('')
     }
-    setSubTargets((prev) => prev.filter((s) => segNames.has(s)))
+    // 内容が変わらない場合は同一参照を返す（新配列で無駄な再レンダ→空キャッシュのオートセーブが走るのを防ぐ）
+    setSubTargets((prev) => {
+      const filtered = prev.filter((s) => segNames.has(s))
+      return filtered.length === prev.length ? prev : filtered
+    })
   }, [allSegments, mainTarget])
 
 
@@ -433,7 +448,8 @@ export function Step3Targeting({
   }, [mainTarget, allSegments, basicInfo, segmentation])
 
   // 指定方針のマップを生成（既にキャッシュ済みなら fetch せず即切替）。
-  const fetchStrategy = useCallback(async (strategy: StrategyType, force = false) => {
+  // replaceAll=true: 既存キャッシュを破棄して新マップ1件のみに（ターゲット変更時の総入れ替え用）。
+  const fetchStrategy = useCallback(async (strategy: StrategyType, force = false, replaceAll = false) => {
     if (!mainTarget) return
     if (!force && cache[strategy]) {
       setSelectedStrategy(strategy)  // キャッシュ済み → 即切替（API呼出なし）
@@ -464,7 +480,7 @@ export function Step3Targeting({
         return
       }
       const data = await res.json() as TargetFitMap
-      const newCache = { ...cache, [strategy]: data }
+      const newCache: Partial<Record<StrategyType, TargetFitMap>> = replaceAll ? { [strategy]: data } : { ...cache, [strategy]: data }
       setCache(newCache)
       // 生成完了時は debounce を待たず即保存（リロード前の取りこぼし＝再生成バグを防ぐ）。
       // getCurrentData() は生成前 state を返すため、マップ関連3フィールドだけ最新値で上書き。
@@ -494,9 +510,9 @@ export function Step3Targeting({
     if (fitMapDebounceRef.current) clearTimeout(fitMapDebounceRef.current)
     fitMapDebounceRef.current = setTimeout(() => {
       setFitMapPending(false)
-      setCache({})
       setSelectedStrategy('strategic_vs_dispersion')
-      fetchStrategy('strategic_vs_dispersion')
+      // 空{}を経由せず、古いマップを保持したまま新マップでキャッシュを総入れ替え（永続化が空にならない）
+      fetchStrategy('strategic_vs_dispersion', true, true)
     }, 1500)
     return () => { if (fitMapDebounceRef.current) clearTimeout(fitMapDebounceRef.current) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -716,18 +732,17 @@ export function Step3Targeting({
           </div>
           {/* マップ本体（生成・更新中はステップ進捗ローダーでマップごと隠す） */}
           {(fitMapPending || fitMapLoading) ? (
-            <div className="mt-3 flex min-h-[300px] items-center justify-center rounded-lg border border-border bg-white px-6 py-8">
-              <StepProgressLoader
-                steps={[
-                  { label: '軸を選定' },
-                  { label: 'ターゲット位置を判定中' },
-                  { label: 'カバー範囲を計算' },
-                  { label: '整合性を判定' },
-                ]}
-                stepDuration={1500}
-                done={false}
-              />
-            </div>
+            <StepProgressPanel
+              className="mt-3"
+              steps={[
+                { label: '軸を選定' },
+                { label: 'ターゲット位置を判定中' },
+                { label: 'カバー範囲を計算' },
+                { label: '整合性を判定' },
+              ]}
+              stepDuration={1500}
+              done={false}
+            />
           ) : fitMap ? (
             <div className="mt-3">
               <TargetFitMapView
