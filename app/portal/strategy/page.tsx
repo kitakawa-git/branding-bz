@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/dialog'
 import { PositioningMap } from '@/components/PositioningMap'
 import type { PositioningMapData } from '@/lib/types/positioning-map'
+import type { BrandStanceStatement } from '@/app/tools/stp/app/[sessionId]/page'
 
 type Persona = {
   name: string
@@ -60,6 +61,7 @@ export default function PortalStrategyPage() {
     personas: Persona[]
     positioningMapUrl: string
     positioningMapData: PositioningMapData | null
+    brandStanceStatements: { statements: BrandStanceStatement[] } | null
   }
   const cacheKey = `portal-strategy-${companyId}`
   const cached = companyId ? getPageCache<StrategyCache>(cacheKey) : null
@@ -71,6 +73,7 @@ export default function PortalStrategyPage() {
   const [personas, setPersonas] = useState<Persona[]>(cached?.personas ?? [])
   const [positioningMapUrl, setPositioningMapUrl] = useState(cached?.positioningMapUrl ?? '')
   const [positioningMapData, setPositioningMapData] = useState<PositioningMapData | null>(cached?.positioningMapData ?? null)
+  const [brandStanceStatements, setBrandStanceStatements] = useState<{ statements: BrandStanceStatement[] } | null>(cached?.brandStanceStatements ?? null)
   const [loading, setLoading] = useState(!cached)
   const [modalOpen, setModalOpen] = useState(false)
 
@@ -82,7 +85,7 @@ export default function PortalStrategyPage() {
       fetchWithRetry(() =>
         supabase
           .from('brand_personas')
-          .select('name, avatar_emoji, age_range, occupation, description, needs, pain_points, brand_expectations, target, positioning_map_url, positioning_map_data, segmentation_data, sort_order')
+          .select('name, avatar_emoji, age_range, occupation, description, needs, pain_points, brand_expectations, target, positioning_map_url, positioning_map_data, segmentation_data, brand_stance_statements, sort_order')
           .eq('company_id', companyId)
           .order('sort_order')
       ),
@@ -124,12 +127,14 @@ export default function PortalStrategyPage() {
       let parsedMapUrl = ''
       let parsedMapData: PositioningMapData | null = null
       let parsedSegmentation: SegmentationData | null = null
+      let parsedStance: { statements: BrandStanceStatement[] } | null = null
       if (data && Array.isArray(data) && data.length > 0) {
         const first = data[0]
         parsedTarget = (first.target as string) || ''
         parsedMapUrl = (first.positioning_map_url as string) || ''
         parsedMapData = (first.positioning_map_data as PositioningMapData) || null
         parsedSegmentation = (first.segmentation_data as SegmentationData) || null
+        parsedStance = (first.brand_stance_statements as { statements: BrandStanceStatement[] }) || null
         parsedPersonas = data.map((rec) => ({
           name: (rec.name as string) || '',
           avatar_emoji: (rec.avatar_emoji as string) || null,
@@ -145,6 +150,7 @@ export default function PortalStrategyPage() {
       setPositioningMapUrl(parsedMapUrl)
       setPositioningMapData(parsedMapData)
       setSegmentationData(parsedSegmentation)
+      setBrandStanceStatements(parsedStance)
       setPersonas(parsedPersonas)
 
       setPageCache(cacheKey, {
@@ -154,6 +160,7 @@ export default function PortalStrategyPage() {
         providedValues: parsedProvidedValues,
         positioningMapUrl: parsedMapUrl,
         positioningMapData: parsedMapData,
+        brandStanceStatements: parsedStance,
         personas: parsedPersonas,
       })
       setLoading(false)
@@ -360,6 +367,50 @@ export default function PortalStrategyPage() {
               </DialogContent>
             </Dialog>
           )}
+        </section>
+      )}
+
+      {/* 自社の立ち位置（STP連携・読み取り表示。空なら非表示） */}
+      {brandStanceStatements && brandStanceStatements.statements.length > 0 && (
+        <section>
+          <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+            <CardContent className="p-4 sm:p-5">
+              <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">自社の立ち位置</h2>
+              <p className="mb-4 text-[13px] text-muted-foreground">
+                各ターゲットに対して、自社が何者として刺さるかをまとめたステートメントです。
+              </p>
+              <div className="space-y-3">
+                {brandStanceStatements.statements.map((s, i) => {
+                  const isMain = s.target_role === 'main'
+                  return (
+                    <div
+                      key={i}
+                      className={`rounded-lg border p-4 ${
+                        isMain ? 'border-ds-app-accent bg-ds-app-accent/5' : 'border-border bg-background'
+                      }`}
+                    >
+                      <div className="mb-2 flex items-center gap-2">
+                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                          isMain ? 'bg-ds-app-accent text-white' : 'bg-gray-100 text-gray-700'
+                        }`}>
+                          {isMain ? 'メインターゲット向け' : 'サブターゲット向け'}
+                        </span>
+                        <span className="text-xs text-muted-foreground">{s.target_name}</span>
+                      </div>
+                      <p className="text-sm leading-relaxed text-foreground" style={{ fontFamily: 'serif' }}>
+                        {s.statement}
+                      </p>
+                      {s.rationale && (
+                        <p className="mt-3 pt-3 border-t border-gray-100 text-xs text-muted-foreground leading-relaxed">
+                          <span className="font-medium">なぜなら: </span>{s.rationale}
+                        </p>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </CardContent>
+          </Card>
         </section>
       )}
 

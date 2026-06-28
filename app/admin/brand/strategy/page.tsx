@@ -17,6 +17,8 @@ import { type PortalSubtitles } from '@/lib/portal-subtitles'
 import { Label } from '@/components/ui/label'
 import { Slider } from '@/components/ui/slider'
 import { PositioningMap } from '@/components/PositioningMap'
+import { TargetFitMapStatic } from '@/components/TargetFitMapStatic'
+import type { TargetFitMap, BrandStanceStatement } from '@/app/tools/stp/app/[sessionId]/page'
 import { Plus, Trash2, Check, WandSparkles, Loader2, UserCircle } from 'lucide-react'
 import { AVATAR_EMOJIS } from '@/lib/persona/avatars'
 import { Fab, FabButton } from '@/components/ui/fab'
@@ -107,6 +109,8 @@ type StrategyCache = {
   providedValues: ProvidedValueItem[]
   personas: PersonaItem[]
   positioningMapData: PositioningMapData | null
+  targetFitMapData: TargetFitMap | null
+  brandStanceStatements: { statements: BrandStanceStatement[] } | null
   portalSubtitle: string
   portalSubtitlesData: PortalSubtitles | null
 }
@@ -122,6 +126,8 @@ export default function BrandStrategyPage() {
   const [personas, setPersonas] = useState<PersonaItem[]>(cached?.personas ?? [])
   const [openAvatarIdx, setOpenAvatarIdx] = useState<number | null>(null)
   const [positioningMapData, setPositioningMapData] = useState<PositioningMapData | null>(cached?.positioningMapData ?? null)
+  const [targetFitMapData, setTargetFitMapData] = useState<TargetFitMap | null>(cached?.targetFitMapData ?? null)
+  const [brandStanceStatements, setBrandStanceStatements] = useState<{ statements: BrandStanceStatement[] } | null>(cached?.brandStanceStatements ?? null)
   const [loading, setLoading] = useState(!cached)
   const [fetchError, setFetchError] = useState('')
   const [saving, setSaving] = useState(false)
@@ -190,6 +196,9 @@ export default function BrandStrategyPage() {
         // ターゲット概要（プロセス文）: brand_personas[0].target
         const parsedTargetOverview = (first.target as string) || ''
         const parsedMapData = (first.positioning_map_data as PositioningMapData) || null
+        // STP連携: ターゲット適合マップ・自社の立ち位置（保存済みを読み取り表示）
+        const parsedFitMap = (first.target_fit_map_data as TargetFitMap) || null
+        const parsedStance = (first.brand_stance_statements as { statements: BrandStanceStatement[] }) || null
         // セグメンテーション（STP連携データ）: brand_personas[0].segmentation_data
         const parsedSegmentation = (first.segmentation_data as SegmentationData) || null
         const parsedPersonas = data.map((d: Record<string, unknown>) => ({
@@ -211,6 +220,8 @@ export default function BrandStrategyPage() {
         setTargetSegments(companyTargetSegments)
         setSegmentationData(parsedSegmentation)
         setPositioningMapData(parsedMapData)
+        setTargetFitMapData(parsedFitMap)
+        setBrandStanceStatements(parsedStance)
         setPersonas(parsedPersonas)
         setPageCache<StrategyCache>(cacheKey, {
           targetOverview: parsedTargetOverview,
@@ -219,6 +230,8 @@ export default function BrandStrategyPage() {
           providedValues: parsedProvidedValues,
           personas: parsedPersonas,
           positioningMapData: parsedMapData,
+          targetFitMapData: parsedFitMap,
+          brandStanceStatements: parsedStance,
           portalSubtitle: fetchedSubtitle,
           portalSubtitlesData: fetchedSubtitlesData,
         })
@@ -681,6 +694,8 @@ export default function BrandStrategyPage() {
         providedValues: savedValues,
         personas: savedPersonas,
         positioningMapData,
+        targetFitMapData,
+        brandStanceStatements,
         portalSubtitle: portalSubtitle.trim(),
         portalSubtitlesData: updatedSubtitles,
       })
@@ -1288,6 +1303,67 @@ export default function BrandStrategyPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Card 2.5: ターゲット適合マップ（STP連携・読み取り表示） */}
+        {targetFitMapData && (
+          <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+            <CardContent className="p-5">
+              <h2 className="text-xs font-bold mb-3">ターゲット適合マップ</h2>
+              <p className="mb-4 text-[13px] text-muted-foreground">
+                選んだターゲットが自社のカバー範囲に入っているかをチェックした結果です。
+              </p>
+              <TargetFitMapStatic fitMap={targetFitMapData} />
+              {targetFitMapData.axis_rationale && (
+                <p className="mt-4 text-xs text-muted-foreground leading-relaxed">
+                  <span className="font-medium text-foreground">軸選定の根拠: </span>
+                  {targetFitMapData.axis_rationale}
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Card 2.6: 自社の立ち位置（STP連携・読み取り表示） */}
+        {brandStanceStatements && brandStanceStatements.statements.length > 0 && (
+          <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+            <CardContent className="p-5">
+              <h2 className="text-xs font-bold mb-3">自社の立ち位置</h2>
+              <p className="mb-4 text-[13px] text-muted-foreground">
+                各ターゲットに対して、自社が何者として刺さるかをまとめたステートメントです。
+              </p>
+              <div className="space-y-3">
+                {brandStanceStatements.statements.map((s, i) => {
+                  const isMain = s.target_role === 'main'
+                  return (
+                    <div
+                      key={i}
+                      className={`rounded-lg border p-4 ${
+                        isMain ? 'border-ds-app-accent bg-ds-app-accent/5' : 'border-gray-200 bg-white'
+                      }`}
+                    >
+                      <div className="mb-2 flex items-center gap-2">
+                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                          isMain ? 'bg-ds-app-accent text-white' : 'bg-gray-100 text-gray-700'
+                        }`}>
+                          {isMain ? 'メインターゲット向け' : 'サブターゲット向け'}
+                        </span>
+                        <span className="text-xs text-muted-foreground">{s.target_name}</span>
+                      </div>
+                      <p className="text-sm leading-relaxed text-foreground" style={{ fontFamily: 'serif' }}>
+                        {s.statement}
+                      </p>
+                      {s.rationale && (
+                        <p className="mt-3 pt-3 border-t border-gray-100 text-xs text-muted-foreground leading-relaxed">
+                          <span className="font-medium">なぜなら: </span>{s.rationale}
+                        </p>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Card 3: 提供価値（value_propositions。「考え方」から移動・統合） */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
