@@ -194,22 +194,6 @@ export function Step3Targeting({
   // ターゲットの実値を追跡（remountや新配列での spurious 再生成を防ぐ）
   const lastTargetsRef = useRef<string | null>(null)
 
-  // 【一時診断】マウント時の props/state を本番コンソールで確認（切り分け後に削除）
-  useEffect(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const t = targeting as any
-    console.log('[Step3 mount diagnostic]', {
-      has_cache_in_props: !!t?.target_fit_map_cache,
-      cache_keys_in_props: Object.keys(t?.target_fit_map_cache ?? {}),
-      cache_recommended_has_x_axis: !!t?.target_fit_map_cache?.strategic_vs_dispersion?.x_axis,
-      selected_strategy_in_props: t?.target_fit_map_selected_strategy,
-      state_cache_keys: Object.keys(cache),
-      state_selected_strategy: selectedStrategy,
-      fit_map_value: fitMap ? 'truthy' : 'null',
-    })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
   // 選択中マップの coverage を更新（スライダー用）
   const updateSelectedCoverage = useCallback((coverage: TargetFitMap['coverage']) => {
     setCache((prev) => {
@@ -467,8 +451,6 @@ export function Step3Targeting({
   // 指定方針のマップを生成（既にキャッシュ済みなら fetch せず即切替）。
   // replaceAll=true: 既存キャッシュを破棄して新マップ1件のみに（ターゲット変更時の総入れ替え用）。
   const fetchStrategy = useCallback(async (strategy: StrategyType, force = false, replaceAll = false) => {
-    // 【一時診断】呼び出し元を確認（切り分け後に削除）
-    console.log('[fetchStrategy called]', { strategy, force, replaceAll, has_cached: !!cache[strategy], stack: new Error().stack?.split('\n').slice(1, 5) })
     if (!mainTarget) return
     if (!force && cache[strategy]) {
       setSelectedStrategy(strategy)  // キャッシュ済み → 即切替（API呼出なし）
