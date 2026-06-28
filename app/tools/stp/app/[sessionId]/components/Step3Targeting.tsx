@@ -191,7 +191,8 @@ export function Step3Targeting({
   const [fitMapLoading, setFitMapLoading] = useState(false)   // API fetch中
   const [fitMapPending, setFitMapPending] = useState(false)    // ターゲット変更〜1.5sのdebounce待機中
   const fitMapDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const fitMapInitRef = useRef(false)
+  // ターゲットの実値を追跡（remountや新配列での spurious 再生成を防ぐ）
+  const lastTargetsRef = useRef<string | null>(null)
 
   // 【一時診断】マウント時の props/state を本番コンソールで確認（切り分け後に削除）
   useEffect(() => {
@@ -466,6 +467,8 @@ export function Step3Targeting({
   // 指定方針のマップを生成（既にキャッシュ済みなら fetch せず即切替）。
   // replaceAll=true: 既存キャッシュを破棄して新マップ1件のみに（ターゲット変更時の総入れ替え用）。
   const fetchStrategy = useCallback(async (strategy: StrategyType, force = false, replaceAll = false) => {
+    // 【一時診断】呼び出し元を確認（切り分け後に削除）
+    console.log('[fetchStrategy called]', { strategy, force, replaceAll, has_cached: !!cache[strategy], stack: new Error().stack?.split('\n').slice(1, 5) })
     if (!mainTarget) return
     if (!force && cache[strategy]) {
       setSelectedStrategy(strategy)  // キャッシュ済み → 即切替（API呼出なし）
@@ -513,26 +516,30 @@ export function Step3Targeting({
     }
   }, [cache, mainTarget, subTargets, mainSegDescription, strengths, buyingFactors, basicInfo, segmentation, getCurrentData, onSaveField])
 
-  // 初回はAI推奨のみ生成。ターゲット変更時は 1.5秒 debounce でキャッシュ全クリア＋推奨を再生成。
+  // ターゲットの「実値」が変わった時だけ再生成。マウント直後やremount・新配列での再発火は無視。
   useEffect(() => {
     if (!mainTarget) return
-    if (!fitMapInitRef.current) {
-      fitMapInitRef.current = true
+    const currentTargets = `${mainTarget}|${[...subTargets].sort().join('|')}`
+    // 初回（基準セット）: 再生成しない。キャッシュが無ければAI推奨のみ生成。
+    if (lastTargetsRef.current === null) {
+      lastTargetsRef.current = currentTargets
       if (!cache.strategic_vs_dispersion) fetchStrategy('strategic_vs_dispersion')
       return
     }
-    // ターゲット変更を検知 → 即座に「変更を反映中」表示。1.5s後にキャッシュクリア＋推奨再生成。
+    // 実値が同じ＝spurious再発火 → 何もしない
+    if (lastTargetsRef.current === currentTargets) return
+    lastTargetsRef.current = currentTargets
+    // 実際にターゲットが変わった → 即座に「変更を反映中」表示。1.5s後に推奨をキャッシュ総入れ替え再生成。
     setFitMapPending(true)
     if (fitMapDebounceRef.current) clearTimeout(fitMapDebounceRef.current)
     fitMapDebounceRef.current = setTimeout(() => {
       setFitMapPending(false)
       setSelectedStrategy('strategic_vs_dispersion')
-      // 空{}を経由せず、古いマップを保持したまま新マップでキャッシュを総入れ替え（永続化が空にならない）
       fetchStrategy('strategic_vs_dispersion', true, true)
     }, 1500)
     return () => { if (fitMapDebounceRef.current) clearTimeout(fitMapDebounceRef.current) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mainTarget, subTargets.join('|')])
+  }, [mainTarget, subTargets])
 
   // セグメントが0個の場合
   if (allSegments.length === 0) {
