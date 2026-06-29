@@ -16,6 +16,8 @@ import { ToolConnectActions } from '@/components/shared/ToolConnectActions'
 import { Step4Journey } from './Step4Journey'
 import { ArrowLeft, RotateCcw, Loader2, UserCircle, Download } from 'lucide-react'
 import { type Persona, type BasicInfo, AVATAR_EMOJIS } from './persona-types'
+import { PersonaAvatarName } from '@/components/shared/PersonaAvatarName'
+import { FieldHeading, FieldSubLabel } from '@/components/shared/FieldHeading'
 
 interface Step5Props {
   sessionId: string
@@ -127,14 +129,15 @@ export function Step5Result({ sessionId, personas, basicInfo, companyId, onBack,
     <div>
       <h1 className="text-2xl font-bold text-foreground mb-2">Step 5: 確認・出力</h1>
       <p className="mb-4 text-[13px] text-muted-foreground">
-        作成した{personas.length}件のペルソナを確認し、branding.bzに連携できます
+        {personas.length}件のペルソナが完成しました。内容を確認し、branding.bz への連携やPDF出力ができます。
       </p>
 
       <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4">
-        <div className="space-y-8">
+        <FieldHeading className="mb-3">ターゲット別ペルソナ一覧</FieldHeading>
+        <div className="space-y-6">
         {groups.map((group) => (
-          <div key={group.name}>
-            <div className="mb-2">
+          <div key={group.name} className="rounded-xl border border-gray-200 bg-white p-4">
+            <div className="mb-3">
               <h2 className={`text-sm font-bold ${group.name === '未分類' ? 'text-amber-800' : 'text-gray-800'}`}>{group.name}</h2>
               {group.description && <p className="text-[12px] text-muted-foreground mt-0.5">{group.description}</p>}
             </div>
@@ -143,38 +146,30 @@ export function Step5Result({ sessionId, personas, basicInfo, companyId, onBack,
               {group.members.map((p, idx) => (
           <Card key={idx} className="border shadow-none">
             <CardContent className="p-6 space-y-4">
-              {/* ヘッダー：アバター＋名称のみ */}
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setOpenAvatarIdx(openAvatarIdx === data.indexOf(p) ? null : data.indexOf(p))}
-                    title="顔アイコンを変更"
-                    className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 transition hover:ring-2 hover:ring-ds-app-accent/40"
-                  >
-                    {p.demographics.avatar_emoji
-                      ? <span className="text-3xl leading-none" role="img" aria-label="顔アイコン">{p.demographics.avatar_emoji}</span>
-                      : <UserCircle className="h-10 w-10 text-gray-400" />}
-                  </button>
-                  {openAvatarIdx === data.indexOf(p) && (
-                    <div className="absolute left-0 top-14 z-20 w-56 rounded-lg border border-border bg-white p-2 shadow-lg">
-                      <div className="grid grid-cols-6 gap-1">
-                        {AVATAR_EMOJIS.map(em => (
-                          <button
-                            key={em}
-                            type="button"
-                            onClick={() => setAvatar(data.indexOf(p), p.demographics.avatar_emoji === em ? '' : em)}
-                            className={`flex h-8 w-8 items-center justify-center rounded text-lg hover:bg-muted ${p.demographics.avatar_emoji === em ? 'bg-ds-app-accent/5 ring-1 ring-ds-app-accent' : ''}`}
-                          >
-                            {em}
-                          </button>
-                        ))}
-                      </div>
+              {/* ヘッダー：アバター（編集可）＋名称（共通コンポーネント PersonaAvatarName） */}
+              <PersonaAvatarName
+                emoji={p.demographics.avatar_emoji}
+                name={p.demographics.persona_name || `ペルソナ${idx + 1}`}
+                fallback={<UserCircle className="h-10 w-10 text-gray-400" />}
+                onEmojiClick={() => setOpenAvatarIdx(openAvatarIdx === data.indexOf(p) ? null : data.indexOf(p))}
+              >
+                {openAvatarIdx === data.indexOf(p) && (
+                  <div className="absolute left-0 top-14 z-20 w-56 rounded-lg border border-border bg-white p-2 shadow-lg">
+                    <div className="grid grid-cols-6 gap-1">
+                      {AVATAR_EMOJIS.map(em => (
+                        <button
+                          key={em}
+                          type="button"
+                          onClick={() => setAvatar(data.indexOf(p), p.demographics.avatar_emoji === em ? '' : em)}
+                          className={`flex h-8 w-8 items-center justify-center rounded text-lg hover:bg-muted ${p.demographics.avatar_emoji === em ? 'bg-ds-app-accent/5 ring-1 ring-ds-app-accent' : ''}`}
+                        >
+                          {em}
+                        </button>
+                      ))}
                     </div>
-                  )}
-                </div>
-                <h2 className="text-lg font-bold text-gray-900">{p.demographics.persona_name || `ペルソナ${idx + 1}`}</h2>
-              </div>
+                  </div>
+                )}
+              </PersonaAvatarName>
 
               {/* 年齢層・職業（管理画面と同じ2カラム） */}
               <div className="grid grid-cols-2 gap-4">
@@ -224,8 +219,7 @@ export function Step5Result({ sessionId, personas, basicInfo, companyId, onBack,
 
       {/* ジャーニー設計（Step4の実ビューを読み取り専用で表示）。連携対象外＝PDF出力のみ反映。 */}
       {data.some(p => p.journey_map?.stages?.some(s => s?.name?.trim())) && (
-        <div className="mt-8">
-          <h2 className="mb-3 text-sm font-bold tracking-wide text-foreground">ジャーニー設計</h2>
+        <div className="mt-6">
           <Step4Journey personas={data} basicInfo={basicInfo} readOnly />
           <p className="mt-2 text-[12px] text-muted-foreground">
             ※ ジャーニー設計は連携の対象に含まれません（branding.bz には反映されません）。「PDFをダウンロード」のみに反映されます。
@@ -293,7 +287,7 @@ function Field({ label, value }: { label: string; value?: string }) {
   if (!value?.trim?.()) return null
   return (
     <div>
-      <span className="text-xs font-bold text-gray-500 mb-1 block">{label}</span>
+      <FieldSubLabel>{label}</FieldSubLabel>
       <p className="text-sm text-gray-700">{value}</p>
     </div>
   )
@@ -304,7 +298,7 @@ function TextBlock({ label, value }: { label: string; value?: string }) {
   if (!value?.trim()) return null
   return (
     <div>
-      <span className="text-xs font-bold text-gray-500 mb-1 block">{label}</span>
+      <FieldSubLabel>{label}</FieldSubLabel>
       <p className="text-sm text-gray-700 whitespace-pre-wrap">{value}</p>
     </div>
   )
@@ -324,10 +318,10 @@ function ChipList({ label, items, color = 'gray' }: { label: string; items?: str
   const cls = colorMap[color] || colorMap.gray
   return (
     <div>
-      <span className="text-xs font-bold text-gray-500 mb-1 block">{label}</span>
+      <FieldSubLabel>{label}</FieldSubLabel>
       <div className="flex flex-wrap gap-1.5">
         {list.map((item, idx) => (
-          <span key={idx} className={`rounded-full border px-2.5 py-0.5 text-xs ${cls}`}>{item}</span>
+          <span key={idx} className={`rounded-full border px-2.5 py-0.5 text-[13px] ${cls}`}>{item}</span>
         ))}
       </div>
     </div>

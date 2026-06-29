@@ -221,7 +221,7 @@ function GoalsForm({ personaName, avatarEmoji, data, onChange }: {
   return (
     <Card className="bg-white border shadow-none">
       <CardContent className="p-5 space-y-6">
-        <PersonaAvatarName emoji={avatarEmoji} name={`${personaName} の課題`} nameClassName="text-base font-bold text-[#0a0a0a]" />
+        <PersonaAvatarName emoji={avatarEmoji} name={`${personaName} の課題`} />
         <div>
           <FieldSubLabel className="mb-1">ニーズ</FieldSubLabel>
           <TagInput value={data.primary_goals} onChange={(next) => set('primary_goals', next)} chipClassName="bg-blue-50 border border-blue-100 text-ds-app-accent-hover" placeholder="例: 本業に集中できる環境の確保（Enterで追加）" />
