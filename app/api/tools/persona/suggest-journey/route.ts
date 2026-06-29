@@ -28,7 +28,15 @@ const SYSTEM_PROMPT = `あなたはブランドマーケティングの専門家
 
 タッチポイント（touchpoints）は「ブランドが施策を当てる接点」を、各ステージ2〜4個、短い共通ラベルで挙げてください。複数ペルソナで横断集計するため、同じ接点には必ず同じ短い表記を使うこと。次の代表ラベルに該当すればその表記をそのまま使い、無い接点だけ短い汎用名を足してください:
 Google検索 / Web広告 / SNS（X/LinkedIn） / LP（トップ） / 料金ページ / 事例ページ / 比較記事 / 資料ダウンロード / ウェビナー・セミナー / 展示会 / メルマガ / 問い合わせフォーム / 無料トライアル・デモ / 営業商談 / 稟議資料・提案書 / FAQ・サポート / スマート名刺
-括弧での補足や長い説明は付けないこと（「Google検索広告（〜キーワード）」のような長い固有表記は禁止。短く正規化された接点名にする）。抽象的な感情・心情は touchpoints ではなく emotions / pain_points に書いてください。`
+括弧での補足や長い説明は付けないこと（「Google検索広告（〜キーワード）」のような長い固有表記は禁止。短く正規化された接点名にする）。抽象的な感情・心情は touchpoints ではなく emotions / pain_points に書いてください。
+
+重要: goals の各項目をジャーニーの各ステージに反映してください:
+- decision_factors（意思決定の要因）→ 検討・購入段階の emotion_score と opportunities に強く影響
+- brand_expectations（ブランドへの期待）→ 継続段階の emotion_score と opportunities に強く影響
+- pain_points → 各段階の pain_points に文脈に応じて分散
+- buying_barriers → 検討段階の pain_points と emotion_score（下げる方向）
+
+これらが全ペルソナで違うなら、ジャーニーの感情カーブも自然に違うものになるはずです。`
 
 // 構造化データをプロンプト用テキストに変換
 function formatBusinessDescriptions(basicInfo: Record<string, unknown>): string {
@@ -122,10 +130,12 @@ export async function POST(request: NextRequest) {
     if (goals) {
       parts.push('')
       parts.push('## ゴール・課題')
-      if (goals.primary_goals?.length) parts.push(`- 目標: ${goals.primary_goals.join('、')}`)
-      if (goals.pain_points?.length) parts.push(`- 課題: ${goals.pain_points.join('、')}`)
-      if (goals.buying_motivation) parts.push(`- 購買動機: ${goals.buying_motivation}`)
-      if (goals.buying_barriers?.length) parts.push(`- 購買障壁: ${goals.buying_barriers.join('、')}`)
+      if (goals.primary_goals?.length) parts.push(`- ニーズ: ${goals.primary_goals.join('、')}`)
+      if (goals.pain_points?.length) parts.push(`- 課題・ペインポイント: ${goals.pain_points.join('、')}`)
+      if (goals.decision_factors?.length) parts.push(`- 意思決定の要因: ${goals.decision_factors.join('、')}`)
+      if (goals.buying_motivation) parts.push(`- 購買の動機: ${goals.buying_motivation}`)
+      if (goals.buying_barriers?.length) parts.push(`- 購買の障壁: ${goals.buying_barriers.join('、')}`)
+      if (goals.brand_expectations?.trim()) parts.push(`- ブランドへの期待: ${goals.brand_expectations.trim()}`)
     }
 
     parts.push('')
