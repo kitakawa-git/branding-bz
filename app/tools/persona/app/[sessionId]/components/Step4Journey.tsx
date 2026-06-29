@@ -11,8 +11,9 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion'
-import { ArrowLeft, ArrowRight, Plus, Trash2, X, ChevronDown, ChevronRight, RefreshCw, Check, Loader2 } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Plus, Trash2, X, ChevronDown, ChevronRight, RefreshCw, Loader2 } from 'lucide-react'
 import { AIButton } from '@/components/shared/AIButton'
+import { FieldHeading, FieldSubLabel } from '@/components/shared/FieldHeading'
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip'
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -259,88 +260,84 @@ export function Step4Journey({ personas: initialPersonas, basicInfo, onNext, onB
         <>
           <h1 className="text-2xl font-bold text-foreground mb-2">Step 4: ジャーニー設計</h1>
           <p className="mb-4 text-[14px] text-muted-foreground">
-            ブランド施策を当てる「タッチポイント」を全ペルソナ横断で洗い出します。感情カーブは優先度の注釈です。
+            全ペルソナ横断で「タッチポイント」を洗い出します。感情カーブは優先度の目安です。
           </p>
         </>
-      )}
-
-      {/* 主要AIボタン（見出し直下・左寄せ。STP Step4と配置を統一） */}
-      {!readOnly && data.length > 1 && (
-        <div className="mb-4">
-          <AIButton onClick={generateAll} disabled={anyLoading}>
-            {bulkLoading ? '生成中…' : 'AIで一括生成'}
-          </AIButton>
-        </div>
-      )}
-
-      {/* A. ペルソナ一覧＋AI生成（readOnly＝Step5埋め込み時は重複のため非表示） */}
-      {!readOnly && (
-      <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-4">
-        <CardContent className="p-4">
-          <h2 className="text-sm font-bold text-foreground mb-3">ペルソナ</h2>
-          <div className="space-y-0.5">
-            {data.map((p, i) => {
-              const has = (p.journey_map?.stages?.length || 0) > 0
-              return (
-                <div key={i} className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/60 transition-colors">
-                  <span className="h-2.5 w-2.5 rounded-full flex-none" style={{ backgroundColor: pColor(i).solid }} />
-                  <span className="text-sm font-semibold text-foreground flex-1 min-w-0 truncate">{personaLabel(p, i)}</span>
-                  {has ? (
-                    <span className="inline-flex items-center gap-1 text-[11.5px] font-semibold text-emerald-600 mr-2 shrink-0">
-                      <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
-                      生成済み
-                    </span>
-                  ) : (
-                    <span className="text-[11.5px] text-muted-foreground mr-2 shrink-0">未生成</span>
-                  )}
-                  {!readOnly && (
-                    <button
-                      type="button"
-                      onClick={() => handleGenerateClick(i)}
-                      disabled={anyLoading}
-                      title={has ? 'このペルソナだけ再生成' : 'このペルソナだけ生成'}
-                      className="inline-flex flex-none items-center justify-center h-8 w-8 rounded-lg border border-border bg-card text-muted-foreground transition-colors hover:border-violet-600 hover:bg-violet-50 hover:text-violet-600 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {aiLoading[i] ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
-                    </button>
-                  )}
-                </div>
-              )
-            })}
-          </div>
-          {!readOnly && Object.entries(aiError).filter(([, v]) => v).map(([k, v]) => (
-            <p key={k} className="mt-2 text-[13px] text-red-600">ペルソナ{Number(k) + 1}: {v}</p>
-          ))}
-        </CardContent>
-      </Card>
       )}
 
       {/* B + C + D を1つのカードに統合 */}
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-4">
         <CardContent className="p-4">
-          {/* B. 表示ペルソナ */}
+          {/* グレー枠の先頭（白カードの上）に見出し＋AI一括生成ボタン（右） */}
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <FieldHeading className="mb-0">ペルソナ別ジャーニー</FieldHeading>
+            {!readOnly && data.length > 1 && (
+              <AIButton size="sm" onClick={generateAll} disabled={anyLoading}>
+                {bulkLoading ? '生成中…' : 'AIで一括生成'}
+              </AIButton>
+            )}
+          </div>
+          {/* 白カード: 表示ペルソナ ＋ 感情カーブ（グラフ）を1枚に */}
+          <div className="rounded-xl border border-gray-200 bg-white p-4">
+          {/* B. 表示ペルソナ（ピル型・再生成↻内蔵）。リストとフィルタを統合 */}
           <div className="space-y-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[13px] text-muted-foreground">表示ペルソナ：</span>
-          <FilterChip active={filterIdx === 'all'} onClick={() => setFilterIdx('all')}>全員</FilterChip>
-          {data.map((p, i) => (
-            <FilterChip key={i} active={filterIdx === i} onClick={() => setFilterIdx(i)} dot={pColor(i).solid}>{personaLabel(p, i)}</FilterChip>
-          ))}
-        </div>
-        {filterIdx !== 'all' && (
-          <p className="text-[13px] text-muted-foreground">
-            「{personaLabel(data[filterIdx], filterIdx)}」のジャーニーを表示中
-            <button onClick={() => setFilterIdx('all')} className="ml-2 underline hover:no-underline">全員に戻る</button>
-          </p>
-        )}
-      </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <FieldSubLabel className="mb-0 mr-1">表示ペルソナ</FieldSubLabel>
+              <button
+                type="button"
+                onClick={() => setFilterIdx('all')}
+                className={`inline-flex items-center gap-1.5 rounded-full border-[1.5px] px-3.5 py-1.5 text-xs font-bold transition-all ${
+                  filterIdx === 'all'
+                    ? 'bg-ds-app-accent text-white border-ds-app-accent'
+                    : 'bg-card text-muted-foreground border-border hover:border-muted-foreground'
+                }`}
+              >
+                全員
+              </button>
+              {data.map((p, i) => {
+                const isActive = filterIdx === i
+                const isLoading = !!aiLoading[i]
+                return (
+                  <div
+                    key={i}
+                    onClick={() => setFilterIdx(i)}
+                    className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border-[1.5px] border-border bg-card py-1 pl-3 pr-1 text-muted-foreground transition-all hover:border-muted-foreground"
+                    style={isActive ? { borderColor: pColor(i).solid, background: pColor(i).soft, color: pColor(i).solid } : undefined}
+                  >
+                    <span className="h-2 w-2 flex-none rounded-full" style={{ background: pColor(i).solid }} />
+                    <span className="max-w-[200px] truncate text-xs font-semibold">{personaLabel(p, i)}</span>
+                    {!readOnly && (
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); handleGenerateClick(i) }}
+                        disabled={anyLoading}
+                        title="このペルソナだけ再生成"
+                        className="ml-1 inline-flex h-[22px] w-[22px] flex-none items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:border-violet-600 hover:bg-violet-50 hover:text-violet-600 disabled:opacity-50"
+                      >
+                        {isLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
+                      </button>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+            {filterIdx !== 'all' && (
+              <p className="text-[13px] text-muted-foreground">
+                「{personaLabel(data[filterIdx], filterIdx)}」のジャーニーを表示中
+                <button onClick={() => setFilterIdx('all')} className="ml-2 underline hover:no-underline">全員に戻る</button>
+              </p>
+            )}
+            {!readOnly && Object.entries(aiError).filter(([, v]) => v).map(([k, v]) => (
+              <p key={k} className="text-[13px] text-red-600">ペルソナ{Number(k) + 1}: {v}</p>
+            ))}
+          </div>
 
           {baseStages.length === 0 ? (
             <p className="mt-4 text-[14px] text-muted-foreground">まだジャーニーがありません。上の各ペルソナの「AI生成」を押してください。</p>
           ) : (
             <>
+            <div className="mt-5 border-t border-border pt-5">
               {/* C. 感情カーブ（優先度の注釈） */}
-              <div className="mt-5 border-t border-border pt-5">
               <h2 className="text-sm font-bold text-foreground mb-3">感情カーブ（優先度の注釈）</h2>
               <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-2">
                 {scopeIdxs.map(i => (
@@ -354,16 +351,16 @@ export function Step4Journey({ personas: initialPersonas, basicInfo, onNext, onB
                 stageNames={stageNames}
                 selectedStageIdx={selectedStageIdx}
               />
-
-              {/* 統合カード：ステージナビ（タブ）＋ 選択ステージの詳細を1カードに */}
+            </div>
+              {/* ステージナビ（タブ）＋詳細（白カードに統合・フラット） */}
               {(() => {
                 const sName = stageNames[selectedStageIdx]
                 if (sName == null) return null
                 const members = scopeIdxs.filter(i => (data[i].journey_map?.stages?.[selectedStageIdx]))
                 return (
-                  <div className="mt-4 overflow-hidden rounded-lg border border-border bg-card">
-                    {/* タブ：ステージナビボタン（X＝ステージ位置）。カード背景に溶け込ませる（罫線・別背景なし） */}
-                    <div className="grid grid-cols-3 gap-2 p-4 sm:grid-cols-5">
+                  <div className="mt-5 border-t border-border pt-5">
+                    {/* ステージナビ（タブ）。白カードに統合済み */}
+                    <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
                       {stageNames.map((nm, i) => {
                         const sel = selectedStageIdx === i
                         const scoped = scopeIdxs.filter(k => data[k].journey_map?.stages?.[i])
@@ -385,7 +382,7 @@ export function Step4Journey({ personas: initialPersonas, basicInfo, onNext, onB
                       })}
                     </div>
                     {/* 選択ステージの詳細 */}
-                    <div key={`${selectedStageIdx}-${filterIdx}`} className="px-4 pb-4 pt-0 animate-in fade-in slide-in-from-top-1 duration-200">
+                    <div key={`${selectedStageIdx}-${filterIdx}`} className="pt-3 animate-in fade-in slide-in-from-top-1 duration-200">
                       {members.length === 0 ? (
                         <p className="text-[13px] text-muted-foreground">このステージのデータがありません。</p>
                       ) : (
@@ -410,8 +407,12 @@ export function Step4Journey({ personas: initialPersonas, basicInfo, onNext, onB
                   </div>
                 )
               })()}
-              </div>
+            </>
+          )}
+          </div>
 
+          {baseStages.length > 0 && (
+            <>
               {/* D. タッチポイント候補プール */}
               <div className="mt-5 border-t border-border pt-5">
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
@@ -555,7 +556,7 @@ function GroupHeader({ priority, count, collapsible, collapsed, onToggle }: {
       )}
     </>
   )
-  const cls = 'flex items-center gap-2 px-4 py-2 bg-gray-50 border-b border-border'
+  const cls = 'flex items-center gap-2 px-4 py-2 bg-white border-b border-border'
   return collapsible
     ? <button type="button" onClick={onToggle} className={`${cls} w-full text-left hover:bg-gray-100 transition-colors`}>{inner}</button>
     : <div className={cls}>{inner}</div>

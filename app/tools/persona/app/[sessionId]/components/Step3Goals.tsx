@@ -3,14 +3,15 @@
 // Step 3: 課題・購買行動（マルチペルソナ・ペルソナ単位）
 // 各ペルソナの demographics で suggest-goals を呼び、persona.goals に格納。
 import { useState, useCallback, useEffect, useRef } from 'react'
-import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion'
-import { FieldHeading } from '@/components/shared/FieldHeading'
-import { ArrowLeft, ArrowRight, Plus, X } from 'lucide-react'
+import { FieldHeading, FieldSubLabel } from '@/components/shared/FieldHeading'
+import { TagInput } from '@/components/shared/TagInput'
+import { PersonaAvatarName } from '@/components/shared/PersonaAvatarName'
+import { ArrowLeft, ArrowRight } from 'lucide-react'
 import { AIButton } from '@/components/shared/AIButton'
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -134,12 +135,6 @@ export function Step3Goals({ personas: initialPersonas, basicInfo, onNext, onBac
         各ペルソナが抱える目標・課題・購買行動を定義します（課題は短い体言止め）。
       </p>
 
-      <div className="flex justify-start mb-4">
-        <AIButton onClick={() => setConfirmOpen(true)}>
-          AIで一括生成
-        </AIButton>
-      </div>
-
       {aiError && (
         <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600 mb-4">
           {aiError}
@@ -147,11 +142,18 @@ export function Step3Goals({ personas: initialPersonas, basicInfo, onNext, onBac
         </div>
       )}
 
-      <div className="space-y-6">
+      <div className="rounded-2xl border border-gray-200 bg-[hsl(0_0%_97%)] p-4">
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <FieldHeading className="mb-0">ペルソナ別の課題・購買行動</FieldHeading>
+          <AIButton size="sm" onClick={() => setConfirmOpen(true)}>
+            AIで一括生成
+          </AIButton>
+        </div>
+        <div className="space-y-6">
         {segments.map((seg) => {
           const members = indexed.filter(({ p }) => p.target_name === seg.name)
           return (
-            <section key={seg.name} className="rounded-xl border border-gray-200 bg-[hsl(0_0%_97%)] p-4">
+            <section key={seg.name} className="rounded-xl border border-gray-200 bg-white p-4">
               <div className="mb-3">
                 <h2 className="text-sm font-bold text-gray-800">{seg.name}</h2>
                 {seg.description && <p className="text-[12px] text-muted-foreground mt-0.5">{seg.description}</p>}
@@ -159,7 +161,7 @@ export function Step3Goals({ personas: initialPersonas, basicInfo, onNext, onBac
               <div className="space-y-3">
                 {members.length === 0 && <p className="text-[13px] text-muted-foreground">このターゲットのペルソナはまだありません。</p>}
                 {members.map(({ p, idx }) => (
-                  <GoalsForm key={idx} personaName={p.demographics.persona_name || `ペルソナ${idx + 1}`} data={p.goals} onChange={(next) => updateGoals(idx, next)} />
+                  <GoalsForm key={idx} personaName={p.demographics.persona_name || `ペルソナ${idx + 1}`} avatarEmoji={p.demographics.avatar_emoji} data={p.goals} onChange={(next) => updateGoals(idx, next)} />
                 ))}
               </div>
             </section>
@@ -173,11 +175,12 @@ export function Step3Goals({ personas: initialPersonas, basicInfo, onNext, onBac
             </div>
             <div className="space-y-3">
               {unclassified.map(({ p, idx }) => (
-                <GoalsForm key={idx} personaName={p.demographics.persona_name || `ペルソナ${idx + 1}`} data={p.goals} onChange={(next) => updateGoals(idx, next)} />
+                <GoalsForm key={idx} personaName={p.demographics.persona_name || `ペルソナ${idx + 1}`} avatarEmoji={p.demographics.avatar_emoji} data={p.goals} onChange={(next) => updateGoals(idx, next)} />
               ))}
             </div>
           </section>
         )}
+        </div>
       </div>
 
       <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 bg-background/80 backdrop-blur border-t border-border px-6 py-4 flex items-center justify-between">
@@ -207,33 +210,36 @@ export function Step3Goals({ personas: initialPersonas, basicInfo, onNext, onBac
 }
 
 // 1ペルソナぶんの課題フォーム（controlled）
-function GoalsForm({ personaName, data, onChange }: {
+function GoalsForm({ personaName, avatarEmoji, data, onChange }: {
   personaName: string
+  avatarEmoji?: string
   data: GoalsData
   onChange: (next: GoalsData) => void
 }) {
   const set = <K extends keyof GoalsData>(key: K, value: GoalsData[K]) => onChange({ ...data, [key]: value })
-  const addItem = (key: keyof GoalsData) => {
-    const arr = data[key]; if (Array.isArray(arr)) set(key, [...arr, ''] as GoalsData[typeof key])
-  }
-  const removeItem = (key: keyof GoalsData, idx: number) => {
-    const arr = data[key]; if (Array.isArray(arr)) set(key, arr.filter((_, i) => i !== idx) as GoalsData[typeof key])
-  }
-  const updateItem = (key: keyof GoalsData, idx: number, value: string) => {
-    const arr = data[key]
-    if (Array.isArray(arr)) { const next = [...arr]; next[idx] = value; set(key, next as GoalsData[typeof key]) }
-  }
 
   return (
     <Card className="bg-white border shadow-none">
       <CardContent className="p-5 space-y-6">
-        <h3 className="text-sm font-bold text-gray-700">{personaName} の課題</h3>
-        <ListSection label="ニーズ" items={data.primary_goals} fieldKey="primary_goals" placeholder="例: 本業に集中できる環境の確保" onAdd={addItem} onRemove={removeItem} onUpdate={updateItem} />
-        <ListSection label="課題・ペインポイント" items={data.pain_points} fieldKey="pain_points" placeholder="例: 費用対効果が見えにくい" onAdd={addItem} onRemove={removeItem} onUpdate={updateItem} />
-        <ListSection label="意思決定の要因" items={data.decision_factors} fieldKey="decision_factors" placeholder="例: 実績・事例の豊富さ" onAdd={addItem} onRemove={removeItem} onUpdate={updateItem} />
-        <ListSection label="購買の障壁" items={data.buying_barriers} fieldKey="buying_barriers" placeholder="例: 費用対効果が見えにくい" onAdd={addItem} onRemove={removeItem} onUpdate={updateItem} />
+        <PersonaAvatarName emoji={avatarEmoji} name={`${personaName} の課題`} nameClassName="text-base font-bold text-[#0a0a0a]" />
         <div>
-          <FieldHeading className="mb-3">ブランドへの期待</FieldHeading>
+          <FieldSubLabel className="mb-1">ニーズ</FieldSubLabel>
+          <TagInput value={data.primary_goals} onChange={(next) => set('primary_goals', next)} chipClassName="bg-blue-50 border border-blue-100 text-ds-app-accent-hover" placeholder="例: 本業に集中できる環境の確保（Enterで追加）" />
+        </div>
+        <div>
+          <FieldSubLabel className="mb-1">課題・ペインポイント</FieldSubLabel>
+          <TagInput value={data.pain_points} onChange={(next) => set('pain_points', next)} chipClassName="bg-orange-50 border border-orange-100 text-orange-700" placeholder="例: 費用対効果が見えにくい（Enterで追加）" />
+        </div>
+        <div>
+          <FieldSubLabel className="mb-1">意思決定の要因</FieldSubLabel>
+          <TagInput value={data.decision_factors} onChange={(next) => set('decision_factors', next)} chipClassName="bg-green-50 border border-green-100 text-green-700" placeholder="例: 実績・事例の豊富さ（Enterで追加）" />
+        </div>
+        <div>
+          <FieldSubLabel className="mb-1">購買の障壁</FieldSubLabel>
+          <TagInput value={data.buying_barriers} onChange={(next) => set('buying_barriers', next)} chipClassName="bg-red-50 border border-red-100 text-red-700" placeholder="例: 費用対効果が見えにくい（Enterで追加）" />
+        </div>
+        <div>
+          <FieldSubLabel className="mb-1">ブランドへの期待</FieldSubLabel>
           <Textarea value={data.brand_expectations} onChange={e => set('brand_expectations', e.target.value)} placeholder="どんな価値を期待するか" rows={2} className="text-sm" />
         </div>
 
@@ -242,7 +248,7 @@ function GoalsForm({ personaName, data, onChange }: {
             <AccordionTrigger className="py-3 text-sm font-bold text-gray-700">詳細設定（任意）</AccordionTrigger>
             <AccordionContent className="pb-4">
               <div>
-                <FieldHeading className="mb-3">購買の動機</FieldHeading>
+                <FieldSubLabel className="mb-1">購買の動機</FieldSubLabel>
                 <Textarea value={data.buying_motivation} onChange={e => set('buying_motivation', e.target.value)} placeholder="何がきっかけで検討するか" rows={2} className="text-sm" />
               </div>
             </AccordionContent>
@@ -253,31 +259,3 @@ function GoalsForm({ personaName, data, onChange }: {
   )
 }
 
-function ListSection({ label, items, fieldKey, placeholder, onAdd, onRemove, onUpdate }: {
-  label: string
-  items: string[]
-  fieldKey: keyof GoalsData
-  placeholder: string
-  onAdd: (key: keyof GoalsData) => void
-  onRemove: (key: keyof GoalsData, idx: number) => void
-  onUpdate: (key: keyof GoalsData, idx: number, value: string) => void
-}) {
-  return (
-    <div>
-      <FieldHeading className="mb-3">{label}</FieldHeading>
-      <div className="space-y-2">
-        {(items || []).map((item, idx) => (
-          <div key={idx} className="flex items-center gap-2">
-            <Input value={item} onChange={e => onUpdate(fieldKey, idx, e.target.value)} placeholder={placeholder} className="h-9 text-sm flex-1" />
-            <button onClick={() => onRemove(fieldKey, idx)} className="rounded p-1 hover:bg-gray-100">
-              <X className="h-4 w-4 text-gray-400" />
-            </button>
-          </div>
-        ))}
-        <Button variant="outline" size="sm" onClick={() => onAdd(fieldKey)} className="h-8 text-xs gap-1">
-          <Plus className="h-3 w-3" /> 追加
-        </Button>
-      </div>
-    </div>
-  )
-}

@@ -9,8 +9,9 @@ import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { FieldHeading, FieldSubLabel } from '@/components/shared/FieldHeading'
+import { TagInput } from '@/components/shared/TagInput'
 import { Skeleton } from '@/components/ui/skeleton'
-import { ArrowLeft, ArrowRight, Plus, X, Trash2 } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Plus, Trash2 } from 'lucide-react'
 import { AIButton } from '@/components/shared/AIButton'
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -132,7 +133,11 @@ export function Step2Demographics({ personas: initialPersonas, basicInfo, onNext
     if (!success) setSaving(false)
   }
 
-  const isValid = personas.length > 0 && personas.every(p => p.demographics.persona_name?.trim())
+  const isValid = personas.length > 0 && personas.every(p =>
+    p.demographics.persona_name?.trim()
+    && p.demographics.avatar_emoji?.trim()
+    && String(p.demographics.age ?? '').trim()
+    && p.demographics.occupation?.trim())
 
   if (aiLoading) {
     return (
@@ -161,7 +166,7 @@ export function Step2Demographics({ personas: initialPersonas, basicInfo, onNext
       data={p.demographics}
       generating={addingIdx === idx}
       onChange={(next) => updateDemographics(idx, next)}
-      onRemove={personas.length > 1 ? () => removePersona(idx) : undefined}
+      onRemove={() => removePersona(idx)}
     />
   )
 
@@ -169,14 +174,8 @@ export function Step2Demographics({ personas: initialPersonas, basicInfo, onNext
     <div>
       <h1 className="text-2xl font-bold text-foreground mb-2">Step 2: ペルソナ生成</h1>
       <p className="mb-4 text-[13px] text-muted-foreground">
-        ターゲットごとにペルソナを定義します。1つのターゲットに複数のペルソナを追加できます。
+        ターゲットごとに代表的な人物像（ペルソナ）を定義します。AIの提案を確認・編集でき、複数追加も可能です。
       </p>
-
-      <div className="flex justify-start mb-4">
-        <AIButton onClick={() => setConfirmOpen(true)}>
-          AIで一括生成
-        </AIButton>
-      </div>
 
       {aiError && (
         <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600 mb-4">
@@ -185,11 +184,17 @@ export function Step2Demographics({ personas: initialPersonas, basicInfo, onNext
         </div>
       )}
 
-      <div className="space-y-6">
+      <div className="space-y-4 rounded-lg border border-border bg-[hsl(0_0%_97%)] p-4">
+        <div className="flex items-center justify-between gap-2">
+          <FieldHeading className="mb-0">ターゲット別ペルソナ</FieldHeading>
+          <AIButton size="sm" onClick={() => setConfirmOpen(true)} className="shrink-0">
+            AIで一括生成
+          </AIButton>
+        </div>
         {segments.map((seg) => {
           const members = indexed.filter(({ p }) => p.target_name === seg.name)
           return (
-            <section key={seg.name} className="rounded-xl border border-gray-200 bg-[hsl(0_0%_97%)] p-4">
+            <section key={seg.name} className="rounded-xl border border-gray-200 bg-white p-4">
               <div className="mb-3">
                 <h2 className="text-sm font-bold text-gray-800">{seg.name}</h2>
                 {seg.description && <p className="text-[12px] text-muted-foreground mt-0.5">{seg.description}</p>}
@@ -255,12 +260,6 @@ function DemographicsForm({ ordinal, data, generating, onChange, onRemove }: {
   onRemove?: () => void
 }) {
   const set = <K extends keyof Demographics>(key: K, value: Demographics[K]) => onChange({ ...data, [key]: value })
-  type TagKey = 'media_channels' | 'personality_traits'
-  const addTag = (key: TagKey) => set(key, [...(data[key] || []), ''])
-  const removeTag = (key: TagKey, i: number) => set(key, (data[key] || []).filter((_, j) => j !== i))
-  const updateTag = (key: TagKey, i: number, v: string) => {
-    const arr = [...(data[key] || [])]; arr[i] = v; set(key, arr)
-  }
 
   return (
     <Card className="bg-white border shadow-none">
@@ -280,16 +279,20 @@ function DemographicsForm({ ordinal, data, generating, onChange, onRemove }: {
         ) : (
           <>
             <div>
-              <FieldSubLabel>顔アイコン（任意）</FieldSubLabel>
+              <FieldSubLabel>呼称 / ペルソナ名称 <span className="text-red-500">*</span></FieldSubLabel>
+              <Input value={data.persona_name} onChange={e => set('persona_name', e.target.value)} placeholder="例: 地方中小企業の経営者" className="h-9 text-sm" />
+            </div>
+            <div>
+              <FieldSubLabel>顔アイコン <span className="text-red-500">*</span></FieldSubLabel>
               <div className="flex flex-wrap gap-1">
                 {AVATAR_EMOJIS.map(em => (
                   <button
                     key={em}
                     type="button"
                     onClick={() => set('avatar_emoji', data.avatar_emoji === em ? '' : em)}
-                    className={`flex h-9 w-9 items-center justify-center rounded-lg border text-xl transition-colors ${
+                    className={`relative flex h-9 w-9 items-center justify-center rounded-lg border text-xl transition-transform duration-150 hover:z-10 hover:scale-[2] ${
                       data.avatar_emoji === em
-                        ? 'border-ds-app-accent bg-ds-app-accent/5 ring-1 ring-ds-app-accent'
+                        ? 'border-ds-app-accent bg-blue-50 ring-1 ring-ds-app-accent'
                         : 'border-border bg-white hover:border-muted-foreground'
                     }`}
                   >
@@ -297,18 +300,17 @@ function DemographicsForm({ ordinal, data, generating, onChange, onRemove }: {
                   </button>
                 ))}
               </div>
-            </div>
-            <div>
-              <FieldSubLabel>呼称 / ペルソナ名称</FieldSubLabel>
-              <Input value={data.persona_name} onChange={e => set('persona_name', e.target.value)} placeholder="例: 地方中小企業の経営者" className="h-9 text-sm" />
+              {!data.avatar_emoji?.trim() && (
+                <p className="mt-1 text-[11px] text-red-500">顔アイコンを1つ選んでください</p>
+              )}
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <FieldSubLabel>年齢層</FieldSubLabel>
+                <FieldSubLabel>年齢層 <span className="text-red-500">*</span></FieldSubLabel>
                 <Input type="text" value={data.age} onChange={e => set('age', e.target.value)} placeholder="例: 30-40歳" className="h-9 text-sm" />
               </div>
               <div>
-                <FieldSubLabel>職業</FieldSubLabel>
+                <FieldSubLabel>職業 <span className="text-red-500">*</span></FieldSubLabel>
                 <Input value={data.occupation} onChange={e => set('occupation', e.target.value)} placeholder="中小企業経営者" className="h-9 text-sm" />
               </div>
             </div>
@@ -331,8 +333,14 @@ function DemographicsForm({ ordinal, data, generating, onChange, onRemove }: {
                 <Input value={data.company_size} onChange={e => set('company_size', e.target.value)} placeholder="50〜100名" className="h-9 text-sm" />
               </div>
             </div>
-            <TagSection label="情報収集チャネル" items={data.media_channels || []} fieldKey="media_channels" placeholder="例: X (Twitter)" onAdd={addTag} onRemove={removeTag} onUpdate={updateTag} />
-            <TagSection label="性格特性" items={data.personality_traits || []} fieldKey="personality_traits" placeholder="例: 慎重派" onAdd={addTag} onRemove={removeTag} onUpdate={updateTag} />
+            <div>
+              <FieldHeading className="mb-3">情報収集チャネル</FieldHeading>
+              <TagInput value={data.media_channels || []} onChange={(next) => set('media_channels', next)} placeholder="例: X (Twitter)（Enterで追加）" />
+            </div>
+            <div>
+              <FieldHeading className="mb-3">性格特性</FieldHeading>
+              <TagInput value={data.personality_traits || []} onChange={(next) => set('personality_traits', next)} placeholder="例: 慎重派（Enterで追加）" />
+            </div>
           </>
         )}
       </CardContent>
@@ -340,31 +348,3 @@ function DemographicsForm({ ordinal, data, generating, onChange, onRemove }: {
   )
 }
 
-function TagSection({ label, items, fieldKey, placeholder, onAdd, onRemove, onUpdate }: {
-  label: string
-  items: string[]
-  fieldKey: 'media_channels' | 'personality_traits'
-  placeholder: string
-  onAdd: (key: 'media_channels' | 'personality_traits') => void
-  onRemove: (key: 'media_channels' | 'personality_traits', idx: number) => void
-  onUpdate: (key: 'media_channels' | 'personality_traits', idx: number, value: string) => void
-}) {
-  return (
-    <div>
-      <FieldHeading className="mb-2">{label}</FieldHeading>
-      <div className="flex flex-wrap gap-2 mb-2">
-        {items.map((item, idx) => (
-          <div key={idx} className="flex items-center gap-1 rounded-full border border-gray-200 bg-white pl-3 pr-1 py-1">
-            <Input value={item} onChange={e => onUpdate(fieldKey, idx, e.target.value)} placeholder={placeholder} className="h-6 w-28 border-0 p-0 text-xs focus-visible:ring-0" />
-            <button onClick={() => onRemove(fieldKey, idx)} className="rounded-full p-0.5 hover:bg-gray-100">
-              <X className="h-3 w-3 text-gray-400" />
-            </button>
-          </div>
-        ))}
-        <Button variant="outline" size="sm" onClick={() => onAdd(fieldKey)} className="h-8 text-xs gap-1 rounded-full">
-          <Plus className="h-3 w-3" /> 追加
-        </Button>
-      </div>
-    </div>
-  )
-}

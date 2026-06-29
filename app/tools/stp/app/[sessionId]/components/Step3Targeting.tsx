@@ -7,8 +7,9 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { AutoResizeTextarea } from '@/components/ui/auto-resize-textarea'
 import { Slider } from '@/components/ui/slider'
-import { ArrowLeft, ArrowRight, X, Loader2, Lock, Unlock } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Loader2, Lock, Unlock } from 'lucide-react'
 import { AIButton } from '@/components/shared/AIButton'
+import { TagInput } from '@/components/shared/TagInput'
 import { FieldHeading, FieldSubLabel } from '@/components/shared/FieldHeading'
 import { StepProgressPanel } from '@/components/stp/StepProgressLoader'
 import {
@@ -230,7 +231,6 @@ export function Step3Targeting({
     return []
   })
 
-  const [tagInput, setTagInput] = useState('')
   const [saving, setSaving] = useState(false)
   const [aiLoading, setAiLoading] = useState(false)
 
@@ -409,24 +409,6 @@ export function Step3Targeting({
     setSubTargets((prev) => prev.map((s) => (s === farthest.name ? segmentName : s)))
     toast.success(`${farthest.name} → ${segmentName} に置き換え`)
   }, [mainTarget, subTargets, fitMap])
-
-  // タグ入力ハンドラ
-  const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if ((e.key === 'Enter' || e.key === ',') && tagInput.trim()) {
-      e.preventDefault()
-      const newTag = tagInput.trim().replace(/,/g, '')
-      if (newTag && !buyingFactors.includes(newTag)) {
-        setBuyingFactors((prev) => [...prev, newTag])
-      }
-      setTagInput('')
-    } else if (e.key === 'Backspace' && !tagInput && buyingFactors.length > 0) {
-      setBuyingFactors((prev) => prev.slice(0, -1))
-    }
-  }
-
-  const removeTag = (index: number) => {
-    setBuyingFactors((prev) => prev.filter((_, i) => i !== index))
-  }
 
   // 戻る: 保留中の autosave を確定し、現在の targeting（生成済みマップ含む）を保存してから戻る。
   // これがないと「戻る→Step3」で未保存のままになり再生成される。
@@ -709,30 +691,11 @@ export function Step3Targeting({
                         {/* 1. 購買決定要因（タグ入力） */}
                         <div>
                           <FieldSubLabel>購買決定要因 <span className="text-red-500">*</span></FieldSubLabel>
-                          <div className="flex flex-wrap gap-1.5 rounded-md border border-gray-200 bg-white p-2 min-h-[36px] focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-1">
-                            {buyingFactors.map((tag, i) => (
-                              <span
-                                key={i}
-                                className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-ds-app-accent-hover"
-                              >
-                                {tag}
-                                <button
-                                  type="button"
-                                  onClick={() => removeTag(i)}
-                                  className="hover:text-blue-900"
-                                >
-                                  <X className="h-3 w-3" />
-                                </button>
-                              </span>
-                            ))}
-                            <input
-                              value={tagInput}
-                              onChange={(e) => setTagInput(e.target.value)}
-                              onKeyDown={handleTagKeyDown}
-                              placeholder={buyingFactors.length === 0 ? '例: 価格、品質、サポート（Enterで追加）' : 'Enterで追加'}
-                              className="flex-1 min-w-[120px] border-none outline-none text-xs bg-transparent"
-                            />
-                          </div>
+                          <TagInput
+                            value={buyingFactors}
+                            onChange={setBuyingFactors}
+                            placeholder="例: 価格、品質、サポート（Enterで追加）"
+                          />
                         </div>
 
                         {/* 2. 自社の強み */}
