@@ -85,7 +85,20 @@ export async function POST(request: NextRequest) {
     }
 
 
-    // ステップ3: 企業レコード作成
+    // 競合ドメイン照合（ID INC. の競合ブロックリスト）。
+    // フリーメールはドメインで判定できないため competitor_flag=false のまま superadmin の人手判断に委ねる。
+    const domain = email.split('@')[1]?.toLowerCase()
+    let competitorFlag = false
+    if (domain) {
+      const { data: blocked } = await supabaseAdmin
+        .from('blocked_competitor_domains')
+        .select('id')
+        .eq('domain', domain)
+        .limit(1)
+      competitorFlag = (blocked?.length ?? 0) > 0
+    }
+
+    // ステップ3: 企業レコード作成（新規owner登録は superadmin 全件承認制 → approval_status='pending'）
     const { data: company, error: companyError } = await supabaseAdmin
       .from('companies')
       .insert({
@@ -93,6 +106,8 @@ export async function POST(request: NextRequest) {
         brand_color_primary: '#1a1a1a',
         brand_color_secondary: '#666666',
         website_url: '',
+        approval_status: 'pending',
+        competitor_flag: competitorFlag,
       })
       .select()
       .single()
@@ -109,7 +124,6 @@ export async function POST(request: NextRequest) {
 
 
     // ステップ3.5: email_domain を設定（ドメイン認証用）
-    const domain = email.split('@')[1]?.toLowerCase()
     const FREE_DOMAINS = ['gmail.com','googlemail.com','yahoo.co.jp','yahoo.com','ymail.com','outlook.com','outlook.jp','hotmail.com','hotmail.co.jp','live.com','live.jp','msn.com','icloud.com','me.com','mac.com','aol.com','protonmail.com','proton.me','zoho.com','mail.com','gmx.com']
     if (domain && !FREE_DOMAINS.includes(domain)) {
       await supabaseAdmin
@@ -171,6 +185,8 @@ export async function POST(request: NextRequest) {
 
 
     // ステップ6: membersに紐づけ（ポータルのアクセス権限はこのレコードで判定される）
+    // 承認制のため pending・非アクティブで作成（superadmin 承認で有効化）。
+    // 行は作る＝oauth-gate が承認待ちownerを孤児と誤判定して削除しない（設計パターンA）。
     const { error: memberInsertError } = await supabaseAdmin
       .from('members')
       .insert({
@@ -179,6 +195,8 @@ export async function POST(request: NextRequest) {
         display_name: userName,
         email,
         profile_id: profile.id,
+        status: 'pending',
+        is_active: false,
       })
 
     if (memberInsertError) {
@@ -195,18 +213,23 @@ export async function POST(request: NextRequest) {
     }
 
 
-    // 開発者へメール通知（失敗しても登録は成功扱い）
+    // superadmin へ承認依頼メール（失敗しても登録は成功扱い）。競合ドメイン一致は警告。
     const resendApiKey = process.env.RESEND_API_KEY
     const devEmail = process.env.SIGNUP_NOTIFICATION_EMAIL || process.env.CONTACT_NOTIFICATION_EMAIL
     if (resendApiKey && devEmail) {
       try {
         const resend = new Resend(resendApiKey)
+        const warn = competitorFlag
+          ? `<p style="margin:0 0 12px;padding:10px 14px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;color:#b91c1c;font-weight:bold;">⚠ 競合ドメイン一致（${escapeHtml(domain || '')}）。登録目的を確認のうえ承認してください。</p>`
+          : ''
         await resend.emails.send({
           from: 'branding.bz <noreply@branding.bz>',
           to: devEmail,
-          subject: `【branding.bz】新規アカウント登録: ${escapeHtml(companyName)}`,
+          subject: `【branding.bz】${competitorFlag ? '⚠競合の疑い ' : ''}新規企業の承認待ち: ${escapeHtml(companyName)}`,
           html: `
-            <h2>新しいアカウントが登録されました</h2>
+            <h2>新規企業オーナー登録が承認待ちです</h2>
+            ${warn}
+            <p>承認するまで、このアカウントはログインできません。</p>
             <table style="border-collapse:collapse;">
               <tr><td style="padding:8px;font-weight:bold;">企業名</td><td style="padding:8px;">${escapeHtml(companyName)}</td></tr>
               <tr><td style="padding:8px;font-weight:bold;">氏名</td><td style="padding:8px;">${escapeHtml(userName)}</td></tr>
@@ -214,17 +237,20 @@ export async function POST(request: NextRequest) {
               <tr><td style="padding:8px;font-weight:bold;">役職</td><td style="padding:8px;">${escapeHtml(position || '未入力')}</td></tr>
               <tr><td style="padding:8px;font-weight:bold;">部署</td><td style="padding:8px;">${escapeHtml(department || '未入力')}</td></tr>
             </table>
-            <hr />
-            <p><a href="https://branding.bz/superadmin">管理画面で確認する</a></p>
+            <p style="margin-top:24px;">
+              <a href="https://branding.bz/superadmin/signup-requests" style="display:inline-block;padding:10px 20px;background:#1e3a5f;color:#fff;text-decoration:none;border-radius:9999px;font-weight:bold;">承認画面を開く</a>
+            </p>
+            <p style="color:#666;font-size:12px;margin-top:16px;">https://branding.bz/superadmin/signup-requests</p>
           `,
         })
       } catch (emailError) {
-        console.error('[Signup] 開発者通知メール送信エラー:', emailError)
+        console.error('[Signup] 承認依頼メール送信エラー:', emailError)
       }
     }
 
     return NextResponse.json({
       success: true,
+      status: 'pending',
       company: {
         id: company.id,
         name: company.name,
@@ -232,6 +258,7 @@ export async function POST(request: NextRequest) {
       admin: {
         email,
       },
+      message: 'ご登録ありがとうございます。ID INC. が内容を確認し、承認されるとログインできるようになります。承認結果はメールでお知らせします。',
     })
   } catch (err) {
     console.error('[Signup] 予期しないエラー:', err)

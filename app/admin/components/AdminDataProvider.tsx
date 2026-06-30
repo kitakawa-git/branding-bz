@@ -62,6 +62,8 @@ export function AdminDataProvider({
   const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [adminError, setAdminError] = useState(false)
+  // 企業が superadmin 承認待ち（approval_status='pending'）ならアクセス不可
+  const [companyPending, setCompanyPending] = useState(false)
 
   const isLoginPage = pathname === '/admin/login'
 
@@ -80,6 +82,7 @@ export function AdminDataProvider({
       setProfileName(null)
       setProfilePhotoUrl(null)
       setAdminError(false)
+      setCompanyPending(false)
       setLoading(false)
       if (!isLoginPage) {
         router.replace('/admin/login')
@@ -101,6 +104,7 @@ export function AdminDataProvider({
       setProfileName(null)
       setProfilePhotoUrl(null)
       setAdminError(false)
+      setCompanyPending(false)
       try {
         // admin_users と members(+profile) を並列取得
         const [adminRes, memberRes] = await Promise.all([
@@ -132,6 +136,18 @@ export function AdminDataProvider({
         setRole(adminData.role)
         setIsSuperAdmin(adminData.is_superadmin === true)
         setAdminError(false)
+
+        // 企業の承認状態を確認（pending=superadmin承認待ちはアクセス不可）。
+        // superadmin は対象外（自社が承認待ちになることは想定しない）。
+        if (adminData.is_superadmin !== true) {
+          const { data: gate } = await supabase
+            .from('companies')
+            .select('approval_status')
+            .eq('id', adminData.company_id)
+            .maybeSingle()
+          if (cancelled) return
+          setCompanyPending((gate as { approval_status?: string } | null)?.approval_status === 'pending')
+        }
 
         // メンバー情報の反映
         if (!memberRes.error && memberRes.data) {
@@ -251,6 +267,32 @@ export function AdminDataProvider({
             <p className="text-sm text-gray-500 mb-6 leading-relaxed">
               このアカウント（{user.email}）は管理者として登録されていません。
               管理者に連絡してください。
+            </p>
+            <button
+              onClick={signOut}
+              className="px-6 py-2.5 bg-ds-app-accent text-white border-none rounded-lg text-sm font-bold cursor-pointer hover:bg-ds-app-accent-hover transition-colors"
+            >
+              ログアウト
+            </button>
+          </div>
+        </div>
+      </AdminDataContext.Provider>
+    )
+  }
+
+  // 企業が superadmin 承認待ち（pending）: 承認されるまでアクセス不可
+  if (companyPending) {
+    return (
+      <AdminDataContext.Provider value={contextValue}>
+        <div className="flex items-center justify-center min-h-screen bg-gray-50 font-sans">
+          <div className="bg-white rounded-xl p-10 text-center max-w-[400px] shadow-sm">
+            <div className="text-5xl mb-4">⏳</div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-3">
+              承認待ちです
+            </h1>
+            <p className="text-sm text-gray-500 mb-6 leading-relaxed">
+              ご登録ありがとうございます。ID INC. が内容を確認しています。
+              承認されるとログインできるようになります。結果はメールでお知らせします。
             </p>
             <button
               onClick={signOut}

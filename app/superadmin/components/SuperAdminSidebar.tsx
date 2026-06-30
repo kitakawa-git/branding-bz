@@ -29,6 +29,7 @@ import {
   MessageSquare,
   Palette,
   ShieldCheck,
+  UserCheck,
   ArrowLeftRight,
   LogOut,
   CircleUser,
@@ -40,6 +41,7 @@ type NavItem = { href: string; label: string; icon: LucideIcon }
 
 const navItems: NavItem[] = [
   { href: '/superadmin/companies', label: '企業一覧', icon: Building2 },
+  { href: '/superadmin/signup-requests', label: '新規登録の承認', icon: UserCheck },
   { href: '/superadmin/news', label: 'ニュース', icon: Newspaper },
   { href: '/superadmin/inquiries', label: 'お問い合わせ', icon: MessageSquare },
   { href: '/superadmin/design-system', label: 'デザインシステム', icon: Palette },

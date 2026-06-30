@@ -8,9 +8,7 @@
 //   → 「参加する」→ Step3（個人情報）→ 参加リクエスト送信
 //   → 「新規作成」→ Step2（企業情報）→ Step3（個人情報）→ 通常登録
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { supabase } from '@/lib/supabase'
 import { Input } from '@/components/ui/input'
 import { Building2, Plus, Clock } from 'lucide-react'
 
@@ -23,7 +21,6 @@ interface MatchedCompany {
 type RegistrationMode = 'new' | 'join'
 
 export default function SignupPage() {
-  const router = useRouter()
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [checkingDomain, setCheckingDomain] = useState(false)
@@ -154,12 +151,9 @@ export default function SignupPage() {
           setError(data.error || '登録に失敗しました')
           return
         }
-        const { error: loginError } = await supabase.auth.signInWithPassword({ email, password })
-        if (loginError) {
-          setError('登録は完了しましたが、自動ログインに失敗しました。ログインページからログインしてください。')
-          return
-        }
-        router.replace('/admin/members')
+        // 新規owner登録は superadmin 承認制。自動ログインせず承認待ち画面へ。
+        setSuccess(data.message || 'ご登録ありがとうございます。承認されるとログインできるようになります。')
+        setStep(4)
       }
     } catch (err) {
       setError(`登録中にエラーが発生しました: ${err instanceof Error ? err.message : String(err)}`)
