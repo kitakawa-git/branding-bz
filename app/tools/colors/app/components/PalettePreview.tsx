@@ -26,15 +26,23 @@ export function PalettePreview({ proposal }: PalettePreviewProps) {
 
   return (
     <div className="space-y-3">
-      {/* タブ切り替え */}
-      <div className="flex gap-1 rounded-lg bg-gray-100 p-1">
+      {/* タブ切り替え（スライドインジケーター付き） */}
+      <div className="relative flex rounded-lg bg-gray-100 p-1">
+        {/* アクティブタブのインジケーター（左右スライド） */}
+        <div
+          className="pointer-events-none absolute inset-y-1 rounded-md bg-white shadow-sm transition-transform duration-300 ease-out"
+          style={{
+            width: `calc((100% - 0.5rem) / ${tabs.length})`,
+            transform: `translateX(calc(${tabs.findIndex((t) => t.key === tab) * 100}%))`,
+          }}
+        />
         {tabs.map((t) => (
           <button
             key={t.key}
-            onClick={() => setTab(t.key)}
-            className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+            onClick={(e) => { e.stopPropagation(); setTab(t.key) }}
+            className={`relative z-10 flex-1 rounded-md px-3 py-1.5 text-xs font-bold transition-colors ${
               tab === t.key
-                ? 'bg-white text-gray-900 shadow-sm'
+                ? 'text-gray-900'
                 : 'text-gray-500 hover:text-gray-700'
             }`}
           >

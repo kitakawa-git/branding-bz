@@ -3,6 +3,7 @@
 // キーワード選択コンポーネント（チップUI + ドラッグ並び替え）
 import { useState } from 'react'
 import { Input } from '@/components/ui/input'
+import { FieldHeading, FieldSubLabel } from '@/components/shared/FieldHeading'
 import { Check, GripVertical, X } from 'lucide-react'
 import {
   DndContext,
@@ -53,7 +54,7 @@ function SortableKeywordItem({
     <div
       ref={setNodeRef}
       style={style}
-      className="flex items-center gap-2 rounded-lg border bg-white px-3 py-2"
+      className="flex items-center gap-2 rounded-lg border bg-white px-3 py-2.5"
     >
       <button {...attributes} {...listeners} className="cursor-grab text-gray-400 hover:text-gray-600">
         <GripVertical className="h-4 w-4" />
@@ -61,7 +62,7 @@ function SortableKeywordItem({
       <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-ds-app-accent-hover">
         {priority}
       </span>
-      <span className="flex-1 text-sm text-gray-700">{keyword}</span>
+      <span className="flex-1 text-sm font-bold text-gray-700">{keyword}</span>
       <button onClick={onRemove} className="text-gray-400 hover:text-red-500">
         <X className="h-4 w-4" />
       </button>
@@ -71,10 +72,6 @@ function SortableKeywordItem({
 
 export function KeywordSelector({ value, onChange }: KeywordSelectorProps) {
   const [freeText, setFreeText] = useState('')
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
-  )
 
   const selectedWords = value.map(k => k.word)
   const canAdd = value.length < 5
@@ -90,21 +87,6 @@ export function KeywordSelector({ value, onChange }: KeywordSelectorProps) {
     }
   }
 
-  const removeKeyword = (word: string) => {
-    const filtered = value.filter(k => k.word !== word)
-    onChange(filtered.map((k, i) => ({ ...k, priority: i + 1 })))
-  }
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event
-    if (!over || active.id === over.id) return
-
-    const oldIndex = value.findIndex(k => k.word === active.id)
-    const newIndex = value.findIndex(k => k.word === over.id)
-    const reordered = arrayMove(value, oldIndex, newIndex)
-    onChange(reordered.map((k, i) => ({ ...k, priority: i + 1 })))
-  }
-
   const addFreeText = () => {
     const word = freeText.trim()
     if (!word || selectedWords.includes(word) || !canAdd) return
@@ -114,13 +96,15 @@ export function KeywordSelector({ value, onChange }: KeywordSelectorProps) {
 
   return (
     <div className="space-y-6">
-      {/* キーワードチップ */}
-      <div className="space-y-4">
+      <FieldHeading className="mb-3">ブランドイメージを表すキーワード（3〜5つ）</FieldHeading>
+
+      {/* キーワード選択カード（カテゴリ群＋自由入力） */}
+      <div className="!mt-0 space-y-6 rounded-lg border border-gray-200 bg-white p-4">
+        {/* キーワードチップ */}
+        <div className="space-y-4">
         {(Object.keys(BRAND_KEYWORDS) as KeywordCategory[]).map((category) => (
           <div key={category}>
-            <h4 className="mb-2 text-xs font-bold text-gray-500">
-              {KEYWORD_CATEGORY_LABELS[category]}
-            </h4>
+            <FieldSubLabel>{KEYWORD_CATEGORY_LABELS[category]}</FieldSubLabel>
             <div className="flex flex-wrap gap-2">
               {BRAND_KEYWORDS[category].map((word) => {
                 const isSelected = selectedWords.includes(word)
@@ -168,32 +152,59 @@ export function KeywordSelector({ value, onChange }: KeywordSelectorProps) {
           </button>
         </div>
       </div>
+      </div>
+    </div>
+  )
+}
 
-      {/* 選択済みキーワード（優先順位ドラッグ） */}
-      {value.length > 0 && (
-        <div>
-          <h4 className="mb-2 text-xs font-bold text-gray-500">
-            選択済み（ドラッグで優先順位を変更）
-            <span className="ml-1 font-normal text-gray-400">
-              {value.length}/5
-            </span>
-          </h4>
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <SortableContext items={value.map(k => k.word)} strategy={verticalListSortingStrategy}>
-              <div className="space-y-1.5">
-                {value.map((kw) => (
-                  <SortableKeywordItem
-                    key={kw.word}
-                    keyword={kw.word}
-                    priority={kw.priority}
-                    onRemove={() => removeKeyword(kw.word)}
-                  />
-                ))}
-              </div>
-            </SortableContext>
-          </DndContext>
-        </div>
-      )}
+/**
+ * 選択済みキーワード一覧（ドラッグで優先順位変更）。
+ * KeywordSelector から切り出し、呼び出し元でレイアウトを制御できるように独立させた。
+ */
+export function SelectedKeywordList({ value, onChange }: KeywordSelectorProps) {
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+  )
+
+  const removeKeyword = (word: string) => {
+    const filtered = value.filter(k => k.word !== word)
+    onChange(filtered.map((k, i) => ({ ...k, priority: i + 1 })))
+  }
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+
+    const oldIndex = value.findIndex(k => k.word === active.id)
+    const newIndex = value.findIndex(k => k.word === over.id)
+    const reordered = arrayMove(value, oldIndex, newIndex)
+    onChange(reordered.map((k, i) => ({ ...k, priority: i + 1 })))
+  }
+
+  if (value.length === 0) return null
+
+  return (
+    <div>
+      <FieldHeading className="mb-3">
+        上記で選択したキーワードの優先順位を決めてください（ドラッグで変更）
+        <span className="ml-1 font-normal text-gray-400">
+          {value.length}/5
+        </span>
+      </FieldHeading>
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={value.map(k => k.word)} strategy={verticalListSortingStrategy}>
+          <div className="space-y-1.5">
+            {value.map((kw) => (
+              <SortableKeywordItem
+                key={kw.word}
+                keyword={kw.word}
+                priority={kw.priority}
+                onRemove={() => removeKeyword(kw.word)}
+              />
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
     </div>
   )
 }

@@ -5,10 +5,10 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
-import { FieldHeading } from '@/components/shared/FieldHeading'
+import { FieldHeading, FieldSubLabel } from '@/components/shared/FieldHeading'
 import { ArrowLeft, ArrowRight, Plus, Trash2 } from 'lucide-react'
 
-import { KeywordSelector } from '../../components/KeywordSelector'
+import { KeywordSelector, SelectedKeywordList } from '../../components/KeywordSelector'
 import { MoodboardPairSelector } from '../../components/MoodboardPair'
 import { ColorPicker } from '../../components/ColorPicker'
 import type {
@@ -41,7 +41,7 @@ export function Step2ImageInput({ project, onNext, onBack }: Step2Props) {
   const [referenceBrands, setReferenceBrands] = useState<string[]>(
     project.reference_brands || []
   )
-  const [showAdditional, setShowAdditional] = useState(false)
+  const [showAdditional, setShowAdditional] = useState(true)
   const [saving, setSaving] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -142,17 +142,6 @@ export function Step2ImageInput({ project, onNext, onBack }: Step2Props) {
               {errors.keywords && (
                 <p className="mt-2 text-xs text-red-500">{errors.keywords}</p>
               )}
-              {keywords.length >= 3 && !showAdditional && (
-                <div className="mt-5">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowAdditional(true)}
-                  >
-                    追加の質問に答える（任意）→
-                  </Button>
-                </div>
-              )}
             </div>
           )}
 
@@ -170,14 +159,22 @@ export function Step2ImageInput({ project, onNext, onBack }: Step2Props) {
             </div>
           )}
 
-          {/* 共通の追加質問 */}
+          {/* 選択済み＋追加の質問（1つの外側カード） */}
           {showAdditional && (
             <div className="mt-5 space-y-5 rounded-lg border border-gray-200 bg-white p-4">
+              {/* 選択済みキーワード（キーワードモードのみ） */}
+              {approach === 'keyword' && keywords.length > 0 && (
+                <>
+                  <SelectedKeywordList value={keywords} onChange={setKeywords} />
+                  <div className="border-t border-gray-200" />
+                </>
+              )}
+
               <FieldHeading optional className="mb-3">追加の質問</FieldHeading>
 
               {/* 避けたい色 */}
               <div>
-                <FieldHeading className="mb-3">避けたい色はありますか？</FieldHeading>
+                <FieldSubLabel>避けたい色はありますか？</FieldSubLabel>
                 <div className="space-y-2">
                   {avoidColors.map((color, i) => (
                     <div key={i} className="flex items-center gap-2">
@@ -211,7 +208,7 @@ export function Step2ImageInput({ project, onNext, onBack }: Step2Props) {
 
               {/* 参考ブランド */}
               <div>
-                <FieldHeading className="mb-3">参考にしたいブランドがあれば教えてください</FieldHeading>
+                <FieldSubLabel>参考にしたいブランドがあれば教えてください</FieldSubLabel>
                 <div className="space-y-2">
                   {referenceBrands.map((brand, i) => (
                     <div key={i} className="flex items-center gap-2">
@@ -250,9 +247,9 @@ export function Step2ImageInput({ project, onNext, onBack }: Step2Props) {
       </Card>
 
       {/* ナビゲーション（スティッキー） */}
-      <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 bg-background/80 backdrop-blur border-t border-border px-6 py-3 flex justify-between">
-        <Button variant="outline" onClick={onBack}>
-          <ArrowLeft className="mr-1 h-4 w-4" />
+      <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 bg-background/80 backdrop-blur border-t border-border px-6 py-4 flex justify-between">
+        <Button variant="outline" onClick={onBack} className="h-14 gap-2 px-6 text-base font-bold">
+          <ArrowLeft className="h-4 w-4" />
           戻る
         </Button>
         {((approach === 'keyword' && keywords.length >= 3) ||
@@ -260,9 +257,10 @@ export function Step2ImageInput({ project, onNext, onBack }: Step2Props) {
           <Button
             onClick={handleNext}
             disabled={saving}
+            className="h-14 gap-2 px-6 text-base font-bold"
           >
             {saving ? '保存中...' : 'AI提案を受ける'}
-            {!saving && <ArrowRight className="ml-1 h-4 w-4" />}
+            {!saving && <ArrowRight className="h-4 w-4" />}
           </Button>
         )}
       </div>

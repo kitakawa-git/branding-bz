@@ -94,7 +94,7 @@ export function MoodboardPairSelector({
           disabled={currentIndex === 0}
           className="text-sm text-gray-500 hover:text-gray-700 disabled:opacity-30"
         >
-          前の質問
+          前のボード
         </button>
 
         {allAnswered ? (
@@ -108,7 +108,7 @@ export function MoodboardPairSelector({
             disabled={currentIndex >= MOODBOARD_PAIRS.length - 1}
             className="flex items-center gap-1 text-sm text-ds-app-accent hover:text-ds-app-accent-hover disabled:opacity-30"
           >
-            次の質問
+            次のボード
             <ArrowRight className="h-3.5 w-3.5" />
           </button>
         )}

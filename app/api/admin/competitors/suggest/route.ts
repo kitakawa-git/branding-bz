@@ -43,7 +43,7 @@ export async function POST() {
   const [companyResult, personaResult] = await Promise.allSettled([
     supabase
       .from('companies')
-      .select('name, industry_category, industry_subcategory, brand_stage, website_url, competitors, target_segments')
+      .select('name, industry_category, industry_subcategory, website_url, competitors, target_segments')
       .eq('id', companyId)
       .maybeSingle(),
     supabase
@@ -70,7 +70,6 @@ export async function POST() {
   const brandInfo: Record<string, unknown> = { 企業名: company.name || '未設定' }
   if (company.industry_category) brandInfo['業種（大分類）'] = company.industry_category
   if (company.industry_subcategory) brandInfo['業種（小分類）'] = company.industry_subcategory
-  if (company.brand_stage) brandInfo['ブランドステージ'] = company.brand_stage
   if (company.website_url) brandInfo['ウェブサイト'] = company.website_url
 
   // 事業内容・mission/vision は philosophy_elements 由来（business_content は service 行へ正規化済み）

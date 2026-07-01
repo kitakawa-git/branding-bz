@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
 import { AIButton } from '@/components/shared/AIButton'
+import { FieldHeading } from '@/components/shared/FieldHeading'
 import { PaletteCard } from '../../components/PaletteCard'
 import type { BrandColorProject, PaletteProposal } from '@/lib/types/color-tool'
 
@@ -171,19 +172,24 @@ export function Step3Proposals({
   return (
     <div>
       <h1 className="text-2xl font-bold text-foreground mb-2">Step 3: AI提案</h1>
-      <p className="mb-5 text-[13px] text-muted-foreground">3パターンの提案からお好みのパレットを選んでください</p>
-
-      {/* AI再提案ボタン（カード上・左寄せ） */}
-      {!generating && (
-        <div className="flex justify-start mb-3">
-          <AIButton size="s" onClick={generateProposals}>
-            AIで再提案
-          </AIButton>
-        </div>
-      )}
+      <p className="mb-4 text-[13px] text-muted-foreground">3パターンの提案からお好みのパレットを選んでください</p>
 
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
         <CardContent className="p-5">
+          <div className="flex items-center justify-between mb-3">
+            <FieldHeading className="mb-0">
+              提案パレット
+              <span className="ml-1 font-normal text-gray-400">
+                {proposals.length}件
+              </span>
+            </FieldHeading>
+            {!generating && (
+              <AIButton size="sm" onClick={generateProposals}>
+                AIで再提案
+              </AIButton>
+            )}
+          </div>
+
           {/* パレットカード（1カラム縦積み） */}
           <div className="space-y-4">
             {proposals.map((proposal) => (
@@ -199,18 +205,19 @@ export function Step3Proposals({
       </Card>
 
       {/* ナビゲーション（スティッキー） */}
-      <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 bg-background/80 backdrop-blur border-t border-border px-6 py-3 flex justify-between">
-        <Button variant="outline" onClick={onBack}>
-          <ArrowLeft className="mr-1 h-4 w-4" />
+      <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 bg-background/80 backdrop-blur border-t border-border px-6 py-4 flex justify-between">
+        <Button variant="outline" onClick={onBack} className="h-14 gap-2 px-6 text-base font-bold">
+          <ArrowLeft className="h-4 w-4" />
           戻る
         </Button>
         <div className="flex items-center gap-2">
           <Button
             onClick={handleNext}
             disabled={!selectedId}
+            className="h-14 gap-2 px-6 text-base font-bold"
           >
             {selectedId ? 'この案で調整に進む' : 'パレットを選択してください'}
-            {selectedId && <ArrowRight className="ml-1 h-4 w-4" />}
+            {selectedId && <ArrowRight className="h-4 w-4" />}
           </Button>
         </div>
       </div>

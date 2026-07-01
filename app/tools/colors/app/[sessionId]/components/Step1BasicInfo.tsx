@@ -5,14 +5,12 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent } from '@/components/ui/card'
 import { IndustrySelect } from '@/components/shared/IndustrySelect'
 import { FieldHeading } from '@/components/shared/FieldHeading'
 import { ColorPicker } from '../../components/ColorPicker'
 import { Plus, Trash2, ArrowRight } from 'lucide-react'
 import {
-  type BrandStage,
   type CompetitorColor,
   type BrandColorProject,
 } from '@/lib/types/color-tool'
@@ -28,11 +26,6 @@ export function Step1BasicInfo({ project, onNext, onSaveField }: Step1Props) {
   const [brandName, setBrandName] = useState(project.brand_name || '')
   const [industryCategory, setIndustryCategory] = useState(project.industry_category || '')
   const [industrySubcategory, setIndustrySubcategory] = useState(project.industry_subcategory || '')
-  const [brandStage, setBrandStage] = useState<BrandStage | ''>(
-    // 廃止された値は 'rebrand' にフォールバック
-    (project.brand_stage === ('refinement' as string) || project.brand_stage === ('refine' as string))
-      ? 'rebrand' : (project.brand_stage || '')
-  )
   const [hasExistingColors, setHasExistingColors] = useState(
     (project.existing_colors?.length ?? 0) > 0
   )
@@ -47,7 +40,7 @@ export function Step1BasicInfo({ project, onNext, onSaveField }: Step1Props) {
   const userIdRef = useRef<string | null>(null)
   const companySyncRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   // フォーム最新値を保持するref（デバウンスタイマー内から安定して読み取るため）
-  const formDataRef = useRef({ brandName: '', industryCategory: '', industrySubcategory: '', brandStage: '' as BrandStage | '', competitorColors: [] as CompetitorColor[] })
+  const formDataRef = useRef({ brandName: '', industryCategory: '', industrySubcategory: '', competitorColors: [] as CompetitorColor[] })
 
   // プリフィル: 本体(companies)の最新データを取得
   // 全フィールド: セッションにデータがなければ companies から読み込み（マージはしない）
@@ -86,10 +79,6 @@ export function Step1BasicInfo({ project, onNext, onSaveField }: Step1Props) {
           setIndustrySubcategory(d.industry_subcategory)
           updates.industry_subcategory = d.industry_subcategory
         }
-        if (d.brand_stage && (isCompany || !brandStage)) {
-          setBrandStage(d.brand_stage)
-          updates.brand_stage = d.brand_stage
-        }
 
         // 競合カラー: company ソースなら常に最新値を適用、それ以外は空の場合のみ
         if (d.competitor_colors?.length > 0 && (isCompany || competitorColors.length === 0)) {
@@ -121,7 +110,7 @@ export function Step1BasicInfo({ project, onNext, onSaveField }: Step1Props) {
 
   // フォーム最新値をrefに同期
   useEffect(() => {
-    formDataRef.current = { brandName, industryCategory, industrySubcategory, brandStage, competitorColors }
+    formDataRef.current = { brandName, industryCategory, industrySubcategory, competitorColors }
   })
 
   // 本体（companies）へリアルタイム同期（fire and forget）
@@ -129,7 +118,6 @@ export function Step1BasicInfo({ project, onNext, onSaveField }: Step1Props) {
     company_name: string
     industry_category: string
     industry_subcategory: string
-    brand_stage: string
     competitor_colors: CompetitorColor[]
   }) => {
     const userId = userIdRef.current
@@ -152,7 +140,6 @@ export function Step1BasicInfo({ project, onNext, onSaveField }: Step1Props) {
         company_name: d.brandName.trim(),
         industry_category: d.industryCategory,
         industry_subcategory: d.industrySubcategory,
-        brand_stage: d.brandStage as string,
         competitor_colors: d.competitorColors.filter(c => c.name.trim()),
       })
     }, 1500)
@@ -176,10 +163,6 @@ export function Step1BasicInfo({ project, onNext, onSaveField }: Step1Props) {
       newErrors.industrySubcategory = '業種（中分類）を選択してください'
     }
 
-    if (!brandStage) {
-      newErrors.brandStage = 'ブランドステージを選択してください'
-    }
-
     if (hasExistingColors && existingColors.length === 0) {
       newErrors.existingColors = '既存カラーを1色以上入力してください'
     }
@@ -197,7 +180,6 @@ export function Step1BasicInfo({ project, onNext, onSaveField }: Step1Props) {
       brand_name: brandName.trim(),
       industry_category: industryCategory,
       industry_subcategory: industrySubcategory,
-      brand_stage: brandStage,
       existing_colors: hasExistingColors ? existingColors : [],
       competitor_colors: competitorColors.filter(c => c.name.trim()),
     }
@@ -205,7 +187,6 @@ export function Step1BasicInfo({ project, onNext, onSaveField }: Step1Props) {
       company_name: brandName.trim(),
       industry_category: industryCategory,
       industry_subcategory: industrySubcategory,
-      brand_stage: brandStage as string,
       competitor_colors: competitorColors.filter(c => c.name.trim()),
     })
 
@@ -247,7 +228,8 @@ export function Step1BasicInfo({ project, onNext, onSaveField }: Step1Props) {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-foreground mb-6">Step 1: 基本情報</h1>
+      <h1 className="text-2xl font-bold text-foreground mb-2">Step 1: 基本情報</h1>
+      <p className="text-sm text-muted-foreground mb-4">AIが最適なカラーパレットを提案できるよう、ブランドの基本情報を入力してください。</p>
 
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
         <CardContent className="p-5">
@@ -262,9 +244,6 @@ export function Step1BasicInfo({ project, onNext, onSaveField }: Step1Props) {
               maxLength={100}
               className={`h-10 ${errors.brandName ? 'border-red-400' : ''}`}
             />
-            <p className="text-[13px] text-muted-foreground mt-1.5">
-              会社名またはブランド名を入力してください
-            </p>
             {errors.brandName && (
               <p className="mt-1 text-xs text-red-500">{errors.brandName}</p>
             )}
@@ -290,29 +269,6 @@ export function Step1BasicInfo({ project, onNext, onSaveField }: Step1Props) {
               <p className="mt-1 text-xs text-red-500">
                 {errors.industryCategory || errors.industrySubcategory}
               </p>
-            )}
-          </div>
-
-          {/* ブランドステージ */}
-          <div className="mb-5">
-            <FieldHeading required className="mb-3">ブランドステージ</FieldHeading>
-            <Select
-              value={brandStage || ''}
-              onValueChange={(val) => {
-                setBrandStage(val as BrandStage)
-                autoSave('brand_stage', val)
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="選択してください" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="new">新規ブランド</SelectItem>
-                <SelectItem value="rebrand">リブランド</SelectItem>
-              </SelectContent>
-            </Select>
-            {errors.brandStage && (
-              <p className="mt-1 text-xs text-red-500">{errors.brandStage}</p>
             )}
           </div>
 
@@ -414,13 +370,14 @@ export function Step1BasicInfo({ project, onNext, onSaveField }: Step1Props) {
       </Card>
 
       {/* 次へボタン（スティッキー） */}
-      <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 bg-background/80 backdrop-blur border-t border-border px-6 py-3 flex justify-end">
+      <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 bg-background/80 backdrop-blur border-t border-border px-6 py-4 flex justify-end">
         <Button
           onClick={handleNext}
           disabled={saving}
+          className="h-14 gap-2 px-6 text-base font-bold"
         >
           {saving ? '保存中...' : 'イメージ入力へ'}
-          {!saving && <ArrowRight className="ml-1 h-4 w-4" />}
+          {!saving && <ArrowRight className="h-4 w-4" />}
         </Button>
       </div>
     </div>

@@ -4,6 +4,7 @@ import type { PaletteProposal } from '@/lib/types/color-tool'
 import { AccessibilityBadge } from './AccessibilityBadge'
 import { PalettePreview } from './PalettePreview'
 import { Button } from '@/components/ui/button'
+import { FieldSubLabel } from '@/components/shared/FieldHeading'
 import { Check } from 'lucide-react'
 
 interface PaletteCardProps {
@@ -23,7 +24,17 @@ export function PaletteCard({ proposal, selected, onSelect }: PaletteCardProps) 
 
   return (
     <div
-      className={`rounded-lg border-2 bg-white transition-all ${
+      role="button"
+      tabIndex={0}
+      aria-pressed={selected}
+      onClick={() => onSelect(proposal.id)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onSelect(proposal.id)
+        }
+      }}
+      className={`cursor-pointer rounded-lg border-2 bg-white transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-ds-app-accent focus-visible:ring-offset-2 ${
         selected
           ? 'border-ds-app-accent-soft shadow-lg shadow-blue-100'
           : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
@@ -72,23 +83,25 @@ export function PaletteCard({ proposal, selected, onSelect }: PaletteCardProps) 
         </div>
 
         {/* 4行目: 提案理由 */}
-        <div>
-          <p className="text-xs font-semibold text-gray-700 mb-1">提案理由</p>
+        <div className="!mt-4">
+          <FieldSubLabel>提案理由</FieldSubLabel>
           <p className="text-xs leading-relaxed text-gray-600">
             {proposal.reasoning}
           </p>
         </div>
 
+        <div className="!mt-4 border-t border-gray-200" />
+
         {/* 5行目: プレビュー */}
-        <div>
-          <p className="text-xs font-semibold text-gray-700 mb-1">プレビュー</p>
+        <div className="!mt-4">
+          <FieldSubLabel>プレビュー</FieldSubLabel>
           <PalettePreview proposal={proposal} />
         </div>
 
         {/* 6行目: 選択ボタン（右寄せ） */}
         <div className="flex justify-end">
         <Button
-          onClick={() => onSelect(proposal.id)}
+          onClick={(e) => { e.stopPropagation(); onSelect(proposal.id) }}
           variant={selected ? 'default' : 'outline'}
         >
           {selected ? (

@@ -4,8 +4,8 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { FieldHeading } from '@/components/shared/FieldHeading'
-import { ArrowLeft } from 'lucide-react'
+import { ToolConnectActions } from '@/components/shared/ToolConnectActions'
+import { ArrowLeft, Download, Loader2, Code2 } from 'lucide-react'
 import { PalettePreview } from '../../components/PalettePreview'
 import { AccessibilityBadge } from '../../components/AccessibilityBadge'
 import type { BrandColorProject, PaletteProposal, ColorValue } from '@/lib/types/color-tool'
@@ -55,7 +55,6 @@ export function Step5Export({
             company_name: project.brand_name,
             industry_category: project.industry_category,
             industry_subcategory: project.industry_subcategory,
-            brand_stage: project.brand_stage,
             competitor_colors: project.competitor_colors,
           }),
         })
@@ -197,75 +196,56 @@ export function Step5Export({
             </div>
           )}
 
-          {/* 出力オプション */}
-          {confirmed && (
-            <div className="mt-5 space-y-3">
-              <FieldHeading className="mb-3">出力・連携</FieldHeading>
-              <div className="grid gap-3 sm:grid-cols-3">
-                {/* PDF */}
-                <button
-                  onClick={handleExportPdf}
-                  disabled={exporting === 'pdf'}
-                  className="rounded-lg border border-gray-200 bg-white p-4 text-left transition-all hover:border-gray-300 hover:shadow-md disabled:opacity-50"
-            >
-              <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-red-50">
-                <svg className="h-5 w-5 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-                  <polyline points="14 2 14 8 20 8" />
-                  <path d="M12 18v-6" />
-                  <path d="M9 15l3 3 3-3" />
-                </svg>
-              </div>
-              <p className="text-sm font-bold text-gray-900">PDFダウンロード</p>
-              <p className="mt-0.5 text-xs text-gray-500">カラーガイドシートをPDFで保存</p>
-            </button>
-
-                {/* CSS */}
-                <button
-                  onClick={handleExportCss}
-                  className="rounded-lg border border-gray-200 bg-white p-4 text-left transition-all hover:border-gray-300 hover:shadow-md"
-            >
-              <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50">
-                <svg className="h-5 w-5 text-ds-app-accent-soft" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <polyline points="16 18 22 12 16 6" />
-                  <polyline points="8 6 2 12 8 18" />
-                </svg>
-              </div>
-              <p className="text-sm font-bold text-gray-900">CSS変数コピー</p>
-              <p className="mt-0.5 text-xs text-gray-500">カスタムプロパティをクリップボードに</p>
-            </button>
-
-                {/* branding.bz連携 */}
-                <button
-                  onClick={handleLink}
-                  disabled={linked || exporting === 'link'}
-                  className="rounded-lg border border-gray-200 bg-white p-4 text-left transition-all hover:border-gray-300 hover:shadow-md disabled:opacity-50"
-            >
-              <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-green-50">
-                <svg className="h-5 w-5 text-green-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" />
-                  <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" />
-                </svg>
-              </div>
-              <p className="text-sm font-bold text-gray-900">
-                {linked ? '連携済み' : 'branding.bzに連携'}
-              </p>
-              <p className="mt-0.5 text-xs text-gray-500">
-                {linked ? 'ビジュアルアイデンティティに反映済み' : '管理画面のカラーパレットに反映'}
-              </p>
-                </button>
-              </div>
-            </div>
-          )}
         </CardContent>
       </Card>
 
-      {/* ナビゲーション（スティッキー） */}
-      <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 bg-background/80 backdrop-blur border-t border-border px-6 py-3 flex gap-3">
-        <Button variant="outline" onClick={onBack}>
-          <ArrowLeft className="mr-1 h-4 w-4" />
+      {/* ===== ツール末尾共通アクション（連携） ===== */}
+      {confirmed && (
+        <>
+          {!linked ? (
+            <ToolConnectActions
+              isAdminUser
+              adminDescription="確定したカラーパレットを管理画面のブランドカラーに反映できます。"
+              onConnectClick={handleLink}
+              connectLabel={exporting === 'link' ? '連携中...' : 'branding.bz に連携'}
+            />
+          ) : (
+            <div className="mt-4 rounded-lg bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-700">
+              カラーパレットをbranding.bzに連携しました。管理画面のブランドカラーから確認できます。
+            </div>
+          )}
+
+          {/* CSS変数コピー（カラーツール独自の補助出力） */}
+          <div className="mt-4 text-center">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleExportCss}
+              className="text-xs text-gray-500"
+            >
+              <Code2 className="h-3 w-3 mr-1" />
+              CSS変数をクリップボードにコピー
+            </Button>
+          </div>
+        </>
+      )}
+
+      {/* フッターナビゲーション */}
+      <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 bg-background/80 backdrop-blur border-t border-border px-6 py-4 flex items-center justify-between">
+        <Button variant="outline" onClick={onBack} className="h-14 gap-2 px-6 text-base font-bold">
+          <ArrowLeft className="h-4 w-4" />
           調整に戻る
         </Button>
+        {confirmed && (
+          <Button
+            onClick={handleExportPdf}
+            disabled={exporting === 'pdf'}
+            className="h-14 gap-2 px-6 text-base font-bold"
+          >
+            {exporting === 'pdf' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            {exporting === 'pdf' ? 'PDF生成中...' : 'PDFをダウンロード'}
+          </Button>
+        )}
       </div>
     </div>
   )

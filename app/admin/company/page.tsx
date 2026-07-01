@@ -10,7 +10,6 @@ import { fetchWithRetry } from '@/lib/supabase-fetch'
 import { useAuth } from '../components/AdminDataProvider'
 import { ImageUpload } from '../components/ImageUpload'
 import { IndustrySelect } from '@/components/shared/IndustrySelect'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
@@ -67,16 +66,9 @@ type Company = {
   website_url: string
   industry_category: string
   industry_subcategory: string
-  brand_stage: string
   competitors: Competitor[]
   target_segments: TargetSegment[]
 }
-
-// ブランドステージの定義
-const BRAND_STAGES = [
-  { value: 'new', label: '新規ブランド', description: 'ブランドをゼロから構築' },
-  { value: 'rebrand', label: 'リブランド', description: '既存ブランドを大幅に刷新' },
-] as const
 
 export default function CompanyPage() {
   const { companyId } = useAuth()
@@ -107,7 +99,7 @@ export default function CompanyPage() {
     const { data, error } = await fetchWithRetry(() =>
       supabase
         .from('companies')
-        .select('id, name, logo_url, website_url, industry_category, industry_subcategory, brand_stage, competitors, target_segments')
+        .select('id, name, logo_url, website_url, industry_category, industry_subcategory, competitors, target_segments')
         .eq('id', companyId)
         .single()
     )
@@ -118,7 +110,7 @@ export default function CompanyPage() {
     } else if (data) {
       const row = data as {
         id: string; name: string | null; logo_url: string | null; website_url: string | null
-        industry_category: string | null; industry_subcategory: string | null; brand_stage: string | null
+        industry_category: string | null; industry_subcategory: string | null
         competitors: Competitor[] | null; target_segments: TargetSegment[] | null
       }
       const companyData: Company = {
@@ -128,7 +120,6 @@ export default function CompanyPage() {
         website_url: row.website_url || '',
         industry_category: row.industry_category || '',
         industry_subcategory: row.industry_subcategory || '',
-        brand_stage: row.brand_stage || '',
         competitors: row.competitors || [],
         target_segments: row.target_segments || [],
       }
@@ -391,7 +382,6 @@ export default function CompanyPage() {
         website_url: normalizedWebsiteUrl,
         industry_category: company.industry_category || null,
         industry_subcategory: company.industry_subcategory || null,
-        brand_stage: company.brand_stage || null,
         competitors: cleanedCompetitors,
         target_segments: cleanedTargetSegments,
       }
@@ -498,26 +488,6 @@ export default function CompanyPage() {
                 onCategoryChange={(val) => handleChange('industry_category', val)}
                 onSubcategoryChange={(val) => handleChange('industry_subcategory', val)}
               />
-            </div>
-
-            {/* ブランドステージ */}
-            <div className="mb-5">
-              <h2 className="text-xs font-bold mb-3">ブランドステージ</h2>
-              <Select
-                value={company.brand_stage || ''}
-                onValueChange={(val) => handleChange('brand_stage', val)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="選択してください" />
-                </SelectTrigger>
-                <SelectContent>
-                  {BRAND_STAGES.map((stage) => (
-                    <SelectItem key={stage.value} value={stage.value}>
-                      {stage.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
 
             {/* WebサイトURL */}
