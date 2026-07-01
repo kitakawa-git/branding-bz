@@ -329,7 +329,7 @@ export function Step4Positioning({
     <div>
       {/* ヘッダー（AIボタンは見出し直下・左寄せ） */}
       <h1 className="text-2xl font-bold text-foreground mb-2">Step 4: ポジショニング</h1>
-      <p className="mb-4 text-[13px] leading-relaxed text-muted-foreground">競合と自社を同じ2軸の上に並べることで、自社だけが立てる独自のポジションを見つけます。AIが提案した軸と配置を確認し、点をドラッグまたはスライダーで動かしながら、差別化できる立ち位置を探りましょう。</p>
+      <p className="mb-4 text-[13px] leading-relaxed text-muted-foreground">競合と自社を2軸上に並べ、自社だけの独自ポジションを見つけます。AIの軸と配置を確認し、点を動かして調整しましょう。</p>
 
       {/* AIエラー */}
       {aiError && (
@@ -364,8 +364,8 @@ export function Step4Positioning({
               AIで提案生成
             </AIButton>
           </div>
-          {/* 1. 要素リスト（2カラム）：まず要素を確認・命名 */}
-          <div>
+          {/* 1. 要素リスト（2カラム）：まず要素を確認・命名。背景白のカードで括る */}
+          <div className="rounded-lg border border-gray-200 bg-white p-4">
             <FieldSubLabel>要素（{items.length}社）</FieldSubLabel>
             <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
               {items.map((item, index) => (
@@ -383,7 +383,7 @@ export function Step4Positioning({
                     value={item.color}
                     onClick={(e) => e.stopPropagation()}
                     onChange={(e) => updateItem(index, { color: e.target.value })}
-                    className="h-5 w-5 shrink-0 cursor-pointer rounded border border-gray-200 p-0.5"
+                    className="h-5 w-5 shrink-0 cursor-pointer rounded-full border border-gray-200 p-0.5"
                   />
                   <Input
                     value={item.name}
@@ -415,15 +415,18 @@ export function Step4Positioning({
             </div>
             <Button variant="outline" onClick={addItem} className="mt-3 w-full gap-2">
               <Plus className="h-4 w-4" />
-              要素を追加
+              競合を追加
             </Button>
           </div>
 
-          <FieldHeading className="!mt-8 mb-3">ポジショニングマップ</FieldHeading>
-          {/* 3. チャート＋軸設定オーバーレイ（全幅・ドラッグで配置） */}
-          <div className="relative rounded-lg border border-border bg-card p-3">
+          {/* ポジショニングマップ：見出し＋チャートを背景白のカードで括る */}
+          <div className="!mt-6 rounded-lg border border-gray-200 bg-white p-4">
+          <FieldHeading className="mb-3">ポジショニングマップ</FieldHeading>
+          {/* 3. チャート＋軸設定オーバーレイ（全幅・ドラッグで配置）。
+              padding は外側の白カード(p-4)と二重になるため付けない。flex-col でフレックス子のマージン相殺を防ぎ、根拠文の mt-[90px]（オーバーレイ回避）を効かせる。 */}
+          <div className="relative flex flex-col">
             {/* 軸設定オーバーレイ */}
-            <div className="absolute left-3 right-3 top-3 z-10 space-y-1.5 rounded-md border border-border bg-white/95 p-2 text-xs shadow-sm">
+            <div className="absolute left-0 right-0 top-0 z-10 space-y-1.5 rounded-md border border-border bg-white/95 p-2 text-xs shadow-sm">
               {/* grid-cols-[1fr_auto_1fr] で中央の矢印をカード中心に固定（先頭アイコンは左セル内に格納） */}
               <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-1.5">
                 <div className="flex min-w-0 items-center gap-1.5">
@@ -446,13 +449,13 @@ export function Step4Positioning({
             {/* 軸選定の根拠（AI生成・軸設定オーバーレイの下、マップの上）。
                 オーバーレイは absolute(top-3, 高さ~78px) なので mt-[90px] でその下に流す。 */}
             {axisRationale && (
-              <div className="mt-[90px] rounded-md bg-muted/40 px-3 py-2 text-[11px] leading-relaxed text-muted-foreground">
+              <div className="mt-[80px] rounded-md bg-muted/40 px-3 py-2 text-[11px] leading-relaxed text-muted-foreground">
                 軸選定の根拠: {axisRationale}
               </div>
             )}
 
             {/* relativeラッパーはSVGと同寸（width100%・aspect4/3）なので、%指定でSVG座標と一致する。 */}
-            <div className={`relative ${axisRationale ? 'mt-3' : 'mt-[90px]'}`}>
+            <div className={`relative ${axisRationale ? 'mt-3' : 'mt-[80px]'}`}>
               <InteractivePositioningMap
                 items={items}
                 axes={{ x_axis: xAxis, y_axis: yAxis }}
@@ -510,9 +513,10 @@ export function Step4Positioning({
               })()}
             </div>
           </div>
+          </div>
 
-          {/* 自社の立ち位置（ターゲット別×N。Step4で生成→Step5は表示のみ）。ポジショニングマップと同じカード内に括る */}
-          <div className="mt-2 border-t border-gray-200 pt-4">
+          {/* 自社の立ち位置（ターゲット別×N。Step4で生成→Step5は表示のみ）。背景白のカードで括る。上余白は space-y を !important で上書きして1段階広げる */}
+          <div className="!mt-6 rounded-lg border border-gray-200 bg-white p-4">
         <div className="mb-2 flex items-center justify-between gap-2">
           <FieldHeading className="mb-0">自社の立ち位置</FieldHeading>
           <AIButton

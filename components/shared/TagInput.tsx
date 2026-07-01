@@ -50,7 +50,7 @@ export function TagInput({
       {value.map((tag, i) => (
         <span
           key={i}
-          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[13px] font-medium ${chipClassName}`}
+          className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-[13px] font-medium ${chipClassName}`}
         >
           {tag}
           <button type="button" onClick={() => removeAt(i)} aria-label={`${tag} を削除`} className="hover:text-blue-900">

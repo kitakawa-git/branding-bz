@@ -7,7 +7,7 @@ import { AutoResizeTextarea } from '@/components/ui/auto-resize-textarea'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { ArrowLeft, ArrowRight, Plus, Trash2, Lightbulb, MapPin, Users, Heart, Activity } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Plus, Trash2, Lightbulb, MapPin, Users, Heart, Activity, ChevronRight } from 'lucide-react'
 import { AIButton } from '@/components/shared/AIButton'
 import {
   Accordion,
@@ -184,6 +184,16 @@ export function Step2Segmentation({
 
   // 再提案（確認ダイアログ付き）
   const [confirmOpen, setConfirmOpen] = useState(false)
+  // 「重視すること」は任意・折りたたみ（AIの配置ヒント用の裏データ。展開キー = varIndex-segIndex）
+  const [openPriorities, setOpenPriorities] = useState<Set<string>>(new Set())
+  const togglePriorities = (vi: number, si: number) => {
+    const key = `${vi}-${si}`
+    setOpenPriorities((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key); else next.add(key)
+      return next
+    })
+  }
 
   const handleRegenerate = () => {
     if (variables.length > 0) {
@@ -275,7 +285,7 @@ export function Step2Segmentation({
     <div>
       <h1 className="text-2xl font-bold text-foreground mb-2">Step 2: セグメンテーション</h1>
       <p className="mb-4 text-[13px] text-muted-foreground">
-        市場を意味のあるまとまりに分けることで、狙うべき相手を絞り込みやすくします。AIが提案した切り口（分け方の軸）とグループを確認し、必要に応じて編集しながら、各グループの特徴を整理しましょう。
+        市場を意味のあるまとまりに分け、狙う相手を絞りやすくします。AIの切り口とグループを確認・編集しましょう。
       </p>
 
       {/* 切り口の選び方ヒント（再提案ボタンの上） */}
@@ -432,7 +442,7 @@ export function Step2Segmentation({
                           updateSegment(varIndex, segIndex, 'name', e.target.value)
                         }
                         placeholder="グループ名"
-                        className="h-8 flex-1 text-sm font-medium"
+                        className="h-8 flex-1 text-sm font-bold"
                       />
                       <button
                         type="button"
@@ -464,15 +474,27 @@ export function Step2Segmentation({
                       className="text-xs min-h-[34px]"
                     />
 
-                    {/* 重視すること */}
-                    <AutoResizeTextarea
-                      value={segment.priorities || ''}
-                      onChange={(e) =>
-                        updateSegment(varIndex, segIndex, 'priorities', e.target.value)
-                      }
-                      placeholder="重視すること（例: スピード、低コスト）"
-                      className="text-[11px] min-h-[34px]"
-                    />
+                    {/* 重視すること（任意・折りたたみ。AIの配置ヒント用の裏データ） */}
+                    <div>
+                      <button
+                        type="button"
+                        onClick={() => togglePriorities(varIndex, segIndex)}
+                        className="inline-flex items-center gap-0.5 text-[11px] text-muted-foreground transition-colors hover:text-foreground"
+                      >
+                        <ChevronRight className={`h-3 w-3 transition-transform ${openPriorities.has(`${varIndex}-${segIndex}`) ? 'rotate-90' : ''}`} />
+                        重視すること{segment.priorities?.trim() && !openPriorities.has(`${varIndex}-${segIndex}`) ? '（設定済み）' : '（任意）'}
+                      </button>
+                      {openPriorities.has(`${varIndex}-${segIndex}`) && (
+                        <AutoResizeTextarea
+                          value={segment.priorities || ''}
+                          onChange={(e) =>
+                            updateSegment(varIndex, segIndex, 'priorities', e.target.value)
+                          }
+                          placeholder="重視すること（例: スピード、低コスト）"
+                          className="mt-1 text-[11px] min-h-[34px]"
+                        />
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -481,11 +503,10 @@ export function Step2Segmentation({
                   <div className="mt-3">
                     <Button
                       variant="outline"
-                      size="sm"
                       onClick={() => addSegment(varIndex)}
-                      className="text-sm"
+                      className="h-auto gap-2 rounded-full px-5 py-2.5 text-sm"
                     >
-                      <Plus className="h-4 w-4 mr-1" />
+                      <Plus className="h-4 w-4" />
                       グループを追加
                     </Button>
                   </div>

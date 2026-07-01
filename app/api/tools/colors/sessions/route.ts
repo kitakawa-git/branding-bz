@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
   try {
     const supabaseAdmin = getSupabaseAdmin()
     const body = await request.json()
-    const { userId, email, password, isNewUser } = body
+    const { userId, email, password, isNewUser, forceNew } = body
 
     let authId = userId
 
@@ -37,8 +37,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'userId が必要です' }, { status: 400 })
     }
 
-    // 進行中のセッションがあればそれを返す
-    const { data: existingSession } = await supabaseAdmin
+    // 進行中のセッションがあればそれを返す（forceNew時はスキップして常に新規作成）
+    const { data: existingSession } = forceNew ? { data: null } : await supabaseAdmin
       .from('mini_app_sessions')
       .select('id, current_step, status')
       .eq('user_id', authId)

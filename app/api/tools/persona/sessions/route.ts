@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
   try {
     const supabaseAdmin = getSupabaseAdmin()
     const body = await request.json()
-    const { userId, email, password, isNewUser } = body
+    const { userId, email, password, isNewUser, forceNew } = body
 
     let authId = userId
 
@@ -59,8 +59,8 @@ export async function POST(request: NextRequest) {
       .eq('status', 'completed')
 
     if (completedCount !== null && completedCount >= FREE_LIMIT) {
-      // 進行中のセッションがあればそれを返す
-      const { data: inProgressSession } = await supabaseAdmin
+      // 進行中のセッションがあればそれを返す（forceNew時は新規作成不可＝403）
+      const { data: inProgressSession } = forceNew ? { data: null } : await supabaseAdmin
         .from('mini_app_sessions')
         .select('id, current_step, session_data')
         .eq('user_id', authId)
@@ -85,8 +85,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 進行中のセッションがあればそれを返す
-    const { data: existingSession } = await supabaseAdmin
+    // 進行中のセッションがあればそれを返す（forceNew時はスキップして常に新規作成）
+    const { data: existingSession } = forceNew ? { data: null } : await supabaseAdmin
       .from('mini_app_sessions')
       .select('id, current_step, session_data')
       .eq('user_id', authId)

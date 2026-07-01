@@ -36,12 +36,55 @@ const DEFAULT_SESSION_DATA = {
 // フリーミアム制限: 完了済みセッション数
 const FREE_LIMIT = 3
 
+// GET /api/tools/stp/sessions?userId= — ユーザーのSTPセッション一覧（履歴選択UI用）
+export async function GET(request: NextRequest) {
+  try {
+    const supabaseAdmin = getSupabaseAdmin()
+    const userId = request.nextUrl.searchParams.get('userId') || ''
+    if (!userId) {
+      return NextResponse.json({ error: 'userId が必要です' }, { status: 400 })
+    }
+    const { data, error } = await supabaseAdmin
+      .from('mini_app_sessions')
+      .select('id, status, current_step, session_data, created_at, updated_at')
+      .eq('user_id', userId)
+      .eq('app_type', 'stp')
+      .neq('status', 'archived')
+      .order('updated_at', { ascending: false })
+      .limit(50)
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+    const sessions = (data || []).map((s) => {
+      const sd = (s.session_data || {}) as {
+        basic_info?: { company_name?: string }
+        targeting?: { main_target?: string }
+      }
+      return {
+        id: s.id,
+        status: s.status,
+        current_step: s.current_step,
+        company_name: sd.basic_info?.company_name || '',
+        main_target: sd.targeting?.main_target || '',
+        created_at: s.created_at,
+        updated_at: s.updated_at,
+      }
+    })
+    return NextResponse.json({ sessions })
+  } catch (err) {
+    return NextResponse.json(
+      { error: `サーバーエラー: ${err instanceof Error ? err.message : String(err)}` },
+      { status: 500 }
+    )
+  }
+}
+
 export async function POST(request: NextRequest) {
 
   try {
     const supabaseAdmin = getSupabaseAdmin()
     const body = await request.json()
-    const { userId, email, password, isNewUser } = body
+    const { userId, email, password, isNewUser, forceNew } = body
 
     let authId = userId
 
@@ -78,8 +121,8 @@ export async function POST(request: NextRequest) {
       .eq('status', 'completed')
 
     if (completedCount !== null && completedCount >= FREE_LIMIT) {
-      // 進行中のセッションがあればそれを返す（制限到達後も復帰は許可）
-      const { data: inProgressSession } = await supabaseAdmin
+      // 進行中のセッションがあればそれを返す（制限到達後も復帰は許可）。forceNew時は新規作成不可＝403
+      const { data: inProgressSession } = forceNew ? { data: null } : await supabaseAdmin
         .from('mini_app_sessions')
         .select('id, current_step, session_data')
         .eq('user_id', authId)
@@ -104,8 +147,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 進行中のセッションがあればそれを返す
-    const { data: existingSession } = await supabaseAdmin
+    // 進行中のセッションがあればそれを返す（forceNew時はスキップして常に新規作成）
+    const { data: existingSession } = forceNew ? { data: null } : await supabaseAdmin
       .from('mini_app_sessions')
       .select('id, current_step, session_data')
       .eq('user_id', authId)

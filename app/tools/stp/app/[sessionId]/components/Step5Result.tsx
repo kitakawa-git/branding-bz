@@ -46,6 +46,7 @@ interface SegmentSource {
 
 interface VariableSource {
   name: string
+  reason?: string
   segments: SegmentSource[]
 }
 
@@ -136,17 +137,13 @@ function toMapData(positioning: PositioningData): PositioningMapData {
   }
 }
 
-// ツールチップバッジ
-function SegmentBadge({ name, description }: { name: string; description: string }) {
-  return (
-    <span
-      className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-medium text-ds-app-accent-hover"
-      title={description}
-    >
-      {name}
-    </span>
-  )
-}
+// 切り口（A/B/C/D）の番号バッジ配色（Step2/3 と一致）。5つ目以降はグレー
+const VAR_BADGE_COLORS = [
+  'bg-blue-100 text-blue-700',
+  'bg-emerald-100 text-emerald-700',
+  'bg-purple-100 text-purple-700',
+  'bg-amber-100 text-amber-700',
+]
 
 export function Step5Result({
   sessionId,
@@ -436,7 +433,7 @@ export function Step5Result({
     <div>
       <h1 className="text-2xl font-bold text-foreground mb-2">Step 5: 確認・出力</h1>
       <p className="mb-4 text-[13px] text-muted-foreground">
-        これまで作成したセグメント・ターゲット・ポジショニングの分析結果を一覧で確認します。内容に問題がなければ、PDFとして保存したり、branding.bz に連携してブランド構築のデータとして活用しましょう。
+        セグメント・ターゲット・ポジショニングの結果を一覧で確認します。PDF保存やbranding.bzへの連携で活用しましょう。
       </p>
 
       {/* 戦略整合性スコア */}
@@ -492,15 +489,40 @@ export function Step5Result({
             const selectedSegments = variable.segments.filter((s) => s.selected)
             if (selectedSegments.length === 0) return null
             return (
-              <div key={vi}>
-                <h2 className="mb-3 text-sm font-bold text-gray-900">{variable.name}</h2>
-                <div className="flex flex-wrap gap-2">
+              <div key={vi} className="rounded-lg border border-gray-200 bg-white p-4">
+                <div className="mb-2 flex items-center gap-2">
+                  <span
+                    aria-hidden="true"
+                    className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold ${VAR_BADGE_COLORS[vi] ?? 'bg-gray-100 text-gray-600'}`}
+                  >
+                    {String.fromCharCode(65 + vi)}
+                  </span>
+                  <h2 className="text-sm font-bold text-gray-900">{variable.name}</h2>
+                </div>
+                {variable.reason && (
+                  <p className="mb-3 text-sm text-gray-500 italic pl-1">{variable.reason}</p>
+                )}
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   {selectedSegments.map((seg, si) => (
-                    <SegmentBadge
-                      key={si}
-                      name={seg.name}
-                      description={seg.description}
-                    />
+                    <div key={si} className="rounded-lg border border-gray-200 bg-white px-3 py-2.5">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-gray-900">{seg.name}</span>
+                        <span
+                          className={`inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                            seg.size_hint === '大'
+                              ? 'bg-emerald-100 text-emerald-700'
+                              : seg.size_hint === '中'
+                              ? 'bg-amber-100 text-amber-700'
+                              : 'bg-gray-100 text-gray-600'
+                          }`}
+                        >
+                          規模: {seg.size_hint}
+                        </span>
+                      </div>
+                      {seg.description && (
+                        <p className="mt-1 text-sm text-gray-600">{seg.description}</p>
+                      )}
+                    </div>
                   ))}
                 </div>
               </div>
