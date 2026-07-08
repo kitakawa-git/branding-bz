@@ -14,6 +14,8 @@ interface Step4Props {
   sessionId: string
   /** 診断済み（再入時）なら true */
   hasDiagnosis: boolean
+  /** 保存済みの診断結果。診断済みのとき Step4 上で要約を見返せるように表示する */
+  diagnosis?: Record<string, unknown> | null
   onComplete: (diagnosis: Record<string, unknown>) => Promise<boolean>
   onBack: () => void
 }
@@ -27,7 +29,13 @@ const LOADING_MESSAGES = [
   '結果をまとめています...',
 ]
 
-export function Step4Diagnosis({ sessionId, hasDiagnosis, onComplete, onBack }: Step4Props) {
+export function Step4Diagnosis({ sessionId, hasDiagnosis, diagnosis, onComplete, onBack }: Step4Props) {
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  const d = (diagnosis || {}) as Record<string, any>
+  const summaryText = typeof d.personality_summary === 'string' ? d.personality_summary : ''
+  const toneText = typeof d.tone_of_voice === 'string' ? d.tone_of_voice : ''
+  const summaryTags = Array.isArray(d.expected_tags) ? d.expected_tags.filter((t: any) => typeof t === 'string') : []
+  /* eslint-enable @typescript-eslint/no-explicit-any */
   const [running, setRunning] = useState(false)
   const [error, setError] = useState('')
   const [messageIndex, setMessageIndex] = useState(0)
@@ -94,6 +102,46 @@ export function Step4Diagnosis({ sessionId, hasDiagnosis, onComplete, onBack }: 
                 30秒ほどかかる場合があります。このままお待ちください。
               </p>
             </>
+          ) : hasDiagnosis ? (
+            <div className="text-left">
+              <div className="text-center">
+                <Sparkles className="mx-auto h-10 w-10 text-ds-app-accent" strokeWidth={1.5} />
+                <h2 className="mt-4 text-base font-bold text-foreground">診断済みのブランドの人格</h2>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  結果は保存されています。詳細の確認・微調整・出力は「前回の結果を見る」から行えます。
+                </p>
+              </div>
+              {summaryText && (
+                <div className="mt-4 rounded-lg border border-gray-200 bg-white p-4">
+                  <p className="text-sm leading-relaxed text-foreground whitespace-pre-wrap">{summaryText}</p>
+                </div>
+              )}
+              {toneText && (
+                <div className="mt-3">
+                  <p className="text-[11px] text-gray-500 mb-1">トーンオブボイス</p>
+                  <p className="text-sm leading-relaxed text-foreground whitespace-pre-wrap">{toneText}</p>
+                </div>
+              )}
+              {summaryTags.length > 0 && (
+                <div className="mt-3">
+                  <p className="text-[11px] text-gray-500 mb-1">期待される印象タグ</p>
+                  <div className="flex flex-wrap gap-2">
+                    {summaryTags.map((t: string) => (
+                      <span key={t} className="rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-[13px] font-medium text-ds-app-accent-hover">{t}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {error && (
+                <div className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600 text-center">
+                  {error}
+                </div>
+              )}
+              <div className="mt-6 flex flex-col items-center gap-2">
+                <AIButton onClick={runDiagnosis}>AIで再診断</AIButton>
+                <p className="text-xs text-muted-foreground">再診断すると前回の結果は上書きされます</p>
+              </div>
+            </div>
           ) : (
             <>
               <Sparkles className="mx-auto h-10 w-10 text-ds-app-accent" strokeWidth={1.5} />
@@ -110,14 +158,7 @@ export function Step4Diagnosis({ sessionId, hasDiagnosis, onComplete, onBack }: 
                 </div>
               )}
               <div className="mt-6 flex flex-col items-center gap-3">
-                <AIButton onClick={runDiagnosis}>
-                  {hasDiagnosis ? 'AIで再診断' : 'AIで診断'}
-                </AIButton>
-                {hasDiagnosis && (
-                  <p className="text-xs text-muted-foreground">
-                    再診断すると前回の結果は上書きされます
-                  </p>
-                )}
+                <AIButton onClick={runDiagnosis}>AIで診断</AIButton>
               </div>
             </>
           )}

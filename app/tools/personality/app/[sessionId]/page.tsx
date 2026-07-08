@@ -64,12 +64,6 @@ export default function PersonalitySessionPage() {
         }
 
         const { session: s } = await res.json()
-        // 診断結果が既にあるのに Step4（生成画面）へ着地する場合は、結果(Step5)を表示する。
-        // 表示上の着地のみ変更（永続化しない）＝Step5の「戻る」でStep4へ戻る導線は維持。
-        const hasDiag = s?.session_data?.diagnosis && Object.keys(s.session_data.diagnosis).length > 0
-        if (hasDiag && s.current_step === 4) {
-          s.current_step = 5
-        }
         setSession(s)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'エラーが発生しました')
@@ -199,6 +193,7 @@ export default function PersonalitySessionPage() {
         <Step4Diagnosis
           sessionId={sessionId}
           hasDiagnosis={!!sd.diagnosis && Object.keys(sd.diagnosis).length > 0}
+          diagnosis={sd.diagnosis && Object.keys(sd.diagnosis).length > 0 ? sd.diagnosis : null}
           onComplete={(diagnosis) =>
             saveAndAdvance(5, Object.keys(diagnosis).length > 0 ? { diagnosis } : undefined)
           }
