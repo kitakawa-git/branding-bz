@@ -25,23 +25,6 @@ import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { Check, Unplug } from 'lucide-react'
 
-interface SegmentSource {
-  name: string
-  description: string
-  size_hint: string
-  selected: boolean
-}
-
-interface VariableSource {
-  name: string
-  segments: SegmentSource[]
-}
-
-interface SegmentationData {
-  mode: 'ai' | 'manual'
-  variables: VariableSource[]
-}
-
 interface TargetingData {
   evaluations: Array<{ segment_name: string; attractiveness: number; competitiveness: number; priority: string }>
   main_target: string
@@ -67,7 +50,6 @@ interface PositioningData {
 interface ConnectModalProps {
   sessionId: string
   companyId: string
-  segmentation: SegmentationData
   targeting: TargetingData
   positioning: PositioningData
   hasTargetFitMap?: boolean
@@ -78,7 +60,6 @@ interface ConnectModalProps {
 }
 
 interface PreflightExisting {
-  hasSegmentation: boolean
   hasTarget: boolean
   hasPositioning: boolean
   hasTargetFitMap?: boolean
@@ -86,7 +67,6 @@ interface PreflightExisting {
 }
 
 interface Selections {
-  segmentation: boolean
   targeting: boolean
   positioning: boolean
   target_fit_map: boolean
@@ -115,7 +95,6 @@ function ToggleRow({ checked, onToggle, title, children }: {
 export function ConnectModal({
   sessionId,
   companyId,
-  segmentation,
   targeting,
   positioning,
   hasTargetFitMap = false,
@@ -127,17 +106,15 @@ export function ConnectModal({
   const [existing, setExisting] = useState<PreflightExisting | null>(null)
   const [loadingPreflight, setLoadingPreflight] = useState(false)
   const [connecting, setConnecting] = useState(false)
-  const [confirmTarget, setConfirmTarget] = useState<{ segmentation: boolean; targeting: boolean; positioning: boolean; target_fit_map: boolean; brand_stance_statements: boolean } | null>(null)
+  const [confirmTarget, setConfirmTarget] = useState<{ targeting: boolean; positioning: boolean; target_fit_map: boolean; brand_stance_statements: boolean } | null>(null)
   // 上書き確認は 409 で1項目ずつ返るため、確認済みフラグを累積して毎回まとめて送る（無限ループ防止）
   const [accumulatedConfirm, setAccumulatedConfirm] = useState<{
-    overwriteSegmentation?: boolean
     overwriteTargeting?: boolean
     overwritePositioning?: boolean
     overwriteTargetFitMap?: boolean
     overwriteBrandStance?: boolean
   }>({})
   const [selections, setSelections] = useState<Selections>({
-    segmentation: true,
     targeting: true,
     positioning: true,
     target_fit_map: true,
@@ -163,10 +140,6 @@ export function ConnectModal({
     fetchPreflight()
   }, [open, sessionId, companyId])
 
-  // セグメンテーション: 選択された segment のみプレビュー
-  const selectedSegments: string[] = (segmentation.variables || [])
-    .flatMap(v => (v.segments || []).filter(s => s.selected).map(s => s.name))
-
   // ターゲット: メイン + サブ
   const targetTags: string[] = [
     ...(targeting.main_target ? [targeting.main_target] : []),
@@ -176,10 +149,10 @@ export function ConnectModal({
   // 自社アイテム
   const selfItem = (positioning.items || []).find(i => i.is_self)
 
-  const hasSelection = selections.segmentation || selections.targeting || selections.positioning
+  const hasSelection = selections.targeting || selections.positioning
     || (hasTargetFitMap && selections.target_fit_map) || (hasBrandStance && selections.brand_stance_statements)
 
-  const executeConnect = useCallback(async (confirm: { overwriteSegmentation?: boolean; overwriteTargeting?: boolean; overwritePositioning?: boolean; overwriteTargetFitMap?: boolean; overwriteBrandStance?: boolean }) => {
+  const executeConnect = useCallback(async (confirm: { overwriteTargeting?: boolean; overwritePositioning?: boolean; overwriteTargetFitMap?: boolean; overwriteBrandStance?: boolean }) => {
     setConnecting(true)
     try {
       const res = await fetch('/api/tools/stp/connect', {
@@ -191,7 +164,6 @@ export function ConnectModal({
 
       if (res.status === 409 && data.needsConfirm) {
         setConfirmTarget({
-          segmentation: data.needsConfirm === 'segmentation',
           targeting: data.needsConfirm === 'targeting',
           positioning: data.needsConfirm === 'positioning',
           target_fit_map: data.needsConfirm === 'target_fit_map',
@@ -217,16 +189,14 @@ export function ConnectModal({
 
   const handleConnectClick = () => {
     // 全項目の既存上書きを事前にまとめて判定し、1回の確認ダイアログで済ませる
-    const needsSegConfirm = !!(selections.segmentation && existing?.hasSegmentation)
     const needsTgtConfirm = !!(selections.targeting && existing?.hasTarget)
     const needsPosConfirm = !!(selections.positioning && existing?.hasPositioning)
     const needsFitMapConfirm = !!(selections.target_fit_map && existing?.hasTargetFitMap)
     const needsStanceConfirm = !!(selections.brand_stance_statements && existing?.hasBrandStance)
     // 新規連携の開始: 累積した確認フラグをリセット
     setAccumulatedConfirm({})
-    if (needsSegConfirm || needsTgtConfirm || needsPosConfirm || needsFitMapConfirm || needsStanceConfirm) {
+    if (needsTgtConfirm || needsPosConfirm || needsFitMapConfirm || needsStanceConfirm) {
       setConfirmTarget({
-        segmentation: needsSegConfirm,
         targeting: needsTgtConfirm,
         positioning: needsPosConfirm,
         target_fit_map: needsFitMapConfirm,
@@ -241,7 +211,6 @@ export function ConnectModal({
     // 今回確認した項目を累積に積み増し、毎回まとめてサーバーへ送る
     const newConfirm = {
       ...accumulatedConfirm,
-      overwriteSegmentation: confirmTarget?.segmentation ? true : accumulatedConfirm.overwriteSegmentation,
       overwriteTargeting: confirmTarget?.targeting ? true : accumulatedConfirm.overwriteTargeting,
       overwritePositioning: confirmTarget?.positioning ? true : accumulatedConfirm.overwritePositioning,
       overwriteTargetFitMap: confirmTarget?.target_fit_map ? true : accumulatedConfirm.overwriteTargetFitMap,
@@ -253,7 +222,6 @@ export function ConnectModal({
   }
 
   const overwriteParts: string[] = []
-  if (confirmTarget?.segmentation) overwriteParts.push('セグメンテーション')
   if (confirmTarget?.targeting) overwriteParts.push('ターゲット')
   if (confirmTarget?.positioning) overwriteParts.push('ポジショニングマップ')
   if (confirmTarget?.target_fit_map) overwriteParts.push('ターゲット適合マップ')
@@ -274,30 +242,6 @@ export function ConnectModal({
           </DialogHeader>
 
           <div className="space-y-3">
-            {/* セグメンテーション */}
-            <ToggleRow
-              checked={selections.segmentation}
-              onToggle={() => setSelections(p => ({ ...p, segmentation: !p.segmentation }))}
-              title="セグメンテーション → 顧客セグメント"
-            >
-              {selectedSegments.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
-                  {selectedSegments.map((name, i) => (
-                    <span key={i} className="rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-700">
-                      {name}
-                    </span>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-xs text-muted-foreground">選択されたセグメントはありません</p>
-              )}
-              {existing?.hasSegmentation && (
-                <p className="mt-2 text-xs text-amber-600">
-                  ⚠ 既存のセグメンテーションを上書きします（実行前に確認があります）
-                </p>
-              )}
-            </ToggleRow>
-
             {/* ターゲティング */}
             <ToggleRow
               checked={selections.targeting}
@@ -324,6 +268,18 @@ export function ConnectModal({
                 </p>
               )}
             </ToggleRow>
+
+            {hasTargetFitMap && (
+              <ToggleRow
+                checked={selections.target_fit_map}
+                onToggle={() => setSelections(p => ({ ...p, target_fit_map: !p.target_fit_map }))}
+                title="ターゲット適合マップ → 顧客側軸＋カバー範囲"
+              >
+                <p className="text-xs text-muted-foreground">
+                  狙ったターゲットが自社のカバー範囲に入るかの分析結果を本体に保存します。
+                </p>
+              </ToggleRow>
+            )}
 
             {/* ポジショニングマップ */}
             <ToggleRow
@@ -355,18 +311,6 @@ export function ConnectModal({
                 </p>
               )}
             </ToggleRow>
-
-            {hasTargetFitMap && (
-              <ToggleRow
-                checked={selections.target_fit_map}
-                onToggle={() => setSelections(p => ({ ...p, target_fit_map: !p.target_fit_map }))}
-                title="ターゲット適合マップ → 顧客側軸＋カバー範囲"
-              >
-                <p className="text-xs text-muted-foreground">
-                  狙ったターゲットが自社のカバー範囲に入るかの分析結果を本体に保存します。
-                </p>
-              </ToggleRow>
-            )}
 
             {hasBrandStance && (
               <ToggleRow

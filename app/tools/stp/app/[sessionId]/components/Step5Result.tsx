@@ -4,13 +4,13 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { PositioningMap } from '@/components/PositioningMap'
 import type { PositioningMapData } from '@/lib/types/positioning-map'
+import { PositioningMapAndStance } from '@/components/shared/PositioningMapAndStance'
+import { TargetSegmentCards } from '@/components/shared/TargetSegmentCards'
+import { TargetDeepDive } from '@/components/shared/TargetDeepDive'
+import { TargetFitMapPreview } from '@/components/shared/TargetFitMapPreview'
 import { checkConsistency } from '@/lib/stp/consistency-check'
 import type { STPSessionData, TargetFitMap, BrandStanceStatement } from '../page'
-import { TargetFitMapStatic } from '@/components/TargetFitMapStatic'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import { ConnectModal } from './ConnectModal'
@@ -28,9 +28,6 @@ import {
 import {
   ArrowLeft,
   Download,
-  LayoutGrid,
-  Target,
-  MapPin,
   Loader2,
   Sparkles,
   RefreshCw,
@@ -70,6 +67,7 @@ interface TargetingData {
   target_summary?: string
   buying_factors?: string[]
   strengths?: string
+  competitors_analysis?: Array<{ name: string; traits: string }>
   target_fit_map?: TargetFitMap | null
 }
 
@@ -137,13 +135,124 @@ function toMapData(positioning: PositioningData): PositioningMapData {
   }
 }
 
-// 切り口（A/B/C/D）の番号バッジ配色（Step2/3 と一致）。5つ目以降はグレー
-const VAR_BADGE_COLORS = [
-  'bg-blue-100 text-blue-700',
-  'bg-emerald-100 text-emerald-700',
-  'bg-purple-100 text-purple-700',
-  'bg-amber-100 text-amber-700',
-]
+// T — ターゲティング セクション（見出し＋ターゲットカード＋適合マップ＋概要文AI生成）
+function TargetingSection({
+  targeting,
+  mainEval,
+  subEvals,
+  targetSummary,
+  summaryLoading,
+  onRegenerateSummary,
+}: {
+  targeting: TargetingData
+  mainEval: Evaluation | undefined
+  subEvals: Array<{ name: string; description: string; eval: Evaluation | undefined }>
+  targetSummary: string
+  summaryLoading: boolean
+  onRegenerateSummary: () => void
+}) {
+  return (
+    <>
+      <div className="mb-5 rounded-lg border border-gray-200 bg-gray-50 p-5">
+        <h2 className="mb-3 text-sm font-bold text-gray-900">ターゲット</h2>
+        <TargetSegmentCards
+          main={{ name: targeting.main_target, description: targeting.target_description }}
+          subs={subEvals.map((sub) => ({
+            name: sub.name,
+            description: sub.description,
+            extra: sub.eval ? (
+              <div className="mt-1 flex items-center gap-4 text-xs text-gray-500">
+                <span>
+                  魅力度: <Stars count={sub.eval.attractiveness} />
+                </span>
+                <span>
+                  競争力: <Stars count={sub.eval.competitiveness} />
+                </span>
+              </div>
+            ) : undefined,
+          }))}
+          emptySubsMessage="サブターゲット: なし"
+          mainExtra={
+            <>
+              {mainEval && (
+                <div className="mt-2 flex items-center gap-4 text-xs text-gray-600">
+                  <span>
+                    市場の魅力度: <Stars count={mainEval.attractiveness} />
+                  </span>
+                  <span>
+                    自社の競争力: <Stars count={mainEval.competitiveness} />
+                  </span>
+                </div>
+              )}
+
+              <TargetDeepDive
+                buyingFactors={targeting.buying_factors}
+                strengths={targeting.strengths}
+                competitorsAnalysis={targeting.competitors_analysis}
+              />
+            </>
+          }
+        />
+
+        {/* ターゲット適合マップ（サムネイル） */}
+        {targeting.target_fit_map && <TargetFitMapPreview fitMap={targeting.target_fit_map} />}
+
+        {/* ターゲット概要文（AI生成） */}
+        <div className="mt-4 rounded-lg border border-blue-100 bg-blue-50/30 p-4">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5">
+              <Sparkles className="h-3.5 w-3.5 text-ds-app-accent" />
+              <p className="text-xs font-bold text-ds-app-accent">ターゲット戦略の概要（AI生成）</p>
+            </div>
+            {targetSummary && !summaryLoading && (
+              <button
+                type="button"
+                onClick={onRegenerateSummary}
+                className="flex items-center gap-1 text-[11px] text-gray-500 hover:text-ds-app-accent"
+              >
+                <RefreshCw className="h-3 w-3" />
+                再生成
+              </button>
+            )}
+          </div>
+          {summaryLoading ? (
+            <div className="flex items-center gap-2 text-xs text-gray-500">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ターゲット戦略の概要を生成中...
+            </div>
+          ) : targetSummary ? (
+            <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{targetSummary}</p>
+          ) : (
+            <button
+              type="button"
+              onClick={onRegenerateSummary}
+              className="text-xs text-ds-app-accent hover:underline"
+            >
+              AIで概要文を生成する
+            </button>
+          )}
+        </div>
+
+      </div>
+    </>
+  )
+}
+
+// P — ポジショニング セクション（見出し＋マップ＋自社の立ち位置。中身は共有コンポーネント）
+function PositioningSection({ positioning, brandStance }: {
+  positioning: PositioningData
+  brandStance: BrandStanceStatement[]
+}) {
+  return (
+    <div className="mb-5">
+      <PositioningMapAndStance
+        positioningMapData={toMapData(positioning)}
+        brandStance={brandStance}
+        emptyStanceMessage="ターゲット別の立ち位置は Step4（ポジショニング）で生成されます。"
+      />
+    </div>
+  )
+}
 
 export function Step5Result({
   sessionId,
@@ -185,6 +294,7 @@ export function Step5Result({
         description: 'S→T→Pの各段階で矛盾なく接続されています。このまま出力できます。',
         bgClass: 'bg-emerald-50 border-emerald-200',
         textClass: 'text-emerald-700',
+        pillBgClass: 'bg-emerald-100',
         circleBorderClass: 'border-emerald-600',
         circleTextClass: 'text-emerald-700',
       }
@@ -195,6 +305,7 @@ export function Step5Result({
         description: '一部のステップで整合性が確認できていません。未充足項目を見直してください。',
         bgClass: 'bg-amber-50 border-amber-200',
         textClass: 'text-amber-700',
+        pillBgClass: 'bg-amber-100',
         circleBorderClass: 'border-amber-600',
         circleTextClass: 'text-amber-700',
       }
@@ -204,6 +315,7 @@ export function Step5Result({
       description: '戦略の整合性に重要な課題があります。前のステップに戻って見直しを推奨します。',
       bgClass: 'bg-red-50 border-red-200',
       textClass: 'text-red-700',
+      pillBgClass: 'bg-red-100',
       circleBorderClass: 'border-red-600',
       circleTextClass: 'text-red-700',
     }
@@ -440,7 +552,7 @@ export function Step5Result({
       <div className={`mb-4 rounded-xl border p-4 ${consistencyStyle.bgClass}`}>
         <div className="flex items-center gap-4">
           {/* 円形スコアバッジ */}
-          <div className={`flex h-16 w-16 flex-shrink-0 flex-col items-center justify-center rounded-full border-2 bg-white ${consistencyStyle.circleBorderClass}`}>
+          <div className={`flex h-16 w-16 flex-shrink-0 flex-col items-center justify-center rounded-full border-2 ${consistencyStyle.circleBorderClass}`}>
             <div className={`text-xl font-bold leading-none ${consistencyStyle.circleTextClass}`}>
               {consistency.total}/5
             </div>
@@ -448,7 +560,7 @@ export function Step5Result({
           </div>
           {/* タイトル＋説明＋チェックピル */}
           <div className="min-w-0 flex-1">
-            <div className={`text-sm font-bold ${consistencyStyle.textClass}`}>
+            <div className={`text-base font-bold ${consistencyStyle.textClass}`}>
               戦略整合性: {consistencyStyle.label}
             </div>
             <div className="mt-0.5 text-xs text-muted-foreground">
@@ -460,7 +572,7 @@ export function Step5Result({
                   key={it.key}
                   className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-medium ${
                     it.passed
-                      ? 'bg-white ' + consistencyStyle.textClass
+                      ? consistencyStyle.pillBgClass + ' ' + consistencyStyle.textClass
                       : 'bg-white text-gray-400'
                   }`}
                   title={!it.passed && it.reason ? it.reason : undefined}
@@ -474,244 +586,16 @@ export function Step5Result({
         </div>
       </div>
 
-      <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-        <CardContent className="p-5">
-          {/* ===== S — セグメンテーション ===== */}
-          <div className="mb-4 flex items-center gap-2">
-            <LayoutGrid className="h-5 w-5 text-ds-app-accent" />
-            <h2 className="text-sm font-bold text-gray-900">
-              S - セグメンテーション
-            </h2>
-          </div>
-          <div className="mb-5 rounded-lg border border-gray-200 bg-white p-5">
-        <div className="space-y-4">
-          {(segmentation.variables || []).map((variable, vi) => {
-            const selectedSegments = variable.segments.filter((s) => s.selected)
-            if (selectedSegments.length === 0) return null
-            return (
-              <div key={vi} className="rounded-lg border border-gray-200 bg-white p-4">
-                <div className="mb-2 flex items-center gap-2">
-                  <span
-                    aria-hidden="true"
-                    className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold ${VAR_BADGE_COLORS[vi] ?? 'bg-gray-100 text-gray-600'}`}
-                  >
-                    {String.fromCharCode(65 + vi)}
-                  </span>
-                  <h2 className="text-sm font-bold text-gray-900">{variable.name}</h2>
-                </div>
-                {variable.reason && (
-                  <p className="mb-3 text-sm text-gray-500 italic pl-1">{variable.reason}</p>
-                )}
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                  {selectedSegments.map((seg, si) => (
-                    <div key={si} className="rounded-lg border border-gray-200 bg-white px-3 py-2.5">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold text-gray-900">{seg.name}</span>
-                        <span
-                          className={`inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${
-                            seg.size_hint === '大'
-                              ? 'bg-emerald-100 text-emerald-700'
-                              : seg.size_hint === '中'
-                              ? 'bg-amber-100 text-amber-700'
-                              : 'bg-gray-100 text-gray-600'
-                          }`}
-                        >
-                          規模: {seg.size_hint}
-                        </span>
-                      </div>
-                      {seg.description && (
-                        <p className="mt-1 text-sm text-gray-600">{seg.description}</p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      </div>
+      <TargetingSection
+        targeting={targeting}
+        mainEval={mainEval}
+        subEvals={subEvals}
+        targetSummary={targetSummary}
+        summaryLoading={summaryLoading}
+        onRegenerateSummary={generateTargetSummary}
+      />
 
-          {/* ===== T — ターゲティング ===== */}
-          <div className="mb-4 flex items-center gap-2">
-            <Target className="h-5 w-5 text-ds-app-accent" />
-            <h2 className="text-sm font-bold text-gray-900">
-              T - ターゲティング
-            </h2>
-          </div>
-          <div className="mb-5 rounded-lg border border-gray-200 bg-white p-5">
-        <h2 className="mb-3 text-sm font-bold text-gray-900">ターゲット</h2>
-        {/* メインターゲット（Step3のカード・バッジ表現に統一） */}
-        <div className="relative mb-3.5 mt-4 rounded-lg border border-ds-app-accent-soft bg-blue-50/50 px-3 py-2.5">
-          <Badge className="absolute -top-[9px] left-[6px] rounded-full px-1.5 py-0 text-[10px] bg-ds-app-accent text-white hover:bg-ds-app-accent-hover">メインターゲット</Badge>
-          <p className="text-sm font-bold text-gray-900">
-            {targeting.main_target || '未選択'}
-          </p>
-          {targeting.target_description && (
-            <p className="mt-1 text-sm text-gray-600 leading-relaxed">
-              {targeting.target_description}
-            </p>
-          )}
-          {mainEval && (
-            <div className="mt-2 flex items-center gap-4 text-xs text-gray-600">
-              <span>
-                市場の魅力度: <Stars count={mainEval.attractiveness} />
-              </span>
-              <span>
-                自社の競争力: <Stars count={mainEval.competitiveness} />
-              </span>
-            </div>
-          )}
-        </div>
-
-        {/* サブターゲット（Step3のカード・バッジ表現に統一） */}
-        {subEvals.length > 0 ? (
-          <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2">
-            {subEvals.map((sub, i) => (
-              <div
-                key={i}
-                className="relative rounded-lg border border-blue-300 bg-blue-50/30 px-3 py-2.5"
-              >
-                <Badge variant="outline" className="absolute -top-[9px] left-[6px] rounded-full px-1.5 py-0 text-[10px] border-blue-300 bg-white text-blue-300">サブターゲット</Badge>
-                <p className="text-sm font-bold text-gray-700">{sub.name}</p>
-                {sub.description && (
-                  <p className="mt-1 text-sm text-gray-600 leading-relaxed">{sub.description}</p>
-                )}
-                {sub.eval && (
-                  <div className="mt-1 flex items-center gap-4 text-xs text-gray-500">
-                    <span>
-                      魅力度: <Stars count={sub.eval.attractiveness} />
-                    </span>
-                    <span>
-                      競争力: <Stars count={sub.eval.competitiveness} />
-                    </span>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5">
-            <p className="text-sm text-gray-400">サブターゲット: なし</p>
-          </div>
-        )}
-
-        {/* ターゲット適合マップ（サムネイル） */}
-        {targeting.target_fit_map && (
-          <div className="mt-4">
-            <h2 className="mb-3 text-sm font-bold text-gray-900">ターゲット適合マップ</h2>
-            <div className="rounded-lg border border-gray-200 bg-white p-3">
-            <TargetFitMapStatic fitMap={targeting.target_fit_map} />
-            <div className="mt-2">
-              {(() => {
-                const st = targeting.target_fit_map.consistency_status
-                const conf = st === 'green'
-                  ? { bar: 'bg-emerald-500', wrap: 'bg-emerald-50 text-emerald-700', text: '✓ ターゲット全員がカバー範囲内' }
-                  : st === 'yellow'
-                    ? { bar: 'bg-amber-500', wrap: 'bg-amber-50 text-amber-700', text: '⚠ 一部がカバー範囲の端' }
-                    : { bar: 'bg-red-500', wrap: 'bg-red-50 text-red-700', text: '✗ カバー範囲外のターゲットあり' }
-                return (
-                  <div className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-[11px] font-medium ${conf.wrap}`}>
-                    <span className={`inline-block h-2 w-2 rounded-full ${conf.bar}`} />{conf.text}
-                  </div>
-                )
-              })()}
-            </div>
-            </div>
-          </div>
-        )}
-
-        {/* ターゲット概要文（AI生成） */}
-        <div className="mt-4 rounded-lg border border-blue-100 bg-blue-50/30 p-4">
-          <div className="mb-2 flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1.5">
-              <Sparkles className="h-3.5 w-3.5 text-ds-app-accent" />
-              <p className="text-xs font-bold text-ds-app-accent">ターゲット戦略の概要（AI生成）</p>
-            </div>
-            {targetSummary && !summaryLoading && (
-              <button
-                type="button"
-                onClick={generateTargetSummary}
-                className="flex items-center gap-1 text-[11px] text-gray-500 hover:text-ds-app-accent"
-              >
-                <RefreshCw className="h-3 w-3" />
-                再生成
-              </button>
-            )}
-          </div>
-          {summaryLoading ? (
-            <div className="flex items-center gap-2 text-xs text-gray-500">
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ターゲット戦略の概要を生成中...
-            </div>
-          ) : targetSummary ? (
-            <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{targetSummary}</p>
-          ) : (
-            <button
-              type="button"
-              onClick={generateTargetSummary}
-              className="text-xs text-ds-app-accent hover:underline"
-            >
-              AIで概要文を生成する
-            </button>
-          )}
-        </div>
-
-      </div>
-
-          {/* ===== P — ポジショニング ===== */}
-          <div className="mb-4 flex items-center gap-2">
-            <MapPin className="h-5 w-5 text-ds-app-accent" />
-            <h2 className="text-sm font-bold text-gray-900">
-              P - ポジショニング
-            </h2>
-          </div>
-          <div className="mb-5 rounded-lg border border-gray-200 bg-white p-5">
-        <h2 className="mb-3 text-sm font-bold text-gray-900">ポジショニングマップ</h2>
-        {/* マップ */}
-        <div className="rounded-lg border bg-white p-3">
-          <PositioningMap data={toMapData(positioning)} />
-        </div>
-
-        {/* 自社の立ち位置（ターゲット別×3） */}
-        <div className="mt-5 border-t border-gray-100 pt-4">
-          <div className="mb-3 flex items-center justify-between gap-2">
-            <p className="text-sm font-bold text-gray-900">自社の立ち位置</p>
-          </div>
-          {brandStance.length === 0 ? (
-            <p className="text-xs text-muted-foreground">ターゲット別の立ち位置は Step4（ポジショニング）で生成されます。</p>
-          ) : (
-            <div className="mt-3 space-y-3.5">
-              {brandStance.map((s, i) => {
-                const isMain = s.target_role === 'main'
-                return (
-                  <div
-                    key={i}
-                    className={`relative rounded-lg px-3 py-2.5 ${
-                      isMain
-                        ? 'border border-ds-app-accent-soft bg-blue-50/50'
-                        : 'border border-blue-300 bg-blue-50/30'
-                    }`}
-                  >
-                    {isMain ? (
-                      <Badge className="absolute -top-[9px] left-[6px] rounded-full px-1.5 py-0 text-[10px] bg-ds-app-accent text-white hover:bg-ds-app-accent-hover">メインターゲット</Badge>
-                    ) : (
-                      <Badge variant="outline" className="absolute -top-[9px] left-[6px] rounded-full px-1.5 py-0 text-[10px] border-blue-300 bg-white text-blue-300">サブターゲット</Badge>
-                    )}
-                    <p className={`text-sm font-bold ${isMain ? 'text-gray-900' : 'text-gray-700'}`}>{s.target_name}</p>
-                    <p className="mt-1 text-sm leading-relaxed text-gray-800 whitespace-pre-wrap">{s.statement}</p>
-                    {s.rationale && (
-                      <p className="mt-1 text-[11px] text-muted-foreground leading-relaxed">なぜなら: {s.rationale}</p>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </div>
-      </div>
-
-        </CardContent>
-      </Card>
+      <PositioningSection positioning={positioning} brandStance={brandStance} />
 
       {/* ===== ツール末尾共通アクション（連携 + やり直す） ===== */}
       <ToolConnectActions
@@ -740,7 +624,6 @@ export function Step5Result({
         <ConnectModal
           sessionId={sessionId}
           companyId={adminCompanyId}
-          segmentation={segmentation}
           targeting={targeting}
           positioning={positioning}
           hasTargetFitMap={!!targeting.target_fit_map}

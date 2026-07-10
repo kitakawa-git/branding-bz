@@ -358,14 +358,73 @@ export function Step4Positioning({
         />
       ) : (
         <div className="space-y-4 rounded-lg border border-border bg-[hsl(0_0%_97%)] p-4">
-          <div className="flex items-center justify-between gap-2">
+          {/* 自社の立ち位置（ターゲット別×N。Step4で生成→Step5は表示のみ）。先頭表示のため上余白なし */}
+          <div>
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <FieldHeading className="mb-0">ポジショニング</FieldHeading>
+          <AIButton
+            size="sm"
+            onClick={generateBrandStance}
+            disabled={stanceLoading || !targeting.main_target || !isValid}
+            icon={stanceLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : undefined}
+          >
+            {stanceLoading ? '生成中…' : brandStance.length > 0 ? 'AIで再生成' : 'AIで自社の立ち位置を生成'}
+          </AIButton>
+        </div>
+        <p className="mb-3 text-[13px] leading-relaxed text-muted-foreground">
+          このポジショニングをもとに、各ターゲットに対して自社が何者として刺さるかを言語化します（確認・出力ステップに反映されます）。
+        </p>
+        {stanceLoading && brandStance.length === 0 ? (
+          <StepProgressPanel
+            steps={[
+              { label: 'ターゲットを整理' },
+              { label: '立ち位置を言語化' },
+              { label: '根拠をまとめる' },
+            ]}
+            stepDuration={1500}
+            done={false}
+            minHeight={160}
+          />
+        ) : brandStance.length === 0 ? (
+          <p className="text-xs text-muted-foreground">ポジショニングが整うと、ターゲット別の立ち位置を自動生成します。</p>
+        ) : (
+          <div className="mt-3 space-y-3.5">
+            {brandStance.map((s, i) => {
+              const isMain = s.target_role === 'main'
+              return (
+                <div
+                  key={i}
+                  className={`relative rounded-lg p-4 ${
+                    isMain
+                      ? 'border border-ds-app-accent-soft bg-blue-50/50'
+                      : 'border border-blue-300 bg-blue-50/30'
+                  }`}
+                >
+                  {isMain ? (
+                    <Badge className="absolute -top-[9px] left-[6px] rounded-full px-1.5 py-0 !text-[10px] !leading-[16px] bg-ds-app-accent text-white hover:bg-ds-app-accent-hover">メインターゲット</Badge>
+                  ) : (
+                    <Badge variant="outline" className="absolute -top-[9px] left-[6px] rounded-full px-1.5 py-0 !text-[10px] !leading-[16px] border-blue-300 bg-white text-blue-300">サブターゲット</Badge>
+                  )}
+                  <p className={`text-lg font-bold ${isMain ? 'text-gray-900' : 'text-gray-700'}`}>{s.target_name}</p>
+                  <p className="mt-1 text-sm leading-relaxed text-gray-800 whitespace-pre-wrap">{s.statement}</p>
+                  {s.rationale && (
+                    <p className="mt-1 text-[11px] text-muted-foreground leading-relaxed">なぜなら: {s.rationale}</p>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
+          </div>
+
+          <div className="!mt-8 flex items-center justify-between gap-2">
             <FieldHeading className="mb-0">自社・競合の一覧</FieldHeading>
             <AIButton size="sm" onClick={handleRegenerate} className="shrink-0">
               AIで提案生成
             </AIButton>
           </div>
-          {/* 1. 要素リスト（2カラム）：まず要素を確認・命名。背景白のカードで括る */}
-          <div className="rounded-lg border border-gray-200 bg-white p-4">
+          {/* 1. 要素リスト（2カラム）：まず要素を確認・命名 */}
+          <div>
             <FieldSubLabel>要素（{items.length}社）</FieldSubLabel>
             <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
               {items.map((item, index) => (
@@ -374,7 +433,7 @@ export function Step4Positioning({
                   onClick={() => setSelectedIdx(index)}
                   className={`flex items-center gap-2 rounded-lg border p-2.5 transition-all cursor-pointer ${
                     selectedIdx === index
-                      ? 'border-ds-app-accent bg-ds-app-accent/5 ring-1 ring-ds-app-accent'
+                      ? 'border-ds-app-accent bg-white ring-1 ring-ds-app-accent'
                       : 'border-border bg-card hover:border-muted-foreground'
                   }`}
                 >
@@ -419,9 +478,10 @@ export function Step4Positioning({
             </Button>
           </div>
 
-          {/* ポジショニングマップ：見出し＋チャートを背景白のカードで括る */}
-          <div className="!mt-6 rounded-lg border border-gray-200 bg-white p-4">
+          {/* ポジショニングマップ：見出しはカードの外、チャートのみ背景白のカードで括る */}
+          <div className="!mt-8">
           <FieldHeading className="mb-3">ポジショニングマップ</FieldHeading>
+          <div className="rounded-lg border border-gray-200 bg-white p-4">
           {/* 3. チャート＋軸設定オーバーレイ（全幅・ドラッグで配置）。
               padding は外側の白カード(p-4)と二重になるため付けない。flex-col でフレックス子のマージン相殺を防ぎ、根拠文の mt-[90px]（オーバーレイ回避）を効かせる。 */}
           <div className="relative flex flex-col">
@@ -446,16 +506,9 @@ export function Step4Positioning({
               </div>
             </div>
 
-            {/* 軸選定の根拠（AI生成・軸設定オーバーレイの下、マップの上）。
-                オーバーレイは absolute(top-3, 高さ~78px) なので mt-[90px] でその下に流す。 */}
-            {axisRationale && (
-              <div className="mt-[80px] rounded-md bg-muted/40 px-3 py-2 text-[11px] leading-relaxed text-muted-foreground">
-                軸選定の根拠: {axisRationale}
-              </div>
-            )}
-
-            {/* relativeラッパーはSVGと同寸（width100%・aspect4/3）なので、%指定でSVG座標と一致する。 */}
-            <div className={`relative ${axisRationale ? 'mt-3' : 'mt-[80px]'}`}>
+            {/* relativeラッパーはSVGと同寸（width100%・aspect4/3）なので、%指定でSVG座標と一致する。
+                オーバーレイは absolute(top-3, 高さ~78px) なので mt-[80px] でその下に流す。 */}
+            <div className="relative mt-[80px]">
               <InteractivePositioningMap
                 items={items}
                 axes={{ x_axis: xAxis, y_axis: yAxis }}
@@ -514,64 +567,6 @@ export function Step4Positioning({
             </div>
           </div>
           </div>
-
-          {/* 自社の立ち位置（ターゲット別×N。Step4で生成→Step5は表示のみ）。背景白のカードで括る。上余白は space-y を !important で上書きして1段階広げる */}
-          <div className="!mt-6 rounded-lg border border-gray-200 bg-white p-4">
-        <div className="mb-2 flex items-center justify-between gap-2">
-          <FieldHeading className="mb-0">自社の立ち位置</FieldHeading>
-          <AIButton
-            size="sm"
-            onClick={generateBrandStance}
-            disabled={stanceLoading || !targeting.main_target || !isValid}
-            icon={stanceLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : undefined}
-          >
-            {stanceLoading ? '生成中…' : brandStance.length > 0 ? 'AIで再生成' : 'AIで自社の立ち位置を生成'}
-          </AIButton>
-        </div>
-        <p className="mb-3 text-[13px] leading-relaxed text-muted-foreground">
-          このポジショニングをもとに、各ターゲットに対して自社が何者として刺さるかを言語化します（確認・出力ステップに反映されます）。
-        </p>
-        {stanceLoading && brandStance.length === 0 ? (
-          <StepProgressPanel
-            steps={[
-              { label: 'ターゲットを整理' },
-              { label: '立ち位置を言語化' },
-              { label: '根拠をまとめる' },
-            ]}
-            stepDuration={1500}
-            done={false}
-            minHeight={160}
-          />
-        ) : brandStance.length === 0 ? (
-          <p className="text-xs text-muted-foreground">ポジショニングが整うと、ターゲット別の立ち位置を自動生成します。</p>
-        ) : (
-          <div className="mt-3 space-y-3.5">
-            {brandStance.map((s, i) => {
-              const isMain = s.target_role === 'main'
-              return (
-                <div
-                  key={i}
-                  className={`relative rounded-lg px-3 py-2.5 ${
-                    isMain
-                      ? 'border border-ds-app-accent-soft bg-blue-50/50'
-                      : 'border border-blue-300 bg-blue-50/30'
-                  }`}
-                >
-                  {isMain ? (
-                    <Badge className="absolute -top-[9px] left-[6px] rounded-full px-1.5 py-0 text-[10px] bg-ds-app-accent text-white hover:bg-ds-app-accent-hover">メインターゲット</Badge>
-                  ) : (
-                    <Badge variant="outline" className="absolute -top-[9px] left-[6px] rounded-full px-1.5 py-0 text-[10px] border-blue-300 bg-white text-blue-300">サブターゲット</Badge>
-                  )}
-                  <p className={`text-sm font-bold ${isMain ? 'text-gray-900' : 'text-gray-700'}`}>{s.target_name}</p>
-                  <p className="mt-1 text-sm leading-relaxed text-gray-800 whitespace-pre-wrap">{s.statement}</p>
-                  {s.rationale && (
-                    <p className="mt-1 text-[11px] text-muted-foreground leading-relaxed">なぜなら: {s.rationale}</p>
-                  )}
-                </div>
-              )
-            })}
-          </div>
-        )}
           </div>
         </div>
       )}

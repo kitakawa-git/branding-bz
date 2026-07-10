@@ -637,18 +637,18 @@ export function Step3Targeting({
                   <button
                     type="button"
                     onClick={() => handleCardClick(seg.name)}
-                    className="relative w-full px-3 py-2.5 text-left cursor-pointer"
+                    className="relative w-full p-4 text-left cursor-pointer"
                   >
                     {/* 選択状態バッジ（デザインシステムのBadgeに統一） */}
                     {isMain && (
-                      <Badge className="absolute -top-[9px] left-[6px] rounded-full px-1.5 py-0 text-[10px] bg-ds-app-accent text-white hover:bg-ds-app-accent-hover">メインターゲット</Badge>
+                      <Badge className="absolute -top-[9px] left-[6px] rounded-full px-1.5 py-0 !text-[10px] !leading-[16px] bg-ds-app-accent text-white hover:bg-ds-app-accent-hover">メインターゲット</Badge>
                     )}
                     {isSub && (
-                      <Badge variant="outline" className="absolute -top-[9px] left-[6px] rounded-full px-1.5 py-0 text-[10px] border-blue-300 bg-white text-blue-300">サブターゲット</Badge>
+                      <Badge variant="outline" className="absolute -top-[9px] left-[6px] rounded-full px-1.5 py-0 !text-[10px] !leading-[16px] border-blue-300 bg-white text-blue-300">サブターゲット</Badge>
                     )}
 
-                    <div className="flex items-center gap-2 pr-24">
-                      <span className="text-sm font-bold text-gray-900">{seg.name}</span>
+                    <div className={`flex items-center gap-2 ${isMain ? 'pr-24' : ''}`}>
+                      <span className={`font-bold text-gray-900 ${isMain || isSub ? 'text-lg' : 'text-sm'}`}>{seg.name}</span>
                       <span
                         className={`inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${
                           seg.size_hint === '大'

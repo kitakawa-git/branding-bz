@@ -48,20 +48,6 @@ type TargetSegment = {
   description: string
 }
 
-// セグメンテーション（STP分析ツールから連携。brand_personas[0].segmentation_data）
-type SegmentationData = {
-  mode?: 'ai' | 'manual'
-  variables?: Array<{
-    name: string
-    segments?: Array<{
-      name: string
-      description?: string
-      size_hint?: string
-      selected?: boolean
-    }>
-  }>
-}
-
 // 提供価値（value_propositions テーブル。「考え方」から「接し方」へ移動・統合）
 // id は保存時の id保持sync 用（既存行はUPDATE・新規はINSERT）。新規入力時は未定義。
 type ProvidedValueItem = {
@@ -105,7 +91,6 @@ const DEFAULT_COLORS = [
 type StrategyCache = {
   targetOverview: string
   targetSegments: TargetSegment[]
-  segmentationData: SegmentationData | null
   providedValues: ProvidedValueItem[]
   personas: PersonaItem[]
   positioningMapData: PositioningMapData | null
@@ -123,7 +108,6 @@ export default function BrandStrategyPage() {
   const cached = companyId ? getPageCache<StrategyCache>(cacheKey) : null
   const [targetOverview, setTargetOverview] = useState<string>(cached?.targetOverview ?? '')
   const [targetSegments, setTargetSegments] = useState<TargetSegment[]>(cached?.targetSegments ?? [])
-  const [segmentationData, setSegmentationData] = useState<SegmentationData | null>(cached?.segmentationData ?? null)
   const [providedValues, setProvidedValues] = useState<ProvidedValueItem[]>(cached?.providedValues ?? [])
   const [personas, setPersonas] = useState<PersonaItem[]>(cached?.personas ?? [])
   const [openAvatarIdx, setOpenAvatarIdx] = useState<number | null>(null)
@@ -210,8 +194,6 @@ export default function BrandStrategyPage() {
         // STP連携: ターゲット適合マップ・自社の立ち位置（保存済みを読み取り表示）
         const parsedFitMap = (first.target_fit_map_data as TargetFitMap) || null
         const parsedStance = (first.brand_stance_statements as { statements: BrandStanceStatement[] }) || null
-        // セグメンテーション（STP連携データ）: brand_personas[0].segmentation_data
-        const parsedSegmentation = (first.segmentation_data as SegmentationData) || null
         const parsedPersonas = data.map((d: Record<string, unknown>) => ({
           id: (d.id as string) || undefined,
           name: (d.name as string) || '',
@@ -229,7 +211,6 @@ export default function BrandStrategyPage() {
         // 主なターゲット: companies.target_segments（概要文とは別管理）
         setTargetOverview(parsedTargetOverview)
         setTargetSegments(companyTargetSegments)
-        setSegmentationData(parsedSegmentation)
         setPositioningMapData(parsedMapData)
         setTargetFitMapData(parsedFitMap)
         setBrandStanceStatements(parsedStance)
@@ -237,7 +218,6 @@ export default function BrandStrategyPage() {
         setPageCache<StrategyCache>(cacheKey, {
           targetOverview: parsedTargetOverview,
           targetSegments: companyTargetSegments,
-          segmentationData: parsedSegmentation,
           providedValues: parsedProvidedValues,
           personas: parsedPersonas,
           positioningMapData: parsedMapData,
@@ -577,7 +557,6 @@ export default function BrandStrategyPage() {
         sort_order: i,
         target: i === 0 ? (overviewText || null) : null,
         positioning_map_data: i === 0 ? (positioningMapData || null) : null,
-        segmentation_data: i === 0 ? (segmentationData || null) : null,
       })
 
       if (cleanedPersonas.length > 0) {
@@ -603,14 +582,13 @@ export default function BrandStrategyPage() {
             savedPersonas.push({ ...p, id: nid })
           }
         }
-      } else if (overviewText || positioningMapData || segmentationData) {
-        // ペルソナは無いが概要/ポジショニング/セグメンテーションを保持するため row0 を1件維持。
+      } else if (overviewText || positioningMapData) {
+        // ペルソナは無いが概要/ポジショニングを保持するため row0 を1件維持。
         const dummyPayload = {
           name: '',
           sort_order: 0,
           target: overviewText || null,
           positioning_map_data: positioningMapData || null,
-          segmentation_data: segmentationData || null,
         }
         if (pExistingIds.length > 0) {
           const res = await fetch(`${supabaseUrl}/rest/v1/brand_personas?id=eq.${pExistingIds[0]}`, {
@@ -703,7 +681,6 @@ export default function BrandStrategyPage() {
       setPageCache<StrategyCache>(cacheKey, {
         targetOverview: overviewText,
         targetSegments: validSegments,
-        segmentationData,
         providedValues: savedValues,
         personas: savedPersonas,
         positioningMapData,
@@ -776,41 +753,6 @@ export default function BrandStrategyPage() {
         {/* Card 1: ターゲット＋ペルソナ */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-5 space-y-5">
-            {/* セグメンテーション（STP分析ツールから連携・読み取り専用） */}
-            {(segmentationData?.variables?.length ?? 0) > 0 && (
-              <div>
-                <div className="mb-3 flex items-center gap-1.5">
-                  <h2 className="text-xs font-bold m-0">セグメンテーション</h2>
-                  <span className="text-xs text-gray-400">（STP分析ツールから連携）</span>
-                </div>
-                <div className="rounded-lg border border-border bg-background p-4 space-y-3">
-                  {segmentationData!.variables!.map((variable, vi) => {
-                    const selectedSegments = (variable.segments || []).filter(s => s.selected)
-                    if (selectedSegments.length === 0) return null
-                    return (
-                      <div key={vi}>
-                        <p className="mb-1.5 text-xs font-bold text-gray-600">{variable.name}</p>
-                        <div className="flex flex-wrap gap-2">
-                          {selectedSegments.map((seg, si) => (
-                            <span
-                              key={si}
-                              className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-medium text-ds-app-accent-hover"
-                              title={seg.description || undefined}
-                            >
-                              {seg.name}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )
-                  })}
-                  <p className="text-[11px] text-muted-foreground m-0">
-                    ※ 編集は STP分析ツールで行い、再連携すると更新されます
-                  </p>
-                </div>
-              </div>
-            )}
-
             <div>
               <div className="mb-2 flex items-center justify-between gap-2">
                 <div className="flex items-center gap-1.5">

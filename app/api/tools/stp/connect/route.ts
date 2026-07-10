@@ -3,7 +3,7 @@
 // POST /api/tools/stp/connect — 選択された項目のみ brand_personas / companies に反映
 //
 // 書き込み先マッピング（/admin/brand/strategy の表示元と一致させる）:
-// - segmentation → brand_personas[0].segmentation_data（履歴・後方互換のため保持）
+// - segmentation は本体に同期しない（STPツール内の下書きデータのみ。target説明文の補完に内部参照する）
 // - targeting    → brand_personas[0].target（ターゲット概要文）
 //                + companies.target_segments（主なターゲット一覧 [{name, description}]）
 // - positioning  → brand_personas[0].positioning_map_data
@@ -52,7 +52,6 @@ function buildTargetSegments(
 }
 
 interface Selections {
-  segmentation?: boolean
   targeting?: boolean
   positioning?: boolean
   target_fit_map?: boolean         // 新規
@@ -60,7 +59,6 @@ interface Selections {
 }
 
 interface Confirm {
-  overwriteSegmentation?: boolean
   overwriteTargeting?: boolean
   overwritePositioning?: boolean
   overwriteTargetFitMap?: boolean        // 新規
@@ -79,12 +77,6 @@ function hasPositioningContent(d: unknown): boolean {
   return false
 }
 
-function hasSegmentationContent(d: unknown): boolean {
-  if (!d || typeof d !== 'object') return false
-  const vars = (d as { variables?: unknown[] }).variables
-  return Array.isArray(vars) && vars.length > 0
-}
-
 export async function GET(request: NextRequest) {
   try {
     const supabaseAdmin = getSupabaseAdmin()
@@ -97,7 +89,7 @@ export async function GET(request: NextRequest) {
     const [{ data: rows }, { data: companyRow }] = await Promise.all([
       supabaseAdmin
         .from('brand_personas')
-        .select('segmentation_data, target, positioning_map_data, target_fit_map_data, brand_stance_statements, sort_order')
+        .select('target, positioning_map_data, target_fit_map_data, brand_stance_statements, sort_order')
         .eq('company_id', companyId)
         .order('sort_order', { ascending: true }),
       supabaseAdmin
@@ -116,7 +108,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       existing: {
-        hasSegmentation: hasSegmentationContent(first?.segmentation_data),
         hasTarget: hasTargetOverview || hasMainTargets,
         hasPositioning: hasPositioningContent(first?.positioning_map_data),
         hasTargetFitMap,
@@ -149,14 +140,13 @@ export async function POST(request: NextRequest) {
 
     // 後方互換: selections 未指定なら全て連携
     const selections: Required<Selections> = {
-      segmentation: selectionsRaw?.segmentation ?? true,
       targeting: selectionsRaw?.targeting ?? true,
       positioning: selectionsRaw?.positioning ?? true,
       target_fit_map: selectionsRaw?.target_fit_map ?? true,
       brand_stance_statements: selectionsRaw?.brand_stance_statements ?? true,
     }
 
-    if (!selections.segmentation && !selections.targeting && !selections.positioning
+    if (!selections.targeting && !selections.positioning
         && !selections.target_fit_map && !selections.brand_stance_statements) {
       return NextResponse.json({ error: '連携する項目が選択されていません' }, { status: 400 })
     }
@@ -208,7 +198,7 @@ export async function POST(request: NextRequest) {
     const [{ data: existingPersonas }, { data: existingCompany }] = await Promise.all([
       supabaseAdmin
         .from('brand_personas')
-        .select('id, sort_order, segmentation_data, target, positioning_map_data, target_fit_map_data, brand_stance_statements')
+        .select('id, sort_order, target, positioning_map_data, target_fit_map_data, brand_stance_statements')
         .eq('company_id', companyId)
         .order('sort_order', { ascending: true }),
       supabaseAdmin
@@ -225,12 +215,6 @@ export async function POST(request: NextRequest) {
       Array.isArray(existingTargetSegments) && existingTargetSegments.some(t => (t?.name || '').trim().length > 0)
 
     // 4. 上書き確認チェック（書き込み前に全て確認）
-    if (first && selections.segmentation && hasSegmentationContent(first.segmentation_data) && !confirm.overwriteSegmentation) {
-      return NextResponse.json(
-        { error: '既存のセグメンテーションがあります。上書き確認が必要です。', needsConfirm: 'segmentation' },
-        { status: 409 }
-      )
-    }
     if (selections.targeting && (hasExistingTargetOverview || hasExistingMainTargets) && !confirm.overwriteTargeting) {
       return NextResponse.json(
         { error: '既存のターゲットがあります。上書き確認が必要です。', needsConfirm: 'targeting' },
@@ -260,7 +244,6 @@ export async function POST(request: NextRequest) {
 
     // 5. brand_personas[0] 更新内容を組み立て
     const personaUpdates: Record<string, unknown> = {}
-    if (selections.segmentation) personaUpdates.segmentation_data = segmentation
     if (selections.targeting) {
       // ターゲット概要は AI生成の長文（target_summary）を優先。無ければ短いdescriptionを使う
       personaUpdates.target = (targeting.target_summary && String(targeting.target_summary).trim())
