@@ -43,9 +43,6 @@ export function SuperAdminHeader() {
           </BreadcrumbList>
         </Breadcrumb>
       )}
-      <span className="ml-auto py-0.5 px-2 bg-[#1e3a5f] text-white text-[10px] font-bold rounded tracking-wide">
-        SUPER ADMIN
-      </span>
     </header>
   )
 }

@@ -66,8 +66,8 @@ export function SuperAdminShell({ children }: { children: React.ReactNode }) {
     <SidebarProvider
       style={{
         '--sidebar-width': '19rem',
-        // 紺色テーマ（#1e3a5f 系）
-        '--sidebar-background': '214 52% 25%',
+        // 背景はほぼ黒（ワントーン明るいダークグレー）、アクセント等は紺系のまま
+        '--sidebar-background': '0 0% 10%',
         '--sidebar-foreground': '210 40% 90%',
         '--sidebar-primary': '38 92% 50%',
         '--sidebar-primary-foreground': '214 60% 18%',

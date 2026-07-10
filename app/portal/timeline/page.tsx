@@ -985,7 +985,7 @@ export default function PortalTimelinePage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-2">
           {filteredPosts.map((post) => (
             <PostCard
               key={post.id}
@@ -1131,9 +1131,9 @@ function PostCard({
 
   return (
     <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-      <CardContent className="p-4 sm:p-5">
+      <CardContent className="px-3 py-2.5">
         {/* Header */}
-        <div className="flex items-start gap-3 mb-3">
+        <div className="flex items-start gap-3 mb-2">
           <Avatar className="size-9 shrink-0">
             {displayPhoto && <AvatarImage src={displayPhoto} alt={displayName} />}
             <AvatarFallback className="bg-muted text-muted-foreground text-xs">
@@ -1240,7 +1240,7 @@ function PostCard({
         )}
 
         {/* Action bar */}
-        <div className="flex items-center gap-4 pt-2 border-t border-border">
+        <div className="flex items-center gap-4">
           <button
             onClick={onLike}
             className={`flex items-center gap-1.5 min-h-11 text-sm transition-colors ${

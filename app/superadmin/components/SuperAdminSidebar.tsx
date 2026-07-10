@@ -129,17 +129,17 @@ export function SuperAdminSidebar() {
               <DropdownMenuContent
                 side="top"
                 align="start"
-                className="w-[--radix-dropdown-menu-trigger-width] min-w-56"
+                className="w-[--radix-dropdown-menu-trigger-width] min-w-56 p-2"
               >
-                <DropdownMenuItem asChild>
+                <DropdownMenuItem asChild className="h-11 px-3 gap-2 text-base font-medium rounded-md">
                   <Link href="/admin" className="no-underline">
-                    <ArrowLeftRight className="mr-2 size-4" />
+                    <ArrowLeftRight className="size-4" />
                     通常管理画面へ
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={signOut}>
-                  <LogOut className="mr-2 size-4" />
+                <DropdownMenuItem onClick={signOut} className="h-11 px-3 gap-2 text-base font-medium rounded-md">
+                  <LogOut className="size-4" />
                   ログアウト
                 </DropdownMenuItem>
               </DropdownMenuContent>

@@ -218,7 +218,7 @@ export default function PortalGuidelinesPage() {
       {(data.slogan || data.concept_visuals.length > 0 || data.brand_video_url || data.brand_statement) && (
         <section>
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none overflow-hidden">
-            <CardContent className="p-4 sm:p-5 space-y-6">
+            <CardContent className="p-4 sm:p-5 space-y-8">
               {data.slogan && (
                 <div>
                   <h2 className="text-sm font-bold text-foreground mb-2 tracking-wide">スローガン</h2>
@@ -271,7 +271,7 @@ export default function PortalGuidelinesPage() {
       {(data.mission || data.vision || filteredValues.length > 0) && (
         <section>
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-            <CardContent className="p-4 sm:p-5 space-y-6">
+            <CardContent className="p-4 sm:p-5 space-y-8">
               {data.mission && (() => {
                 const { copy, body } = splitBrandCopy(data.mission)
                 return (
@@ -333,7 +333,7 @@ export default function PortalGuidelinesPage() {
                       {String(i + 1).padStart(2, '0')}
                     </span>
                     <div className="flex-1 min-w-0">
-                      <span className="text-base font-semibold text-foreground">{g.title}</span>
+                      <span className="text-[18px] font-semibold text-foreground">{g.title}</span>
                       {g.description && (
                         <p className="text-base sm:text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap mt-1 m-0" style={secondaryStyle}>
                           {g.description}
@@ -352,7 +352,7 @@ export default function PortalGuidelinesPage() {
       {(data.brand_story || filteredHistory.length > 0 || filteredBusiness.length > 0) && (
         <section>
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-            <CardContent className="p-4 sm:p-5 space-y-6">
+            <CardContent className="p-4 sm:p-5 space-y-8">
               {data.brand_story && (
                 <div>
                   <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">ブランドストーリー</h2>
@@ -369,7 +369,7 @@ export default function PortalGuidelinesPage() {
                   <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">沿革</h2>
                   <div className="relative">
                     {filteredHistory.map((item, i) => (
-                      <div key={i} className="relative flex gap-4 pb-6 last:pb-0">
+                      <div key={i} className="relative flex gap-6 pb-8 last:pb-0">
                         {/* ドットを繋ぐ縦ライン（最後の項目以外） */}
                         {i < filteredHistory.length - 1 && (
                           <span className="absolute left-[3px] top-2 -bottom-1.5 w-px bg-blue-200" />
@@ -398,7 +398,7 @@ export default function PortalGuidelinesPage() {
                           {String(i + 1).padStart(2, '0')}
                         </span>
                         <div className="flex-1 min-w-0">
-                          <span className="text-base font-semibold text-foreground">{item.title}</span>
+                          <span className="text-[18px] font-semibold text-foreground">{item.title}</span>
                           {item.description && (
                             <p className="text-base sm:text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap mt-1 m-0">
                               {item.description}

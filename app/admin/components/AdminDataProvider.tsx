@@ -321,7 +321,11 @@ export function AdminDataProvider({
     <AdminDataContext.Provider value={contextValue}>
       <AdminDynamicTitle />
       <SidebarProvider
-        style={{ '--sidebar-width': '19rem' } as React.CSSProperties}
+        style={{
+          '--sidebar-width': '19rem',
+          // 管理画面サイドバー背景を少し明るく（グローバル 220 13% 18% → 21%）。管理画面のみに限定。
+          '--sidebar-background': '220 13% 21%',
+        } as React.CSSProperties}
       >
         <AppSidebar />
         <SidebarInset>

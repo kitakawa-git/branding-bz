@@ -168,12 +168,12 @@ export function QuestionListStep({
       </div>
 
       {/* フッターナビゲーション */}
-      <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 bg-background/80 backdrop-blur border-t border-border px-6 py-3 flex justify-between">
-        <Button variant="outline" onClick={onBack} disabled={saving} className="gap-1">
+      <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 bg-background/80 backdrop-blur border-t border-border px-6 py-4 flex justify-between">
+        <Button variant="outline" onClick={onBack} disabled={saving} className="h-14 gap-2 px-6 text-base font-bold">
           <ArrowLeft className="h-4 w-4" />
           戻る
         </Button>
-        <Button onClick={handleNext} disabled={saving || !isValid} className="gap-1">
+        <Button onClick={handleNext} disabled={saving || !isValid} className="h-14 gap-2 px-6 text-base font-bold">
           {saving ? '保存中...' : nextLabel}
           {!saving && <ArrowRight className="h-4 w-4" />}
         </Button>

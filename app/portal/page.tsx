@@ -169,7 +169,7 @@ function DashboardPostCard({
   return (
     <Link href="/portal/timeline" className="no-underline block">
       <Card className="border shadow-none hover:shadow-sm transition-shadow">
-        <CardContent className="p-3">
+        <CardContent className="px-3 py-2.5">
           {showAuthor && !post.is_anonymous && post.display_name && (
             <p className="text-xs font-semibold text-foreground mb-1 m-0">
               {post.display_name}
@@ -238,6 +238,7 @@ type KpiItemSummary = {
 
 type DashboardCache = {
   mission: string | null
+  conceptVisualUrl: string | null
   personalStats: PersonalStats | null
   allUserPostsRaw: UserPostRaw[]
   allLikePostIds: string[]
@@ -263,6 +264,7 @@ export default function PortalTopPage() {
   const cached = companyId && user?.id ? getPageCache<DashboardCache>(cacheKey) : null
   const [loading, setLoading] = useState(!cached)
   const [mission, setMission] = useState<string | null>(cached?.mission ?? null)
+  const [conceptVisualUrl, setConceptVisualUrl] = useState<string | null>(cached?.conceptVisualUrl ?? null)
   const [personalStats, setPersonalStats] = useState<PersonalStats | null>(cached?.personalStats ?? null)
   const [allUserPostsRaw, setAllUserPostsRaw] = useState<UserPostRaw[]>(cached?.allUserPostsRaw ?? [])
   const [allLikePostIds, setAllLikePostIds] = useState<string[]>(cached?.allLikePostIds ?? [])
@@ -359,7 +361,7 @@ export default function PortalTopPage() {
     const fetchAll = async () => {
       try {
         // === Group 1: base queries (parallel) ===
-        const [missionRes, allUserPostsRes, userRecent3Res, companyRecent3Res, announcementsRes, kpiGoalsRes, goalPeriodRes, goalPeriodsRes] =
+        const [missionRes, allUserPostsRes, userRecent3Res, companyRecent3Res, announcementsRes, kpiGoalsRes, goalPeriodRes, goalPeriodsRes, conceptVisualRes] =
           await Promise.allSettled([
             fetchPhilosophy(supabase, companyId),
             supabase
@@ -407,6 +409,11 @@ export default function PortalTopPage() {
               .eq('status', 'active')
               .limit(1)
               .maybeSingle(),
+            supabase
+              .from('brand_guidelines')
+              .select('concept_visuals, concept_visual_url')
+              .eq('company_id', companyId)
+              .maybeSingle(),
           ])
 
         // Extract results
@@ -415,6 +422,17 @@ export default function PortalTopPage() {
         if (missionData?.mission) {
           setMission(missionData.mission)
         }
+
+        // コンセプトビジュアル（新カラム concept_visuals 優先・レガシー concept_visual_url フォールバック）
+        const cvRow =
+          conceptVisualRes.status === 'fulfilled'
+            ? (conceptVisualRes.value.data as { concept_visuals?: string[] | null; concept_visual_url?: string | null } | null)
+            : null
+        const conceptVisual =
+          (Array.isArray(cvRow?.concept_visuals) && cvRow!.concept_visuals!.length > 0
+            ? cvRow!.concept_visuals![0]
+            : cvRow?.concept_visual_url) || null
+        setConceptVisualUrl(conceptVisual)
 
         const allUserPosts: UserPostRaw[] =
           allUserPostsRes.status === 'fulfilled'
@@ -640,6 +658,7 @@ export default function PortalTopPage() {
         // Cache all dashboard data
         setPageCache(cacheKey, {
           mission: missionData?.mission || null,
+          conceptVisualUrl: conceptVisual,
           personalStats: {
             monthlyPosts: allUserPosts.length,
             monthlyLikesReceived: likesReceived,
@@ -806,8 +825,19 @@ export default function PortalTopPage() {
 
       {/* ===== 2. ミッションカード ===== */}
       {mission && (
-        <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-6">
-          <CardContent className="p-4 sm:p-5">
+        <Card className="relative overflow-hidden bg-[hsl(0_0%_97%)] border shadow-none mb-6">
+          {/* コンセプトビジュアルが設定されていれば背景に敷く（可読性のため白スクリムを重ねる） */}
+          {conceptVisualUrl && (
+            <>
+              <div
+                className="absolute inset-0 bg-cover bg-center"
+                style={{ backgroundImage: `url(${conceptVisualUrl})` }}
+                aria-hidden
+              />
+              <div className="absolute inset-0 bg-white/80 backdrop-blur-[2px]" aria-hidden />
+            </>
+          )}
+          <CardContent className="relative p-4 sm:p-5">
             <Link
               href="/portal/guidelines"
               className="no-underline flex items-center justify-between mb-3"
@@ -852,8 +882,7 @@ export default function PortalTopPage() {
             return (
               <Link key={q.href} href={q.href} className="no-underline block h-full">
                 <Card className="relative h-full bg-[hsl(0_0%_97%)] border shadow-none hover:shadow-sm transition-shadow overflow-hidden">
-                  <div className={`absolute left-0 top-0 bottom-0 w-1 ${tone.bar}`} />
-                  <CardContent className="p-4 pl-5 flex items-start gap-3">
+                  <CardContent className="p-4 flex items-start gap-3">
                     <div className={`shrink-0 size-11 rounded-xl flex items-center justify-center ${tone.tile}`}>
                       <Icon size={24} />
                     </div>

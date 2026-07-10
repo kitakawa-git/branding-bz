@@ -292,3 +292,24 @@ html {
 .ai-action-button:disabled::before {
   display: none;
 }
+
+/* カラー入力（<input type="color">）のスウォッチをボックスいっぱいに描画して正方形に保つ。
+   ブラウザ既定のスウォッチ余白で横長に見える問題の解消。 */
+input[type="color"] {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  padding: 0;
+  background: transparent;
+}
+input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+input[type="color"]::-webkit-color-swatch {
+  border: none;
+  border-radius: inherit;
+}
+input[type="color"]::-moz-color-swatch {
+  border: none;
+  border-radius: inherit;
+}

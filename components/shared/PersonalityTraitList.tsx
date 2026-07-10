@@ -33,7 +33,7 @@ export function PersonalityTraitList({ traits, bodyTextStyle, className = '' }: 
           <div className="flex-1">
             <p className="text-sm font-bold text-foreground mb-0.5 m-0">{trait.name}</p>
             {trait.copy && (
-              <p className="text-base font-semibold text-foreground mt-0.5 m-0" style={bodyTextStyle}>
+              <p className="text-[18px] font-semibold text-foreground mt-0.5 m-0" style={bodyTextStyle}>
                 {trait.copy}
               </p>
             )}

@@ -209,14 +209,14 @@ export function Step4Refinement({
     </Card>
 
     {/* 【5】フッター */}
-    <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 bg-background/80 backdrop-blur border-t border-border px-6 py-3 flex items-center justify-between">
-      <Button variant="outline" onClick={onBack}>
-        <ArrowLeft className="mr-1 h-4 w-4" />
+    <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 bg-background/80 backdrop-blur border-t border-border px-6 py-4 flex items-center justify-between">
+      <Button variant="outline" onClick={onBack} className="h-14 gap-2 px-6 text-base font-bold">
+        <ArrowLeft className="h-4 w-4" />
         戻る
       </Button>
-      <Button onClick={handleNext}>
+      <Button onClick={handleNext} className="h-14 gap-2 px-6 text-base font-bold">
         確定・出力へ進む
-        <ArrowRight className="ml-1 h-4 w-4" />
+        <ArrowRight className="h-4 w-4" />
       </Button>
     </div>
   </>

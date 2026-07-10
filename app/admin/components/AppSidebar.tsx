@@ -255,46 +255,46 @@ export function AppSidebar() {
               <DropdownMenuContent
                 side="top"
                 align="start"
-                className="w-[--radix-dropdown-menu-trigger-width] min-w-56"
+                className="w-[--radix-dropdown-menu-trigger-width] min-w-56 p-2"
               >
                 {isSuperAdmin && (
                   <>
-                    <DropdownMenuItem asChild>
+                    <DropdownMenuItem asChild className="h-11 px-3 gap-2 text-base font-medium rounded-md">
                       <Link href="/superadmin/companies" className="no-underline">
-                        <ShieldCheck className="mr-2 size-4" />
+                        <ShieldCheck className="size-4" />
                         スーパー管理画面
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                   </>
                 )}
-                <DropdownMenuItem asChild>
+                <DropdownMenuItem asChild className="h-11 px-3 gap-2 text-base font-medium rounded-md">
                   <Link href="/admin/company" className="no-underline">
-                    <Sparkles className="mr-2 size-4" />
+                    <Sparkles className="size-4" />
                     基本情報
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
+                <DropdownMenuItem asChild className="h-11 px-3 gap-2 text-base font-medium rounded-md">
                   <Link href="/admin/members" className="no-underline">
-                    <Users className="mr-2 size-4" />
+                    <Users className="size-4" />
                     アカウント
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
+                <DropdownMenuItem asChild className="h-11 px-3 gap-2 text-base font-medium rounded-md">
                   <Link href="/admin/settings" className="no-underline">
-                    <Settings className="mr-2 size-4" />
+                    <Settings className="size-4" />
                     設定
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
+                <DropdownMenuItem asChild className="h-11 px-3 gap-2 text-base font-medium rounded-md">
                   <Link href="/portal" className="no-underline">
-                    <ArrowLeftRight className="mr-2 size-4" />
+                    <ArrowLeftRight className="size-4" />
                     サービス画面
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={signOut}>
-                  <LogOut className="mr-2 size-4" />
+                <DropdownMenuItem onClick={signOut} className="h-11 px-3 gap-2 text-base font-medium rounded-md">
+                  <LogOut className="size-4" />
                   ログアウト
                 </DropdownMenuItem>
               </DropdownMenuContent>
