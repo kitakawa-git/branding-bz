@@ -265,7 +265,7 @@ function DemographicsForm({ ordinal, data, generating, onChange, onRemove }: {
     <Card className="bg-white border shadow-none">
       <CardContent className="p-4 space-y-5">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-bold text-gray-700">ペルソナ{ordinal}</h3>
+          <h3 className="text-lg font-bold text-gray-700">ペルソナ{ordinal}</h3>
           {onRemove && (
             <Button type="button" variant="outline" size="icon" onClick={onRemove}
               className="size-9 shrink-0 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive">
