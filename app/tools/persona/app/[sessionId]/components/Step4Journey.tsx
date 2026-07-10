@@ -338,7 +338,7 @@ export function Step4Journey({ personas: initialPersonas, basicInfo, onNext, onB
             <>
             <div className="mt-5 border-t border-border pt-5">
               {/* C. 感情カーブ（優先度の注釈） */}
-              <h2 className="text-sm font-bold text-foreground mb-3">感情カーブ（優先度の注釈）</h2>
+              <h2 className="text-lg font-bold text-foreground mb-3">感情カーブ（優先度の注釈）</h2>
               <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-2">
                 {scopeIdxs.map(i => (
                   <span key={i} className="flex items-center gap-1.5 text-[13px] text-muted-foreground">
@@ -390,7 +390,7 @@ export function Step4Journey({ personas: initialPersonas, basicInfo, onNext, onB
                           {/* ペルソナ選択は上部「表示ペルソナ」フィルタに集約。各ペルソナの詳細はアコーディオンで開閉 */}
                           {members.map(i => (
                             <AccordionItem key={i} value={`p-${i}`} className="rounded-lg border border-border bg-card px-3">
-                              <AccordionTrigger className="py-3 text-[13px] hover:no-underline">
+                              <AccordionTrigger className="py-3 text-base hover:no-underline">
                                 <span className="flex items-center gap-1.5">
                                   <span className="h-2 w-2 rounded-full" style={{ backgroundColor: pColor(i).solid }} />
                                   <span className="font-semibold text-foreground">{personaLabel(data[i], i)}</span>
@@ -414,7 +414,7 @@ export function Step4Journey({ personas: initialPersonas, basicInfo, onNext, onB
           {baseStages.length > 0 && (
             <>
               {/* D. タッチポイント候補プール */}
-              <div className="mt-5 border-t border-border pt-5">
+              <div className="mt-8">
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                 <h2 className="text-sm font-bold text-foreground">タッチポイント候補プール</h2>
                 {!readOnly && (

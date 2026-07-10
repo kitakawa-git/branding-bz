@@ -230,19 +230,19 @@ html {
 
 /* ===== 本文の最低フォントサイズ 14px =====
    text-xs / text-[9〜13px] / text-[0.8rem] を全ページで 14px に底上げする。
-   ただし UI 部品（ボタン・タブ・カプセル＝バッジやピル・アバター・ステッパー・SVG内テキスト）は
+   ただし UI 部品（ボタン・タブ・shadcn Badge・ステッパー・SVG内テキスト）は
    本文ではないため除外する。個別箇所を書き換える代わりにここで一括制御する。
    除外の判定:
    - button 配下 … ボタン・タブ（Radix の TabsTrigger は button）
    - [role="tab"|"tablist"] 配下 … button 以外で実装されたタブ
-   - .rounded-full 配下 … ピル型カプセル・アバター
    - .inline-flex.rounded-md … shadcn の Badge と buttonVariants を当てたリンク
    - [data-stepper] 配下 … ステップ進捗バー（StepProgressBar 等）
-   - svg 配下 … チャート等の描画テキスト */
+   - svg 配下 … チャート等の描画テキスト
+   ※ 丸型ピル/タグ（.rounded-full）は「これ系タグ」として本文と同じ 14px に統一するため除外しない。
+     アバター等の .rounded-full は text-2xl 等でこのルールの対象外（9〜13px/text-xs のみ底上げ）のため影響なし。 */
 :is(.text-xs, .text-\[9px\], .text-\[10px\], .text-\[11px\], .text-\[12px\], .text-\[13px\], .text-\[0\.8rem\]):not(
   button, button *,
   [role="tab"], [role="tab"] *, [role="tablist"], [role="tablist"] *,
-  .rounded-full, .rounded-full *,
   .inline-flex.rounded-md, .inline-flex.rounded-md *,
   [data-stepper], [data-stepper] *,
   svg, svg *
