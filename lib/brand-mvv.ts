@@ -47,10 +47,10 @@ export function resolveTraitCopy(trait: { copy?: string | null; description?: st
   return { copy: desc.slice(0, nl).trim(), description: desc.slice(nl + 1).trim() }
 }
 
-// トーンオブボイス用: 「コピー（任意）＋説明文」に分割。
+// コミュニケーションスタイル用: 「コピー（任意）＋説明文」に分割。
 // 空行（\n\n）があれば前=コピー・後=説明文。無ければ全体を説明文として扱う（コピー無し）。
-// ※ splitBrandCopy（空行なし→コピー）とは逆。トーンは説明文が主体のため。
-export function splitToneOfVoice(text: string | null | undefined): { copy: string; body: string } {
+// ※ splitBrandCopy（空行なし→コピー）とは逆。コミュニケーションスタイルは説明文が主体のため。
+export function splitCommunicationStyle(text: string | null | undefined): { copy: string; body: string } {
   const raw = (text ?? '').trim()
   if (!raw) return { copy: '', body: '' }
   const m = raw.match(/\n\s*\n/)

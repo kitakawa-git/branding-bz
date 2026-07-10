@@ -30,7 +30,7 @@ interface BrandData {
     description?: string
   }[]
   personality?: {
-    tone_of_voice?: string
+    communication_style?: string
   }
   visuals?: {
     color_palette?: unknown
@@ -71,7 +71,7 @@ function hasSufficientData(data: BrandData): boolean {
     data.guidelines?.vision,
     data.guidelines?.business_content,
     data.personas && data.personas.length > 0,
-    data.personality?.tone_of_voice,
+    data.personality?.communication_style,
   ]
   // 少なくとも2つ以上のデータがあればOK
   const filledCount = checks.filter(Boolean).length
@@ -141,7 +141,7 @@ export async function POST(_request: NextRequest, context: RouteContext) {
       // brand_personalities
       supabase
         .from('brand_personalities')
-        .select('tone_of_voice')
+        .select('communication_style')
         .eq('company_id', companyId)
         .single(),
       // brand_visuals

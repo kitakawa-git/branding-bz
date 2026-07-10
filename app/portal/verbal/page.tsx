@@ -13,7 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
 import { BrandPageTracker } from '@/components/analytics/BrandPageTracker'
 import { BrandExpressionTabs } from '../components/BrandExpressionTabs'
-import { splitToneOfVoice } from '@/lib/brand-mvv'
+import { BrandPersonalityCard } from '@/components/shared/BrandPersonalityCard'
 import { Input } from '@/components/ui/input'
 import { Search } from 'lucide-react'
 
@@ -30,18 +30,25 @@ type ToneRule = {
   ok_example: string | null
 }
 
-type VerbalCache = { terms: Term[]; toneOfVoice: string | null; toneRules: ToneRule[] }
+type VerbalCache = {
+  terms: Term[]
+  communicationStyle: string | null
+  toneRules: ToneRule[]
+  expectedTags: string[]
+}
 
 export default function PortalVerbalIdentityPage() {
   const { companyId } = usePortalAuth()
   const brandFonts = useBrandFonts(companyId)
   const secondaryStyle = brandFonts ? { fontFamily: getCssFontFamily(brandFonts.secondary_font) } : undefined
-  const cacheKey = `portal-verbal-${companyId}`
+  // v2: BrandPersonalityCard 統合＋期待タグ追加によりキャッシュ形状が変わったためキー更新
+  const cacheKey = `portal-verbal-v2-${companyId}`
   const cached = companyId ? getPageCache<VerbalCache>(cacheKey) : null
 
   const [terms, setTerms] = useState<Term[]>(cached?.terms ?? [])
-  const [toneOfVoice, setToneOfVoice] = useState<string | null>(cached?.toneOfVoice ?? null)
+  const [communicationStyle, setCommunicationStyle] = useState<string | null>(cached?.communicationStyle ?? null)
   const [toneRules, setToneRules] = useState<ToneRule[]>(cached?.toneRules ?? [])
+  const [expectedTags, setExpectedTags] = useState<string[]>(cached?.expectedTags ?? [])
   const [loading, setLoading] = useState(!cached)
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState<string>('')
@@ -54,15 +61,19 @@ export default function PortalVerbalIdentityPage() {
       fetchWithRetry(() =>
         supabase.from('brand_terms').select('preferred_term, avoided_term, context, category, sort_order').eq('company_id', companyId).order('sort_order')
       ),
-      // トーンオブボイス: brand_personalities.tone_of_voice
+      // コミュニケーションスタイル: brand_personalities.communication_style
       fetchWithRetry(() =>
-        supabase.from('brand_personalities').select('tone_of_voice').eq('company_id', companyId).maybeSingle()
+        supabase.from('brand_personalities').select('communication_style').eq('company_id', companyId).maybeSingle()
       ),
       // 表現ルール: governance_rules(tone_rule)。RLSがメンバー読み取り不可のためAPI経由（失敗時は非表示のまま）
       fetch('/api/brand/tone-rules')
         .then(res => (res.ok ? res.json() : { rules: [] }))
         .catch(() => ({ rules: [] })),
-    ]).then(([tRes, pRes, rRes]) => {
+      // 期待される印象タグ: brand_personality_tag_mappings (is_expected=true)
+      fetchWithRetry(() =>
+        supabase.from('brand_personality_tag_mappings').select('tag').eq('company_id', companyId).eq('is_expected', true)
+      ),
+    ]).then(([tRes, pRes, rRes, tagRes]) => {
       let parsedTerms: Term[] = []
       if (tRes.data && Array.isArray(tRes.data)) {
         parsedTerms = tRes.data.map((d: unknown) => {
@@ -77,15 +88,24 @@ export default function PortalVerbalIdentityPage() {
         setTerms(parsedTerms)
       }
       const p = pRes.data as Record<string, unknown> | null
-      const tone = (p?.tone_of_voice as string) || null
-      setToneOfVoice(tone)
+      const comm = (p?.communication_style as string) || null
+      setCommunicationStyle(comm)
       const parsedRules: ToneRule[] = (Array.isArray(rRes?.rules) ? rRes.rules : []).map((r: Record<string, unknown>) => ({
         rule_text: (r.rule_text as string) || '',
         ng_example: (r.ng_example as string) || null,
         ok_example: (r.ok_example as string) || null,
       })).filter((r: ToneRule) => r.rule_text)
       setToneRules(parsedRules)
-      setPageCache(cacheKey, { terms: parsedTerms, toneOfVoice: tone, toneRules: parsedRules })
+      const parsedTags: string[] = Array.isArray(tagRes?.data)
+        ? tagRes.data.map((r: unknown) => ((r as Record<string, unknown>).tag as string) || '').filter(Boolean)
+        : []
+      setExpectedTags(parsedTags)
+      setPageCache(cacheKey, {
+        terms: parsedTerms,
+        communicationStyle: comm,
+        toneRules: parsedRules,
+        expectedTags: parsedTags,
+      })
       setLoading(false)
     })
   }, [companyId, cacheKey])
@@ -153,10 +173,12 @@ export default function PortalVerbalIdentityPage() {
   )
 
   const hasTerms = terms.length > 0
-  const hasTone = !!toneOfVoice
+  const hasComm = !!communicationStyle
   const hasRules = toneRules.length > 0
+  const hasTags = expectedTags.length > 0
+  const hasPersonality = hasComm || hasTags || hasRules
 
-  if (!hasTerms && !hasTone && !hasRules) {
+  if (!hasTerms && !hasPersonality) {
     return <div className="text-center py-16 text-muted-foreground text-[15px]">まだ登録されていません</div>
   }
 
@@ -168,57 +190,15 @@ export default function PortalVerbalIdentityPage() {
       {/* ビジュアル / バーバル 切替タブ */}
       <BrandExpressionTabs />
 
-      {/* トーンオブボイス（brand_personalities.tone_of_voice） */}
-      {hasTone && (
+      {/* コミュニケーションスタイル + 期待タグ + 表現ルール（共通コンポーネント。Step5と装飾統一） */}
+      {hasPersonality && (
         <section>
-          <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-            <CardContent className="p-4 sm:p-5">
-              <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">トーンオブボイス</h2>
-              {(() => {
-                const { copy, body } = splitToneOfVoice(toneOfVoice)
-                return (
-                  <>
-                    {copy && <p className="text-base font-bold text-foreground mb-1 m-0" style={secondaryStyle}>{copy}</p>}
-                    {body && <p className="text-base sm:text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0" style={secondaryStyle}>{body}</p>}
-                  </>
-                )
-              })()}
-            </CardContent>
-          </Card>
-        </section>
-      )}
-
-      {/* 表現ルール（governance_rules の tone_rule。0件なら非表示） */}
-      {hasRules && (
-        <section>
-          <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-            <CardContent className="p-4 sm:p-5">
-              <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">表現ルール</h2>
-              <div className="space-y-2">
-                {toneRules.map((r, i) => (
-                  <div key={i} className="rounded-lg border border-border bg-background p-4">
-                    <p className="text-base sm:text-sm font-semibold text-foreground m-0" style={secondaryStyle}>{r.rule_text}</p>
-                    {(r.ng_example || r.ok_example) && (
-                      <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                        {r.ng_example && (
-                          <div className="rounded-md bg-red-50 px-3 py-2">
-                            <p className="text-[11px] font-bold text-red-600 mb-0.5 m-0">NG例</p>
-                            <p className="text-sm text-red-700/90 leading-relaxed m-0">{r.ng_example}</p>
-                          </div>
-                        )}
-                        {r.ok_example && (
-                          <div className="rounded-md bg-green-50 px-3 py-2">
-                            <p className="text-[11px] font-bold text-green-700 mb-0.5 m-0">OK例</p>
-                            <p className="text-sm text-green-800/90 leading-relaxed m-0">{r.ok_example}</p>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          <BrandPersonalityCard
+            communicationStyle={communicationStyle}
+            expectedTags={expectedTags}
+            toneRules={toneRules}
+            bodyTextStyle={secondaryStyle}
+          />
         </section>
       )}
 

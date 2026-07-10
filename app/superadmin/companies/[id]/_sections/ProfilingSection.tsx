@@ -304,6 +304,7 @@ export default function ProfilingSection({
           company_id: companyId,
           rule_type: draft.rule.rule_type,
           scope: 'global',
+          source: 'manual',
           target_value_proposition_id: null,
           rule_text: draft.rule.rule_text.trim(),
           ng_example: draft.rule.ng_example.trim() || null,

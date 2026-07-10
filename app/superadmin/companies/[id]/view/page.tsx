@@ -368,7 +368,6 @@ export default function CompanyViewPage() {
           <Card key={pe.id} className="py-0">
             <CardContent className="p-4">
               <p className="mb-1 text-xs font-semibold text-muted-foreground">パーソナリティ</p>
-              <Line label="トーン・オブ・ボイス" value={field(pe, 'tone_of_voice')} />
               <Line label="コミュニケーションスタイル" value={field(pe, 'communication_style')} />
               <Chips label="アーキタイプ" items={strArr(pe, 'archetype')} />
             </CardContent>

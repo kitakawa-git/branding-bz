@@ -167,7 +167,7 @@ export default function GovernanceRulesSection({
         const nextOrder = rows.length > 0 ? Math.max(...rows.map((r) => r.sort_order)) + 1 : 0
         const { error } = await supabase
           .from('governance_rules')
-          .insert({ ...buildPayload(), sort_order: nextOrder })
+          .insert({ ...buildPayload(), source: 'manual', sort_order: nextOrder })
         if (error) throw error
         toast.success('追加しました')
       } else if (editingId) {
@@ -250,6 +250,7 @@ export default function GovernanceRulesSection({
         company_id: companyId,
         rule_type: d.rule_type,
         scope: d.scope,
+        source: 'manual',
         target_value_proposition_id: null,
         rule_text: d.rule_text.trim(),
         ng_example: d.ng_example.trim() || null,

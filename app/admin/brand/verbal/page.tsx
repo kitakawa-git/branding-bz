@@ -1,7 +1,7 @@
 'use client'
 
-// バーバルアイデンティティ 編集ページ（トーンオブボイス＋表現ルール＋用語ルール）
-// - トーンオブボイス: brand_personalities.tone_of_voice
+// バーバルアイデンティティ 編集ページ（コミュニケーションスタイル＋表現ルール＋用語ルール）
+// - コミュニケーションスタイル: brand_personalities.communication_style
 // - 表現ルール: governance_rules の rule_type='tone_rule' のみ（claim_rule 等はオントロジー側の管轄）。
 //   RLSで管理者は直接書けないため /api/brand/tone-rules 経由。削除は element_relations のエッジを巻き込む
 // - 用語ルール: brand_terms
@@ -17,7 +17,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { AutoResizeTextarea } from '@/components/ui/auto-resize-textarea'
 import { type PortalSubtitles } from '@/lib/portal-subtitles'
-import { splitToneOfVoice, combineBrandCopy } from '@/lib/brand-mvv'
+import { splitCommunicationStyle, combineBrandCopy } from '@/lib/brand-mvv'
 import { Plus, Trash2, Check } from 'lucide-react'
 import { Fab, FabButton } from '@/components/ui/fab'
 import {
@@ -32,9 +32,9 @@ import {
 } from '@/components/ui/alert-dialog'
 
 type Personality = {
-  // トーンオブボイスは「コピー＋説明文」を分けて編集（保存時に空行区切りで結合し tone_of_voice 列へ）
-  tone_copy: string
-  tone_body: string
+  // コミュニケーションスタイルは「コピー＋説明文」を分けて編集（保存時に空行区切りで結合し communication_style 列へ）
+  comm_copy: string
+  comm_body: string
 }
 
 type TermItem = {
@@ -73,7 +73,7 @@ export default function VerbalIdentityPage() {
   const cacheKey = `admin-brand-verbal-${companyId}`
   const cached = companyId ? getPageCache<VerbalCache>(cacheKey) : null
   const [personalityId, setPersonalityId] = useState<string | null>(cached?.personalityId ?? null)
-  const [personality, setPersonality] = useState<Personality>(cached?.personality ?? { tone_copy: '', tone_body: '' })
+  const [personality, setPersonality] = useState<Personality>(cached?.personality ?? { comm_copy: '', comm_body: '' })
   const [terms, setTerms] = useState<TermItem[]>(cached?.terms ?? [])
   const [loading, setLoading] = useState(!cached)
   const [fetchError, setFetchError] = useState('')
@@ -148,11 +148,11 @@ export default function VerbalIdentityPage() {
       }
 
       let parsedPersonalityId: string | null = null
-      let parsedPersonality: Personality = { tone_copy: '', tone_body: '' }
+      let parsedPersonality: Personality = { comm_copy: '', comm_body: '' }
       if (personalityData) {
         parsedPersonalityId = personalityData.id
-        const tone = splitToneOfVoice(personalityData.tone_of_voice as string)
-        parsedPersonality = { tone_copy: tone.copy, tone_body: tone.body }
+        const comm = splitCommunicationStyle(personalityData.communication_style as string)
+        parsedPersonality = { comm_copy: comm.copy, comm_body: comm.body }
         setPersonalityId(parsedPersonalityId)
         setPersonality(parsedPersonality)
       }
@@ -190,7 +190,7 @@ export default function VerbalIdentityPage() {
     fetchData()
   }, [companyId, cacheKey])
 
-  const updateTone = (field: 'tone_copy' | 'tone_body', value: string) => {
+  const updateCommunicationStyle = (field: 'comm_copy' | 'comm_body', value: string) => {
     setPersonality(prev => ({ ...prev, [field]: value }))
   }
 
@@ -334,11 +334,10 @@ export default function VerbalIdentityPage() {
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
       const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 
-      // --- 1. トーンオブボイス保存（brand_personalities） ---
-      // ※ communication_style はこの画面に編集UIがないため触らない（診断連携で書かれた値を消さない）
+      // --- 1. コミュニケーションスタイル保存（brand_personalities） ---
       const personalityData: Record<string, unknown> = {
         company_id: companyId,
-        tone_of_voice: combineBrandCopy(personality.tone_copy, personality.tone_body) || null,
+        communication_style: combineBrandCopy(personality.comm_copy, personality.comm_body) || null,
       }
       let pResult: { ok: boolean; error?: string; data?: Record<string, unknown> }
       if (personalityId) {
@@ -350,7 +349,7 @@ export default function VerbalIdentityPage() {
         }
       }
       if (!pResult.ok) {
-        throw new Error('トーン保存エラー: ' + pResult.error)
+        throw new Error('コミュニケーションスタイル保存エラー: ' + pResult.error)
       }
 
       // --- 2. 用語ルール保存（全削除→全INSERT） ---
@@ -445,7 +444,7 @@ export default function VerbalIdentityPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        {/* トーンオブボイス（コピー＋説明文） */}
+        {/* コミュニケーションスタイル（コピー＋説明文） */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-5 space-y-3">
             <Skeleton className="h-4 w-36" />
@@ -487,24 +486,24 @@ export default function VerbalIdentityPage() {
     <div>
       {/* タイトルはヘッダーのパンくずに移管 */}
       <form id="verbal-form" onSubmit={handleSubmit} className="space-y-6">
-        {/* カード1: トーンオブボイス */}
+        {/* カード1: コミュニケーションスタイル */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-5">
-            <h2 className="text-xs font-bold mb-3">トーンオブボイス</h2>
+            <h2 className="text-xs font-bold mb-3">コミュニケーションスタイル</h2>
             <div className="space-y-2">
               <div>
                 <label className="text-xs font-medium text-muted-foreground mb-1 block">コピー（キャッチコピー・任意）</label>
                 <Input
-                  value={personality.tone_copy}
-                  onChange={(e) => updateTone('tone_copy', e.target.value)}
+                  value={personality.comm_copy}
+                  onChange={(e) => updateCommunicationStyle('comm_copy', e.target.value)}
                   placeholder="例：誠実に、まっすぐ伝える。"
                 />
               </div>
               <div>
                 <label className="text-xs font-medium text-muted-foreground mb-1 block">説明文</label>
                 <AutoResizeTextarea
-                  value={personality.tone_body}
-                  onChange={(e) => updateTone('tone_body', e.target.value)}
+                  value={personality.comm_body}
+                  onChange={(e) => updateCommunicationStyle('comm_body', e.target.value)}
                   placeholder="フォーマルだが親しみやすい、専門用語は最小限に..."
                   className="min-h-[100px]"
                 />

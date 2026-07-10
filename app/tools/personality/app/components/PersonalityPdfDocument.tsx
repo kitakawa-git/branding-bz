@@ -281,22 +281,15 @@ export function PersonalityPdfDocument({ data }: { data: PersonalityPdfData }) {
           </View>
         ) : null}
 
-        {/* トーン */}
-        <View style={styles.section} wrap={false}>
-          <Text style={styles.sectionTitle}>トーン</Text>
-          {d.tone_of_voice ? (
+        {/* コミュニケーションスタイル */}
+        {d.communication_style ? (
+          <View style={styles.section} wrap={false}>
+            <Text style={styles.sectionTitle}>コミュニケーションスタイル</Text>
             <View style={styles.card}>
-              <Text style={{ fontSize: 9, fontWeight: 700, color: '#374151', marginBottom: 3 }}>トーンオブボイス</Text>
-              <Text style={styles.bodyText}>{d.tone_of_voice}</Text>
-            </View>
-          ) : null}
-          {d.communication_style ? (
-            <View style={styles.card}>
-              <Text style={{ fontSize: 9, fontWeight: 700, color: '#374151', marginBottom: 3 }}>コミュニケーションスタイル</Text>
               <Text style={styles.bodyText}>{d.communication_style}</Text>
             </View>
-          ) : null}
-        </View>
+          </View>
+        ) : null}
 
         {/* 表現ルール */}
         {d.tone_rules?.length > 0 ? (

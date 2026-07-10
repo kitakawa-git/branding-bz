@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
         .single(),
       supabase
         .from('brand_personalities')
-        .select('tone_of_voice')
+        .select('communication_style')
         .eq('company_id', companyId)
         .limit(1)
         .single(),
@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
       ビジョン: phil.vision || '未設定',
       バリュー: valuesText,
       ブランドストーリー: guidelines?.brand_story || '未設定',
-      トーンオブボイス: personality?.tone_of_voice || '未設定',
+      コミュニケーションスタイル: personality?.communication_style || '未設定',
     }
 
     const userMessage = `以下の企業のブランドデータを分析し、期待される印象タグを提案してください:\n\n${JSON.stringify(brandData, null, 2)}`

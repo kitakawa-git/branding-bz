@@ -88,7 +88,7 @@ export type CIManualData = {
     visual_guidelines_images: GuidelineImage[]
   } | null
   verbal: {
-    tone_of_voice: string | null
+    communication_style: string | null
     terms: TermItem[]
   } | null
   strategy: {

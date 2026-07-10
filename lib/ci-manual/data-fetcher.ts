@@ -247,7 +247,7 @@ export async function fetchCIManualData(companyId: string): Promise<CIManualData
       : null,
     verbal: pers || termsData.length > 0
       ? {
-          tone_of_voice: pers?.tone_of_voice || null,
+          communication_style: pers?.communication_style || null,
           terms: termsData.map((t: Record<string, unknown>) => ({
             preferred_term: (t.preferred_term as string) || '',
             avoided_term: (t.avoided_term as string) || '',

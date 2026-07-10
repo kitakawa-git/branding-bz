@@ -14,19 +14,8 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
 import { BrandPageTracker } from '@/components/analytics/BrandPageTracker'
 import { resolveTraitCopy } from '@/lib/brand-mvv'
-import {
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  Radar,
-} from 'recharts'
-import {
-  type ChartConfig,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from '@/components/ui/chart'
+import { BrandPersonaCard } from '@/components/shared/BrandPersonaCard'
+import { type PersonalityTraitItem } from '@/components/shared/PersonalityTraitList'
 
 type TraitItem = { name: string; score: number; copy?: string; description: string; added_index?: number }
 
@@ -114,13 +103,6 @@ export default function PortalPersonalityPage() {
     ? data.traits.filter(t => t.name && !t.name.match(/^特性\s?\d+$/))
     : [...data.traits].filter(t => t.name && !t.name.match(/^特性\s?\d+$/)).sort((a, b) => (a.added_index ?? 0) - (b.added_index ?? 0))
   const chartData = filteredTraits.map(t => ({ name: t.name, score: t.score }))
-  const radarConfig = {
-    score: {
-      label: 'スコア',
-      color: 'hsl(217, 91%, 60%)',
-    },
-  } satisfies ChartConfig
-
   const hasTraits = filteredTraits.length > 0
   const archetype = data.archetype
 
@@ -134,76 +116,17 @@ export default function PortalPersonalityPage() {
     {companyId && <BrandPageTracker companyId={companyId} pageType="personality" />}
     <div className="max-w-4xl mx-auto px-5 pt-4 pb-10 space-y-6">
 
-      {/* 1. 人格（ブランドパーソナリティ：レーダーチャート＋概要＋リスト） */}
+      {/* 1. ブランドの人格（レーダーチャート＋概要＋特性リスト・共通コンポーネント） */}
       {(hasTraits || data.summary) && (
         <section>
-          <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-            <CardContent className="p-4 sm:p-5">
-              <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">人格</h2>
-
-              {/* レーダーチャート（3つ以上の場合のみ） */}
-              {chartData.length >= 3 && (
-                <div className="w-full max-w-[440px] mx-auto mb-6">
-                  <ChartContainer config={radarConfig} className="aspect-square">
-                    <RadarChart data={chartData} cx="50%" cy="50%" outerRadius="77%">
-                      <ChartTooltip
-                        content={<ChartTooltipContent hideLabel />}
-                      />
-                      <PolarGrid />
-                      <PolarAngleAxis dataKey="name" tick={{ fontSize: 12 }} />
-                      <PolarRadiusAxis angle={90} domain={[0, 5]} tick={{ fontSize: 10 }} tickCount={6} />
-                      <Radar
-                        dataKey="score"
-                        fill="var(--color-score)"
-                        fillOpacity={0.2}
-                        stroke="var(--color-score)"
-                        strokeWidth={2}
-                        dot={{ r: 4, fillOpacity: 1, fill: 'var(--color-score)' }}
-                      />
-                    </RadarChart>
-                  </ChartContainer>
-                </div>
-              )}
-
-              {/* パーソナリティ概要（brand_guidelines.personality_summary） */}
-              {data.summary && (
-                <p className="text-base sm:text-sm text-foreground/80 leading-[1.9] whitespace-pre-wrap mb-6 m-0">
-                  {data.summary}
-                </p>
-              )}
-
-              <div className="space-y-2">
-                {filteredTraits.map((trait, i) => {
-                  const { copy, description } = resolveTraitCopy(trait)
-                  return (
-                  <div key={i} className="rounded-lg border border-border bg-background p-4 flex items-center gap-4">
-                    <div className="flex-1">
-                      <p className="text-sm font-bold text-foreground mb-0.5 m-0">
-                        {trait.name}
-                      </p>
-                      {copy && (
-                        <p className="text-base font-semibold text-foreground mt-0.5 m-0">
-                          {copy}
-                        </p>
-                      )}
-                      {description && (
-                        <p className="text-base sm:text-sm text-foreground/70 leading-[1.8] whitespace-pre-wrap mt-1 m-0">
-                          {description}
-                        </p>
-                      )}
-                    </div>
-                    <div className="shrink-0 text-center">
-                      <div className="w-11 h-11 rounded-full bg-ds-app-accent text-white flex items-center justify-center text-base font-bold">
-                        {trait.score}
-                      </div>
-                      <div className="text-[10px] text-muted-foreground mt-1">/5</div>
-                    </div>
-                  </div>
-                  )
-                })}
-              </div>
-            </CardContent>
-          </Card>
+          <BrandPersonaCard
+            chartData={chartData}
+            summary={data.summary}
+            traits={filteredTraits.map<PersonalityTraitItem>(t => {
+              const { copy, description } = resolveTraitCopy(t)
+              return { name: t.name, score: t.score, copy, description }
+            })}
+          />
         </section>
       )}
 

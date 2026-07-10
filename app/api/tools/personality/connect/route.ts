@@ -6,7 +6,7 @@
 // - traits（選択フレームワーク分: aaker→aaker_scores / archetype→archetype_traits）→ brand_guidelines.traits + traits_sort
 //   ※ aaker の name は dimension key から archetypes.ts の現行ラベルに正規化（旧セッションの古いラベル復活を防ぐ）
 // - personality_summary → brand_guidelines.personality_summary
-// - tone_of_voice / communication_style → brand_personalities
+// - communication_style → brand_personalities（トーンと接し方を1本化）
 // - 期待タグ → brand_personality_tag_mappings（UPSERT。行削除は一切しない＝計測側の語彙行を壊さない）
 // - tone_rules（選択分のみ）→ governance_rules（rule_type='tone_rule', scope='global' 固定。同一rule_text重複防止）
 // - アーキタイプ → brand_personalities.archetype（framework=archetype のときのみ。aaker は拒否）
@@ -247,7 +247,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // --- brand_personalities（tone_of_voice / communication_style / archetype）---
+    // --- brand_personalities（communication_style / archetype）---
     if (selections.tone || archetypeSelected) {
       const { data: existing } = await supabaseAdmin
         .from('brand_personalities')
@@ -257,7 +257,6 @@ export async function POST(request: NextRequest) {
 
       const personalityData: Record<string, unknown> = {}
       if (selections.tone) {
-        personalityData.tone_of_voice = d.tone_of_voice
         personalityData.communication_style = d.communication_style
         written.tone = true
       }
@@ -324,33 +323,39 @@ export async function POST(request: NextRequest) {
         .map(i => d.tone_rules[i])
 
       if (selectedRules.length > 0) {
-        // 冪等性: 同一 rule_text の tone_rule が既存なら再INSERTしない（再実行での重複防止）
-        const { data: existingRules } = await supabaseAdmin
+        // 置換方式: 既存の source='personality_diagnosis' な tone_rule を全削除→新規INSERT。
+        // 手動追加分（source='manual'）は保持。AI出力の rule_text が微妙に変わっても正しく置換される。
+        const { error: deleteError } = await supabaseAdmin
           .from('governance_rules')
-          .select('rule_text, sort_order')
+          .delete()
           .eq('company_id', companyId)
+          .eq('rule_type', 'tone_rule')
+          .eq('source', 'personality_diagnosis')
+        if (deleteError) throw new Error(`旧 personality tone_rule 削除エラー: ${deleteError.message}`)
 
-        const existingTexts = new Set((existingRules || []).map(r => r.rule_text as string))
-        const rulesToInsert = selectedRules.filter(r => !existingTexts.has(r.rule_text))
-        const maxOrder = (existingRules || []).reduce((m, r) => Math.max(m, (r.sort_order as number) ?? 0), 0)
+        // sort_order は残った手動ルールの末尾に連番
+        const { data: remainingRules } = await supabaseAdmin
+          .from('governance_rules')
+          .select('sort_order')
+          .eq('company_id', companyId)
+        const maxOrder = (remainingRules || []).reduce((m, r) => Math.max(m, (r.sort_order as number) ?? 0), 0)
         const baseOrder = maxOrder + 1
 
-        if (rulesToInsert.length > 0) {
-          const { error } = await supabaseAdmin.from('governance_rules').insert(
-            rulesToInsert.map((r, i) => ({
-              company_id: companyId,
-              rule_type: 'tone_rule',
-              scope: 'global',
-              rule_text: r.rule_text,
-              ng_example: r.ng_example,
-              ok_example: r.ok_example,
-              severity: SEVERITY_MAP[r.severity] ?? 'warn',
-              sort_order: baseOrder + i,
-            })),
-          )
-          if (error) throw new Error(`governance_rules 登録エラー: ${error.message}`)
-        }
-        written.tone_rules = rulesToInsert.length
+        const { error } = await supabaseAdmin.from('governance_rules').insert(
+          selectedRules.map((r, i) => ({
+            company_id: companyId,
+            rule_type: 'tone_rule',
+            scope: 'global',
+            source: 'personality_diagnosis',
+            rule_text: r.rule_text,
+            ng_example: r.ng_example,
+            ok_example: r.ok_example,
+            severity: SEVERITY_MAP[r.severity] ?? 'warn',
+            sort_order: baseOrder + i,
+          })),
+        )
+        if (error) throw new Error(`governance_rules 登録エラー: ${error.message}`)
+        written.tone_rules = selectedRules.length
       }
     }
 

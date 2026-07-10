@@ -72,9 +72,9 @@ function buildSystemPrompt(whyCount: number, howCount: number): string {
 
 【concept タグ（reference_data に必ず含める）】
 - 各設問の reference_data に以下を必ず入れる:
-  - field: 参照した主フィールド名（例: "mvv" / "tone_of_voice" / "color_palette" / "terms"）
+  - field: 参照した主フィールド名（例: "mvv" / "communication_style" / "color_palette" / "terms"）
   - value: 参照した値の要約
-  - concept: その設問が問う主ブランド概念の識別子（短い文字列。例: "mission" / "value:本質に向き合う" / "tone_of_voice" / "color:革新グリーン" / "term:アイディ"）
+  - concept: その設問が問う主ブランド概念の識別子（短い文字列。例: "mission" / "value:本質に向き合う" / "communication_style" / "color:革新グリーン" / "term:アイディ"）
   - style: "recall" または "relational"
 
 【出力形式】

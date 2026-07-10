@@ -145,6 +145,7 @@ export async function PUT(request: NextRequest) {
           company_id: companyId,
           rule_type: 'tone_rule',
           scope: 'global',
+          source: 'manual',
           rule_text: r.rule_text,
           ng_example: r.ng_example || null,
           ok_example: r.ok_example || null,

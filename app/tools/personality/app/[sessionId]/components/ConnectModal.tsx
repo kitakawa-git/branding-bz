@@ -248,14 +248,13 @@ export function ConnectModal({ sessionId, userId, diagnosis: d, framework, open,
             </ToggleRow>
             )}
 
-            {/* tone */}
+            {/* communication style */}
             <ToggleRow
               checked={selections.tone}
               onToggle={() => setSelections(p => ({ ...p, tone: !p.tone }))}
-              title="トーンオブボイス / コミュニケーションスタイル"
+              title="コミュニケーションスタイル"
             >
-              <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">{d.tone_of_voice}</p>
-              <p className="mt-1 text-xs text-muted-foreground leading-relaxed line-clamp-2">{d.communication_style}</p>
+              <p className="text-xs text-muted-foreground leading-relaxed line-clamp-3">{d.communication_style}</p>
             </ToggleRow>
 
             {/* tags */}
@@ -266,7 +265,7 @@ export function ConnectModal({ sessionId, userId, diagnosis: d, framework, open,
             >
               <div className="flex flex-wrap gap-2">
                 {d.expected_tags.map(t => (
-                  <span key={t} className="rounded-full border border-ds-app-accent bg-blue-50 px-3 py-1 text-xs text-ds-app-accent-hover">{t}</span>
+                  <span key={t} className="rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-[13px] font-medium text-ds-app-accent-hover">{t}</span>
                 ))}
               </div>
               {(existing?.expectedTags.length ?? 0) > 0 && (

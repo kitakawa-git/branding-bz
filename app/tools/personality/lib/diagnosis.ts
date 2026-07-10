@@ -54,7 +54,6 @@ export interface DiagnosisResult {
   }
   archetype_traits: ArchetypeTraitItem[]
   personality_summary: string
-  tone_of_voice: string
   communication_style: string
   expected_tags: string[]
   tone_rules: ToneRule[]
@@ -95,7 +94,7 @@ export function buildSystemPrompt(framework: FrameworkKey): string {
 2. 12アーキタイプの主人格・副人格
 3. アーキタイプ特性（archetype_traits）: 主・副の人格をこの企業の特性3〜5項目に翻訳したもの
 4. パーソナリティ概要（personality_summary）: ${summaryVocab}で書く物語文（200〜300字）
-5. トーンオブボイス（80〜140字）／コミュニケーションスタイル（60〜100字）
+5. コミュニケーションスタイル（100〜200字。ブランドの語り口・トーンと顧客接点での振る舞い方針を両方含めて1本化する）
 6. 期待印象タグ（2〜3個）
 7. トーン制約ルール（最大3本）
 
@@ -103,7 +102,7 @@ export function buildSystemPrompt(framework: FrameworkKey): string {
 - Q1（言われたい存在）・Q5（距離感）・Q9（5年後の姿＋自由記述）はアーキタイプの主シグナル
 - Q4（休日の過ごし方）・Q10（創業の原動力）は動機の裏付け
 - Q2（言われたくない形容詞）は除外制約。該当する人格要素・表現を必ず避け、tone_rules に最低1本反映する
-- Q3（競合との話し方）・Q7（語り口）はトーンオブボイスの直接素材
+- Q3（競合との話し方）・Q7（語り口）はコミュニケーションスタイルの直接素材
 - Q6（意思決定の優先）・Q8（価格・品質）はAaker次元の強弱に反映
 - 単一の質問を単一の次元に機械的に対応させず、回答全体から総合判断する
 
@@ -118,8 +117,7 @@ ${archetypeDefs}
 - 各次元の copy（15字以内のキャッチ）と description（60〜90字）は、この企業の回答・事業内容を反映した固有の文。上の定義文の複製は禁止
 - archetype: primary と secondary は必ず異なる型。key は上の12種から選ぶ。description はこの企業がその型である理由（80〜120字、回答の内容を反映）。label と copy は定義のものをそのまま書く
 - archetype_traits: 3〜5項目。name は特性名（例: 誠実・革新）、score は1〜5の整数で全項目を同じ値にしない。copy（15字以内）と description（60〜90字）は企業固有の文
-- tone_of_voice: 主人格の語り口の参照と Q3/Q7 の回答を統合した実務的な記述
-- communication_style: 顧客接点での振る舞い方針
+- communication_style: 主人格の語り口（Q3/Q7 の回答を反映）と顧客接点での振る舞い方針を統合した実務的な1本の記述
 - expected_tags: 次の8語から2〜3個。これ以外の語は出力禁止: ${EXPECTED_TAG_VOCABULARY.join('/')}
 - tone_rules: 最大3本。各ルールに rule_text / ng_example / ok_example を必ず含め、severity は low / medium / high のいずれか
 - 実績・数値・受賞・顧客の声などの事実を創作しない
@@ -141,7 +139,6 @@ ${archetypeDefs}
     { "name": "...", "score": 4, "copy": "...", "description": "..." }
   ],
   "personality_summary": "...",
-  "tone_of_voice": "...",
   "communication_style": "...",
   "expected_tags": ["専門的", "信頼感"],
   "tone_rules": [
@@ -300,10 +297,8 @@ export function validateAndNormalize(raw: string): ValidationOutcome {
 
   // --- テキスト必須項目 ---
   const summary = typeof parsed.personality_summary === 'string' ? parsed.personality_summary.trim() : ''
-  const tone = typeof parsed.tone_of_voice === 'string' ? parsed.tone_of_voice.trim() : ''
   const style = typeof parsed.communication_style === 'string' ? parsed.communication_style.trim() : ''
   if (!summary) return { ok: false, reason: 'personality_summary が空' }
-  if (!tone) return { ok: false, reason: 'tone_of_voice が空' }
   if (!style) return { ok: false, reason: 'communication_style が空' }
 
   // --- expected_tags: 8語クローズドリスト（確定的検証＝リトライ対象） ---
@@ -339,7 +334,6 @@ export function validateAndNormalize(raw: string): ValidationOutcome {
       archetype: { primary, secondary },
       archetype_traits: traitItems,
       personality_summary: summary,
-      tone_of_voice: tone,
       communication_style: style,
       expected_tags: expectedTags,
       tone_rules: toneRules,

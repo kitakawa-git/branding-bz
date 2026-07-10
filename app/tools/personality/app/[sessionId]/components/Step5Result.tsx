@@ -21,18 +21,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from '@/components/ui/chart'
-import {
-  PolarAngleAxis,
-  PolarGrid,
-  PolarRadiusAxis,
-  Radar,
-  RadarChart,
-} from 'recharts'
+import { BrandPersonaCard } from '@/components/shared/BrandPersonaCard'
+import { type PersonalityTraitItem } from '@/components/shared/PersonalityTraitList'
+import { BrandPersonalityCard } from '@/components/shared/BrandPersonalityCard'
 import { toast } from 'sonner'
 import { ArrowLeft, Download, SlidersHorizontal, Check, X, Unplug, RotateCcw } from 'lucide-react'
 import { ARCHETYPE_BY_KEY, AAKER_CITATION, type ArchetypeKey } from '../../../lib/archetypes'
@@ -52,12 +43,6 @@ interface Step5Props {
   companyName: string
   onSaveField: (data: Record<string, unknown>) => Promise<void>
   onBack: () => void
-}
-
-const radarConfig = {
-  // アプリ青アクセント（DB design_tokens(app) → --ds-app-accent）。
-  // ChartContainer が --color-score: var(--ds-app-accent) を生成し、Radar の fill/stroke が解決する。
-  score: { label: 'スコア', color: 'var(--ds-app-accent)' },
 }
 
 export function Step5Result({ sessionId, framework, diagnosis, companyName, onSaveField, onBack }: Step5Props) {
@@ -194,8 +179,8 @@ export function Step5Result({ sessionId, framework, diagnosis, companyName, onSa
             </p>
           </CardContent>
         </Card>
-        <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 bg-background/80 backdrop-blur border-t border-border px-6 py-3 flex justify-start">
-          <Button variant="outline" onClick={onBack} className="gap-1">
+        <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 bg-background/80 backdrop-blur border-t border-border px-6 py-4 flex justify-start">
+          <Button variant="outline" onClick={onBack} className="h-14 gap-2 px-6 text-base font-bold">
             <ArrowLeft className="h-4 w-4" />
             戻る
           </Button>
@@ -218,97 +203,72 @@ export function Step5Result({ sessionId, framework, diagnosis, companyName, onSa
       {/* 選択フレームワークの結果のみ表示（タブ切替は廃止・仕様改定） */}
       {defaultTab === 'aaker' ? (
         <div className="space-y-4">
-          <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between mb-2">
-                <h2 className="text-sm font-bold text-foreground">5次元スコア</h2>
-                <div className="flex items-center gap-2">
-                  {d.adjusted && (
-                    <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-medium text-amber-700">
-                      ※スコア調整済み
-                    </span>
-                  )}
-                  {!editing && (
-                    <Button variant="outline" size="sm" onClick={startEdit} className="gap-1 h-8">
-                      <SlidersHorizontal className="h-3.5 w-3.5" />
-                      微調整
-                    </Button>
-                  )}
-                </div>
-              </div>
-
-              {/* レーダーチャート（上限5・ポータルと同設定） */}
-              {!editing && (
-                <div className="w-full max-w-[420px] mx-auto mb-4">
-                  <ChartContainer config={radarConfig} className="aspect-square">
-                    <RadarChart data={chartData} cx="50%" cy="50%" outerRadius="77%">
-                      <ChartTooltip content={<ChartTooltipContent hideLabel />} />
-                      <PolarGrid />
-                      <PolarAngleAxis dataKey="name" tick={{ fontSize: 12 }} />
-                      <PolarRadiusAxis angle={90} domain={[0, 5]} tick={{ fontSize: 10 }} tickCount={6} />
-                      <Radar
-                        dataKey="score"
-                        fill="var(--color-score)"
-                        fillOpacity={0.2}
-                        stroke="var(--color-score)"
-                        strokeWidth={2}
-                        dot={{ r: 4, fillOpacity: 1, fill: 'var(--color-score)' }}
-                      />
-                    </RadarChart>
-                  </ChartContainer>
-                </div>
-              )}
-
-              {/* 次元リスト（表示モード） or スライダー（編集モード） */}
-              <div className="space-y-3">
-                {(editing ? editScores : d.aaker_scores).map((s, i) => (
-                  <div key={s.dimension} className="rounded-lg border border-gray-200 bg-white p-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="min-w-0">
-                        <span className="text-sm font-bold text-foreground">{s.label}</span>
-                        {!editing && s.copy && (
-                          <span className="ml-2 text-xs font-semibold text-ds-app-accent-hover">{s.copy}</span>
-                        )}
+          <BrandPersonaCard
+            chartData={chartData}
+            summary={editing ? null : d.personality_summary}
+            maxChartWidth={420}
+            hideChart={editing}
+            traits={d.aaker_scores.map<PersonalityTraitItem>(s => ({
+              name: s.label,
+              score: s.score,
+              copy: s.copy,
+              description: s.description,
+            }))}
+            headerRight={
+              <>
+                {d.adjusted && (
+                  <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-medium text-amber-700">
+                    ※スコア調整済み
+                  </span>
+                )}
+                {!editing && (
+                  <Button variant="outline" size="sm" onClick={startEdit} className="gap-1 h-8">
+                    <SlidersHorizontal className="h-3.5 w-3.5" />
+                    微調整
+                  </Button>
+                )}
+              </>
+            }
+            traitListReplacement={
+              editing ? (
+                <>
+                  <div className="space-y-2">
+                    {editScores.map((s, i) => (
+                      <div key={s.dimension} className="rounded-lg border border-border bg-background p-4">
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-sm font-bold text-foreground">{s.label}</span>
+                          <div className="shrink-0 flex h-8 w-8 items-center justify-center rounded-full bg-ds-app-accent text-sm font-bold text-white">
+                            {s.score}
+                          </div>
+                        </div>
+                        <div className="mt-3">
+                          <Slider
+                            value={[s.score]}
+                            min={1}
+                            max={5}
+                            step={1}
+                            onValueChange={([v]) => {
+                              setEditScores(prev => prev.map((p, pi) => pi === i ? { ...p, score: v } : p))
+                            }}
+                          />
+                        </div>
                       </div>
-                      <div className="shrink-0 flex h-8 w-8 items-center justify-center rounded-full bg-ds-app-accent text-sm font-bold text-white">
-                        {s.score}
-                      </div>
-                    </div>
-                    {editing ? (
-                      <div className="mt-3">
-                        <Slider
-                          value={[s.score]}
-                          min={1}
-                          max={5}
-                          step={1}
-                          onValueChange={([v]) => {
-                            setEditScores(prev => prev.map((p, pi) => pi === i ? { ...p, score: v } : p))
-                          }}
-                        />
-                      </div>
-                    ) : (
-                      s.description && (
-                        <p className="mt-2 text-xs text-muted-foreground leading-relaxed">{s.description}</p>
-                      )
-                    )}
+                    ))}
                   </div>
-                ))}
-              </div>
-
-              {editing && (
-                <div className="mt-4 flex justify-end gap-2">
-                  <Button variant="outline" size="sm" onClick={() => setEditing(false)} disabled={savingScores} className="gap-1">
-                    <X className="h-3.5 w-3.5" />
-                    キャンセル
-                  </Button>
-                  <Button size="sm" onClick={saveEdit} disabled={savingScores} className="gap-1">
-                    <Check className="h-3.5 w-3.5" />
-                    {savingScores ? '保存中...' : 'この調整で保存'}
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                  <div className="mt-4 flex justify-end gap-2">
+                    <Button variant="outline" size="sm" onClick={() => setEditing(false)} disabled={savingScores} className="gap-1">
+                      <X className="h-3.5 w-3.5" />
+                      キャンセル
+                    </Button>
+                    <Button size="sm" onClick={saveEdit} disabled={savingScores} className="gap-1">
+                      <Check className="h-3.5 w-3.5" />
+                      {savingScores ? '保存中...' : 'この調整で保存'}
+                    </Button>
+                  </div>
+                </>
+              ) : undefined
+            }
+          />
         </div>
       ) : (
         <div className="space-y-4">
@@ -397,65 +357,13 @@ export function Step5Result({ sessionId, framework, diagnosis, companyName, onSa
         </div>
       )}
 
-      {/* ===== 共通表示: 物語文・トーン・期待タグ ===== */}
-      <Card className="mt-4 bg-[hsl(0_0%_97%)] border shadow-none">
-        <CardContent className="p-5 space-y-4">
-          {d.personality_summary && (
-            <div>
-              <h3 className="text-sm font-bold text-foreground mb-2">パーソナリティ概要</h3>
-              <p className="text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap">{d.personality_summary}</p>
-            </div>
-          )}
-          {d.tone_of_voice && (
-            <div>
-              <h3 className="text-sm font-bold text-foreground mb-2">トーンオブボイス</h3>
-              <p className="text-sm text-foreground/80 leading-relaxed">{d.tone_of_voice}</p>
-            </div>
-          )}
-          {d.communication_style && (
-            <div>
-              <h3 className="text-sm font-bold text-foreground mb-2">コミュニケーションスタイル</h3>
-              <p className="text-sm text-foreground/80 leading-relaxed">{d.communication_style}</p>
-            </div>
-          )}
-          {d.tone_rules?.length > 0 && (
-            <div>
-              <h3 className="text-sm font-bold text-foreground mb-2">表現ルール</h3>
-              <div className="space-y-2">
-                {d.tone_rules.map((r, i) => (
-                  <div key={i} className="rounded-lg border border-gray-200 bg-white p-4">
-                    <p className="text-sm font-semibold text-foreground">{r.rule_text}</p>
-                    <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                      {r.ng_example && (
-                        <div className="rounded-md bg-red-50 px-3 py-2">
-                          <p className="text-[11px] font-bold text-red-600 mb-0.5">NG例</p>
-                          <p className="text-xs text-red-700/90 leading-relaxed">{r.ng_example}</p>
-                        </div>
-                      )}
-                      {r.ok_example && (
-                        <div className="rounded-md bg-green-50 px-3 py-2">
-                          <p className="text-[11px] font-bold text-green-700 mb-0.5">OK例</p>
-                          <p className="text-xs text-green-800/90 leading-relaxed">{r.ok_example}</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          {d.expected_tags?.length > 0 && (
-            <div>
-              <h3 className="text-sm font-bold text-foreground mb-2">期待される印象タグ</h3>
-              <div className="flex flex-wrap gap-2">
-                {d.expected_tags.map(t => (
-                  <span key={t} className="rounded-full border border-ds-app-accent bg-blue-50 px-3 py-1 text-xs font-medium text-ds-app-accent-hover">{t}</span>
-                ))}
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* ===== コミュニケーションスタイル + 期待タグ + 表現ルール（共通コンポーネント） ===== */}
+      <BrandPersonalityCard
+        className="mt-4"
+        communicationStyle={d.communication_style}
+        expectedTags={d.expected_tags}
+        toneRules={d.tone_rules}
+      />
 
       {/* 出典表記 */}
       <p className="mt-3 text-[11px] text-muted-foreground">{AAKER_CITATION}</p>
@@ -510,12 +418,12 @@ export function Step5Result({ sessionId, framework, diagnosis, companyName, onSa
       </div>
 
       {/* フッターナビゲーション */}
-      <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 bg-background/80 backdrop-blur border-t border-border px-6 py-3 flex justify-between">
-        <Button variant="outline" onClick={onBack} className="gap-1">
+      <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 bg-background/80 backdrop-blur border-t border-border px-6 py-4 flex justify-between">
+        <Button variant="outline" onClick={onBack} className="h-14 gap-2 px-6 text-base font-bold">
           <ArrowLeft className="h-4 w-4" />
           戻る
         </Button>
-        <Button onClick={handleExportPdf} disabled={exporting} className="gap-1">
+        <Button onClick={handleExportPdf} disabled={exporting} className="h-14 gap-2 px-6 text-base font-bold">
           <Download className="h-4 w-4" />
           {exporting ? 'PDF生成中...' : 'PDFをダウンロード'}
         </Button>

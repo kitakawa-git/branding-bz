@@ -13,7 +13,7 @@ export interface ArchetypeDefinition {
   copy: string
   description: string
   keywords: [string, string, string]
-  /** カード表示には使わない。AIが tone_of_voice / tone_rules を生成する際の参照値 */
+  /** カード表示には使わない。AIが communication_style / tone_rules を生成する際の参照値 */
   tone_hint: string
 }
 
