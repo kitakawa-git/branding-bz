@@ -5,8 +5,8 @@
 > Cowork: 直接読み書き
 > Claude Projects: ナレッジとしてアップロード（週1回推奨）
 
-**最終更新:** 2026-07-09
-**更新者:** Claude Code（ペルソナビルダー Step4/Step5 の UI 微調整＋システム全体の丸型ピル/タグを 14px に統一。別セッションが personality/colors/stp/portal を並行改修中のため、コミットは自分のハンクのみに限定（globals.css は min-font ブロックだけを切り出し、Step4Diagnosis のフッター等 並行分は非コミット保持）。前回 2026-07-02 のカラー定義ツール改修を継承）
+**最終更新:** 2026-07-10
+**更新者:** Claude Code（STP分析ツール Step5「確認・出力」のT/P表示をコンポーネント化し、ポータル・Step4と共通化。別セッションが personality/colors/persona/stp Step1・portal/guidelines を並行改修中のため、コミットは自分のハンクのみに限定）
 
 ---
 
@@ -15,12 +15,13 @@
 | 項目 | 状態 |
 |------|------|
 | 作業ブランチ | `main`（直接コミット運用。ブランチ作成・切替・マージは北川さんの明示指示まで行わない） |
-| 本番デプロイ | **済み** — 2026-07-09 リリース分まで反映。Vercel 自動デプロイ Ready |
-| 今セッションのリリース（2026-07-09） | **ペルソナビルダー UI 微調整＋丸型ピル/タグ 14px 統一**①ペルソナビルダー Step4（ジャーニー）＝「感情カーブ（優先度の注釈）」見出しを 18px、ペルソナ名アコーディオンを 16px、「タッチポイント候補プール」上の区切り罫線を削除し余白を mt-5+pt-5(40px) → mt-8(32px) に整理②**システム全体**＝`globals.css` の「本文最低14px」一括ルールの除外から `.rounded-full` を撤去し、丸型ピル/タグ（期待印象タグ・各ツールのタグチップ等）を本文と同じ 14px に統一（アバターは text-2xl 等で対象外・ボタン/タブ/Badge/ステッパーは除外維持）。※ personality の Step4 診断結果表示は一旦入れて revert 済み（元の「実行専用ステップ」仕様に戻す） |
+| 本番デプロイ | **済み** — 2026-07-10 リリース分まで反映。Vercel 自動デプロイ Ready（コミット `e797452`） |
+| 今セッションのリリース（2026-07-10） | **STP分析ツール T/P表示のコンポーネント化＋ポータル/Step4との共通化**①`components/shared/` に `TargetSegmentCards`（メイン/サブターゲットバッジカード）・`TargetDeepDive`（購買決定要因/自社の強み/競合分析）・`TargetFitMapPreview`（ターゲット適合マップ）・`PositioningMapAndStance`（ポジショニングマップ＋自社の立ち位置）を新設し、STP Step5・Step4・`portal/strategy` の3箇所で共通利用②ポータル `portal/strategy` にターゲットの深掘り情報（購買決定要因・強み・競合分析・適合マップ）を新規表示、AI概要文がメイン説明文と重複する場合は非表示化③STP Step5からセグメンテーション（S）セクションと各セクション見出し／外枠カードを削除しシンプル化、戦略整合性チェックピルの背景色をカード背景よりワントーン濃く④STP Step4でも自社の立ち位置カードを先頭に配置、外枠・見出し二重化を解消、軸選定の根拠テキストを削除⑤STP Step3のターゲット候補カードの `pr-24`（AIボタン用余白）をメインカードのみに限定し、非選択カードでタイトルが折り返される不具合を修正⑥`app/portal/components/SurveyBanner.tsx` の見出し文字色をアクセントカラーに⑦segmentation は本体（brand_personas/companies）への同期を廃止（STPツール内部の下書きデータとしてのみ保持、ターゲット説明文補完に利用）。**修正コミット** `e797452` で、直前のコミットが依存する `PersonaCarousel` の `title` prop 未コミット分を追加し本番ビルドエラーを解消 |
+| 2026-07-09 リリース | **ペルソナビルダー UI 微調整＋丸型ピル/タグ 14px 統一**①ペルソナビルダー Step4（ジャーニー）＝「感情カーブ（優先度の注釈）」見出しを 18px、ペルソナ名アコーディオンを 16px、「タッチポイント候補プール」上の区切り罫線を削除し余白を mt-5+pt-5(40px) → mt-8(32px) に整理②**システム全体**＝`globals.css` の「本文最低14px」一括ルールの除外から `.rounded-full` を撤去し、丸型ピル/タグ（期待印象タグ・各ツールのタグチップ等）を本文と同じ 14px に統一（アバターは text-2xl 等で対象外・ボタン/タブ/Badge/ステッパーは除外維持）。※ personality の Step4 診断結果表示は一旦入れて revert 済み（元の「実行専用ステップ」仕様に戻す） |
 | 2026-07-02 リリース | **カラー定義ツールの UX 全面改修＋ブランドステージ削除**（コミット `f1c31f3`）①**Step1（基本情報）**＝補足テキストを見出し直下へ移動＋文言リライト、業種セレクトの背景を白に統一②**Step2（イメージ入力）**＝「追加の質問」を常時表示化、キーワード選択エリアを白カードで括り「ブランドイメージを表すキーワード（3〜5つ）」見出し追加、カテゴリラベルを `FieldSubLabel` で統一、キーワードチップのパディングを 10x12、選択済みリストを独立コンポーネント（`SelectedKeywordList`）に切り出して「選択済み＋追加の質問」を1枚の白カードに統合、ムードボードのラベルを「前のボード/次のボード」に③**Step3（AI提案）**＝見出し「提案パレット + 件数」追加、「AIで再提案」を Sサイズで同一行右端に、パレットカード全体クリックで選択（`role="button"`＋キーボード対応、タブとボタンは `stopPropagation` で保護）、「提案理由」「プレビュー」を `FieldSubLabel` に統一、区切り罫線＋16px間隔で整列、タブUIをスライドインジケーターでアニメーション化＋文字を太字に④**Step5（確定・出力）**＝STP/ペルソナと同じ `ToolConnectActions` パターンに再構成、スティッキーフッターに PDF ダウンロードを移動、CSS 変数コピーはゴーストボタンで温存、連携済み時のグリーンサクセスボックス追加⑤**ブランドステージのコード全消し**＝実効がプロンプト1行のみで機能への影響が薄いため、色ツール入力/バリデーション/state/保存、`generate` プロンプト、`competitors/suggest` プロンプト＋SELECT列、管理画面の編集UI/型/定数/保存の**全参照を削除**。`companies.brand_stage` カラムは後回し（アプリからの参照は消滅済み） |
 | 前回リリース（2026-06-27〜28） | STP分析ツールの一連の改修①段階1の決定論化（temperature=0・軸両端ラベル）②ターゲット適合マップを C案（推奨即生成＋遅延切替＋キャッシュ）へ③死蔵データ表示④根拠データを本体へ⑤ConnectModal 累積バグ修正 |
 | 前々回リリース（2026-06-24） | ①管理画面ペルソナ保存を id保持sync 化②ペルソナTier1パラメータを離散カラム化＋編集可能に③未使用voice／孤立フィールド撤去④Step4名称を「ジャーニー／タッチポイント」に統一 |
-| 未コミットWIP | 並行セッションのLP系WIP（`app/(site)/page.tsx`）＋ news系（`app/(site)/news/[slug]/page.tsx`・`app/superadmin/news/_components/NewsForm.tsx`）＋ `package.json`／`scripts/verify-copy-*.ts` が working tree に残存。**ステータス更新では触らない** |
+| 未コミットWIP | 並行セッションのLP系WIP（`app/(site)/page.tsx`）＋ news系（`app/(site)/news/[slug]/page.tsx`・`app/superadmin/news/_components/NewsForm.tsx`）＋ `package.json`／`package-lock.json`／`app/globals.css`／`app/portal/guidelines/page.tsx`／colors・persona・personality 各ツールの一部Step／STP `Step1BasicInfo.tsx`（`components/shared/ToolStep1BasicInfo.tsx` への切り出し中）が working tree に残存。**ステータス更新では触らない** |
 
 ---
 
