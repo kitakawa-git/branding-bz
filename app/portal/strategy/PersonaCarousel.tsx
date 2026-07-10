@@ -5,9 +5,11 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 interface PersonaCarouselProps {
   children: ReactNode[]
+  /** セクション見出し（ページネーションと同じ行の左側に表示） */
+  title?: ReactNode
 }
 
-export function PersonaCarousel({ children }: PersonaCarouselProps) {
+export function PersonaCarousel({ children, title }: PersonaCarouselProps) {
   const items = Array.isArray(children) ? children : [children]
   const count = items.length
   const scrollerRef = useRef<HTMLDivElement>(null)
@@ -66,9 +68,14 @@ export function PersonaCarousel({ children }: PersonaCarouselProps) {
 
   if (count === 0) return null
 
-  // ペルソナ1人なら静的表示
+  // ペルソナ1人なら静的表示（見出しは表示、ページネーションなし）
   if (count === 1) {
-    return <div>{items[0]}</div>
+    return (
+      <div>
+        {title && <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">{title}</h2>}
+        {items[0]}
+      </div>
+    )
   }
 
   return (
@@ -80,29 +87,34 @@ export function PersonaCarousel({ children }: PersonaCarouselProps) {
       tabIndex={0}
       onKeyDown={handleKeyDown}
     >
-      {/* ヘッダー：インデックス + 前後ボタン */}
-      <div className="flex items-center justify-end gap-2 mb-3 -mt-1">
-        <span className="text-xs text-muted-foreground font-semibold mr-1">
-          {activeIdx + 1} / {count}
-        </span>
-        <button
-          type="button"
-          onClick={() => goTo(activeIdx - 1)}
-          disabled={activeIdx === 0}
-          aria-label="前のペルソナ"
-          className="inline-flex items-center justify-center w-8 h-8 rounded-full border border-border bg-card hover:bg-soft disabled:opacity-35 disabled:cursor-not-allowed transition-all"
-        >
-          <ChevronLeft className="w-4 h-4" />
-        </button>
-        <button
-          type="button"
-          onClick={() => goTo(activeIdx + 1)}
-          disabled={activeIdx === count - 1}
-          aria-label="次のペルソナ"
-          className="inline-flex items-center justify-center w-8 h-8 rounded-full border border-border bg-card hover:bg-soft disabled:opacity-35 disabled:cursor-not-allowed transition-all"
-        >
-          <ChevronRight className="w-4 h-4" />
-        </button>
+      {/* ヘッダー：見出し（左） + インデックス + 前後ボタン（右） */}
+      <div className="flex items-center justify-between gap-2 mb-3">
+        {title
+          ? <h2 className="text-sm font-bold text-foreground tracking-wide m-0">{title}</h2>
+          : <span />}
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground font-semibold mr-1">
+            {activeIdx + 1} / {count}
+          </span>
+          <button
+            type="button"
+            onClick={() => goTo(activeIdx - 1)}
+            disabled={activeIdx === 0}
+            aria-label="前のペルソナ"
+            className="inline-flex items-center justify-center w-8 h-8 rounded-full border border-border bg-card hover:bg-soft disabled:opacity-35 disabled:cursor-not-allowed transition-all"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => goTo(activeIdx + 1)}
+            disabled={activeIdx === count - 1}
+            aria-label="次のペルソナ"
+            className="inline-flex items-center justify-center w-8 h-8 rounded-full border border-border bg-card hover:bg-soft disabled:opacity-35 disabled:cursor-not-allowed transition-all"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
       {/* スクローラー */}
