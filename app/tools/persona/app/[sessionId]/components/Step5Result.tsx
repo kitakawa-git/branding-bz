@@ -133,7 +133,7 @@ export function Step5Result({ sessionId, personas, basicInfo, companyId, onBack,
       </p>
 
       <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4">
-        <FieldHeading className="mb-3">ターゲット別ペルソナ一覧</FieldHeading>
+        <FieldHeading className="mb-3 mt-0">ターゲット別ペルソナ一覧</FieldHeading>
         <div className="space-y-6">
         {groups.map((group) => (
           <div key={group.name} className="rounded-xl border border-gray-200 bg-white p-4">

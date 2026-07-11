@@ -96,7 +96,7 @@ export function KeywordSelector({ value, onChange }: KeywordSelectorProps) {
 
   return (
     <div className="space-y-6">
-      <FieldHeading className="mb-3">ブランドイメージを表すキーワード（3〜5つ）</FieldHeading>
+      <FieldHeading className="mb-3 mt-0">ブランドイメージを表すキーワード（3〜5つ）</FieldHeading>
 
       {/* キーワード選択カード（カテゴリ群＋自由入力） */}
       <div className="!mt-0 space-y-6 rounded-lg border border-gray-200 bg-white p-4">

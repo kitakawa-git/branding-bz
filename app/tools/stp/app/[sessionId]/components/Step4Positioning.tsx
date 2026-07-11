@@ -3,6 +3,7 @@
 // Step 4: ポジショニング（マップ + スライダー編集）
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { Input } from '@/components/ui/input'
+import { AutoResizeTextarea } from '@/components/ui/auto-resize-textarea'
 import { Button } from '@/components/ui/button'
 import { Slider } from '@/components/ui/slider'
 import { StepProgressPanel } from '@/components/stp/StepProgressLoader'
@@ -18,6 +19,13 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import {
   ArrowLeft,
   ArrowRight,
   Plus,
@@ -26,6 +34,7 @@ import {
   ArrowUpDown,
   X,
   Loader2,
+  Pencil,
 } from 'lucide-react'
 import { AIButton } from '@/components/shared/AIButton'
 import { FieldHeading, FieldSubLabel } from '@/components/shared/FieldHeading'
@@ -40,6 +49,7 @@ interface PositioningItem {
   y: number
   color: string
   is_self: boolean
+  traits?: string  // 特徴・強み・弱み（任意。AIの配置精度向上と競合分析への連携に使う）
   reasoning?: string  // AIによる配置根拠（1文）
   confidence?: 'high' | 'medium' | 'low'  // 配置の確からしさ
 }
@@ -87,7 +97,6 @@ interface TargetingData {
   sub_targets: string[]
   target_description: string
   buying_factors?: string[]
-  strengths?: string
   competitor_traits?: string  // 後方互換
   competitors_analysis?: Array<{ name: string; traits: string }>
 }
@@ -98,6 +107,7 @@ interface Step4Props {
   basicInfo: BasicInfo
   targeting: TargetingData
   segmentation: SegmentationData
+  companyId: string | null
   brandStance?: BrandStanceStatement[]
   onNext: (data: PositioningData) => Promise<boolean>
   onBack: () => void
@@ -125,6 +135,7 @@ export function Step4Positioning({
   basicInfo,
   targeting,
   segmentation,
+  companyId,
   brandStance: initialBrandStance,
   onNext,
   onBack,
@@ -145,6 +156,36 @@ export function Step4Positioning({
   // 自社の立ち位置（ターゲット別ポジショニング文）。Step4で生成し、Step5は表示のみ。
   const [brandStance, setBrandStance] = useState<BrandStanceStatement[]>(initialBrandStance || [])
   const [stanceLoading, setStanceLoading] = useState(false)
+
+  // 過去の connect() で companies に保存済みの自社の強み・競合分析を、traits未入力の項目にのみ復元する
+  // （旧バージョンのStep3で入力→保存されていたが、positioning.items新設時に引き継がれなかったデータの救済）
+  const backfillRequestedRef = useRef(false)
+  useEffect(() => {
+    if (!companyId || backfillRequestedRef.current) return
+    const hasMissingTraits = items.some((item) => !item.traits?.trim())
+    if (!hasMissingTraits) return
+    backfillRequestedRef.current = true
+    fetch(`/api/tools/stp/connect?sessionId=${sessionId}&companyId=${companyId}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        const companyTraits = data?.companyTraits as
+          | { strengths?: string; competitorsAnalysis?: Array<{ name: string; traits: string }> }
+          | undefined
+        if (!companyTraits) return
+        setItems((prev) => prev.map((item) => {
+          if (item.traits?.trim()) return item
+          if (item.is_self) {
+            return companyTraits.strengths?.trim() ? { ...item, traits: companyTraits.strengths } : item
+          }
+          const matched = companyTraits.competitorsAnalysis?.find(
+            (c) => c.name.trim().toLowerCase() === item.name.trim().toLowerCase()
+          )
+          return matched?.traits?.trim() ? { ...item, traits: matched.traits } : item
+        }))
+      })
+      .catch(() => {})
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [companyId, sessionId])
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const aiRequestedRef = useRef(false)
@@ -230,10 +271,21 @@ export function Step4Positioning({
     setAiLoading(true)
     setAiError('')
     try {
+      // 自社・競合の一覧で入力済みの特徴（traits）を、既存の自社の強み・競合分析入力と同じ形でプロンプトに渡す
+      const selfTraits = items.find((item) => item.is_self)?.traits?.trim()
+      const competitorsAnalysis = items
+        .filter((item) => !item.is_self && item.traits?.trim())
+        .map((item) => ({ name: item.name, traits: item.traits as string }))
+      const targetingWithTraits = {
+        ...targeting,
+        strengths: selfTraits || undefined,
+        competitors_analysis: competitorsAnalysis,
+      }
+
       const res = await fetch('/api/tools/stp/suggest-positioning', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ basic_info: basicInfo, targeting, segmentation }),
+        body: JSON.stringify({ basic_info: basicInfo, targeting: targetingWithTraits, segmentation }),
       })
       if (!res.ok) {
         const data = await res.json()
@@ -243,14 +295,20 @@ export function Step4Positioning({
       const data = await res.json()
       setXAxis(data.x_axis)
       setYAxis(data.y_axis)
-      setItems(data.items)
+      // 既存の traits をユーザー入力の消失なく引き継ぐ（名前一致で復元）
+      setItems((data.items as PositioningItem[]).map((newItem) => {
+        const existing = items.find(
+          (item) => item.name.trim().toLowerCase() === newItem.name.trim().toLowerCase()
+        )
+        return existing?.traits ? { ...newItem, traits: existing.traits } : newItem
+      }))
       setAxisRationale(data.axis_rationale || '')
     } catch (err) {
       setAiError(err instanceof Error ? err.message : 'エラーが発生しました')
     } finally {
       setAiLoading(false)
     }
-  }, [basicInfo, targeting, segmentation])
+  }, [basicInfo, targeting, segmentation, items])
 
   // 初回自動リクエスト（データなしの場合のみ）
   useEffect(() => {
@@ -297,8 +355,18 @@ export function Step4Positioning({
     )
   }
 
+  // 追加した要素を選択状態にし、編集モーダルを即開く
+  const handleAddItem = () => {
+    const newIndex = items.length
+    addItem()
+    setSelectedIdx(newIndex)
+    setEditOpen(true)
+  }
+
   // 選択中の要素（チャート/リスト/詳細スライダーで連動）
   const [selectedIdx, setSelectedIdx] = useState<number | null>(items.length > 0 ? 0 : null)
+  // 選択中要素の「詳しく編集」モーダル（マップ上のフローティングパネルから開く）
+  const [editOpen, setEditOpen] = useState(false)
   // 要素削除やAI再生成で選択が範囲外になったら補正
   useEffect(() => {
     if (selectedIdx !== null && selectedIdx >= items.length) {
@@ -311,14 +379,20 @@ export function Step4Positioning({
   }, [])
 
   // バリデーション
+  const selfItem = items.find((item) => item.is_self)
   const isValid =
     xAxis.left.trim() !== '' &&
     xAxis.right.trim() !== '' &&
     yAxis.bottom.trim() !== '' &&
     yAxis.top.trim() !== '' &&
-    items.length >= 2
+    items.length >= 2 &&
+    !!selfItem?.traits?.trim()
 
   const handleNext = async () => {
+    if (!selfItem?.traits?.trim()) {
+      toast.error('自社の強みを入力してください')
+      return
+    }
     setSaving(true)
     if (debounceRef.current) clearTimeout(debounceRef.current)
     const success = await onNext(getCurrentData())
@@ -361,7 +435,7 @@ export function Step4Positioning({
           {/* 自社の立ち位置（ターゲット別×N。Step4で生成→Step5は表示のみ）。先頭表示のため上余白なし */}
           <div>
         <div className="mb-2 flex items-center justify-between gap-2">
-          <FieldHeading className="mb-0">ポジショニング</FieldHeading>
+          <FieldHeading className="mb-0 mt-0">ポジショニング</FieldHeading>
           <AIButton
             size="sm"
             onClick={generateBrandStance}
@@ -372,7 +446,7 @@ export function Step4Positioning({
           </AIButton>
         </div>
         <p className="mb-3 text-[13px] leading-relaxed text-muted-foreground">
-          このポジショニングをもとに、各ターゲットに対して自社が何者として刺さるかを言語化します（確認・出力ステップに反映されます）。
+          各ターゲットに対して自社が何者として刺さるかを言語化します（確認・出力ステップに反映されます）。
         </p>
         {stanceLoading && brandStance.length === 0 ? (
           <StepProgressPanel
@@ -396,8 +470,8 @@ export function Step4Positioning({
                   key={i}
                   className={`relative rounded-lg p-4 ${
                     isMain
-                      ? 'border border-ds-app-accent-soft bg-blue-50/50'
-                      : 'border border-blue-300 bg-blue-50/30'
+                      ? 'border-2 border-ds-app-accent-soft bg-blue-50/50'
+                      : 'border-2 border-blue-300 bg-blue-50/30'
                   }`}
                 >
                   {isMain ? (
@@ -417,70 +491,15 @@ export function Step4Positioning({
         )}
           </div>
 
-          <div className="!mt-8 flex items-center justify-between gap-2">
-            <FieldHeading className="mb-0">自社・競合の一覧</FieldHeading>
+          {/* ポジショニングマップ：見出しはカードの外、チャートのみ背景白のカードで括る。要素の追加・選択・詳細編集はマップ内に統合。
+              flex行は右のAIButton(28px)が高いため items-center で h2(20px) が4px下にオフセット→上余白は 32-4=28px(mt-7) で見出し上を32pxにする */}
+          <div className="!mt-7">
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <FieldHeading className="mb-0 mt-0">ポジショニングマップ</FieldHeading>
             <AIButton size="sm" onClick={handleRegenerate} className="shrink-0">
               AIで提案生成
             </AIButton>
           </div>
-          {/* 1. 要素リスト（2カラム）：まず要素を確認・命名 */}
-          <div>
-            <FieldSubLabel>要素（{items.length}社）</FieldSubLabel>
-            <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-              {items.map((item, index) => (
-                <div
-                  key={index}
-                  onClick={() => setSelectedIdx(index)}
-                  className={`flex items-center gap-2 rounded-lg border p-2.5 transition-all cursor-pointer ${
-                    selectedIdx === index
-                      ? 'border-ds-app-accent bg-white ring-1 ring-ds-app-accent'
-                      : 'border-border bg-card hover:border-muted-foreground'
-                  }`}
-                >
-                  <input
-                    type="color"
-                    value={item.color}
-                    onClick={(e) => e.stopPropagation()}
-                    onChange={(e) => updateItem(index, { color: e.target.value })}
-                    className="h-5 w-5 shrink-0 cursor-pointer rounded-full border border-gray-200 p-0.5"
-                  />
-                  <Input
-                    value={item.name}
-                    onClick={(e) => e.stopPropagation()}
-                    onChange={(e) => updateItem(index, { name: e.target.value })}
-                    placeholder="項目名"
-                    className="h-7 min-w-0 flex-1 text-xs"
-                  />
-                  <span className="whitespace-nowrap font-mono text-[10px] text-muted-foreground">x:{item.x} y:{item.y}</span>
-                  {item.is_self && (
-                    <span className="shrink-0 rounded bg-ds-app-accent/10 px-1.5 py-0.5 text-[10px] font-bold text-ds-app-accent">自社</span>
-                  )}
-                  {item.confidence === 'low' && (
-                    <span className="shrink-0 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-700">
-                      データ不足
-                    </span>
-                  )}
-                  {items.length > 2 && (
-                    <button
-                      type="button"
-                      onClick={(e) => { e.stopPropagation(); removeItem(index) }}
-                      className="shrink-0 text-gray-400 hover:text-red-500"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-            <Button variant="outline" onClick={addItem} className="mt-3 w-full gap-2">
-              <Plus className="h-4 w-4" />
-              競合を追加
-            </Button>
-          </div>
-
-          {/* ポジショニングマップ：見出しはカードの外、チャートのみ背景白のカードで括る */}
-          <div className="!mt-8">
-          <FieldHeading className="mb-3">ポジショニングマップ</FieldHeading>
           <div className="rounded-lg border border-gray-200 bg-white p-4">
           {/* 3. チャート＋軸設定オーバーレイ（全幅・ドラッグで配置）。
               padding は外側の白カード(p-4)と二重になるため付けない。flex-col でフレックス子のマージン相殺を防ぎ、根拠文の mt-[90px]（オーバーレイ回避）を効かせる。 */}
@@ -507,8 +526,18 @@ export function Step4Positioning({
             </div>
 
             {/* relativeラッパーはSVGと同寸（width100%・aspect4/3）なので、%指定でSVG座標と一致する。
-                オーバーレイは absolute(top-3, 高さ~78px) なので mt-[80px] でその下に流す。 */}
-            <div className="relative mt-[80px]">
+                オーバーレイは absolute(top-3, 高さ~78px) なので mt-[96px] でその下に流す。 */}
+            <div className="relative mt-[96px]">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleAddItem}
+                className="absolute right-2 top-2 z-10 h-8 gap-1"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                競合他社を追加
+              </Button>
               <InteractivePositioningMap
                 items={items}
                 axes={{ x_axis: xAxis, y_axis: yAxis }}
@@ -561,6 +590,14 @@ export function Step4Positioning({
                       </div>
                       <Slider value={[sel.y]} onValueChange={([v]) => updateItem(selectedIdx, { y: v })} min={0} max={100} step={1} />
                     </div>
+                    <button
+                      type="button"
+                      onClick={() => setEditOpen(true)}
+                      className="flex w-full items-center justify-center gap-1 rounded-md border border-border py-1.5 text-[11px] font-medium text-muted-foreground hover:border-ds-app-accent hover:text-ds-app-accent"
+                    >
+                      <Pencil className="h-3 w-3" />
+                      詳しく編集
+                    </button>
                   </div>
                 )
               })()}
@@ -603,6 +640,72 @@ export function Step4Positioning({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* 要素の詳しい編集（マップ上のフローティングパネルの「詳しく編集」から起動） */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="sm:max-w-md">
+          {selectedIdx !== null && items[selectedIdx] && (() => {
+            const sel = items[selectedIdx]
+            return (
+              <>
+                <DialogHeader>
+                  <DialogTitle>{sel.name || `要素${selectedIdx + 1}`} を編集</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={sel.color}
+                      onChange={(e) => updateItem(selectedIdx, { color: e.target.value })}
+                      className="h-8 w-8 shrink-0 cursor-pointer rounded-full border border-gray-200 p-0.5"
+                    />
+                    <Input
+                      value={sel.name}
+                      onChange={(e) => updateItem(selectedIdx, { name: e.target.value })}
+                      placeholder="項目名"
+                      className="flex-1"
+                    />
+                    {sel.is_self && (
+                      <span className="shrink-0 rounded bg-ds-app-accent/10 px-1.5 py-0.5 text-[10px] font-bold text-ds-app-accent">自社</span>
+                    )}
+                  </div>
+                  <div>
+                    <FieldSubLabel>{sel.is_self ? '自社の強み（必須）' : '特徴（任意）'}</FieldSubLabel>
+                    {/* 特徴: 自社は「自社の強み」として必須、競合は任意。AIの配置精度と確認・出力ステップの競合分析にも反映される */}
+                    <AutoResizeTextarea
+                      value={sel.traits || ''}
+                      onChange={(e) => updateItem(selectedIdx, { traits: e.target.value })}
+                      placeholder={
+                        sel.is_self
+                          ? '例: 中小企業の現場を知り尽くした実践的なノウハウ、低コストで始められる仕組み'
+                          : '例: 高額だが大手実績が豊富。フルサポート型で柔軟性は低い'
+                      }
+                      className="min-h-[100px] text-sm"
+                      maxLength={300}
+                    />
+                  </div>
+                </div>
+                <DialogFooter className="sm:justify-between">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={items.length <= 2}
+                    onClick={() => {
+                      removeItem(selectedIdx)
+                      setEditOpen(false)
+                    }}
+                    className="gap-2 text-red-500 hover:text-red-600"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    削除
+                  </Button>
+                  <Button type="button" onClick={() => setEditOpen(false)}>閉じる</Button>
+                </DialogFooter>
+              </>
+            )
+          })()}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

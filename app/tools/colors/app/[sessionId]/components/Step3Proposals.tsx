@@ -177,7 +177,7 @@ export function Step3Proposals({
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
         <CardContent className="p-5">
           <div className="flex items-center justify-between mb-3">
-            <FieldHeading className="mb-0">
+            <FieldHeading className="mb-0 mt-0">
               提案パレット
               <span className="ml-1 font-normal text-gray-400">
                 {proposals.length}件

@@ -144,7 +144,7 @@ export function Step3Goals({ personas: initialPersonas, basicInfo, onNext, onBac
 
       <div className="rounded-2xl border border-gray-200 bg-[hsl(0_0%_97%)] p-4">
         <div className="mb-3 flex items-center justify-between gap-2">
-          <FieldHeading className="mb-0">ペルソナ別の課題・購買行動</FieldHeading>
+          <FieldHeading className="mb-0 mt-0">ペルソナ別の課題・購買行動</FieldHeading>
           <AIButton size="sm" onClick={() => setConfirmOpen(true)}>
             AIで一括生成
           </AIButton>

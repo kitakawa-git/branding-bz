@@ -25,29 +25,17 @@ export async function POST(request: NextRequest) {
         ? basic_info.competitors.filter((c: { name: string }) => c.name?.trim())
         : []
 
-    // 競合がある場合のみ competitors_analysis を含むスキーマを使う
-    const competitorsAnalysisSchema = competitors.length > 0
-      ? `"competitors_analysis": [
-${competitors.map(c => `    { "name": "${c.name.trim()}", "traits": "この競合の特徴・強み・弱み（2〜3文）" }`).join(',\n')}
-  ],`
-      : ''
-
-    const competitorsNote = competitors.length > 0
-      ? `- competitors_analysis は必ず指定された競合企業ごとに個別の分析を記載すること。各競合のURL・メモを踏まえて具体的に`
-      : ''
-
     const SYSTEM_PROMPT = `あなたはブランドマーケティングの専門家です。STP分析のターゲティングにおいて、選択されたメインターゲットの深掘り情報を提案してください。企業情報とセグメンテーション結果を踏まえ、実践的で具体的な内容を提案してください。回答はJSON形式のみで、前後に説明文やマークダウンのコードブロックを含めないでください。
 
 出力JSONスキーマ:
 {
   "buying_factors": ["購買決定要因1", "購買決定要因2", "購買決定要因3"],
-  "strengths": "自社の強み（ターゲットに対して活かせる強み。2〜3文）"${competitorsAnalysisSchema ? ',\n  ' + competitorsAnalysisSchema.trim() : ''}
+  "strengths": "自社の強み（ターゲットに対して活かせる強み。2〜3文）"
 }
 
 注意:
 - buying_factors は3〜5個の短いキーワードで
-- strengths はターゲットに刺さる自社の強みを具体的に
-${competitorsNote}`
+- strengths はターゲットに刺さる自社の強みを具体的に`
 
     // ユーザープロンプト構築
     const parts: string[] = []
@@ -136,10 +124,7 @@ ${competitorsNote}`
     }
 
     parts.push('')
-    parts.push('上記のメインターゲットについて、購買決定要因・自社の強み・競合分析をJSON形式で提案してください。')
-    if (competitors.length > 0) {
-      parts.push('競合企業ごとに個別の特徴分析を competitors_analysis に含めてください。')
-    }
+    parts.push('上記のメインターゲットについて、購買決定要因・自社の強みをJSON形式で提案してください。')
 
     const userMessage = parts.join('\n')
 
@@ -176,7 +161,6 @@ ${competitorsNote}`
     let parsed: {
       buying_factors: string[]
       strengths: string
-      competitors_analysis?: Array<{ name: string; traits: string }>
     }
     try {
       parsed = JSON.parse(jsonStr)

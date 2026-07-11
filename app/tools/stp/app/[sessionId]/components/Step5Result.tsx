@@ -9,8 +9,7 @@ import { PositioningMapAndStance } from '@/components/shared/PositioningMapAndSt
 import { TargetSegmentCards } from '@/components/shared/TargetSegmentCards'
 import { TargetDeepDive } from '@/components/shared/TargetDeepDive'
 import { TargetFitMapPreview } from '@/components/shared/TargetFitMapPreview'
-import { checkConsistency } from '@/lib/stp/consistency-check'
-import type { STPSessionData, TargetFitMap, BrandStanceStatement } from '../page'
+import type { TargetFitMap, BrandStanceStatement } from '../page'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import { ConnectModal } from './ConnectModal'
@@ -66,8 +65,6 @@ interface TargetingData {
   target_description: string
   target_summary?: string
   buying_factors?: string[]
-  strengths?: string
-  competitors_analysis?: Array<{ name: string; traits: string }>
   target_fit_map?: TargetFitMap | null
 }
 
@@ -77,6 +74,7 @@ interface PositioningItem {
   y: number
   color: string
   is_self: boolean
+  traits?: string
 }
 
 interface PositioningData {
@@ -138,6 +136,7 @@ function toMapData(positioning: PositioningData): PositioningMapData {
 // T — ターゲティング セクション（見出し＋ターゲットカード＋適合マップ＋概要文AI生成）
 function TargetingSection({
   targeting,
+  positioning,
   mainEval,
   subEvals,
   targetSummary,
@@ -145,6 +144,7 @@ function TargetingSection({
   onRegenerateSummary,
 }: {
   targeting: TargetingData
+  positioning: PositioningData
   mainEval: Evaluation | undefined
   subEvals: Array<{ name: string; description: string; eval: Evaluation | undefined }>
   targetSummary: string
@@ -185,10 +185,9 @@ function TargetingSection({
                 </div>
               )}
 
+              {/* 自社の強み・競合分析は P（ポジショニングマップ）配下へ移動。ここではターゲット像に紐づく購買決定要因のみ表示 */}
               <TargetDeepDive
                 buyingFactors={targeting.buying_factors}
-                strengths={targeting.strengths}
-                competitorsAnalysis={targeting.competitors_analysis}
               />
             </>
           }
@@ -243,12 +242,24 @@ function PositioningSection({ positioning, brandStance }: {
   positioning: PositioningData
   brandStance: BrandStanceStatement[]
 }) {
+  // 自社の強み・競合分析は Step4「自社・競合の一覧」（positioning.items）が出所
+  const selfStrengths = positioning.items.find((item) => item.is_self)?.traits
+  const competitorsAnalysis = positioning.items
+    .filter((item) => !item.is_self && item.traits?.trim())
+    .map((item) => ({ name: item.name, traits: item.traits as string, color: item.color }))
   return (
     <div className="mb-5">
       <PositioningMapAndStance
         positioningMapData={toMapData(positioning)}
         brandStance={brandStance}
         emptyStanceMessage="ターゲット別の立ち位置は Step4（ポジショニング）で生成されます。"
+        belowMap={
+          <TargetDeepDive
+            strengths={selfStrengths}
+            competitorsAnalysis={competitorsAnalysis}
+            bordered={false}
+          />
+        }
       />
     </div>
   )
@@ -274,52 +285,6 @@ export function Step5Result({
 
   // 自社の立ち位置（ターゲット別ポジショニング文）。生成はStep4で行い、ここは表示のみ。
   const brandStance = useMemo(() => initialBrandStance || [], [initialBrandStance])
-
-  // 戦略整合性スコア（5項目）。props＋生成済み立ち位置から算出。
-  const consistency = useMemo(() => {
-    const data = {
-      segmentation,
-      targeting,
-      positioning,
-      brand_stance_statements: brandStance.length > 0 ? { statements: brandStance } : null,
-    } as unknown as STPSessionData
-    return checkConsistency(data)
-  }, [segmentation, targeting, positioning, brandStance])
-
-  // スコア値に応じた配色・判定文・説明文
-  const consistencyStyle = (() => {
-    if (consistency.total >= 5) {
-      return {
-        label: '完全',
-        description: 'S→T→Pの各段階で矛盾なく接続されています。このまま出力できます。',
-        bgClass: 'bg-emerald-50 border-emerald-200',
-        textClass: 'text-emerald-700',
-        pillBgClass: 'bg-emerald-100',
-        circleBorderClass: 'border-emerald-600',
-        circleTextClass: 'text-emerald-700',
-      }
-    }
-    if (consistency.total >= 3) {
-      return {
-        label: '要確認',
-        description: '一部のステップで整合性が確認できていません。未充足項目を見直してください。',
-        bgClass: 'bg-amber-50 border-amber-200',
-        textClass: 'text-amber-700',
-        pillBgClass: 'bg-amber-100',
-        circleBorderClass: 'border-amber-600',
-        circleTextClass: 'text-amber-700',
-      }
-    }
-    return {
-      label: '要再検討',
-      description: '戦略の整合性に重要な課題があります。前のステップに戻って見直しを推奨します。',
-      bgClass: 'bg-red-50 border-red-200',
-      textClass: 'text-red-700',
-      pillBgClass: 'bg-red-100',
-      circleBorderClass: 'border-red-600',
-      circleTextClass: 'text-red-700',
-    }
-  })()
 
   // ターゲット概要文をAI生成（再生成にも使う）
   const generateTargetSummary = useCallback(async () => {
@@ -548,46 +513,9 @@ export function Step5Result({
         セグメント・ターゲット・ポジショニングの結果を一覧で確認します。PDF保存やbranding.bzへの連携で活用しましょう。
       </p>
 
-      {/* 戦略整合性スコア */}
-      <div className={`mb-4 rounded-xl border p-4 ${consistencyStyle.bgClass}`}>
-        <div className="flex items-center gap-4">
-          {/* 円形スコアバッジ */}
-          <div className={`flex h-16 w-16 flex-shrink-0 flex-col items-center justify-center rounded-full border-2 ${consistencyStyle.circleBorderClass}`}>
-            <div className={`text-xl font-bold leading-none ${consistencyStyle.circleTextClass}`}>
-              {consistency.total}/5
-            </div>
-            <div className={`mt-0.5 text-[10px] ${consistencyStyle.textClass}`}>スコア</div>
-          </div>
-          {/* タイトル＋説明＋チェックピル */}
-          <div className="min-w-0 flex-1">
-            <div className={`text-base font-bold ${consistencyStyle.textClass}`}>
-              戦略整合性: {consistencyStyle.label}
-            </div>
-            <div className="mt-0.5 text-xs text-muted-foreground">
-              {consistencyStyle.description}
-            </div>
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {consistency.items.map((it) => (
-                <span
-                  key={it.key}
-                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-medium ${
-                    it.passed
-                      ? consistencyStyle.pillBgClass + ' ' + consistencyStyle.textClass
-                      : 'bg-white text-gray-400'
-                  }`}
-                  title={!it.passed && it.reason ? it.reason : undefined}
-                >
-                  <span aria-hidden>{it.passed ? '✓' : '○'}</span>
-                  <span>{it.label}</span>
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
       <TargetingSection
         targeting={targeting}
+        positioning={positioning}
         mainEval={mainEval}
         subEvals={subEvals}
         targetSummary={targetSummary}

@@ -8,7 +8,8 @@ import type { ReactNode } from 'react'
  * required で「*」、optional で「（任意）」を付与。
  * 【全構築ツール共通ルール】標準の下余白は 12px（className="mb-3"）に統一する。
  * 例外（余白ゼロ）= flex見出し行（横にボタン/スイッチ）・space-y 親・見出し直下にキャプションが続く場合は className="mb-0"。
- * ※デフォルト余白は付けない（旧Step1等の flex 見出しを壊さないため）。新規の標準見出しでは必ず mb-3 を明示する。
+ * 【上余白】デフォルトで mt-8（32px）を付与する。各ステップ/ページの最初に表示される見出しだけは
+ * className に mt-0 を含めて上書きすること（cn は tailwind-merge のため後勝ちで上書きされる）。
  */
 export function FieldHeading({
   children,
@@ -22,7 +23,7 @@ export function FieldHeading({
   className?: string
 }) {
   return (
-    <h2 className={cn('text-xs font-bold', className)}>
+    <h2 className={cn('text-xs font-bold mt-8', className)}>
       {children}
       {required && <span className="text-xs text-red-500 font-normal"> *</span>}
       {optional && <span className="text-xs text-gray-400 font-normal"> （任意）</span>}

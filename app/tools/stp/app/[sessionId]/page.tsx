@@ -322,6 +322,7 @@ export default function STPSessionPage() {
           basicInfo={session.session_data.basic_info}
           targeting={session.session_data.targeting}
           segmentation={session.session_data.segmentation}
+          companyId={session.company_id}
           brandStance={session.session_data.brand_stance_statements?.statements || []}
           onNext={(data) => saveAndAdvance(5, { positioning: data })}
           onBack={() => saveAndAdvance(3)}

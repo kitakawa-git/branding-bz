@@ -1,5 +1,6 @@
 // ポジショニングマップ＋自社の立ち位置（STP Step5「確認・出力」のレイアウトを共有化）
 // STP Step5・社員ポータル(/portal/strategy) から共通で利用する。
+import type { ReactNode } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { PositioningMap } from '@/components/PositioningMap'
 import type { PositioningMapData } from '@/lib/types/positioning-map'
@@ -10,9 +11,11 @@ interface PositioningMapAndStanceProps {
   brandStance: BrandStanceStatement[]
   // 指定時のみ、立ち位置0件でもメッセージを表示する（STPツール文脈用）。未指定時は0件なら立ち位置ブロックごと省略。
   emptyStanceMessage?: string
+  // マップの下（このカードの内側）に追加コンテンツを差し込みたい場合の slot。自社の強み・競合分析など。
+  belowMap?: ReactNode
 }
 
-export function PositioningMapAndStance({ positioningMapData, brandStance, emptyStanceMessage }: PositioningMapAndStanceProps) {
+export function PositioningMapAndStance({ positioningMapData, brandStance, emptyStanceMessage, belowMap }: PositioningMapAndStanceProps) {
   return (
     <div className="rounded-lg border border-gray-200 bg-gray-50 p-5">
       {/* 自社の立ち位置（ターゲット別×N） */}
@@ -32,8 +35,8 @@ export function PositioningMapAndStance({ positioningMapData, brandStance, empty
                     key={i}
                     className={`relative rounded-lg p-4 ${
                       isMain
-                        ? 'border border-ds-app-accent-soft bg-blue-50/50'
-                        : 'border border-blue-300 bg-blue-50/30'
+                        ? 'border-2 border-ds-app-accent-soft bg-blue-50/50'
+                        : 'border-2 border-blue-300 bg-blue-50/30'
                     }`}
                   >
                     {isMain ? (
@@ -59,6 +62,7 @@ export function PositioningMapAndStance({ positioningMapData, brandStance, empty
       <div className="rounded-lg border bg-white p-3">
         <PositioningMap data={positioningMapData} />
       </div>
+      {belowMap && <div className="mt-6">{belowMap}</div>}
     </div>
   )
 }

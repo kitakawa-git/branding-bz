@@ -5,7 +5,7 @@ import { FieldSubLabel } from '@/components/shared/FieldHeading'
 interface TargetDeepDiveProps {
   buyingFactors?: string[]
   strengths?: string
-  competitorsAnalysis?: Array<{ name: string; traits?: string }>
+  competitorsAnalysis?: Array<{ name: string; traits?: string; color?: string }>
   // false時は上の要素との区切り線を出さない（メインターゲットカードの外＝単独表示時用）
   bordered?: boolean
 }
@@ -31,7 +31,9 @@ export function TargetDeepDive({ buyingFactors, strengths, competitorsAnalysis, 
       {!!strengths && (
         <div>
           <FieldSubLabel>自社の強み</FieldSubLabel>
-          <p className="text-sm leading-relaxed text-gray-700 whitespace-pre-wrap">{strengths}</p>
+          <div className="rounded-md border border-gray-200 bg-white px-3 py-2.5">
+            <p className="text-sm leading-relaxed text-gray-700 whitespace-pre-wrap">{strengths}</p>
+          </div>
         </div>
       )}
       {!!competitorsAnalysis?.length && (
@@ -40,7 +42,19 @@ export function TargetDeepDive({ buyingFactors, strengths, competitorsAnalysis, 
           <div className="space-y-2">
             {competitorsAnalysis.map((c, i) => (
               <div key={i} className="rounded-md border border-gray-200 bg-white px-3 py-2.5">
-                <p className="text-xs font-bold text-gray-900">{c.name}</p>
+                <p
+                  className="flex items-center gap-1.5 text-xs font-bold"
+                  style={c.color ? { color: c.color } : undefined}
+                >
+                  {c.color && (
+                    <span
+                      className="inline-block h-[18px] w-[18px] shrink-0 rounded-full border-2 border-white ring-[0.5px] ring-black/5"
+                      style={{ backgroundColor: c.color, opacity: 0.85 }}
+                      aria-hidden
+                    />
+                  )}
+                  {c.name}
+                </p>
                 {c.traits && <p className="mt-1 text-xs text-gray-600 leading-relaxed">{c.traits}</p>}
               </div>
             ))}

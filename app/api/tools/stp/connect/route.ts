@@ -7,6 +7,8 @@
 // - targeting    → brand_personas[0].target（ターゲット概要文）
 //                + companies.target_segments（主なターゲット一覧 [{name, description}]）
 // - positioning  → brand_personas[0].positioning_map_data
+//                + companies.strengths（Step4「自社・競合の一覧」の自社=is_self項目のtraits）
+//                + companies.competitors_analysis（同・競合項目のtraits [{name, traits}]）
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
@@ -94,7 +96,7 @@ export async function GET(request: NextRequest) {
         .order('sort_order', { ascending: true }),
       supabaseAdmin
         .from('companies')
-        .select('target_segments')
+        .select('target_segments, strengths, competitors_analysis')
         .eq('id', companyId)
         .maybeSingle(),
     ])
@@ -112,6 +114,11 @@ export async function GET(request: NextRequest) {
         hasPositioning: hasPositioningContent(first?.positioning_map_data),
         hasTargetFitMap,
         hasBrandStance,
+      },
+      // Step4「自社・競合の一覧」の traits 復元用（過去の connect() で companies に保存済みの自社の強み・競合分析）
+      companyTraits: {
+        strengths: (companyRow?.strengths as string) || '',
+        competitorsAnalysis: (companyRow?.competitors_analysis as Array<{ name: string; traits: string }> | null) || [],
       },
     })
   } catch (err) {
@@ -297,22 +304,26 @@ export async function POST(request: NextRequest) {
     }
 
     // 6. companies を更新（主なターゲット一覧＋自社の強み＋競合分析）
+    // 自社の強み・競合分析は Step4「自社・競合の一覧」で入力する特徴（traits）が出所（selections.positioning で連携）
+    const companyUpdates: Record<string, unknown> = {}
     if (selections.targeting) {
       const newTargetSegments = buildTargetSegments(targeting, segmentation)
-      const companyUpdates: Record<string, unknown> = {
-        target_segments: newTargetSegments.length > 0 ? newTargetSegments : null,
+      companyUpdates.target_segments = newTargetSegments.length > 0 ? newTargetSegments : null
+    }
+    if (selections.positioning) {
+      const positioningItems = (positioning.items || []) as Array<{ name?: string; traits?: string; is_self?: boolean }>
+      // 自社の強み（自社=is_self項目のtraits）
+      const selfTraits = positioningItems.find((item) => item.is_self)?.traits?.trim()
+      if (selfTraits) {
+        companyUpdates.strengths = selfTraits
       }
-      // 自社の強み
-      if (typeof targeting.strengths === 'string' && targeting.strengths.trim()) {
-        companyUpdates.strengths = targeting.strengths.trim()
-      }
-      // 競合分析（[{name, traits}]）
-      if (Array.isArray(targeting.competitors_analysis)) {
-        const cleaned = (targeting.competitors_analysis as Array<{ name?: string; traits?: string }>)
-          .filter((c) => c.name?.trim())
-          .map((c) => ({ name: (c.name as string).trim(), traits: (c.traits || '').trim() }))
-        companyUpdates.competitors_analysis = cleaned.length > 0 ? cleaned : []
-      }
+      // 競合分析（[{name, traits}]）。自社（is_self）と特徴未入力の項目は除外
+      const cleaned = positioningItems
+        .filter((item) => !item.is_self && item.name?.trim() && item.traits?.trim())
+        .map((item) => ({ name: (item.name as string).trim(), traits: (item.traits as string).trim() }))
+      companyUpdates.competitors_analysis = cleaned.length > 0 ? cleaned : []
+    }
+    if (Object.keys(companyUpdates).length > 0) {
       const { error: companyError } = await supabaseAdmin
         .from('companies')
         .update(companyUpdates)

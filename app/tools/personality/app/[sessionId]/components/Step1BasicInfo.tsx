@@ -187,7 +187,7 @@ export function Step1BasicInfo({ basicInfo, framework, onNext, onSaveField }: St
         <CardContent className="p-5">
           {/* 企業名 */}
           <div className="mb-5">
-            <FieldHeading required className="mb-3">企業名またはブランド名</FieldHeading>
+            <FieldHeading required className="mb-3 mt-0">企業名またはブランド名</FieldHeading>
             <Input
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}

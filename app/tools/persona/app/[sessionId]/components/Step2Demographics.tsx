@@ -186,7 +186,7 @@ export function Step2Demographics({ personas: initialPersonas, basicInfo, onNext
 
       <div className="space-y-4 rounded-lg border border-border bg-[hsl(0_0%_97%)] p-4">
         <div className="flex items-center justify-between gap-2">
-          <FieldHeading className="mb-0">ターゲット別ペルソナ</FieldHeading>
+          <FieldHeading className="mb-0 mt-0">ターゲット別ペルソナ</FieldHeading>
           <AIButton size="sm" onClick={() => setConfirmOpen(true)} className="shrink-0">
             AIで一括生成
           </AIButton>

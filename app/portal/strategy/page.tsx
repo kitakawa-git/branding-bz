@@ -317,7 +317,7 @@ export default function PortalStrategyPage() {
                     <div
                       key={i}
                       className={`relative rounded-lg px-3 py-2.5 ${
-                        isMain ? 'border border-ds-app-accent-soft bg-blue-50/50' : 'border border-blue-300 bg-blue-50/30'
+                        isMain ? 'border-2 border-ds-app-accent-soft bg-blue-50/50' : 'border-2 border-blue-300 bg-blue-50/30'
                       }`}
                     >
                       <p className={`text-sm font-bold ${isMain ? 'text-gray-900' : 'text-gray-700'}`}>{s.target_name}</p>

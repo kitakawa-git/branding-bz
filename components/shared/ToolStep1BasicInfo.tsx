@@ -579,7 +579,7 @@ export function ToolStep1BasicInfo({
         <CardContent className="p-5">
           {/* 企業名またはブランド名 */}
           <div className="mb-5">
-            <FieldHeading required className="mb-3">企業名またはブランド名</FieldHeading>
+            <FieldHeading required className="mb-3 mt-0">企業名またはブランド名</FieldHeading>
             <Input
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
@@ -621,9 +621,9 @@ export function ToolStep1BasicInfo({
           </div>
 
           {/* 現状の顧客層（構造化入力＋AI提案） */}
-          <div className="mb-5">
+          <div className="mt-7 mb-5">
             <div className="flex items-center justify-between gap-2 mb-1.5">
-              <FieldHeading optional className="mb-0">{targetLabel}</FieldHeading>
+              <FieldHeading optional className="mb-0 mt-0">{targetLabel}</FieldHeading>
               <AIButton
                 type="button"
                 size="sm"
@@ -650,9 +650,9 @@ export function ToolStep1BasicInfo({
 
           {/* 競合企業・サービス（表示ツールのみ） */}
           {showCompetitors && (
-            <div className="mb-5">
+            <div className="mt-7 mb-5">
               <div className="flex items-center justify-between gap-2 mb-1.5">
-                <FieldHeading optional className="mb-0">競合企業・サービス</FieldHeading>
+                <FieldHeading optional className="mb-0 mt-0">競合企業・サービス</FieldHeading>
                 <AIButton
                   type="button"
                   size="sm"

@@ -235,7 +235,7 @@ export function Step1BasicInfo({ project, onNext, onSaveField }: Step1Props) {
         <CardContent className="p-5">
           {/* 企業名またはブランド名 */}
           <div className="mb-5">
-            <FieldHeading required className="mb-3">企業名またはブランド名</FieldHeading>
+            <FieldHeading required className="mb-3 mt-0">企業名またはブランド名</FieldHeading>
             <Input
               value={brandName}
               onChange={(e) => setBrandName(e.target.value)}
@@ -273,9 +273,9 @@ export function Step1BasicInfo({ project, onNext, onSaveField }: Step1Props) {
           </div>
 
           {/* 既存カラー */}
-          <div className="mb-5">
+          <div className="mt-7 mb-5">
             <div className="flex items-center justify-between mb-3">
-              <FieldHeading className="mb-0">既存のブランドカラーがある</FieldHeading>
+              <FieldHeading className="mb-0 mt-0">既存のブランドカラーがある</FieldHeading>
               <Switch
                 checked={hasExistingColors}
                 onCheckedChange={setHasExistingColors}

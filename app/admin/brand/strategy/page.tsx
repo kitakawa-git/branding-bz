@@ -1322,7 +1322,7 @@ export default function BrandStrategyPage() {
                   return (
                     <div
                       key={i}
-                      className={`rounded-lg border p-4 ${
+                      className={`rounded-lg border-2 p-4 ${
                         isMain ? 'border-ds-app-accent bg-ds-app-accent/5' : 'border-gray-200 bg-white'
                       }`}
                     >

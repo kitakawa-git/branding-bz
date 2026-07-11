@@ -270,7 +270,8 @@ export function Step4Journey({ personas: initialPersonas, basicInfo, onNext, onB
         <CardContent className="p-4">
           {/* グレー枠の先頭（白カードの上）に見出し＋AI一括生成ボタン（右） */}
           <div className="mb-3 flex items-center justify-between gap-2">
-            <FieldHeading className="mb-0">ペルソナ別ジャーニー</FieldHeading>
+            {/* readOnly（Step5埋め込み）時は先頭見出しではないためデフォルトのmt-8を適用、単独Step4では先頭のためmt-0 */}
+            <FieldHeading className={readOnly ? 'mb-0' : 'mb-0 mt-0'}>ペルソナ別ジャーニー</FieldHeading>
             {!readOnly && data.length > 1 && (
               <AIButton size="sm" onClick={generateAll} disabled={anyLoading}>
                 {bulkLoading ? '生成中…' : 'AIで一括生成'}
