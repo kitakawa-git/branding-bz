@@ -108,6 +108,49 @@ function SortableValueItem({
   )
 }
 
+function SortableHistoryItem({
+  id, item, index, onUpdate, onRemove,
+}: {
+  id: string; item: HistoryItem; index: number
+  onUpdate: (index: number, field: 'year' | 'event', value: string) => void
+  onRemove: (index: number) => void
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
+  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }
+  const { year, month } = parseHistoryYM(item.year)
+  return (
+    <div ref={setNodeRef} style={style} className="flex gap-2 mb-2 items-center">
+      <button type="button" className="p-1 rounded hover:bg-gray-200 cursor-grab active:cursor-grabbing text-muted-foreground shrink-0" {...attributes} {...listeners}>
+        <GripVertical size={16} />
+      </button>
+      <div className="flex gap-1 shrink-0">
+        <select
+          value={year}
+          onChange={(e) => onUpdate(index, 'year', formatHistoryYM(e.target.value, month))}
+          className="h-10 rounded-md border border-input bg-white px-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        >
+          <option value="">年</option>
+          {HISTORY_YEAR_OPTIONS.map(y => (
+            <option key={y} value={y}>{y}年</option>
+          ))}
+        </select>
+        <select
+          value={month}
+          onChange={(e) => onUpdate(index, 'year', formatHistoryYM(year, e.target.value))}
+          className="h-10 rounded-md border border-input bg-white px-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        >
+          <option value="">月</option>
+          {Array.from({ length: 12 }, (_, i) => i + 1).map(mo => (
+            <option key={mo} value={mo}>{mo}月</option>
+          ))}
+        </select>
+      </div>
+      <Input type="text" value={item.event} onChange={(e) => onUpdate(index, 'event', e.target.value)} placeholder="出来事" className="h-10 flex-1" />
+      <Button type="button" variant="outline" size="icon" onClick={() => onRemove(index)} className="size-9 shrink-0 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"><Trash2 size={14} /></Button>
+    </div>
+  )
+}
+
 function SortableConceptVisual({
   id, url, index, onRemove,
 }: {
@@ -401,6 +444,16 @@ export default function BrandGuidelinesPage() {
     const newIndex = guidelines.values.findIndex((_, i) => `value-${i}` === over.id)
     if (oldIndex !== -1 && newIndex !== -1) {
       handleChange('values', arrayMove(guidelines.values, oldIndex, newIndex))
+    }
+  }
+
+  const handleHistoryDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    const oldIndex = guidelines.history.findIndex((_, i) => `history-${i}` === active.id)
+    const newIndex = guidelines.history.findIndex((_, i) => `history-${i}` === over.id)
+    if (oldIndex !== -1 && newIndex !== -1) {
+      handleChange('history', arrayMove(guidelines.history, oldIndex, newIndex))
     }
   }
 
@@ -1047,45 +1100,20 @@ export default function BrandGuidelinesPage() {
               <p className="text-xs text-muted-foreground mb-2">
                 企業の歩みを年と出来事で記録します
               </p>
-              {guidelines.history.map((item, index) => {
-                const { year, month } = parseHistoryYM(item.year)
-                return (
-                <div key={index} className="flex gap-2 mb-2 items-center">
-                  <div className="flex gap-1 shrink-0">
-                    <select
-                      value={year}
-                      onChange={(e) => updateHistory(index, 'year', formatHistoryYM(e.target.value, month))}
-                      className="h-10 rounded-md border border-input bg-white px-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                    >
-                      <option value="">年</option>
-                      {HISTORY_YEAR_OPTIONS.map(y => (
-                        <option key={y} value={y}>{y}年</option>
-                      ))}
-                    </select>
-                    <select
-                      value={month}
-                      onChange={(e) => updateHistory(index, 'year', formatHistoryYM(year, e.target.value))}
-                      className="h-10 rounded-md border border-input bg-white px-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                    >
-                      <option value="">月</option>
-                      {Array.from({ length: 12 }, (_, i) => i + 1).map(mo => (
-                        <option key={mo} value={mo}>{mo}月</option>
-                      ))}
-                    </select>
-                  </div>
-                  <Input
-                    type="text"
-                    value={item.event}
-                    onChange={(e) => updateHistory(index, 'event', e.target.value)}
-                    placeholder="出来事"
-                    className="h-10 flex-1"
-                  />
-                  <Button type="button" variant="outline" size="icon" onClick={() => removeHistory(index)} className="size-9 shrink-0 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive">
-                    <Trash2 size={14} />
-                  </Button>
-                </div>
-                )
-              })}
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleHistoryDragEnd}>
+                <SortableContext items={guidelines.history.map((_, i) => `history-${i}`)} strategy={verticalListSortingStrategy}>
+                  {guidelines.history.map((item, index) => (
+                    <SortableHistoryItem
+                      key={`history-${index}`}
+                      id={`history-${index}`}
+                      item={item}
+                      index={index}
+                      onUpdate={updateHistory}
+                      onRemove={removeHistory}
+                    />
+                  ))}
+                </SortableContext>
+              </DndContext>
               <Button type="button" variant="outline" onClick={addHistory} className="py-2 px-4 text-[13px]">
                 <Plus size={16} />沿革を追加
               </Button>
