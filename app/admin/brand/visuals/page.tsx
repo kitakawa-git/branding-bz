@@ -954,29 +954,6 @@ export default function BrandVisualsPage() {
             <div>
               <h2 className="text-xs font-bold mb-3">ロゴガイドライン</h2>
 
-              {/* 表示順設定 */}
-              {visuals.logo_sections.some(s => s.items.length > 0) && (
-                <div className="flex items-center gap-3 mb-3">
-                  <p className="text-xs text-muted-foreground m-0">表示順:</p>
-                  <div className="flex gap-1">
-                    <button
-                      type="button"
-                      onClick={() => setVisuals(prev => ({ ...prev, logo_sections_sort: 'registered' }))}
-                      className={`px-3 py-1 text-xs rounded-md transition-colors ${visuals.logo_sections_sort === 'registered' ? 'bg-foreground text-background' : 'bg-muted text-muted-foreground hover:text-foreground'}`}
-                    >
-                      登録順
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setVisuals(prev => ({ ...prev, logo_sections_sort: 'custom' }))}
-                      className={`px-3 py-1 text-xs rounded-md transition-colors ${visuals.logo_sections_sort === 'custom' ? 'bg-foreground text-background' : 'bg-muted text-muted-foreground hover:text-foreground'}`}
-                    >
-                      カスタム
-                    </button>
-                  </div>
-                </div>
-              )}
-
               {visuals.logo_sections.map((section, sIdx) => (
                 <div key={sIdx} className="border border-border rounded-lg p-4 mb-3 bg-background">
                   {/* セクションヘッダー */}
@@ -1012,8 +989,8 @@ export default function BrandVisualsPage() {
                     </AlertDialog>
                   </div>
 
-                  {/* 画像一覧（カスタム順 — ドラッグ&ドロップ） */}
-                  {section.items.length > 0 && visuals.logo_sections_sort === 'custom' && (
+                  {/* 画像一覧（ドラッグ&ドロップで並べ替え） */}
+                  {section.items.length > 0 && (
                     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleLogoDragEnd(sIdx)}>
                       <SortableContext items={section.items.map((_, i) => `logo-${sIdx}-${i}`)} strategy={rectSortingStrategy}>
                         <div className="grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-3 mb-3">
@@ -1031,57 +1008,6 @@ export default function BrandVisualsPage() {
                         </div>
                       </SortableContext>
                     </DndContext>
-                  )}
-
-                  {/* 画像一覧（登録順） */}
-                  {section.items.length > 0 && visuals.logo_sections_sort === 'registered' && (
-                    <div className="grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-3 mb-3">
-                      {[...section.items].sort((a, b) => a.added_index - b.added_index).map((item) => {
-                        const realIdx = section.items.indexOf(item)
-                        return (
-                          <div key={realIdx} className="border border-border rounded-lg overflow-hidden bg-gray-50 relative">
-                            <div className="p-2 flex items-center justify-center min-h-[100px] bg-gray-100">
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="icon"
-                                    className="absolute top-1 right-1 size-7 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive bg-background/80 z-10"
-                                  >
-                                    <Trash2 size={12} />
-                                  </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>画像を削除しますか？</AlertDialogTitle>
-                                    <AlertDialogDescription>この画像を削除します。この操作は保存後に確定されます。</AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>キャンセル</AlertDialogCancel>
-                                    <AlertDialogAction onClick={() => removeImage(sIdx, realIdx)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">削除する</AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
-                              <img
-                                src={item.url}
-                                alt={item.caption || ''}
-                                className="max-w-full max-h-[100px] object-contain"
-                              />
-                            </div>
-                            <div className="p-2">
-                              <Input
-                                type="text"
-                                value={item.caption}
-                                onChange={(e) => updateCaption(sIdx, realIdx, e.target.value)}
-                                placeholder="キャプション"
-                                className="text-xs py-1.5 px-2"
-                              />
-                            </div>
-                          </div>
-                        )
-                      })}
-                    </div>
                   )}
 
                   {/* 画像追加 */}
