@@ -396,7 +396,7 @@ export default function PortalGuidelinesPage() {
               {filteredBusiness.length > 0 && (
                 <div>
                   <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">事業内容</h2>
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {filteredBusiness.map((item, i) => (
                       <div key={i} className="relative overflow-hidden rounded-lg border border-border bg-background p-4 pl-5 flex gap-3">
                         {/* 左端の青バー（「私たちの『らしさ』」カードと同装飾：角丸クリップで丸端） */}
