@@ -40,6 +40,7 @@ import {
 import {
   SortableContext,
   rectSortingStrategy,
+  verticalListSortingStrategy,
   useSortable,
   arrayMove,
 } from '@dnd-kit/sortable'
@@ -261,6 +262,25 @@ function SortableLogoBaseItem({
   )
 }
 
+// ロゴガイドラインのセクション自体を並べ替えるためのラッパー。
+// setNodeRef を外枠に、ドラッグハンドル用の attributes/listeners を children に渡す。
+function SortableSection({
+  id,
+  children,
+}: {
+  id: string
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  children: (handle: { attributes: any; listeners: any }) => React.ReactNode
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
+  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }
+  return (
+    <div ref={setNodeRef} style={style}>
+      {children({ attributes, listeners })}
+    </div>
+  )
+}
+
 export default function BrandVisualsPage() {
   const { companyId } = useAuth()
   const cacheKey = `admin-brand-visuals-${companyId}`
@@ -322,6 +342,18 @@ export default function BrandVisualsPage() {
       const newIndex = prev.logo_images.findIndex((_, i) => `logobase-${i}` === over.id)
       if (oldIndex === -1 || newIndex === -1) return prev
       return { ...prev, logo_images: arrayMove(prev.logo_images, oldIndex, newIndex) }
+    })
+  }
+
+  // ロゴガイドラインのセクション自体の並べ替え
+  const handleSectionDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    setVisuals(prev => {
+      const oldIndex = prev.logo_sections.findIndex((_, i) => `section-${i}` === active.id)
+      const newIndex = prev.logo_sections.findIndex((_, i) => `section-${i}` === over.id)
+      if (oldIndex === -1 || newIndex === -1) return prev
+      return { ...prev, logo_sections: arrayMove(prev.logo_sections, oldIndex, newIndex) }
     })
   }
 
@@ -954,10 +986,22 @@ export default function BrandVisualsPage() {
             <div>
               <h2 className="text-xs font-bold mb-3">ロゴガイドライン</h2>
 
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleSectionDragEnd}>
+                <SortableContext items={visuals.logo_sections.map((_, i) => `section-${i}`)} strategy={verticalListSortingStrategy}>
               {visuals.logo_sections.map((section, sIdx) => (
-                <div key={sIdx} className="border border-border rounded-lg p-4 mb-3 bg-background">
+                <SortableSection key={sIdx} id={`section-${sIdx}`}>
+                  {({ attributes, listeners }) => (
+                <div className="border border-border rounded-lg p-4 mb-3 bg-background">
                   {/* セクションヘッダー */}
                   <div className="flex items-center gap-2 mb-3">
+                    <button
+                      type="button"
+                      className="p-1 rounded hover:bg-gray-200 cursor-grab active:cursor-grabbing text-muted-foreground shrink-0"
+                      {...attributes}
+                      {...listeners}
+                    >
+                      <GripVertical size={16} />
+                    </button>
                     <Input
                       type="text"
                       value={section.title}
@@ -1036,7 +1080,11 @@ export default function BrandVisualsPage() {
                     </div>
                   )}
                 </div>
+                  )}
+                </SortableSection>
               ))}
+                </SortableContext>
+              </DndContext>
 
               {visuals.logo_sections.length < 10 && (
                 <Button
