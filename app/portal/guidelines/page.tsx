@@ -385,7 +385,7 @@ export default function PortalGuidelinesPage() {
                           <span className="absolute left-0 top-1.5 w-2 h-2 rounded-full bg-ds-app-accent z-10" />
                           {item.year}
                         </div>
-                        <div className="text-base text-foreground/80 leading-relaxed">
+                        <div className="text-base text-foreground/80 leading-relaxed whitespace-pre-wrap">
                           {item.event}
                         </div>
                       </div>
