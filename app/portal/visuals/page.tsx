@@ -59,22 +59,26 @@ function PortalImageCard({
   caption,
   onClick,
   heightClass = 'h-[160px]',
+  fit = 'height',
 }: {
   url: string
   caption?: string
   onClick: () => void
   heightClass?: string
+  // 'height': 固定高さの枠内で中央寄せ（高さ揃え／画像が縦長だと左右に余白）
+  // 'width': セル幅いっぱいに表示し高さは自動（左右余白なし）
+  fit?: 'height' | 'width'
 }) {
   return (
     <div className="text-center">
       <div
         onClick={onClick}
-        className={`${heightClass} cursor-pointer rounded-lg hover:bg-muted transition-colors overflow-hidden flex items-center justify-center`}
+        className={`${fit === 'width' ? '' : heightClass} cursor-pointer rounded-lg hover:bg-muted transition-colors overflow-hidden flex items-center justify-center`}
       >
         <img
           src={url}
           alt={caption || ''}
-          className="max-w-full max-h-full object-contain"
+          className={fit === 'width' ? 'w-full h-auto object-contain' : 'max-w-full max-h-full object-contain'}
         />
       </div>
       {caption && (
@@ -279,7 +283,7 @@ export default function PortalVisualsPage() {
                         url={img.url}
                         caption={img.caption}
                         onClick={() => setModalImage(img.url)}
-                        heightClass="h-[220px]"
+                        fit="width"
                       />
                     ))}
                   </div>
