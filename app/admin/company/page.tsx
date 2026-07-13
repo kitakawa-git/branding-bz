@@ -612,19 +612,25 @@ export default function CompanyPage() {
                             placeholder="企業名（必須）"
                             className="h-9 text-sm"
                           />
-                          {/* 色ドット表示（閲覧のみ） */}
-                          {comp.colors && comp.colors.length > 0 && (
-                            <div className="flex gap-1 shrink-0">
-                              {comp.colors.map((color, ci) => (
-                                <div
-                                  key={ci}
-                                  className="h-4 w-4 rounded-full border border-gray-200"
-                                  style={{ backgroundColor: color }}
-                                  title={color}
-                                />
-                              ))}
-                            </div>
-                          )}
+                          {/* 色ドット表示（閲覧のみ）。色未指定のフォールバック #888888 と空は非表示 */}
+                          {(() => {
+                            const realColors = (comp.colors ?? []).filter(
+                              c => c && c.trim() && c.trim().toLowerCase() !== '#888888'
+                            )
+                            if (realColors.length === 0) return null
+                            return (
+                              <div className="flex gap-1 shrink-0">
+                                {realColors.map((color, ci) => (
+                                  <div
+                                    key={ci}
+                                    className="h-4 w-4 rounded-full border border-gray-200"
+                                    style={{ backgroundColor: color }}
+                                    title={color}
+                                  />
+                                ))}
+                              </div>
+                            )
+                          })()}
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           <Input
