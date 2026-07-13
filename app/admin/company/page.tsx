@@ -61,11 +61,12 @@ interface TargetSegment {
 
 type Company = {
   id: string
+  // name は保存時に表示言語トグルで選んだ表記へ自動同期する派生値（各所の表示はこれを読む）
   name: string
-  // 企業名の表記バリエーション（任意）
+  // 企業名の表記。日本語/英語。表示はトグル name_display_lang で選択
   name_ja: string
   name_en: string
-  name_reading: string
+  name_display_lang: 'ja' | 'en'
   logo_url: string
   website_url: string
   industry_category: string
@@ -103,7 +104,7 @@ export default function CompanyPage() {
     const { data, error } = await fetchWithRetry(() =>
       supabase
         .from('companies')
-        .select('id, name, name_ja, name_en, name_reading, logo_url, website_url, industry_category, industry_subcategory, competitors, target_segments')
+        .select('id, name, name_ja, name_en, name_display_lang, logo_url, website_url, industry_category, industry_subcategory, competitors, target_segments')
         .eq('id', companyId)
         .single()
     )
@@ -114,17 +115,28 @@ export default function CompanyPage() {
     } else if (data) {
       const row = data as {
         id: string; name: string | null
-        name_ja: string | null; name_en: string | null; name_reading: string | null
+        name_ja: string | null; name_en: string | null
+        name_display_lang: string | null
         logo_url: string | null; website_url: string | null
         industry_category: string | null; industry_subcategory: string | null
         competitors: Competitor[] | null; target_segments: TargetSegment[] | null
       }
+      const rawName = row.name || ''
+      let nameJa = row.name_ja || ''
+      let nameEn = row.name_en || ''
+      // 旧来の単一 name しか無い企業は、ASCII なら英語表記・それ以外は日本語表記へ寄せて初期表示（移行）
+      if (!nameJa && !nameEn && rawName) {
+        if (/^[\x00-\x7F]+$/.test(rawName)) nameEn = rawName
+        else nameJa = rawName
+      }
+      // デフォルトは日本語。明示的に 'en' の時のみ英語。
+      const displayLang: 'ja' | 'en' = row.name_display_lang === 'en' ? 'en' : 'ja'
       const companyData: Company = {
         id: row.id,
-        name: row.name || '',
-        name_ja: row.name_ja || '',
-        name_en: row.name_en || '',
-        name_reading: row.name_reading || '',
+        name: rawName,
+        name_ja: nameJa,
+        name_en: nameEn,
+        name_display_lang: displayLang,
         logo_url: row.logo_url || '',
         website_url: row.website_url || '',
         industry_category: row.industry_category || '',
@@ -385,11 +397,18 @@ export default function CompanyPage() {
           description: ts.description.trim(),
         }))
 
+      // name は表示言語トグルで選んだ表記へ同期。選択側が空なら他方→従来 name の順でフォールバック（空にしない）
+      const ja = company.name_ja.trim()
+      const en = company.name_en.trim()
+      const preferred = company.name_display_lang === 'en' ? en : ja
+      const other = company.name_display_lang === 'en' ? ja : en
+      const syncedName = preferred || other || company.name
+
       const updateData: Record<string, unknown> = {
-        name: company.name,
-        name_ja: company.name_ja.trim() || null,
-        name_en: company.name_en.trim() || null,
-        name_reading: company.name_reading.trim() || null,
+        name: syncedName,
+        name_ja: ja || null,
+        name_en: en || null,
+        name_display_lang: company.name_display_lang,
         logo_url: company.logo_url,
         website_url: normalizedWebsiteUrl,
         industry_category: company.industry_category || null,
@@ -405,6 +424,7 @@ export default function CompanyPage() {
         toast.error('保存に失敗しました: ' + result.error)
       } else {
         toast.success('保存しました')
+        handleChange('name', syncedName)
         handleChange('website_url', normalizedWebsiteUrl)
         handleChange('competitors', cleanedCompetitors)
         handleChange('target_segments', cleanedTargetSegments)
@@ -476,21 +496,11 @@ export default function CompanyPage() {
               />
             </div>
 
-            {/* 企業名またはブランド名 */}
+            {/* 企業名またはブランド名（日本語/英語＋表示トグル） */}
             <div className="mb-5">
               <h2 className="text-xs font-bold mb-3">企業名またはブランド名</h2>
-              <Input
-                type="text"
-                value={company.name}
-                onChange={(e) => handleChange('name', e.target.value)}
-                placeholder="株式会社○○"
-                className="h-10"
-              />
-              <p className="text-[13px] text-muted-foreground mt-1.5">
-                企業名・サービス名・個人名など、ブランディングの対象となる名称を入力してください
-              </p>
 
-              <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <p className="text-[11px] text-gray-500 mb-1.5">日本語表記</p>
                   <Input
@@ -511,15 +521,29 @@ export default function CompanyPage() {
                     className="h-10"
                   />
                 </div>
-                <div>
-                  <p className="text-[11px] text-gray-500 mb-1.5">読み方（ふりがな）</p>
-                  <Input
-                    type="text"
-                    value={company.name_reading}
-                    onChange={(e) => handleChange('name_reading', e.target.value)}
-                    placeholder="例: あいでぃー"
-                    className="h-10"
-                  />
+              </div>
+
+              {/* 表示に使う表記のトグル */}
+              <div className="mt-3 flex items-center gap-3">
+                <p className="text-[11px] text-gray-500 m-0 shrink-0">表示に使う表記</p>
+                <div className="flex rounded-lg border border-border overflow-hidden">
+                  {([
+                    { value: 'ja' as const, label: '日本語' },
+                    { value: 'en' as const, label: '英語' },
+                  ]).map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => handleChange('name_display_lang', opt.value)}
+                      className={`px-4 py-1.5 text-xs font-medium transition-colors ${
+                        company.name_display_lang === opt.value
+                          ? 'bg-foreground text-background'
+                          : 'bg-background text-muted-foreground hover:bg-muted'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>
