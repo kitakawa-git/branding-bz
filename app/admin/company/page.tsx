@@ -62,6 +62,10 @@ interface TargetSegment {
 type Company = {
   id: string
   name: string
+  // 企業名の表記バリエーション（任意）
+  name_ja: string
+  name_en: string
+  name_reading: string
   logo_url: string
   website_url: string
   industry_category: string
@@ -99,7 +103,7 @@ export default function CompanyPage() {
     const { data, error } = await fetchWithRetry(() =>
       supabase
         .from('companies')
-        .select('id, name, logo_url, website_url, industry_category, industry_subcategory, competitors, target_segments')
+        .select('id, name, name_ja, name_en, name_reading, logo_url, website_url, industry_category, industry_subcategory, competitors, target_segments')
         .eq('id', companyId)
         .single()
     )
@@ -109,13 +113,18 @@ export default function CompanyPage() {
       setFetchError(error)
     } else if (data) {
       const row = data as {
-        id: string; name: string | null; logo_url: string | null; website_url: string | null
+        id: string; name: string | null
+        name_ja: string | null; name_en: string | null; name_reading: string | null
+        logo_url: string | null; website_url: string | null
         industry_category: string | null; industry_subcategory: string | null
         competitors: Competitor[] | null; target_segments: TargetSegment[] | null
       }
       const companyData: Company = {
         id: row.id,
         name: row.name || '',
+        name_ja: row.name_ja || '',
+        name_en: row.name_en || '',
+        name_reading: row.name_reading || '',
         logo_url: row.logo_url || '',
         website_url: row.website_url || '',
         industry_category: row.industry_category || '',
@@ -378,6 +387,9 @@ export default function CompanyPage() {
 
       const updateData: Record<string, unknown> = {
         name: company.name,
+        name_ja: company.name_ja.trim() || null,
+        name_en: company.name_en.trim() || null,
+        name_reading: company.name_reading.trim() || null,
         logo_url: company.logo_url,
         website_url: normalizedWebsiteUrl,
         industry_category: company.industry_category || null,
@@ -477,6 +489,39 @@ export default function CompanyPage() {
               <p className="text-[13px] text-muted-foreground mt-1.5">
                 企業名・サービス名・個人名など、ブランディングの対象となる名称を入力してください
               </p>
+
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <p className="text-[11px] text-gray-500 mb-1.5">日本語表記</p>
+                  <Input
+                    type="text"
+                    value={company.name_ja}
+                    onChange={(e) => handleChange('name_ja', e.target.value)}
+                    placeholder="例: 株式会社アイディー"
+                    className="h-10"
+                  />
+                </div>
+                <div>
+                  <p className="text-[11px] text-gray-500 mb-1.5">英語表記</p>
+                  <Input
+                    type="text"
+                    value={company.name_en}
+                    onChange={(e) => handleChange('name_en', e.target.value)}
+                    placeholder="例: ID INC."
+                    className="h-10"
+                  />
+                </div>
+                <div>
+                  <p className="text-[11px] text-gray-500 mb-1.5">読み方（ふりがな）</p>
+                  <Input
+                    type="text"
+                    value={company.name_reading}
+                    onChange={(e) => handleChange('name_reading', e.target.value)}
+                    placeholder="例: あいでぃー"
+                    className="h-10"
+                  />
+                </div>
+              </div>
             </div>
 
             {/* 業種 */}
