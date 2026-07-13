@@ -27,6 +27,7 @@ type ActionGuideline = { title: string; description: string }
 
 type Guidelines = {
   slogan: string | null
+  slogan_description: string | null
   // 複数コンセプトビジュアル（スライドショー）。レガシー concept_visual_url からのフォールバックあり。
   concept_visuals: string[]
   brand_video_url: string | null
@@ -98,7 +99,7 @@ export default function PortalGuidelinesPage() {
       fetchWithRetry(() =>
         supabase
           .from('brand_guidelines')
-          .select('slogan, concept_visual_url, concept_visuals, brand_video_url, brand_statement, values_sort, brand_story, history, business_content_sort')
+          .select('slogan, slogan_description, concept_visual_url, concept_visuals, brand_video_url, brand_statement, values_sort, brand_story, history, business_content_sort')
           .eq('company_id', companyId)
           .single()
       ),
@@ -117,6 +118,7 @@ export default function PortalGuidelinesPage() {
 
       const parsed: Guidelines = {
         slogan: (g?.slogan as string) || null,
+        slogan_description: (g?.slogan_description as string) || null,
         // 新カラム concept_visuals を優先。空ならレガシー concept_visual_url を1枚として扱う
         concept_visuals: (Array.isArray(g?.concept_visuals) && (g?.concept_visuals as string[]).length > 0)
           ? (g?.concept_visuals as string[])
@@ -223,6 +225,11 @@ export default function PortalGuidelinesPage() {
                 <div>
                   <h2 className="text-sm font-bold text-foreground mb-2 tracking-wide">スローガン</h2>
                   <p className="text-3xl font-bold text-foreground m-0" style={primaryStyle}>{data.slogan}</p>
+                  {data.slogan_description && (
+                    <p className="text-base text-foreground/80 leading-relaxed whitespace-pre-wrap m-0 mt-3">
+                      {data.slogan_description}
+                    </p>
+                  )}
                 </div>
               )}
               {data.concept_visuals.length > 0 && (

@@ -43,6 +43,8 @@ type ActionGuideline = { id?: string; title: string; description: string }
 
 type Guidelines = {
   slogan: string
+  // スローガンの補足説明文（ポータル「考え方」でスローガン直下に表示）
+  slogan_description: string
   // 複数コンセプトビジュアル（スライドショー用）。順序＝表示順。
   concept_visuals: string[]
   brand_video_url: string
@@ -174,6 +176,7 @@ export default function BrandGuidelinesPage() {
   const [guidelinesId, setGuidelinesId] = useState<string | null>(cached?.guidelinesId ?? null)
   const [guidelines, setGuidelines] = useState<Guidelines>(cached?.guidelines ?? {
     slogan: '',
+    slogan_description: '',
     concept_visuals: [],
     brand_video_url: '',
     brand_statement: '',
@@ -252,6 +255,7 @@ export default function BrandGuidelinesPage() {
         const parsedId = (result?.id as string) ?? null
         const parsedGuidelines: Guidelines = {
           slogan: result?.slogan || '',
+          slogan_description: (result?.slogan_description as string) || '',
           // 新カラム concept_visuals を優先。空ならレガシー concept_visual_url を1枚として取り込む
           concept_visuals: (Array.isArray(result?.concept_visuals) && (result!.concept_visuals as string[]).length > 0)
             ? (result!.concept_visuals as string[])
@@ -653,6 +657,7 @@ export default function BrandGuidelinesPage() {
       const saveData: Record<string, unknown> = {
         company_id: companyId,
         slogan: guidelines.slogan || null,
+        slogan_description: guidelines.slogan_description || null,
         concept_visuals: guidelines.concept_visuals,
         // レガシー/CIマニュアル表紙互換: 先頭画像を単一URLカラムにも保存
         concept_visual_url: guidelines.concept_visuals[0] || null,
@@ -808,6 +813,13 @@ export default function BrandGuidelinesPage() {
                 onChange={(e) => handleChange('slogan', e.target.value)}
                 placeholder="企業スローガン"
                 className="h-10"
+              />
+              <p className="text-[11px] text-gray-500 mt-3 mb-1.5">説明文（任意）</p>
+              <AutoResizeTextarea
+                value={guidelines.slogan_description}
+                onChange={(e) => handleChange('slogan_description', e.target.value)}
+                placeholder="スローガンに込めた意味や補足（ポータルでスローガンの下に表示されます）"
+                className="min-h-[72px]"
               />
             </div>
 
