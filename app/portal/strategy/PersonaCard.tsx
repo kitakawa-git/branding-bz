@@ -29,7 +29,7 @@ export function PersonaCard({ persona }: { persona: PortalPersona }) {
         <PersonaAvatarName emoji={persona.avatar_emoji} name={persona.name} className="mb-1" />
         {/* メタ行は最大2行想定。min-h で2行分を確保し、折り返し有無に関わらず
             下の「ニーズ」見出しの開始位置をカード間で揃える。 */}
-        <p className="text-base sm:text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0 min-h-[3.6em]">
+        <p className="text-base text-foreground/80 leading-relaxed whitespace-pre-wrap m-0 min-h-[3.6em]">
           {[persona.age_range, persona.occupation].filter(Boolean).join('\n')}
         </p>
       </div>
@@ -55,7 +55,7 @@ export function PersonaCard({ persona }: { persona: PortalPersona }) {
 
       {persona.brand_expectations && (
         <div className="mt-3">
-          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2 m-0">ブランドへの期待</p>
+          <p className="text-[11px] text-gray-500 mb-2 m-0">ブランドへの期待</p>
           <p className="text-base sm:text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap m-0">
             {persona.brand_expectations}
           </p>
@@ -86,7 +86,7 @@ function ExpandableChips({ label, items, chipClass, className = '' }: {
   )
   return (
     <div className={className}>
-      <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2 m-0">{label}</p>
+      <p className="text-[11px] text-gray-500 mb-2 m-0">{label}</p>
       <div className="flex flex-wrap gap-1.5">
         {head.map((item, i) => chip(item, i))}
       </div>

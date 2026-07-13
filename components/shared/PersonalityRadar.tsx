@@ -56,7 +56,7 @@ export function PersonalityRadar({
   return (
     <>
       {showChart && (
-        <div className="w-full mx-auto mb-6" style={{ maxWidth: `${maxChartWidth}px` }}>
+        <div className="w-full mx-auto mb-0" style={{ maxWidth: `${maxChartWidth}px` }}>
           <ChartContainer config={radarConfig} className="aspect-square">
             <RadarChart data={data} cx="50%" cy="50%" outerRadius="77%">
               <ChartTooltip content={<ChartTooltipContent hideLabel />} />
@@ -77,7 +77,7 @@ export function PersonalityRadar({
       )}
 
       {summary && (
-        <p className={`text-sm text-foreground/80 leading-[1.9] whitespace-pre-wrap m-0 mb-4 ${summaryClassName}`}>
+        <p className={`text-base text-foreground/80 leading-relaxed whitespace-pre-wrap m-0 mb-6 ${summaryClassName}`}>
           {summary}
         </p>
       )}

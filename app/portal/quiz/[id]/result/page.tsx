@@ -219,7 +219,7 @@ export default function QuizResultPage() {
                       </Badge>
                     )}
                   </div>
-                  <p className="text-base sm:text-sm text-foreground leading-relaxed">{a.question_text}</p>
+                  <p className="text-base text-foreground/80 leading-relaxed">{a.question_text}</p>
                 </div>
               </div>
 

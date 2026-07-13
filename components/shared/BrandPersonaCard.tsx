@@ -52,7 +52,6 @@ export function BrandPersonaCard({
           summary={summary}
           maxChartWidth={maxChartWidth}
           hideChart={hideChart}
-          summaryClassName="mb-4"
         />
 
         {traitListReplacement ?? <PersonalityTraitList traits={traits} bodyTextStyle={bodyTextStyle} />}

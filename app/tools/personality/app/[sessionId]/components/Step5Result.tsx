@@ -279,7 +279,7 @@ export function Step5Result({ sessionId, framework, diagnosis, companyName, onSa
                 <p className="text-[11px] font-semibold tracking-wide text-ds-app-accent-hover mb-1">主人格</p>
                 <h2 className="text-2xl font-bold text-foreground">{primaryDef.label}</h2>
                 <p className="mt-1 text-base font-semibold text-ds-app-accent-hover">{primaryDef.copy}</p>
-                <p className="mt-3 text-sm text-foreground/80 leading-relaxed">{primaryDef.description}</p>
+                <p className="mt-3 text-base text-foreground/80 leading-relaxed">{primaryDef.description}</p>
                 <div className="mt-4 flex flex-wrap gap-2">
                   {primaryDef.keywords.map(k => (
                     <span key={k} className="rounded-full bg-ds-app-accent px-3 py-1 text-xs font-medium text-white">{k}</span>
@@ -315,13 +315,13 @@ export function Step5Result({ sessionId, framework, diagnosis, companyName, onSa
                 {d.archetype.primary.description && (
                   <div>
                     <p className="text-xs font-semibold text-ds-app-accent-hover mb-1">{primaryDef?.label}（主人格）</p>
-                    <p className="text-sm text-foreground/80 leading-relaxed">{d.archetype.primary.description}</p>
+                    <p className="text-base text-foreground/80 leading-relaxed">{d.archetype.primary.description}</p>
                   </div>
                 )}
                 {d.archetype.secondary.description && (
                   <div>
                     <p className="text-xs font-semibold text-muted-foreground mb-1">{secondaryDef?.label}（副人格）</p>
-                    <p className="text-sm text-foreground/80 leading-relaxed">{d.archetype.secondary.description}</p>
+                    <p className="text-base text-foreground/80 leading-relaxed">{d.archetype.secondary.description}</p>
                   </div>
                 )}
               </div>

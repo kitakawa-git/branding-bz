@@ -38,7 +38,7 @@ export function TargetSegmentCards({ main, subs, mainExtra, emptySubsMessage }: 
           {subs.map((sub, i) => (
             <div key={i} className="relative rounded-lg border-2 border-blue-300 bg-blue-50/30 p-4">
               <Badge variant="outline" className="absolute -top-[9px] left-[6px] rounded-full px-1.5 py-0 !text-[10px] !leading-[16px] border-blue-300 bg-white text-blue-300">サブターゲット</Badge>
-              <p className="text-lg font-bold text-gray-700">{sub.name}</p>
+              <p className="text-base font-bold text-gray-700">{sub.name}</p>
               {sub.description && (
                 <p className="mt-1 text-sm text-gray-600 leading-relaxed">{sub.description}</p>
               )}

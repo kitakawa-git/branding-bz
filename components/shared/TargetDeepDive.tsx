@@ -15,13 +15,13 @@ export function TargetDeepDive({ buyingFactors, strengths, competitorsAnalysis, 
   if (!hasContent) return null
 
   return (
-    <div className={`space-y-4 ${bordered ? 'mt-3 border-t border-blue-200 pt-4' : ''}`}>
+    <div className={`space-y-3 ${bordered ? 'mt-3 border-t border-blue-200 pt-4' : ''}`}>
       {!!buyingFactors?.length && (
         <div>
           <FieldSubLabel>購買決定要因</FieldSubLabel>
           <div className="flex flex-wrap gap-1.5">
             {buyingFactors.map((f, i) => (
-              <span key={i} className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-3 py-1 text-[13px] font-medium text-ds-app-accent-hover">
+              <span key={i} className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-3 py-1 text-base font-medium text-ds-app-accent-hover">
                 {f}
               </span>
             ))}
@@ -31,9 +31,7 @@ export function TargetDeepDive({ buyingFactors, strengths, competitorsAnalysis, 
       {!!strengths && (
         <div>
           <FieldSubLabel>自社の強み</FieldSubLabel>
-          <div className="rounded-md border border-gray-200 bg-white px-3 py-2.5">
-            <p className="text-sm leading-relaxed text-gray-700 whitespace-pre-wrap">{strengths}</p>
-          </div>
+          <p className="text-base leading-relaxed text-gray-700 whitespace-pre-wrap">{strengths}</p>
         </div>
       )}
       {!!competitorsAnalysis?.length && (

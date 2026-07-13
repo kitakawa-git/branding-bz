@@ -327,54 +327,24 @@ export default function BrandPersonalityPage() {
     <div>
       {/* タイトルはヘッダーのパンくずに移管 */}
       <form id="personality-form" onSubmit={handleSubmit} className="space-y-6">
-        {/* 概要（ポータルの「感じられ方」レーダー下に表示） */}
+        {/* パーソナリティ概要＋特性（1カードに統合） */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-          <CardContent className="p-5">
-            <h2 className="text-xs font-bold mb-2">パーソナリティ概要</h2>
-            <p className="text-xs text-muted-foreground mb-3">
-              ブランドの人格全体を要約する概要文。ポータルの「感じられ方」でレーダーチャートの下に表示されます。
-            </p>
-            <AutoResizeTextarea
-              value={summary}
-              onChange={(e) => setSummary(e.target.value)}
-              placeholder="例：誠実さと革新性を兼ね備えた知性的なブランド。長期的な信頼関係を築きながら、常に新しい価値づくりに挑戦している。"
-              className="min-h-[90px]"
-            />
-          </CardContent>
-        </Card>
+          <CardContent className="p-5 space-y-6">
+            {/* 概要（ポータルの「感じられ方」レーダー下に表示） */}
+            <div>
+              <h2 className="text-xs font-bold mb-2">パーソナリティ概要</h2>
+              <p className="text-xs text-muted-foreground mb-3">
+                ブランドの人格全体を要約する概要文。ポータルの「感じられ方」でレーダーチャートの下に表示されます。
+              </p>
+              <AutoResizeTextarea
+                value={summary}
+                onChange={(e) => setSummary(e.target.value)}
+                placeholder="例：誠実さと革新性を兼ね備えた知性的なブランド。長期的な信頼関係を築きながら、常に新しい価値づくりに挑戦している。"
+                className="min-h-[90px]"
+              />
+            </div>
 
-        {/* アーキタイプ（読み取り専用。パーソナリティ診断ツールの連携で登録される／brand_personalities.archetype） */}
-        {archetype && (
-          <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-            <CardContent className="p-5 space-y-3">
-              <div className="flex items-center gap-2">
-                <h2 className="text-xs font-bold">アーキタイプ（主・副人格）</h2>
-                <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">診断連携・読み取り専用</span>
-              </div>
-              <div className="rounded-lg border-2 border-ds-app-accent bg-blue-50/40 p-4">
-                <p className="text-[10px] font-semibold tracking-wide text-ds-app-accent-hover mb-1">主人格</p>
-                <div className="flex items-baseline gap-2 flex-wrap">
-                  <span className="text-lg font-bold text-foreground">{archetype.primary.label}</span>
-                  {archetype.primary.copy && <span className="text-sm font-semibold text-ds-app-accent-hover">{archetype.primary.copy}</span>}
-                </div>
-                {archetype.primary.description && (
-                  <p className="mt-2 text-xs text-foreground/80 leading-relaxed">{archetype.primary.description}</p>
-                )}
-              </div>
-              <div className="rounded-lg border border-border bg-background p-4">
-                <p className="text-[10px] font-semibold tracking-wide text-muted-foreground mb-1">副人格</p>
-                <div className="flex items-baseline gap-2 flex-wrap">
-                  <span className="text-base font-bold text-foreground">{archetype.secondary.label}</span>
-                  {archetype.secondary.copy && <span className="text-sm font-semibold text-muted-foreground">{archetype.secondary.copy}</span>}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* 特性（人格スコア／brand_guidelines.traits） */}
-        <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-          <CardContent className="p-5">
+            {/* 特性（人格スコア／brand_guidelines.traits） */}
             <div>
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-xs font-bold">特性（最大5つ）</h2>
@@ -431,6 +401,36 @@ export default function BrandPersonalityPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* アーキタイプ（読み取り専用。パーソナリティ診断ツールの連携で登録される／brand_personalities.archetype） */}
+        {archetype && (
+          <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+            <CardContent className="p-5 space-y-3">
+              <div className="flex items-center gap-2">
+                <h2 className="text-xs font-bold">アーキタイプ（主・副人格）</h2>
+                <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">診断連携・読み取り専用</span>
+              </div>
+              <div className="rounded-lg border-2 border-ds-app-accent bg-blue-50/40 p-4">
+                <p className="text-[10px] font-semibold tracking-wide text-ds-app-accent-hover mb-1">主人格</p>
+                <div className="flex items-baseline gap-2 flex-wrap">
+                  <span className="text-lg font-bold text-foreground">{archetype.primary.label}</span>
+                  {archetype.primary.copy && <span className="text-sm font-semibold text-ds-app-accent-hover">{archetype.primary.copy}</span>}
+                </div>
+                {archetype.primary.description && (
+                  <p className="mt-2 text-xs text-foreground/80 leading-relaxed">{archetype.primary.description}</p>
+                )}
+              </div>
+              <div className="rounded-lg border border-border bg-background p-4">
+                <p className="text-[10px] font-semibold tracking-wide text-muted-foreground mb-1">副人格</p>
+                <div className="flex items-baseline gap-2 flex-wrap">
+                  <span className="text-base font-bold text-foreground">{archetype.secondary.label}</span>
+                  {archetype.secondary.copy && <span className="text-sm font-semibold text-muted-foreground">{archetype.secondary.copy}</span>}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
       </form>
 
       {/* FabBar との重なりを防ぐスペーサー */}

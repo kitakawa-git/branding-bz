@@ -145,7 +145,7 @@ export default function PortalPersonalityPage() {
                   <p className="mt-1 text-base font-semibold text-ds-app-accent-hover m-0">{archetype.primary.copy}</p>
                 )}
                 {archetype.primary.description && (
-                  <p className="mt-3 text-base sm:text-sm text-foreground/80 leading-[1.8] m-0">{archetype.primary.description}</p>
+                  <p className="mt-3 text-base text-foreground/80 leading-relaxed m-0">{archetype.primary.description}</p>
                 )}
               </div>
 

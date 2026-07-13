@@ -861,8 +861,9 @@ export default function BrandVisualsPage() {
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-5">
             {/* ロゴ基本形（複数枚） */}
-            <div className="mb-5">
-              <h2 className="text-xs font-bold mb-3">ロゴ基本形</h2>
+            <div className="mb-8">
+              <h2 className="text-xs font-bold mb-2">ロゴ基本形</h2>
+              <p className="text-[11px] text-muted-foreground mb-3">ロゴの基本形となる画像（複数登録可・推奨：背景透過PNG）</p>
               {visuals.logo_images.length > 0 && (
                 <div className="flex flex-wrap gap-3 mb-3">
                   {visuals.logo_images.map((img, i) => (
@@ -893,11 +894,10 @@ export default function BrandVisualsPage() {
               >
                 {uploadingMap['logo-base'] ? 'アップロード中...' : <><Plus size={16} />画像を追加</>}
               </Button>
-              <p className="text-[11px] text-muted-foreground mt-1">ロゴの基本形となる画像（複数登録可・推奨：背景透過PNG）</p>
             </div>
 
             {/* ロゴコンセプト */}
-            <div className="mb-5">
+            <div className="mb-8">
               <h2 className="text-xs font-bold mb-3">ロゴコンセプト</h2>
               <AutoResizeTextarea
                 value={visuals.logo_concept}
@@ -1090,7 +1090,7 @@ export default function BrandVisualsPage() {
 
             {COLOR_CATEGORIES.map((cat, catIdx) => (
               <div key={cat.key} className={catIdx < COLOR_CATEGORIES.length - 1 ? 'mb-6' : ''}>
-                <h3 className="text-sm font-bold mb-3 text-muted-foreground">{cat.label}</h3>
+                <h3 className="text-[11px] text-gray-500 mb-3">{cat.label}</h3>
 
                 <div className="space-y-2">
                   {visuals.color_palette[cat.key].map((color, cIdx) => (
@@ -1166,8 +1166,8 @@ export default function BrandVisualsPage() {
             <h2 className="text-xs font-bold mb-5">フォント</h2>
 
             {/* プライマリフォント */}
-            <div className="mb-6">
-              <p className="text-xs font-semibold text-foreground mb-3 m-0">プライマリフォント（見出し・タイトル用）</p>
+            <div className="mb-8">
+              <p className="text-[11px] text-gray-500 mb-3 m-0">プライマリフォント（見出し・タイトル用）</p>
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-muted-foreground w-10 shrink-0">欧文</span>
@@ -1200,7 +1200,7 @@ export default function BrandVisualsPage() {
 
             {/* セカンダリフォント */}
             <div>
-              <p className="text-xs font-semibold text-foreground mb-3 m-0">セカンダリフォント（本文・説明文用）</p>
+              <p className="text-[11px] text-gray-500 mb-3 m-0">セカンダリフォント（本文・説明文用）</p>
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-muted-foreground w-10 shrink-0">欧文</span>

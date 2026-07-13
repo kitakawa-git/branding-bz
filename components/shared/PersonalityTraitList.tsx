@@ -24,7 +24,7 @@ export function PersonalityTraitList({ traits, bodyTextStyle, className = '' }: 
   if (!traits.length) return null
 
   return (
-    <div className={`space-y-2 ${className}`}>
+    <div className={`space-y-3 ${className}`}>
       {traits.map((trait, i) => (
         <div
           key={`${trait.name}-${i}`}
@@ -39,7 +39,7 @@ export function PersonalityTraitList({ traits, bodyTextStyle, className = '' }: 
             )}
             {trait.description && (
               <p
-                className="text-base sm:text-sm text-foreground/70 leading-[1.8] whitespace-pre-wrap mt-1 m-0"
+                className="text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap mt-1 m-0"
                 style={bodyTextStyle}
               >
                 {trait.description}

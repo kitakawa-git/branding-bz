@@ -6,7 +6,7 @@ import type { TargetFitMap } from '@/app/tools/stp/app/[sessionId]/page'
 export function TargetFitMapPreview({ fitMap }: { fitMap: TargetFitMap }) {
   const st = fitMap.consistency_status
   const conf = st === 'green'
-    ? { bar: 'bg-emerald-500', wrap: 'bg-emerald-50 text-emerald-700', text: '✓ ターゲット全員がカバー範囲内' }
+    ? { bar: 'bg-emerald-500', wrap: 'bg-emerald-50 text-emerald-700', text: 'ターゲット全員がカバー範囲内' }
     : st === 'yellow'
       ? { bar: 'bg-amber-500', wrap: 'bg-amber-50 text-amber-700', text: '⚠ 一部がカバー範囲の端' }
       : { bar: 'bg-red-500', wrap: 'bg-red-50 text-red-700', text: '✗ カバー範囲外のターゲットあり' }

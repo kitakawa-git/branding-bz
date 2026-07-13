@@ -132,7 +132,7 @@ export function Step5Result({ sessionId, personas, basicInfo, companyId, onBack,
         {personas.length}件のペルソナが完成しました。内容を確認し、branding.bz への連携やPDF出力ができます。
       </p>
 
-      <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4">
+      <div className="rounded-2xl border border-gray-200 bg-[hsl(0_0%_97%)] p-4">
         <FieldHeading className="mb-3 mt-0">ターゲット別ペルソナ一覧</FieldHeading>
         <div className="space-y-6">
         {groups.map((group) => (
@@ -299,7 +299,7 @@ function TextBlock({ label, value }: { label: string; value?: string }) {
   return (
     <div>
       <FieldSubLabel>{label}</FieldSubLabel>
-      <p className="text-sm text-gray-700 whitespace-pre-wrap">{value}</p>
+      <p className="text-base text-foreground/80 leading-relaxed whitespace-pre-wrap">{value}</p>
     </div>
   )
 }

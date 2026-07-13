@@ -11,7 +11,6 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
 import { BrandPageTracker } from '@/components/analytics/BrandPageTracker'
 import { BrandExpressionTabs } from '../components/BrandExpressionTabs'
-import { Separator } from '@/components/ui/separator'
 import {
   Dialog,
   DialogContent,
@@ -269,11 +268,11 @@ export default function PortalVisualsPage() {
       {(data.logo_images.length > 0 || data.logo_concept || validSections.length > 0) && (
         <section>
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-            <CardContent className="p-4 sm:p-5 space-y-6">
+            <CardContent className="p-4 sm:p-5 space-y-8">
               {data.logo_images.length > 0 && (
                 <div>
                   <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">ロゴ基本形</h2>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-2">
                     {data.logo_images.map((img, i) => (
                       <PortalImageCard
                         key={i}
@@ -290,7 +289,7 @@ export default function PortalVisualsPage() {
               {data.logo_concept && (
                 <div>
                   <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">ロゴコンセプト</h2>
-                  <p className="text-base sm:text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0">{data.logo_concept}</p>
+                  <p className="text-base text-foreground/80 leading-relaxed whitespace-pre-wrap m-0">{data.logo_concept}</p>
                 </div>
               )}
 
@@ -298,11 +297,9 @@ export default function PortalVisualsPage() {
                 <div>
                   <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">ロゴガイドライン</h2>
                   {validSections.map((section, sIdx) => (
-                    <div key={sIdx}>
-                      {sIdx > 0 && <Separator className="my-5" />}
-
+                    <div key={sIdx} className={sIdx > 0 ? 'mt-8' : ''}>
                       {section.title && (
-                        <h3 className="text-xs font-bold text-muted-foreground/60 mb-3 m-0">
+                        <h3 className="text-[11px] text-gray-500 mb-3 m-0">
                           {section.title}
                         </h3>
                       )}
@@ -337,9 +334,8 @@ export default function PortalVisualsPage() {
               <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">ブランドカラー</h2>
 
               {visibleCategories.map((cat, catIdx) => (
-                <div key={cat.key}>
-                  {catIdx > 0 && <Separator className="my-5" />}
-                  <h3 className="text-xs font-bold text-muted-foreground/60 mb-3 m-0">
+                <div key={cat.key} className={catIdx > 0 ? 'mt-8' : ''}>
+                  <h3 className="text-[11px] text-gray-500 mb-3 m-0">
                     {cat.label}
                   </h3>
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
@@ -365,8 +361,8 @@ export default function PortalVisualsPage() {
             <CardContent className="p-4 sm:p-5">
               <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">フォント</h2>
 
-              <div className="mb-4">
-                <p className="text-xs font-bold text-muted-foreground/60 mb-3 m-0">プライマリフォント（見出し・タイトル用）</p>
+              <div>
+                <p className="text-[11px] text-gray-500 mb-3 m-0">プライマリフォント（見出し・タイトル用）</p>
                 <p className="text-2xl font-bold text-foreground m-0">
                   {getFontRoleLabel(data.fonts.primary_font)}
                 </p>
@@ -378,9 +374,8 @@ export default function PortalVisualsPage() {
                 </p>
               </div>
 
-              <Separator className="my-4" />
-              <div>
-                <p className="text-xs font-bold text-muted-foreground/60 mb-3 m-0">セカンダリフォント（本文・説明文用）</p>
+              <div className="mt-8">
+                <p className="text-[11px] text-gray-500 mb-3 m-0">セカンダリフォント（本文・説明文用）</p>
                 <p className="text-2xl font-bold text-foreground m-0">
                   {getFontRoleLabel(data.fonts.secondary_font)}
                 </p>
@@ -421,7 +416,7 @@ export default function PortalVisualsPage() {
                 )}
               </div>
               {data.visual_guidelines && (
-                <p className="text-base sm:text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0">{data.visual_guidelines}</p>
+                <p className="text-base text-foreground/80 leading-relaxed whitespace-pre-wrap m-0">{data.visual_guidelines}</p>
               )}
               {sortedGuidelineImages.length > 0 && guidelineLayout === 'grid' && (
                 <div className={`grid grid-cols-3 gap-4 ${data.visual_guidelines ? 'mt-4' : ''}`}>

@@ -223,6 +223,11 @@ export default function PortalStrategyPage() {
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
             <CardContent className="p-4 sm:p-5">
               <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">ターゲット</h2>
+              {/* ターゲット戦略の概要（STP Step5「ターゲット戦略の概要」＝brand_personas.target）。カード先頭に表示。
+                  未生成時はメインターゲット説明文がフォールバックされるため、それと同一なら重複回避で非表示 */}
+              {target && target !== targetSegments[0]?.description && (
+                <p className="text-base text-foreground/80 leading-relaxed whitespace-pre-wrap m-0 mb-6" style={secondaryStyle}>{target}</p>
+              )}
               {/* 主なターゲット（STP分析ツール Step5と共通のバッジカード表現。先頭がメイン、以降がサブ） */}
               {targetSegments.length > 0 ? (
                 <TargetSegmentCards
@@ -231,25 +236,15 @@ export default function PortalStrategyPage() {
                   mainExtra={
                     <TargetDeepDive
                       buyingFactors={buyingFactors}
-                      strengths={strengths}
-                      competitorsAnalysis={competitorsAnalysis}
                     />
                   }
                 />
               ) : hasDeepDive ? (
                 <TargetDeepDive
                   buyingFactors={buyingFactors}
-                  strengths={strengths}
-                  competitorsAnalysis={competitorsAnalysis}
                   bordered={false}
                 />
               ) : null}
-              {/* 概要文（プロセス文）。AI生成の概要文（target_summary）が未生成の場合、
-                  STP連携APIはメインターゲットの説明文をそのままフォールバックするため、
-                  重複表示を避けるためメインターゲット説明文と同一なら非表示にする */}
-              {target && target !== targetSegments[0]?.description && (
-                <p className={`text-base sm:text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0 ${targetSegments.length > 0 || hasDeepDive ? 'mt-3' : ''}`} style={secondaryStyle}>{target}</p>
-              )}
               {/* ターゲット適合マップ（STP分析ツールと共通表示） */}
               {targetFitMap?.x_axis?.left && <TargetFitMapPreview fitMap={targetFitMap} />}
             </CardContent>
@@ -278,6 +273,21 @@ export default function PortalStrategyPage() {
           <PositioningMapAndStance
             positioningMapData={positioningMapData}
             brandStance={brandStanceStatements?.statements || []}
+            belowMap={
+              (strengths.trim() || competitorsAnalysis.length > 0) ? (
+                <TargetDeepDive
+                  strengths={strengths}
+                  // 競合名をポジショニングマップの点の色に紐づけて凡例の丸を表示（STP Step5と同様）
+                  competitorsAnalysis={competitorsAnalysis.map(c => ({
+                    ...c,
+                    color: positioningMapData?.items?.find(
+                      it => it.name.trim().toLowerCase() === c.name.trim().toLowerCase()
+                    )?.color,
+                  }))}
+                  bordered={false}
+                />
+              ) : undefined
+            }
           />
         </section>
       ) : positioningMapUrl ? (
@@ -321,7 +331,7 @@ export default function PortalStrategyPage() {
                       }`}
                     >
                       <p className={`text-sm font-bold ${isMain ? 'text-gray-900' : 'text-gray-700'}`}>{s.target_name}</p>
-                      <p className="mt-1 text-sm leading-relaxed text-gray-800 whitespace-pre-wrap">{s.statement}</p>
+                      <p className="mt-1 text-base leading-relaxed text-foreground/80 whitespace-pre-wrap">{s.statement}</p>
                       {s.rationale && (
                         <p className="mt-1 text-[11px] text-muted-foreground leading-relaxed">なぜなら: {s.rationale}</p>
                       )}
@@ -351,7 +361,7 @@ export default function PortalStrategyPage() {
                         {val.title}
                       </div>
                       {val.description && (
-                        <div className="text-base sm:text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap" style={secondaryStyle}>
+                        <div className="text-base text-foreground/80 leading-relaxed whitespace-pre-wrap" style={secondaryStyle}>
                           {val.description}
                         </div>
                       )}

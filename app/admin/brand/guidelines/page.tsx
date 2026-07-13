@@ -799,7 +799,7 @@ export default function BrandGuidelinesPage() {
       <form id="guidelines-form" onSubmit={handleSubmit} className="space-y-6">
         {/* Card 1: スローガン＋コンセプトビジュアル＋ブランド動画＋メッセージ */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-          <CardContent className="p-5 space-y-6">
+          <CardContent className="p-5 space-y-8">
             <div>
               <h2 className="text-xs font-bold mb-3">スローガン</h2>
               <Input
@@ -984,9 +984,28 @@ export default function BrandGuidelinesPage() {
           </CardContent>
         </Card>
 
-        {/* Card 3: ブランドストーリー＋沿革＋事業内容 */}
+        {/* Card 3: 行動指針（旧 ブランド戦略 から移設。ブランドストーリーより上に表示） */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-          <CardContent className="p-5 space-y-6">
+          <CardContent className="p-5">
+            <h2 className="text-xs font-bold mb-3">行動指針</h2>
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleActionDragEnd}>
+              <SortableContext items={guidelines.action_guidelines.map((_, i) => `action-${i}`)} strategy={verticalListSortingStrategy}>
+                {guidelines.action_guidelines.map((guideline, index) => (
+                  <SortableActionItem key={`action-${index}`} id={`action-${index}`} item={guideline} index={index} onUpdate={updateGuideline} onRemove={removeGuideline} />
+                ))}
+              </SortableContext>
+            </DndContext>
+            {guidelines.action_guidelines.length < 10 && (
+              <Button type="button" variant="outline" onClick={addGuideline} className="py-1.5 px-3 text-xs">
+                <Plus size={16} />行動指針を追加
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Card 4: ブランドストーリー＋沿革＋事業内容 */}
+        <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+          <CardContent className="p-5 space-y-8">
             <div>
               <h2 className="text-xs font-bold mb-3">ブランドストーリー</h2>
               <AutoResizeTextarea
@@ -1076,25 +1095,6 @@ export default function BrandGuidelinesPage() {
                 />
               )}
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Card 4: 行動指針（旧 ブランド戦略 から移設） */}
-        <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-          <CardContent className="p-5">
-            <h2 className="text-xs font-bold mb-3">行動指針</h2>
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleActionDragEnd}>
-              <SortableContext items={guidelines.action_guidelines.map((_, i) => `action-${i}`)} strategy={verticalListSortingStrategy}>
-                {guidelines.action_guidelines.map((guideline, index) => (
-                  <SortableActionItem key={`action-${index}`} id={`action-${index}`} item={guideline} index={index} onUpdate={updateGuideline} onRemove={removeGuideline} />
-                ))}
-              </SortableContext>
-            </DndContext>
-            {guidelines.action_guidelines.length < 10 && (
-              <Button type="button" variant="outline" onClick={addGuideline} className="py-1.5 px-3 text-xs">
-                <Plus size={16} />行動指針を追加
-              </Button>
-            )}
           </CardContent>
         </Card>
 

@@ -103,7 +103,7 @@ type StrategyCache = {
 }
 
 export default function BrandStrategyPage() {
-  const { companyId } = useAuth()
+  const { companyId, companyName } = useAuth()
   const cacheKey = `admin-brand-strategy-${companyId}`
   const cached = companyId ? getPageCache<StrategyCache>(cacheKey) : null
   const [targetOverview, setTargetOverview] = useState<string>(cached?.targetOverview ?? '')
@@ -492,6 +492,44 @@ export default function BrandStrategyPage() {
     })
   }
 
+  // プロット項目が自社かどうか（名称が会社名と一致すれば自社）
+  const isSelfItem = (itemName: string) =>
+    !!companyName && itemName.trim().toLowerCase() === companyName.trim().toLowerCase()
+
+  // プロット項目の説明（自社=自社の強み strengths、競合=競合の特徴 competitorsAnalysis[].traits）
+  const getItemDescription = (itemName: string): string => {
+    if (isSelfItem(itemName)) return strengths
+    const match = competitorsAnalysis.find(c => c.name.trim().toLowerCase() === itemName.trim().toLowerCase())
+    return match?.traits ?? ''
+  }
+
+  const updateItemDescription = (itemName: string, text: string) => {
+    if (isSelfItem(itemName)) {
+      setStrengths(text)
+      return
+    }
+    // 競合: 名称一致でupsert（無ければ追加）
+    setCompetitorsAnalysis(prev => {
+      const idx = prev.findIndex(c => c.name.trim().toLowerCase() === itemName.trim().toLowerCase())
+      if (idx >= 0) {
+        const next = [...prev]
+        next[idx] = { ...next[idx], traits: text }
+        return next
+      }
+      return [...prev, { name: itemName.trim(), traits: text }]
+    })
+  }
+
+  // 自社の立ち位置（ステートメント）の編集
+  const updateStanceStatement = (index: number, field: 'target_name' | 'statement' | 'rationale', value: string) => {
+    setBrandStanceStatements(prev => {
+      if (!prev) return prev
+      const statements = [...prev.statements]
+      statements[index] = { ...statements[index], [field]: value }
+      return { ...prev, statements }
+    })
+  }
+
   // 保存処理
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -557,6 +595,7 @@ export default function BrandStrategyPage() {
         sort_order: i,
         target: i === 0 ? (overviewText || null) : null,
         positioning_map_data: i === 0 ? (positioningMapData || null) : null,
+        brand_stance_statements: i === 0 ? (brandStanceStatements || null) : null,
       })
 
       if (cleanedPersonas.length > 0) {
@@ -582,13 +621,14 @@ export default function BrandStrategyPage() {
             savedPersonas.push({ ...p, id: nid })
           }
         }
-      } else if (overviewText || positioningMapData) {
-        // ペルソナは無いが概要/ポジショニングを保持するため row0 を1件維持。
+      } else if (overviewText || positioningMapData || brandStanceStatements) {
+        // ペルソナは無いが概要/ポジショニング/立ち位置を保持するため row0 を1件維持。
         const dummyPayload = {
           name: '',
           sort_order: 0,
           target: overviewText || null,
           positioning_map_data: positioningMapData || null,
+          brand_stance_statements: brandStanceStatements || null,
         }
         if (pExistingIds.length > 0) {
           const res = await fetch(`${supabaseUrl}/rest/v1/brand_personas?id=eq.${pExistingIds[0]}`, {
@@ -669,6 +709,11 @@ export default function BrandStrategyPage() {
         body: JSON.stringify({
           portal_subtitles: Object.keys(updatedSubtitles).length > 0 ? updatedSubtitles : null,
           target_segments: validSegments.length > 0 ? validSegments : null,
+          // プロット項目カードで編集した自社の強み・競合の特徴
+          strengths: strengths.trim() || null,
+          competitors_analysis: competitorsAnalysis.filter(c => c.name.trim()).length > 0
+            ? competitorsAnalysis.filter(c => c.name.trim()).map(c => ({ name: c.name.trim(), traits: c.traits.trim() }))
+            : null,
         }),
       })
       setPortalSubtitlesData(updatedSubtitles)
@@ -750,9 +795,21 @@ export default function BrandStrategyPage() {
   return (
     <div>
       <form id="strategy-form" onSubmit={handleSubmit} className="space-y-6">
-        {/* Card 1: ターゲット＋ペルソナ */}
+        {/* Card 1: ターゲット概要＋主なターゲット＋ターゲット適合マップ（統合） */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-          <CardContent className="p-5 space-y-5">
+          <CardContent className="p-5 space-y-8">
+            {/* ターゲット概要（プロセス文） */}
+            <div>
+              <h2 className="text-xs font-bold mb-3">ターゲット概要</h2>
+              <AutoResizeTextarea
+                value={targetOverview}
+                onChange={(e) => setTargetOverview(e.target.value)}
+                placeholder="ターゲット全体の考え方・方針の概要文（任意）"
+                className="min-h-[90px]"
+              />
+            </div>
+
+            {/* 主なターゲット */}
             <div>
               <div className="mb-2 flex items-center justify-between gap-2">
                 <div className="flex items-center gap-1.5">
@@ -794,17 +851,28 @@ export default function BrandStrategyPage() {
               />
             </div>
 
-            {/* ターゲット概要（プロセス文）。主なターゲットとペルソナの間に表示 */}
-            <div>
-              <h2 className="text-xs font-bold mb-3">ターゲット概要</h2>
-              <AutoResizeTextarea
-                value={targetOverview}
-                onChange={(e) => setTargetOverview(e.target.value)}
-                placeholder="ターゲット全体の考え方・方針の概要文（任意）"
-                className="min-h-[90px]"
-              />
-            </div>
+            {/* ターゲット適合マップ（STP連携・読み取り表示） */}
+            {targetFitMapData && (
+              <div>
+                <h2 className="text-xs font-bold mb-3">ターゲット適合マップ</h2>
+                <p className="mb-4 text-[13px] text-muted-foreground">
+                  選んだターゲットが自社のカバー範囲に入っているかをチェックした結果です。
+                </p>
+                <TargetFitMapStatic fitMap={targetFitMapData} />
+                {targetFitMapData.axis_rationale && (
+                  <p className="mt-4 text-xs text-muted-foreground leading-relaxed">
+                    <span className="font-medium text-foreground">軸選定の根拠: </span>
+                    {targetFitMapData.axis_rationale}
+                  </p>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
+        {/* Card 3: ペルソナ */}
+        <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+          <CardContent className="p-5">
             <div>
               <h2 className="text-xs font-bold mb-3">ペルソナ</h2>
               <p className="text-xs text-muted-foreground mb-4">
@@ -1058,16 +1126,71 @@ export default function BrandStrategyPage() {
           </CardContent>
         </Card>
 
-        {/* Card 2: ポジショニングマップ */}
+        {/* Card 2: 自社の立ち位置＋ポジショニングマップ（統合） */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-          <CardContent className="p-5">
+          <CardContent className="p-5 space-y-8">
+            {/* 自社の立ち位置（STP連携・編集可能） */}
+            {brandStanceStatements && brandStanceStatements.statements.length > 0 && (
+              <div>
+              <h2 className="text-xs font-bold mb-3">自社の立ち位置</h2>
+              <p className="mb-4 text-[13px] text-muted-foreground">
+                各ターゲットに対して、自社が何者として刺さるかをまとめたステートメントです。
+              </p>
+              <div className="space-y-3">
+                {brandStanceStatements.statements.map((s, i) => {
+                  const isMain = s.target_role === 'main'
+                  return (
+                    <div
+                      key={i}
+                      className={`rounded-lg border-2 p-4 ${
+                        isMain ? 'border-ds-app-accent bg-ds-app-accent/5' : 'border-gray-200 bg-white'
+                      }`}
+                    >
+                      <div className="mb-3 flex items-center gap-2">
+                        <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                          isMain ? 'bg-ds-app-accent text-white' : 'bg-gray-100 text-gray-700'
+                        }`}>
+                          {isMain ? 'メインターゲット向け' : 'サブターゲット向け'}
+                        </span>
+                        <Input
+                          type="text"
+                          value={s.target_name}
+                          onChange={(e) => updateStanceStatement(i, 'target_name', e.target.value)}
+                          placeholder="ターゲット名"
+                          className="h-8 flex-1"
+                        />
+                      </div>
+                      <AutoResizeTextarea
+                        value={s.statement}
+                        onChange={(e) => updateStanceStatement(i, 'statement', e.target.value)}
+                        placeholder="このターゲットに対する自社の立ち位置ステートメント"
+                        className="min-h-[72px]"
+                      />
+                      <div className="mt-3">
+                        <Label className="text-xs text-muted-foreground mb-1.5 block">なぜなら</Label>
+                        <AutoResizeTextarea
+                          value={s.rationale}
+                          onChange={(e) => updateStanceStatement(i, 'rationale', e.target.value)}
+                          placeholder="この立ち位置が成り立つ理由・根拠"
+                          className="min-h-[60px]"
+                        />
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+              </div>
+            )}
+
+            {/* ポジショニングマップ */}
+            <div>
             <h2 className="text-xs font-bold mb-3">ポジショニングマップ</h2>
 
             {positioningMapData ? (
               <div className="space-y-5">
                 {/* 軸ラベル設定 */}
                 <div className="space-y-3">
-                  <h3 className="text-[13px] font-bold text-muted-foreground">軸ラベル</h3>
+                  <h3 className="text-[11px] text-gray-500">軸ラベル</h3>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <Label className="text-xs text-muted-foreground mb-1 block">X軸 左</Label>
@@ -1112,9 +1235,17 @@ export default function BrandStrategyPage() {
                   </div>
                 </div>
 
+                {/* 軸選定の根拠（軸ラベルの下に表示） */}
+                {positioningMapData?.axis_rationale && (
+                  <div className="text-xs text-gray-700 leading-relaxed">
+                    <span className="font-bold text-gray-900">軸選定の根拠: </span>
+                    {positioningMapData.axis_rationale}
+                  </div>
+                )}
+
                 {/* アイテム一覧 */}
                 <div className="space-y-3">
-                  <h3 className="text-[13px] font-bold text-muted-foreground">
+                  <h3 className="text-[11px] text-gray-500">
                     プロット項目（{positioningMapData.items.length}/10）
                   </h3>
 
@@ -1211,6 +1342,21 @@ export default function BrandStrategyPage() {
                           </div>
                         )}
                       </div>
+
+                      {/* 説明: 自社=自社の強み / 競合=競合の特徴。名称一致で自社判別 */}
+                      <div className="mt-3">
+                        <Label className="text-xs text-muted-foreground mb-1.5 block">
+                          {isSelfItem(item.name) ? '自社の強み' : '競合の特徴'}
+                        </Label>
+                        <AutoResizeTextarea
+                          value={getItemDescription(item.name)}
+                          onChange={(e) => updateItemDescription(item.name, e.target.value)}
+                          placeholder={isSelfItem(item.name)
+                            ? '自社が提供できる強み・価値'
+                            : 'この競合の特徴・強み'}
+                          className="min-h-[72px]"
+                        />
+                      </div>
                     </div>
                   ))}
 
@@ -1228,36 +1374,8 @@ export default function BrandStrategyPage() {
 
                 {/* プレビュー */}
                 <div>
-                  <h3 className="text-[13px] font-bold text-muted-foreground mb-2">プレビュー</h3>
+                  <h3 className="text-[11px] text-gray-500 mb-2">プレビュー</h3>
                   <PositioningMap data={positioningMapData} />
-                  {positioningMapData?.axis_rationale && (
-                    <div className="mt-4 rounded-md bg-gray-50 p-3 text-xs text-gray-700 leading-relaxed">
-                      <span className="font-bold text-gray-900">軸選定の根拠: </span>
-                      {positioningMapData.axis_rationale}
-                    </div>
-                  )}
-                  {positioningMapData?.items?.some(item => item.reasoning) && (
-                    <details className="mt-3 rounded-md border border-gray-200">
-                      <summary className="cursor-pointer p-3 text-xs font-medium text-gray-700">各企業の配置根拠を見る</summary>
-                      <div className="border-t border-gray-200 p-3 space-y-2">
-                        {positioningMapData.items.filter(item => item.reasoning).map((item, i) => (
-                          <div key={i} className="text-xs">
-                            <span className="font-bold text-gray-900">{item.name}: </span>
-                            <span className="text-gray-600">{item.reasoning}</span>
-                            {item.confidence && (
-                              <span className={`ml-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                                item.confidence === 'high' ? 'bg-emerald-100 text-emerald-700' :
-                                item.confidence === 'medium' ? 'bg-amber-100 text-amber-700' :
-                                'bg-gray-100 text-gray-600'
-                              }`}>
-                                確信度 {item.confidence === 'high' ? '高' : item.confidence === 'medium' ? '中' : '低'}
-                              </span>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </details>
-                  )}
                 </div>
 
                 {/* マップ削除 */}
@@ -1286,99 +1404,11 @@ export default function BrandStrategyPage() {
                 </Button>
               </div>
             )}
+            </div>
           </CardContent>
         </Card>
 
-        {/* Card 2.5: ターゲット適合マップ（STP連携・読み取り表示） */}
-        {targetFitMapData && (
-          <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-            <CardContent className="p-5">
-              <h2 className="text-xs font-bold mb-3">ターゲット適合マップ</h2>
-              <p className="mb-4 text-[13px] text-muted-foreground">
-                選んだターゲットが自社のカバー範囲に入っているかをチェックした結果です。
-              </p>
-              <TargetFitMapStatic fitMap={targetFitMapData} />
-              {targetFitMapData.axis_rationale && (
-                <p className="mt-4 text-xs text-muted-foreground leading-relaxed">
-                  <span className="font-medium text-foreground">軸選定の根拠: </span>
-                  {targetFitMapData.axis_rationale}
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Card 2.6: 自社の立ち位置（STP連携・読み取り表示） */}
-        {brandStanceStatements && brandStanceStatements.statements.length > 0 && (
-          <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-            <CardContent className="p-5">
-              <h2 className="text-xs font-bold mb-3">自社の立ち位置</h2>
-              <p className="mb-4 text-[13px] text-muted-foreground">
-                各ターゲットに対して、自社が何者として刺さるかをまとめたステートメントです。
-              </p>
-              <div className="space-y-3">
-                {brandStanceStatements.statements.map((s, i) => {
-                  const isMain = s.target_role === 'main'
-                  return (
-                    <div
-                      key={i}
-                      className={`rounded-lg border-2 p-4 ${
-                        isMain ? 'border-ds-app-accent bg-ds-app-accent/5' : 'border-gray-200 bg-white'
-                      }`}
-                    >
-                      <div className="mb-2 flex items-center gap-2">
-                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                          isMain ? 'bg-ds-app-accent text-white' : 'bg-gray-100 text-gray-700'
-                        }`}>
-                          {isMain ? 'メインターゲット向け' : 'サブターゲット向け'}
-                        </span>
-                        <span className="text-xs text-muted-foreground">{s.target_name}</span>
-                      </div>
-                      <p className="text-sm leading-relaxed text-foreground" style={{ fontFamily: 'serif' }}>
-                        {s.statement}
-                      </p>
-                      {s.rationale && (
-                        <p className="mt-3 pt-3 border-t border-gray-100 text-xs text-muted-foreground leading-relaxed">
-                          <span className="font-medium">なぜなら: </span>{s.rationale}
-                        </p>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Card 2.7: 自社の強み（STP連携・読み取り表示） */}
-        {strengths && strengths.trim() && (
-          <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-            <CardContent className="p-5">
-              <h2 className="text-xs font-bold mb-3">自社の強み（STP分析）</h2>
-              <p className="text-sm leading-relaxed text-gray-700 whitespace-pre-wrap">{strengths}</p>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Card 2.8: 競合分析（STP連携・読み取り表示） */}
-        {competitorsAnalysis.length > 0 && (
-          <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-            <CardContent className="p-5">
-              <h2 className="text-xs font-bold mb-3">競合分析（STP分析）</h2>
-              <p className="mb-4 text-[13px] text-muted-foreground">各競合の特徴と、自社との差別化ポイント</p>
-              <div className="space-y-3">
-                {competitorsAnalysis.map((comp, i) => (
-                  <div key={i} className="rounded-lg border border-gray-200 bg-white p-4">
-                    <div className="mb-2 text-sm font-bold text-gray-900">{comp.name}</div>
-                    {comp.traits && (
-                      <p className="text-xs text-gray-600 leading-relaxed whitespace-pre-wrap">{comp.traits}</p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        {/* 自社の強み・競合分析はポジショニングマップの各プロット項目カード内で編集する（読み取り専用カードは廃止） */}
 
         {/* Card 3: 提供価値（value_propositions。「考え方」から移動・統合） */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">

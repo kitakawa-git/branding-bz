@@ -17,7 +17,7 @@ interface PositioningMapAndStanceProps {
 
 export function PositioningMapAndStance({ positioningMapData, brandStance, emptyStanceMessage, belowMap }: PositioningMapAndStanceProps) {
   return (
-    <div className="rounded-lg border border-gray-200 bg-gray-50 p-5">
+    <div className="rounded-lg border border-gray-200 bg-[hsl(0_0%_97%)] p-5">
       {/* 自社の立ち位置（ターゲット別×N） */}
       {(brandStance.length > 0 || emptyStanceMessage) && (
         <div className="mb-8">
@@ -44,8 +44,8 @@ export function PositioningMapAndStance({ positioningMapData, brandStance, empty
                     ) : (
                       <Badge variant="outline" className="absolute -top-[9px] left-[6px] rounded-full px-1.5 py-0 !text-[10px] !leading-[16px] border-blue-300 bg-white text-blue-300">サブターゲット</Badge>
                     )}
-                    <p className={`text-lg font-bold ${isMain ? 'text-gray-900' : 'text-gray-700'}`}>{s.target_name}</p>
-                    <p className="mt-1 text-sm leading-relaxed text-gray-800 whitespace-pre-wrap">{s.statement}</p>
+                    <p className={`font-bold ${isMain ? 'text-lg text-gray-900' : 'text-base text-gray-700'}`}>{s.target_name}</p>
+                    <p className="mt-1 text-base leading-relaxed text-gray-800 whitespace-pre-wrap">{s.statement}</p>
                     {s.rationale && (
                       <p className="mt-1 text-[11px] text-muted-foreground leading-relaxed">なぜなら: {s.rationale}</p>
                     )}
@@ -62,7 +62,7 @@ export function PositioningMapAndStance({ positioningMapData, brandStance, empty
       <div className="rounded-lg border bg-white p-3">
         <PositioningMap data={positioningMapData} />
       </div>
-      {belowMap && <div className="mt-6">{belowMap}</div>}
+      {belowMap && <div className="mt-3">{belowMap}</div>}
     </div>
   )
 }

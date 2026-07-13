@@ -588,7 +588,7 @@ export function Step3Targeting({
                     )}
 
                     <div className={`flex items-center gap-2 ${isMain ? 'pr-24' : ''}`}>
-                      <span className={`font-bold text-gray-900 ${isMain || isSub ? 'text-lg' : 'text-sm'}`}>{seg.name}</span>
+                      <span className={`font-bold text-gray-900 ${isMain ? 'text-lg' : isSub ? 'text-base' : 'text-sm'}`}>{seg.name}</span>
                       <span
                         className={`inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${
                           seg.size_hint === '大'

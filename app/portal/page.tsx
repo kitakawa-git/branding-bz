@@ -59,7 +59,7 @@ const BRAND_QUADRANTS = [
   {
     perspective: '考え方',
     noun: 'ブランド方針',
-    items: 'MVV・バリュー・行動指針・ストーリー',
+    items: 'MVV・行動指針・ストーリー',
     href: '/portal/guidelines',
     icon: Compass,
     tone: 'purple' as const,
@@ -75,7 +75,7 @@ const BRAND_QUADRANTS = [
   {
     perspective: '見え方・聞こえ方',
     noun: 'ブランド表現',
-    items: 'ビジュアルアイデンティティ・バーバルアイデンティティ（トーンオブボイス・用語ルール含む）',
+    items: 'ロゴ・カラー・言葉づかい・用語のルール',
     href: '/portal/visuals',
     icon: Eye,
     tone: 'green' as const,
@@ -83,7 +83,7 @@ const BRAND_QUADRANTS = [
   {
     perspective: '接し方',
     noun: 'ブランド戦略',
-    items: '顧客ターゲット・ペルソナ・ポジショニング・提供価値',
+    items: '届けたいお客様像・立ち位置・提供する価値',
     href: '/portal/strategy',
     icon: Target,
     tone: 'green' as const,
@@ -186,7 +186,7 @@ function DashboardPostCard({
               {getRelativeTime(post.created_at)}
             </span>
           </div>
-          <p className="text-base sm:text-sm text-foreground line-clamp-2 m-0 whitespace-pre-wrap">
+          <p className="text-base text-foreground/80 leading-relaxed line-clamp-2 m-0 whitespace-pre-wrap">
             {post.content}
           </p>
           <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
@@ -770,18 +770,18 @@ export default function PortalTopPage() {
       </div>
 
       {/* ===== 1.3. 未回答サーベイバナー ===== */}
-      <div className="mb-6">
+      <div className="mb-4">
         <SurveyBanner />
       </div>
 
       {/* ===== 1.4. 未受験 理解度テストバナー ===== */}
-      <div className="mb-6">
+      <div className="mb-4">
         <QuizBanner />
       </div>
 
       {/* ===== 1.5. 最新のお知らせ ===== */}
       {latestAnnouncements.length > 0 && (
-        <div className="mb-6">
+        <div className="mb-4">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Bell size={18} className="text-foreground" />
@@ -825,7 +825,7 @@ export default function PortalTopPage() {
 
       {/* ===== 2. ミッションカード ===== */}
       {mission && (
-        <Card className="relative overflow-hidden bg-[hsl(0_0%_97%)] border shadow-none mb-6">
+        <Card className="relative overflow-hidden bg-[hsl(0_0%_97%)] border shadow-none mb-4">
           {/* コンセプトビジュアルが設定されていれば背景に敷く（可読性のため白スクリムを重ねる） */}
           {conceptVisualUrl && (
             <>
@@ -857,7 +857,7 @@ export default function PortalTopPage() {
                     </p>
                   )}
                   {body && (
-                    <p className="text-base sm:text-sm text-foreground/80 leading-[1.8] whitespace-pre-line mt-4 m-0">
+                    <p className="text-base text-foreground/80 leading-relaxed whitespace-pre-line mt-4 m-0">
                       {body}
                     </p>
                   )}
@@ -869,7 +869,7 @@ export default function PortalTopPage() {
       )}
 
       {/* ===== 2.7. 私たちの「らしさ」4象限概観カード ===== */}
-      <div className="mb-8">
+      <div className="mb-4 rounded-lg border border-gray-200 bg-[hsl(0_0%_97%)] p-5">
         <div className="flex items-center gap-2 mb-3">
           <h2 className="text-sm font-bold text-foreground tracking-wide m-0">
             私たちの「らしさ」
@@ -881,7 +881,7 @@ export default function PortalTopPage() {
             const tone = QUADRANT_TONES[q.tone]
             return (
               <Link key={q.href} href={q.href} className="no-underline block h-full">
-                <Card className="relative h-full bg-[hsl(0_0%_97%)] border shadow-none hover:shadow-sm transition-shadow overflow-hidden">
+                <Card className="relative h-full bg-white border shadow-none hover:shadow-sm transition-shadow overflow-hidden">
                   <CardContent className="p-4 flex items-start gap-3">
                     <div className={`shrink-0 size-11 rounded-xl flex items-center justify-center ${tone.tile}`}>
                       <Icon size={24} />
@@ -929,7 +929,7 @@ export default function PortalTopPage() {
 
         return (
           <div className="mb-8">
-            <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+            <Card className="bg-white border shadow-none">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-3">
                   <h2 className="text-sm font-bold text-foreground tracking-wide m-0">
@@ -979,7 +979,9 @@ export default function PortalTopPage() {
       )}
 
       {/* ===== 4. あなたのブランドコミット（タイムライン由来。無効時は非表示） ===== */}
-      {timelineEnabled && personalStats && (() => {
+      {timelineEnabled && personalStats && (
+      <div className="mb-4 rounded-lg border border-gray-200 bg-[hsl(0_0%_97%)] p-5">
+      {(() => {
         const catWithData = filteredStats.categoryDistribution.filter(d => d.count > 0)
         const totalCatCount = catWithData.reduce((sum, d) => sum + d.count, 0)
 
@@ -992,7 +994,7 @@ export default function PortalTopPage() {
 
         return (
           <div className="mb-3">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-3">
               <h2 className="text-sm font-bold text-foreground tracking-wide m-0">
                 あなたのタイムライン分析
               </h2>
@@ -1021,8 +1023,8 @@ export default function PortalTopPage() {
                 {/* 上段: 投稿数 + いいね数 (2列) */}
                 <div className="grid grid-cols-2 gap-3">
                   {/* 投稿数 */}
-                  <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-                    <CardContent className="p-5 pb-3">
+                  <Card className="bg-white border shadow-none">
+                    <CardContent className="p-4 pb-3">
                       <div className="flex items-center gap-2 mb-3">
                         <FileText size={18} className="text-foreground" />
                         <h3 className="text-sm font-semibold text-foreground m-0">投稿数</h3>
@@ -1034,8 +1036,8 @@ export default function PortalTopPage() {
                   </Card>
 
                   {/* いいね数 */}
-                  <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-                    <CardContent className="p-5 pb-3">
+                  <Card className="bg-white border shadow-none">
+                    <CardContent className="p-4 pb-3">
                       <div className="flex items-center gap-2 mb-3">
                         <Heart size={18} className="text-foreground" />
                         <h3 className="text-sm font-semibold text-foreground m-0">いいね数</h3>
@@ -1048,7 +1050,7 @@ export default function PortalTopPage() {
                 </div>
 
                 {/* 下段: 連続投稿記録 (2列ぶち抜き) */}
-                <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+                <Card className="bg-white border shadow-none">
                   <CardContent className="p-4 sm:p-5">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
@@ -1083,7 +1085,7 @@ export default function PortalTopPage() {
               </div>
 
               {/* === 右側: 行動指針別割合 === */}
-              <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+              <Card className="bg-white border shadow-none">
                 <CardContent className="p-4 sm:p-5">
                   <div className="flex items-center gap-2 mb-3">
                     <PieChartIcon size={18} className="text-foreground" />
@@ -1163,58 +1165,54 @@ export default function PortalTopPage() {
         )
       })()}
 
-      {/* ===== 5. 投稿カード（2カラム・タイムライン由来。無効時は非表示） ===== */}
-      {timelineEnabled && (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* ===== 5. 投稿カード（2カラム・タイムライン由来。ラップ内なので判定不要） ===== */}
+      <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* 左: あなたの投稿 */}
-        <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-          <CardContent className="p-4 sm:p-5">
-            <div className="flex items-center gap-2 mb-4">
-              <User size={18} className="text-foreground" />
-              <h3 className="text-sm font-semibold text-foreground m-0">あなたの投稿</h3>
-            </div>
-            <div className="space-y-2">
-              {myRecentPosts.length > 0 ? (
-                myRecentPosts.map((post) => (
-                  <DashboardPostCard key={post.id} post={post} />
-                ))
-              ) : (
-                <p className="text-xs text-muted-foreground m-0">
-                  まだ投稿がありません
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <User size={18} className="text-foreground" />
+            <h3 className="text-sm font-semibold text-foreground m-0">あなたの投稿</h3>
+          </div>
+          <div className="space-y-2">
+            {myRecentPosts.length > 0 ? (
+              myRecentPosts.map((post) => (
+                <DashboardPostCard key={post.id} post={post} />
+              ))
+            ) : (
+              <p className="text-xs text-muted-foreground m-0">
+                まだ投稿がありません
+              </p>
+            )}
+          </div>
+        </div>
 
         {/* 右: みんなの投稿 */}
-        <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-          <CardContent className="p-4 sm:p-5">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Users size={18} className="text-foreground" />
-                <h3 className="text-sm font-semibold text-foreground m-0">みんなの投稿</h3>
-              </div>
-              <Link
-                href="/portal/timeline"
-                className="text-xs text-ds-app-accent hover:underline flex items-center gap-1 no-underline"
-              >
-                すべて見る <ArrowRight size={14} />
-              </Link>
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Users size={18} className="text-foreground" />
+              <h3 className="text-sm font-semibold text-foreground m-0">みんなの投稿</h3>
             </div>
-            <div className="space-y-2">
-              {companyRecentPosts.length > 0 ? (
-                companyRecentPosts.map((post) => (
-                  <DashboardPostCard key={post.id} post={post} showAuthor />
-                ))
-              ) : (
-                <p className="text-xs text-muted-foreground m-0">
-                  まだ投稿がありません
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+            <Link
+              href="/portal/timeline"
+              className="text-xs text-ds-app-accent hover:underline flex items-center gap-1 no-underline"
+            >
+              すべて見る <ArrowRight size={14} />
+            </Link>
+          </div>
+          <div className="space-y-2">
+            {companyRecentPosts.length > 0 ? (
+              companyRecentPosts.map((post) => (
+                <DashboardPostCard key={post.id} post={post} showAuthor />
+              ))
+            ) : (
+              <p className="text-xs text-muted-foreground m-0">
+                まだ投稿がありません
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
       </div>
       )}
 

@@ -714,13 +714,13 @@ function StageDetail({ stage, onChange, readOnly = false }: { stage: JourneyStag
         {stage.description?.trim() && (
           <div>
             <label className="text-[13px] font-medium text-muted-foreground mb-1 block">説明</label>
-            <p className="m-0 whitespace-pre-wrap text-[14px] text-foreground">{stage.description}</p>
+            <p className="m-0 whitespace-pre-wrap text-base text-foreground/80 leading-relaxed">{stage.description}</p>
           </div>
         )}
         {stage.emotions?.trim() && (
           <div>
             <label className="text-[13px] font-medium text-muted-foreground mb-1 block">感情（心情）</label>
-            <p className="m-0 whitespace-pre-wrap text-[14px] text-foreground">{stage.emotions}</p>
+            <p className="m-0 whitespace-pre-wrap text-base text-foreground/80 leading-relaxed">{stage.emotions}</p>
           </div>
         )}
         {listRO('pain_points', '課題（pain points）')}

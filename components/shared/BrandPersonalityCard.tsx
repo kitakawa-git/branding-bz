@@ -46,7 +46,7 @@ export function BrandPersonalityCard({
 
   return (
     <Card className={`bg-[hsl(0_0%_97%)] border shadow-none ${className}`}>
-      <CardContent className="p-4 sm:p-5 space-y-4">
+      <CardContent className="p-4 sm:p-5 space-y-8">
         {/* コミュニケーションスタイル */}
         {hasComm && (
           <div>
@@ -57,7 +57,7 @@ export function BrandPersonalityCard({
               </p>
             )}
             {commBody && (
-              <p className="text-base sm:text-sm text-foreground/80 leading-[1.8] whitespace-pre-wrap m-0" style={bodyTextStyle}>
+              <p className="text-base text-foreground/80 leading-relaxed whitespace-pre-wrap m-0" style={bodyTextStyle}>
                 {commBody}
               </p>
             )}
@@ -72,7 +72,7 @@ export function BrandPersonalityCard({
               {expectedTags.map(t => (
                 <span
                   key={t}
-                  className="rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-[13px] font-medium text-ds-app-accent-hover"
+                  className="rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-base font-medium text-ds-app-accent-hover"
                 >
                   {t}
                 </span>
@@ -88,7 +88,7 @@ export function BrandPersonalityCard({
             <div className="space-y-2">
               {toneRules.map((r, i) => (
                 <div key={i} className="rounded-lg border border-border bg-background p-4">
-                  <p className="text-base sm:text-sm font-semibold text-foreground m-0" style={bodyTextStyle}>
+                  <p className="text-base font-semibold text-foreground m-0" style={bodyTextStyle}>
                     {r.rule_text}
                   </p>
                   {(r.ng_example || r.ok_example) && (

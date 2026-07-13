@@ -479,8 +479,8 @@ export function Step4Positioning({
                   ) : (
                     <Badge variant="outline" className="absolute -top-[9px] left-[6px] rounded-full px-1.5 py-0 !text-[10px] !leading-[16px] border-blue-300 bg-white text-blue-300">サブターゲット</Badge>
                   )}
-                  <p className={`text-lg font-bold ${isMain ? 'text-gray-900' : 'text-gray-700'}`}>{s.target_name}</p>
-                  <p className="mt-1 text-sm leading-relaxed text-gray-800 whitespace-pre-wrap">{s.statement}</p>
+                  <p className={`font-bold ${isMain ? 'text-lg text-gray-900' : 'text-base text-gray-700'}`}>{s.target_name}</p>
+                  <p className="mt-1 text-base leading-relaxed text-foreground/80 whitespace-pre-wrap">{s.statement}</p>
                   {s.rationale && (
                     <p className="mt-1 text-[11px] text-muted-foreground leading-relaxed">なぜなら: {s.rationale}</p>
                   )}

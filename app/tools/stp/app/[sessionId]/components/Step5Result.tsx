@@ -153,8 +153,43 @@ function TargetingSection({
 }) {
   return (
     <>
-      <div className="mb-5 rounded-lg border border-gray-200 bg-gray-50 p-5">
+      <div className="mb-5 rounded-lg border border-gray-200 bg-[hsl(0_0%_97%)] p-5">
         <h2 className="mb-3 text-sm font-bold text-gray-900">ターゲット</h2>
+        {/* ターゲット概要文（AI生成）＝カード先頭に表示 */}
+        <div className="mb-4 rounded-lg border border-blue-100 bg-blue-50/30 p-4">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5">
+              <Sparkles className="h-3.5 w-3.5 text-ds-app-accent" />
+              <p className="text-xs font-bold text-ds-app-accent">ターゲット戦略の概要（AI生成）</p>
+            </div>
+            {targetSummary && !summaryLoading && (
+              <button
+                type="button"
+                onClick={onRegenerateSummary}
+                className="flex items-center gap-1 text-[11px] text-gray-500 hover:text-ds-app-accent"
+              >
+                <RefreshCw className="h-3 w-3" />
+                再生成
+              </button>
+            )}
+          </div>
+          {summaryLoading ? (
+            <div className="flex items-center gap-2 text-xs text-gray-500">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ターゲット戦略の概要を生成中...
+            </div>
+          ) : targetSummary ? (
+            <p className="text-base text-foreground/80 leading-relaxed whitespace-pre-wrap">{targetSummary}</p>
+          ) : (
+            <button
+              type="button"
+              onClick={onRegenerateSummary}
+              className="text-xs text-ds-app-accent hover:underline"
+            >
+              AIで概要文を生成する
+            </button>
+          )}
+        </div>
         <TargetSegmentCards
           main={{ name: targeting.main_target, description: targeting.target_description }}
           subs={subEvals.map((sub) => ({
@@ -195,43 +230,6 @@ function TargetingSection({
 
         {/* ターゲット適合マップ（サムネイル） */}
         {targeting.target_fit_map && <TargetFitMapPreview fitMap={targeting.target_fit_map} />}
-
-        {/* ターゲット概要文（AI生成） */}
-        <div className="mt-4 rounded-lg border border-blue-100 bg-blue-50/30 p-4">
-          <div className="mb-2 flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1.5">
-              <Sparkles className="h-3.5 w-3.5 text-ds-app-accent" />
-              <p className="text-xs font-bold text-ds-app-accent">ターゲット戦略の概要（AI生成）</p>
-            </div>
-            {targetSummary && !summaryLoading && (
-              <button
-                type="button"
-                onClick={onRegenerateSummary}
-                className="flex items-center gap-1 text-[11px] text-gray-500 hover:text-ds-app-accent"
-              >
-                <RefreshCw className="h-3 w-3" />
-                再生成
-              </button>
-            )}
-          </div>
-          {summaryLoading ? (
-            <div className="flex items-center gap-2 text-xs text-gray-500">
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ターゲット戦略の概要を生成中...
-            </div>
-          ) : targetSummary ? (
-            <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{targetSummary}</p>
-          ) : (
-            <button
-              type="button"
-              onClick={onRegenerateSummary}
-              className="text-xs text-ds-app-accent hover:underline"
-            >
-              AIで概要文を生成する
-            </button>
-          )}
-        </div>
-
       </div>
     </>
   )

@@ -407,7 +407,7 @@ export default function SurveyRespondPage() {
                 >
                   <CardContent className="p-4 sm:p-5">
                     {/* 設問テキスト */}
-                    <p className="text-base sm:text-sm text-foreground leading-relaxed mb-4">
+                    <p className="text-base text-foreground/80 leading-relaxed mb-4">
                       <span className="text-xs font-mono text-muted-foreground mr-2">
                         Q{currentGlobalIndex}.
                       </span>

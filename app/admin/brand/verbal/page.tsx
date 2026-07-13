@@ -486,13 +486,15 @@ export default function VerbalIdentityPage() {
     <div>
       {/* タイトルはヘッダーのパンくずに移管 */}
       <form id="verbal-form" onSubmit={handleSubmit} className="space-y-6">
-        {/* カード1: コミュニケーションスタイル */}
+        {/* カード1: コミュニケーションスタイル＋表現ルール（統合） */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-          <CardContent className="p-5">
+          <CardContent className="p-5 space-y-8">
+            {/* コミュニケーションスタイル */}
+            <div>
             <h2 className="text-xs font-bold mb-3">コミュニケーションスタイル</h2>
             <div className="space-y-2">
               <div>
-                <label className="text-xs font-medium text-muted-foreground mb-1 block">コピー（キャッチコピー・任意）</label>
+                <label className="text-[11px] text-gray-500 mb-1 block">コピー（キャッチコピー・任意）</label>
                 <Input
                   value={personality.comm_copy}
                   onChange={(e) => updateCommunicationStyle('comm_copy', e.target.value)}
@@ -500,7 +502,7 @@ export default function VerbalIdentityPage() {
                 />
               </div>
               <div>
-                <label className="text-xs font-medium text-muted-foreground mb-1 block">説明文</label>
+                <label className="text-[11px] text-gray-500 mb-1 block">説明文</label>
                 <AutoResizeTextarea
                   value={personality.comm_body}
                   onChange={(e) => updateCommunicationStyle('comm_body', e.target.value)}
@@ -509,12 +511,10 @@ export default function VerbalIdentityPage() {
                 />
               </div>
             </div>
-          </CardContent>
-        </Card>
+            </div>
 
-        {/* カード2: 表現ルール（governance_rules tone_rule） */}
-        <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-          <CardContent className="p-5">
+            {/* 表現ルール */}
+            <div>
             <h2 className="text-xs font-bold mb-2">表現ルール</h2>
             <p className="text-xs text-muted-foreground mb-4">
               ブランドの語り口の制約ルール（NG例・OK例つき）を設定します。AIのコピー生成やパーソナリティ診断の連携で参照されます
@@ -570,6 +570,7 @@ export default function VerbalIdentityPage() {
             <Button type="button" variant="outline" onClick={addToneRule} className="mt-3 gap-1">
               <Plus size={16} />表現ルールを追加
             </Button>
+            </div>
           </CardContent>
         </Card>
 
