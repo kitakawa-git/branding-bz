@@ -331,7 +331,7 @@ export default function PortalGuidelinesPage() {
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
             <CardContent className="p-4 sm:p-5">
               <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">行動指針</h2>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {data.action_guidelines.map((g, i) => (
                   <div key={i} className="relative overflow-hidden rounded-lg border border-border bg-background p-4 pl-5 flex gap-3">
                     {/* 左端の青バー（「私たちの『らしさ』」カードと同装飾：角丸クリップで丸端） */}
