@@ -39,6 +39,20 @@ import { CSS } from '@dnd-kit/utilities'
 type ValueItem = { id?: string; name: string; description: string; added_index: number }
 type HistoryItem = { year: string; event: string }
 type BusinessItem = { id?: string; title: string; description: string; added_index: number }
+
+// 沿革の year フィールドは表示文字列（"2011年" / "2011年5月"）で保持する。
+// ドロップダウン用に年・月を取り出す／組み立てるヘルパー。既存の年のみデータもそのまま扱える。
+function parseHistoryYM(raw: string): { year: string; month: string } {
+  const m = (raw || '').match(/(\d{4})[^\d]*(\d{1,2})?/)
+  return { year: m?.[1] ?? '', month: m?.[2] ? String(parseInt(m[2], 10)) : '' }
+}
+function formatHistoryYM(year: string, month: string): string {
+  if (!year) return ''
+  return month ? `${year}年${month}月` : `${year}年`
+}
+const HISTORY_CURRENT_YEAR = new Date().getFullYear()
+// 選択できる年（現在の年〜1900年）
+const HISTORY_YEAR_OPTIONS = Array.from({ length: HISTORY_CURRENT_YEAR - 1900 + 1 }, (_, i) => HISTORY_CURRENT_YEAR - i)
 type ActionGuideline = { id?: string; title: string; description: string }
 
 type Guidelines = {
@@ -1033,15 +1047,32 @@ export default function BrandGuidelinesPage() {
               <p className="text-xs text-muted-foreground mb-2">
                 企業の歩みを年と出来事で記録します
               </p>
-              {guidelines.history.map((item, index) => (
+              {guidelines.history.map((item, index) => {
+                const { year, month } = parseHistoryYM(item.year)
+                return (
                 <div key={index} className="flex gap-2 mb-2 items-center">
-                  <Input
-                    type="text"
-                    value={item.year}
-                    onChange={(e) => updateHistory(index, 'year', e.target.value)}
-                    placeholder="年"
-                    className="h-10 w-20 shrink-0"
-                  />
+                  <div className="flex gap-1 shrink-0">
+                    <select
+                      value={year}
+                      onChange={(e) => updateHistory(index, 'year', formatHistoryYM(e.target.value, month))}
+                      className="h-10 rounded-md border border-input bg-white px-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    >
+                      <option value="">年</option>
+                      {HISTORY_YEAR_OPTIONS.map(y => (
+                        <option key={y} value={y}>{y}年</option>
+                      ))}
+                    </select>
+                    <select
+                      value={month}
+                      onChange={(e) => updateHistory(index, 'year', formatHistoryYM(year, e.target.value))}
+                      className="h-10 rounded-md border border-input bg-white px-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    >
+                      <option value="">月（任意）</option>
+                      {Array.from({ length: 12 }, (_, i) => i + 1).map(mo => (
+                        <option key={mo} value={mo}>{mo}月</option>
+                      ))}
+                    </select>
+                  </div>
                   <Input
                     type="text"
                     value={item.event}
@@ -1053,7 +1084,8 @@ export default function BrandGuidelinesPage() {
                     <Trash2 size={14} />
                   </Button>
                 </div>
-              ))}
+                )
+              })}
               <Button type="button" variant="outline" onClick={addHistory} className="py-2 px-4 text-[13px]">
                 <Plus size={16} />沿革を追加
               </Button>
