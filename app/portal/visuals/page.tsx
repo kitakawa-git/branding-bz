@@ -73,7 +73,7 @@ function PortalImageCard({
     <div className="text-center">
       <div
         onClick={onClick}
-        className={`${fit === 'width' ? '' : heightClass} cursor-pointer rounded-lg hover:bg-muted transition-colors overflow-hidden flex items-center justify-center`}
+        className={`${fit === 'width' ? '' : `${heightClass} rounded-lg`} cursor-pointer hover:bg-muted transition-colors overflow-hidden flex items-center justify-center`}
       >
         <img
           src={url}
@@ -276,7 +276,7 @@ export default function PortalVisualsPage() {
               {data.logo_images.length > 0 && (
                 <div>
                   <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">ロゴ基本形</h2>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-4">
                     {data.logo_images.map((img, i) => (
                       <PortalImageCard
                         key={i}
