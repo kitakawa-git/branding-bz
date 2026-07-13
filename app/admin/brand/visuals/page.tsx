@@ -604,9 +604,12 @@ export default function BrandVisualsPage() {
   }
 
   // --- ロゴ基本形画像 ---
-  const handleLogoImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file || !companyId) return
+  const handleLogoImageUpload = async (file: File) => {
+    if (!companyId) return
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('ファイルサイズは5MB以下にしてください')
+      return
+    }
     setUploadingMap(prev => ({ ...prev, 'logo-base': true }))
     try {
       const ext = file.name.split('.').pop()
@@ -957,8 +960,14 @@ export default function BrandVisualsPage() {
                 ref={(el) => { fileInputRefs.current['logo-base'] = el }}
                 type="file"
                 accept="image/*"
+                multiple
                 className="hidden"
-                onChange={handleLogoImageUpload}
+                onChange={async (e) => {
+                  const input = e.target
+                  const files = Array.from(input.files ?? [])
+                  for (const file of files) { await handleLogoImageUpload(file) }
+                  input.value = ''
+                }}
               />
               <Button
                 type="button"
@@ -1061,11 +1070,16 @@ export default function BrandVisualsPage() {
                         ref={(el) => { fileInputRefs.current[`file-${sIdx}`] = el }}
                         type="file"
                         accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                        multiple
                         className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0]
-                          if (file) handleImageUpload(sIdx, file)
-                          e.target.value = ''
+                        onChange={async (e) => {
+                          const input = e.target
+                          const remaining = 10 - section.items.length
+                          const all = Array.from(input.files ?? [])
+                          const files = all.slice(0, remaining)
+                          if (all.length > files.length) toast.error(`このセクションは最大10枚までです（${files.length}枚のみ追加します）`)
+                          for (const file of files) { await handleImageUpload(sIdx, file) }
+                          input.value = ''
                         }}
                       />
                       <Button
@@ -1369,11 +1383,16 @@ export default function BrandVisualsPage() {
                   ref={(el) => { fileInputRefs.current['guideline'] = el }}
                   type="file"
                   accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                  multiple
                   className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0]
-                    if (file) handleGuidelineImageUpload(file)
-                    e.target.value = ''
+                  onChange={async (e) => {
+                    const input = e.target
+                    const remaining = 10 - visuals.visual_guidelines_images.length
+                    const all = Array.from(input.files ?? [])
+                    const files = all.slice(0, remaining)
+                    if (all.length > files.length) toast.error(`参考画像は最大10枚までです（${files.length}枚のみ追加します）`)
+                    for (const file of files) { await handleGuidelineImageUpload(file) }
+                    input.value = ''
                   }}
                 />
                 <Button
