@@ -1067,7 +1067,7 @@ export default function BrandGuidelinesPage() {
                       onChange={(e) => updateHistory(index, 'year', formatHistoryYM(year, e.target.value))}
                       className="h-10 rounded-md border border-input bg-white px-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                     >
-                      <option value="">月（任意）</option>
+                      <option value="">月</option>
                       {Array.from({ length: 12 }, (_, i) => i + 1).map(mo => (
                         <option key={mo} value={mo}>{mo}月</option>
                       ))}
