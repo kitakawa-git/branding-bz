@@ -233,6 +233,34 @@ function SortableLogoItem({
   )
 }
 
+function SortableLogoBaseItem({
+  id,
+  img,
+  index,
+  onCaptionChange,
+  onRemove,
+}: {
+  id: string
+  img: LogoBaseImage
+  index: number
+  onCaptionChange: (index: number, caption: string) => void
+  onRemove: (index: number) => void
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
+  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }
+  return (
+    <div ref={setNodeRef} style={style} className="w-[180px]">
+      <CaptionedImageCard
+        url={img.url}
+        caption={img.caption}
+        onCaptionChange={(c) => onCaptionChange(index, c)}
+        onRemove={() => onRemove(index)}
+        dragHandle={<DragHandle attributes={attributes} listeners={listeners} />}
+      />
+    </div>
+  )
+}
+
 export default function BrandVisualsPage() {
   const { companyId } = useAuth()
   const cacheKey = `admin-brand-visuals-${companyId}`
@@ -283,6 +311,17 @@ export default function BrandVisualsPage() {
       if (oldIndex === -1 || newIndex === -1) return prev
       sections[sIdx] = { ...sections[sIdx], items: arrayMove(items, oldIndex, newIndex) }
       return { ...prev, logo_sections: sections }
+    })
+  }
+
+  const handleLogoBaseDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    setVisuals(prev => {
+      const oldIndex = prev.logo_images.findIndex((_, i) => `logobase-${i}` === active.id)
+      const newIndex = prev.logo_images.findIndex((_, i) => `logobase-${i}` === over.id)
+      if (oldIndex === -1 || newIndex === -1) return prev
+      return { ...prev, logo_images: arrayMove(prev.logo_images, oldIndex, newIndex) }
     })
   }
 
@@ -865,18 +904,22 @@ export default function BrandVisualsPage() {
               <h2 className="text-xs font-bold mb-2">ロゴ基本形</h2>
               <p className="text-[11px] text-muted-foreground mb-3">ロゴの基本形となる画像（複数登録可・推奨：背景透過PNG）</p>
               {visuals.logo_images.length > 0 && (
-                <div className="flex flex-wrap gap-3 mb-3">
-                  {visuals.logo_images.map((img, i) => (
-                    <div key={i} className="w-[180px]">
-                      <CaptionedImageCard
-                        url={img.url}
-                        caption={img.caption}
-                        onCaptionChange={(c) => updateLogoImageCaption(i, c)}
-                        onRemove={() => removeLogoImage(i)}
-                      />
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleLogoBaseDragEnd}>
+                  <SortableContext items={visuals.logo_images.map((_, i) => `logobase-${i}`)} strategy={rectSortingStrategy}>
+                    <div className="flex flex-wrap gap-3 mb-3">
+                      {visuals.logo_images.map((img, i) => (
+                        <SortableLogoBaseItem
+                          key={`logobase-${i}`}
+                          id={`logobase-${i}`}
+                          img={img}
+                          index={i}
+                          onCaptionChange={updateLogoImageCaption}
+                          onRemove={removeLogoImage}
+                        />
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  </SortableContext>
+                </DndContext>
               )}
               <input
                 ref={(el) => { fileInputRefs.current['logo-base'] = el }}
