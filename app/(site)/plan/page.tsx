@@ -7,6 +7,15 @@ export const metadata: Metadata = {
   title: '料金プラン | branding.bz',
   description:
     'AIブランディングSaaS branding.bz の料金プラン。Free / Brand Card / Brand Standard / Brand Premium の4プランから、あなたのブランドフェーズに最適なプランを選べます。',
+  alternates: {
+    canonical: '/plan',
+  },
+  openGraph: {
+    title: '料金プラン | branding.bz',
+    description:
+      'AIブランディングSaaS branding.bz の料金プラン。Free / Brand Card / Brand Standard / Brand Premium の4プランから、あなたのブランドフェーズに最適なプランを選べます。',
+    url: 'https://branding.bz/plan',
+  },
 }
 
 const PLANS = [

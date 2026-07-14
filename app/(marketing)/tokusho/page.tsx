@@ -4,6 +4,14 @@ import { PageHero } from '@/components/lp/ui'
 export const metadata: Metadata = {
   title: '特定商取引法に基づく表記',
   description: 'branding.bz の特定商取引法に基づく表記です。',
+  alternates: {
+    canonical: '/tokusho',
+  },
+  openGraph: {
+    title: '特定商取引法に基づく表記 | branding.bz',
+    description: 'branding.bz の特定商取引法に基づく表記です。',
+    url: 'https://branding.bz/tokusho',
+  },
 }
 
 const rows = [

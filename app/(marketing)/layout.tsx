@@ -1,5 +1,3 @@
-'use client'
-
 import Nav from '@/components/lp/Nav'
 import Footer from '@/components/Footer'
 import PageTransition from '@/components/lp/PageTransition'

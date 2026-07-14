@@ -4,6 +4,14 @@ import { PageHero } from '@/components/lp/ui'
 export const metadata: Metadata = {
   title: '利用規約',
   description: 'branding.bz の利用規約です。',
+  alternates: {
+    canonical: '/terms',
+  },
+  openGraph: {
+    title: '利用規約 | branding.bz',
+    description: 'branding.bz の利用規約です。',
+    url: 'https://branding.bz/terms',
+  },
 }
 
 export default function TermsPage() {

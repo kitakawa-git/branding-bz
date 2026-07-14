@@ -4,6 +4,14 @@ import { PageHero } from '@/components/lp/ui'
 export const metadata: Metadata = {
   title: 'プライバシーポリシー',
   description: 'branding.bz のプライバシーポリシーです。',
+  alternates: {
+    canonical: '/privacy-policy',
+  },
+  openGraph: {
+    title: 'プライバシーポリシー | branding.bz',
+    description: 'branding.bz のプライバシーポリシーです。',
+    url: 'https://branding.bz/privacy-policy',
+  },
 }
 
 export default function PrivacyPolicyPage() {

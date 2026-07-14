@@ -8,6 +8,15 @@ export const metadata: Metadata = {
   title: 'よくある質問 | branding.bz',
   description:
     'branding.bz に関するよくある質問と回答。料金プラン・機能・ブランドスコア・スマート名刺・導入方法について。',
+  alternates: {
+    canonical: '/faq',
+  },
+  openGraph: {
+    title: 'よくある質問 | branding.bz',
+    description:
+      'branding.bz に関するよくある質問と回答。料金プラン・機能・ブランドスコア・スマート名刺・導入方法について。',
+    url: 'https://branding.bz/faq',
+  },
 }
 
 const faqCategories = [

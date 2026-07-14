@@ -23,10 +23,14 @@ type Props = {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  // 個人情報保護のため、スマート名刺ページは検索インデックス対象外
+  // （氏名・役職・メール・電話が載る個人ページ。QR配布前提で本人の検索露出同意は取れていない）
+  const noindex = { robots: { index: false, follow: false } } as const
+
   const { slug } = await params
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  if (!supabaseUrl || !supabaseKey) return { title: 'branding.bz' }
+  if (!supabaseUrl || !supabaseKey) return { title: 'branding.bz', ...noindex }
 
   const supabase = createClient(supabaseUrl, supabaseKey)
   const { data: profile } = await supabase
@@ -36,12 +40,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     .eq('card_enabled', true)
     .single()
 
-  if (!profile) return { title: 'branding.bz' }
+  if (!profile) return { title: 'branding.bz', ...noindex }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const companies = profile.companies as any
   // 機能トグル: 会社のスマート名刺が無効なら、タブタイトルに氏名を出さない
-  if (!isFeatureEnabled(companies, 'card_enabled')) return { title: 'branding.bz' }
+  if (!isFeatureEnabled(companies, 'card_enabled')) return { title: 'branding.bz', ...noindex }
   const companyName = companies?.name as string | undefined
   const companyLogoUrl = companies?.logo_url as string | undefined
   return {
@@ -49,6 +53,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       absolute: companyName ? `${profile.name} | ${companyName}` : (profile.name || 'branding.bz'),
     },
     icons: { icon: companyLogoUrl || '/icon.svg' },
+    ...noindex,
   }
 }
 

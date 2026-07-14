@@ -8,6 +8,14 @@ import { PageHero } from '@/components/lp/ui'
 export const metadata = {
   title: 'ニュース | branding.bz',
   description: 'branding.bz の最新ニュース・プレスリリース・サービスアップデート情報',
+  alternates: {
+    canonical: '/news',
+  },
+  openGraph: {
+    title: 'ニュース | branding.bz',
+    description: 'branding.bz の最新ニュース・プレスリリース・サービスアップデート情報',
+    url: 'https://branding.bz/news',
+  },
 }
 
 const CATEGORY_STYLES: Record<NewsCategory, string> = {

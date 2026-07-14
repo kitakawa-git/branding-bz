@@ -20,6 +20,15 @@ export const metadata: Metadata = {
   title: '機能紹介 | branding.bz',
   description:
     'branding.bz の機能紹介。ブランド掲示・Good Jobタイムライン・KPI・スマート名刺・ブランドスコアなど、ブランドの構築・浸透・発信を支える機能をまとめて紹介します。',
+  alternates: {
+    canonical: '/features',
+  },
+  openGraph: {
+    title: '機能紹介 | branding.bz',
+    description:
+      'branding.bz の機能紹介。ブランド掲示・Good Jobタイムライン・KPI・スマート名刺・ブランドスコアなど、ブランドの構築・浸透・発信を支える機能をまとめて紹介します。',
+    url: 'https://branding.bz/features',
+  },
 }
 
 type Feature = { id?: string; title: string; description: string; icon: LucideIcon; tag: string }

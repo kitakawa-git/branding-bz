@@ -1,4 +1,5 @@
 // ニュース詳細（新デザイン / 公開・SSR）
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import ReactMarkdown from 'react-markdown'
@@ -15,17 +16,33 @@ const CATEGORY_STYLES: Record<NewsCategory, string> = {
 
 export const dynamic = 'force-dynamic'
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params
   const supabase = getSupabaseAdmin()
   const { data } = await supabase
     .from('news')
-    .select('title, summary')
+    .select('title, summary, published_at')
     .eq('slug', slug)
     .eq('is_published', true)
     .single()
   if (!data) return { title: 'ニュースが見つかりません | branding.bz' }
-  return { title: `${data.title} | branding.bz`, description: data.summary || data.title }
+  const title = `${data.title} | branding.bz`
+  const description = data.summary || data.title
+  const url = `https://branding.bz/news/${slug}`
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: `/news/${slug}`,
+    },
+    openGraph: {
+      type: 'article',
+      title,
+      description,
+      url,
+      publishedTime: data.published_at ?? undefined,
+    },
+  }
 }
 
 export default async function LpNewsDetailPage({ params }: { params: Promise<{ slug: string }> }) {
