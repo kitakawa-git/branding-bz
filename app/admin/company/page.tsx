@@ -433,7 +433,7 @@ export default function CompanyPage() {
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-5">
             {/* ロゴ */}
-            <div className="mb-5">
+            <div className="mb-8">
               <h2 className="text-xs font-bold mb-3">ロゴ</h2>
               <ImageUpload
                 bucket="avatars"
@@ -444,7 +444,7 @@ export default function CompanyPage() {
             </div>
 
             {/* 企業名またはブランド名（日本語/英語＋表示トグル） */}
-            <div className="mb-5">
+            <div className="mb-8">
               <h2 className="text-xs font-bold mb-3">企業名またはブランド名</h2>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -496,7 +496,7 @@ export default function CompanyPage() {
             </div>
 
             {/* 概要（ポータル「私たちについて」に表示） */}
-            <div className="mb-5">
+            <div className="mb-8">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <p className="text-[11px] text-gray-500 mb-1.5">設立</p>
@@ -542,7 +542,7 @@ export default function CompanyPage() {
             </div>
 
             {/* 業種 */}
-            <div className="mb-5">
+            <div className="mb-8">
               <h2 className="text-xs font-bold mb-3">業種</h2>
               <IndustrySelect
                 category={company.industry_category}
@@ -553,7 +553,7 @@ export default function CompanyPage() {
             </div>
 
             {/* WebサイトURL */}
-            <div className="mb-5">
+            <div className="mb-8">
               <h2 className="text-xs font-bold mb-3">ウェブサイト</h2>
               <Input
                 type="text"
@@ -565,7 +565,7 @@ export default function CompanyPage() {
             </div>
 
             {/* 事業内容（philosophy_elements の service 行。表示はポータル「私たちについて」） */}
-            <div className="mb-5">
+            <div className="mb-8">
               <BusinessContentEditor
                 items={company.business_content}
                 sort={company.business_content_sort}
