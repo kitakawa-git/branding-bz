@@ -41,7 +41,7 @@ import {
   Smile,
   Eye,
   GraduationCap,
-  Building2,
+  Users,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -191,7 +191,7 @@ export function PortalSidebar() {
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild isActive={pathname.startsWith('/portal/about')}>
                     <Link href="/portal/about" onClick={handleNavClick}>
-                      <Building2 size={18} />
+                      <Users size={18} />
                       <span>私たちについて</span>
                     </Link>
                   </SidebarMenuButton>
