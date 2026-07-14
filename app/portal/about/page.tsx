@@ -43,6 +43,7 @@ export default function PortalAboutPage() {
   const cached = companyId ? getPageCache<Overview>(cacheKey) : null
   const [data, setData] = useState<Overview | null>(cached)
   const [loading, setLoading] = useState(!cached)
+  const [profileExpanded, setProfileExpanded] = useState(false)
 
   useEffect(() => {
     if (!companyId) return
@@ -117,15 +118,30 @@ export default function PortalAboutPage() {
   const rows: Array<{ label: string; value: React.ReactNode }> = []
   if (data.founded) rows.push({ label: '設立', value: data.founded })
   if (data.representative) {
+    const PROFILE_TRUNCATE_AT = 180
+    const profile = data.representative_profile
+    const truncated = profile.length > PROFILE_TRUNCATE_AT
+    const shown = truncated && !profileExpanded ? profile.slice(0, PROFILE_TRUNCATE_AT) + '…' : profile
     rows.push({
       label: '代表者',
       value: (
         <>
           <span>{data.representative}</span>
-          {data.representative_profile && (
-            <p className="mt-2 text-sm text-foreground/70 leading-relaxed whitespace-pre-wrap m-0">
-              {data.representative_profile}
-            </p>
+          {profile && (
+            <>
+              <p className="mt-2 text-sm text-foreground/70 leading-relaxed whitespace-pre-wrap m-0">
+                {shown}
+              </p>
+              {truncated && (
+                <button
+                  type="button"
+                  onClick={() => setProfileExpanded((v) => !v)}
+                  className="mt-2 text-sm text-ds-app-accent hover:underline"
+                >
+                  {profileExpanded ? '閉じる' : 'もっと読む'}
+                </button>
+              )}
+            </>
           )}
         </>
       ),
