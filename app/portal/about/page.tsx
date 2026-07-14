@@ -116,7 +116,21 @@ export default function PortalAboutPage() {
   const nameEn = data.name_en
   const rows: Array<{ label: string; value: React.ReactNode }> = []
   if (data.founded) rows.push({ label: '設立', value: data.founded })
-  if (data.representative) rows.push({ label: '代表者', value: data.representative })
+  if (data.representative) {
+    rows.push({
+      label: '代表者',
+      value: (
+        <>
+          <span>{data.representative}</span>
+          {data.representative_profile && (
+            <p className="mt-2 text-sm text-foreground/70 leading-relaxed whitespace-pre-wrap m-0">
+              {data.representative_profile}
+            </p>
+          )}
+        </>
+      ),
+    })
+  }
   const industry = industryLabel(data.industry_category, data.industry_subcategory)
   if (industry) rows.push({ label: '業種', value: industry })
   if (data.website_url) {
@@ -173,18 +187,6 @@ export default function PortalAboutPage() {
 
           {rows.length === 0 && (
             <p className="mt-4 text-sm text-muted-foreground">情報はまだ登録されていません。</p>
-          )}
-
-          {/* 代表者プロフィール（管理: 基本情報ページ / データ: companies.representative_profile） */}
-          {data.representative_profile && (
-            <div className="mt-8">
-              <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">代表者プロフィール</h2>
-              <div className="rounded-lg border border-border bg-background p-4">
-                <p className="text-base text-foreground/80 leading-relaxed whitespace-pre-wrap m-0">
-                  {data.representative_profile}
-                </p>
-              </div>
-            </div>
           )}
 
           {/* 事業内容（管理: 基本情報ページ / データ: philosophy_elements の service 行） */}
