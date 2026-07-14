@@ -54,7 +54,6 @@ type NavItem = {
 // 浸透グループ
 const engagementItems: NavItem[] = [
   { href: '/portal', label: 'ダッシュボード', icon: LayoutDashboard },
-  { href: '/portal/about', label: '会社について', icon: Building2 },
   { href: '/portal/timeline', label: 'タイムライン', icon: MessageSquareHeart },
   { href: '/portal/kpi', label: '目標・KPI', icon: Milestone },
   { href: '/portal/learning', label: 'ラーニング', icon: GraduationCap },
@@ -184,6 +183,22 @@ export function PortalSidebar() {
             </SidebarGroupContent>
           </SidebarGroup>
           <RashisaGroup pathname={pathname} onNavClick={handleNavClick} />
+
+          {/* 会社について（らしさグループの下） */}
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={pathname.startsWith('/portal/about')}>
+                    <Link href="/portal/about" onClick={handleNavClick}>
+                      <Building2 size={18} />
+                      <span>会社について</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
 
         </SidebarContent>
 
