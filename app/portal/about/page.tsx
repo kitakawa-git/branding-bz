@@ -27,6 +27,7 @@ type Overview = {
   industry_subcategory: string
   founded: string
   representative: string
+  representative_profile: string
   business_content: BusinessItem[]
   business_content_sort: 'registered' | 'custom'
 }
@@ -52,7 +53,7 @@ export default function PortalAboutPage() {
         fetchWithRetry(() =>
           supabase
             .from('companies')
-            .select('name, name_ja, name_en, website_url, industry_category, industry_subcategory, founded, representative')
+            .select('name, name_ja, name_en, website_url, industry_category, industry_subcategory, founded, representative, representative_profile')
             .eq('id', companyId)
             .single()
         ),
@@ -79,6 +80,7 @@ export default function PortalAboutPage() {
           industry_subcategory: r.industry_subcategory || '',
           founded: r.founded || '',
           representative: r.representative || '',
+          representative_profile: r.representative_profile || '',
           business_content: phil.services,
           business_content_sort: guidelinesRow?.business_content_sort === 'custom' ? 'custom' : 'registered',
         }
@@ -171,6 +173,18 @@ export default function PortalAboutPage() {
 
           {rows.length === 0 && (
             <p className="mt-4 text-sm text-muted-foreground">情報はまだ登録されていません。</p>
+          )}
+
+          {/* 代表者プロフィール（管理: 基本情報ページ / データ: companies.representative_profile） */}
+          {data.representative_profile && (
+            <div className="mt-8">
+              <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">代表者プロフィール</h2>
+              <div className="rounded-lg border border-border bg-background p-4">
+                <p className="text-base text-foreground/80 leading-relaxed whitespace-pre-wrap m-0">
+                  {data.representative_profile}
+                </p>
+              </div>
+            </div>
           )}
 
           {/* 事業内容（管理: 基本情報ページ / データ: philosophy_elements の service 行） */}

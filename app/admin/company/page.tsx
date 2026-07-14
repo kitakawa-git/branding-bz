@@ -17,6 +17,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { AutoResizeTextarea } from '@/components/ui/auto-resize-textarea'
 
 import { Check } from 'lucide-react'
 import { Fab, FabButton } from '@/components/ui/fab'
@@ -42,6 +43,7 @@ type Company = {
   // 会社概要（ポータル「会社について」で表示）
   founded: string
   representative: string
+  representative_profile: string
   target_segments: TargetSegment[]
   // 事業内容（philosophy_elements の service 行）。表示順は business_content_sort。
   // 実データは companies ではなく philosophy_elements / brand_guidelines に保存する。
@@ -69,7 +71,7 @@ export default function CompanyPage() {
       fetchWithRetry(() =>
         supabase
           .from('companies')
-          .select('id, name, name_ja, name_en, name_display_lang, logo_url, website_url, industry_category, industry_subcategory, founded, representative, target_segments')
+          .select('id, name, name_ja, name_en, name_display_lang, logo_url, website_url, industry_category, industry_subcategory, founded, representative, representative_profile, target_segments')
           .eq('id', companyId)
           .single()
       ),
@@ -102,6 +104,7 @@ export default function CompanyPage() {
         logo_url: string | null; website_url: string | null
         industry_category: string | null; industry_subcategory: string | null
         founded: string | null; representative: string | null
+        representative_profile: string | null
         target_segments: TargetSegment[] | null
       }
       const rawName = row.name || ''
@@ -138,6 +141,7 @@ export default function CompanyPage() {
         industry_subcategory: row.industry_subcategory || '',
         founded: row.founded || '',
         representative: row.representative || '',
+        representative_profile: row.representative_profile || '',
         target_segments: row.target_segments || [],
         business_content: businessContent,
         business_content_sort: businessSort,
@@ -348,6 +352,7 @@ export default function CompanyPage() {
         industry_subcategory: company.industry_subcategory || null,
         founded: company.founded.trim() || null,
         representative: company.representative.trim() || null,
+        representative_profile: company.representative_profile.trim() || null,
         target_segments: cleanedTargetSegments,
       }
 
@@ -530,7 +535,7 @@ export default function CompanyPage() {
             {/* 代表者（ポータル「私たちについて」に表示） */}
             <div className="mb-8">
               <h2 className="text-xs font-bold mb-3">代表者</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                 <Input
                   type="text"
                   value={company.representative}
@@ -539,6 +544,13 @@ export default function CompanyPage() {
                   className="h-10"
                 />
               </div>
+              <p className="text-[11px] text-gray-500 mb-1.5">プロフィール（任意・改行可）</p>
+              <AutoResizeTextarea
+                value={company.representative_profile}
+                onChange={(e) => handleChange('representative_profile', e.target.value)}
+                placeholder="経歴・自己紹介など"
+                className="min-h-24"
+              />
             </div>
 
             {/* 業種 */}
