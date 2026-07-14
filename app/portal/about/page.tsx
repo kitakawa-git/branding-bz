@@ -31,7 +31,7 @@ function industryLabel(category: string, subcategory: string): string {
 }
 
 export default function PortalAboutPage() {
-  const { companyId, companyName, companyLogoUrl, slogan } = usePortalAuth()
+  const { companyId, companyName, companyLogoUrl } = usePortalAuth()
   const cacheKey = `portal-about-${companyId}`
   const cached = companyId ? getPageCache<Overview>(cacheKey) : null
   const [data, setData] = useState<Overview | null>(cached)
@@ -133,10 +133,6 @@ export default function PortalAboutPage() {
             </div>
           </div>
 
-          {slogan && (
-            <p className="mt-4 text-base text-foreground/80 leading-relaxed m-0">{slogan}</p>
-          )}
-
           {/* 概要テーブル */}
           {rows.length > 0 && (
             <dl className="mt-6 divide-y divide-border rounded-lg border border-border bg-background">
@@ -149,7 +145,7 @@ export default function PortalAboutPage() {
             </dl>
           )}
 
-          {rows.length === 0 && !slogan && (
+          {rows.length === 0 && (
             <p className="mt-4 text-sm text-muted-foreground">会社情報はまだ登録されていません。</p>
           )}
         </CardContent>
