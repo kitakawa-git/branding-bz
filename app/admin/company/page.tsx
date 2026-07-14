@@ -495,50 +495,48 @@ export default function CompanyPage() {
               </div>
             </div>
 
-            {/* 概要（ポータル「私たちについて」に表示） */}
+            {/* 設立（ポータル「私たちについて」に表示） */}
             <div className="mb-8">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <h2 className="text-xs font-bold mb-3">設立</h2>
-                  {(() => {
-                    const { year, month } = parseYearMonth(company.founded)
-                    return (
-                      <div className="flex gap-1">
-                        <select
-                          value={year}
-                          onChange={(e) => handleChange('founded', formatYearMonth(e.target.value, month))}
-                          className="h-10 rounded-md border border-input bg-white px-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                        >
-                          <option value="">年</option>
-                          {YEAR_OPTIONS.map(y => (
-                            <option key={y} value={y}>{y}年</option>
-                          ))}
-                        </select>
-                        <select
-                          value={month}
-                          onChange={(e) => handleChange('founded', formatYearMonth(year, e.target.value))}
-                          className="h-10 rounded-md border border-input bg-white px-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                        >
-                          <option value="">月</option>
-                          {Array.from({ length: 12 }, (_, i) => i + 1).map(mo => (
-                            <option key={mo} value={mo}>{mo}月</option>
-                          ))}
-                        </select>
-                      </div>
-                    )
-                  })()}
-                </div>
-                <div>
-                  <h2 className="text-xs font-bold mb-3">代表者</h2>
-                  <Input
-                    type="text"
-                    value={company.representative}
-                    onChange={(e) => handleChange('representative', e.target.value)}
-                    placeholder="例: 山田太郎"
-                    className="h-10"
-                  />
-                </div>
-              </div>
+              <h2 className="text-xs font-bold mb-3">設立</h2>
+              {(() => {
+                const { year, month } = parseYearMonth(company.founded)
+                return (
+                  <div className="flex gap-1">
+                    <select
+                      value={year}
+                      onChange={(e) => handleChange('founded', formatYearMonth(e.target.value, month))}
+                      className="h-10 rounded-md border border-input bg-white px-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    >
+                      <option value="">年</option>
+                      {YEAR_OPTIONS.map(y => (
+                        <option key={y} value={y}>{y}年</option>
+                      ))}
+                    </select>
+                    <select
+                      value={month}
+                      onChange={(e) => handleChange('founded', formatYearMonth(year, e.target.value))}
+                      className="h-10 rounded-md border border-input bg-white px-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    >
+                      <option value="">月</option>
+                      {Array.from({ length: 12 }, (_, i) => i + 1).map(mo => (
+                        <option key={mo} value={mo}>{mo}月</option>
+                      ))}
+                    </select>
+                  </div>
+                )
+              })()}
+            </div>
+
+            {/* 代表者（ポータル「私たちについて」に表示） */}
+            <div className="mb-8">
+              <h2 className="text-xs font-bold mb-3">代表者</h2>
+              <Input
+                type="text"
+                value={company.representative}
+                onChange={(e) => handleChange('representative', e.target.value)}
+                placeholder="例: 山田太郎"
+                className="h-10"
+              />
             </div>
 
             {/* 業種 */}
