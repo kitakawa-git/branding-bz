@@ -1,9 +1,10 @@
 'use client'
 
 // ブランド方針 閲覧ページ（考え方｜ブランド方針）
-// 表示項目: MVV / バリュー / 行動指針 / 沿革 / 事業内容
-// - MVV・バリュー・沿革・事業内容: brand_guidelines
+// 表示項目: MVV / バリュー / 行動指針 / 沿革
+// - MVV・バリュー・沿革: brand_guidelines
 // - 行動指針: brand_guidelines.action_guidelines
+// ※ 事業内容は「私たちについて」(/portal/about) へ移動
 // ※ 提供価値（value_propositions＋companies.provided_values）は「接し方｜ブランド戦略」(/portal/strategy) へ移動
 import { useEffect, useState, type CSSProperties } from 'react'
 import { supabase } from '@/lib/supabase'
@@ -22,7 +23,6 @@ import { ConceptVisualSlideshow } from './ConceptVisualSlideshow'
 
 type ValueItem = { name: string; description: string; added_index?: number }
 type HistoryItem = { year: string; event: string }
-type BusinessItem = { title: string; description: string; added_index?: number }
 type ActionGuideline = { title: string; description: string }
 
 type Guidelines = {
@@ -38,8 +38,6 @@ type Guidelines = {
   values_sort: 'registered' | 'custom'
   brand_story: string | null
   history: HistoryItem[]
-  business_content: BusinessItem[]
-  business_content_sort: 'registered' | 'custom'
   // 統合表示分（brand_guidelines 以外のテーブル由来）
   action_guidelines: ActionGuideline[]
 }
@@ -99,7 +97,7 @@ export default function PortalGuidelinesPage() {
       fetchWithRetry(() =>
         supabase
           .from('brand_guidelines')
-          .select('slogan, slogan_description, concept_visual_url, concept_visuals, brand_video_url, brand_statement, values_sort, brand_story, history, business_content_sort')
+          .select('slogan, slogan_description, concept_visual_url, concept_visuals, brand_video_url, brand_statement, values_sort, brand_story, history')
           .eq('company_id', companyId)
           .single()
       ),
@@ -131,8 +129,6 @@ export default function PortalGuidelinesPage() {
         values_sort: (g?.values_sort as 'registered' | 'custom') || 'registered',
         brand_story: (g?.brand_story as string) || null,
         history: (g?.history as HistoryItem[]) || [],
-        business_content: phil.services,
-        business_content_sort: (g?.business_content_sort as 'registered' | 'custom') || 'registered',
         action_guidelines: actionGuidelines,
       }
       setData(parsed)
@@ -203,11 +199,6 @@ export default function PortalGuidelinesPage() {
 
   // フィルター: 入力済みの沿革のみ
   const filteredHistory = data.history.filter(h => h.year || h.event)
-
-  // フィルター: 入力済みの事業内容のみ（ソート対応）
-  const filteredBusiness = data.business_content_sort === 'custom'
-    ? data.business_content.filter(b => b.title)
-    : [...data.business_content].filter(b => b.title).sort((a, b) => (a.added_index ?? 0) - (b.added_index ?? 0))
 
   const embedUrl = data.brand_video_url ? getYouTubeEmbedUrl(data.brand_video_url) : null
 
@@ -355,8 +346,8 @@ export default function PortalGuidelinesPage() {
         </section>
       )}
 
-      {/* 5. ブランドストーリー＋沿革＋事業内容 */}
-      {(data.brand_story || filteredHistory.length > 0 || filteredBusiness.length > 0) && (
+      {/* 5. ブランドストーリー＋沿革 */}
+      {(data.brand_story || filteredHistory.length > 0) && (
         <section>
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
             <CardContent className="p-4 sm:p-5 space-y-8">
@@ -387,30 +378,6 @@ export default function PortalGuidelinesPage() {
                         </div>
                         <div className="text-base text-foreground/80 leading-relaxed whitespace-pre-wrap">
                           {item.event}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {filteredBusiness.length > 0 && (
-                <div>
-                  <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">事業内容</h2>
-                  <div className="space-y-3">
-                    {filteredBusiness.map((item, i) => (
-                      <div key={i} className="relative overflow-hidden rounded-lg border border-border bg-background p-4 pl-5 flex gap-3">
-                        {/* 左端の青バー（「私たちの『らしさ』」カードと同装飾：角丸クリップで丸端） */}
-                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-ds-app-accent" />
-                        <span className="text-xs font-mono text-muted-foreground tabular-nums pt-0.5">
-                          {String(i + 1).padStart(2, '0')}
-                        </span>
-                        <div className="flex-1 min-w-0">
-                          <span className="text-[18px] font-semibold text-foreground">{item.title}</span>
-                          {item.description && (
-                            <p className="text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap mt-1 m-0">
-                              {item.description}
-                            </p>
-                          )}
                         </div>
                       </div>
                     ))}

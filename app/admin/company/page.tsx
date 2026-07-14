@@ -2,7 +2,7 @@
 
 // 企業情報編集ページ（マルチテナント対応: 自社のレコードのみ表示・編集）
 // ブランド関連項目（スローガン、MVV、ブランドストーリー、提供価値、ブランドカラー）は
-// ブランド掲示の各ページで管理するため、ここでは基本情報のみ管理
+// ブランド掲示の各ページで管理。ここでは基本情報＋事業内容（philosophy_elements の service 行）を管理する。
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
@@ -10,6 +10,7 @@ import { fetchWithRetry } from '@/lib/supabase-fetch'
 import { useAuth } from '../components/AdminDataProvider'
 import { ImageUpload } from '../components/ImageUpload'
 import { IndustrySelect } from '@/components/shared/IndustrySelect'
+import { BusinessContentEditor, type BusinessContentItem } from '@/components/shared/BusinessContentEditor'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
@@ -77,6 +78,10 @@ type Company = {
   representative: string
   competitors: Competitor[]
   target_segments: TargetSegment[]
+  // 事業内容（philosophy_elements の service 行）。表示順は business_content_sort。
+  // 実データは companies ではなく philosophy_elements / brand_guidelines に保存する。
+  business_content: BusinessContentItem[]
+  business_content_sort: 'registered' | 'custom'
 }
 
 export default function CompanyPage() {
@@ -105,13 +110,32 @@ export default function CompanyPage() {
     setFetchError('')
 
     // fetchWithRetry: タイムアウト6秒 + リトライ1回（setTimeout のリーク防止＋短縮版）
-    const { data, error } = await fetchWithRetry(() =>
-      supabase
-        .from('companies')
-        .select('id, name, name_ja, name_en, name_display_lang, logo_url, website_url, industry_category, industry_subcategory, founded, address, representative, competitors, target_segments')
-        .eq('id', companyId)
-        .single()
-    )
+    // 事業内容（service 行）と表示順（business_content_sort）も並列取得する。
+    const [companyRes, serviceRes, guidelinesRes] = await Promise.all([
+      fetchWithRetry(() =>
+        supabase
+          .from('companies')
+          .select('id, name, name_ja, name_en, name_display_lang, logo_url, website_url, industry_category, industry_subcategory, founded, address, representative, competitors, target_segments')
+          .eq('id', companyId)
+          .single()
+      ),
+      fetchWithRetry(() =>
+        supabase
+          .from('philosophy_elements')
+          .select('id, title, body, sort_order')
+          .eq('company_id', companyId)
+          .eq('element_type', 'service')
+          .order('sort_order', { ascending: true })
+      ),
+      fetchWithRetry(() =>
+        supabase
+          .from('brand_guidelines')
+          .select('business_content_sort')
+          .eq('company_id', companyId)
+          .maybeSingle()
+      ),
+    ])
+    const { data, error } = companyRes
 
     if (error) {
       console.error('[Company] データ取得エラー:', error)
@@ -136,6 +160,18 @@ export default function CompanyPage() {
       }
       // デフォルトは日本語。明示的に 'en' の時のみ英語。
       const displayLang: 'ja' | 'en' = row.name_display_lang === 'en' ? 'en' : 'ja'
+      // 事業内容（philosophy_elements の service 行）。id を保持し保存時の差分計算に使う。
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const serviceRows = (serviceRes.data as any[] | null) || []
+      const businessContent: BusinessContentItem[] = serviceRows.map((r, i) => ({
+        id: r.id as string,
+        title: (r.title as string) || '',
+        description: (r.body as string) || '',
+        added_index: (r.sort_order as number) ?? i,
+      }))
+      const guidelinesRow = guidelinesRes.data as { business_content_sort?: string | null } | null
+      const businessSort: 'registered' | 'custom' =
+        guidelinesRow?.business_content_sort === 'custom' ? 'custom' : 'registered'
       const companyData: Company = {
         id: row.id,
         name: rawName,
@@ -151,6 +187,8 @@ export default function CompanyPage() {
         representative: row.representative || '',
         competitors: row.competitors || [],
         target_segments: row.target_segments || [],
+        business_content: businessContent,
+        business_content_sort: businessSort,
       }
       setCompany(companyData)
       setPageCache(cacheKey, companyData)
@@ -185,7 +223,7 @@ export default function CompanyPage() {
     }
   }, [companyId])
 
-  const handleChange = (field: keyof Company, value: string | Competitor[] | TargetSegment[]) => {
+  const handleChange = (field: keyof Company, value: string | Competitor[] | TargetSegment[] | BusinessContentItem[]) => {
     setCompany(prev => prev ? { ...prev, [field]: value } : null)
   }
 
@@ -379,6 +417,112 @@ export default function CompanyPage() {
     }
   }
 
+  // Supabase REST API直接fetch (INSERT)。brand_guidelines 行の新規作成に使う。
+  const supabaseInsert = async (table: string, data: Record<string, unknown>): Promise<{ ok: boolean; error?: string }> => {
+    const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/${table}`
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 10000)
+
+    const { data: { session } } = await supabase.auth.getSession()
+    const token = session?.access_token || ''
+
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
+          'Authorization': `Bearer ${token}`,
+          'Prefer': 'return=minimal',
+        },
+        body: JSON.stringify(data),
+        signal: controller.signal,
+      })
+      clearTimeout(timeoutId)
+      if (!res.ok) {
+        const body = await res.text()
+        return { ok: false, error: `HTTP ${res.status}: ${body}` }
+      }
+      return { ok: true }
+    } catch (err) {
+      clearTimeout(timeoutId)
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        return { ok: false, error: 'タイムアウト（10秒）' }
+      }
+      return { ok: false, error: err instanceof Error ? err.message : '不明なエラー' }
+    }
+  }
+
+  // 事業内容を philosophy_elements の service 行へ同期（id一致でUPDATE・id無しでINSERT・不要行DELETE）。
+  // element_type='service' でスコープされるため、他の理念要素（mission/vision/value/action_guideline）には触れない。
+  // sort_order = 表示順（配列インデックス）。保存後の id・表示順を反映した配列を返す。
+  const syncServiceElements = async (
+    desired: BusinessContentItem[],
+  ): Promise<{ ok: boolean; error?: string; business: BusinessContentItem[] }> => {
+    try {
+      const now = new Date().toISOString()
+      const { data: exRows, error: exErr } = await supabase
+        .from('philosophy_elements')
+        .select('id')
+        .eq('company_id', companyId)
+        .eq('element_type', 'service')
+      if (exErr) throw exErr
+      const existingIds = new Set((exRows as { id: string }[] | null)?.map((r) => r.id) ?? [])
+      const kept = new Set<string>()
+      const ids: string[] = []
+      for (let i = 0; i < desired.length; i++) {
+        const d = desired[i]
+        if (d.id && existingIds.has(d.id)) {
+          const { error } = await supabase
+            .from('philosophy_elements')
+            .update({ title: d.title, body: d.description, sort_order: i, status: 'published', updated_at: now })
+            .eq('id', d.id)
+          if (error) throw error
+          kept.add(d.id)
+          ids.push(d.id)
+        } else {
+          const { data, error } = await supabase
+            .from('philosophy_elements')
+            .insert({ company_id: companyId, element_type: 'service', title: d.title, body: d.description, sort_order: i, status: 'published' })
+            .select('id')
+            .single()
+          if (error) throw error
+          const nid = (data as { id: string }).id
+          kept.add(nid)
+          ids.push(nid)
+        }
+      }
+      const toDelete = [...existingIds].filter((id) => !kept.has(id))
+      if (toDelete.length > 0) {
+        const { error } = await supabase.from('philosophy_elements').delete().in('id', toDelete)
+        if (error) throw error
+      }
+      const business: BusinessContentItem[] = desired.map((b, i) => ({ ...b, id: ids[i], added_index: i }))
+      return { ok: true, business }
+    } catch (err) {
+      return { ok: false, error: err instanceof Error ? err.message : '不明なエラー', business: desired }
+    }
+  }
+
+  // 事業内容の表示順トグルを brand_guidelines へ保存（行があればPATCH・無ければINSERT）。
+  const saveBusinessContentSort = async (sort: 'registered' | 'custom'): Promise<{ ok: boolean; error?: string }> => {
+    try {
+      const { data: bgRow, error: bgErr } = await supabase
+        .from('brand_guidelines')
+        .select('id')
+        .eq('company_id', companyId)
+        .maybeSingle()
+      if (bgErr) throw new Error(bgErr.message)
+      const bgId = (bgRow as { id: string } | null)?.id ?? null
+      if (bgId) {
+        return await supabasePatch('brand_guidelines', bgId, { business_content_sort: sort })
+      }
+      return await supabaseInsert('brand_guidelines', { company_id: companyId, business_content_sort: sort })
+    } catch (err) {
+      return { ok: false, error: err instanceof Error ? err.message : '不明なエラー' }
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!company) return
@@ -405,6 +549,9 @@ export default function CompanyPage() {
           description: ts.description.trim(),
         }))
 
+      // 事業内容の空タイトル行を除外（philosophy_elements の service 行へ同期）
+      const cleanedBusiness = company.business_content.filter(b => b.title.trim() !== '')
+
       // name は表示言語トグルで選んだ表記へ同期。選択側が空なら他方→従来 name の順でフォールバック（空にしない）
       const ja = company.name_ja.trim()
       const en = company.name_en.trim()
@@ -430,15 +577,29 @@ export default function CompanyPage() {
 
       const result = await supabasePatch('companies', company.id, updateData)
 
+      // 事業内容（service 行）と表示順を同期
+      const bizResult = await syncServiceElements(cleanedBusiness)
+      const sortResult = await saveBusinessContentSort(company.business_content_sort)
+
       if (!result.ok) {
         console.error('[Company Save] エラー:', result.error)
         toast.error('保存に失敗しました: ' + result.error)
+      } else if (!bizResult.ok || !sortResult.ok) {
+        console.error('[Company Save] 事業内容エラー:', bizResult.error || sortResult.error)
+        toast.error('保存に失敗しました: ' + (bizResult.error || sortResult.error))
       } else {
         toast.success('保存しました')
-        handleChange('name', syncedName)
-        handleChange('website_url', normalizedWebsiteUrl)
-        handleChange('competitors', cleanedCompetitors)
-        handleChange('target_segments', cleanedTargetSegments)
+        // 保存後の正規化済み state（competitors/事業内容のid・表示順を反映）をキャッシュへも反映
+        const nextCompany: Company = {
+          ...company,
+          name: syncedName,
+          website_url: normalizedWebsiteUrl,
+          competitors: cleanedCompetitors,
+          target_segments: cleanedTargetSegments,
+          business_content: bizResult.business,
+        }
+        setCompany(nextCompany)
+        setPageCache(cacheKey, nextCompany)
       }
     } catch (err) {
       console.error('[Company Save] 予期しないエラー:', err)
@@ -620,6 +781,16 @@ export default function CompanyPage() {
                   />
                 </div>
               </div>
+            </div>
+
+            {/* 事業内容（philosophy_elements の service 行。表示はポータル「私たちについて」） */}
+            <div className="mb-5">
+              <BusinessContentEditor
+                items={company.business_content}
+                sort={company.business_content_sort}
+                onSortChange={(s) => handleChange('business_content_sort', s)}
+                onItemsChange={(items) => handleChange('business_content', items)}
+              />
             </div>
 
             {/* 競合企業・サービス */}

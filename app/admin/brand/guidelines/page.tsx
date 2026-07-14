@@ -1,7 +1,8 @@
 'use client'
 
 // ブランド方針 編集ページ
-// スローガン・コンセプトビジュアル・動画・メッセージ・MVV・ストーリー・沿革・事業内容・特性
+// スローガン・コンセプトビジュアル・動画・メッセージ・MVV・ストーリー・沿革・特性
+// （事業内容は基本情報ページ app/admin/company で管理）
 import { useEffect, useState, useRef } from 'react'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
@@ -15,7 +16,6 @@ import { Input } from '@/components/ui/input'
 import { AutoResizeTextarea } from '@/components/ui/auto-resize-textarea'
 import { type PortalSubtitles } from '@/lib/portal-subtitles'
 import { splitBrandCopy, combineBrandCopy } from '@/lib/brand-mvv'
-import { TitleDescriptionList } from '@/components/shared/TitleDescriptionList'
 import { GripVertical, Plus, Trash2, Check } from 'lucide-react'
 import { Fab, FabButton } from '@/components/ui/fab'
 import {
@@ -38,7 +38,6 @@ import { CSS } from '@dnd-kit/utilities'
 // id は philosophy_elements の行ID（新規追加項目では undefined → 保存時INSERT）
 type ValueItem = { id?: string; name: string; description: string; added_index: number }
 type HistoryItem = { year: string; event: string }
-type BusinessItem = { id?: string; title: string; description: string; added_index: number }
 
 // 沿革の year フィールドは表示文字列（"2011年" / "2011年5月"）で保持する。
 // ドロップダウン用に年・月を取り出す／組み立てるヘルパー。既存の年のみデータもそのまま扱える。
@@ -73,8 +72,6 @@ type Guidelines = {
   values_sort: 'registered' | 'custom'
   brand_story: string
   history: HistoryItem[]
-  business_content: BusinessItem[]
-  business_content_sort: 'registered' | 'custom'
   // 行動指針（旧 ブランド戦略 から移設。brand_guidelines.action_guidelines）
   action_guidelines: ActionGuideline[]
 }
@@ -177,34 +174,6 @@ function SortableConceptVisual({
   )
 }
 
-function SortableBusinessItem({
-  id, item, index, onUpdate, onRemove,
-}: {
-  id: string; item: BusinessItem; index: number
-  onUpdate: (index: number, field: 'title' | 'description', value: string) => void
-  onRemove: (index: number) => void
-}) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
-  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }
-  return (
-    <div ref={setNodeRef} style={style} className="border border-border rounded-lg p-3 mb-2 bg-background">
-      <div className="flex gap-2 mb-2 items-center">
-        <button type="button" className="p-1 rounded hover:bg-gray-200 cursor-grab active:cursor-grabbing text-muted-foreground shrink-0" {...attributes} {...listeners}>
-          <GripVertical size={16} />
-        </button>
-        <Input type="text" value={item.title} onChange={(e) => onUpdate(index, 'title', e.target.value)} placeholder="事業タイトル" className="h-10 flex-1" />
-        <Button type="button" variant="outline" size="icon" onClick={() => onRemove(index)} className="size-9 shrink-0 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"><Trash2 size={14} /></Button>
-      </div>
-      <AutoResizeTextarea
-        value={item.description}
-        onChange={(e) => onUpdate(index, 'description', e.target.value)}
-        placeholder="事業の説明"
-        className="min-h-[60px]"
-      />
-    </div>
-  )
-}
-
 function SortableActionItem({
   id, item, index, onUpdate, onRemove,
 }: {
@@ -246,8 +215,6 @@ export default function BrandGuidelinesPage() {
     values_sort: 'registered',
     brand_story: '',
     history: [],
-    business_content: [],
-    business_content_sort: 'registered',
     action_guidelines: [],
   })
   const [loading, setLoading] = useState(!cached)
@@ -307,7 +274,6 @@ export default function BrandGuidelinesPage() {
       const visionRow = philRows.find((r) => r.element_type === 'vision')
       const valueRows = philRows.filter((r) => r.element_type === 'value')
       const actionRows = philRows.filter((r) => r.element_type === 'action_guideline')
-      const serviceRows = philRows.filter((r) => r.element_type === 'service')
 
       if (result || philRows.length > 0) {
         const parsedId = (result?.id as string) ?? null
@@ -335,14 +301,6 @@ export default function BrandGuidelinesPage() {
           values_sort: (result?.values_sort as 'registered' | 'custom') || 'registered',
           brand_story: result?.brand_story || '',
           history: result?.history || [],
-          // business_content は philosophy_elements の service 行（id を保持し保存時の差分計算に使う）
-          business_content: serviceRows.map((r, i) => ({
-            id: r.id as string,
-            title: (r.title as string) || '',
-            description: (r.body as string) || '',
-            added_index: (r.sort_order as number) ?? i,
-          })),
-          business_content_sort: (result?.business_content_sort as 'registered' | 'custom') || 'registered',
           // action_guidelines は philosophy_elements の action_guideline 行（id を保持）
           action_guidelines: actionRows.map((r) => ({
             id: r.id as string,
@@ -407,20 +365,6 @@ export default function BrandGuidelinesPage() {
     handleChange('history', guidelines.history.filter((_, i) => i !== index))
   }
 
-  // --- 事業内容 ---
-  const addBusiness = () => {
-    const maxIndex = guidelines.business_content.reduce((max, b) => Math.max(max, b.added_index), -1)
-    handleChange('business_content', [...guidelines.business_content, { title: '', description: '', added_index: maxIndex + 1 }])
-  }
-  const updateBusiness = (index: number, field: 'title' | 'description', value: string) => {
-    const updated = [...guidelines.business_content]
-    updated[index] = { ...updated[index], [field]: value }
-    handleChange('business_content', updated)
-  }
-  const removeBusiness = (index: number) => {
-    handleChange('business_content', guidelines.business_content.filter((_, i) => i !== index))
-  }
-
   // --- 行動指針 ---
   const addGuideline = () => {
     if (guidelines.action_guidelines.length >= 10) return
@@ -455,16 +399,6 @@ export default function BrandGuidelinesPage() {
     const newIndex = guidelines.history.findIndex((_, i) => `history-${i}` === over.id)
     if (oldIndex !== -1 && newIndex !== -1) {
       handleChange('history', arrayMove(guidelines.history, oldIndex, newIndex))
-    }
-  }
-
-  const handleBusinessDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event
-    if (!over || active.id === over.id) return
-    const oldIndex = guidelines.business_content.findIndex((_, i) => `business-${i}` === active.id)
-    const newIndex = guidelines.business_content.findIndex((_, i) => `business-${i}` === over.id)
-    if (oldIndex !== -1 && newIndex !== -1) {
-      handleChange('business_content', arrayMove(guidelines.business_content, oldIndex, newIndex))
     }
   }
 
@@ -598,8 +532,7 @@ export default function BrandGuidelinesPage() {
   const syncPhilosophyElements = async (
     cleanedValues: ValueItem[],
     cleanedGuidelines: ActionGuideline[],
-    cleanedBusiness: BusinessItem[],
-  ): Promise<{ ok: boolean; error?: string; values: ValueItem[]; guidelines: ActionGuideline[]; business: BusinessItem[] }> => {
+  ): Promise<{ ok: boolean; error?: string; values: ValueItem[]; guidelines: ActionGuideline[] }> => {
     try {
       const now = new Date().toISOString()
 
@@ -637,7 +570,7 @@ export default function BrandGuidelinesPage() {
       // values / action_guideline: 複数行。id一致でUPDATE・id無し（新規）でINSERT・desiredに無い既存行をDELETE。
       // sort_order = 表示順（配列インデックス）。表示ヘルパは sort_order を added_index に写像する。
       const syncList = async (
-        type: 'value' | 'action_guideline' | 'service',
+        type: 'value' | 'action_guideline',
         desired: { id?: string; title: string; body: string }[],
       ): Promise<string[]> => {
         const { data: exRows, error: exErr } = await supabase
@@ -687,23 +620,17 @@ export default function BrandGuidelinesPage() {
         'action_guideline',
         cleanedGuidelines.map((g) => ({ id: g.id, title: g.title, body: g.description })),
       )
-      const businessIds = await syncList(
-        'service',
-        cleanedBusiness.map((b) => ({ id: b.id, title: b.title, body: b.description })),
-      )
 
       // 保存後の最新id・表示順をフォーム状態へ反映（再保存時の差分計算のため）
       const valuesWithId: ValueItem[] = cleanedValues.map((v, i) => ({ ...v, id: valueIds[i], added_index: i }))
       const guidelinesWithId: ActionGuideline[] = cleanedGuidelines.map((g, i) => ({ ...g, id: guidelineIds[i] }))
-      const businessWithId: BusinessItem[] = cleanedBusiness.map((b, i) => ({ ...b, id: businessIds[i], added_index: i }))
-      return { ok: true, values: valuesWithId, guidelines: guidelinesWithId, business: businessWithId }
+      return { ok: true, values: valuesWithId, guidelines: guidelinesWithId }
     } catch (err) {
       return {
         ok: false,
         error: err instanceof Error ? err.message : '不明なエラー',
         values: cleanedValues,
         guidelines: cleanedGuidelines,
-        business: cleanedBusiness,
       }
     }
   }
@@ -719,7 +646,6 @@ export default function BrandGuidelinesPage() {
 
       const cleanedValues = guidelines.values.filter(v => v.name.trim() !== '')
       const cleanedHistory = guidelines.history.filter(h => h.year.trim() !== '' || h.event.trim() !== '')
-      const cleanedBusiness = guidelines.business_content.filter(b => b.title.trim() !== '')
       const cleanedGuidelines = guidelines.action_guidelines.filter(g => g.title.trim() !== '' || g.description.trim() !== '')
 
       const saveData: Record<string, unknown> = {
@@ -731,12 +657,12 @@ export default function BrandGuidelinesPage() {
         concept_visual_url: guidelines.concept_visuals[0] || null,
         brand_video_url: guidelines.brand_video_url ? normalizeUrl(guidelines.brand_video_url) : null,
         brand_statement: guidelines.brand_statement || null,
-        // ※ mission/vision/values/action_guidelines/business_content は philosophy_elements へ移行済み。
-        //   ここでは brand_guidelines へ書かない（Step6でDROP）。values_sort/business_content_sort は表示順設定として継続。
+        // ※ mission/vision/values/action_guidelines は philosophy_elements へ移行済み。
+        //   ここでは brand_guidelines へ書かない（Step6でDROP）。values_sort は表示順設定として継続。
+        //   事業内容（service）とその表示順 business_content_sort は基本情報ページ（app/admin/company）で管理する。
         values_sort: guidelines.values_sort,
         brand_story: guidelines.brand_story || null,
         history: cleanedHistory.length > 0 ? cleanedHistory : [],
-        business_content_sort: guidelines.business_content_sort,
       }
 
       let result: { ok: boolean; error?: string; data?: Record<string, unknown> }
@@ -752,8 +678,8 @@ export default function BrandGuidelinesPage() {
         }
       }
 
-      // 理念要素（mission/vision/values/action_guidelines/service）を philosophy_elements の行へ同期
-      const philResult = await syncPhilosophyElements(cleanedValues, cleanedGuidelines, cleanedBusiness)
+      // 理念要素（mission/vision/values/action_guidelines）を philosophy_elements の行へ同期
+      const philResult = await syncPhilosophyElements(cleanedValues, cleanedGuidelines)
 
       // ポータルサブタイトル保存
       const updatedSubtitles = { ...(portalSubtitlesData || {}) }
@@ -775,7 +701,6 @@ export default function BrandGuidelinesPage() {
           values: philResult.values,
           action_guidelines: philResult.guidelines,
           history: cleanedHistory,
-          business_content: philResult.business,
           brand_video_url: guidelines.brand_video_url ? normalizeUrl(guidelines.brand_video_url) : '',
         }
         setGuidelines(nextGuidelines)
@@ -1083,7 +1008,7 @@ export default function BrandGuidelinesPage() {
           </CardContent>
         </Card>
 
-        {/* Card 4: ブランドストーリー＋沿革＋事業内容 */}
+        {/* Card 4: ブランドストーリー＋沿革 */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-5 space-y-8">
             <div>
@@ -1118,55 +1043,6 @@ export default function BrandGuidelinesPage() {
               <Button type="button" variant="outline" onClick={addHistory} className="py-2 px-4 text-[13px]">
                 <Plus size={16} />沿革を追加
               </Button>
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-xs font-bold">事業内容</h2>
-                {guidelines.business_content.length > 1 && (
-                  <div className="flex rounded-lg border border-border overflow-hidden">
-                    <button type="button" onClick={() => handleChange('business_content_sort', 'registered')}
-                      className={`px-3 py-1 text-xs font-medium transition-colors ${guidelines.business_content_sort === 'registered' ? 'bg-foreground text-background' : 'bg-background text-muted-foreground hover:bg-muted'}`}>
-                      登録順
-                    </button>
-                    <button type="button" onClick={() => handleChange('business_content_sort', 'custom')}
-                      className={`px-3 py-1 text-xs font-medium transition-colors ${guidelines.business_content_sort === 'custom' ? 'bg-foreground text-background' : 'bg-background text-muted-foreground hover:bg-muted'}`}>
-                      カスタム
-                    </button>
-                  </div>
-                )}
-              </div>
-              {guidelines.business_content_sort === 'custom' ? (
-                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleBusinessDragEnd}>
-                  <SortableContext items={guidelines.business_content.map((_, i) => `business-${i}`)} strategy={verticalListSortingStrategy}>
-                    {guidelines.business_content.map((item, index) => (
-                      <SortableBusinessItem key={`business-${index}`} id={`business-${index}`} item={item} index={index} onUpdate={updateBusiness} onRemove={removeBusiness} />
-                    ))}
-                  </SortableContext>
-                </DndContext>
-              ) : (
-                <TitleDescriptionList
-                  label=""
-                  items={[...guidelines.business_content]
-                    .sort((a, b) => (a.added_index ?? 0) - (b.added_index ?? 0))
-                    .map(item => ({ title: item.title, description: item.description }))}
-                  onChange={(newItems) => {
-                    // added_index を保持してマージ
-                    const sorted = [...guidelines.business_content].sort((a, b) => (a.added_index ?? 0) - (b.added_index ?? 0))
-                    const maxIndex = sorted.reduce((max, b) => Math.max(max, b.added_index ?? 0), -1)
-                    const result: BusinessItem[] = newItems.map((item, i) => ({
-                      title: item.title,
-                      description: item.description,
-                      added_index: i < sorted.length ? sorted[i].added_index : maxIndex + 1 + (i - sorted.length),
-                    }))
-                    handleChange('business_content', result)
-                  }}
-                  addButtonLabel="事業内容を追加"
-                  titlePlaceholder="事業タイトル"
-                  descriptionPlaceholder="事業の説明"
-                  required={false}
-                />
-              )}
             </div>
           </CardContent>
         </Card>

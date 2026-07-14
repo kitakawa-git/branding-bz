@@ -1,17 +1,22 @@
 'use client'
 
 // 私たちについて（会社/ブランド概要）閲覧ページ
-// 表示: 会社名(日本語/英語)・ロゴ・スローガン・業種・設立・代表者・所在地・公式サイト
+// 表示: 会社名(日本語/英語)・ロゴ・スローガン・業種・設立・代表者・所在地・公式サイト・事業内容
 // - 会社名(日/英)・ロゴ・スローガンは PortalDataProvider から、その他は companies を直接取得
-// - 沿革/事業内容/MVV は「考え方」にあるため重複させない
+// - 事業内容は philosophy_elements の service 行（管理は基本情報ページ）
+// - 沿革/MVV は「考え方」にあるため重複させない
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { fetchWithRetry } from '@/lib/supabase-fetch'
+import { fetchPhilosophy } from '@/lib/brand/philosophy'
 import { usePortalAuth } from '../components/PortalDataProvider'
 import { INDUSTRY_CATEGORIES } from '@/lib/constants/industries'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
+
+// 事業内容（philosophy_elements の service 行）。id は無い（表示専用）。
+type BusinessItem = { title: string; description: string; added_index?: number }
 
 type Overview = {
   name: string
@@ -23,6 +28,8 @@ type Overview = {
   founded: string
   address: string
   representative: string
+  business_content: BusinessItem[]
+  business_content_sort: 'registered' | 'custom'
 }
 
 function industryLabel(category: string, subcategory: string): string {
@@ -41,16 +48,29 @@ export default function PortalAboutPage() {
     if (!companyId) return
     let active = true
     const run = async () => {
-      const { data: row } = await fetchWithRetry(() =>
-        supabase
-          .from('companies')
-          .select('name, name_ja, name_en, website_url, industry_category, industry_subcategory, founded, address, representative')
-          .eq('id', companyId)
-          .single()
-      )
+      // 会社概要・事業内容（service 行）・事業内容の表示順を並列取得
+      const [companyRes, phil, guidelinesRes] = await Promise.all([
+        fetchWithRetry(() =>
+          supabase
+            .from('companies')
+            .select('name, name_ja, name_en, website_url, industry_category, industry_subcategory, founded, address, representative')
+            .eq('id', companyId)
+            .single()
+        ),
+        fetchPhilosophy(supabase, companyId),
+        fetchWithRetry(() =>
+          supabase
+            .from('brand_guidelines')
+            .select('business_content_sort')
+            .eq('company_id', companyId)
+            .maybeSingle()
+        ),
+      ])
+      const { data: row } = companyRes
       if (!active) return
       if (row) {
         const r = row as Record<string, string | null>
+        const guidelinesRow = guidelinesRes.data as { business_content_sort?: string | null } | null
         const overview: Overview = {
           name: r.name || '',
           name_ja: r.name_ja || '',
@@ -61,6 +81,8 @@ export default function PortalAboutPage() {
           founded: r.founded || '',
           address: r.address || '',
           representative: r.representative || '',
+          business_content: phil.services,
+          business_content_sort: guidelinesRow?.business_content_sort === 'custom' ? 'custom' : 'registered',
         }
         setData(overview)
         setPageCache(cacheKey, overview)
@@ -114,6 +136,11 @@ export default function PortalAboutPage() {
     })
   }
 
+  // フィルター: 入力済みの事業内容のみ（登録順=added_index昇順 / カスタム=配列順）
+  const filteredBusiness = data.business_content_sort === 'custom'
+    ? data.business_content.filter(b => b.title)
+    : [...data.business_content].filter(b => b.title).sort((a, b) => (a.added_index ?? 0) - (b.added_index ?? 0))
+
   return (
     <div className="max-w-4xl mx-auto px-5 pt-4 pb-10">
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none overflow-hidden">
@@ -147,6 +174,32 @@ export default function PortalAboutPage() {
 
           {rows.length === 0 && (
             <p className="mt-4 text-sm text-muted-foreground">情報はまだ登録されていません。</p>
+          )}
+
+          {/* 事業内容（管理: 基本情報ページ / データ: philosophy_elements の service 行） */}
+          {filteredBusiness.length > 0 && (
+            <div className="mt-8">
+              <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">事業内容</h2>
+              <div className="space-y-3">
+                {filteredBusiness.map((item, i) => (
+                  <div key={i} className="relative overflow-hidden rounded-lg border border-border bg-background p-4 pl-5 flex gap-3">
+                    {/* 左端の青バー（「考え方」の事業内容カードと同装飾） */}
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-ds-app-accent" />
+                    <span className="text-xs font-mono text-muted-foreground tabular-nums pt-0.5">
+                      {String(i + 1).padStart(2, '0')}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-[18px] font-semibold text-foreground">{item.title}</span>
+                      {item.description && (
+                        <p className="text-base text-foreground/80 leading-relaxed whitespace-pre-wrap mt-1 m-0">
+                          {item.description}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
         </CardContent>
       </Card>
