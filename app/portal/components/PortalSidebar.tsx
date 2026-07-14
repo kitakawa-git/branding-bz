@@ -41,6 +41,7 @@ import {
   Smile,
   Eye,
   GraduationCap,
+  Building2,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -53,6 +54,7 @@ type NavItem = {
 // 浸透グループ
 const engagementItems: NavItem[] = [
   { href: '/portal', label: 'ダッシュボード', icon: LayoutDashboard },
+  { href: '/portal/about', label: '会社について', icon: Building2 },
   { href: '/portal/timeline', label: 'タイムライン', icon: MessageSquareHeart },
   { href: '/portal/kpi', label: '目標・KPI', icon: Milestone },
   { href: '/portal/learning', label: 'ラーニング', icon: GraduationCap },

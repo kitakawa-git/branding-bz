@@ -6,6 +6,7 @@ import { usePortalAuth } from './PortalDataProvider'
 
 const titleMap: Record<string, string> = {
   '/portal': 'ダッシュボード',
+  '/portal/about': '会社について',
   '/portal/timeline': 'タイムライン',
   '/portal/announcements': 'お知らせ',
   '/portal/kpi': '目標・KPI',

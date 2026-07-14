@@ -71,6 +71,10 @@ type Company = {
   website_url: string
   industry_category: string
   industry_subcategory: string
+  // 会社概要（ポータル「会社について」で表示）
+  founded: string
+  address: string
+  representative: string
   competitors: Competitor[]
   target_segments: TargetSegment[]
 }
@@ -104,7 +108,7 @@ export default function CompanyPage() {
     const { data, error } = await fetchWithRetry(() =>
       supabase
         .from('companies')
-        .select('id, name, name_ja, name_en, name_display_lang, logo_url, website_url, industry_category, industry_subcategory, competitors, target_segments')
+        .select('id, name, name_ja, name_en, name_display_lang, logo_url, website_url, industry_category, industry_subcategory, founded, address, representative, competitors, target_segments')
         .eq('id', companyId)
         .single()
     )
@@ -119,6 +123,7 @@ export default function CompanyPage() {
         name_display_lang: string | null
         logo_url: string | null; website_url: string | null
         industry_category: string | null; industry_subcategory: string | null
+        founded: string | null; address: string | null; representative: string | null
         competitors: Competitor[] | null; target_segments: TargetSegment[] | null
       }
       const rawName = row.name || ''
@@ -141,6 +146,9 @@ export default function CompanyPage() {
         website_url: row.website_url || '',
         industry_category: row.industry_category || '',
         industry_subcategory: row.industry_subcategory || '',
+        founded: row.founded || '',
+        address: row.address || '',
+        representative: row.representative || '',
         competitors: row.competitors || [],
         target_segments: row.target_segments || [],
       }
@@ -413,6 +421,9 @@ export default function CompanyPage() {
         website_url: normalizedWebsiteUrl,
         industry_category: company.industry_category || null,
         industry_subcategory: company.industry_subcategory || null,
+        founded: company.founded.trim() || null,
+        address: company.address.trim() || null,
+        representative: company.representative.trim() || null,
         competitors: cleanedCompetitors,
         target_segments: cleanedTargetSegments,
       }
@@ -569,6 +580,46 @@ export default function CompanyPage() {
                 placeholder="https://example.com"
                 className="h-10"
               />
+            </div>
+
+            {/* 会社概要（ポータル「会社について」に表示） */}
+            <div className="mb-5">
+              <h2 className="text-xs font-bold mb-3">会社概要</h2>
+              <p className="text-[13px] text-muted-foreground mb-3">
+                ポータルの「会社について」ページに表示されます（任意）
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <p className="text-[11px] text-gray-500 mb-1.5">設立</p>
+                  <Input
+                    type="text"
+                    value={company.founded}
+                    onChange={(e) => handleChange('founded', e.target.value)}
+                    placeholder="例: 2011年4月"
+                    className="h-10"
+                  />
+                </div>
+                <div>
+                  <p className="text-[11px] text-gray-500 mb-1.5">代表者</p>
+                  <Input
+                    type="text"
+                    value={company.representative}
+                    onChange={(e) => handleChange('representative', e.target.value)}
+                    placeholder="例: 北川巧"
+                    className="h-10"
+                  />
+                </div>
+                <div className="sm:col-span-3">
+                  <p className="text-[11px] text-gray-500 mb-1.5">所在地</p>
+                  <Input
+                    type="text"
+                    value={company.address}
+                    onChange={(e) => handleChange('address', e.target.value)}
+                    placeholder="例: 東京都世田谷区奥沢..."
+                    className="h-10"
+                  />
+                </div>
+              </div>
             </div>
 
             {/* 競合企業・サービス */}
