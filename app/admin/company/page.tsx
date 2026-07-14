@@ -497,10 +497,6 @@ export default function CompanyPage() {
 
             {/* 概要（ポータル「私たちについて」に表示） */}
             <div className="mb-5">
-              <h2 className="text-xs font-bold mb-3">概要</h2>
-              <p className="text-[13px] text-muted-foreground mb-3">
-                ポータルの「私たちについて」ページに表示されます（任意）
-              </p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <p className="text-[11px] text-gray-500 mb-1.5">設立</p>
