@@ -518,7 +518,7 @@ export default function CompanyPage() {
                     type="text"
                     value={company.name_ja}
                     onChange={(e) => handleChange('name_ja', e.target.value)}
-                    placeholder="例: 株式会社アイディー"
+                    placeholder="例: 株式会社サンプル"
                     className="h-10"
                   />
                 </div>
@@ -528,7 +528,7 @@ export default function CompanyPage() {
                     type="text"
                     value={company.name_en}
                     onChange={(e) => handleChange('name_en', e.target.value)}
-                    placeholder="例: ID INC."
+                    placeholder="例: Sample Inc."
                     className="h-10"
                   />
                 </div>
@@ -595,7 +595,7 @@ export default function CompanyPage() {
                     type="text"
                     value={company.founded}
                     onChange={(e) => handleChange('founded', e.target.value)}
-                    placeholder="例: 2011年4月"
+                    placeholder="例: 2020年4月"
                     className="h-10"
                   />
                 </div>
@@ -605,7 +605,7 @@ export default function CompanyPage() {
                     type="text"
                     value={company.representative}
                     onChange={(e) => handleChange('representative', e.target.value)}
-                    placeholder="例: 北川巧"
+                    placeholder="例: 山田太郎"
                     className="h-10"
                   />
                 </div>
@@ -615,7 +615,7 @@ export default function CompanyPage() {
                     type="text"
                     value={company.address}
                     onChange={(e) => handleChange('address', e.target.value)}
-                    placeholder="例: 東京都世田谷区奥沢..."
+                    placeholder="例: 東京都千代田区..."
                     className="h-10"
                   />
                 </div>
