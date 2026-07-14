@@ -495,29 +495,6 @@ export default function CompanyPage() {
               </div>
             </div>
 
-            {/* 業種 */}
-            <div className="mb-5">
-              <h2 className="text-xs font-bold mb-3">業種</h2>
-              <IndustrySelect
-                category={company.industry_category}
-                subcategory={company.industry_subcategory}
-                onCategoryChange={(val) => handleChange('industry_category', val)}
-                onSubcategoryChange={(val) => handleChange('industry_subcategory', val)}
-              />
-            </div>
-
-            {/* WebサイトURL */}
-            <div className="mb-5">
-              <h2 className="text-xs font-bold mb-3">ウェブサイトURL</h2>
-              <Input
-                type="text"
-                value={company.website_url}
-                onChange={(e) => handleChange('website_url', e.target.value)}
-                placeholder="https://example.com"
-                className="h-10"
-              />
-            </div>
-
             {/* 概要（ポータル「私たちについて」に表示） */}
             <div className="mb-5">
               <h2 className="text-xs font-bold mb-3">概要</h2>
@@ -566,6 +543,29 @@ export default function CompanyPage() {
                   />
                 </div>
               </div>
+            </div>
+
+            {/* 業種 */}
+            <div className="mb-5">
+              <h2 className="text-xs font-bold mb-3">業種</h2>
+              <IndustrySelect
+                category={company.industry_category}
+                subcategory={company.industry_subcategory}
+                onCategoryChange={(val) => handleChange('industry_category', val)}
+                onSubcategoryChange={(val) => handleChange('industry_subcategory', val)}
+              />
+            </div>
+
+            {/* WebサイトURL */}
+            <div className="mb-5">
+              <h2 className="text-xs font-bold mb-3">ウェブサイトURL</h2>
+              <Input
+                type="text"
+                value={company.website_url}
+                onChange={(e) => handleChange('website_url', e.target.value)}
+                placeholder="https://example.com"
+                className="h-10"
+              />
             </div>
 
             {/* 事業内容（philosophy_elements の service 行。表示はポータル「私たちについて」） */}
