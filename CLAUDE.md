@@ -160,7 +160,7 @@ id (uuid), company_id (FK→companies), name, position, department, bio, photo_u
   - 本体企業レコード・実セッション（`mini_app_sessions`）へ検証目的で書き込まない。
 - 破壊的UI検証（削除等）は**デモ企業1社に限定**し、必要なら使い捨ての新規セッションで行う（汚染がデモに限定されることを承知の上で）。
 - データ確認は read-only を優先し、書き込み前に必ず対象IDを確認する。
-- デモデータの復元基準は `scripts/seed-demo-data.sql`。修復はツール経由でなく**DB直書き**で行う（ツール経由だと再同期で再汚染する）。
+- デモデータの復元基準は `scripts/seed-demo-data.sql`。修復はツール経由でなく**DB直書き**で行う（ツール経由だと再同期で再汚染する）。※ **実行前スキーマ乖離解消要**（現行スキーマとカラム乖離あり: `companies.slogan/mvv` や `brand_guidelines.mission/vision/values/business_content` は DROP 済み。現状のまま実行すると 500）
 - `companies.industry_category` は `lib/constants/industries.ts` の **`value`（コード: `it_tech`/`consulting` 等）** で保存する。ラベル（「IT・テクノロジー」等）を入れると業種プルダウンが表示されない。
 
 ## コーディング規約
