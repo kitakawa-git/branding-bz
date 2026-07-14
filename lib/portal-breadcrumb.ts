@@ -10,7 +10,7 @@ export type PortalCrumb = {
 
 const breadcrumbMap: Record<string, PortalCrumb> = {
   '/portal': { title: 'ダッシュボード' },
-  '/portal/about': { title: '会社について' },
+  '/portal/about': { title: '私たちについて' },
   '/portal/values': { title: '提供価値' },
   '/portal/announcements': { title: 'お知らせ' },
   '/portal/profile': { title: 'マイプロフィール' },

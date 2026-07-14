@@ -1,6 +1,6 @@
 'use client'
 
-// 会社について（会社概要）閲覧ページ
+// 私たちについて（会社/ブランド概要）閲覧ページ
 // 表示: 会社名(日本語/英語)・ロゴ・スローガン・業種・設立・代表者・所在地・公式サイト
 // - 会社名(日/英)・ロゴ・スローガンは PortalDataProvider から、その他は companies を直接取得
 // - 沿革/事業内容/MVV は「考え方」にあるため重複させない
@@ -146,7 +146,7 @@ export default function PortalAboutPage() {
           )}
 
           {rows.length === 0 && (
-            <p className="mt-4 text-sm text-muted-foreground">会社情報はまだ登録されていません。</p>
+            <p className="mt-4 text-sm text-muted-foreground">情報はまだ登録されていません。</p>
           )}
         </CardContent>
       </Card>

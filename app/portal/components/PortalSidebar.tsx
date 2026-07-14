@@ -184,7 +184,7 @@ export function PortalSidebar() {
           </SidebarGroup>
           <RashisaGroup pathname={pathname} onNavClick={handleNavClick} />
 
-          {/* 会社について（らしさグループの下） */}
+          {/* 私たちについて（らしさグループの下） */}
           <SidebarGroup>
             <SidebarGroupContent>
               <SidebarMenu>
@@ -192,7 +192,7 @@ export function PortalSidebar() {
                   <SidebarMenuButton asChild isActive={pathname.startsWith('/portal/about')}>
                     <Link href="/portal/about" onClick={handleNavClick}>
                       <Building2 size={18} />
-                      <span>会社について</span>
+                      <span>私たちについて</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
