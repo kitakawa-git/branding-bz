@@ -5,7 +5,7 @@
 // - 会社名(日/英)・ロゴ・スローガンは PortalDataProvider から、その他は companies を直接取得
 // - 事業内容は philosophy_elements の service 行（管理は基本情報ページ）
 // - 沿革/MVV は「考え方」にあるため重複させない
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { fetchWithRetry } from '@/lib/supabase-fetch'
 import { fetchPhilosophy } from '@/lib/brand/philosophy'
@@ -37,13 +37,87 @@ function industryLabel(category: string, subcategory: string): string {
   return [cat, subcategory].filter(Boolean).join(' ／ ')
 }
 
+// 代表者名 + プロフィール（180文字超はもっと読むボタン＋高さアニメーション）
+function RepresentativeCell({ name, profile }: { name: string; profile: string }) {
+  const [expanded, setExpanded] = useState(false)
+  const contentRef = useRef<HTMLDivElement>(null)
+  const didMount = useRef(false)
+  const PROFILE_TRUNCATE_AT = 180
+  const truncated = profile.length > PROFILE_TRUNCATE_AT
+  const head = truncated ? profile.slice(0, PROFILE_TRUNCATE_AT) : profile
+  const tail = truncated ? profile.slice(PROFILE_TRUNCATE_AT) : ''
+  const showEllipsis = truncated && !expanded
+
+  useEffect(() => {
+    const el = contentRef.current
+    if (!el || !truncated) return
+    // 初回マウントは初期状態（collapsed）で確定させ、アニメーションを発火させない
+    if (!didMount.current) {
+      didMount.current = true
+      return
+    }
+    if (expanded) {
+      // 0 → scrollHeight → auto
+      el.style.height = el.scrollHeight + 'px'
+      const done = () => {
+        el.style.height = 'auto'
+        el.removeEventListener('transitionend', done)
+      }
+      el.addEventListener('transitionend', done)
+      return () => el.removeEventListener('transitionend', done)
+    } else {
+      // auto → scrollHeight (現在高さ) → 0
+      el.style.height = el.scrollHeight + 'px'
+      // 強制リフロー（開始高さを確定させないと transition が走らない）
+      void el.offsetHeight
+      el.style.height = '0px'
+    }
+  }, [expanded, truncated])
+
+  return (
+    <>
+      <span>{name}</span>
+      {profile && (
+        <>
+          <p className="mt-2 text-sm text-foreground/70 leading-relaxed whitespace-pre-wrap m-0">
+            {head}{showEllipsis && '…'}
+          </p>
+          {truncated && (
+            <>
+              <div
+                ref={contentRef}
+                aria-hidden={!expanded}
+                style={{
+                  height: 0,
+                  overflow: 'hidden',
+                  transition: 'height 300ms ease-out',
+                }}
+              >
+                <p className="text-sm text-foreground/70 leading-relaxed whitespace-pre-wrap m-0">
+                  {tail}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setExpanded((v) => !v)}
+                className="mt-2 text-sm text-ds-app-accent hover:underline"
+              >
+                {expanded ? '閉じる' : 'もっと読む'}
+              </button>
+            </>
+          )}
+        </>
+      )}
+    </>
+  )
+}
+
 export default function PortalAboutPage() {
   const { companyId, companyName, companyLogoUrl } = usePortalAuth()
   const cacheKey = `portal-about-${companyId}`
   const cached = companyId ? getPageCache<Overview>(cacheKey) : null
   const [data, setData] = useState<Overview | null>(cached)
   const [loading, setLoading] = useState(!cached)
-  const [profileExpanded, setProfileExpanded] = useState(false)
 
   useEffect(() => {
     if (!companyId) return
@@ -118,33 +192,9 @@ export default function PortalAboutPage() {
   const rows: Array<{ label: string; value: React.ReactNode }> = []
   if (data.founded) rows.push({ label: '設立', value: data.founded })
   if (data.representative) {
-    const PROFILE_TRUNCATE_AT = 180
-    const profile = data.representative_profile
-    const truncated = profile.length > PROFILE_TRUNCATE_AT
-    const shown = truncated && !profileExpanded ? profile.slice(0, PROFILE_TRUNCATE_AT) + '…' : profile
     rows.push({
       label: '代表者',
-      value: (
-        <>
-          <span>{data.representative}</span>
-          {profile && (
-            <>
-              <p className="mt-2 text-sm text-foreground/70 leading-relaxed whitespace-pre-wrap m-0">
-                {shown}
-              </p>
-              {truncated && (
-                <button
-                  type="button"
-                  onClick={() => setProfileExpanded((v) => !v)}
-                  className="mt-2 text-sm text-ds-app-accent hover:underline"
-                >
-                  {profileExpanded ? '閉じる' : 'もっと読む'}
-                </button>
-              )}
-            </>
-          )}
-        </>
-      ),
+      value: <RepresentativeCell name={data.representative} profile={data.representative_profile} />,
     })
   }
   const industry = industryLabel(data.industry_category, data.industry_subcategory)
