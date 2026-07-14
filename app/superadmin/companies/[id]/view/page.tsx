@@ -44,7 +44,7 @@ type ViewData = {
 
 /* 既知の企業カラム以外を key/value で出すための除外リスト（プラン・機能トグルは自動表示される） */
 const COMPANY_KNOWN_KEYS = new Set([
-  'id', 'name', 'logo_url', 'slogan', 'mvv', 'website_url',
+  'id', 'name', 'logo_url', 'website_url',
   'brand_color_primary', 'brand_color_secondary', 'created_at', 'updated_at',
 ])
 
@@ -225,8 +225,6 @@ export default function CompanyViewPage() {
           <CardContent className="grid grid-cols-1 gap-x-6 gap-y-1 p-4 sm:grid-cols-2 md:grid-cols-3">
             <KeyVal label="企業名" value={s(c.name)} />
             <KeyVal label="Webサイト" value={s(c.website_url)} />
-            <KeyVal label="スローガン" value={s(c.slogan)} />
-            <KeyVal label="MVV" value={s(c.mvv)} />
             <KeyVal
               label="ブランドカラー"
               value={
