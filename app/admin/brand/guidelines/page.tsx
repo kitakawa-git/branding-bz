@@ -34,24 +34,14 @@ import {
   arrayMove,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { parseYearMonth as parseHistoryYM, formatYearMonth as formatHistoryYM, YEAR_OPTIONS as HISTORY_YEAR_OPTIONS } from '@/lib/year-month'
 
 // id は philosophy_elements の行ID（新規追加項目では undefined → 保存時INSERT）
 type ValueItem = { id?: string; name: string; description: string; added_index: number }
 type HistoryItem = { year: string; event: string }
 
 // 沿革の year フィールドは表示文字列（"2011年" / "2011年5月"）で保持する。
-// ドロップダウン用に年・月を取り出す／組み立てるヘルパー。既存の年のみデータもそのまま扱える。
-function parseHistoryYM(raw: string): { year: string; month: string } {
-  const m = (raw || '').match(/(\d{4})[^\d]*(\d{1,2})?/)
-  return { year: m?.[1] ?? '', month: m?.[2] ? String(parseInt(m[2], 10)) : '' }
-}
-function formatHistoryYM(year: string, month: string): string {
-  if (!year) return ''
-  return month ? `${year}年${month}月` : `${year}年`
-}
-const HISTORY_CURRENT_YEAR = new Date().getFullYear()
-// 選択できる年（現在の年〜1900年）
-const HISTORY_YEAR_OPTIONS = Array.from({ length: HISTORY_CURRENT_YEAR - 1900 + 1 }, (_, i) => HISTORY_CURRENT_YEAR - i)
+// 年・月の相互変換ヘルパーは lib/year-month に共通化（設立などでも共用）。
 type ActionGuideline = { id?: string; title: string; description: string }
 
 type Guidelines = {

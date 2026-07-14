@@ -11,6 +11,7 @@ import { useAuth } from '../components/AdminDataProvider'
 import { ImageUpload } from '../components/ImageUpload'
 import { IndustrySelect } from '@/components/shared/IndustrySelect'
 import { BusinessContentEditor, type BusinessContentItem } from '@/components/shared/BusinessContentEditor'
+import { parseYearMonth, formatYearMonth, YEAR_OPTIONS } from '@/lib/year-month'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
@@ -752,13 +753,33 @@ export default function CompanyPage() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <p className="text-[11px] text-gray-500 mb-1.5">設立</p>
-                  <Input
-                    type="text"
-                    value={company.founded}
-                    onChange={(e) => handleChange('founded', e.target.value)}
-                    placeholder="例: 2020年4月"
-                    className="h-10"
-                  />
+                  {(() => {
+                    const { year, month } = parseYearMonth(company.founded)
+                    return (
+                      <div className="flex gap-1">
+                        <select
+                          value={year}
+                          onChange={(e) => handleChange('founded', formatYearMonth(e.target.value, month))}
+                          className="h-10 rounded-md border border-input bg-white px-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                        >
+                          <option value="">年</option>
+                          {YEAR_OPTIONS.map(y => (
+                            <option key={y} value={y}>{y}年</option>
+                          ))}
+                        </select>
+                        <select
+                          value={month}
+                          onChange={(e) => handleChange('founded', formatYearMonth(year, e.target.value))}
+                          className="h-10 rounded-md border border-input bg-white px-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                        >
+                          <option value="">月</option>
+                          {Array.from({ length: 12 }, (_, i) => i + 1).map(mo => (
+                            <option key={mo} value={mo}>{mo}月</option>
+                          ))}
+                        </select>
+                      </div>
+                    )
+                  })()}
                 </div>
                 <div>
                   <p className="text-[11px] text-gray-500 mb-1.5">代表者</p>
