@@ -499,7 +499,7 @@ export default function CompanyPage() {
             <div className="mb-8">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <p className="text-[11px] text-gray-500 mb-1.5">設立</p>
+                  <h2 className="text-xs font-bold mb-3">設立</h2>
                   {(() => {
                     const { year, month } = parseYearMonth(company.founded)
                     return (
@@ -529,7 +529,7 @@ export default function CompanyPage() {
                   })()}
                 </div>
                 <div>
-                  <p className="text-[11px] text-gray-500 mb-1.5">代表者</p>
+                  <h2 className="text-xs font-bold mb-3">代表者</h2>
                   <Input
                     type="text"
                     value={company.representative}
