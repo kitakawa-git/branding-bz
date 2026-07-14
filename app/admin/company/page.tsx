@@ -554,7 +554,7 @@ export default function CompanyPage() {
 
             {/* WebサイトURL */}
             <div className="mb-5">
-              <h2 className="text-xs font-bold mb-3">ウェブサイトURL</h2>
+              <h2 className="text-xs font-bold mb-3">ウェブサイト</h2>
               <Input
                 type="text"
                 value={company.website_url}
