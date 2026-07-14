@@ -67,6 +67,16 @@ function RashisaGroup({ pathname, onNavClick }: { pathname: string; onNavClick: 
       <SidebarGroupLabel>私たちの「らしさ」</SidebarGroupLabel>
       <SidebarGroupContent>
         <SidebarMenu>
+          {/* 0. 私たちについて（会社/ブランド基本情報） */}
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild isActive={pathname.startsWith('/portal/about')}>
+              <Link href="/portal/about" onClick={onNavClick}>
+                <Users size={18} />
+                <span>私たちについて</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+
           {/* 1. 考え方（バリューを内包） */}
           <SidebarMenuItem>
             <SidebarMenuButton asChild isActive={pathname.startsWith('/portal/guidelines')}>
@@ -217,12 +227,6 @@ export function PortalSidebar() {
                   align="start"
                   className="w-[--radix-dropdown-menu-trigger-width] min-w-56 p-2"
                 >
-                  <DropdownMenuItem asChild className="h-11 px-3 gap-2 text-base font-medium rounded-md">
-                    <Link href="/portal/about" className="no-underline" onClick={handleNavClick}>
-                      <Users className="size-4" />
-                      私たちについて
-                    </Link>
-                  </DropdownMenuItem>
                   <DropdownMenuItem asChild className="h-11 px-3 gap-2 text-base font-medium rounded-md">
                     <Link href="/portal/profile" className="no-underline" onClick={handleNavClick}>
                       <CircleUser className="size-4" />
