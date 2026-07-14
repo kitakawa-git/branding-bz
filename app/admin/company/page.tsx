@@ -530,13 +530,15 @@ export default function CompanyPage() {
             {/* 代表者（ポータル「私たちについて」に表示） */}
             <div className="mb-8">
               <h2 className="text-xs font-bold mb-3">代表者</h2>
-              <Input
-                type="text"
-                value={company.representative}
-                onChange={(e) => handleChange('representative', e.target.value)}
-                placeholder="例: 山田太郎"
-                className="h-10"
-              />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Input
+                  type="text"
+                  value={company.representative}
+                  onChange={(e) => handleChange('representative', e.target.value)}
+                  placeholder="例: 山田太郎"
+                  className="h-10"
+                />
+              </div>
             </div>
 
             {/* 業種 */}
