@@ -1,6 +1,7 @@
 // ニュース詳細（新デザイン / 公開・SSR）
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import ReactMarkdown from 'react-markdown'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import type { NewsItem, NewsCategory } from '@/lib/types/news'
 import { NEWS_CATEGORY_LABELS } from '@/lib/types/news'
@@ -62,7 +63,9 @@ export default async function LpNewsDetailPage({ params }: { params: Promise<{ s
         <h1 className="mb-8 text-2xl font-bold tracking-tight md:text-3xl">{item.title}</h1>
 
         {item.body && (
-          <div className="whitespace-pre-wrap text-base leading-relaxed text-white/70">{item.body}</div>
+          <div className="prose prose-invert prose-sm md:prose-base max-w-none text-white/70 [&_a]:text-white [&_a]:underline [&_a:hover]:text-white/80 [&_h2]:mt-10 [&_h2]:mb-4 [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:text-white [&_h3]:mt-8 [&_h3]:mb-3 [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:text-white [&_p]:my-4 [&_p]:leading-relaxed [&_ul]:my-4 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:my-4 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:my-1 [&_li]:leading-relaxed [&_strong]:font-semibold [&_strong]:text-white [&_code]:rounded [&_code]:bg-white/10 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:text-sm [&_blockquote]:my-4 [&_blockquote]:border-l-2 [&_blockquote]:border-white/20 [&_blockquote]:pl-4 [&_blockquote]:text-white/60 [&_hr]:my-8 [&_hr]:border-white/10">
+            <ReactMarkdown>{item.body}</ReactMarkdown>
+          </div>
         )}
 
         <div className="mt-16 border-t border-white/10 pt-8">
