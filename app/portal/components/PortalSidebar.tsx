@@ -67,16 +67,6 @@ function RashisaGroup({ pathname, onNavClick }: { pathname: string; onNavClick: 
       <SidebarGroupLabel>私たちの「らしさ」</SidebarGroupLabel>
       <SidebarGroupContent>
         <SidebarMenu>
-          {/* 0. 私たちについて（会社/ブランド基本情報） */}
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={pathname.startsWith('/portal/about')}>
-              <Link href="/portal/about" onClick={onNavClick}>
-                <Users size={18} />
-                <span>私たちについて</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-
           {/* 1. 考え方（バリューを内包） */}
           <SidebarMenuItem>
             <SidebarMenuButton asChild isActive={pathname.startsWith('/portal/guidelines')}>
@@ -113,6 +103,16 @@ function RashisaGroup({ pathname, onNavClick }: { pathname: string; onNavClick: 
               <Link href="/portal/strategy" onClick={onNavClick}>
                 <Target size={18} />
                 <span>接し方</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+
+          {/* 5. 私たちについて（会社/ブランド基本情報） */}
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild isActive={pathname.startsWith('/portal/about')}>
+              <Link href="/portal/about" onClick={onNavClick}>
+                <Users size={18} />
+                <span>私たちについて</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
