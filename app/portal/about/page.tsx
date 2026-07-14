@@ -22,6 +22,7 @@ type Overview = {
   name: string
   name_ja: string
   name_en: string
+  name_display_lang: 'ja' | 'en'
   website_url: string
   industry_category: string
   industry_subcategory: string
@@ -128,7 +129,7 @@ export default function PortalAboutPage() {
         fetchWithRetry(() =>
           supabase
             .from('companies')
-            .select('name, name_ja, name_en, website_url, industry_category, industry_subcategory, founded, representative, representative_profile')
+            .select('name, name_ja, name_en, name_display_lang, website_url, industry_category, industry_subcategory, founded, representative, representative_profile')
             .eq('id', companyId)
             .single()
         ),
@@ -150,6 +151,7 @@ export default function PortalAboutPage() {
           name: r.name || '',
           name_ja: r.name_ja || '',
           name_en: r.name_en || '',
+          name_display_lang: r.name_display_lang === 'en' ? 'en' : 'ja',
           website_url: r.website_url || '',
           industry_category: r.industry_category || '',
           industry_subcategory: r.industry_subcategory || '',
@@ -189,6 +191,9 @@ export default function PortalAboutPage() {
 
   const nameJa = data.name_ja || data.name
   const nameEn = data.name_en
+  // 表示に使う表記トグルに応じて主/副を入れ替え（管理画面 name_display_lang）
+  const primaryName = data.name_display_lang === 'en' ? (nameEn || nameJa) : (nameJa || nameEn)
+  const secondaryName = data.name_display_lang === 'en' ? nameJa : nameEn
   const rows: Array<{ label: string; value: React.ReactNode }> = []
   if (data.founded) rows.push({ label: '設立', value: data.founded })
   if (data.representative) {
@@ -232,9 +237,9 @@ export default function PortalAboutPage() {
               </div>
             )}
             <div className="min-w-0">
-              <h1 className="text-xl font-bold text-foreground m-0">{nameJa}</h1>
-              {nameEn && nameEn !== nameJa && (
-                <p className="text-sm text-muted-foreground m-0 mt-0.5">{nameEn}</p>
+              <h1 className="text-xl font-bold text-foreground m-0">{primaryName}</h1>
+              {secondaryName && secondaryName !== primaryName && (
+                <p className="text-sm text-muted-foreground m-0 mt-0.5">{secondaryName}</p>
               )}
             </div>
           </div>
