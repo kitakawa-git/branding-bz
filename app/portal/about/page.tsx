@@ -1,7 +1,7 @@
 'use client'
 
 // 私たちについて（会社/ブランド概要）閲覧ページ
-// 表示: 会社名(日本語/英語)・ロゴ・スローガン・業種・設立・代表者・所在地・公式サイト・事業内容
+// 表示: 会社名(日本語/英語)・ロゴ・スローガン・業種・設立・代表者・公式サイト・事業内容
 // - 会社名(日/英)・ロゴ・スローガンは PortalDataProvider から、その他は companies を直接取得
 // - 事業内容は philosophy_elements の service 行（管理は基本情報ページ）
 // - 沿革/MVV は「考え方」にあるため重複させない
@@ -26,7 +26,6 @@ type Overview = {
   industry_category: string
   industry_subcategory: string
   founded: string
-  address: string
   representative: string
   business_content: BusinessItem[]
   business_content_sort: 'registered' | 'custom'
@@ -53,7 +52,7 @@ export default function PortalAboutPage() {
         fetchWithRetry(() =>
           supabase
             .from('companies')
-            .select('name, name_ja, name_en, website_url, industry_category, industry_subcategory, founded, address, representative')
+            .select('name, name_ja, name_en, website_url, industry_category, industry_subcategory, founded, representative')
             .eq('id', companyId)
             .single()
         ),
@@ -79,7 +78,6 @@ export default function PortalAboutPage() {
           industry_category: r.industry_category || '',
           industry_subcategory: r.industry_subcategory || '',
           founded: r.founded || '',
-          address: r.address || '',
           representative: r.representative || '',
           business_content: phil.services,
           business_content_sort: guidelinesRow?.business_content_sort === 'custom' ? 'custom' : 'registered',
@@ -117,7 +115,6 @@ export default function PortalAboutPage() {
   const rows: Array<{ label: string; value: React.ReactNode }> = []
   if (data.founded) rows.push({ label: '設立', value: data.founded })
   if (data.representative) rows.push({ label: '代表者', value: data.representative })
-  if (data.address) rows.push({ label: '所在地', value: data.address })
   const industry = industryLabel(data.industry_category, data.industry_subcategory)
   if (industry) rows.push({ label: '業種', value: industry })
   if (data.website_url) {

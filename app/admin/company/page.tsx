@@ -41,7 +41,6 @@ type Company = {
   industry_subcategory: string
   // 会社概要（ポータル「会社について」で表示）
   founded: string
-  address: string
   representative: string
   target_segments: TargetSegment[]
   // 事業内容（philosophy_elements の service 行）。表示順は business_content_sort。
@@ -70,7 +69,7 @@ export default function CompanyPage() {
       fetchWithRetry(() =>
         supabase
           .from('companies')
-          .select('id, name, name_ja, name_en, name_display_lang, logo_url, website_url, industry_category, industry_subcategory, founded, address, representative, target_segments')
+          .select('id, name, name_ja, name_en, name_display_lang, logo_url, website_url, industry_category, industry_subcategory, founded, representative, target_segments')
           .eq('id', companyId)
           .single()
       ),
@@ -102,7 +101,7 @@ export default function CompanyPage() {
         name_display_lang: string | null
         logo_url: string | null; website_url: string | null
         industry_category: string | null; industry_subcategory: string | null
-        founded: string | null; address: string | null; representative: string | null
+        founded: string | null; representative: string | null
         target_segments: TargetSegment[] | null
       }
       const rawName = row.name || ''
@@ -138,7 +137,6 @@ export default function CompanyPage() {
         industry_category: row.industry_category || '',
         industry_subcategory: row.industry_subcategory || '',
         founded: row.founded || '',
-        address: row.address || '',
         representative: row.representative || '',
         target_segments: row.target_segments || [],
         business_content: businessContent,
@@ -349,7 +347,6 @@ export default function CompanyPage() {
         industry_category: company.industry_category || null,
         industry_subcategory: company.industry_subcategory || null,
         founded: company.founded.trim() || null,
-        address: company.address.trim() || null,
         representative: company.representative.trim() || null,
         target_segments: cleanedTargetSegments,
       }
@@ -565,16 +562,6 @@ export default function CompanyPage() {
                     value={company.representative}
                     onChange={(e) => handleChange('representative', e.target.value)}
                     placeholder="例: 山田太郎"
-                    className="h-10"
-                  />
-                </div>
-                <div className="sm:col-span-3">
-                  <p className="text-[11px] text-gray-500 mb-1.5">所在地</p>
-                  <Input
-                    type="text"
-                    value={company.address}
-                    onChange={(e) => handleChange('address', e.target.value)}
-                    placeholder="例: 東京都千代田区..."
                     className="h-10"
                   />
                 </div>
