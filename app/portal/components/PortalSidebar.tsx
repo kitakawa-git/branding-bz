@@ -144,7 +144,7 @@ export function PortalSidebar() {
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton size="lg" asChild>
-                <Link href="/portal" onClick={handleNavClick}>
+                <Link href="/portal/about" onClick={handleNavClick}>
                   {/* ロゴ未登録時はアイコン枠を表示しない（フォールバックの頭文字も出さない） */}
                   {companyLogoUrl && (
                     <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground overflow-hidden">
