@@ -60,20 +60,23 @@ export function SuperAdminShell({ children }: { children: React.ReactNode }) {
   }
 
   // スーパー管理者: サイドバー + ヘッダー + コンテンツ（管理画面と同じ floating Sidebar）
-  // サイドバーの配色だけ紺色テーマに上書き（通常管理画面と区別）。
+  // サイドバーの配色だけ独自テーマに上書き（通常管理画面と区別）。
   // SidebarInset(本体)は bg-background、SidebarTrigger は ghost ボタンのため影響なし。
   return (
     <SidebarProvider
       style={{
         '--sidebar-width': '19rem',
-        // 背景はほぼ黒（ワントーン明るいダークグレー）、アクセント等は紺系のまま
+        // 背景はほぼ黒（無彩色のダークグレー）。
         '--sidebar-background': '0 0% 10%',
         '--sidebar-foreground': '210 40% 90%',
+        // ロゴ／フォーカスリングのみアクセントカラー（琥珀・紺）を残す
         '--sidebar-primary': '38 92% 50%',
         '--sidebar-primary-foreground': '214 60% 18%',
-        '--sidebar-accent': '213 45% 35%',
+        // アクティブ/ホバー背景は背景と同じ無彩色で明度+8pt（通常管理画面の 18%→26% と同じ関係）。
+        // 背景に馴染ませ、区別は文字色(白)と font-semibold で付ける。
+        '--sidebar-accent': '0 0% 18%',
         '--sidebar-accent-foreground': '0 0% 100%',
-        '--sidebar-border': '214 40% 38%',
+        '--sidebar-border': '0 0% 18%',
         '--sidebar-ring': '214 50% 55%',
       } as React.CSSProperties}
     >
