@@ -87,7 +87,8 @@ export function SuperAdminSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <Link href="/superadmin">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground overflow-hidden">
+                {/* 琥珀色のまま、暗い背景から輪郭が立つよう薄いグレーの外線を付ける */}
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg border border-gray-300 bg-sidebar-primary text-sidebar-primary-foreground overflow-hidden">
                   <ShieldCheck className="size-4" />
                 </div>
                 <div className="flex flex-col gap-0.5 leading-none">
