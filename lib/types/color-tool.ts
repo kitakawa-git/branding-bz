@@ -258,11 +258,11 @@ export const MOODBOARD_PAIRS: MoodboardPairDef[] = [
 ]
 
 // ============================================
-// フリーミアム制限
+// フリーミアム制限（colors 固有）
 // ============================================
+// 月間セッション上限は lib/tools/free-limits.ts の MONTHLY_FREE_LIMIT に集約（4ツール共通）
 
 export const FREE_LIMITS = {
-  monthlyGenerations: 3,       // 月間パレット生成回数
   proposalsPerGeneration: 3,   // 1回あたりの提案数
   chatTurnsPerSession: 5,      // セッションあたりのチャット回数
   pdfWatermark: true,          // PDF透かし

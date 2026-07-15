@@ -2,6 +2,7 @@
 // POST /api/tools/persona/sessions
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { MONTHLY_FREE_LIMIT, MONTHLY_LIMIT_REACHED_MESSAGE, getCurrentMonthStartUtcIso } from '@/lib/tools/free-limits'
 
 // ペルソナセッションのデフォルトデータ
 const DEFAULT_SESSION_DATA = {
@@ -14,8 +15,7 @@ const DEFAULT_SESSION_DATA = {
   completed: false,
 }
 
-// フリーミアム制限: 完了済みセッション数
-const FREE_LIMIT = 3
+// フリーミアム制限は lib/tools/free-limits.ts に集約（4ツール共通・月次リセット）
 
 export async function POST(request: NextRequest) {
 
@@ -50,15 +50,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'userId が必要です' }, { status: 400 })
     }
 
-    // フリーミアム制限チェック: 完了済みセッション数
+    // フリーミアム制限チェック: 当月(JST)の完了セッション数（1-1=B / 1-2=JST / 1-3=完了月）
+    const monthStart = getCurrentMonthStartUtcIso()
     const { count: completedCount } = await supabaseAdmin
       .from('mini_app_sessions')
       .select('id', { count: 'exact', head: true })
       .eq('user_id', authId)
       .eq('app_type', 'persona')
       .eq('status', 'completed')
+      .gte('updated_at', monthStart)
 
-    if (completedCount !== null && completedCount >= FREE_LIMIT) {
+    if (completedCount !== null && completedCount >= MONTHLY_FREE_LIMIT) {
       // 進行中のセッションがあればそれを返す（forceNew時は新規作成不可＝403）
       const { data: inProgressSession } = forceNew ? { data: null } : await supabaseAdmin
         .from('mini_app_sessions')
@@ -80,7 +82,7 @@ export async function POST(request: NextRequest) {
       }
 
       return NextResponse.json(
-        { error: `無料プランの上限（${FREE_LIMIT}回）に達しました。有料プランへのアップグレードをご検討ください。` },
+        { error: MONTHLY_LIMIT_REACHED_MESSAGE },
         { status: 403 }
       )
     }

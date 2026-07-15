@@ -3,6 +3,7 @@
 // 新規ユーザー作成 or 既存ユーザーのセッション作成
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { MONTHLY_FREE_LIMIT, MONTHLY_LIMIT_REACHED_MESSAGE, getCurrentMonthStartUtcIso } from '@/lib/tools/free-limits'
 
 export async function POST(request: NextRequest) {
 
@@ -54,6 +55,24 @@ export async function POST(request: NextRequest) {
         currentStep: existingSession.current_step,
         isExisting: true,
       })
+    }
+
+    // フリーミアム制限チェック: 当月(JST)の完了セッション数（1-1=B / 1-2=JST / 1-3=完了月）
+    // 他3ツールと共通の月次リセット。in_progress は上で既に返しているのでここに来た時点で新規作成扱い。
+    const monthStart = getCurrentMonthStartUtcIso()
+    const { count: completedCount } = await supabaseAdmin
+      .from('mini_app_sessions')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', authId)
+      .eq('app_type', 'brand_colors')
+      .eq('status', 'completed')
+      .gte('updated_at', monthStart)
+
+    if (completedCount !== null && completedCount >= MONTHLY_FREE_LIMIT) {
+      return NextResponse.json(
+        { error: MONTHLY_LIMIT_REACHED_MESSAGE },
+        { status: 403 }
+      )
     }
 
     // 既存のbranding.bzアカウントか確認（company_id取得）

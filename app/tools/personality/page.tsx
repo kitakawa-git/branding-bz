@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Fingerprint, Radar, Drama, CheckCircle2, Sparkles, SlidersHorizontal, Download, Unplug, ArrowRight, type LucideIcon } from 'lucide-react'
 import Nav from '@/components/lp/Nav'
 import Footer from '@/components/Footer'
+import { FREE_TIER_BADGE_LABEL } from '@/lib/tools/free-limits'
 
 const CONCEPT_CARDS = [
   { label: 'パーソナリティとは？', icon: Fingerprint, title: 'ブランドを「人格」に翻訳', description: '「もしブランドが人だったら、どんな性格か」。頭の中にある感覚を10問の質問で引き出し、AIが人格として言語化します。' },
@@ -157,7 +158,7 @@ export default function PersonalityLandingPage() {
             style={{ background: 'radial-gradient(80% 120% at 50% 0%, rgba(16,185,129,0.4) 0%, rgba(8,8,10,0) 60%), #0d0d11' }}
           >
             <div className="mb-7 inline-flex flex-wrap items-center justify-center gap-4 text-sm text-white/70">
-              <span className="inline-flex items-center gap-1.5"><CheckCircle2 size={14} className="text-emerald-400" /> 無料で3回まで利用可能</span>
+              <span className="inline-flex items-center gap-1.5"><CheckCircle2 size={14} className="text-emerald-400" /> {FREE_TIER_BADGE_LABEL}</span>
               <span className="inline-flex items-center gap-1.5"><CheckCircle2 size={14} className="text-emerald-400" /> クレジットカード不要</span>
             </div>
             <h2 className="text-balance text-3xl font-bold tracking-tight md:text-5xl">今すぐブランドの人格を診断する</h2>

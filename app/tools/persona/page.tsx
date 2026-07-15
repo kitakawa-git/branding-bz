@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { UserCircle, Route, CheckCircle2, Lightbulb, Download, Unplug, Target, ArrowRight, type LucideIcon } from 'lucide-react'
 import Nav from '@/components/lp/Nav'
 import Footer from '@/components/Footer'
+import { FREE_TIER_BADGE_LABEL } from '@/lib/tools/free-limits'
 
 const PERSONA_CARDS = [
   {
@@ -198,7 +199,7 @@ export default function PersonaLandingPage() {
             }}
           >
             <div className="mb-7 inline-flex flex-wrap items-center justify-center gap-4 text-sm text-white/70">
-              <span className="inline-flex items-center gap-1.5"><CheckCircle2 size={14} className="text-blue-400" /> 無料で3回まで利用可能</span>
+              <span className="inline-flex items-center gap-1.5"><CheckCircle2 size={14} className="text-blue-400" /> {FREE_TIER_BADGE_LABEL}</span>
               <span className="inline-flex items-center gap-1.5"><CheckCircle2 size={14} className="text-blue-400" /> クレジットカード不要</span>
             </div>
             <h2 className="text-balance text-3xl font-bold tracking-tight md:text-5xl">

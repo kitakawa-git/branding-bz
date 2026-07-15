@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Palette, WandSparkles, Download, CheckCircle2, Plug, ArrowRight, type LucideIcon } from 'lucide-react'
 import Nav from '@/components/lp/Nav'
 import Footer from '@/components/Footer'
+import { FREE_TIER_BADGE_LABEL } from '@/lib/tools/free-limits'
 
 const EXAMPLE_PALETTES = [
   {
@@ -252,7 +253,7 @@ export default function ColorsLandingPage() {
             style={{ background: 'radial-gradient(80% 120% at 50% 0%, rgba(236,72,153,0.4) 0%, rgba(8,8,10,0) 60%), #0d0d11' }}
           >
             <div className="mb-7 inline-flex flex-wrap items-center justify-center gap-4 text-sm text-white/70">
-              <span className="inline-flex items-center gap-1.5"><CheckCircle2 size={14} className="text-blue-400" /> アカウント登録は30秒</span>
+              <span className="inline-flex items-center gap-1.5"><CheckCircle2 size={14} className="text-blue-400" /> {FREE_TIER_BADGE_LABEL}</span>
               <span className="inline-flex items-center gap-1.5"><CheckCircle2 size={14} className="text-blue-400" /> クレジットカード不要</span>
             </div>
             <h2 className="text-balance text-3xl font-bold tracking-tight md:text-5xl">今すぐカラーパレットを作成</h2>
