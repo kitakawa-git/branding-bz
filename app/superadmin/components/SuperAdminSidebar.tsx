@@ -87,7 +87,7 @@ export function SuperAdminSidebar() {
             <SidebarMenuButton size="lg" asChild>
               <Link href="/superadmin">
                 {/* branding.bz の bz マーク（画像アセット: public/logo-mark.png） */}
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg border border-gray-500 overflow-hidden">
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg border border-gray-600 overflow-hidden">
                   <img src="/logo-mark.png" alt="" aria-hidden="true" className="size-full object-cover" />
                 </div>
                 <div className="flex flex-col gap-0.5 leading-none">
