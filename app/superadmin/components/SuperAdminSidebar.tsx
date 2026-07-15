@@ -1,8 +1,10 @@
 'use client'
 
 // スーパー管理画面サイドバー（shadcn/ui Sidebar ベース・管理画面と統一）
+import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
 import { useAdminData } from '@/app/admin/components/AdminDataProvider'
 import {
   Sidebar,
@@ -12,6 +14,7 @@ import {
   SidebarGroupContent,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar'
@@ -47,9 +50,30 @@ const navItems: NavItem[] = [
   { href: '/superadmin/design-system', label: 'デザインシステム', icon: Palette },
 ]
 
+// 承認待ち件数が変わったとき、承認ページからこのイベントで即時反映させる
+export const SIGNUP_REQUESTS_CHANGED = 'signup-requests-changed'
+
 export function SuperAdminSidebar() {
   const pathname = usePathname()
   const { user, profileName, profilePhotoUrl, signOut } = useAdminData()
+  // 承認待ちの新規登録件数（サイドバーの「新規登録の承認」にバッジ表示）
+  const [pendingCount, setPendingCount] = useState(0)
+
+  const loadPendingCount = useCallback(async () => {
+    const { count } = await supabase
+      .from('companies')
+      .select('id', { count: 'exact', head: true })
+      .eq('approval_status', 'pending')
+    setPendingCount(count ?? 0)
+  }, [])
+
+  // 初回・ページ遷移時に再取得。承認/却下の直後はカスタムイベントで即時反映。
+  useEffect(() => {
+    loadPendingCount()
+    const onChanged = () => loadPendingCount()
+    window.addEventListener(SIGNUP_REQUESTS_CHANGED, onChanged)
+    return () => window.removeEventListener(SIGNUP_REQUESTS_CHANGED, onChanged)
+  }, [loadPendingCount, pathname])
 
   const initials = profileName
     ? profileName.slice(0, 1)
@@ -84,6 +108,11 @@ export function SuperAdminSidebar() {
               {navItems.map((item) => {
                 const Icon = item.icon
                 const isActive = pathname.startsWith(item.href)
+                // 「新規登録の承認」だけ、承認待ち件数を通知バッジで出す
+                const badge =
+                  item.href === '/superadmin/signup-requests' && pendingCount > 0
+                    ? pendingCount
+                    : null
                 return (
                   <SidebarMenuItem key={item.href}>
                     <SidebarMenuButton asChild isActive={isActive}>
@@ -92,6 +121,15 @@ export function SuperAdminSidebar() {
                         <span>{item.label}</span>
                       </Link>
                     </SidebarMenuButton>
+                    {badge !== null && (
+                      // rounded-full: 通知バッジらしい見た目＋globals.css の本文14px底上げ対象外にする
+                      <SidebarMenuBadge
+                        className="rounded-full bg-red-500 font-bold text-white peer-hover/menu-button:text-white peer-data-[active=true]/menu-button:text-white"
+                        aria-label={`承認待ち ${badge}件`}
+                      >
+                        {badge > 99 ? '99+' : badge}
+                      </SidebarMenuBadge>
+                    )}
                   </SidebarMenuItem>
                 )
               })}

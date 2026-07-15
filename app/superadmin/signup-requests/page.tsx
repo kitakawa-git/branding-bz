@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { SIGNUP_REQUESTS_CHANGED } from '@/app/superadmin/components/SuperAdminSidebar'
 import { toast } from 'sonner'
 import { AlertTriangle, Building2, Mail, Clock, Ban, Plus, Trash2 } from 'lucide-react'
 
@@ -74,6 +75,8 @@ export default function SignupRequestsPage() {
       }
       toast.success(action === 'approve' ? '承認しました' : '却下しました')
       setRequests((prev) => prev.filter((r) => r.companyId !== req.companyId))
+      // サイドバーの承認待ちバッジを即時更新
+      window.dispatchEvent(new Event(SIGNUP_REQUESTS_CHANGED))
     } catch {
       toast.error('処理中にエラーが発生しました')
     } finally {
