@@ -19,7 +19,8 @@ export function SuperAdminHeader() {
 
   return (
     <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 px-4 bg-background/80 backdrop-blur-sm">
-      <SidebarTrigger className="-ml-1" />
+      {/* 通常管理画面(AdminHeader)・ポータルと同一指定に統一（タップ領域44px・アイコン24px） */}
+      <SidebarTrigger className="-ml-1 size-11 [&_svg]:size-6" />
       <Separator
         orientation="vertical"
         className="mr-2 data-[orientation=vertical]:h-4"
