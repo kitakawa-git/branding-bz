@@ -86,13 +86,9 @@ export function SuperAdminSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <Link href="/superadmin">
-                {/* branding.bz の bz マーク（ジオメトリは app/icon.svg と同一の正本） */}
+                {/* branding.bz の bz マーク（画像アセット: public/logo-mark.svg） */}
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg border border-gray-500 overflow-hidden">
-                  <svg viewBox="0 0 512 512" className="size-full" aria-hidden="true">
-                    <rect width="512" height="512" fill="#222222" />
-                    <path d="M115 169 H288 L115 342 Z" fill="#ffffff" />
-                    <path d="M396 342 H223 L396 169 Z" fill="#ffffff" />
-                  </svg>
+                  <img src="/logo-mark.svg" alt="" aria-hidden="true" className="size-full object-cover" />
                 </div>
                 <div className="flex flex-col gap-0.5 leading-none">
                   <span className="font-semibold">branding.bz</span>
