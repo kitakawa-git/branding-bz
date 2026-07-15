@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { SearchX } from 'lucide-react'
 
 /* 404 ページ。/admin/login と統一したリキッドグラス。
    GateShell を使うと onClick が必要でクライアント境界が入るため、
@@ -27,7 +28,9 @@ export default function NotFound() {
         />
 
         <div className="relative z-10 p-10 text-center">
-          <div className="mb-4 text-5xl">🔍</div>
+          <div className="mb-4 flex justify-center text-white/70">
+            <SearchX size={48} />
+          </div>
           <h1 className="mb-3 text-2xl font-bold">ページが見つかりません</h1>
           <p className="mb-6 text-sm leading-relaxed text-white/55">
             お探しのページは削除されたか、URLが変更されている可能性があります。

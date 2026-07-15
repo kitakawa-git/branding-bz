@@ -13,6 +13,7 @@ import { AppSidebar } from './AppSidebar'
 import { AdminHeader } from './AdminHeader'
 import { AdminDynamicTitle } from './AdminDynamicTitle'
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
+import { ShieldAlert, Hourglass } from 'lucide-react'
 import { GateShell } from '@/components/admin/GateShell'
 import { AuthSplash } from '@/components/admin/AuthSplash'
 
@@ -259,7 +260,7 @@ export function AdminDataProvider({
     return (
       <AdminDataContext.Provider value={contextValue}>
         <GateShell
-          icon={<span className="text-5xl">🚫</span>}
+          icon={<ShieldAlert size={48} />}
           title="アクセス権限がありません"
           body={<>このアカウント（{user.email}）は管理者として登録されていません。<br />管理者に連絡してください。</>}
           primary={{ label: 'ログアウト', onClick: signOut }}
@@ -273,7 +274,7 @@ export function AdminDataProvider({
     return (
       <AdminDataContext.Provider value={contextValue}>
         <GateShell
-          icon={<span className="text-5xl">⏳</span>}
+          icon={<Hourglass size={48} />}
           title="承認待ちです"
           body={<>ご登録ありがとうございます。ID INC. が内容を確認しています。承認されるとログインできるようになります。結果はメールでお知らせします。</>}
           primary={{ label: 'ログアウト', onClick: signOut }}

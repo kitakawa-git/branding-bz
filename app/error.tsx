@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import { AlertTriangle } from 'lucide-react'
 import { GateShell } from '@/components/admin/GateShell'
 
 /* 全アプリのエラー境界。Next.js が client component として要求する。 */
@@ -11,7 +12,7 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
 
   return (
     <GateShell
-      icon={<span className="text-5xl">⚠️</span>}
+      icon={<AlertTriangle size={48} />}
       title="エラーが発生しました"
       body="申し訳ありません。予期せぬエラーが発生しました。もう一度お試しください。"
       secondary={{ label: 'トップへ', onClick: () => { window.location.href = '/' } }}
