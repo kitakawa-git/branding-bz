@@ -1,54 +1,58 @@
-// PWAアイコン生成スクリプト（sharp使用）
-// 素材: public/logo.svg 左側のブランドマーク（2三角形・ベクターパス＝フォント非依存）
+// ファビコン / PWAアイコン生成スクリプト（sharp使用）
+// 実行: node scripts/gen-pwa-icons.mjs
+//
+// 素材（正本）: public/logo-mark.png
+//   北川さん提供の bz マーク画像（1024x1024・濃グレー背景 #222222 ＋白マーク・全面塗り）。
+//   以前はこのスクリプト内でベクターパスから描画していたが、提供画像を正本にする方針に変更した。
+//   マークの形や色を変えるときは public/logo-mark.png を差し替えて本スクリプトを再実行する。
+//
 // 出力:
-//   public/icons/icon-192.png         (purpose any・角丸)
-//   public/icons/icon-512.png         (purpose any・角丸)
-//   public/icons/icon-maskable-512.png(purpose maskable・全面塗り＝OSがマスク)
-//   app/apple-icon.png                (180・iOS用・全面塗り)
+//   public/icons/icon-192.png          (manifest purpose:any)
+//   public/icons/icon-512.png          (manifest purpose:any)
+//   public/icons/icon-maskable-512.png (manifest purpose:maskable ＝OSがマスクするので全面塗り)
+//   app/apple-icon.png                 (180・iOS。iOS側が角丸マスクするので全面塗り)
+//   app/icon.png                       (ファビコン。Next.js の app/icon.* 規約)
+//   app/favicon.ico                    (64・PNG-in-ICO。/favicon.ico を直接叩く古い経路向け)
+//
+// 注: 素材が全面塗り（角丸なし）のため、purpose:any も角丸なしの正方形になる。
+//     iOS/Android はホーム画面で自動的にマスクするため実害はない。
 import sharp from 'sharp'
-import { mkdir } from 'node:fs/promises'
+import { mkdir, writeFile } from 'node:fs/promises'
 
-// 白黒反転版：白背景＋濃いマーク
-const BG = '#ffffff'
-const FG = '#1a1a1a'
+const SRC = 'public/logo-mark.png'
 
-// ブランドマーク（logo.svg のマーク部分。元bbox x:0-112 / y:25.791-95）
-const MARK = `
-  <path d="M69.2093 95L112 95L112 52.2093L69.2093 95Z"/>
-  <path d="M69.2093 25.791L0 25.791L-1.21009e-05 95.0003L69.2093 25.791Z"/>
-`
-const MARK_W = 112
-const MARK_H = 69.209 // 95 - 25.791
-const MARK_Y0 = 25.791
-
-// 正方形キャンバスにマークを中央配置するSVGを生成
-// fill=マーク占有率（キャンバス幅に対する比）、rounded=角丸有無
-function buildSvg(size, fill, rounded) {
-  const markW = size * fill
-  const scale = markW / MARK_W
-  const markH = MARK_H * scale
-  const tx = (size - markW) / 2
-  const ty = (size - markH) / 2 - MARK_Y0 * scale
-  const rx = rounded ? Math.round(size * 0.1875) : 0 // 角丸=18.75%（iOS風）
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
-  <rect width="${size}" height="${size}" rx="${rx}" fill="${BG}"/>
-  <g transform="translate(${tx} ${ty}) scale(${scale})" fill="${FG}">${MARK}</g>
-</svg>`
+async function png(size, outPath) {
+  await sharp(SRC).resize(size, size, { fit: 'cover' }).png().toFile(outPath)
+  console.log('  ✓', outPath, `(${size}x${size})`)
 }
 
-async function render(svg, size, outPath) {
-  await sharp(Buffer.from(svg)).resize(size, size).png().toFile(outPath)
-  console.log('  ✓', outPath)
+// PNG を ICO コンテナに包む（PNG-in-ICO。モダンブラウザは全て対応）
+async function ico(size, outPath) {
+  const body = await sharp(SRC).resize(size, size, { fit: 'cover' }).png().toBuffer()
+  const header = Buffer.alloc(6)
+  header.writeUInt16LE(0, 0) // reserved
+  header.writeUInt16LE(1, 2) // type: 1=icon
+  header.writeUInt16LE(1, 4) // image count
+  const entry = Buffer.alloc(16)
+  entry.writeUInt8(size >= 256 ? 0 : size, 0) // width (0=256)
+  entry.writeUInt8(size >= 256 ? 0 : size, 1) // height
+  entry.writeUInt8(0, 2) // palette colors
+  entry.writeUInt8(0, 3) // reserved
+  entry.writeUInt16LE(1, 4) // color planes
+  entry.writeUInt16LE(32, 6) // bits per pixel
+  entry.writeUInt32LE(body.length, 8) // image size
+  entry.writeUInt32LE(header.length + entry.length, 12) // offset
+  await writeFile(outPath, Buffer.concat([header, entry, body]))
+  console.log('  ✓', outPath, `(${size}x${size} PNG-in-ICO)`)
 }
 
 await mkdir('public/icons', { recursive: true })
 
-// purpose any（角丸・マーク55%）
-await render(buildSvg(512, 0.55, true), 192, 'public/icons/icon-192.png')
-await render(buildSvg(512, 0.55, true), 512, 'public/icons/icon-512.png')
-// purpose maskable（全面塗り・マーク42%＝セーフゾーン内）
-await render(buildSvg(512, 0.42, false), 512, 'public/icons/icon-maskable-512.png')
-// apple-touch（全面塗り・マーク50%。iOSが角丸処理）
-await render(buildSvg(512, 0.5, false), 180, 'app/apple-icon.png')
+await png(192, 'public/icons/icon-192.png')
+await png(512, 'public/icons/icon-512.png')
+await png(512, 'public/icons/icon-maskable-512.png')
+await png(180, 'app/apple-icon.png')
+await png(512, 'app/icon.png')
+await ico(64, 'app/favicon.ico')
 
 console.log('done')
