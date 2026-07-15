@@ -123,8 +123,9 @@ export function SuperAdminSidebar() {
                     </SidebarMenuButton>
                     {badge !== null && (
                       // rounded-full: 通知バッジらしい見た目＋globals.css の本文14px底上げ対象外にする
+                      // top-1/2 + -translate-y-1/2: 既定の top-1.5（上寄せ）を打ち消して項目の上下中央に置く
                       <SidebarMenuBadge
-                        className="rounded-full bg-red-500 font-bold text-white peer-hover/menu-button:text-white peer-data-[active=true]/menu-button:text-white"
+                        className="peer-data-[size=default]/menu-button:top-1/2 -translate-y-1/2 rounded-full bg-red-500 font-bold text-white peer-hover/menu-button:text-white peer-data-[active=true]/menu-button:text-white"
                         aria-label={`承認待ち ${badge}件`}
                       >
                         {badge > 99 ? '99+' : badge}
