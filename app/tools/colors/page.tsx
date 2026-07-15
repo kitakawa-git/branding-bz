@@ -2,7 +2,7 @@
 
 // ブランドカラー定義 ランディングページ（LPダークデザインに準拠）
 import Link from 'next/link'
-import { Palette, WandSparkles, Download, CheckCircle2, Plug, ArrowRight, type LucideIcon } from 'lucide-react'
+import { Palette, WandSparkles, Download, CheckCircle2, Plug, ArrowRight, Plus, type LucideIcon } from 'lucide-react'
 import Nav from '@/components/lp/Nav'
 import Footer from '@/components/Footer'
 import { FREE_TIER_BADGE_LABEL } from '@/lib/tools/free-limits'
@@ -91,6 +91,26 @@ const HIGHLIGHTS = [
   { label: '連携', icon: Plug, title: ['ワンクリックで', 'branding.bz に連携'], description: '確定したカラーをブランディングプラットフォームに登録。社内ガイドラインや名刺に即反映。' },
 ]
 
+// 表示と FAQPage schema は同じ配列を参照して完全一致を担保する
+const FAQ_ITEMS = [
+  {
+    q: '無料で使えますか？',
+    a: 'はい。無料で月に3回までご利用いただけます。クレジットカード登録は不要です。毎月リセットされます。',
+  },
+  {
+    q: 'どんなカラーパレットが作れますか？',
+    a: 'ブランドのパーソナリティや業種に合わせて、AIがプロ品質のカラーパレットを提案します。WCAG準拠のアクセシビリティ基準を自動で検証し、誰にでも見やすい配色に整えます。',
+  },
+  {
+    q: '作ったカラーはどう使えますか？',
+    a: 'パレットカードのPDFとCSSカスタムプロパティをワンクリックでダウンロードでき、branding.bz 本体にも連携できます。',
+  },
+  {
+    q: 'デザインの専門知識がなくても使えますか？',
+    a: 'AIチャットで対話しながら「もう少し温かみがほしい」など、自然な言葉で何度でも配色を調整できます。',
+  },
+]
+
 /* LP準拠のダークグラスカード */
 function GlowCard({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   return (
@@ -131,6 +151,35 @@ export default function ColorsLandingPage() {
             offers: { '@type': 'Offer', price: '0', priceCurrency: 'JPY' },
             description: 'AIがブランドのパーソナリティや業種に合わせてプロ品質のカラーパレットを提案。WCAG準拠チェック、PDF・CSS出力に対応。',
             provider: { '@type': 'Organization', name: 'branding.bz', url: 'https://branding.bz' },
+          }),
+        }}
+      />
+      {/* FAQPage: 下の可視FAQと同じ FAQ_ITEMS を参照して1文字違わず一致を担保 */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'FAQPage',
+            mainEntity: FAQ_ITEMS.map((item) => ({
+              '@type': 'Question',
+              name: item.q,
+              acceptedAnswer: { '@type': 'Answer', text: item.a },
+            })),
+          }),
+        }}
+      />
+      {/* BreadcrumbList: 画面表示なし、schema のみ */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'BreadcrumbList',
+            itemListElement: [
+              { '@type': 'ListItem', position: 1, name: 'ホーム', item: 'https://branding.bz/' },
+              { '@type': 'ListItem', position: 2, name: 'ブランドカラー定義ツール', item: 'https://branding.bz/tools/colors' },
+            ],
           }),
         }}
       />
@@ -240,6 +289,27 @@ export default function ColorsLandingPage() {
                 title={<>{item.title[0]}<br />{item.title[1]}</>}
                 description={item.description}
               />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* よくある質問 */}
+      <section className="px-6 py-16">
+        <div className="mx-auto max-w-3xl">
+          <h2 className="mb-8 text-center text-3xl font-bold tracking-tight md:text-4xl">よくある質問</h2>
+          <div className="space-y-3">
+            {FAQ_ITEMS.map((item) => (
+              <details
+                key={item.q}
+                className="group rounded-2xl border border-white/10 bg-white/[0.03] p-5 transition-colors open:bg-white/[0.05]"
+              >
+                <summary className="flex cursor-pointer items-start justify-between gap-4 text-base font-semibold text-white [&::-webkit-details-marker]:hidden">
+                  <span>{item.q}</span>
+                  <Plus size={18} className="mt-0.5 flex-shrink-0 text-white/50 transition-transform group-open:rotate-45" />
+                </summary>
+                <p className="mt-3 text-sm leading-relaxed text-white/70">{item.a}</p>
+              </details>
             ))}
           </div>
         </div>

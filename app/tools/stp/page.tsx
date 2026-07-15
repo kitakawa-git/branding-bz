@@ -2,7 +2,7 @@
 
 // STP分析ツール ランディングページ（LPダークデザインに準拠）
 import Link from 'next/link'
-import { LayoutGrid, Target, MapPin, CheckCircle2, Lightbulb, SlidersHorizontal, Download, Unplug, ArrowRight, type LucideIcon } from 'lucide-react'
+import { LayoutGrid, Target, MapPin, CheckCircle2, Lightbulb, SlidersHorizontal, Download, Unplug, ArrowRight, Plus, type LucideIcon } from 'lucide-react'
 import Nav from '@/components/lp/Nav'
 import Footer from '@/components/Footer'
 import { FREE_TIER_BADGE_LABEL } from '@/lib/tools/free-limits'
@@ -26,6 +26,26 @@ const HIGHLIGHTS = [
   { label: 'マップ', icon: SlidersHorizontal, title: ['インタラクティブ', 'ポジショニングマップ'], description: 'スライダーで直感的に自社・競合を配置。ポジショニングの空白地帯が一目でわかります。' },
   { label: '出力', icon: Download, title: ['PDF・画像を', 'ワンクリック出力'], description: '分析結果をPDFでワンクリックダウンロード。ポジショニングマップも画像で保存できます。' },
   { label: '連携', icon: Unplug, title: ['ワンクリックで', 'branding.bz に連携'], description: '確定したSTP分析をブランディングプラットフォームに登録。ブランド戦略に即反映。' },
+]
+
+// 表示と FAQPage schema は同じ配列を参照して完全一致を担保する
+const FAQ_ITEMS = [
+  {
+    q: '無料で使えますか？',
+    a: 'はい。無料で月に3回までご利用いただけます。クレジットカード登録は不要です。毎月リセットされます。',
+  },
+  {
+    q: 'STP分析ツールで何ができますか？',
+    a: 'AIがセグメンテーション・ターゲティング・ポジショニングを提案し、ポジショニングマップの自動作成とPDF出力に対応しています。マップは画像でも保存できます。',
+  },
+  {
+    q: '作成した分析結果は保存・活用できますか？',
+    a: '分析結果はPDF・画像でダウンロードできるほか、ワンクリックで branding.bz のブランド戦略に連携できます。',
+  },
+  {
+    q: 'STP分析の知識がなくても使えますか？',
+    a: '5つのステップ（基本情報→セグメンテーション→ターゲティング→ポジショニング→確認・出力）に沿ってAIがガイドするため、専門知識がなくても進められます。',
+  },
 ]
 
 /* LP準拠のダークグラスカード */
@@ -68,6 +88,35 @@ export default function STPLandingPage() {
             offers: { '@type': 'Offer', price: '0', priceCurrency: 'JPY' },
             description: 'AIが最適なセグメンテーション・ターゲティング・ポジショニングを提案。ポジショニングマップの自動作成・PDF出力に対応。',
             provider: { '@type': 'Organization', name: 'branding.bz', url: 'https://branding.bz' },
+          }),
+        }}
+      />
+      {/* FAQPage: 下の可視FAQと同じ FAQ_ITEMS を参照して1文字違わず一致を担保 */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'FAQPage',
+            mainEntity: FAQ_ITEMS.map((item) => ({
+              '@type': 'Question',
+              name: item.q,
+              acceptedAnswer: { '@type': 'Answer', text: item.a },
+            })),
+          }),
+        }}
+      />
+      {/* BreadcrumbList: 画面表示なし、schema のみ */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'BreadcrumbList',
+            itemListElement: [
+              { '@type': 'ListItem', position: 1, name: 'ホーム', item: 'https://branding.bz/' },
+              { '@type': 'ListItem', position: 2, name: 'STP分析ツール', item: 'https://branding.bz/tools/stp' },
+            ],
           }),
         }}
       />
@@ -145,6 +194,27 @@ export default function STPLandingPage() {
                 title={<>{item.title[0]}<br />{item.title[1]}</>}
                 description={item.description}
               />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* よくある質問 */}
+      <section className="px-6 py-16">
+        <div className="mx-auto max-w-3xl">
+          <h2 className="mb-8 text-center text-3xl font-bold tracking-tight md:text-4xl">よくある質問</h2>
+          <div className="space-y-3">
+            {FAQ_ITEMS.map((item) => (
+              <details
+                key={item.q}
+                className="group rounded-2xl border border-white/10 bg-white/[0.03] p-5 transition-colors open:bg-white/[0.05]"
+              >
+                <summary className="flex cursor-pointer items-start justify-between gap-4 text-base font-semibold text-white [&::-webkit-details-marker]:hidden">
+                  <span>{item.q}</span>
+                  <Plus size={18} className="mt-0.5 flex-shrink-0 text-white/50 transition-transform group-open:rotate-45" />
+                </summary>
+                <p className="mt-3 text-sm leading-relaxed text-white/70">{item.a}</p>
+              </details>
             ))}
           </div>
         </div>

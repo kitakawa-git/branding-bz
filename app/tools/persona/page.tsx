@@ -2,7 +2,7 @@
 
 // ペルソナビルダー ランディングページ（LPダークデザインに準拠）
 import Link from 'next/link'
-import { UserCircle, Route, CheckCircle2, Lightbulb, Download, Unplug, Target, ArrowRight, type LucideIcon } from 'lucide-react'
+import { UserCircle, Route, CheckCircle2, Lightbulb, Download, Unplug, Target, ArrowRight, Plus, type LucideIcon } from 'lucide-react'
 import Nav from '@/components/lp/Nav'
 import Footer from '@/components/Footer'
 import { FREE_TIER_BADGE_LABEL } from '@/lib/tools/free-limits'
@@ -63,6 +63,26 @@ const HIGHLIGHTS = [
   },
 ]
 
+// 表示と FAQPage schema は同じ配列を参照して完全一致を担保する
+const FAQ_ITEMS = [
+  {
+    q: '無料で使えますか？',
+    a: 'はい。無料で月に3回までご利用いただけます。クレジットカード登録は不要です。毎月リセットされます。',
+  },
+  {
+    q: 'どんなペルソナが作れますか？',
+    a: '属性だけでなく、価値観・課題・購買行動、5段階のカスタマージャーニー（認知→興味→検討→購入→継続）までAIが提案します。',
+  },
+  {
+    q: 'どんな業種でも使えますか？',
+    a: 'はい。業種や事業内容を入力すると、AIがそれに合ったペルソナを生成します。',
+  },
+  {
+    q: '作ったペルソナは出力できますか？',
+    a: 'ペルソナシートとカスタマージャーニーマップの両方をPDF出力できます。確定したペルソナは branding.bz 本体にも連携できます。',
+  },
+]
+
 /* LP準拠のダークグラスカード */
 function GlowCard({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   return (
@@ -103,6 +123,35 @@ export default function PersonaLandingPage() {
             offers: { '@type': 'Offer', price: '0', priceCurrency: 'JPY' },
             description: 'AIがターゲット顧客のペルソナを自動生成。名前・年齢・職業・行動パターン・インサイトまで具体化。',
             provider: { '@type': 'Organization', name: 'branding.bz', url: 'https://branding.bz' },
+          }),
+        }}
+      />
+      {/* FAQPage: 下の可視FAQと同じ FAQ_ITEMS を参照して1文字違わず一致を担保 */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'FAQPage',
+            mainEntity: FAQ_ITEMS.map((item) => ({
+              '@type': 'Question',
+              name: item.q,
+              acceptedAnswer: { '@type': 'Answer', text: item.a },
+            })),
+          }),
+        }}
+      />
+      {/* BreadcrumbList: 画面表示なし、schema のみ */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'BreadcrumbList',
+            itemListElement: [
+              { '@type': 'ListItem', position: 1, name: 'ホーム', item: 'https://branding.bz/' },
+              { '@type': 'ListItem', position: 2, name: 'ペルソナビルダー', item: 'https://branding.bz/tools/persona' },
+            ],
           }),
         }}
       />
@@ -183,6 +232,27 @@ export default function PersonaLandingPage() {
                 title={<>{item.title[0]}<br />{item.title[1]}</>}
                 description={item.description}
               />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* よくある質問 */}
+      <section className="px-6 py-16">
+        <div className="mx-auto max-w-3xl">
+          <h2 className="mb-8 text-center text-3xl font-bold tracking-tight md:text-4xl">よくある質問</h2>
+          <div className="space-y-3">
+            {FAQ_ITEMS.map((item) => (
+              <details
+                key={item.q}
+                className="group rounded-2xl border border-white/10 bg-white/[0.03] p-5 transition-colors open:bg-white/[0.05]"
+              >
+                <summary className="flex cursor-pointer items-start justify-between gap-4 text-base font-semibold text-white [&::-webkit-details-marker]:hidden">
+                  <span>{item.q}</span>
+                  <Plus size={18} className="mt-0.5 flex-shrink-0 text-white/50 transition-transform group-open:rotate-45" />
+                </summary>
+                <p className="mt-3 text-sm leading-relaxed text-white/70">{item.a}</p>
+              </details>
             ))}
           </div>
         </div>
