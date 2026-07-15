@@ -462,34 +462,34 @@ export default function MembersPage() {
   if (loading) {
     return (
       <div>
-        <Skeleton className="h-8 w-40 mb-6" />
+        <Skeleton className="mb-6 h-8 w-40 bg-white/10" />
         {/* 作成フォームスケルトン */}
-        <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-6">
-          <CardContent className="p-5 space-y-4">
-            <Skeleton className="h-4 w-32" />
-            <Skeleton className="h-10 w-full rounded-md" />
-            <Skeleton className="h-10 w-full rounded-md" />
-            <Skeleton className="h-10 w-full rounded-md" />
-            <Skeleton className="h-9 w-28" />
+        <Card className="mb-6 border-white/10 bg-white/[0.03] text-white shadow-none">
+          <CardContent className="space-y-4 p-5">
+            <Skeleton className="h-4 w-32 bg-white/10" />
+            <Skeleton className="h-10 w-full rounded-md bg-white/10" />
+            <Skeleton className="h-10 w-full rounded-md bg-white/10" />
+            <Skeleton className="h-10 w-full rounded-md bg-white/10" />
+            <Skeleton className="h-9 w-28 bg-white/10" />
           </CardContent>
         </Card>
         {/* テーブルスケルトン */}
-        <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+        <Card className="border-white/10 bg-white/[0.03] text-white shadow-none">
           <CardContent className="p-0">
             <div className="p-4">
-              <div className="flex bg-muted px-4 py-3 gap-4 border-b border-border rounded-t-md">
+              <div className="flex gap-4 rounded-t-md border-b border-white/10 bg-white/5 px-4 py-3">
                 {[1, 2, 3, 4, 5, 6].map(i => (
-                  <Skeleton key={i} className="h-4 w-20" />
+                  <Skeleton key={i} className="h-4 w-20 bg-white/10" />
                 ))}
               </div>
               {[1, 2, 3, 4, 5].map(i => (
-                <div key={i} className="flex px-4 py-3 gap-4 border-b border-border items-center">
-                  <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-4 w-40" />
-                  <Skeleton className="h-4 w-12" />
-                  <Skeleton className="h-5 w-16 rounded-full" />
-                  <Skeleton className="h-4 w-20" />
-                  <Skeleton className="h-8 w-16 rounded" />
+                <div key={i} className="flex items-center gap-4 border-b border-white/10 px-4 py-3">
+                  <Skeleton className="h-4 w-24 bg-white/10" />
+                  <Skeleton className="h-4 w-40 bg-white/10" />
+                  <Skeleton className="h-4 w-12 bg-white/10" />
+                  <Skeleton className="h-5 w-16 rounded-full bg-white/10" />
+                  <Skeleton className="h-4 w-20 bg-white/10" />
+                  <Skeleton className="h-8 w-16 rounded bg-white/10" />
                 </div>
               ))}
             </div>
@@ -519,18 +519,18 @@ export default function MembersPage() {
 
           <form onSubmit={handleCreateMember} className="space-y-4">
             <div>
-              <label className="text-xs font-bold mb-1.5 block">メールアドレス</label>
+              <label className="mb-1.5 block text-xs font-bold">メールアドレス</label>
               <Input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="member@example.com" required className="h-9" />
             </div>
             <div>
-              <label className="text-xs font-bold mb-1.5 block">パスワード</label>
+              <label className="mb-1.5 block text-xs font-bold">パスワード</label>
               <div className="flex gap-2">
                 <Input type="text" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="8文字以上" required minLength={8} className="h-9 flex-1" />
-                <Button type="button" variant="outline" size="sm" className="h-9 text-xs shrink-0" onClick={() => setNewPassword(generatePassword())}>自動生成</Button>
+                <Button type="button" variant="outline" size="sm" className="h-9 shrink-0 text-xs" onClick={() => setNewPassword(generatePassword())}>自動生成</Button>
               </div>
             </div>
             <div>
-              <label className="text-xs font-bold mb-1.5 block">名前</label>
+              <label className="mb-1.5 block text-xs font-bold">名前</label>
               <Input type="text" value={newDisplayName} onChange={(e) => setNewDisplayName(e.target.value)} placeholder="山田太郎" required className="h-9" />
             </div>
             <div className="flex justify-end gap-2 pt-2">
@@ -546,24 +546,24 @@ export default function MembersPage() {
       </Dialog>
 
       {/* ===== 招待リンク ===== */}
-      <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-6">
+      <Card className="mb-6 border-white/10 bg-white/[0.03] text-white shadow-none">
         <CardContent className="p-0">
           <button
             onClick={() => setShowInviteLinks(!showInviteLinks)}
-            className="w-full p-4 flex items-center justify-between hover:bg-muted/30 transition-colors text-left"
+            className="flex w-full items-center justify-between p-4 text-left transition-colors hover:bg-white/[0.06]"
           >
             <div className="flex items-center gap-2">
-              <Link2 size={16} className="text-muted-foreground" />
-              <h3 className="text-sm font-bold text-foreground">招待リンク</h3>
-              <span className="text-xs text-muted-foreground">— 従業員に共有してセルフ登録</span>
+              <Link2 size={16} className="text-white/50" />
+              <h3 className="text-sm font-bold text-white">招待リンク</h3>
+              <span className="text-xs text-white/50">— 従業員に共有してセルフ登録</span>
             </div>
-            {showInviteLinks ? <ChevronUp size={16} className="text-muted-foreground" /> : <ChevronDown size={16} className="text-muted-foreground" />}
+            {showInviteLinks ? <ChevronUp size={16} className="text-white/50" /> : <ChevronDown size={16} className="text-white/50" />}
           </button>
 
           {showInviteLinks && (
-            <div className="px-5 pb-5 border-t">
+            <div className="border-t border-white/10 px-5 pb-5">
               <div className="pt-4">
-                <Button onClick={handleGenerateLink} disabled={generatingLink} size="sm" className="mb-4">
+                <Button onClick={handleGenerateLink} disabled={generatingLink} size="sm" className="mb-4 bg-white text-black hover:bg-white/90">
                   {generatingLink ? '生成中...' : '招待リンクを生成'}
                 </Button>
 
@@ -572,31 +572,31 @@ export default function MembersPage() {
                   <table className="w-full min-w-[520px] border-collapse text-sm">
                     <thead>
                       <tr>
-                        <th className="text-left px-4 py-2 bg-muted text-muted-foreground font-semibold border-b border-border text-xs">リンク</th>
-                        <th className="text-left px-4 py-2 bg-muted text-muted-foreground font-semibold border-b border-border text-xs">ステータス</th>
-                        <th className="text-left px-4 py-2 bg-muted text-muted-foreground font-semibold border-b border-border text-xs">作成日</th>
-                        <th className="text-left px-4 py-2 bg-muted text-muted-foreground font-semibold border-b border-border text-xs">操作</th>
+                        <th className="border-b border-white/10 bg-white/5 px-4 py-2 text-left text-xs font-semibold text-white/50">リンク</th>
+                        <th className="border-b border-white/10 bg-white/5 px-4 py-2 text-left text-xs font-semibold text-white/50">ステータス</th>
+                        <th className="border-b border-white/10 bg-white/5 px-4 py-2 text-left text-xs font-semibold text-white/50">作成日</th>
+                        <th className="border-b border-white/10 bg-white/5 px-4 py-2 text-left text-xs font-semibold text-white/50">操作</th>
                       </tr>
                     </thead>
                     <tbody>
                       {inviteLinks.map((link) => (
                         <tr key={link.id}>
-                          <td className="px-4 py-2 border-b border-border text-xs text-foreground break-all">
+                          <td className="break-all border-b border-white/10 px-4 py-2 text-xs text-white">
                             /portal/register?token={link.token.substring(0, 8)}...
                           </td>
-                          <td className="px-4 py-2 border-b border-border">
-                            <span className={`py-0.5 px-2 rounded text-xs font-bold ${link.is_active ? 'bg-green-50 text-green-600' : 'bg-muted text-muted-foreground'}`}>
+                          <td className="border-b border-white/10 px-4 py-2">
+                            <span className={`rounded px-2 py-0.5 text-xs font-bold ${link.is_active ? 'bg-emerald-500/10 text-emerald-400' : 'bg-white/5 text-white/50'}`}>
                               {link.is_active ? '有効' : '無効'}
                             </span>
                           </td>
-                          <td className="px-4 py-2 border-b border-border text-xs text-muted-foreground">
+                          <td className="border-b border-white/10 px-4 py-2 text-xs text-white/50">
                             {new Date(link.created_at).toLocaleDateString('ja-JP')}
                           </td>
-                          <td className="px-4 py-2 border-b border-border">
+                          <td className="border-b border-white/10 px-4 py-2">
                             {link.is_active && (
                               <div className="flex gap-2">
-                                <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => handleCopyLink(link.token)}>コピー</Button>
-                                <Button variant="outline" size="sm" className="h-7 text-xs text-destructive hover:text-destructive" onClick={() => handleDeactivateLink(link.id)}>無効化</Button>
+                                <Button variant="outline" size="sm" className="h-7 border-white/15 bg-white/5 text-xs text-white hover:bg-white/10 hover:text-white" onClick={() => handleCopyLink(link.token)}>コピー</Button>
+                                <Button variant="outline" size="sm" className="h-7 border-rose-500/30 bg-white/5 text-xs text-rose-400 hover:bg-rose-500/10 hover:text-rose-300" onClick={() => handleDeactivateLink(link.id)}>無効化</Button>
                               </div>
                             )}
                           </td>
@@ -607,7 +607,7 @@ export default function MembersPage() {
                   </div>
                 )}
                 {inviteLinks.length === 0 && (
-                  <p className="text-xs text-muted-foreground">招待リンクはまだありません</p>
+                  <p className="text-xs text-white/50">招待リンクはまだありません</p>
                 )}
               </div>
             </div>
@@ -616,34 +616,34 @@ export default function MembersPage() {
       </Card>
 
       {/* ===== 孤立アカウントクリーンアップ ===== */}
-      <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-6">
+      <Card className="mb-6 border-white/10 bg-white/[0.03] text-white shadow-none">
         <CardContent className="p-0">
           <button
             onClick={() => setShowCleanup(!showCleanup)}
-            className="w-full p-4 flex items-center justify-between hover:bg-muted/30 transition-colors text-left"
+            className="flex w-full items-center justify-between p-4 text-left transition-colors hover:bg-white/[0.06]"
           >
             <div className="flex items-center gap-2">
-              <Trash2 size={16} className="text-muted-foreground" />
-              <h3 className="text-sm font-bold text-foreground">残存アカウントの削除</h3>
-              <span className="text-xs text-muted-foreground">— 「既に登録されています」エラーが出る時に使用</span>
+              <Trash2 size={16} className="text-white/50" />
+              <h3 className="text-sm font-bold text-white">残存アカウントの削除</h3>
+              <span className="text-xs text-white/50">— 「既に登録されています」エラーが出る時に使用</span>
             </div>
-            {showCleanup ? <ChevronUp size={16} className="text-muted-foreground" /> : <ChevronDown size={16} className="text-muted-foreground" />}
+            {showCleanup ? <ChevronUp size={16} className="text-white/50" /> : <ChevronDown size={16} className="text-white/50" />}
           </button>
 
           {showCleanup && (
-            <div className="px-5 pb-5 border-t">
+            <div className="border-t border-white/10 px-5 pb-5">
               <div className="pt-4">
-                <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
+                <p className="mb-3 text-xs leading-relaxed text-white/55">
                   メンバー削除後にAuthデータが残ってしまい、同じメールアドレスで再登録できないケース用の復旧機能です。<br />
                   メンバー一覧に存在するアカウントには使えません（先に通常の削除を実行してください）。
                 </p>
-                <div className="flex gap-2 items-start">
+                <div className="flex items-start gap-2">
                   <Input
                     type="email"
                     placeholder="member@example.com"
                     value={cleanupEmail}
                     onChange={(e) => setCleanupEmail(e.target.value)}
-                    className="max-w-xs"
+                    className="max-w-xs border-white/10 bg-white/5 text-white placeholder:text-white/30"
                     disabled={cleaningUp}
                   />
                   <AlertDialog>
@@ -651,7 +651,7 @@ export default function MembersPage() {
                       <Button
                         size="sm"
                         variant="outline"
-                        className="text-destructive hover:text-destructive"
+                        className="border-rose-500/30 bg-white/5 text-rose-400 hover:bg-rose-500/10 hover:text-rose-300"
                         disabled={!cleanupEmail.trim() || cleaningUp}
                       >
                         {cleaningUp ? '削除中...' : '残存アカウントを削除'}
@@ -685,32 +685,32 @@ export default function MembersPage() {
 
       {/* ===== 参加リクエスト ===== */}
       {joinRequests.length > 0 && (
-        <Card className="border-amber-200 bg-amber-50/50 shadow-none mb-6">
+        <Card className="mb-6 border-amber-500/20 bg-amber-500/10 text-white shadow-none">
           <CardContent className="p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <UserPlus size={16} className="text-amber-600" />
-              <h3 className="text-sm font-bold text-foreground">
+            <div className="mb-3 flex items-center gap-2">
+              <UserPlus size={16} className="text-amber-400" />
+              <h3 className="text-sm font-bold text-white">
                 参加リクエスト
-                <span className="ml-2 inline-flex items-center justify-center h-5 min-w-[20px] px-1.5 rounded-full bg-amber-500 text-white text-xs font-bold">
+                <span className="ml-2 inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-amber-500 px-1.5 text-xs font-bold text-black">
                   {joinRequests.length}
                 </span>
               </h3>
             </div>
             <div className="space-y-2">
               {joinRequests.map((req) => (
-                <div key={req.id} className="flex items-center justify-between gap-3 p-3 rounded-lg bg-white border border-border">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-foreground m-0 truncate">{req.display_name}</p>
-                    <p className="text-xs text-muted-foreground m-0 truncate">{req.email}</p>
-                    <p className="text-xs text-muted-foreground m-0">
+                <div key={req.id} className="flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-white/5 p-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="m-0 truncate text-sm font-bold text-white">{req.display_name}</p>
+                    <p className="m-0 truncate text-xs text-white/55">{req.email}</p>
+                    <p className="m-0 text-xs text-white/40">
                       {new Date(req.created_at).toLocaleDateString('ja-JP')} 申請
                     </p>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex shrink-0 items-center gap-2">
                     <Button
                       variant="outline"
                       size="sm"
-                      className="h-8 text-xs gap-1 text-green-600 border-green-200 hover:bg-green-50 hover:text-green-700"
+                      className="h-8 gap-1 border-emerald-500/30 bg-white/5 text-xs text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-300"
                       disabled={processingRequestId === req.id}
                       onClick={() => handleJoinRequest(req.id, 'approve')}
                     >
@@ -720,7 +720,7 @@ export default function MembersPage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="h-8 text-xs gap-1 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+                      className="h-8 gap-1 border-rose-500/30 bg-white/5 text-xs text-rose-400 hover:bg-rose-500/10 hover:text-rose-300"
                       disabled={processingRequestId === req.id}
                       onClick={() => handleJoinRequest(req.id, 'reject')}
                     >
@@ -736,20 +736,20 @@ export default function MembersPage() {
       )}
 
       {/* ===== アカウント一覧 ===== */}
-      <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+      <Card className="border-white/10 bg-white/[0.03] text-white shadow-none">
         <CardContent className="p-0">
           {fetchError ? (
-            <div className="text-center p-10">
-              <p className="text-red-600 text-sm mb-3">{fetchError}</p>
-              <Button variant="outline" size="sm" onClick={() => fetchData()}>再読み込み</Button>
+            <div className="p-10 text-center">
+              <p className="mb-3 text-sm text-rose-400">{fetchError}</p>
+              <Button variant="outline" size="sm" className="border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white" onClick={() => fetchData()}>再読み込み</Button>
             </div>
           ) : members.length === 0 ? (
-            <p className="text-muted-foreground text-center p-10">アカウントが登録されていません</p>
+            <p className="p-10 text-center text-white/50">アカウントが登録されていません</p>
           ) : (
             <div className="overflow-x-auto">
             <table className="w-full min-w-[640px]">
               <thead>
-                <tr className="border-b text-left text-xs text-muted-foreground">
+                <tr className="border-b border-white/10 text-left text-xs text-white/40">
                   <th className="px-4 py-3 font-medium">名前</th>
                   <th className="px-4 py-3 font-medium">メール</th>
                   <th className="px-4 py-3 font-medium">名刺</th>
@@ -763,39 +763,39 @@ export default function MembersPage() {
                   const cardEnabled = member.profile?.card_enabled ?? false
                   const profileId = member.profile?.id
                   return (
-                    <tr key={member.id} className="border-b last:border-b-0 hover:bg-muted/30 transition-colors">
+                    <tr key={member.id} className="border-b border-white/10 transition-colors last:border-b-0 hover:bg-white/[0.04]">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
                           <Avatar className="size-9 shrink-0">
                             {member.profile?.photo_url && <AvatarImage src={member.profile.photo_url} alt={member.display_name} />}
-                            <AvatarFallback className="text-xs">{member.display_name.slice(0, 1)}</AvatarFallback>
+                            <AvatarFallback className="bg-white/10 text-xs text-white">{member.display_name.slice(0, 1)}</AvatarFallback>
                           </Avatar>
-                          <span className="text-sm font-bold text-foreground">{member.display_name}</span>
+                          <span className="text-sm font-bold text-white">{member.display_name}</span>
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <span className="text-xs text-foreground">{member.email}</span>
+                        <span className="text-xs text-white/70">{member.email}</span>
                       </td>
                       <td className="px-4 py-3">
                         {profileId ? (
                           <button
                             onClick={() => toggleCard(profileId, cardEnabled)}
                             disabled={togglingId === profileId}
-                            className={`py-1 px-3 rounded-xl border-none text-xs font-bold cursor-pointer ${cardEnabled ? 'bg-green-50 text-green-600' : 'bg-muted text-muted-foreground'} ${togglingId === profileId ? 'opacity-50 cursor-default' : ''}`}
+                            className={`cursor-pointer rounded-xl border-none px-3 py-1 text-xs font-bold ${cardEnabled ? 'bg-emerald-500/10 text-emerald-400' : 'bg-white/5 text-white/50'} ${togglingId === profileId ? 'cursor-default opacity-50' : ''}`}
                           >
                             {cardEnabled ? <><Check size={14} className="inline" /> ON</> : 'OFF'}
                           </button>
                         ) : (
-                          <span className="text-muted-foreground text-xs">-</span>
+                          <span className="text-xs text-white/40">-</span>
                         )}
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`py-0.5 px-2 rounded text-xs font-bold ${member.is_active ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
+                        <span className={`rounded px-2 py-0.5 text-xs font-bold ${member.is_active ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
                           {member.is_active ? '有効' : '無効'}
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-xs text-white/50">
                           {new Date(member.created_at).toLocaleDateString('ja-JP')}
                         </span>
                       </td>
@@ -806,7 +806,7 @@ export default function MembersPage() {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className={`size-8 ${member.is_active ? '' : 'text-muted-foreground'}`}
+                                className={`size-8 text-white/70 hover:bg-white/10 hover:text-white ${member.is_active ? '' : 'text-white/40'}`}
                               >
                                 {member.is_active ? <Eye size={14} /> : <EyeOff size={14} />}
                               </Button>
@@ -831,13 +831,13 @@ export default function MembersPage() {
                             </AlertDialogContent>
                           </AlertDialog>
                           {profileId && cardEnabled ? (
-                            <Button variant="ghost" size="icon" className="size-8" asChild>
+                            <Button variant="ghost" size="icon" className="size-8 text-white/70 hover:bg-white/10 hover:text-white" asChild>
                               <Link href={`/admin/members/${profileId}/edit`}>
                                 <Pencil size={14} />
                               </Link>
                             </Button>
                           ) : (
-                            <Button variant="ghost" size="icon" className="size-8" disabled>
+                            <Button variant="ghost" size="icon" className="size-8 text-white/30" disabled>
                               <Pencil size={14} />
                             </Button>
                           )}
@@ -846,7 +846,7 @@ export default function MembersPage() {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="size-8 text-destructive hover:text-destructive"
+                                className="size-8 text-rose-400 hover:bg-rose-500/10 hover:text-rose-300"
                               >
                                 <Trash2 size={14} />
                               </Button>
