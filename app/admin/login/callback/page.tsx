@@ -6,7 +6,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { Skeleton } from '@/components/ui/skeleton'
+import { AuthSplash } from '@/components/admin/AuthSplash'
 
 export default function AdminAuthCallbackPage() {
   const router = useRouter()
@@ -63,29 +63,13 @@ export default function AdminAuthCallbackPage() {
 
   if (error) {
     return (
-      <div
-        className="flex min-h-screen items-center justify-center font-sans"
-        style={{ background: 'linear-gradient(135deg, #0f0f1a 0%, #141425 50%, #0d0d1a 100%)' }}
-      >
-        <div
-          className="rounded-xl px-6 py-4 text-sm text-red-300"
-          style={{ background: 'rgba(220, 38, 38, 0.15)', border: '1px solid rgba(220, 38, 38, 0.25)' }}
-        >
+      <div className="flex min-h-screen items-center justify-center bg-white px-6 font-sans">
+        <div className="rounded-2xl border border-rose-500/30 bg-rose-500/5 px-6 py-4 text-sm text-rose-500">
           {error}
         </div>
       </div>
     )
   }
 
-  return (
-    <div
-      className="flex min-h-screen items-center justify-center font-sans"
-      style={{ background: 'linear-gradient(135deg, #0f0f1a 0%, #141425 50%, #0d0d1a 100%)' }}
-    >
-      <div className="text-center">
-        <Skeleton className="mx-auto mb-4 h-8 w-48 bg-white/10" />
-        <p className="text-sm text-white/50">認証を確認しています...</p>
-      </div>
-    </div>
-  )
+  return <AuthSplash message="認証を確認しています..." />
 }

@@ -10,9 +10,9 @@ import type { PortalSubtitles } from '@/lib/portal-subtitles'
 import { supabase } from '@/lib/supabase'
 import { FEATURE_TOGGLE_COLUMNS } from '@/lib/constants/feature-toggles'
 import { useAppAuth } from '@/components/providers/AppAuthProvider'
-import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { ShieldAlert } from 'lucide-react'
+import { GateShell } from '@/components/admin/GateShell'
+import { AuthSplash } from '@/components/admin/AuthSplash'
 
 type MemberInfo = {
   id: string
@@ -242,9 +242,7 @@ export function PortalDataProvider({ children }: { children: React.ReactNode }) 
   if (authLoading || loading) {
     return (
       <PortalDataContext.Provider value={contextValue}>
-        <div className="flex items-center justify-center min-h-screen bg-white text-base text-gray-500 font-sans">
-          読み込み中...
-        </div>
+        <AuthSplash />
       </PortalDataContext.Provider>
     )
   }
@@ -258,24 +256,12 @@ export function PortalDataProvider({ children }: { children: React.ReactNode }) 
   if (!member || !companyId) {
     return (
       <PortalDataContext.Provider value={contextValue}>
-        <div className="flex items-center justify-center min-h-screen bg-white font-sans">
-          <Card className="bg-[hsl(0_0%_97%)] border shadow-none max-w-[400px] w-full mx-5">
-            <CardContent className="p-10 text-center">
-              <div className="mb-4 flex justify-center text-muted-foreground">
-                <ShieldAlert size={48} />
-              </div>
-              <h2 className="text-xl font-bold text-foreground mb-3">
-                アクセス権限がありません
-              </h2>
-              <p className="text-base sm:text-sm text-muted-foreground mb-6 leading-relaxed">
-                このアカウントはメンバーとして登録されていません。管理者に連絡してください。
-              </p>
-              <Button onClick={signOut} className="rounded-lg">
-                ログアウト
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+        <GateShell
+          icon={<ShieldAlert size={48} />}
+          title="アクセス権限がありません"
+          body="このアカウントはメンバーとして登録されていません。管理者に連絡してください。"
+          primary={{ label: 'ログアウト', onClick: signOut }}
+        />
       </PortalDataContext.Provider>
     )
   }

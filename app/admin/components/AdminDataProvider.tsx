@@ -13,6 +13,8 @@ import { AppSidebar } from './AppSidebar'
 import { AdminHeader } from './AdminHeader'
 import { AdminDynamicTitle } from './AdminDynamicTitle'
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
+import { GateShell } from '@/components/admin/GateShell'
+import { AuthSplash } from '@/components/admin/AuthSplash'
 
 // companies レコード（少なくとも機能トグルのカラムを含む）
 type CompanyRecord = Record<string, unknown>
@@ -242,9 +244,7 @@ export function AdminDataProvider({
   if (authLoading || loading) {
     return (
       <AdminDataContext.Provider value={contextValue}>
-        <div className="flex items-center justify-center min-h-screen bg-gray-50 text-base text-gray-500">
-          読み込み中...
-        </div>
+        <AuthSplash />
       </AdminDataContext.Provider>
     )
   }
@@ -258,24 +258,12 @@ export function AdminDataProvider({
   if (adminError || !companyId) {
     return (
       <AdminDataContext.Provider value={contextValue}>
-        <div className="flex items-center justify-center min-h-screen bg-gray-50 font-sans">
-          <div className="bg-white rounded-xl p-10 text-center max-w-[400px] shadow-sm">
-            <div className="text-5xl mb-4">🚫</div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-3">
-              アクセス権限がありません
-            </h1>
-            <p className="text-sm text-gray-500 mb-6 leading-relaxed">
-              このアカウント（{user.email}）は管理者として登録されていません。
-              管理者に連絡してください。
-            </p>
-            <button
-              onClick={signOut}
-              className="px-6 py-2.5 bg-ds-app-accent text-white border-none rounded-lg text-sm font-bold cursor-pointer hover:bg-ds-app-accent-hover transition-colors"
-            >
-              ログアウト
-            </button>
-          </div>
-        </div>
+        <GateShell
+          icon={<span className="text-5xl">🚫</span>}
+          title="アクセス権限がありません"
+          body={<>このアカウント（{user.email}）は管理者として登録されていません。<br />管理者に連絡してください。</>}
+          primary={{ label: 'ログアウト', onClick: signOut }}
+        />
       </AdminDataContext.Provider>
     )
   }
@@ -284,24 +272,12 @@ export function AdminDataProvider({
   if (companyPending) {
     return (
       <AdminDataContext.Provider value={contextValue}>
-        <div className="flex items-center justify-center min-h-screen bg-gray-50 font-sans">
-          <div className="bg-white rounded-xl p-10 text-center max-w-[400px] shadow-sm">
-            <div className="text-5xl mb-4">⏳</div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-3">
-              承認待ちです
-            </h1>
-            <p className="text-sm text-gray-500 mb-6 leading-relaxed">
-              ご登録ありがとうございます。ID INC. が内容を確認しています。
-              承認されるとログインできるようになります。結果はメールでお知らせします。
-            </p>
-            <button
-              onClick={signOut}
-              className="px-6 py-2.5 bg-ds-app-accent text-white border-none rounded-lg text-sm font-bold cursor-pointer hover:bg-ds-app-accent-hover transition-colors"
-            >
-              ログアウト
-            </button>
-          </div>
-        </div>
+        <GateShell
+          icon={<span className="text-5xl">⏳</span>}
+          title="承認待ちです"
+          body={<>ご登録ありがとうございます。ID INC. が内容を確認しています。承認されるとログインできるようになります。結果はメールでお知らせします。</>}
+          primary={{ label: 'ログアウト', onClick: signOut }}
+        />
       </AdminDataContext.Provider>
     )
   }

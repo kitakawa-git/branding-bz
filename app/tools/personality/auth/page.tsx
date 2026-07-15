@@ -3,6 +3,7 @@
 // 後方互換: 旧認証ページ → 統一ログインへリダイレクト
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { AuthSplash } from '@/components/admin/AuthSplash'
 
 export default function PersonalityAuthRedirect() {
   const router = useRouter()
@@ -11,9 +12,5 @@ export default function PersonalityAuthRedirect() {
     router.replace('/portal/auth?from=personality')
   }, [router])
 
-  return (
-    <div className="flex min-h-screen items-center justify-center font-sans">
-      <p className="text-sm text-gray-500">リダイレクト中...</p>
-    </div>
-  )
+  return <AuthSplash message="リダイレクト中..." />
 }

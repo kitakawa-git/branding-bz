@@ -5,15 +5,11 @@
 import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { Skeleton } from '@/components/ui/skeleton'
+import { AuthSplash } from '@/components/admin/AuthSplash'
 
 export default function PortalAuthCallbackPage() {
   return (
-    <Suspense fallback={
-      <div className="flex min-h-screen items-center justify-center font-sans">
-        <p className="text-sm text-gray-500">読み込み中...</p>
-      </div>
-    }>
+    <Suspense fallback={<AuthSplash />}>
       <PortalAuthCallbackContent />
     </Suspense>
   )
@@ -81,20 +77,13 @@ function PortalAuthCallbackContent() {
 
   if (error) {
     return (
-      <div className="flex min-h-screen items-center justify-center font-sans">
-        <div className="rounded-lg bg-red-50 px-6 py-4 text-sm text-red-600">
+      <div className="flex min-h-screen items-center justify-center bg-white px-6 font-sans">
+        <div className="rounded-2xl border border-rose-500/30 bg-rose-500/5 px-6 py-4 text-sm text-rose-500">
           {error}
         </div>
       </div>
     )
   }
 
-  return (
-    <div className="flex min-h-screen items-center justify-center font-sans">
-      <div className="text-center">
-        <Skeleton className="mx-auto mb-4 h-8 w-48" />
-        <p className="text-sm text-gray-500">認証を確認しています...</p>
-      </div>
-    </div>
-  )
+  return <AuthSplash message="認証を確認しています..." />
 }
