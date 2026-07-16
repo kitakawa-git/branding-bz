@@ -19,6 +19,7 @@ const footerLinks = {
   ],
   company: [
     { href: 'https://include.bz/', label: 'ID INC. について', external: true },
+    { href: 'https://designnow.design/', label: 'DESIGN NOW', external: true },
     { href: '/news', label: 'ニュース' },
     { href: '/contact', label: 'お問い合わせ' },
     { href: 'https://include.bz/recruit', label: '採用', external: true },

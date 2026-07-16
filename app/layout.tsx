@@ -73,6 +73,61 @@ export default async function RootLayout({
             dangerouslySetInnerHTML={{ __html: designTokensCss }}
           />
         )}
+        {/*
+          3ドメインシナジー用 JSON-LD (@graph)。全ページ共通。
+          - Organization: 運営 ID株式会社 の子ノード。parentOrganization/publisher で include.bz を親参照。
+          - SoftwareApplication: サービス本体。有料プラン混在のため offers は省略（有料SaaSを0円と偽らない）。
+          - WebSite: このドメイン。inLanguage=ja。
+          - sameAs: include.bz / branding.bz / designnow.design + 公式SNS。3サイトで同一配列にして名寄せ。
+        */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@graph': [
+                {
+                  '@type': 'Organization',
+                  '@id': 'https://branding.bz/#organization',
+                  name: 'branding.bz',
+                  url: 'https://branding.bz',
+                  logo: 'https://branding.bz/logo.svg',
+                  description:
+                    'AIがブランディングを加速。中小企業・スタートアップ向けのブランド構築・浸透・発信を一気通貫で支援するSaaS。',
+                  parentOrganization: { '@id': 'https://include.bz/#organization' },
+                  publisher: { '@id': 'https://include.bz/#organization' },
+                  sameAs: [
+                    'https://include.bz',
+                    'https://branding.bz',
+                    'https://designnow.design',
+                    'https://www.facebook.com/include.bz',
+                    'https://www.instagram.com/include.bz/',
+                    'https://twitter.com/include_bz',
+                  ],
+                },
+                {
+                  '@type': 'SoftwareApplication',
+                  '@id': 'https://branding.bz/#software',
+                  name: 'branding.bz',
+                  url: 'https://branding.bz',
+                  applicationCategory: 'BusinessApplication',
+                  operatingSystem: 'Web',
+                  description:
+                    'STP分析・ペルソナ作成・ブランドカラー定義などをAIで支援するブランド構築SaaS。無料ツールも公開。',
+                  publisher: { '@id': 'https://include.bz/#organization' },
+                },
+                {
+                  '@type': 'WebSite',
+                  '@id': 'https://branding.bz/#website',
+                  url: 'https://branding.bz',
+                  name: 'branding.bz',
+                  publisher: { '@id': 'https://branding.bz/#organization' },
+                  inLanguage: 'ja',
+                },
+              ],
+            }),
+          }}
+        />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
