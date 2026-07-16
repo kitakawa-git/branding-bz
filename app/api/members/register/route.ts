@@ -1,15 +1,11 @@
-import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { generateRandomSlug } from '@/lib/generate-slug'
-
-// Service Role Key（サーバーサイド専用）
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 export async function POST(req: NextRequest) {
   try {
+    // ビルド時（env が揃わない環境）にモジュール評価で落ちないよう、handler 内で lazy 生成
+    const supabaseAdmin = getSupabaseAdmin()
     const { email, password, display_name, token } = await req.json()
 
     if (!email || !password || !display_name || !token) {
