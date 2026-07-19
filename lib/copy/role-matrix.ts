@@ -71,6 +71,7 @@ export const INTENT_TRANSLATION_RULE = `# 言い換え原則（最重要・違�
 export function buildCopySystemPrompt(opts: {
   role: CopyRole; register: Register;
   intentBlock: string; factBlock: string; rulesBlock: string; personaBlock: string;
+  aspirationBlock?: string;                 // §9 未来の素材（0件なら注入しない＝従来と同一出力）
   clicheList: string;                       // 禁止語＋クリシェ（strict時に効かせる）
   brief?: string; chosenInsight?: string; chosenAngle?: string;
 }): string {
@@ -88,6 +89,12 @@ export function buildCopySystemPrompt(opts: {
     opts.chosenAngle ? `# 採用した切り口\n${opts.chosenAngle}` : '',
     `\n# 意図の素材（INTENT・引用禁止：意味だけ抜け）\n${opts.intentBlock}`,
     `# 引用してよい事実（FACT・数字/固有名詞はここからのみ）\n${opts.factBlock || '（登録された実績なし。事実の創作は禁止。抽象語に逃げず、無いものは言わない）'}`,
+    // §9 ASPIRATION は FACT と物理的に別セクション。0件なら行ごと出さない（従来プロンプトと完全一致）。
+    opts.aspirationBlock
+      ? `# 目指す姿（ASPIRATION・まだ事実ではない）\n${opts.aspirationBlock}\n` +
+        `※ASPIRATION は目指す姿・未来であって実績ではない。「目指す」「これから」の形でのみ言及してよい。` +
+        `事実として断定したり、ここから数字・成果を引用してはならない。引用してよい事実は FACT ブロックのみ。`
+      : '',
     `# 守るべきルール（違反は失格）\n${opts.rulesBlock || '（特になし）'}`,
     `# 読み手（この人の日常語で書け）\n${opts.personaBlock || '（ペルソナ未登録。一般的な読み手を想定）'}`,
     `\n出力は本文のみ。説明・前置きをしない。` +

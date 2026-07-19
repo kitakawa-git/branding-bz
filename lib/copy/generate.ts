@@ -69,12 +69,14 @@ export async function generateCopyDraft(opts: {
   let factBlock = ''
   let rulesBlock = ''
   let personaBlock = ''
+  let aspirationBlock = '' // §9 未来素材（0件なら空＝注入しない）
   let injectedProofIds: string[] = []
 
   if (inject) {
     const blocks = await buildCopyOntologyBlocks(opts.companyId, opts.personaId)
     intentBlock = blocks.intentBlock
     factBlock = blocks.factBlock
+    aspirationBlock = blocks.aspirationBlock
     rulesBlock = blocks.rulesBlock
     personaBlock = blocks.personaBlock
     injectedProofIds = blocks.injectedProofIds
@@ -87,6 +89,7 @@ export async function generateCopyDraft(opts: {
     register: opts.register,
     intentBlock,
     factBlock,
+    aspirationBlock,
     rulesBlock,
     personaBlock,
     clicheList: SHARED_CLICHE.join('、'),

@@ -22,13 +22,18 @@ const txt = (s: unknown) => (typeof s === 'string' ? s : '').replace(/\s+/g, ' '
 
 function buildAngleSystem(p: {
   insightBodies: string[]; factBlock: string; intentBlock: string; personaBlock: string
+  aspirationBlock?: string
 }): string {
+  // §9 未来素材は FACT と別枠。0件なら行ごと出さない（従来プロンプトと一致）。
+  const aspiration = p.aspirationBlock
+    ? `\n目指す姿(ASPIRATION・まだ事実ではない): ${p.aspirationBlock}\n※ASPIRATION は「目指す／これから」の形でのみ言及可。事実として断定・数値引用してはならない。`
+    : ''
   return `あなたはコピー戦略家。1つの「本音」に刺すための切り口（スタンス）を設計します。
 
 # 与えられた素材
 狙う本音: ${p.insightBodies.map((b) => `「${b}」`).join('、')}
 ブランドの事実(FACT): ${p.factBlock || '（登録された実績なし）'}
-ブランドの理念・提供価値(INTENT): ${p.intentBlock || '（なし）'}
+ブランドの理念・提供価値(INTENT): ${p.intentBlock || '（なし）'}${aspiration}
 読み手: ${p.personaBlock || '（ペルソナ未登録）'}
 
 # 指示：次の5つの型で、それぞれ1つずつ切り口を作れ
@@ -96,6 +101,7 @@ export async function generateAngles(projectId: string): Promise<AngleCandidate[
     insightBodies: bodies,
     factBlock: ontology.factBlock,
     intentBlock: ontology.intentBlock,
+    aspirationBlock: ontology.aspirationBlock,
     personaBlock: ontology.personaBlock,
   })
   const raw = await callClaude({ system, userMessage: '5型の切り口を設計し、指定JSON配列のみを出力せよ。', maxTokens: 3000 })
