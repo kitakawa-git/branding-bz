@@ -189,6 +189,14 @@
 - マルチペルソナ化（`session_data.personas[]`・connectはN件sync・冪等）＋ターゲット別グルーピング（`target_name` を `persona_data` に格納）。
 - ジャーニー: maxTokens 8000＋堅牢パーサ、Step4任意化。一度撤去→北川さん判断で復元（5ステップ・`journey_map_data` 列は残置）。
 
+### 🆕 ブランドオントロジー未来設計（現在→理想→道のり）：設計＋DB基盤＋ドメイン層まで実装（UI未着手・2026-07-18）
+- **設計7本** `docs/260718_ブランドオントロジー_*.md`（**C案統合設計_v1 が正**・判定ロジック詳細/DB基盤マイグレ設計を含む）。方針：Proof Point＝**事実限定**／**Desired Evidence（獲得目標の証拠）を独立概念**／**state と progress を分離**／**indeterminate 導入**（データ不足と未達を混同しない）／**重み付き実証進捗＋判定可能率**（セット表示必須）／VPは `target→transition_candidate→current`（管理者昇格）／**FACT・ASPIRATION分離**で反捏造を維持。
+- **DB基盤5本 本番適用済み**（`apply_migration` 実行・ローカル `.sql` は実versionにリネーム済）：`desired_evidence`(20260718133238) ／ `proof_point_measurements`(141811) ／ `desired_evidence_evaluations`＋失効スナップショット＋bumpトリガ(141841) ／ `value_propositions.lifecycle_state`(141907) ／ `element_relations` relation_type +4種〔aspiresTo/requires/toBeEvidencedBy/verifies〕(141920)。**全て加算・既定値で挙動不変**。
+- **ドメイン層**：`lib/brand/future-design/`（rule検証・評価エンジン・人間判断の失効判定・重み付き進捗・読取専用IO）＋ `lib/brand/integrity.ts` に §10 未来設計チェック（獲得計画なし／判定条件未設定／昇格レビュー待ち／単位・指標不一致／測定値なし判定不能／override要再確認 ほか）。**ユニット計20 pass・tsc/build緑・DB無変更**。
+- コミット：`6fe76f1`(docs) / `21d4961`(M1) / `2f71a93`(M2-5) / `6b23da1`(engine) / `34a3f94`(integrity)。**全て未push**。
+- 残：**§11 管理UI** ／ **§9 コピーAI FACT・ASPIRATION注入** ／ **§14.2 rule_hash算出RPC**（override有効化に必要・未整備の現状は override 失効扱いで自動評価にフォールバック） ／ ID INC. E2E。
+- **運用注意**：このリポは `supabase db push` **不可**（ローカル/リモートの version ドリフト）。マイグレは **apply_migration＋ローカル `.sql` を実versionにリネーム**する運用。
+
 
 - スマート名刺 (/card/[slug]) — プロフィール＋企業ブランド＋MVV＋マイクロフィードバック
 - 管理画面 (/admin) — 企業情報・メンバー・ブランドガイドライン・お知らせ・名刺テンプレート
