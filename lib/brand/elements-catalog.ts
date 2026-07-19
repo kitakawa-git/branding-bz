@@ -9,6 +9,7 @@ export type ElementKind =
   | 'proof_point'
   | 'governance_rule'
   | 'persona'
+  | 'desired_evidence'
 
 export type ElementRef = { kind: ElementKind; id: string; label: string }
 
@@ -19,6 +20,7 @@ export const KIND_LABELS: Record<ElementKind, string> = {
   proof_point: '実績・エピソード',
   governance_rule: '表現ルール',
   persona: 'ペルソナ',
+  desired_evidence: '獲得目標',
 }
 
 // philosophy_elements.element_type の和訳
@@ -37,6 +39,11 @@ export const RELATION_TYPES: { value: string; label: string; desc: string }[] = 
   { value: 'communicatedAs', label: '表現される', desc: 'A は B として表現される' },
   { value: 'constrainedBy', label: '制約される', desc: 'A は B（禁則）に制約される' },
   { value: 'conflictsWith', label: '矛盾する', desc: 'A と B は矛盾しうる' },
+  // 未来設計（C案・§3-1）で追加した4種。DB側の CHECK / 端点検証トリガは適用済み。
+  { value: 'aspiresTo', label: '目指す', desc: 'A は B（理想）を目指す' },
+  { value: 'requires', label: '必要とする', desc: '理想 A の実現には B（獲得目標）が必要' },
+  { value: 'toBeEvidencedBy', label: '裏づけ予定', desc: '未来の約束 A は B（獲得目標）で裏づく予定' },
+  { value: 'verifies', label: '立証する', desc: 'A（実績）は、B（獲得目標）の達成を立証する' },
 ]
 
 export const relationLabel = (v: string): string =>
@@ -54,12 +61,14 @@ export async function fetchElementsCatalog(
 ): Promise<ElementRef[]> {
   if (!companyId) return []
 
-  const [phil, vp, pp, gov, persona] = await Promise.all([
+  const [phil, vp, pp, gov, persona, de] = await Promise.all([
     supabase.from('philosophy_elements').select('id, element_type, title, body, sort_order').eq('company_id', companyId).order('sort_order', { ascending: true }),
     supabase.from('value_propositions').select('id, title, sort_order').eq('company_id', companyId).order('sort_order', { ascending: true }),
     supabase.from('proof_points').select('id, title, sort_order').eq('company_id', companyId).order('sort_order', { ascending: true }),
     supabase.from('governance_rules').select('id, rule_text, sort_order').eq('company_id', companyId).order('sort_order', { ascending: true }),
     supabase.from('brand_personas').select('id, name, sort_order').eq('company_id', companyId).order('sort_order', { ascending: true }),
+    // 未来設計（獲得目標）。0件なら何も増えず既存挙動は不変。
+    supabase.from('desired_evidence').select('id, title, sort_order').eq('company_id', companyId).order('sort_order', { ascending: true }),
   ])
 
   const out: ElementRef[] = []
@@ -76,6 +85,8 @@ export async function fetchElementsCatalog(
   for (const r of (gov.data as any[] | null) || []) out.push({ kind: 'governance_rule', id: r.id as string, label: snippet(r.rule_text) })
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   for (const r of (persona.data as any[] | null) || []) out.push({ kind: 'persona', id: r.id as string, label: snippet(r.name) })
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  for (const r of (de.data as any[] | null) || []) out.push({ kind: 'desired_evidence', id: r.id as string, label: snippet(r.title) })
 
   return out
 }

@@ -21,6 +21,7 @@ import ProfilingSection from './ProfilingSection'
 import ProofPointsSection, { type ValuePropositionRef } from './ProofPointsSection'
 import GovernanceRulesSection from './GovernanceRulesSection'
 import ElementRelationsSection from './ElementRelationsSection'
+import DesiredEvidenceSection from './DesiredEvidenceSection'
 import IntegrityCheckSection from './IntegrityCheckSection'
 import { ONTOLOGY_DATA_CHANGED_EVENT, ONTOLOGY_GOTO_STEP_EVENT } from './ontology-events'
 
@@ -58,8 +59,9 @@ const STEPS: { num: number; label: string; full: string; why: string }[] = [
   { num: 1, label: '基本情報', full: '基本情報の確認', why: '理念と提供価値が、この後のすべての土台になります' },
   { num: 2, label: '実績・エピソード', full: '実績・エピソードを集める', why: '提供価値に沿った実績・エピソードがあるほど、AIの提案が御社ならではの内容になります' },
   { num: 3, label: '言葉のルール', full: '言葉のルールを決める', why: '「言わせたくないこと」を決めるほど、AIの言葉づかいが御社らしくなります' },
-  { num: 4, label: '関係性', full: '際立つ関係性を洗い出す', why: '要素どうしが支え合う関係・ぶつかる関係を登録すると、AIが正しい根拠と避けるべき表現を判断できるようになります' },
-  { num: 5, label: '補足質問', full: '補足質問', why: 'ここまでに登録された内容を精査して、不足している点を質問でお聞きします' },
+  { num: 4, label: '未来設計', full: 'これから獲得する証拠を決める', why: 'いま無い証拠を「獲得目標」として置くと、理想までの道のりが可視化され、事実（実績）と願望を混ぜずに扱えます（任意）' },
+  { num: 5, label: '関係性', full: '際立つ関係性を洗い出す', why: '要素どうしが支え合う関係・ぶつかる関係を登録すると、AIが正しい根拠と避けるべき表現を判断できるようになります' },
+  { num: 6, label: '補足質問', full: '補足質問', why: 'ここまでに登録された内容を精査して、不足している点を質問でお聞きします' },
 ]
 
 export default function OntologyBuilderSection({
@@ -100,8 +102,12 @@ export default function OntologyBuilderSection({
         case 3:
           return counts.rule > 0
         case 4:
-          return counts.relation > 0
+          // 未来設計（獲得目標）は任意ステップ。完了判定・自動遷移をブロックしないため常に done 扱い
+          // （既存企業は0件のままでもウィザードの進行・完了が従来どおりになる）。
+          return true
         case 5:
+          return counts.relation > 0
+        case 6:
           // 対象warnが「解消済みまたは保留済み」で全件カバーされていれば完了
           return inspection !== null && inspection.uncoveredWarnCount === 0 && basicsDone
         default:
@@ -376,9 +382,12 @@ export default function OntologyBuilderSection({
             <GovernanceRulesSection companyId={companyId} valuePropositions={valuePropositions} onDataChanged={broadcastDataChanged} />
           )}
           {current.num === 4 && (
-            <ElementRelationsSection companyId={companyId} onDataChanged={broadcastDataChanged} />
+            <DesiredEvidenceSection companyId={companyId} onDataChanged={broadcastDataChanged} />
           )}
           {current.num === 5 && (
+            <ElementRelationsSection companyId={companyId} onDataChanged={broadcastDataChanged} />
+          )}
+          {current.num === 6 && (
             <>
               {renderCompletionBanner()}
               <IntegrityCheckSection companyId={companyId} />

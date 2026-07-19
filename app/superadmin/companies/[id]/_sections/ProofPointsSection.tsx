@@ -11,7 +11,7 @@ import { supabase } from '@/lib/supabase'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { AutoResizeTextarea } from '@/components/ui/auto-resize-textarea'
-import { Plus, Trash2, Pencil, Check, X, ChevronUp, ChevronDown, Sparkles, AlertTriangle } from 'lucide-react'
+import { Plus, Trash2, Pencil, Check, X, ChevronUp, ChevronDown, Sparkles, AlertTriangle, Ruler } from 'lucide-react'
 import { toast } from 'sonner'
 import type { ProofExtractDraft } from '@/lib/brand/draft-extraction'
 
@@ -37,6 +37,39 @@ type Draft = {
   source_url: string
   evidence_date: string
 }
+
+// §2-2 proof_point_measurements（1実績＝複数測定値）
+type Measurement = {
+  id: string
+  proof_point_id: string
+  metric_key: string
+  metric_label: string | null
+  metric_value: number
+  metric_unit: string
+  measured_at: string | null
+  measurement_scope: string | null
+  source_reference: string | null
+}
+
+type MDraft = {
+  metric_key: string
+  metric_label: string
+  metric_value: string
+  metric_unit: string
+  measured_at: string
+  measurement_scope: string
+  source_reference: string
+}
+
+const emptyMDraft = (): MDraft => ({
+  metric_key: '',
+  metric_label: '',
+  metric_value: '',
+  metric_unit: '',
+  measured_at: '',
+  measurement_scope: '',
+  source_reference: '',
+})
 
 const SOURCE_TYPES: { value: string; label: string }[] = [
   { value: 'jisseki', label: '実績' },
@@ -79,6 +112,13 @@ export default function ProofPointsSection({
   const [aiDrafts, setAiDrafts] = useState<ProofExtractDraft[] | null>(null)
   const [aiLoading, setAiLoading] = useState(false)
   const [aiRegistering, setAiRegistering] = useState<number | null>(null)
+  // --- 測定値（proof_point_measurements） ---
+  const [measurements, setMeasurements] = useState<Record<string, Measurement[]>>({})
+  const [expandedPpId, setExpandedPpId] = useState<string | null>(null)
+  const [mEditingId, setMEditingId] = useState<string | null>(null) // 'new:<ppId>' または測定値ID
+  const [mDraft, setMDraft] = useState<MDraft>(emptyMDraft())
+  const [mSaving, setMSaving] = useState(false)
+  const [metricKeys, setMetricKeys] = useState<string[]>([])
 
   const vpTitle = (id: string | null) =>
     id ? valuePropositions.find((v) => v.id === id)?.title ?? '（削除済みの提供価値）' : '全般'
@@ -101,10 +141,125 @@ export default function ProofPointsSection({
     setLoading(false)
   }
 
+  // 測定値を company 単位で一括取得し proof_point_id ごとに束ねる
+  const fetchMeasurements = async () => {
+    const { data, error } = await supabase
+      .from('proof_point_measurements')
+      .select('*')
+      .eq('company_id', companyId)
+      .order('measured_at', { ascending: false, nullsFirst: false })
+      .order('created_at', { ascending: true })
+    if (error) {
+      console.error('[ProofPoints] 測定値の取得エラー:', error)
+      return
+    }
+    const list = (data as Measurement[]) || []
+    const by: Record<string, Measurement[]> = {}
+    for (const m of list) {
+      by[m.proof_point_id] = by[m.proof_point_id] || []
+      by[m.proof_point_id].push(m)
+    }
+    setMeasurements(by)
+    setMetricKeys(Array.from(new Set(list.map((m) => (m.metric_key || '').trim()).filter(Boolean))).sort())
+  }
+
   useEffect(() => {
     fetchRows()
+    fetchMeasurements()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [companyId])
+
+  const startAddMeasurement = (ppId: string) => {
+    setMDraft(emptyMDraft())
+    setMEditingId(`new:${ppId}`)
+    setExpandedPpId(ppId)
+  }
+
+  const startEditMeasurement = (m: Measurement) => {
+    setMDraft({
+      metric_key: m.metric_key ?? '',
+      metric_label: m.metric_label ?? '',
+      metric_value: m.metric_value != null ? String(m.metric_value) : '',
+      metric_unit: m.metric_unit ?? '',
+      measured_at: m.measured_at ?? '',
+      measurement_scope: m.measurement_scope ?? '',
+      source_reference: m.source_reference ?? '',
+    })
+    setMEditingId(m.id)
+  }
+
+  const cancelMeasurementEdit = () => {
+    setMEditingId(null)
+    setMDraft(emptyMDraft())
+  }
+
+  const saveMeasurement = async (ppId: string) => {
+    if (!mDraft.metric_key.trim()) {
+      toast.error('指標キーは必須です')
+      return
+    }
+    if (!/^[a-z0-9_]+$/.test(mDraft.metric_key.trim())) {
+      toast.error('指標キーは半角小文字・数字・_ のみで入力してください')
+      return
+    }
+    const value = Number(mDraft.metric_value)
+    if (!Number.isFinite(value)) {
+      toast.error('測定値は数値で入力してください')
+      return
+    }
+    if (!mDraft.metric_unit.trim()) {
+      toast.error('単位は必須です（指標キーとセットで判定に使います）')
+      return
+    }
+    setMSaving(true)
+    try {
+      const payload = {
+        company_id: companyId,
+        proof_point_id: ppId,
+        metric_key: mDraft.metric_key.trim(),
+        metric_label: mDraft.metric_label.trim(),
+        metric_value: value,
+        metric_unit: mDraft.metric_unit.trim(),
+        measured_at: mDraft.measured_at || null,
+        measurement_scope: mDraft.measurement_scope.trim(),
+        source_reference: mDraft.source_reference.trim(),
+      }
+      if (mEditingId?.startsWith('new:')) {
+        const { error } = await supabase.from('proof_point_measurements').insert(payload)
+        if (error) throw error
+        toast.success('測定値を追加しました')
+      } else if (mEditingId) {
+        const { error } = await supabase
+          .from('proof_point_measurements')
+          .update({ ...payload, updated_at: new Date().toISOString() })
+          .eq('id', mEditingId)
+        if (error) throw error
+        toast.success('測定値を更新しました')
+      }
+      cancelMeasurementEdit()
+      await fetchMeasurements()
+      onDataChanged?.()
+    } catch (err) {
+      console.error('[ProofPoints] 測定値の保存エラー:', err)
+      toast.error('保存に失敗しました: ' + (err instanceof Error ? err.message : '不明なエラー'))
+    } finally {
+      setMSaving(false)
+    }
+  }
+
+  const removeMeasurement = async (id: string) => {
+    if (!confirm('この測定値を削除しますか？')) return
+    const { error } = await supabase.from('proof_point_measurements').delete().eq('id', id)
+    if (error) {
+      console.error('[ProofPoints] 測定値の削除エラー:', error)
+      toast.error('削除に失敗しました')
+      return
+    }
+    toast.success('削除しました')
+    if (mEditingId === id) cancelMeasurementEdit()
+    await fetchMeasurements()
+    onDataChanged?.()
+  }
 
   const startAdd = () => {
     setDraft(emptyDraft())
@@ -327,6 +482,170 @@ export default function ProofPointsSection({
     )
   }
 
+  // --- 測定値エディタ（実績ごとの展開パネル） ---
+  const renderMeasurementForm = (ppId: string) => (
+    <div className="border border-violet-200 bg-violet-50/40 rounded-lg p-3 mb-2 space-y-3">
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex-1">
+          <label className="text-xs font-bold text-foreground mb-1.5 block">
+            指標キー <span className="text-red-500">*</span>
+          </label>
+          <Input
+            type="text"
+            list="pp-metric-keys"
+            pattern="^[a-z0-9_]+$"
+            value={mDraft.metric_key}
+            onChange={(e) => setMDraft({ ...mDraft, metric_key: e.target.value })}
+            placeholder="例: brand_awareness_rate"
+            className="h-10"
+          />
+          <p className="text-[11px] text-muted-foreground mt-1 m-0">半角小文字・数字・_ のみ。獲得目標の指標キーと一致させると判定に使われます</p>
+        </div>
+        <div className="flex-1">
+          <label className="text-xs font-bold text-foreground mb-1.5 block">表示名（任意）</label>
+          <Input
+            type="text"
+            value={mDraft.metric_label}
+            onChange={(e) => setMDraft({ ...mDraft, metric_label: e.target.value })}
+            placeholder="例: ブランド認知率"
+            className="h-10"
+          />
+        </div>
+      </div>
+
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex-1">
+          <label className="text-xs font-bold text-foreground mb-1.5 block">
+            測定値 <span className="text-red-500">*</span>
+          </label>
+          <Input
+            type="number"
+            step="any"
+            value={mDraft.metric_value}
+            onChange={(e) => setMDraft({ ...mDraft, metric_value: e.target.value })}
+            placeholder="例: 40.4"
+            className="h-10"
+          />
+        </div>
+        <div className="flex-1">
+          <label className="text-xs font-bold text-foreground mb-1.5 block">
+            単位 <span className="text-red-500">*</span>
+          </label>
+          <Input
+            type="text"
+            value={mDraft.metric_unit}
+            onChange={(e) => setMDraft({ ...mDraft, metric_unit: e.target.value })}
+            placeholder="例: %"
+            className="h-10"
+          />
+        </div>
+        <div className="flex-1">
+          <label className="text-xs font-bold text-foreground mb-1.5 block">測定日</label>
+          <Input
+            type="date"
+            value={mDraft.measured_at}
+            onChange={(e) => setMDraft({ ...mDraft, measured_at: e.target.value })}
+            className="h-10"
+          />
+          <p className="text-[11px] text-muted-foreground mt-1 m-0">「最新」で判定する場合は必須</p>
+        </div>
+      </div>
+
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex-1">
+          <label className="text-xs font-bold text-foreground mb-1.5 block">対象範囲（任意）</label>
+          <Input
+            type="text"
+            value={mDraft.measurement_scope}
+            onChange={(e) => setMDraft({ ...mDraft, measurement_scope: e.target.value })}
+            placeholder="例: 全国20-40代"
+            className="h-10"
+          />
+        </div>
+        <div className="flex-1">
+          <label className="text-xs font-bold text-foreground mb-1.5 block">出典（任意）</label>
+          <Input
+            type="text"
+            value={mDraft.source_reference}
+            onChange={(e) => setMDraft({ ...mDraft, source_reference: e.target.value })}
+            placeholder="例: 2025年 自社調査(n=1000)"
+            className="h-10"
+          />
+        </div>
+      </div>
+
+      <div className="flex gap-2">
+        <Button type="button" size="sm" onClick={() => saveMeasurement(ppId)} disabled={mSaving}>
+          <Check size={14} />
+          {mSaving ? '保存中...' : '保存'}
+        </Button>
+        <Button type="button" size="sm" variant="outline" onClick={cancelMeasurementEdit} disabled={mSaving}>
+          <X size={14} />
+          キャンセル
+        </Button>
+      </div>
+    </div>
+  )
+
+  const renderMeasurements = (ppId: string) => {
+    const list = measurements[ppId] || []
+    return (
+      <div className="mt-3 border-t border-border pt-3">
+        <p className="text-xs font-bold text-foreground m-0 mb-2">測定値（{list.length}）</p>
+        {list.length === 0 && mEditingId !== `new:${ppId}` && (
+          <p className="text-[13px] text-muted-foreground m-0 mb-2">
+            測定値がありません。数値で達成を判定する獲得目標に使います
+          </p>
+        )}
+        {list.map((m) =>
+          mEditingId === m.id ? (
+            <div key={m.id}>{renderMeasurementForm(ppId)}</div>
+          ) : (
+            <div key={m.id} className="flex justify-between items-start gap-2 border border-border rounded-md p-2.5 mb-2 bg-white">
+              <div className="min-w-0">
+                <p className="text-[13px] font-bold text-foreground m-0 break-words">
+                  {m.metric_label || m.metric_key}：{m.metric_value} {m.metric_unit}
+                </p>
+                <p className="text-[11px] text-muted-foreground m-0 mt-0.5 break-words">
+                  キー: {m.metric_key}
+                  {m.measured_at ? ` ／ 測定日: ${m.measured_at}` : ' ／ 測定日なし'}
+                  {m.measurement_scope ? ` ／ 対象: ${m.measurement_scope}` : ''}
+                  {m.source_reference ? ` ／ 出典: ${m.source_reference}` : ''}
+                </p>
+              </div>
+              <div className="flex items-center gap-1 shrink-0">
+                <Button type="button" variant="outline" size="icon" onClick={() => startEditMeasurement(m)} className="size-8">
+                  <Pencil size={13} />
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => removeMeasurement(m.id)}
+                  className="size-8 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+                >
+                  <Trash2 size={13} />
+                </Button>
+              </div>
+            </div>
+          ),
+        )}
+        {mEditingId === `new:${ppId}` && renderMeasurementForm(ppId)}
+        {mEditingId === null && (
+          <Button type="button" variant="outline" size="sm" onClick={() => startAddMeasurement(ppId)} className="text-[13px]">
+            <Plus size={14} />
+            測定値を追加
+          </Button>
+        )}
+        <datalist id="pp-metric-keys">
+          {metricKeys.map((k) => (
+            <option key={k} value={k} />
+          ))}
+        </datalist>
+      </div>
+    )
+  }
+
   const renderForm = () => (
     <div className="border border-blue-200 bg-blue-50/40 rounded-lg p-4 mb-3 space-y-4">
       <div>
@@ -467,6 +786,20 @@ export default function ProofPointsSection({
                   <Button
                     type="button"
                     variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setExpandedPpId(expandedPpId === row.id ? null : row.id)
+                      cancelMeasurementEdit()
+                    }}
+                    className="h-8 px-2 text-[12px]"
+                    title="測定値（数値で達成を判定する獲得目標に使います）"
+                  >
+                    <Ruler size={13} />
+                    測定値 {(measurements[row.id] || []).length}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
                     size="icon"
                     onClick={() => move(index, -1)}
                     disabled={index === 0}
@@ -504,6 +837,7 @@ export default function ProofPointsSection({
                   </Button>
                 </div>
               </div>
+              {expandedPpId === row.id && renderMeasurements(row.id)}
             </div>
           )
         )
