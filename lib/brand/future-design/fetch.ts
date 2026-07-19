@@ -139,16 +139,17 @@ export async function fetchCurrentRuleHashes(companyId: string, desiredEvidenceI
   const out = new Map<string, string>()
   if (!companyId || desiredEvidenceIds.length === 0) return out
   const supabase = getSupabaseAdmin()
-  const { data, error } = await supabase.rpc('desired_evidence_rule_hashes', {
-    p_company_id: companyId,
-    p_ids: desiredEvidenceIds,
-  })
+  // RPC は company 単位（引数は p_company_id のみ）。必要な DE だけ Map に載せる。
+  const { data, error } = await supabase.rpc('desired_evidence_rule_hashes', { p_company_id: companyId })
   if (error) {
     // RPC 未整備でも致命でない：override は失効扱い（自動評価にフォールバック）
     console.warn('[future-design] rule_hash 取得不可（override は失効扱い）:', error.message)
     return out
   }
-  for (const r of (data ?? []) as Array<{ id: string; rule_hash: string }>) out.set(r.id, r.rule_hash)
+  const wanted = new Set(desiredEvidenceIds)
+  for (const r of (data ?? []) as Array<{ id: string; rule_hash: string }>) {
+    if (wanted.has(r.id)) out.set(r.id, r.rule_hash)
+  }
   return out
 }
 

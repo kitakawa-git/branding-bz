@@ -9,7 +9,7 @@ import { supabase } from '@/lib/supabase'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { AutoResizeTextarea } from '@/components/ui/auto-resize-textarea'
-import { Plus, Trash2, Pencil, Check, X, ChevronUp, ChevronDown } from 'lucide-react'
+import { Plus, Trash2, Pencil, Check, X, ChevronUp, ChevronDown, Gavel, ArrowUpCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import { validateRule } from '@/lib/brand/future-design/rule-validator'
 import type { AchievementRuleV1 } from '@/lib/brand/future-design/types'
@@ -220,6 +220,41 @@ const REASON_TEXTS: Record<string, string> = {
 const reasonText = (ev: DesiredEvidenceEvaluationDto['evaluation']): string =>
   REASON_TEXTS[ev.reason_code] ?? `判定できません（${ev.reason_code}）`
 
+// --- §6 人間判断 ---
+type JudgmentDraft = {
+  achievementState: 'unmet' | 'partially_met' | 'met'
+  progress: string // 空欄＝未指定（null）
+  reason: string
+}
+const emptyJudgmentDraft = (): JudgmentDraft => ({ achievementState: 'met', progress: '', reason: '' })
+
+const JUDGMENT_STATES: { value: JudgmentDraft['achievementState']; label: string }[] = [
+  { value: 'met', label: '達成' },
+  { value: 'partially_met', label: '一部達成' },
+  { value: 'unmet', label: '未達' },
+]
+
+/** §6-4 状態と進捗率の整合（APIとDB CHECK と同じ規則をUIでも先に弾く） */
+function checkStateProgress(state: JudgmentDraft['achievementState'], raw: string): string | null {
+  if (raw.trim() === '') return null
+  const p = Number(raw)
+  if (!Number.isFinite(p) || p < 0 || p > 1) return '進捗率は0〜1で入力してください（未指定でも可）'
+  if (state === 'met' && p !== 1) return '「達成」の進捗率は 1 か未指定にしてください'
+  if (state === 'unmet' && p !== 0) return '「未達」の進捗率は 0 か未指定にしてください'
+  if (state === 'partially_met' && !(p > 0 && p < 1)) return '「一部達成」の進捗率は 0 より大きく 1 未満にしてください'
+  return null
+}
+
+// --- §8 提供価値のライフサイクル ---
+type VpRow = { id: string; title: string | null; lifecycle_state: string | null; promoted_at: string | null; sort_order: number }
+const VP_STATES: { value: string; label: string }[] = [
+  { value: 'target', label: '目標（未来の約束）' },
+  { value: 'transition_candidate', label: '移行候補' },
+  { value: 'current', label: '現在の約束' },
+  { value: 'retired', label: '廃止' },
+]
+const vpStateLabel = (v: string | null) => VP_STATES.find((s) => s.value === (v ?? 'current'))?.label ?? (v ?? 'current')
+
 export default function DesiredEvidenceSection({
   companyId,
   onDataChanged,
@@ -238,6 +273,13 @@ export default function DesiredEvidenceSection({
   const [visionProgress, setVisionProgress] = useState<VisionProgressDto[]>([])
   const [overall, setOverall] = useState<Omit<VisionProgressDto, 'vision_id' | 'vision_label'> | null>(null)
   const [evalError, setEvalError] = useState<string | null>(null)
+  // 人間判断パネル（§6）
+  const [judgeOpenId, setJudgeOpenId] = useState<string | null>(null)
+  const [jDraft, setJDraft] = useState<JudgmentDraft>(emptyJudgmentDraft())
+  const [jSaving, setJSaving] = useState(false)
+  // 提供価値のライフサイクル（§8）
+  const [vps, setVps] = useState<VpRow[]>([])
+  const [vpBusyId, setVpBusyId] = useState<string | null>(null)
 
   const fetchRows = async () => {
     setLoading(true)
@@ -291,10 +333,125 @@ export default function DesiredEvidenceSection({
     }
   }
 
+  // --- §6 人間判断の記録／クリア（RLSでクライアント直更新できないため必ずAPI経由） ---
+  const authedPost = async (url: string, payload: unknown) => {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session?.access_token) throw new Error('セッションが無効です。再ログインしてください')
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+      body: JSON.stringify(payload),
+    })
+    const json = await res.json()
+    if (!res.ok) throw new Error(json?.error || 'エラーが発生しました')
+    return json
+  }
+
+  const openJudgment = (row: DesiredEvidence) => {
+    const ev = evals[row.id]
+    setJDraft({
+      achievementState: (ev?.judgmentState ?? 'met') as JudgmentDraft['achievementState'],
+      progress: ev?.judgmentProgress != null ? String(ev.judgmentProgress) : '',
+      reason: ev?.judgmentReason ?? '',
+    })
+    setJudgeOpenId(row.id)
+  }
+
+  const saveJudgment = async (row: DesiredEvidence) => {
+    if (!jDraft.reason.trim()) {
+      toast.error('判断の理由は必須です')
+      return
+    }
+    const consistency = checkStateProgress(jDraft.achievementState, jDraft.progress)
+    if (consistency) {
+      toast.error(consistency)
+      return
+    }
+    // §6 手動ルールは manual_review、それ以外は自動評価の上書き＝automatic_override
+    const r = row.achievement_rule as AchievementRuleV1 | null
+    const source = r && typeof r === 'object' && 'type' in r && r.type === 'manual' ? 'manual_review' : 'automatic_override'
+
+    setJSaving(true)
+    try {
+      await authedPost('/api/superadmin/desired-evidence/judgment', {
+        companyId,
+        desiredEvidenceId: row.id,
+        evaluationSource: source,
+        achievementState: jDraft.achievementState,
+        progressFraction: jDraft.progress.trim() === '' ? null : Number(jDraft.progress),
+        reason: jDraft.reason.trim(),
+      })
+      toast.success('人間判断を記録しました')
+      setJudgeOpenId(null)
+      await fetchEvaluations()
+      onDataChanged?.()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '記録に失敗しました')
+    } finally {
+      setJSaving(false)
+    }
+  }
+
+  const clearJudgment = async (row: DesiredEvidence) => {
+    if (!confirm('人間判断を取り下げて、自動評価に戻しますか？')) return
+    setJSaving(true)
+    try {
+      await authedPost('/api/superadmin/desired-evidence/judgment', {
+        companyId,
+        desiredEvidenceId: row.id,
+        action: 'clear',
+      })
+      toast.success('自動評価に戻しました')
+      setJudgeOpenId(null)
+      await fetchEvaluations()
+      onDataChanged?.()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '取り下げに失敗しました')
+    } finally {
+      setJSaving(false)
+    }
+  }
+
+  // --- §8 提供価値のライフサイクル ---
+  const fetchVps = async () => {
+    const { data, error } = await supabase
+      .from('value_propositions')
+      .select('id, title, lifecycle_state, promoted_at, sort_order')
+      .eq('company_id', companyId)
+      .order('sort_order', { ascending: true })
+    if (error) {
+      console.error('[DesiredEvidence] 提供価値の取得エラー:', error)
+      return
+    }
+    setVps((data as VpRow[]) || [])
+  }
+
+  const changeVpState = async (vp: VpRow, next: string) => {
+    if (next === 'current' && (vp.lifecycle_state ?? 'current') !== 'current') {
+      if (!confirm(`「${vp.title || '（無題）'}」を現在の約束に昇格しますか？（昇格者と日時が記録されます）`)) return
+    }
+    setVpBusyId(vp.id)
+    try {
+      await authedPost('/api/superadmin/value-proposition-lifecycle', {
+        companyId,
+        valuePropositionId: vp.id,
+        lifecycleState: next,
+      })
+      toast.success(next === 'current' ? '現在の約束に昇格しました' : '状態を変更しました')
+      await fetchVps()
+      onDataChanged?.()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '変更に失敗しました')
+    } finally {
+      setVpBusyId(null)
+    }
+  }
+
   useEffect(() => {
     fetchRows()
     fetchMetricKeys()
     fetchEvaluations()
+    fetchVps()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [companyId])
 
@@ -667,6 +824,159 @@ export default function DesiredEvidenceSection({
     )
   }
 
+  // §6 / §11 人間判断パネル（現行判断の表示＋記録フォーム＋自動評価へ戻す）
+  const renderJudgmentPanel = (row: DesiredEvidence) => {
+    const ev = evals[row.id]
+    const r = row.achievement_rule as AchievementRuleV1 | null
+    const isManualRule = !!r && typeof r === 'object' && 'type' in r && r.type === 'manual'
+    const sourceLabel = isManualRule ? '手動判定（manual_review）' : '自動評価の上書き（automatic_override）'
+    const expired = !!ev?.hasCurrentHumanJudgment && !ev.humanJudgmentValid
+    const open = judgeOpenId === row.id
+
+    return (
+      <div className="mt-3 border-t border-border pt-3">
+        {ev?.hasCurrentHumanJudgment && (
+          <div className={`rounded-md p-2.5 mb-2 ${expired ? 'bg-amber-50 border border-amber-200' : 'bg-gray-50 border border-border'}`}>
+            <p className="text-[13px] text-foreground m-0 break-words">
+              <span className="font-bold">人間判断</span>：
+              {JUDGMENT_STATES.find((s) => s.value === ev.judgmentState)?.label ?? ev.judgmentState}
+              {ev.judgmentProgress != null && ` ／ 進捗 ${Math.round(ev.judgmentProgress * 100)}%`}
+              {ev.judgmentSource === 'manual_review' ? '（手動判定）' : '（自動評価の上書き）'}
+            </p>
+            {ev.judgmentReason && (
+              <p className="text-[13px] text-muted-foreground m-0 mt-0.5 whitespace-pre-line break-words">理由: {ev.judgmentReason}</p>
+            )}
+            {expired && (
+              <p className="text-[13px] text-amber-900 m-0 mt-1 break-words">
+                ⚠ ルール／データの変更で失効中＝いまは自動評価を使用しています。内容を確認して記録し直してください。
+              </p>
+            )}
+          </div>
+        )}
+
+        {open ? (
+          <div className="border border-violet-200 bg-violet-50/40 rounded-lg p-3 space-y-3">
+            <p className="text-[11px] text-muted-foreground m-0">記録の種類：{sourceLabel}（達成条件のタイプから自動で決まります）</p>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex-1">
+                <label className="text-xs font-bold text-foreground mb-1.5 block">判断する状態</label>
+                <select
+                  className={SELECT_CLASS}
+                  value={jDraft.achievementState}
+                  onChange={(e) => setJDraft({ ...jDraft, achievementState: e.target.value as JudgmentDraft['achievementState'] })}
+                >
+                  {JUDGMENT_STATES.map((s) => (
+                    <option key={s.value} value={s.value}>
+                      {s.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex-1">
+                <label className="text-xs font-bold text-foreground mb-1.5 block">進捗率（任意・0〜1）</label>
+                <Input
+                  type="number"
+                  step="0.05"
+                  min="0"
+                  max="1"
+                  value={jDraft.progress}
+                  onChange={(e) => setJDraft({ ...jDraft, progress: e.target.value })}
+                  placeholder="未指定でも可"
+                  className="h-10"
+                />
+                <p className="text-[11px] text-muted-foreground mt-1 m-0">達成=1／未達=0／一部達成=0より大きく1未満</p>
+              </div>
+            </div>
+            <div>
+              <label className="text-xs font-bold text-foreground mb-1.5 block">
+                判断の理由 <span className="text-red-500">*</span>
+              </label>
+              <AutoResizeTextarea
+                value={jDraft.reason}
+                onChange={(e) => setJDraft({ ...jDraft, reason: e.target.value })}
+                placeholder="なぜそう判断したか（後から見て根拠がわかるように）"
+                className="min-h-[60px]"
+              />
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" size="sm" onClick={() => saveJudgment(row)} disabled={jSaving}>
+                <Check size={14} />
+                {jSaving ? '記録中...' : '記録する'}
+              </Button>
+              <Button type="button" size="sm" variant="outline" onClick={() => setJudgeOpenId(null)} disabled={jSaving}>
+                <X size={14} />
+                キャンセル
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" variant="outline" size="sm" onClick={() => openJudgment(row)} className="text-[13px]">
+              <Gavel size={14} />
+              {ev?.hasCurrentHumanJudgment ? (expired ? '再確認して記録し直す' : '人間判断を編集') : '人間判断を記録'}
+            </Button>
+            {ev?.hasCurrentHumanJudgment && (
+              <Button type="button" variant="outline" size="sm" onClick={() => clearJudgment(row)} disabled={jSaving} className="text-[13px]">
+                自動評価に戻す
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // §8 / §10 提供価値の状態（昇格レビュー導線）
+  const renderVpPanel = () => {
+    if (vps.length === 0) return null
+    return (
+      <div className="border border-border rounded-lg p-3 mb-3 bg-background">
+        <p className="text-[13px] font-bold text-foreground m-0 mb-2">提供価値の状態</p>
+        <p className="text-[11px] text-muted-foreground m-0 mb-2">
+          「目標」は未来の約束。裏づけがそろったら「現在の約束」へ昇格します（昇格者と日時が残ります）
+        </p>
+        {vps.map((vp) => (
+          <div key={vp.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-t border-border pt-2 mt-2 first:border-0 first:pt-0 first:mt-0">
+            <div className="min-w-0">
+              <p className="text-[13px] text-foreground m-0 break-words">{vp.title || '（無題）'}</p>
+              <p className="text-[11px] text-muted-foreground m-0">
+                現在: {vpStateLabel(vp.lifecycle_state)}
+                {vp.promoted_at && ` ／ 昇格 ${vp.promoted_at.slice(0, 10)}`}
+              </p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <select
+                className={`${SELECT_CLASS} w-auto`}
+                value={vp.lifecycle_state ?? 'current'}
+                disabled={vpBusyId === vp.id}
+                onChange={(e) => changeVpState(vp, e.target.value)}
+              >
+                {VP_STATES.map((s) => (
+                  <option key={s.value} value={s.value}>
+                    {s.label}
+                  </option>
+                ))}
+              </select>
+              {(vp.lifecycle_state === 'target' || vp.lifecycle_state === 'transition_candidate') && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => changeVpState(vp, 'current')}
+                  disabled={vpBusyId === vp.id}
+                  className="text-[13px] whitespace-nowrap"
+                >
+                  <ArrowUpCircle size={14} />
+                  現在へ昇格
+                </Button>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
   const renderForm = () => (
     <div className="border border-blue-200 bg-blue-50/40 rounded-lg p-4 mb-3 space-y-4">
       <div>
@@ -771,6 +1081,7 @@ export default function DesiredEvidenceSection({
       </p>
 
       {renderProgressPanel()}
+      {renderVpPanel()}
 
       {loading ? (
         <p className="text-muted-foreground text-sm">読み込み中...</p>
@@ -851,6 +1162,7 @@ export default function DesiredEvidenceSection({
                   </Button>
                 </div>
               </div>
+              {renderJudgmentPanel(row)}
             </div>
           ),
         )

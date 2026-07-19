@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { fetchEvaluationBundles } from '@/lib/brand/future-design/fetch'
-import { resolveEvaluation } from '@/lib/brand/future-design/human-judgment'
+import { resolveEvaluation, isHumanJudgmentValid } from '@/lib/brand/future-design/human-judgment'
 import { computeProgress, type ProgressItem } from '@/lib/brand/future-design/progress'
 import type { AchievementEvaluation } from '@/lib/brand/future-design/types'
 
@@ -16,6 +16,13 @@ export type DesiredEvidenceEvaluationDto = {
   importance_weight: number
   execution_state: string
   evaluation: AchievementEvaluation
+  /** §14.4 is_current（現行の人間判断があるか）と is_valid（それが有効か）は別物 */
+  hasCurrentHumanJudgment: boolean
+  humanJudgmentValid: boolean
+  judgmentSource: 'manual_review' | 'automatic_override' | null
+  judgmentState: 'unmet' | 'partially_met' | 'met' | null
+  judgmentProgress: number | null
+  judgmentReason: string | null
 }
 
 export type VisionProgressDto = {
@@ -61,13 +68,35 @@ export async function GET(request: NextRequest) {
 
     // --- 判定（人間判断が0件でも自動評価で動く） ---
     const bundles = await fetchEvaluationBundles(companyId)
-    const evaluations: DesiredEvidenceEvaluationDto[] = bundles.map((b) => ({
-      id: b.row.id,
-      title: b.row.title,
-      importance_weight: Number(b.row.importance_weight ?? 1),
-      execution_state: b.row.execution_state,
-      evaluation: resolveEvaluation(b.de, b.proofs, b.humanJudgment, { currentRuleHash: b.currentRuleHash }),
-    }))
+
+    // 現行判断の理由文（UI表示用。判定そのものには使わない）
+    const { data: reasonRows } = await supabaseAdmin
+      .from('desired_evidence_evaluations')
+      .select('desired_evidence_id, reason')
+      .eq('company_id', companyId)
+      .eq('is_current', true)
+    const reasonById = new Map(
+      ((reasonRows ?? []) as Array<{ desired_evidence_id: string; reason: string }>).map((r) => [r.desired_evidence_id, r.reason]),
+    )
+
+    const now = new Date()
+    const evaluations: DesiredEvidenceEvaluationDto[] = bundles.map((b) => {
+      const hj = b.humanJudgment
+      const valid = isHumanJudgmentValid(hj, b.currentRuleHash, b.row.evidence_updated_at, now)
+      return {
+        id: b.row.id,
+        title: b.row.title,
+        importance_weight: Number(b.row.importance_weight ?? 1),
+        execution_state: b.row.execution_state,
+        evaluation: resolveEvaluation(b.de, b.proofs, hj, { currentRuleHash: b.currentRuleHash, now }),
+        hasCurrentHumanJudgment: !!hj,
+        humanJudgmentValid: valid,
+        judgmentSource: hj?.source ?? null,
+        judgmentState: hj?.achievement_state ?? null,
+        judgmentProgress: hj?.progress_fraction ?? null,
+        judgmentReason: reasonById.get(b.row.id) ?? null,
+      }
+    })
     const evalById = new Map(evaluations.map((e) => [e.id, e]))
 
     // --- vision 単位の進捗（requires: philosophy(vision) → desired_evidence で辿る） ---
