@@ -1,8 +1,19 @@
 // §9 FACT/ASPIRATION 物理分離の単体テスト（DB非依存）。
 // 実行: npx tsx lib/copy/ontology-blocks.test.ts
 import assert from 'node:assert/strict'
-import { buildAspirationBlock, isCurrentVp, isAspirationVp } from './ontology-blocks'
+import { buildAspirationBlock, isCurrentVp, isAspirationVp, extractBannedTerms } from './ontology-blocks'
 import { buildCopySystemPrompt } from './role-matrix'
+
+// --- 禁止語の抽出（rule_type 未取得で常に空だった回帰の防止） ---
+const banned = extractBannedTerms([
+  { rule_type: 'banned_word', rule_text: '業界No.1', ng_example: '当社は業界No.1です' },
+  { rule_type: 'tone_rule', rule_text: '断定口調を避ける' },
+  { rule_type: 'claim_rule', rule_text: '効果を保証しない' },
+  { rule_type: 'compliance_rule', rule_text: '薬機法に配慮' },
+])
+assert.deepEqual(banned, ['業界No.1', '当社は業界No.1です'], 'banned_word の rule_text と ng_example だけを拾う')
+assert.equal(extractBannedTerms([{ rule_type: 'tone_rule', rule_text: 'x' }]).length, 0, 'banned_word が無ければ空')
+assert.equal(extractBannedTerms([{ rule_text: 'rule_type 未取得' }]).length, 0, 'rule_type が無い行は対象外')
 
 // --- lifecycle_state の振り分け ---
 assert.equal(isCurrentVp({ lifecycle_state: 'current' }), true)

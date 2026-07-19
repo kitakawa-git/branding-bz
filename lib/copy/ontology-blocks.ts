@@ -45,6 +45,23 @@ const txt = (s: string | null | undefined) => (s || '').replace(/\s+/g, ' ').tri
 const arr = (v: unknown): string[] =>
   Array.isArray(v) ? v.map((x) => (typeof x === 'string' ? x : txt(String((x as { text?: string })?.text ?? x)))).filter(Boolean) : []
 
+export type RuleLike = { rule_text?: string | null; ng_example?: string | null; rule_type?: string | null }
+
+/**
+ * 禁止語チェック（Stage3 クリシェ密度）の照合元を取り出す。
+ * rule_type='banned_word' の rule_text / ng_example のみを対象にする。
+ */
+export function extractBannedTerms(rules: RuleLike[]): string[] {
+  return Array.from(
+    new Set(
+      rules
+        .filter((r) => r.rule_type === 'banned_word')
+        .flatMap((r) => [txt(r.rule_text), txt(r.ng_example)])
+        .filter(Boolean),
+    ),
+  )
+}
+
 // ---- §9 FACT/ASPIRATION 分離の純粋ロジック（DB非依存＝単体テスト対象） ----
 
 export type VpLike = { title?: string | null; description?: string | null; lifecycle_state?: string | null }
@@ -153,7 +170,7 @@ export async function buildCopyOntologyBlocks(
     fetchPhilosophy(supabase, companyId),
     supabase.from('value_propositions').select('title, description, lifecycle_state').eq('company_id', companyId).order('sort_order', { ascending: true }),
     supabase.from('proof_points').select('id, title, description, source_type').eq('company_id', companyId).order('sort_order', { ascending: true }),
-    supabase.from('governance_rules').select('rule_text, ng_example, ok_example, severity').eq('company_id', companyId).order('sort_order', { ascending: true }),
+    supabase.from('governance_rules').select('rule_text, ng_example, ok_example, severity, rule_type').eq('company_id', companyId).order('sort_order', { ascending: true }),
     supabase.from('element_relations').select('source_kind, source_id, target_kind, target_id, relation_type').eq('company_id', companyId).eq('relation_type', 'communicatedAs').order('sort_order', { ascending: true }),
     fetchElementsCatalog(supabase, companyId),
     supabase.from('brand_guidelines').select('slogan').eq('company_id', companyId).maybeSingle(),
@@ -273,15 +290,10 @@ export async function buildCopyOntologyBlocks(
     })
   const rulesBlock = ruleLines.join('\n')
 
-  // bannedTerms: クリシェ密度の照合元（禁止語・非推奨表現の生語＝rule_text＋ng_example）
-  const bannedTerms = Array.from(
-    new Set(
-      rules
-        .filter((r) => ['banned_word', 'discouraged_expression'].includes(r.rule_type as string))
-        .flatMap((r) => [txt(r.rule_text), txt(r.ng_example)])
-        .filter(Boolean),
-    ),
-  )
+  // bannedTerms: クリシェ密度の照合元（禁止語の生語＝rule_text＋ng_example）。
+  // ※ rule_type の実在値は banned_word / claim_rule / compliance_rule / tone_rule。
+  //   禁止語彙は banned_word のみ（かつては非実在の 'discouraged_expression' を見ていて常に空だった）。
+  const bannedTerms = extractBannedTerms(rules)
 
   // quotablePhrases：communicatedAs承認フレーズ＋スローガン（Stage3のマスク用に温存）
   const slogan = txt((bgRes.data as { slogan?: string } | null)?.slogan)
