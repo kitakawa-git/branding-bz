@@ -189,12 +189,16 @@
 - マルチペルソナ化（`session_data.personas[]`・connectはN件sync・冪等）＋ターゲット別グルーピング（`target_name` を `persona_data` に格納）。
 - ジャーニー: maxTokens 8000＋堅牢パーサ、Step4任意化。一度撤去→北川さん判断で復元（5ステップ・`journey_map_data` 列は残置）。
 
-### 🆕 ブランドオントロジー未来設計（現在→理想→道のり）：設計＋DB基盤＋ドメイン層まで実装（UI未着手・2026-07-18）
+### 🆕 ブランドオントロジー未来設計（現在→理想→道のり）：設計＋DB基盤＋ドメイン層＋UI＋コピーAI注入まで実装完了（2026-07-19）
 - **設計7本** `docs/260718_ブランドオントロジー_*.md`（**C案統合設計_v1 が正**・判定ロジック詳細/DB基盤マイグレ設計を含む）。方針：Proof Point＝**事実限定**／**Desired Evidence（獲得目標の証拠）を独立概念**／**state と progress を分離**／**indeterminate 導入**（データ不足と未達を混同しない）／**重み付き実証進捗＋判定可能率**（セット表示必須）／VPは `target→transition_candidate→current`（管理者昇格）／**FACT・ASPIRATION分離**で反捏造を維持。
 - **DB基盤5本 本番適用済み**（`apply_migration` 実行・ローカル `.sql` は実versionにリネーム済）：`desired_evidence`(20260718133238) ／ `proof_point_measurements`(141811) ／ `desired_evidence_evaluations`＋失効スナップショット＋bumpトリガ(141841) ／ `value_propositions.lifecycle_state`(141907) ／ `element_relations` relation_type +4種〔aspiresTo/requires/toBeEvidencedBy/verifies〕(141920)。**全て加算・既定値で挙動不変**。
 - **ドメイン層**：`lib/brand/future-design/`（rule検証・評価エンジン・人間判断の失効判定・重み付き進捗・読取専用IO）＋ `lib/brand/integrity.ts` に §10 未来設計チェック（獲得計画なし／判定条件未設定／昇格レビュー待ち／単位・指標不一致／測定値なし判定不能／override要再確認 ほか）。**ユニット計20 pass・tsc/build緑・DB無変更**。
-- コミット：`6fe76f1`(docs) / `21d4961`(M1) / `2f71a93`(M2-5) / `6b23da1`(engine) / `34a3f94`(integrity)。**全て未push**。
-- 残：**§11 管理UI** ／ **§9 コピーAI FACT・ASPIRATION注入** ／ **§14.2 rule_hash算出RPC**（override有効化に必要・未整備の現状は override 失効扱いで自動評価にフォールバック） ／ ID INC. E2E。
+- **§11 管理UI**（企業詳細・オントロジー構築ウィザードのステップ4「未来設計」）：獲得目標CRUD＋達成条件エディタ（boolean/count/aggregate/manual・保存前に `validateRule`）／実績への**測定値入力**（指標キー・値・単位・測定日・対象範囲・出典）／判定と進捗の表示（状態バッジ 達成・一部・未達・判定不能＋進捗バー＋理由文、セクション上部に**実証進捗と判定可能率をセット表示**・獲得目標0件は §14.6 で「未設定」）／**人間判断**パネル（記録・**失効中の警告と再確認導線**・自動評価に戻す）／**提供価値の状態遷移と current 昇格**（昇格者・日時を記録）。`element_relations` は `desired_evidence` を端点に選べるよう拡張（aspiresTo/requires/toBeEvidencedBy/verifies）。
+- **§14.2 rule_hash 算出RPC 本番適用済み**（`desired_evidence_rule_hashes` / version 20260719025247・SECURITY DEFINER・service_role のみ）→ `fetchCurrentRuleHashes` を実RPCに結線し、**override の失効判定が実際に機能**（ルール変更で失効→自動評価へフォールバック）。
+- **§9 コピーAI FACT/ASPIRATION 分離注入**：FACT＝実績＋測定値＋`lifecycle_state='current'` の提供価値（null は current 扱い）／ASPIRATION＝`target`・`transition_candidate` の提供価値＋**met 以外**の獲得目標＋ビジョン。ASPIRATION は system プロンプトに FACT と別セクションで注入し「目指す／これからの形でのみ言及可・事実として断定や数値引用は禁止・引用可の事実は FACT のみ」を明示。獲得目標は met でも引用対象にしない（§14.5・引用できるのは紐づく実績）。**ASPIRATION 0件なら注入なし＝従来プロンプトと文字列完全一致**。あわせて `governance_rules.rule_type` 未取得で禁止語チェック（`bannedTerms`）が常に空だった既存バグを修正。
+- コミット：`6fe76f1`(docs) / `21d4961`(M1) / `2f71a93`(M2-5) / `6b23da1`(engine) / `34a3f94`(integrity) / `8260da1`(status) / `2931805`(UI a+b) / `c753267`(人間判断・VP昇格・RPC結線) / `55b28aa`(コピーAI FACT/ASPIRATION) / `6361e78`(禁止語fix)。**約11コミットが未push**。
+- 検証：tsc / build 緑。ユニット（判定エンジン20＋FACT/ASPIRATION分離）全pass。デモ企業テックブリッジのみでロールバック検証（人間判断の記録→ルール変更で失効→自動評価フォールバック→クリアで復帰／状態と進捗の整合CHECK違反はAPIとDBの双方で拒否／VP昇格で promoted_by・promoted_at 記録）。**実クライアント（リィツ／ID INC.）は無変更・テスト行は全削除**。
+- 残：**ID INC. での実機E2E**（実データでの一連の操作確認）。
 - **運用注意**：このリポは `supabase db push` **不可**（ローカル/リモートの version ドリフト）。マイグレは **apply_migration＋ローカル `.sql` を実versionにリネーム**する運用。
 
 
