@@ -132,11 +132,30 @@ export default function OntologySummaryHub({
     return () => window.removeEventListener(ONTOLOGY_DATA_CHANGED_EVENT, handler)
   }, [fetchMapStats])
 
+  // プレゼンモードの enter/exit アニメーション制御。
+  // presentOpen=true でマウント後、次フレームで presentEntering=true に切替えて
+  // opacity/scale の transition を発火。閉じるときは exit を先に走らせて 300ms 後にアンマウント。
+  const [presentEntering, setPresentEntering] = useState(false)
+  useEffect(() => {
+    if (!presentOpen) {
+      setPresentEntering(false)
+      return
+    }
+    const raf = requestAnimationFrame(() => setPresentEntering(true))
+    return () => cancelAnimationFrame(raf)
+  }, [presentOpen])
+
+  const closePresent = useCallback(() => {
+    setPresentEntering(false)
+    const t = setTimeout(() => setPresentOpen(false), 300)
+    return () => clearTimeout(t)
+  }, [])
+
   // プレゼンモード: Esc で閉じる＋背後のスクロールを止める
   useEffect(() => {
     if (!presentOpen) return
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setPresentOpen(false)
+      if (e.key === 'Escape') closePresent()
     }
     window.addEventListener('keydown', onKey)
     const prevOverflow = document.body.style.overflow
@@ -145,7 +164,7 @@ export default function OntologySummaryHub({
       window.removeEventListener('keydown', onKey)
       document.body.style.overflow = prevOverflow
     }
-  }, [presentOpen])
+  }, [presentOpen, closePresent])
 
   const c = status?.counts
   const insp = status?.inspection ?? null
@@ -333,10 +352,14 @@ export default function OntologySummaryHub({
         <BrandMapSection companyId={companyId} showLegend={showLegend} />
       </div>
 
-      {/* プレゼンモード（全画面3D）。開いている間だけ描画ループが回る */}
+      {/* プレゼンモード（全画面3D）。開いている間だけ描画ループが回る。
+          enter/exit: opacity 0↔1 + scale 0.96↔1 を 300ms ease-out で。
+          transform は canvas の DOM 幅を変えないため描画は乱れない。 */}
       {presentOpen && graph && (
         <div
-          className="fixed inset-0 z-50 flex flex-col bg-background p-4 sm:p-6"
+          className={`fixed inset-0 z-50 flex flex-col bg-background p-4 sm:p-6 origin-center transition-[opacity,transform] duration-300 ease-out ${
+            presentEntering ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
+          }`}
           role="dialog"
           aria-modal="true"
           aria-label="ブランドオントロジー プレゼンモード"
@@ -344,7 +367,7 @@ export default function OntologySummaryHub({
           <div className="flex items-center gap-2 mb-3">
             <h3 className="text-base font-bold text-foreground m-0">ブランドオントロジー（プレゼンモード）</h3>
             <div className="grow" />
-            <Button type="button" variant="outline" size="icon" className="size-8" onClick={() => setPresentOpen(false)} title="閉じる（Esc）">
+            <Button type="button" variant="outline" size="icon" className="size-8" onClick={closePresent} title="閉じる（Esc）">
               <X size={15} />
             </Button>
           </div>
