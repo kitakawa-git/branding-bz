@@ -102,15 +102,18 @@ export function evaluate(de: DesiredEvidenceInput, adoptedProofs: ProofInput[]):
     }
 
     case 'aggregate': {
-      let M = P.flatMap((p) => p.measurements || []).filter((m) => matchesKeyAndUnit(m, r.metric_key, r.unit))
+      // まず key＋unit＋有限値で母集団を作る。ここが空なら「そもそも測定値が無い」＝ NO_MATCHING_MEASUREMENT。
+      const M_all = P.flatMap((p) => p.measurements || []).filter((m) => matchesKeyAndUnit(m, r.metric_key, r.unit))
+      if (M_all.length === 0) return indeterminate('NO_MATCHING_MEASUREMENT')
+
+      let M = M_all
       if (r.aggregation === 'latest') {
         // §5-4 measured_at のある測定値のみ対象（created_at にフォールバックしない）
         M = M.filter((m) => toTime(m.measured_at) !== null)
+        // 母集団はあるのに measured_at 付きが無い＝「日付が無くて最新を判定できない」＝ NO_MEASURED_DATE。
+        if (M.length === 0) return indeterminate('NO_MEASURED_DATE')
         // measured_at 降順（同値は元順＝安定ソートで tie-break）
         M = [...M].sort((a, b) => (toTime(b.measured_at) as number) - (toTime(a.measured_at) as number))
-      }
-      if (M.length === 0) {
-        return indeterminate(r.aggregation === 'latest' ? 'NO_MEASURED_DATE' : 'NO_MATCHING_MEASUREMENT')
       }
       const a = aggregateValue(M.map((m) => m.metric_value), r.aggregation)
       const met = r.operator === '>=' ? a >= r.target : a <= r.target

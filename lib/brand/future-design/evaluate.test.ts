@@ -140,6 +140,24 @@ test('latest 全measured_at null → NO_MEASURED_DATE（created_atにフォー�
   assert.equal(r.reason_code, 'NO_MEASURED_DATE')
 })
 
+// ---------- 追加: latest でも「測定値ゼロ」は NO_MATCHING（NO_MEASURED_DATE と区別） ----------
+test('latest かつ一致する測定値ゼロ → NO_MATCHING_MEASUREMENT（NO_MEASURED_DATEと混同しない）', () => {
+  const rule: AchievementRuleV1 = {
+    version: 1, type: 'aggregate', metric_key: 'nps', aggregation: 'latest', unit: 'pt', operator: '>=', target: 30,
+  }
+  // 一致する測定値そのものが無い（別keyのみ）。日付有無以前の「データ不足」。
+  const r = evaluate(de(rule), [pp('p1', [m('churn_rate', 5, '%')])])
+  assert.equal(r.state, 'indeterminate')
+  assert.equal(r.reason_code, 'NO_MATCHING_MEASUREMENT')
+})
+test('latest で測定値が1件も無い（実績ゼロ） → NO_MATCHING_MEASUREMENT', () => {
+  const rule: AchievementRuleV1 = {
+    version: 1, type: 'aggregate', metric_key: 'nps', aggregation: 'latest', unit: 'pt', operator: '>=', target: 30,
+  }
+  const r = evaluate(de(rule), [])
+  assert.equal(r.reason_code, 'NO_MATCHING_MEASUREMENT')
+})
+
 // ---------- 追加: count は同一PPの複数測定を1件（§5-5 DISTINCT） ----------
 test('count は同一PPの複数測定を1件として数える（§5-5）', () => {
   const rule: AchievementRuleV1 = {

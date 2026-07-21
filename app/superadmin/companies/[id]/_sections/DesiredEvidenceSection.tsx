@@ -13,6 +13,7 @@ import { Plus, Trash2, Pencil, Check, X, ChevronUp, ChevronDown, Gavel, ArrowUpC
 import { toast } from 'sonner'
 import { validateRule } from '@/lib/brand/future-design/rule-validator'
 import type { AchievementRuleV1 } from '@/lib/brand/future-design/types'
+import MetricPicker, { type MetricSelection } from './MetricPicker'
 import type {
   DesiredEvidenceEvaluationDto,
   VisionProgressDto,
@@ -47,10 +48,12 @@ type Draft = {
   minimum_proof_count: string
   threshold: string
   filter_metric_key: string
+  filter_metric_label: string // プレビュー用の表示名（保存しない）
   filter_unit: string
   filter_operator: '' | '>=' | '<='
   filter_value: string
   agg_metric_key: string
+  agg_metric_label: string // プレビュー用の表示名（保存しない）
   aggregation: 'sum' | 'average' | 'maximum' | 'minimum' | 'latest'
   agg_unit: string
   agg_operator: '>=' | '<='
@@ -66,12 +69,49 @@ const EXECUTION_STATES: { value: ExecutionState; label: string }[] = [
 ]
 const execLabel = (v: ExecutionState) => EXECUTION_STATES.find((s) => s.value === v)?.label ?? v
 
-const RULE_TYPES: { value: RuleType; label: string; hint: string }[] = [
-  { value: 'boolean', label: '存在（実績があるか）', hint: '立証する実績が必要数そろえば達成' },
-  { value: 'count', label: '件数（いくつ集まったか）', hint: '条件を満たす実績の件数で達成を判定' },
-  { value: 'aggregate', label: '集計（数値が目標に届いたか）', hint: '測定値を集計して目標値と比較' },
-  { value: 'manual', label: '手動（人が判断する）', hint: '自動判定せず、人の判断で達成を記録' },
+// 非エンジニア向けのテンプレカード（判定ロジック＝rule_type は不変。見せ方だけやさしく）
+const RULE_TEMPLATES: { value: RuleType; title: string; example: string; icon: string }[] = [
+  { value: 'aggregate', title: '数字が目標に届いたら', example: '例：ブランド認知率が50%以上になったら', icon: '📈' },
+  { value: 'count', title: '◯件たまったら', example: '例：導入事例が3件そろったら', icon: '🔢' },
+  { value: 'boolean', title: '証拠が1つでもあれば', example: '例：受賞・掲載などの実績が付いたら', icon: '✅' },
+  { value: 'manual', title: '人が見て判断する', example: '自動では測れないものを人が確認して記録', icon: '👤' },
 ]
+
+const AGG_LABEL = (v: Draft['aggregation']) =>
+  ({ sum: '合計', average: '平均', maximum: '最大', minimum: '最小', latest: '最新' })[v] ?? v
+const OP_WORD = (op: '>=' | '<=') => (op === '>=' ? '以上' : '以下')
+
+// 達成条件を日本語1文にする（常時プレビュー）。metric_key を見せず表示名で語る。
+function rulePreview(d: Draft): string {
+  switch (d.rule_type) {
+    case 'aggregate': {
+      const name = d.agg_metric_label.trim() || '指標'
+      const unit = d.agg_unit.trim()
+      const target = d.agg_target.trim() || '◯'
+      const aggWord = d.aggregation === 'latest' ? '最新で' : `${AGG_LABEL(d.aggregation)}が`
+      const base = d.agg_baseline.trim() !== '' ? `（今${d.agg_baseline}${unit}）` : ''
+      return `${name}が${aggWord}${target}${unit}${OP_WORD(d.agg_operator)}になったら達成${base}`
+    }
+    case 'count': {
+      const n = d.threshold.trim() || '◯'
+      if (d.filter_metric_key.trim()) {
+        const name = d.filter_metric_label.trim() || '指定した指標'
+        const cond =
+          d.filter_operator && d.filter_value.trim() !== ''
+            ? `（${name}が${d.filter_value}${d.filter_unit}${OP_WORD(d.filter_operator)}のものだけ）`
+            : `（${name}を持つものだけ）`
+        return `条件に合う実績が${n}件そろったら達成${cond}`
+      }
+      return `立証する実績が${n}件そろったら達成`
+    }
+    case 'boolean': {
+      const n = d.minimum_proof_count.trim()
+      return n && Number(n) > 1 ? `立証する実績が${n}件以上あれば達成` : `立証する実績が1つでもあれば達成`
+    }
+    case 'manual':
+      return '人が確認して「達成／一部／未達」を記録します'
+  }
+}
 const AGGREGATIONS: { value: Draft['aggregation']; label: string }[] = [
   { value: 'sum', label: '合計' },
   { value: 'average', label: '平均' },
@@ -87,14 +127,16 @@ const emptyDraft = (): Draft => ({
   verification_method: '',
   milestone_note: '',
   execution_state: 'planned',
-  rule_type: 'boolean',
+  rule_type: 'aggregate',
   minimum_proof_count: '',
   threshold: '3',
   filter_metric_key: '',
+  filter_metric_label: '',
   filter_unit: '',
   filter_operator: '',
   filter_value: '',
   agg_metric_key: '',
+  agg_metric_label: '',
   aggregation: 'latest',
   agg_unit: '',
   agg_operator: '>=',
@@ -210,8 +252,8 @@ const REASON_TEXTS: Record<string, string> = {
   MET: '達成条件を満たしています',
   BELOW_TARGET: '目標値にまだ届いていません',
   INSUFFICIENT_COUNT: '立証する実績の件数が足りません',
-  NO_MATCHING_MEASUREMENT: 'データ不足で判定できません（条件に合う測定値がありません）',
-  NO_MEASURED_DATE: '測定日のない測定値があるため「最新」を判定できません',
+  NO_MATCHING_MEASUREMENT: 'まだ測定値がありません（データ不足）',
+  NO_MEASURED_DATE: '測定日のない測定値があり「最新」を判定できません',
   INVALID_RULE: '達成条件が不正です。編集して直してください',
   INVALID_BASELINE: '現状値（基準）の向きが目標と矛盾しているため、進捗率は出せません',
   MANUAL_REVIEW: '手動判定です。人の判断が記録されるまで判定できません',
@@ -267,7 +309,8 @@ export default function DesiredEvidenceSection({
   const [editingId, setEditingId] = useState<string | null>(null) // 'new' または行ID
   const [draft, setDraft] = useState<Draft>(emptyDraft())
   const [saving, setSaving] = useState(false)
-  const [metricKeys, setMetricKeys] = useState<string[]>([]) // datalist サジェスト
+  // 指標辞書（編集時にプレビュー表示名を復元するため metric_key→定義 を持つ）
+  const [metricDefs, setMetricDefs] = useState<Record<string, MetricSelection>>({})
   // 判定・進捗（読み取り専用API）
   const [evals, setEvals] = useState<Record<string, DesiredEvidenceEvaluationDto>>({})
   const [visionProgress, setVisionProgress] = useState<VisionProgressDto[]>([])
@@ -299,16 +342,15 @@ export default function DesiredEvidenceSection({
     setLoading(false)
   }
 
-  // 既存の metric_key をサジェスト（0件なら空）
-  const fetchMetricKeys = async () => {
+  // 指標辞書を取得（プレビューの表示名復元・単位の突き合わせに使う）
+  const fetchMetricDefs = async () => {
     const { data } = await supabase
-      .from('proof_point_measurements')
-      .select('metric_key')
+      .from('metric_definitions')
+      .select('metric_key, display_name, canonical_unit')
       .eq('company_id', companyId)
-    const keys = Array.from(
-      new Set(((data as { metric_key: string | null }[] | null) || []).map((m) => (m.metric_key || '').trim()).filter(Boolean)),
-    ).sort()
-    setMetricKeys(keys)
+    const map: Record<string, MetricSelection> = {}
+    for (const d of ((data as MetricSelection[] | null) || [])) map[d.metric_key] = d
+    setMetricDefs(map)
   }
 
   // 判定・進捗を取得（読み取りのみ。失敗しても CRUD は動かす）
@@ -449,7 +491,7 @@ export default function DesiredEvidenceSection({
 
   useEffect(() => {
     fetchRows()
-    fetchMetricKeys()
+    fetchMetricDefs()
     fetchEvaluations()
     fetchVps()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -461,6 +503,10 @@ export default function DesiredEvidenceSection({
   }
 
   const startEdit = (row: DesiredEvidence) => {
+    const ruleDraft = ruleToDraft(row.achievement_rule)
+    // 編集時はプレビュー用の表示名を指標辞書から復元する
+    const aggLabel = ruleDraft.agg_metric_key ? metricDefs[ruleDraft.agg_metric_key]?.display_name ?? '' : ''
+    const filterLabel = ruleDraft.filter_metric_key ? metricDefs[ruleDraft.filter_metric_key]?.display_name ?? '' : ''
     setDraft({
       ...emptyDraft(),
       title: row.title ?? '',
@@ -469,7 +515,9 @@ export default function DesiredEvidenceSection({
       verification_method: row.verification_method ?? '',
       milestone_note: row.milestone_note ?? '',
       execution_state: row.execution_state ?? 'planned',
-      ...ruleToDraft(row.achievement_rule),
+      ...ruleDraft,
+      agg_metric_label: aggLabel,
+      filter_metric_label: filterLabel,
     })
     setEditingId(row.id)
   }
@@ -564,152 +612,58 @@ export default function DesiredEvidenceSection({
     await fetchRows()
   }
 
+  // 指標選択：表示名・単位・内部キーをまとめて draft に反映（単位はピッカーの canonical_unit を自動採用）
+  const setAggMetric = (sel: MetricSelection | null) =>
+    setDraft({
+      ...draft,
+      agg_metric_key: sel?.metric_key ?? '',
+      agg_metric_label: sel?.display_name ?? '',
+      agg_unit: sel?.canonical_unit ?? '',
+    })
+  const setFilterMetric = (sel: MetricSelection | null) =>
+    setDraft({
+      ...draft,
+      filter_metric_key: sel?.metric_key ?? '',
+      filter_metric_label: sel?.display_name ?? '',
+      filter_unit: sel?.canonical_unit ?? '',
+    })
+
   const renderRuleEditor = () => (
     <div className="border border-border rounded-lg p-3 bg-white space-y-3">
-      <div>
-        <label className="text-xs font-bold text-foreground mb-1.5 block">達成条件のタイプ</label>
-        <select
-          className={SELECT_CLASS}
-          value={draft.rule_type}
-          onChange={(e) => setDraft({ ...draft, rule_type: e.target.value as RuleType })}
-        >
-          {RULE_TYPES.map((t) => (
-            <option key={t.value} value={t.value}>
-              {t.label}
-            </option>
-          ))}
-        </select>
-        <p className="text-[11px] text-muted-foreground mt-1 m-0">
-          {RULE_TYPES.find((t) => t.value === draft.rule_type)?.hint}
-        </p>
+      {/* テンプレカード：どうなったら「達成」か */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        {RULE_TEMPLATES.map((t) => {
+          const active = draft.rule_type === t.value
+          return (
+            <button
+              key={t.value}
+              type="button"
+              onClick={() => setDraft({ ...draft, rule_type: t.value })}
+              className={`text-left rounded-lg border p-3 transition ${
+                active ? 'border-ds-app-accent-soft bg-ds-app-accent-soft/10 ring-1 ring-ds-app-accent-soft' : 'border-border bg-white hover:border-ds-app-accent-soft/60'
+              }`}
+            >
+              <p className="text-[13px] font-bold text-foreground m-0">
+                <span className="mr-1">{t.icon}</span>
+                {t.title}
+              </p>
+              <p className="text-[11px] text-muted-foreground m-0 mt-0.5">{t.example}</p>
+            </button>
+          )
+        })}
       </div>
 
-      {draft.rule_type === 'boolean' && (
-        <div>
-          <label className="text-xs font-bold text-foreground mb-1.5 block">必要な実績数（省略時1）</label>
-          <Input
-            type="number"
-            min={1}
-            value={draft.minimum_proof_count}
-            onChange={(e) => setDraft({ ...draft, minimum_proof_count: e.target.value })}
-            placeholder="1"
-            className="h-10"
-          />
-        </div>
-      )}
-
-      {draft.rule_type === 'count' && (
-        <>
-          <div>
-            <label className="text-xs font-bold text-foreground mb-1.5 block">
-              必要件数 <span className="text-red-500">*</span>
-            </label>
-            <Input
-              type="number"
-              min={1}
-              value={draft.threshold}
-              onChange={(e) => setDraft({ ...draft, threshold: e.target.value })}
-              className="h-10"
-            />
-          </div>
-          <p className="text-[11px] text-muted-foreground m-0">絞り込み条件（任意）：指標を指定すると、その測定値を持つ実績だけを数えます</p>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="flex-1">
-              <label className="text-xs font-bold text-foreground mb-1.5 block">指標キー</label>
-              <Input
-                type="text"
-                list="de-metric-keys"
-                pattern="^[a-z0-9_]+$"
-                value={draft.filter_metric_key}
-                onChange={(e) => setDraft({ ...draft, filter_metric_key: e.target.value })}
-                placeholder="例: case_study"
-                className="h-10"
-              />
-            </div>
-            <div className="flex-1">
-              <label className="text-xs font-bold text-foreground mb-1.5 block">単位</label>
-              <Input
-                type="text"
-                value={draft.filter_unit}
-                onChange={(e) => setDraft({ ...draft, filter_unit: e.target.value })}
-                placeholder="例: 件"
-                className="h-10"
-              />
-            </div>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="flex-1">
-              <label className="text-xs font-bold text-foreground mb-1.5 block">条件</label>
-              <select
-                className={SELECT_CLASS}
-                value={draft.filter_operator}
-                onChange={(e) => setDraft({ ...draft, filter_operator: e.target.value as Draft['filter_operator'] })}
-              >
-                <option value="">指定しない</option>
-                <option value=">=">以上（&gt;=）</option>
-                <option value="<=">以下（&lt;=）</option>
-              </select>
-            </div>
-            <div className="flex-1">
-              <label className="text-xs font-bold text-foreground mb-1.5 block">しきい値</label>
-              <Input
-                type="number"
-                value={draft.filter_value}
-                onChange={(e) => setDraft({ ...draft, filter_value: e.target.value })}
-                placeholder="条件を使う場合は必須"
-                className="h-10"
-              />
-            </div>
-          </div>
-        </>
-      )}
-
+      {/* ①数字が目標に届いたら（aggregate） */}
       {draft.rule_type === 'aggregate' && (
-        <>
+        <div className="space-y-3">
+          <MetricPicker
+            companyId={companyId}
+            value={draft.agg_metric_key}
+            onChange={setAggMetric}
+            label="どの数字で見る？"
+            required
+          />
           <div className="flex flex-col sm:flex-row gap-3">
-            <div className="flex-1">
-              <label className="text-xs font-bold text-foreground mb-1.5 block">
-                指標キー <span className="text-red-500">*</span>
-              </label>
-              <Input
-                type="text"
-                list="de-metric-keys"
-                pattern="^[a-z0-9_]+$"
-                value={draft.agg_metric_key}
-                onChange={(e) => setDraft({ ...draft, agg_metric_key: e.target.value })}
-                placeholder="例: brand_awareness_rate"
-                className="h-10"
-              />
-              <p className="text-[11px] text-muted-foreground mt-1 m-0">半角小文字・数字・_ のみ。測定値と同じキーにしてください</p>
-            </div>
-            <div className="flex-1">
-              <label className="text-xs font-bold text-foreground mb-1.5 block">
-                単位 <span className="text-red-500">*</span>
-              </label>
-              <Input
-                type="text"
-                value={draft.agg_unit}
-                onChange={(e) => setDraft({ ...draft, agg_unit: e.target.value })}
-                placeholder="例: %"
-                className="h-10"
-              />
-            </div>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="flex-1">
-              <label className="text-xs font-bold text-foreground mb-1.5 block">集計方法</label>
-              <select
-                className={SELECT_CLASS}
-                value={draft.aggregation}
-                onChange={(e) => setDraft({ ...draft, aggregation: e.target.value as Draft['aggregation'] })}
-              >
-                {AGGREGATIONS.map((a) => (
-                  <option key={a.value} value={a.value}>
-                    {a.label}
-                  </option>
-                ))}
-              </select>
-            </div>
             <div className="flex-1">
               <label className="text-xs font-bold text-foreground mb-1.5 block">条件</label>
               <select
@@ -717,46 +671,149 @@ export default function DesiredEvidenceSection({
                 value={draft.agg_operator}
                 onChange={(e) => setDraft({ ...draft, agg_operator: e.target.value as '>=' | '<=' })}
               >
-                <option value=">=">以上（&gt;=）</option>
-                <option value="<=">以下（&lt;=）</option>
+                <option value=">=">目標値以上になったら</option>
+                <option value="<=">目標値以下になったら</option>
               </select>
             </div>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-3">
             <div className="flex-1">
               <label className="text-xs font-bold text-foreground mb-1.5 block">
                 目標値 <span className="text-red-500">*</span>
               </label>
-              <Input
-                type="number"
-                value={draft.agg_target}
-                onChange={(e) => setDraft({ ...draft, agg_target: e.target.value })}
-                placeholder="例: 50"
-                className="h-10"
-              />
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  value={draft.agg_target}
+                  onChange={(e) => setDraft({ ...draft, agg_target: e.target.value })}
+                  placeholder="例: 50"
+                  className="h-10"
+                />
+                {draft.agg_unit && <span className="text-sm text-muted-foreground shrink-0">{draft.agg_unit}</span>}
+              </div>
             </div>
-            <div className="flex-1">
-              <label className="text-xs font-bold text-foreground mb-1.5 block">現状値（基準・任意）</label>
+          </div>
+          <div>
+            <label className="text-xs font-bold text-foreground mb-1.5 block">今の数字（任意）</label>
+            <div className="flex items-center gap-2">
               <Input
                 type="number"
                 value={draft.agg_baseline}
                 onChange={(e) => setDraft({ ...draft, agg_baseline: e.target.value })}
                 placeholder="例: 20"
-                className="h-10"
+                className="h-10 max-w-[200px]"
               />
-              <p className="text-[11px] text-muted-foreground mt-1 m-0">
-                入れると進捗率を出せます（以上なら 現状 &lt; 目標、以下なら 現状 &gt; 目標）
-              </p>
+              {draft.agg_unit && <span className="text-sm text-muted-foreground shrink-0">{draft.agg_unit}</span>}
             </div>
+            <p className="text-[11px] text-muted-foreground mt-1 m-0">入れると「今 → 目標」の進捗率（％）を出せます</p>
           </div>
-        </>
+
+          {/* 詳細（集計方法）：既定は「最新」 */}
+          <details className="text-[13px]">
+            <summary className="cursor-pointer text-muted-foreground">詳細：数字の見方（既定は「最新の値」）</summary>
+            <div className="mt-2">
+              <select
+                className={SELECT_CLASS}
+                value={draft.aggregation}
+                onChange={(e) => setDraft({ ...draft, aggregation: e.target.value as Draft['aggregation'] })}
+              >
+                <option value="latest">最新の値で見る</option>
+                <option value="sum">合計で見る</option>
+                <option value="average">平均で見る</option>
+                <option value="maximum">最大で見る</option>
+                <option value="minimum">最小で見る</option>
+              </select>
+            </div>
+          </details>
+        </div>
       )}
 
-      <datalist id="de-metric-keys">
-        {metricKeys.map((k) => (
-          <option key={k} value={k} />
-        ))}
-      </datalist>
+      {/* ②◯件たまったら（count） */}
+      {draft.rule_type === 'count' && (
+        <div className="space-y-3">
+          <div>
+            <label className="text-xs font-bold text-foreground mb-1.5 block">
+              何件そろったら達成？ <span className="text-red-500">*</span>
+            </label>
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                min={1}
+                value={draft.threshold}
+                onChange={(e) => setDraft({ ...draft, threshold: e.target.value })}
+                className="h-10 max-w-[200px]"
+              />
+              <span className="text-sm text-muted-foreground shrink-0">件</span>
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-1 m-0">既定では「立証する実績」の件数を数えます</p>
+          </div>
+
+          <details className="text-[13px]">
+            <summary className="cursor-pointer text-muted-foreground">詳細：特定の指標に絞る（任意）</summary>
+            <div className="mt-2 space-y-3">
+              <MetricPicker companyId={companyId} value={draft.filter_metric_key} onChange={setFilterMetric} label="この指標を持つ実績だけ数える" />
+              {draft.filter_metric_key && (
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <div className="flex-1">
+                    <label className="text-xs font-bold text-foreground mb-1.5 block">さらに条件（任意）</label>
+                    <select
+                      className={SELECT_CLASS}
+                      value={draft.filter_operator}
+                      onChange={(e) => setDraft({ ...draft, filter_operator: e.target.value as Draft['filter_operator'] })}
+                    >
+                      <option value="">指定しない</option>
+                      <option value=">=">しきい値以上</option>
+                      <option value="<=">しきい値以下</option>
+                    </select>
+                  </div>
+                  <div className="flex-1">
+                    <label className="text-xs font-bold text-foreground mb-1.5 block">しきい値</label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        value={draft.filter_value}
+                        onChange={(e) => setDraft({ ...draft, filter_value: e.target.value })}
+                        placeholder="条件を使う場合は必須"
+                        className="h-10"
+                      />
+                      {draft.filter_unit && <span className="text-sm text-muted-foreground shrink-0">{draft.filter_unit}</span>}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </details>
+        </div>
+      )}
+
+      {/* ③証拠が1つでもあれば（boolean） */}
+      {draft.rule_type === 'boolean' && (
+        <details className="text-[13px]">
+          <summary className="cursor-pointer text-muted-foreground">詳細：必要な件数を変える（既定は1件）</summary>
+          <div className="mt-2">
+            <label className="text-xs font-bold text-foreground mb-1.5 block">◯件以上あれば達成</label>
+            <Input
+              type="number"
+              min={1}
+              value={draft.minimum_proof_count}
+              onChange={(e) => setDraft({ ...draft, minimum_proof_count: e.target.value })}
+              placeholder="1"
+              className="h-10 max-w-[200px]"
+            />
+          </div>
+        </details>
+      )}
+
+      {/* ④人が見て判断する（manual）：入力なし */}
+      {draft.rule_type === 'manual' && (
+        <p className="text-[13px] text-muted-foreground m-0">自動では判定しません。あとで「人間判断」から達成状態を記録します。</p>
+      )}
+
+      {/* 常時プレビュー：この条件が満たされたら「達成」 */}
+      <div className="rounded-md bg-emerald-50 border border-emerald-200 p-2.5">
+        <p className="text-[13px] text-emerald-900 m-0">
+          <span className="font-bold">こうなったら達成：</span>
+          {rulePreview(draft)}
+        </p>
+      </div>
     </div>
   )
 

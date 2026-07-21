@@ -14,6 +14,7 @@ import { AutoResizeTextarea } from '@/components/ui/auto-resize-textarea'
 import { Plus, Trash2, Pencil, Check, X, ChevronUp, ChevronDown, Sparkles, AlertTriangle, Ruler } from 'lucide-react'
 import { toast } from 'sonner'
 import type { ProofExtractDraft } from '@/lib/brand/draft-extraction'
+import MetricPicker, { type MetricSelection } from './MetricPicker'
 
 export type ValuePropositionRef = { id: string; title: string }
 
@@ -118,7 +119,6 @@ export default function ProofPointsSection({
   const [mEditingId, setMEditingId] = useState<string | null>(null) // 'new:<ppId>' または測定値ID
   const [mDraft, setMDraft] = useState<MDraft>(emptyMDraft())
   const [mSaving, setMSaving] = useState(false)
-  const [metricKeys, setMetricKeys] = useState<string[]>([])
 
   const vpTitle = (id: string | null) =>
     id ? valuePropositions.find((v) => v.id === id)?.title ?? '（削除済みの提供価値）' : '全般'
@@ -160,8 +160,16 @@ export default function ProofPointsSection({
       by[m.proof_point_id].push(m)
     }
     setMeasurements(by)
-    setMetricKeys(Array.from(new Set(list.map((m) => (m.metric_key || '').trim()).filter(Boolean))).sort())
   }
+
+  // 指標ピッカーで選んだ定義を測定値ドラフトに反映（キー・表示名・単位を一括で揃える）
+  const setMeasurementMetric = (sel: MetricSelection | null) =>
+    setMDraft((prev) => ({
+      ...prev,
+      metric_key: sel?.metric_key ?? '',
+      metric_label: sel?.display_name ?? '',
+      metric_unit: sel?.canonical_unit ?? '',
+    }))
 
   useEffect(() => {
     fetchRows()
@@ -195,20 +203,12 @@ export default function ProofPointsSection({
 
   const saveMeasurement = async (ppId: string) => {
     if (!mDraft.metric_key.trim()) {
-      toast.error('指標キーは必須です')
-      return
-    }
-    if (!/^[a-z0-9_]+$/.test(mDraft.metric_key.trim())) {
-      toast.error('指標キーは半角小文字・数字・_ のみで入力してください')
+      toast.error('指標を選んでください')
       return
     }
     const value = Number(mDraft.metric_value)
     if (!Number.isFinite(value)) {
       toast.error('測定値は数値で入力してください')
-      return
-    }
-    if (!mDraft.metric_unit.trim()) {
-      toast.error('単位は必須です（指標キーとセットで判定に使います）')
       return
     }
     setMSaving(true)
@@ -485,59 +485,31 @@ export default function ProofPointsSection({
   // --- 測定値エディタ（実績ごとの展開パネル） ---
   const renderMeasurementForm = (ppId: string) => (
     <div className="border border-violet-200 bg-violet-50/40 rounded-lg p-3 mb-2 space-y-3">
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="flex-1">
-          <label className="text-xs font-bold text-foreground mb-1.5 block">
-            指標キー <span className="text-red-500">*</span>
-          </label>
-          <Input
-            type="text"
-            list="pp-metric-keys"
-            pattern="^[a-z0-9_]+$"
-            value={mDraft.metric_key}
-            onChange={(e) => setMDraft({ ...mDraft, metric_key: e.target.value })}
-            placeholder="例: brand_awareness_rate"
-            className="h-10"
-          />
-          <p className="text-[11px] text-muted-foreground mt-1 m-0">半角小文字・数字・_ のみ。獲得目標の指標キーと一致させると判定に使われます</p>
-        </div>
-        <div className="flex-1">
-          <label className="text-xs font-bold text-foreground mb-1.5 block">表示名（任意）</label>
-          <Input
-            type="text"
-            value={mDraft.metric_label}
-            onChange={(e) => setMDraft({ ...mDraft, metric_label: e.target.value })}
-            placeholder="例: ブランド認知率"
-            className="h-10"
-          />
-        </div>
-      </div>
+      <MetricPicker
+        companyId={companyId}
+        value={mDraft.metric_key}
+        onChange={setMeasurementMetric}
+        label="どの指標の測定値？"
+        required
+      />
 
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="flex-1">
           <label className="text-xs font-bold text-foreground mb-1.5 block">
             測定値 <span className="text-red-500">*</span>
           </label>
-          <Input
-            type="number"
-            step="any"
-            value={mDraft.metric_value}
-            onChange={(e) => setMDraft({ ...mDraft, metric_value: e.target.value })}
-            placeholder="例: 40.4"
-            className="h-10"
-          />
-        </div>
-        <div className="flex-1">
-          <label className="text-xs font-bold text-foreground mb-1.5 block">
-            単位 <span className="text-red-500">*</span>
-          </label>
-          <Input
-            type="text"
-            value={mDraft.metric_unit}
-            onChange={(e) => setMDraft({ ...mDraft, metric_unit: e.target.value })}
-            placeholder="例: %"
-            className="h-10"
-          />
+          <div className="flex items-center gap-2">
+            <Input
+              type="number"
+              step="any"
+              value={mDraft.metric_value}
+              onChange={(e) => setMDraft({ ...mDraft, metric_value: e.target.value })}
+              placeholder="例: 40.4"
+              className="h-10"
+            />
+            {mDraft.metric_unit && <span className="text-sm text-muted-foreground shrink-0">{mDraft.metric_unit}</span>}
+          </div>
+          <p className="text-[11px] text-muted-foreground mt-1 m-0">単位は選んだ指標から自動で入ります</p>
         </div>
         <div className="flex-1">
           <label className="text-xs font-bold text-foreground mb-1.5 block">測定日</label>
@@ -607,10 +579,10 @@ export default function ProofPointsSection({
                   {m.metric_label || m.metric_key}：{m.metric_value} {m.metric_unit}
                 </p>
                 <p className="text-[11px] text-muted-foreground m-0 mt-0.5 break-words">
-                  キー: {m.metric_key}
-                  {m.measured_at ? ` ／ 測定日: ${m.measured_at}` : ' ／ 測定日なし'}
+                  {m.measured_at ? `測定日: ${m.measured_at}` : '測定日なし'}
                   {m.measurement_scope ? ` ／ 対象: ${m.measurement_scope}` : ''}
                   {m.source_reference ? ` ／ 出典: ${m.source_reference}` : ''}
+                  <span className="opacity-60"> ／ 内部ID: {m.metric_key}</span>
                 </p>
               </div>
               <div className="flex items-center gap-1 shrink-0">
@@ -637,11 +609,6 @@ export default function ProofPointsSection({
             測定値を追加
           </Button>
         )}
-        <datalist id="pp-metric-keys">
-          {metricKeys.map((k) => (
-            <option key={k} value={k} />
-          ))}
-        </datalist>
       </div>
     )
   }
