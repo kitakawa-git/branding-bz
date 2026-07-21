@@ -16,7 +16,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
-import { AlertTriangle, Check, Info } from 'lucide-react'
+import { Check, Info } from 'lucide-react'
 import ProfilingSection from './ProfilingSection'
 import ProofPointsSection, { type ValuePropositionRef } from './ProofPointsSection'
 import GovernanceRulesSection from './GovernanceRulesSection'
@@ -259,13 +259,10 @@ export default function OntologyBuilderSection({
             不足分はこのウィザードでは作成しません。該当企業の管理画面（ブランドの考え方／ブランド戦略）の編集機能・AIサジェストで登録してから戻ってきてください
           </p>
         ) : counts.vp === 0 ? (
-          // 必須（理念）は充足。提供価値は任意だが未登録なのでアラートで促す
-          <div className="flex items-start gap-2 text-[13px] text-amber-800 border border-amber-200 bg-amber-50 rounded-lg p-3 m-0">
-            <AlertTriangle size={15} className="shrink-0 mt-0.5" />
-            <span>
-              提供価値が未登録です。任意ですが、登録すると実績の裏づけ・点検・AI草案の精度が上がります。管理画面「ブランド戦略」で登録できます
-            </span>
-          </div>
+          // 提供価値の未登録はカード上部の警告チップに一本化（ここでは色を使わず事実だけ添える）
+          <p className="text-[13px] text-muted-foreground m-0">
+            提供価値は未登録です（任意）。登録すると実績の裏づけ・点検・AI草案の精度が上がります
+          </p>
         ) : (
           <p className="text-sm text-green-700 border border-green-200 bg-green-50 rounded-lg p-3 m-0">
             基本情報は揃っています。次のステップへ進んでください

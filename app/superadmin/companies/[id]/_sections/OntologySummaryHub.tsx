@@ -9,7 +9,7 @@
 //   件数・凡例・整列レイアウトは右上「…」メニューへ、俯瞰は「⛶」プレゼンモード（3D全画面）へ畳む。
 // - AIレビュー（MapReviewPanel）は常設表示から外した（コンポーネント/APIは将来のレポート出力用に残置）。
 //   クイックアクションは各セクションへのアンカー移動のみで、機能の実体は持たない。
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { fetchElementsCatalog, KIND_LABELS, type ElementKind, type ElementRef } from '@/lib/brand/elements-catalog'
 import { buildBrandMapGraph, type BrandMapGraph, type ProofFkRow, type RelationRow } from '@/lib/brand/map-data'
@@ -20,7 +20,7 @@ import BrandMap3D from './BrandMap3D'
 import OutputTestPanel from './OutputTestPanel'
 import type { ValuePropositionRef } from './ProofPointsSection'
 import { Button } from '@/components/ui/button'
-import { Maximize2, MoreHorizontal, X } from 'lucide-react'
+import { ChevronDown, ChevronRight, Maximize2, MoreHorizontal, X } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -33,7 +33,6 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 
 // 関係性ステップの番号（ステップ4に「未来設計」が入ったため5）
 const STEP_RELATIONS = 5
-const STEP_QUESTIONS = 6
 
 // 未接続要素をどのステップで直すか（種別 → ステップ番号）
 const STEP_BY_KIND: Record<ElementKind, number> = {
@@ -75,12 +74,26 @@ export default function OntologySummaryHub({
   const [showLegend, setShowLegend] = useState(false)
   const [presentOpen, setPresentOpen] = useState(false)
   const [presentSelected, setPresentSelected] = useState<string | null>(null)
+  // 「編集する」折りたたみ。構築完了なら畳む・未完了なら開く（初回に status が来た時だけ決める）
+  const [editOpen, setEditOpen] = useState(false)
+  const editDecided = useRef(false)
+  const editRef = useRef<HTMLDivElement>(null)
 
-  const onStatusChange = useCallback((s: OntologyStatus) => setStatus(s), [])
+  const onStatusChange = useCallback((s: OntologyStatus) => {
+    setStatus(s)
+    // 初回だけ：構築完了なら「編集する」を畳んでおく（未完了は開いたまま）
+    if (!editDecided.current) {
+      editDecided.current = true
+      setEditOpen(!s.complete)
+    }
+  }, [])
 
-  // クイックアクション → ウィザードの該当ステップへ切替（実体はステップパネル内）
+  // チップ/導線 → ウィザードの該当ステップへ。畳んでいる場合は開いてからスクロールする。
+  // （ウィザードは hidden で常時マウント＝イベント購読と件数通知を切らさない）
   const gotoStep = (step: number) => {
+    setEditOpen(true)
     window.dispatchEvent(new CustomEvent(ONTOLOGY_GOTO_STEP_EVENT, { detail: step }))
+    requestAnimationFrame(() => editRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
   }
 
   // グラフ（島・未接続チップとプレゼンモードの3Dで共用）。マップと同じ純関数で導出。
@@ -243,6 +256,28 @@ export default function OntologySummaryHub({
         ) : (
           <Chip label="" value="すべて接続済み" tone="green" />
         )}
+        {/* 提供価値は未登録のときだけ促す（登録済みなら消える） */}
+        {c && c.vp === 0 && (
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className="inline-flex items-center gap-1 py-1 px-2.5 rounded-md text-[12px] font-semibold bg-amber-100 text-amber-800 border-0 cursor-pointer hover:bg-amber-200"
+              >
+                提供価値が未登録 <span className="font-normal opacity-80">→ 登録する</span>
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-80">
+              <p className="text-[13px] text-foreground m-0">
+                提供価値が未登録です。任意ですが、登録すると実績の裏づけ・点検・AI草案の精度が上がります。
+              </p>
+              <p className="text-[12px] text-muted-foreground m-0 mt-2">
+                登録先は<strong className="text-foreground">この企業の</strong>管理画面「ブランド戦略」です。
+                管理画面は各社のログインで開くため、ここからは直接遷移しません。
+              </p>
+            </PopoverContent>
+          </Popover>
+        )}
         <Chip
           label={backingLabel}
           value={insp ? `${backed}/${backingTotal}${pending > 0 ? `（保留${pending}）` : ''}` : '–'}
@@ -306,38 +341,28 @@ export default function OntologySummaryHub({
         <OutputTestPanel companyId={companyId} />
       </div>
 
-      {/* クイックアクション（実体は下のステップパネル。該当ステップへの切替のみ） */}
-      <div className="flex flex-wrap gap-2 mb-4">
+      {/* 編集する（構築完了なら畳む）。ウィザードは hidden で常時マウント＝
+          件数の通知とステップ遷移イベントの購読を切らさない */}
+      <div ref={editRef}>
         <button
           type="button"
-          onClick={() => gotoStep(STEP_RELATIONS)}
-          className="inline-flex items-center rounded-md border border-border bg-background px-3 py-1.5 text-[13px] font-semibold text-foreground cursor-pointer hover:bg-muted"
+          onClick={() => setEditOpen((v) => !v)}
+          className="inline-flex w-full items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 text-[13px] font-semibold text-foreground cursor-pointer hover:bg-muted"
+          aria-expanded={editOpen}
         >
-          AIスキャンを実行 →
+          {editOpen ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
+          編集する
+          <span className="font-normal text-muted-foreground">
+            （6ステップ{pending > 0 ? `・保留 ${pending}` : ''}）
+          </span>
         </button>
-        <button
-          type="button"
-          onClick={() => gotoStep(STEP_QUESTIONS)}
-          className="inline-flex items-center rounded-md border border-border bg-background px-3 py-1.5 text-[13px] font-semibold text-foreground cursor-pointer hover:bg-muted"
-        >
-          質問に答える{pending > 0 ? `（保留 ${pending}）` : ''} →
-        </button>
-        <button
-          type="button"
-          onClick={() => gotoStep(STEP_QUESTIONS)}
-          className="inline-flex items-center rounded-md border border-border bg-background px-3 py-1.5 text-[13px] font-semibold text-foreground cursor-pointer hover:bg-muted"
-        >
-          AI判定（トーン・主張） →
-        </button>
-      </div>
-
-      {/* ステッパー（常設ナビ）＋各ステップに機能の実体を埋め込み */}
-      <div className="border border-border rounded-lg p-3 bg-background">
-        <OntologyBuilderSection
-          companyId={companyId}
-          valuePropositions={valuePropositions}
-          onStatusChange={onStatusChange}
-        />
+        <div className={editOpen ? 'border border-border border-t-0 rounded-b-lg p-3 bg-background' : 'hidden'}>
+          <OntologyBuilderSection
+            companyId={companyId}
+            valuePropositions={valuePropositions}
+            onStatusChange={onStatusChange}
+          />
+        </div>
       </div>
     </div>
   )
