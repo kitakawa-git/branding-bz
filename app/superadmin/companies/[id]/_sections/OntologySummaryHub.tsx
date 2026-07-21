@@ -20,7 +20,7 @@ import BrandMap3D from './BrandMap3D'
 import OutputTestPanel from './OutputTestPanel'
 import type { ValuePropositionRef } from './ProofPointsSection'
 import { Button } from '@/components/ui/button'
-import { ChevronDown, ChevronRight, Maximize2, MoreHorizontal, X } from 'lucide-react'
+import { ChevronDown, Maximize2, MoreHorizontal, X } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -366,8 +366,9 @@ export default function OntologySummaryHub({
         <OutputTestPanel companyId={companyId} />
       </div>
 
-      {/* 編集する（構築完了なら畳む）。ウィザードは hidden で常時マウント＝
-          件数の通知とステップ遷移イベントの購読を切らさない */}
+      {/* 編集する（構築完了なら畳む）。ウィザードは常時マウント＝件数の通知とステップ遷移イベントの購読を切らさない。
+          開閉は grid-template-rows 0fr→1fr のアニメーション（中身の実高さに追随するので高さの決め打ち不要）。
+          display:none を使わないぶん畳んだ中身にキーボードが入ってしまうため inert で無効化する。 */}
       <div ref={editRef}>
         <button
           type="button"
@@ -378,20 +379,30 @@ export default function OntologySummaryHub({
           className="inline-flex w-full items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 text-[13px] font-semibold text-foreground cursor-pointer hover:bg-muted"
           aria-expanded={editOpen}
         >
-          {editOpen ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
+          <ChevronDown
+            size={15}
+            className={`transition-transform duration-300 ease-out ${editOpen ? '' : '-rotate-90'}`}
+          />
           編集する
           <span className="font-normal text-muted-foreground">
             （5ステップ{pending > 0 ? `・保留 ${pending}` : ''}）
           </span>
         </button>
-        {/* p-4＝16px。globals.css の「カード内パディング16px統一」は .rounded-lg を対象にしており
-            ここ（rounded-b-lg）は対象外のため、直接16pxを指定して基準に揃える。 */}
-        <div className={editOpen ? 'border border-border border-t-0 rounded-b-lg p-4 bg-background' : 'hidden'}>
-          <OntologyBuilderSection
-            companyId={companyId}
-            valuePropositions={valuePropositions}
-            onStatusChange={onStatusChange}
-          />
+        <div
+          className={`grid transition-[grid-template-rows] duration-300 ease-out ${editOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}
+          inert={!editOpen}
+        >
+          <div className="overflow-hidden">
+            {/* p-4＝16px。globals.css の「カード内パディング16px統一」は .rounded-lg を対象にしており
+                ここ（rounded-b-lg）は対象外のため、直接16pxを指定して基準に揃える。 */}
+            <div className="border border-border border-t-0 rounded-b-lg p-4 bg-background">
+              <OntologyBuilderSection
+                companyId={companyId}
+                valuePropositions={valuePropositions}
+                onStatusChange={onStatusChange}
+              />
+            </div>
+          </div>
         </div>
       </div>
     </div>
