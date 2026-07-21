@@ -15,6 +15,8 @@ import { AutoResizeTextarea } from '@/components/ui/auto-resize-textarea'
 import { Plus, Trash2, Pencil, Check, X, ChevronUp, ChevronDown, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
 import { AIButton } from '@/components/shared/AIButton'
+import { RuleExampleBoxes } from '@/components/shared/RuleExampleBoxes'
+import { RULE_TYPES, SEVERITIES, ruleTypeLabel, severityMeta, sourceLabel } from '@/lib/brand/rule-display'
 import type { ValuePropositionRef } from './ProofPointsSection'
 import type { RuleExtractDraft } from '@/lib/brand/draft-extraction'
 
@@ -42,34 +44,10 @@ type Draft = {
   severity: string
 }
 
-const RULE_TYPES: { value: string; label: string }[] = [
-  { value: 'banned_word', label: '禁止ワード' },
-  { value: 'discouraged_expression', label: '非推奨表現' },
-  { value: 'tone_rule', label: 'トーンルール' },
-  { value: 'claim_rule', label: '主張ルール' },
-  { value: 'compliance_rule', label: 'コンプラルール' },
-]
+// 種別・重要度・出所のラベルは lib/brand/rule-display.ts に集約（診断ツールと共用＝表記がズレない）。
 // scope（適用範囲）はUIから撤去した。getGuardrails に絞り込み機構はあるが呼び出し元が
 // 誰も scopes を渡しておらず、全ルールが常時注入される＝設定しても効かないため。
 // DB列・API・絞り込み機構は温存し、値は「編集時は既存値のまま／新規は 'global'」で書き続ける。
-const SEVERITIES: { value: string; label: string; cls: string }[] = [
-  { value: 'block', label: '絶対遵守', cls: 'bg-red-100 text-red-700' },
-  { value: 'warn', label: '原則遵守', cls: 'bg-amber-100 text-amber-800' },
-  { value: 'info', label: '参考', cls: 'bg-gray-100 text-gray-600' },
-]
-
-// governance_rules.source → 表示名。DBの CHECK 制約が 'manual' | 'personality_diagnosis' に
-// 限定しているため、この2種類しか入らない（AI草案から登録した分も 'manual' に含まれ区別できない）。
-// 未知の値はそのまま出す（勝手に「手入力」に丸めない＝出所を偽らない）。
-const SOURCE_LABELS: Record<string, string> = {
-  manual: '手入力',
-  personality_diagnosis: '診断由来',
-}
-const sourceLabel = (v: string | null) => (v ? SOURCE_LABELS[v] ?? v : '手入力')
-
-const labelOf = (list: { value: string; label: string }[], v: string | null) =>
-  list.find((x) => x.value === v)?.label ?? v ?? '—'
-const severityMeta = (v: string) => SEVERITIES.find((s) => s.value === v)
 
 const emptyDraft = (): Draft => ({
   rule_type: 'banned_word',
@@ -336,29 +314,12 @@ export default function GovernanceRulesSection({
                     </span>
                   )}
                   <span className="py-0.5 px-2 bg-gray-100 text-gray-600 rounded text-[11px] font-semibold">
-                    {labelOf(RULE_TYPES, d.rule_type)}
+                    {ruleTypeLabel(d.rule_type)}
                   </span>
                 </div>
                 <p className="text-sm font-bold text-foreground break-words m-0">{d.rule_text}</p>
-                {/* 登録済み一覧と同じ2カラムの色付きボックス（草案と登録後で見え方を変えない） */}
-                {(d.ng_example || d.ok_example) && (
-                  <div
-                    className={`mt-2 grid gap-2 grid-cols-1 ${d.ng_example && d.ok_example ? 'sm:grid-cols-2' : ''}`}
-                  >
-                    {d.ng_example && (
-                      <div className="rounded-md bg-red-50 px-3 py-2">
-                        <p className="text-[11px] font-bold text-red-600 mb-0.5 m-0">NG例</p>
-                        <p className="text-[13px] text-red-700/90 leading-relaxed m-0 break-words">{d.ng_example}</p>
-                      </div>
-                    )}
-                    {d.ok_example && (
-                      <div className="rounded-md bg-green-50 px-3 py-2">
-                        <p className="text-[11px] font-bold text-green-700 mb-0.5 m-0">OK例</p>
-                        <p className="text-[13px] text-green-800/90 leading-relaxed m-0 break-words">{d.ok_example}</p>
-                      </div>
-                    )}
-                  </div>
-                )}
+                {/* 登録後と同じ見た目（草案と登録済みで見え方を変えない） */}
+                <RuleExampleBoxes ngExample={d.ng_example} okExample={d.ok_example} />
                 <p className="text-[11px] text-muted-foreground mt-2 m-0">根拠: {d.rationale}</p>
                 <div className="flex flex-wrap gap-2 mt-2">
                   <Button type="button" size="sm" onClick={() => approveAiDraft(d, i)} disabled={aiRegistering !== null}>
@@ -502,7 +463,7 @@ export default function GovernanceRulesSection({
                       </span>
                     )}
                     <span className="py-0.5 px-2 bg-gray-100 text-gray-600 rounded text-xs font-semibold">
-                      {labelOf(RULE_TYPES, row.rule_type)}
+                      {ruleTypeLabel(row.rule_type)}
                     </span>
                     {vpTitle(row.target_value_proposition_id) && (
                       <span className="py-0.5 px-2 bg-blue-100 text-blue-800 rounded text-xs font-semibold">
@@ -560,29 +521,9 @@ export default function GovernanceRulesSection({
                 </div>
               </div>
 
-              {/* NG例・OK例はポータル（BrandPersonalityCard の表現ルール）と同じ2カラムの色付きボックス。
-                  操作ボタン行の外に出して**カード全幅**に広げる（行内に置くとボタン幅ぶん狭くなる）。
-                  片方だけのときは1カラムで全幅。 */}
-              {(row.ng_example || row.ok_example) && (
-                <div
-                  className={`mt-2 grid gap-2 grid-cols-1 ${
-                    row.ng_example && row.ok_example ? 'sm:grid-cols-2' : ''
-                  }`}
-                >
-                  {row.ng_example && (
-                    <div className="rounded-md bg-red-50 px-3 py-2">
-                      <p className="text-[11px] font-bold text-red-600 mb-0.5 m-0">NG例</p>
-                      <p className="text-[13px] text-red-700/90 leading-relaxed m-0 break-words">{row.ng_example}</p>
-                    </div>
-                  )}
-                  {row.ok_example && (
-                    <div className="rounded-md bg-green-50 px-3 py-2">
-                      <p className="text-[11px] font-bold text-green-700 mb-0.5 m-0">OK例</p>
-                      <p className="text-[13px] text-green-800/90 leading-relaxed m-0 break-words">{row.ok_example}</p>
-                    </div>
-                  )}
-                </div>
-              )}
+              {/* NG例・OK例は共通部品（診断ツール・ポータルと同じ見た目）。
+                  操作ボタン行の外に出して**カード全幅**に広げる（行内に置くとボタン幅ぶん狭くなる）。 */}
+              <RuleExampleBoxes ngExample={row.ng_example} okExample={row.ok_example} />
             </div>
           )
         )

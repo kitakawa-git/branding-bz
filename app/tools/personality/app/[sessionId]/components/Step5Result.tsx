@@ -24,6 +24,7 @@ import {
 import { BrandPersonaCard } from '@/components/shared/BrandPersonaCard'
 import { type PersonalityTraitItem } from '@/components/shared/PersonalityTraitList'
 import { BrandPersonalityCard } from '@/components/shared/BrandPersonalityCard'
+import { RegisteredToneRules } from './RegisteredToneRules'
 import { toast } from 'sonner'
 import { ArrowLeft, Download, SlidersHorizontal, Check, X, Unplug, RotateCcw } from 'lucide-react'
 import { ARCHETYPE_BY_KEY, AAKER_CITATION, type ArchetypeKey } from '../../../lib/archetypes'
@@ -90,6 +91,8 @@ export function Step5Result({ sessionId, framework, diagnosis, companyName, onSa
   const [checkingAdmin, setCheckingAdmin] = useState(true)
   const [userId, setUserId] = useState('')
   const [connectOpen, setConnectOpen] = useState(false)
+  // 「登録済みの表現ルール」表示用（ここで解決した company を使い回す＝重複クエリを避ける）
+  const [adminCompanyId, setAdminCompanyId] = useState<string | null>(null)
 
   useEffect(() => {
     const checkAdminStatus = async () => {
@@ -104,7 +107,10 @@ export function Step5Result({ sessionId, framework, diagnosis, companyName, onSa
           .eq('auth_id', user.id)
           .maybeSingle()
 
-        if (adminUser?.company_id) setIsAdminUser(true)
+        if (adminUser?.company_id) {
+          setIsAdminUser(true)
+          setAdminCompanyId(adminUser.company_id as string)
+        }
       } catch {
         console.error('[PersonalityStep5] admin_users確認エラー')
       } finally {
@@ -367,6 +373,10 @@ export function Step5Result({ sessionId, framework, diagnosis, companyName, onSa
 
       {/* 出典表記 */}
       <p className="mt-3 text-[11px] text-muted-foreground">{AAKER_CITATION}</p>
+
+      {/* 登録済みの表現ルール（＝branding.bz に反映済みの現在地）。上の「この診断の提案」とは別枠。
+          未ログイン・company未解決・0件のときはコンポーネント側で非表示になる。 */}
+      <RegisteredToneRules companyId={adminCompanyId} />
 
       {/* ===== 本体連携（管理者のみ） ===== */}
       {!checkingAdmin && (
