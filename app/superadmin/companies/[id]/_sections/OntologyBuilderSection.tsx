@@ -16,7 +16,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
-import { Info } from 'lucide-react'
 import ProfilingSection from './ProfilingSection'
 import ProofPointsSection, { type ValuePropositionRef } from './ProofPointsSection'
 import GovernanceRulesSection from './GovernanceRulesSection'
@@ -325,20 +324,18 @@ export default function OntologyBuilderSection({
         <p className="text-muted-foreground text-sm m-0">読み込み中...</p>
       ) : current ? (
         <div className="border border-border rounded-lg p-4 bg-background mt-2">
-          <div className="mb-3">
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-sm font-bold text-foreground m-0">
-                ステップ{current.num}: {current.full}
-              </p>
-              {/* 各ステップの主アクション置き場。実体は各セクション側が portal で差し込む
-                  （状態はセクションが持つため、ここは空の受け皿だけを用意する） */}
-              <div id={STEP_ACTION_SLOT_ID} className="shrink-0" />
-            </div>
-            <p className="inline-flex items-center gap-1.5 text-[13px] text-blue-900 bg-blue-100/60 rounded-md px-2.5 py-1 m-0 mt-1.5">
-              <Info size={13} className="shrink-0" />
-              {current.why}
-            </p>
+          {/* 見出し・説明は各ツール（/tools/stp 等）のステップ見出しと同じ体裁に揃える
+              （見出し: text-2xl font-bold・行に mb-2 ／ 説明: mb-4 text-[13px] text-muted-foreground）。
+              mb-2 は h4 ではなく行に持たせる＝右のアクションが文字の中心と揃う。 */}
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <h4 className="text-2xl font-bold text-foreground">
+              ステップ{current.num}: {current.full}
+            </h4>
+            {/* 各ステップの主アクション置き場。実体は各セクション側が portal で差し込む
+                （状態はセクションが持つため、ここは空の受け皿だけを用意する） */}
+            <div id={STEP_ACTION_SLOT_ID} className="shrink-0" />
           </div>
+          <p className="mb-4 text-[13px] text-muted-foreground">{current.why}</p>
 
           {/* 各ステップに機能の実体を埋め込み（カード外に重複セクションは無い＝実体は各1箇所） */}
           {current.num === 1 && (
