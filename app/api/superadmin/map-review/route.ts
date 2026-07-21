@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'companyId は必須です' }, { status: 400 })
     }
 
-    // superadmin 認証（relation-scan / integrity-ai と同方針）
+    // superadmin 認証（relation-scan と同方針）
     const authHeader = request.headers.get('Authorization')
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json({ error: '認証が必要です。再ログインしてください。' }, { status: 401 })

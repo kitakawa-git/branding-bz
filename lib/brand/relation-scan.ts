@@ -1,6 +1,6 @@
 // AI関係スキャン（ステージA）: 既存の要素データから element_relations の候補をAIが推定する。
 //
-// 設計（integrity-ai と同思想）:
+// 設計（profiling / map-review と同思想）:
 // - 草案のみ。このモジュールはDBへ一切書き込まない。登録は superadmin UI での人間承認後
 //   （クライアント supabase INSERT。RLS・検証トリガが効く経路）。
 // - 1社1回の Claude 呼び出し。既存エッジ一覧を渡して「既出の組は提案しない」差分スキャン。

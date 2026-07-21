@@ -70,9 +70,6 @@ const LAST_STEP = STEPS[STEPS.length - 1].num
 
 // ステップ見出し行の右端に置くアクションの受け皿（各セクションが portal で差し込む）
 const STEP_ACTION_SLOT_ID = 'ontology-step-action'
-// カード全体のアクション置き場。整合性チェックは特定ステップの機能ではなく
-// 体系全体（理念・提供価値・スローガン等）を横断して検査するため、ステップの外に出す。
-const CARD_ACTION_SLOT_ID = 'ontology-card-action'
 
 export default function OntologyBuilderSection({
   companyId,
@@ -263,11 +260,6 @@ export default function OntologyBuilderSection({
   return (
     <div>
       {/* ステッパー（/tools/personality の StepProgressBar と同じ装飾・全幅） */}
-      {/* カード全体のアクション（整合性チェックのAI判定）。ステップ横断の機能なのでステップの外に置く */}
-      <div className="flex justify-end">
-        <div id={CARD_ACTION_SLOT_ID} />
-      </div>
-
       {/* ステッパーの上下は 24px（カード内パディング16px＋mt-2）。下は次ブロックの mt-6 と相殺されて24px */}
       <div className="w-full mt-2 mb-3">
         <div className="relative">
@@ -384,10 +376,10 @@ export default function OntologyBuilderSection({
         </div>
       ) : null}
 
-      {/* 体系全体の点検（整合性チェック）。ステップ横断の機能なのでステップの外・カード末尾に置き、
-          実行ボタンだけを上部のカードアクション行へ portal する。 */}
-      <div className="mt-6">
-        <IntegrityCheckSection companyId={companyId} headerActionSlotId={CARD_ACTION_SLOT_ID} />
+      {/* 体系全体の点検（決定論の自動点検）。ステップ横断の機能なのでステップの外・カード末尾に置く。
+          指摘0件だとセクションは何も描画しないため、empty:hidden で余白（mt-6）ごと消す。 */}
+      <div className="mt-6 empty:hidden">
+        <IntegrityCheckSection companyId={companyId} />
       </div>
     </div>
   )

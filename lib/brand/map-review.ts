@@ -3,7 +3,7 @@
 // - (a) グラフ事実（島・ハブ・裏づけカバレッジ・矛盾・背骨の太さ・未接続数）は決定論で計算（AI不要）。
 // - (b) Claude には (a) の事実だけを渡して講評を生成（1社1回・読み取り専用・無書込み）。
 // - グラウンディング: 出力の「」引用と数値を入力事実と照合し、実在しない名・数値を含む行は破棄
-//   （integrity-ai / profiling と同型の防護）。
+//   （profiling と同型の防護）。
 // - 関係0件・API失敗は review: null＋reason（例外を上げない）。
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { callClaude } from '@/lib/claude-api'
