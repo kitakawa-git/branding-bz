@@ -319,17 +319,17 @@ export default function OntologyBuilderSection({
         </div>
       </div>
 
-      {/* 現在ステップのパネル */}
+      {/* 現在ステップのパネル（枠なし＝ツール側のステップ画面と同じく地の上に直接置く） */}
       {loading ? (
         <p className="text-muted-foreground text-sm m-0">読み込み中...</p>
       ) : current ? (
-        <div className="border border-border rounded-lg p-4 bg-background mt-2">
+        <div className="mt-4">
           {/* 見出し・説明は各ツール（/tools/stp 等）のステップ見出しと同じ体裁に揃える
               （見出し: text-2xl font-bold・行に mb-2 ／ 説明: mb-4 text-[13px] text-muted-foreground）。
               mb-2 は h4 ではなく行に持たせる＝右のアクションが文字の中心と揃う。 */}
           <div className="flex items-center justify-between gap-2 mb-2">
             <h4 className="text-2xl font-bold text-foreground">
-              ステップ{current.num}: {current.full}
+              Step {current.num}: {current.full}
             </h4>
             {/* 各ステップの主アクション置き場。実体は各セクション側が portal で差し込む
                 （状態はセクションが持つため、ここは空の受け皿だけを用意する） */}
