@@ -29,6 +29,36 @@ export const ruleTypeLabel = (v: string | null) =>
 export const severityMeta = (v: string) => SEVERITIES.find((s) => s.value === v)
 export const sourceLabel = (v: string | null) => (v ? SOURCE_LABELS[v] ?? v : '手入力')
 
+// 診断の severity（low/medium/high）→ governance_rules の語彙（info/warn/block）。
+// connect API と同じ対応表（表示でも同じ見え方にする）。
+export const diagnosisSeverityToRule = (v: string): string =>
+  v === 'high' ? 'block' : v === 'low' ? 'info' : 'warn'
+
+/**
+ * ルール本文の照合用の正規化。trim＋空白（全角含む）の圧縮のみ。
+ * 表記ゆれの吸収はしない＝完全一致のみで判定する（過剰な曖昧マッチで別ルールを同一視しない）。
+ */
+export const normalizeRuleText = (s: string | null | undefined): string =>
+  (s || '').replace(/[\s　]+/g, ' ').trim()
+
+/**
+ * 診断の提案のうち「まだDBに登録されていないもの」だけを返す。
+ * 既に登録済み（＝同じ本文が governance_rules にある）ものは重複表示しないため除く。
+ */
+export function unregisteredProposals<T extends { rule_text: string }>(
+  registeredTexts: (string | null | undefined)[],
+  proposals: T[],
+): T[] {
+  const known = new Set(registeredTexts.map(normalizeRuleText).filter(Boolean))
+  const seen = new Set<string>()
+  return proposals.filter((p) => {
+    const key = normalizeRuleText(p.rule_text)
+    if (!key || known.has(key) || seen.has(key)) return false
+    seen.add(key) // 提案側の重複も1回だけ
+    return true
+  })
+}
+
 /** 表示順: severity（絶対遵守→原則遵守→参考）→ sort_order */
 const SEVERITY_ORDER: Record<string, number> = { block: 0, warn: 1, info: 2 }
 export function compareRulesForDisplay(

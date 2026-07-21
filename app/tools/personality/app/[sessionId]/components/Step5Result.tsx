@@ -24,7 +24,7 @@ import {
 import { BrandPersonaCard } from '@/components/shared/BrandPersonaCard'
 import { type PersonalityTraitItem } from '@/components/shared/PersonalityTraitList'
 import { BrandPersonalityCard } from '@/components/shared/BrandPersonalityCard'
-import { RegisteredToneRules } from './RegisteredToneRules'
+import { ToneRulesSection } from './ToneRulesSection'
 import { toast } from 'sonner'
 import { ArrowLeft, Download, SlidersHorizontal, Check, X, Unplug, RotateCcw } from 'lucide-react'
 import { ARCHETYPE_BY_KEY, AAKER_CITATION, type ArchetypeKey } from '../../../lib/archetypes'
@@ -363,20 +363,21 @@ export function Step5Result({ sessionId, framework, diagnosis, companyName, onSa
         </div>
       )}
 
-      {/* ===== コミュニケーションスタイル + 期待タグ + 表現ルール（共通コンポーネント） ===== */}
+      {/* ===== コミュニケーションスタイル + 期待タグ（共通コンポーネント） =====
+          表現ルールは下の ToneRulesSection に統合したのでここでは出さない
+          （登録済み＝現在地 と 診断の提案 を1リストで見せ、同じルールが二重に並ばないようにする）。 */}
       <BrandPersonalityCard
         className="mt-4"
         communicationStyle={d.communication_style}
         expectedTags={d.expected_tags}
-        toneRules={d.tone_rules}
       />
 
       {/* 出典表記 */}
       <p className="mt-3 text-[11px] text-muted-foreground">{AAKER_CITATION}</p>
 
-      {/* 登録済みの表現ルール（＝branding.bz に反映済みの現在地）。上の「この診断の提案」とは別枠。
-          未ログイン・company未解決・0件のときはコンポーネント側で非表示になる。 */}
-      <RegisteredToneRules companyId={adminCompanyId} />
+      {/* 表現ルール（登録済み＋この診断の未登録提案を1リストに統合）。
+          未ログイン・company未解決なら提案のみ、どちらも空なら非表示。 */}
+      <ToneRulesSection companyId={adminCompanyId} sessionRules={d.tone_rules} />
 
       {/* ===== 本体連携（管理者のみ） ===== */}
       {!checkingAdmin && (
