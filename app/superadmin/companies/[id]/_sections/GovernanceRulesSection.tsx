@@ -7,12 +7,14 @@
 // - 「AI草案を生成」: 業種・バリュー・用語規定からルール候補を推定（/api/superadmin/draft-extraction・
 //   押した時だけ）。候補は1件ずつ承認/編集/却下。承認・編集して登録した時のみ通常の作成経路でINSERT。
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { supabase } from '@/lib/supabase'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { AutoResizeTextarea } from '@/components/ui/auto-resize-textarea'
 import { Plus, Trash2, Pencil, Check, X, ChevronUp, ChevronDown, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
+import { AIButton } from '@/components/shared/AIButton'
 import type { ValuePropositionRef } from './ProofPointsSection'
 import type { RuleExtractDraft } from '@/lib/brand/draft-extraction'
 
@@ -81,11 +83,15 @@ export default function GovernanceRulesSection({
   companyId,
   valuePropositions,
   onDataChanged,
+  headerActionSlotId,
 }: {
   companyId: string
   valuePropositions: ValuePropositionRef[]
   // データ再取得のたびに通知（ウィザードのステップ判定更新用・任意）
   onDataChanged?: () => void
+  // 指定すると「AI草案を生成」をこのidの要素へ portal する（ステップ見出し行に置くため）。
+  // 未指定・要素が無い場合は従来どおりセクション下部のボタン行に出す。
+  headerActionSlotId?: string
 }) {
   const [rows, setRows] = useState<GovernanceRule[]>([])
   const [loading, setLoading] = useState(true)
@@ -95,6 +101,8 @@ export default function GovernanceRulesSection({
   const [aiDrafts, setAiDrafts] = useState<RuleExtractDraft[] | null>(null)
   const [aiLoading, setAiLoading] = useState(false)
   const [aiRegistering, setAiRegistering] = useState<number | null>(null)
+  // 見出し行のアクション置き場（マウント後に解決。無ければ従来位置にフォールバック）
+  const [actionSlot, setActionSlot] = useState<HTMLElement | null>(null)
 
   const vpTitle = (id: string | null) =>
     id ? valuePropositions.find((v) => v.id === id)?.title ?? '（削除済みの提供価値）' : null
@@ -121,6 +129,11 @@ export default function GovernanceRulesSection({
     fetchRows()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [companyId])
+
+  // portal 先の解決はマウント後（親が同じコミットで描画する受け皿を掴む）
+  useEffect(() => {
+    setActionSlot(headerActionSlotId ? document.getElementById(headerActionSlotId) : null)
+  }, [headerActionSlotId])
 
   const startAdd = () => {
     setDraft(emptyDraft())
@@ -284,6 +297,14 @@ export default function GovernanceRulesSection({
     setEditingId('new')
     dismissAiDraft(index)
   }
+
+  // 「AI草案を生成」ボタン本体。置き場所（見出し行 or セクション下部）だけが変わる。
+  // AIアクションは共通の AIButton（sm＝px-3 py-1.5 text-xs gap-1.5）に統一。
+  const aiExtractButton = (
+    <AIButton type="button" size="sm" onClick={runAiExtract} disabled={aiLoading || loading}>
+      {aiLoading ? '生成中...' : 'AI草案を生成'}
+    </AIButton>
+  )
 
   const renderAiDrafts = () => {
     if (aiDrafts === null) return null
@@ -549,12 +570,13 @@ export default function GovernanceRulesSection({
             <Plus size={16} />
             表現ルールを追加
           </Button>
-          <Button type="button" onClick={runAiExtract} disabled={aiLoading || loading} className="py-2 px-4 text-[13px]">
-            <Sparkles size={16} />
-            {aiLoading ? '生成中...' : 'AI草案を生成'}
-          </Button>
+          {/* スロットが無いときだけここに出す（ある場合は見出し行へ portal） */}
+          {!actionSlot && aiExtractButton}
         </div>
       )}
+
+      {/* ステップ見出し行へ差し込み */}
+      {actionSlot && createPortal(aiExtractButton, actionSlot)}
 
       {renderAiDrafts()}
     </div>

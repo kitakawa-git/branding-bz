@@ -7,11 +7,13 @@
 // - 「AIスキャン」: 既存要素から関係候補をAIが推定（/api/superadmin/relation-scan・POST・押した時だけ）。
 //   候補は1件ずつ承認/却下。承認時のみ通常の作成経路（クライアント supabase INSERT）で登録する。
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { AutoResizeTextarea } from '@/components/ui/auto-resize-textarea'
 import { Plus, Trash2, Check, X, ChevronUp, ChevronDown, ArrowRight, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
+import { AIButton } from '@/components/shared/AIButton'
 import type { RelationCandidate } from '@/lib/brand/relation-scan'
 import {
   fetchElementsCatalog,
@@ -64,11 +66,22 @@ function parseRef(v: string): { kind: ElementKind; id: string } | null {
 export default function ElementRelationsSection({
   companyId,
   onDataChanged,
+  headerActionSlotId,
 }: {
   companyId: string
   // データ再取得のたびに通知（ウィザードのステップ判定更新用・任意）
   onDataChanged?: () => void
+  // 指定すると「AIスキャンを実行」をこのidの要素へ portal する（ステップ見出し行に置くため）。
+  // 未指定・要素が無い場合は従来どおりセクション下部のボタン行に出す。
+  headerActionSlotId?: string
 }) {
+  // 見出し行のアクション置き場（マウント後に解決。無ければ従来位置にフォールバック）
+  const [actionSlot, setActionSlot] = useState<HTMLElement | null>(null)
+
+  useEffect(() => {
+    setActionSlot(headerActionSlotId ? document.getElementById(headerActionSlotId) : null)
+  }, [headerActionSlotId])
+
   const [rows, setRows] = useState<Relation[]>([])
   const [catalog, setCatalog] = useState<ElementRef[]>([])
   const [loading, setLoading] = useState(true)
@@ -357,6 +370,14 @@ export default function ElementRelationsSection({
     </div>
   )
 
+  // 「AIスキャンを実行」ボタン本体。置き場所（見出し行 or セクション下部）だけが変わる。
+  // AIアクションは共通の AIButton（sm＝px-3 py-1.5 text-xs gap-1.5）に統一。
+  const aiScanButton = (
+    <AIButton type="button" size="sm" onClick={runScan} disabled={scanning || loading}>
+      {scanning ? 'スキャン中...' : 'AIスキャンを実行'}
+    </AIButton>
+  )
+
   return (
     <div>
       {loading ? (
@@ -416,12 +437,13 @@ export default function ElementRelationsSection({
             <Plus size={16} />
             関係を追加
           </Button>
-          <Button type="button" onClick={runScan} disabled={scanning || loading} className="py-2 px-4 text-[13px]">
-            <Sparkles size={16} />
-            {scanning ? 'スキャン中...' : 'AIスキャンを実行'}
-          </Button>
+          {/* スロットが無いときだけここに出す（ある場合は見出し行へ portal） */}
+          {!actionSlot && aiScanButton}
         </div>
       )}
+
+      {/* ステップ見出し行へ差し込み */}
+      {actionSlot && createPortal(aiScanButton, actionSlot)}
 
       {/* AIスキャン候補（承認するまで一切登録されない） */}
       {candidates !== null && (

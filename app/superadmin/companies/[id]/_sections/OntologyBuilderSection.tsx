@@ -347,13 +347,22 @@ export default function OntologyBuilderSection({
             />
           )}
           {current.num === 2 && (
-            <GovernanceRulesSection companyId={companyId} valuePropositions={valuePropositions} onDataChanged={broadcastDataChanged} />
+            <GovernanceRulesSection
+              companyId={companyId}
+              valuePropositions={valuePropositions}
+              onDataChanged={broadcastDataChanged}
+              headerActionSlotId={STEP_ACTION_SLOT_ID}
+            />
           )}
           {current.num === 3 && (
             <DesiredEvidenceSection companyId={companyId} onDataChanged={broadcastDataChanged} />
           )}
           {current.num === 4 && (
-            <ElementRelationsSection companyId={companyId} onDataChanged={broadcastDataChanged} />
+            <ElementRelationsSection
+              companyId={companyId}
+              onDataChanged={broadcastDataChanged}
+              headerActionSlotId={STEP_ACTION_SLOT_ID}
+            />
           )}
           {current.num === 5 && (
             <>
