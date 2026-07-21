@@ -34,9 +34,12 @@ type DbRule = {
 export function ToneRulesSection({
   companyId,
   sessionRules = [],
+  className = '',
 }: {
   companyId: string | null
   sessionRules?: ToneRule[]
+  /** 余白は置き場所側で決める（カード内に差し込むときは親の space-y に任せる） */
+  className?: string
 }) {
   const [dbRules, setDbRules] = useState<DbRule[]>([])
 
@@ -75,7 +78,7 @@ export function ToneRulesSection({
   const registered = dbRules.length > 0
 
   return (
-    <div className="mt-8">
+    <div className={className}>
       <h3 className="text-sm font-bold text-foreground mb-1 tracking-wide">
         {registered ? '表現ルール' : 'この診断からの提案'}
       </h3>

@@ -363,21 +363,18 @@ export function Step5Result({ sessionId, framework, diagnosis, companyName, onSa
         </div>
       )}
 
-      {/* ===== コミュニケーションスタイル + 期待タグ（共通コンポーネント） =====
-          表現ルールは下の ToneRulesSection に統合したのでここでは出さない
+      {/* ===== コミュニケーションスタイル + 期待タグ + 表現ルール（共通コンポーネント） =====
+          表現ルールは「期待される印象タグ」の下に、DBと統合したリストとして差し込む
           （登録済み＝現在地 と 診断の提案 を1リストで見せ、同じルールが二重に並ばないようにする）。 */}
       <BrandPersonalityCard
         className="mt-4"
         communicationStyle={d.communication_style}
         expectedTags={d.expected_tags}
+        extraSection={<ToneRulesSection companyId={adminCompanyId} sessionRules={d.tone_rules} />}
       />
 
       {/* 出典表記 */}
       <p className="mt-3 text-[11px] text-muted-foreground">{AAKER_CITATION}</p>
-
-      {/* 表現ルール（登録済み＋この診断の未登録提案を1リストに統合）。
-          未ログイン・company未解決なら提案のみ、どちらも空なら非表示。 */}
-      <ToneRulesSection companyId={adminCompanyId} sessionRules={d.tone_rules} />
 
       {/* ===== 本体連携（管理者のみ） ===== */}
       {!checkingAdmin && (

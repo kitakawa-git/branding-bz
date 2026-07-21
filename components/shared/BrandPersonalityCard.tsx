@@ -9,7 +9,7 @@
 //   - 診断ツール Step5（AI診断結果を表示）
 //   - ポータル /portal/verbal 聞こえ方タブ（DB保存値を表示）
 // どちらも同じ見た目に揃える。個々のセクションは値が無ければ非表示。
-import { CSSProperties } from 'react'
+import { CSSProperties, ReactNode } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { splitCommunicationStyle } from '@/lib/brand-mvv'
 
@@ -27,6 +27,12 @@ interface BrandPersonalityCardProps {
   bodyTextStyle?: CSSProperties
   /** カード全体のクラス上書き（省略可） */
   className?: string
+  /**
+   * 「期待される印象タグ」の下に差し込む追加ブロック（省略可）。
+   * 診断ツールでは表現ルールを DB と統合して出すため、ここに差し込んで
+   * 1枚のカード内に収める（ポータルは従来どおり toneRules を使う）。
+   */
+  extraSection?: ReactNode
 }
 
 export function BrandPersonalityCard({
@@ -35,12 +41,13 @@ export function BrandPersonalityCard({
   toneRules = [],
   bodyTextStyle,
   className = '',
+  extraSection,
 }: BrandPersonalityCardProps) {
   const hasComm = !!communicationStyle && communicationStyle.trim().length > 0
   const hasTags = expectedTags.length > 0
   const hasRules = toneRules.length > 0
 
-  if (!hasComm && !hasTags && !hasRules) return null
+  if (!hasComm && !hasTags && !hasRules && !extraSection) return null
 
   const { copy: commCopy, body: commBody } = hasComm ? splitCommunicationStyle(communicationStyle) : { copy: '', body: '' }
 
@@ -80,6 +87,9 @@ export function BrandPersonalityCard({
             </div>
           </div>
         )}
+
+        {/* 追加ブロック（診断ツールの統合済み表現ルールなど）。期待される印象タグの下に入る */}
+        {extraSection}
 
         {/* 表現ルール */}
         {hasRules && (
