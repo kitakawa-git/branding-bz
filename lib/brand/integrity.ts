@@ -212,6 +212,24 @@ export async function runIntegrityChecks(companyId: string): Promise<IntegrityFi
   //    チップは行クリックで該当ステップへ飛べる＝直す導線があるのに対し、
   //    ここの info は同じ内容を読み上げるだけで数十件を占有していたため出力をやめた。
 
+  // 8. 誰にも約束されていないペルソナ（info）: promisedTo で結ばれていないペルソナ。
+  //    ペルソナは「誰に約束するか」の軸であり、繋がっていなければオントロジー上は飾りになる。
+  //    ※ 接続チップの到達可能性判定はペルソナを対象外にしている（理念由来でなくてよい）ため、
+  //      この意味的な穴はここでしか検出されない。
+  for (const e of catalog.filter((c) => c.kind === 'persona')) {
+    const promised = ers.some(
+      (r) => r.relation_type === 'promisedTo' && r.target_kind === 'persona' && r.target_id === e.id,
+    )
+    if (!promised) {
+      findings.push({
+        severity: 'info',
+        category: '約束されていないペルソナ',
+        message: `ペルソナ「${e.label}」に、どの提供価値・理念も約束されていません。関係性ステップでAIスキャンを実行するか、promisedTo の関係を追加してください`,
+        refs: [{ kind: KIND_LABELS.persona, label: e.label }],
+      })
+    }
+  }
+
   // ===== §10 未来設計（C案）の整合性チェック（すべて info・自動修正なし） =====
   // DE が0件（M1適用直後・未入力）の会社では以下すべて発火しない＝既存挙動不変。
   if (des.length > 0 || vps.some((v) => (v.lifecycle_state ?? 'current') !== 'current')) {

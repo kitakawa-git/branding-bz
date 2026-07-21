@@ -11,6 +11,7 @@ import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { callClaude } from '@/lib/claude-api'
 import {
   fetchElementsCatalog,
+  isValidRelationShape,
   KIND_LABELS,
   RELATION_TYPES,
   type ElementKind,
@@ -37,33 +38,77 @@ export type ExistingEdge = {
   relation_type: string
 }
 
-const VALID_RELATION_TYPES = new Set(RELATION_TYPES.map((r) => r.value))
+/** 焦点スキャンの対象要素。指定するとこの要素を端点に含む候補だけを返す */
+export type FocusRef = { kind: ElementKind; id: string }
 
-// 各関係種別の意味定義（プロンプト用。方向の意味を明示する）
+/** 焦点スキャンで返す候補の上限（1要素の繋ぎ先を選ぶ画面なので絞る） */
+export const FOCUS_CANDIDATE_LIMIT = 5
+
+// 各関係種別の意味定義（プロンプト用。方向の意味を明示する）。
+// スキャンで提案するのはここに載せた種別だけ。
+// - communicatedAs は廃止（レンジを定義できる要素種が無い）
+// - 未来設計4種（aspiresTo 等）は獲得目標の設計判断であり、内容の類似から推定するものではない
+//   ため対象外（以前は RELATION_TYPES 全10種を列挙して「6種のみ」と言い、4種の説明が
+//   undefined になるバグがあった）。
 const RELATION_DEFS: Record<string, string> = {
   guides: 'source（理念・ミッション・ビジョン・バリュー）が target の内容・在り方を方向づけている',
   evidencedBy: 'source（提供価値・理念などの約束・主張）が target（証拠・実績）によって裏づけられている',
   promisedTo: 'source（提供価値など）が target（ペルソナ＝約束の相手）に向けて約束されている',
-  communicatedAs: 'source（理念・提供価値）が target の表現・言葉として打ち出されている',
   constrainedBy: 'source の表現・主張が target（表現ルール）によって制約されている',
   conflictsWith: 'source と target が両立しにくい・優先順位がぶつかる場面がありうる（対称的な関係）',
 }
 
+const SCAN_TYPES = RELATION_TYPES.filter((r) => r.value in RELATION_DEFS)
+const VALID_RELATION_TYPES = new Set(SCAN_TYPES.map((r) => r.value))
+
 const SYSTEM_PROMPT = `あなたはブランド戦略のオントロジー設計者です。ある企業のブランド要素（理念・提供価値・証拠・表現ルール・ペルソナ）の一覧から、要素間に成立している「関係」の候補を推定してください。
 
-関係種別は以下の6種のみ:
-${RELATION_TYPES.map((r) => `- ${r.value}（${r.label}）: ${RELATION_DEFS[r.value]}`).join('\n')}
+関係種別は以下の${SCAN_TYPES.length}種のみ:
+${SCAN_TYPES.map((r) => `- ${r.value}（${r.label}）: ${RELATION_DEFS[r.value]}`).join('\n')}
 
 判定方針（厳守）:
 - 要素の内容（本文）から確信できる関係のみを提案する。こじつけ・一般論による推測は出さない。
 - 同じ relation_type の関係が同一の target に3本以上集まりそうな場合は、最も代表的な1〜2本に絞って提案する。機械的な全列挙はしない。
 - mission / vision から提供価値・事業内容への guides は、ブランドの背骨にあたる。本文に明確な根拠があれば優先的に提案してよい。
 - 提供価値が要素一覧に無い（未選定の）会社では、バリュー（理念）と実績を結ぶ evidencedBy（バリューを実績が裏づける）を、明確な根拠があれば重視して提案する。
+- ペルソナが要素一覧にいる場合、「どの提供価値（無ければ理念）が、どのペルソナへの約束か」を promisedTo で提案することを必ず検討する。ペルソナの課題・ニーズと約束の内容が対応していることが根拠になる。
+- 内容が明確にぶつかる組（例: 低価格の約束と高品質保証の約束、スピードの約束と丁寧さのルール）があれば conflictsWith を遠慮なく提案する。矛盾の可視化は失敗ではなく、このスキャンの重要な成果である。
 - 「既存の関係（提案禁止）」に挙がっている組み合わせは提案しない。
 - 同じ要素どうし（自己参照）は提案しない。
 - rationale（理由）は必須。両要素の内容のどこが対応しているかを1〜2文の日本語で具体的に書く。
 - confidence は high（本文どうしが明確に対応）/ medium（対応はあるが解釈を含む）/ low（推測）。low になるものはそもそも提案しない。
 - 関係が1つも見つからなければ空配列 [] を返す。
+
+出力は以下のJSON配列のみ。前後に説明文やMarkdownのコードブロックを付けないこと:
+[
+  {
+    "source_kind": "要素一覧に与えられた kind をそのまま",
+    "source_id": "要素一覧に与えられた id をそのまま",
+    "target_kind": "同上",
+    "target_id": "同上",
+    "relation_type": "6種のいずれか",
+    "confidence": "high または medium",
+    "rationale": "この関係が成立すると判断した理由（日本語1〜2文）"
+  }
+]`
+
+// 焦点スキャン用のシステムプロンプト。全体スキャンとの違いは「1要素の繋ぎ先だけを考える」点のみ。
+// 判定方針・出力形式は全体スキャンと同一（同じ validateCandidates を通すため）。
+const FOCUS_SYSTEM_PROMPT = `あなたはブランド戦略のオントロジー設計者です。ある企業のブランド要素の一覧と、そのうち1つの「焦点要素」が与えられます。焦点要素が他のどの要素と・どの関係で繋がるべきかの候補だけを推定してください。
+
+関係種別は以下の${SCAN_TYPES.length}種のみ:
+${SCAN_TYPES.map((r) => `- ${r.value}（${r.label}）: ${RELATION_DEFS[r.value]}`).join('\n')}
+
+判定方針（厳守）:
+- **焦点要素を source または target のどちらかに必ず含む候補だけ**を出す。焦点要素と無関係な要素どうしの関係は出さない。
+- 方向は関係種別の定義に従って決める。焦点要素が常に source とは限らない（例: 焦点が実績なら、提供価値 -evidencedBy-> 実績 のように target 側になる）。
+- 要素の内容（本文）から確信できる関係のみを提案する。こじつけ・一般論による推測は出さない。
+- 「既存の関係（提案禁止）」に挙がっている組み合わせは提案しない。
+- 同じ要素どうし（自己参照）は提案しない。
+- 多くても${FOCUS_CANDIDATE_LIMIT}件まで。確信の高い順に並べる。
+- rationale（理由）は必須。両要素の内容のどこが対応しているかを1〜2文の日本語で具体的に書く。
+- confidence は high（本文どうしが明確に対応）/ medium（対応はあるが解釈を含む）/ low（推測）。low になるものはそもそも提案しない。
+- 妥当な繋ぎ先が見つからなければ空配列 [] を返す。無理に埋めない。
 
 出力は以下のJSON配列のみ。前後に説明文やMarkdownのコードブロックを付けないこと:
 [
@@ -130,7 +175,15 @@ function buildUserMessage(
   catalog: ElementRef[],
   bodies: Map<string, string>,
   existing: ExistingEdge[],
+  focus?: FocusRef | null,
 ): string {
+  const focusBlock = (() => {
+    if (!focus) return ''
+    const e = catalog.find((x) => x.kind === focus.kind && x.id === focus.id)
+    if (!e) return ''
+    const body = bodies.get(`${e.kind}:${e.id}`)
+    return `# 焦点要素（この要素の繋ぎ先だけを考える）\n- kind: ${e.kind}\n  id: ${e.id}\n  種別: ${KIND_LABELS[e.kind]}\n  内容: ${body || e.label}\n\n`
+  })()
   const elementLines = catalog
     .map((e) => {
       const body = bodies.get(`${e.kind}:${e.id}`)
@@ -143,7 +196,7 @@ function buildUserMessage(
       : existing
           .map((r) => `- ${r.source_kind}:${r.source_id} -${r.relation_type}-> ${r.target_kind}:${r.target_id}`)
           .join('\n')
-  return `# 要素一覧\n${elementLines}\n\n# 既存の関係（提案禁止）\n${existingLines}`
+  return `${focusBlock}# 要素一覧\n${elementLines}\n\n# 既存の関係（提案禁止）\n${existingLines}`
 }
 
 // Claude応答からJSON配列を抽出（Markdownコードブロック対応・失敗時は空配列）
@@ -168,7 +221,8 @@ const edgeKey = (sk: string, sid: string, rt: string, tk: string, tid: string) =
 
 // AI出力の後処理バリデーション（ユニットテスト可能なよう分離・純関数）。
 // 破棄条件: 実在しない kind+id / 既存エッジとの重複（conflictsWith は逆向きも重複扱い）/
-// 自己参照 / relation_type 不正 / confidence が high・medium 以外 / rationale 無し / 候補内の重複
+// 自己参照 / relation_type 不正 / ドメイン・レンジ違反（RELATION_RULES＝DBトリガと同基準）/
+// confidence が high・medium 以外 / rationale 無し / 候補内の重複
 export function validateCandidates(
   raw: unknown[],
   catalog: ElementRef[],
@@ -197,7 +251,8 @@ export function validateCandidates(
     const rationale = typeof f?.rationale === 'string' ? f.rationale.trim() : ''
     const confidence = f?.confidence === 'high' ? 'high' : f?.confidence === 'medium' ? 'medium' : null
 
-    if (!VALID_RELATION_TYPES.has(rt)) continue // 関係種別が6種以外
+    if (!VALID_RELATION_TYPES.has(rt)) continue // スキャン対象外の関係種別
+    if (!isValidRelationShape(rt, sk, tk)) continue // ドメイン/レンジ違反（DBトリガでも落ちる組）
     if (!confidence) continue // low・不正値は破棄
     if (!rationale) continue // 理由なしは破棄
     const sourceLabel = labelMap.get(`${sk}:${sid}`)
@@ -226,7 +281,30 @@ export function validateCandidates(
   return out
 }
 
-export async function scanRelationCandidates(companyId: string): Promise<RelationCandidate[]> {
+/**
+ * 焦点スキャンの後処理（純関数）。
+ * AIが焦点要素と無関係な候補を混ぜてきても、ここで機械的に落とす＝プロンプト任せにしない。
+ * 上限も適用する（表示側で切るとAI呼び出し分が無駄になるため、ここで確定させる）。
+ */
+export function filterToFocus(
+  candidates: RelationCandidate[],
+  focus: FocusRef,
+  limit = FOCUS_CANDIDATE_LIMIT,
+): RelationCandidate[] {
+  return candidates
+    .filter(
+      (c) =>
+        (c.source_kind === focus.kind && c.source_id === focus.id) ||
+        (c.target_kind === focus.kind && c.target_id === focus.id),
+    )
+    .slice(0, limit)
+}
+
+export async function scanRelationCandidates(
+  companyId: string,
+  // 指定するとこの要素を端点に含む候補だけを返す（未指定＝従来の全体スキャン・挙動不変）
+  focus?: FocusRef | null,
+): Promise<RelationCandidate[]> {
   if (!companyId) return []
   const supabase = getSupabaseAdmin()
 
@@ -245,13 +323,16 @@ export async function scanRelationCandidates(companyId: string): Promise<Relatio
     }
     const existing = (erR.data as ExistingEdge[] | null) || []
     if (catalog.length < 2) return [] // 要素が2つ未満なら関係は成立しない
+    // 焦点要素がカタログに実在しない（削除済み・別company）ならAIを呼ばずに空で返す
+    if (focus && !catalog.some((e) => e.kind === focus.kind && e.id === focus.id)) return []
 
     const raw = await callClaude({
-      system: SYSTEM_PROMPT,
-      userMessage: buildUserMessage(catalog, bodies, existing),
+      system: focus ? FOCUS_SYSTEM_PROMPT : SYSTEM_PROMPT,
+      userMessage: buildUserMessage(catalog, bodies, existing, focus),
       maxTokens: 4096,
     })
-    return validateCandidates(extractJsonArray(raw), catalog, existing)
+    const validated = validateCandidates(extractJsonArray(raw), catalog, existing)
+    return focus ? filterToFocus(validated, focus) : validated
   } catch (err) {
     console.error('[relation-scan] スキャン失敗:', err)
     return []

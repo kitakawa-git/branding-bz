@@ -2,7 +2,10 @@
 
 // スーパー管理画面 企業詳細: 「実績・エピソード」(proof_points) CRUD セクション（表示名のみ。テーブル・識別子は proof_points のまま）
 // - 一覧 / 追加 / 編集 / 削除 / 並び替え（上下）
-// - value_proposition_id は当該企業の提供価値(value_propositions)からセレクト（未選択=全般）
+// - 「裏づけ対象」は element_relations の evidencedBy 辺（提供価値 → 実績）として保存する。
+//   旧 proof_points.value_proposition_id（FK）は 20260721163027 で辺へ移行済み・書き込み禁止
+//   （裏づけの正が FK と辺の2つあり、消費側すべてが union する必要があった問題の解消）。
+//   フォームのセレクトは従来どおり（UXは不変）。永続化先だけが辺になった。
 // - 書き込みは proof_points_superadmin_all ポリシー（is_superadmin）で許可される前提
 // - 「AI草案を生成」: 登録済みデータから実績候補を抽出（/api/superadmin/draft-extraction・押した時だけ）。
 //   候補は1件ずつ承認/編集/却下。承認・編集して登録した時のみ通常の作成経路でINSERTされる。
@@ -23,6 +26,7 @@ export type ValuePropositionRef = { id: string; title: string }
 type ProofPoint = {
   id: string
   company_id: string
+  /** @deprecated 裏づけの正は evidencedBy 辺（20260721163027 で移行・全行null）。列DROP待ちの残骸 */
   value_proposition_id: string | null
   title: string
   description: string | null
@@ -127,26 +131,79 @@ export default function ProofPointsSection({
   const [mSaving, setMSaving] = useState(false)
   // 見出し行のアクション置き場（マウント後に解決。無ければ従来位置にフォールバック）
   const [actionSlot, setActionSlot] = useState<HTMLElement | null>(null)
+  // 実績ごとの裏づけ対象（evidencedBy 辺の source＝提供価値）。実績1件に複数の辺がある場合は
+  // 最初の1本（created_at 昇順）をこのフォームの管理対象とし、他は関係グラフ側で管理する。
+  const [backingByProof, setBackingByProof] = useState<Record<string, string>>({})
 
   const vpTitle = (id: string | null) =>
     id ? valuePropositions.find((v) => v.id === id)?.title ?? '（削除済みの提供価値）' : '全般'
 
+  const backingOf = (ppId: string): string | null => backingByProof[ppId] ?? null
+
   const fetchRows = async () => {
     setLoading(true)
-    const { data, error } = await supabase
-      .from('proof_points')
-      .select('*')
-      .eq('company_id', companyId)
-      .order('sort_order', { ascending: true })
-      .order('created_at', { ascending: true })
-    if (error) {
-      console.error('[ProofPoints] 取得エラー:', error)
+    const [ppRes, edgeRes] = await Promise.all([
+      supabase
+        .from('proof_points')
+        .select('*')
+        .eq('company_id', companyId)
+        .order('sort_order', { ascending: true })
+        .order('created_at', { ascending: true }),
+      supabase
+        .from('element_relations')
+        .select('source_id, target_id')
+        .eq('company_id', companyId)
+        .eq('relation_type', 'evidencedBy')
+        .eq('source_kind', 'value_proposition')
+        .eq('target_kind', 'proof_point')
+        .order('created_at', { ascending: true }),
+    ])
+    if (ppRes.error) {
+      console.error('[ProofPoints] 取得エラー:', ppRes.error)
       toast.error('実績・エピソードの取得に失敗しました')
     } else {
-      setRows((data as ProofPoint[]) || [])
+      setRows((ppRes.data as ProofPoint[]) || [])
+      const by: Record<string, string> = {}
+      for (const e of (edgeRes.data as { source_id: string; target_id: string }[] | null) || []) {
+        if (!(e.target_id in by)) by[e.target_id] = e.source_id // 最初の1本だけ
+      }
+      setBackingByProof(by)
       onDataChanged?.()
     }
     setLoading(false)
+  }
+
+  // 裏づけ対象の永続化（evidencedBy 辺の張り替え）。prev と同じなら何もしない。
+  const syncBacking = async (ppId: string, nextVpId: string | null) => {
+    const prevVpId = backingOf(ppId)
+    if ((prevVpId ?? '') === (nextVpId ?? '')) return
+    if (prevVpId) {
+      // このフォームが管理している1本だけを外す（関係グラフで手作りした他の辺は温存）
+      const { error } = await supabase
+        .from('element_relations')
+        .delete()
+        .eq('company_id', companyId)
+        .eq('relation_type', 'evidencedBy')
+        .eq('source_kind', 'value_proposition')
+        .eq('source_id', prevVpId)
+        .eq('target_kind', 'proof_point')
+        .eq('target_id', ppId)
+      if (error) throw error
+    }
+    if (nextVpId) {
+      const { error } = await supabase.from('element_relations').insert({
+        company_id: companyId,
+        source_kind: 'value_proposition',
+        source_id: nextVpId,
+        target_kind: 'proof_point',
+        target_id: ppId,
+        relation_type: 'evidencedBy',
+        note: '実績フォームの裏づけ対象として指定',
+        sort_order: 0,
+      })
+      // 関係グラフ側で同じ辺を先に作っていた場合の重複は許容（unique違反は握りつぶす）
+      if (error && !`${error.code}`.startsWith('23')) throw error
+    }
   }
 
   // 測定値を company 単位で一括取得し proof_point_id ごとに束ねる
@@ -281,7 +338,7 @@ export default function ProofPointsSection({
 
   const startEdit = (row: ProofPoint) => {
     setDraft({
-      value_proposition_id: row.value_proposition_id ?? '',
+      value_proposition_id: backingOf(row.id) ?? '',
       title: row.title ?? '',
       description: row.description ?? '',
       source_type: row.source_type ?? '',
@@ -296,9 +353,10 @@ export default function ProofPointsSection({
     setDraft(emptyDraft())
   }
 
+  // 裏づけ対象（draft.value_proposition_id）は payload に含めない＝FKには書かない。
+  // save() が evidencedBy 辺として syncBacking() で永続化する。
   const buildPayload = () => ({
     company_id: companyId,
-    value_proposition_id: draft.value_proposition_id || null,
     title: draft.title.trim(),
     description: draft.description.trim() || null,
     source_type: draft.source_type || null,
@@ -315,10 +373,13 @@ export default function ProofPointsSection({
     try {
       if (editingId === 'new') {
         const nextOrder = rows.length > 0 ? Math.max(...rows.map((r) => r.sort_order)) + 1 : 0
-        const { error } = await supabase
+        const { data: inserted, error } = await supabase
           .from('proof_points')
           .insert({ ...buildPayload(), sort_order: nextOrder })
+          .select('id')
+          .single()
         if (error) throw error
+        await syncBacking((inserted as { id: string }).id, draft.value_proposition_id || null)
         toast.success('追加しました')
       } else if (editingId) {
         const { error } = await supabase
@@ -326,6 +387,7 @@ export default function ProofPointsSection({
           .update({ ...buildPayload(), updated_at: new Date().toISOString() })
           .eq('id', editingId)
         if (error) throw error
+        await syncBacking(editingId, draft.value_proposition_id || null)
         toast.success('更新しました')
       }
       cancelEdit()
@@ -397,17 +459,22 @@ export default function ProofPointsSection({
     setAiRegistering(index)
     try {
       const nextOrder = rows.length > 0 ? Math.max(...rows.map((r) => r.sort_order)) + 1 : 0
-      const { error } = await supabase.from('proof_points').insert({
-        company_id: companyId,
-        value_proposition_id: d.value_proposition_id,
-        title: d.title.trim(),
-        description: d.description.trim() || null,
-        source_type: d.source_type || null,
-        source_url: null,
-        evidence_date: null,
-        sort_order: nextOrder,
-      })
+      const { data: inserted, error } = await supabase
+        .from('proof_points')
+        .insert({
+          company_id: companyId,
+          title: d.title.trim(),
+          description: d.description.trim() || null,
+          source_type: d.source_type || null,
+          source_url: null,
+          evidence_date: null,
+          sort_order: nextOrder,
+        })
+        .select('id')
+        .single()
       if (error) throw error
+      // 裏づけ対象は evidencedBy 辺として登録（FKには書かない）
+      await syncBacking((inserted as { id: string }).id, d.value_proposition_id)
       toast.success('登録しました')
       dismissAiDraft(index)
       await fetchRows()
@@ -742,7 +809,7 @@ export default function ProofPointsSection({
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-1.5 mb-1">
                     <span className="py-0.5 px-2 bg-blue-100 text-blue-800 rounded text-xs font-semibold">
-                      {vpTitle(row.value_proposition_id)}
+                      {vpTitle(backingOf(row.id))}
                     </span>
                     {sourceLabel(row.source_type) && (
                       <span className="py-0.5 px-2 bg-gray-100 text-gray-600 rounded text-xs font-semibold">

@@ -31,12 +31,14 @@ const PHIL_TYPE_LABELS: Record<string, string> = {
   action_guideline: '行動指針',
 }
 
-// relation_type の和訳（オーサリングUI・AI整形で共有）
+// relation_type の和訳（表示辞書。過去データの表示用に communicatedAs も残す）
 export const RELATION_TYPES: { value: string; label: string; desc: string }[] = [
   { value: 'guides', label: '方向づける', desc: 'A が B を方向づける' },
   { value: 'evidencedBy', label: '裏づけられる', desc: 'A は B（実績）に裏づけられる' },
   { value: 'promisedTo', label: '約束する相手', desc: 'A は B（相手）に約束される' },
-  { value: 'communicatedAs', label: '表現される', desc: 'A は B として表現される' },
+  // communicatedAs は廃止（新規作成不可・DBトリガでも拒否）。要素6種に「表現物」にあたる
+  // 種が無くレンジを定義できないため。表示ラベルだけ過去データ用に残す。
+  { value: 'communicatedAs', label: '表現される', desc: '（廃止）A は B として表現される' },
   { value: 'constrainedBy', label: '制約される', desc: 'A は B（禁則）に制約される' },
   { value: 'conflictsWith', label: '矛盾する', desc: 'A と B は矛盾しうる' },
   // 未来設計（C案・§3-1）で追加した4種。DB側の CHECK / 端点検証トリガは適用済み。
@@ -48,6 +50,35 @@ export const RELATION_TYPES: { value: string; label: string; desc: string }[] = 
 
 export const relationLabel = (v: string): string =>
   RELATION_TYPES.find((r) => r.value === v)?.label ?? v
+
+// ---- 関係の意味制約（ドメイン/レンジ） ----
+// 「どの種別の要素どうしを、どの関係で結べるか」の正。
+// DBトリガ validate_element_relation_semantics（20260721163054）と同内容を保つこと。
+// ここに無い relation_type（communicatedAs）は新規作成不可。
+export const RELATION_RULES: Record<string, { sources: ElementKind[]; targets: ElementKind[] }> = {
+  guides: { sources: ['philosophy_element'], targets: ['philosophy_element', 'value_proposition'] },
+  evidencedBy: { sources: ['philosophy_element', 'value_proposition'], targets: ['proof_point'] },
+  promisedTo: { sources: ['philosophy_element', 'value_proposition'], targets: ['persona'] },
+  constrainedBy: { sources: ['philosophy_element', 'value_proposition'], targets: ['governance_rule'] },
+  conflictsWith: {
+    sources: ['philosophy_element', 'value_proposition', 'governance_rule'],
+    targets: ['philosophy_element', 'value_proposition', 'governance_rule'],
+  },
+  aspiresTo: { sources: ['value_proposition'], targets: ['philosophy_element'] },
+  requires: { sources: ['philosophy_element'], targets: ['desired_evidence'] },
+  toBeEvidencedBy: { sources: ['value_proposition'], targets: ['desired_evidence'] },
+  verifies: { sources: ['proof_point'], targets: ['desired_evidence'] },
+}
+
+/** 作成可能な relation_type（UIのセレクト・AI候補の検証で使う） */
+export const CREATABLE_RELATION_TYPES = RELATION_TYPES.filter((r) => r.value in RELATION_RULES)
+
+/** (relation_type, source_kind, target_kind) の組がドメイン/レンジに適合するか */
+export function isValidRelationShape(relationType: string, sourceKind: string, targetKind: string): boolean {
+  const rule = RELATION_RULES[relationType]
+  if (!rule) return false
+  return rule.sources.includes(sourceKind as ElementKind) && rule.targets.includes(targetKind as ElementKind)
+}
 
 function snippet(s: string | null | undefined, n = 48): string {
   const t = (s || '').replace(/\s+/g, ' ').trim()
