@@ -2,7 +2,7 @@
 
 // スーパー管理画面 企業詳細: 「表現ルール」(governance_rules) CRUD セクション
 // - 一覧 / 追加 / 編集 / 削除 / 並び替え（上下）
-// - rule_type / scope / severity はセレクト、ng_example・ok_example は任意
+// - rule_type / severity はセレクト、ng_example・ok_example は任意（scope はUIから撤去・下記コメント参照）
 // - 書き込みは governance_rules_superadmin_all ポリシー（is_superadmin）で許可される前提
 // - 「AI草案を生成」: 業種・バリュー・用語規定からルール候補を推定（/api/superadmin/draft-extraction・
 //   押した時だけ）。候補は1件ずつ承認/編集/却下。承認・編集して登録した時のみ通常の作成経路でINSERT。
@@ -49,14 +49,9 @@ const RULE_TYPES: { value: string; label: string }[] = [
   { value: 'claim_rule', label: '主張ルール' },
   { value: 'compliance_rule', label: 'コンプラルール' },
 ]
-const SCOPES: { value: string; label: string }[] = [
-  { value: 'global', label: '全般' },
-  { value: 'claim', label: '主張' },
-  { value: 'benefit', label: 'ベネフィット' },
-  { value: 'audience', label: '対象顧客' },
-  { value: 'service', label: 'サービス' },
-  { value: 'action_guideline', label: '行動指針' },
-]
+// scope（適用範囲）はUIから撤去した。getGuardrails に絞り込み機構はあるが呼び出し元が
+// 誰も scopes を渡しておらず、全ルールが常時注入される＝設定しても効かないため。
+// DB列・API・絞り込み機構は温存し、値は「編集時は既存値のまま／新規は 'global'」で書き続ける。
 const SEVERITIES: { value: string; label: string; cls: string }[] = [
   { value: 'block', label: '絶対遵守', cls: 'bg-red-100 text-red-700' },
   { value: 'warn', label: '原則遵守', cls: 'bg-amber-100 text-amber-800' },
@@ -343,9 +338,6 @@ export default function GovernanceRulesSection({
                   <span className="py-0.5 px-2 bg-gray-100 text-gray-600 rounded text-[11px] font-semibold">
                     {labelOf(RULE_TYPES, d.rule_type)}
                   </span>
-                  <span className="py-0.5 px-2 bg-blue-50 text-ds-app-accent-hover rounded text-[11px] font-semibold">
-                    {labelOf(SCOPES, d.scope)}
-                  </span>
                 </div>
                 <p className="text-sm font-bold text-foreground break-words m-0">{d.rule_text}</p>
                 {d.ng_example && <p className="text-[13px] text-red-600 mt-0.5 break-words m-0">NG: {d.ng_example}</p>}
@@ -384,20 +376,6 @@ export default function GovernanceRulesSection({
             onChange={(e) => setDraft({ ...draft, rule_type: e.target.value })}
           >
             {RULE_TYPES.map((s) => (
-              <option key={s.value} value={s.value}>
-                {s.label}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="flex-1">
-          <label className="text-xs font-bold text-foreground mb-1.5 block">適用範囲（scope）</label>
-          <select
-            className={SELECT_CLASS}
-            value={draft.scope}
-            onChange={(e) => setDraft({ ...draft, scope: e.target.value })}
-          >
-            {SCOPES.map((s) => (
               <option key={s.value} value={s.value}>
                 {s.label}
               </option>
@@ -508,9 +486,6 @@ export default function GovernanceRulesSection({
                     )}
                     <span className="py-0.5 px-2 bg-gray-100 text-gray-600 rounded text-xs font-semibold">
                       {labelOf(RULE_TYPES, row.rule_type)}
-                    </span>
-                    <span className="py-0.5 px-2 bg-blue-50 text-ds-app-accent-hover rounded text-xs font-semibold">
-                      {labelOf(SCOPES, row.scope)}
                     </span>
                     {vpTitle(row.target_value_proposition_id) && (
                       <span className="py-0.5 px-2 bg-blue-100 text-blue-800 rounded text-xs font-semibold">
