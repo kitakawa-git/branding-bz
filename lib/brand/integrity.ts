@@ -206,68 +206,11 @@ export async function runIntegrityChecks(companyId: string): Promise<IntegrityFi
     })
   }
 
-  // 7. 理念から辿れない要素（info）: mission（無ければ vision、どちらも無ければ value 全件）を根に、
-  //    関係（向きは無視・無向）＋証拠の直接FK（proof_points.value_proposition_id）を辺として
-  //    到達可能性を見る。届かない要素は「島」＝論理の根拠が未登録のサイン。
-  //    - 検出対象: 理念（根自身を除く）/提供価値/実績/表現ルール。ペルソナは対象外
-  //      （理念由来でなくてよい）が、経路としては通過できる。
-  //    - 根が1つも無い会社（理念未登録）はチェック自体をスキップ（全要素が島になり煩雑なため）。
-  //    - ラベルはカタログ由来（title が null の理念も body で表示される。幽霊エッジ誤診の教訓）。
-  //    - info のためウィザード Step5 の完了判定には影響しない。
-  {
-    const rootPhils = (() => {
-      const m = phils.filter((p) => p.element_type === 'mission')
-      if (m.length > 0) return m
-      const v = phils.filter((p) => p.element_type === 'vision')
-      if (v.length > 0) return v
-      return phils.filter((p) => p.element_type === 'value')
-    })()
-    if (rootPhils.length > 0) {
-      const adj = new Map<string, string[]>()
-      const addEdge = (a: string, b: string) => {
-        if (!adj.has(a)) adj.set(a, [])
-        if (!adj.has(b)) adj.set(b, [])
-        adj.get(a)!.push(b)
-        adj.get(b)!.push(a)
-      }
-      for (const r of ers) addEdge(`${r.source_kind}:${r.source_id}`, `${r.target_kind}:${r.target_id}`)
-      for (const p of pps) {
-        if (p.value_proposition_id) addEdge(`value_proposition:${p.value_proposition_id}`, `proof_point:${p.id}`)
-      }
-      const reachable = new Set<string>(rootPhils.map((p) => `philosophy_element:${p.id}`))
-      const queue = [...reachable]
-      for (let i = 0; i < queue.length; i++) {
-        for (const nb of adj.get(queue[i]) || []) {
-          if (!reachable.has(nb)) {
-            reachable.add(nb)
-            queue.push(nb)
-          }
-        }
-      }
-      const rootIds = new Set(rootPhils.map((p) => p.id))
-      const unreachable = catalog.filter(
-        (e) =>
-          e.kind !== 'persona' &&
-          !(e.kind === 'philosophy_element' && rootIds.has(e.id)) &&
-          !reachable.has(`${e.kind}:${e.id}`),
-      )
-      if (unreachable.length > 0) {
-        findings.push({
-          severity: 'info',
-          category: '理念から辿れない要素',
-          message: `理念からの線が繋がっていない要素が${unreachable.length}件あります。関係性ステップでAIスキャンを再実行するか、手動で関係を追加してください`,
-        })
-        for (const e of unreachable) {
-          findings.push({
-            severity: 'info',
-            category: '理念から辿れない要素',
-            message: `「${e.label}」は理念からの線が繋がっていません（島になっています）`,
-            refs: [{ kind: KIND_LABELS[e.kind], label: e.label }],
-          })
-        }
-      }
-    }
-  }
+  // 7.（廃止）理念から辿れない要素の findings
+  //    判定そのものは lib/brand/map-data.ts の findUnreachableFromPhilosophy に残っていて、
+  //    スーパー管理の「未接続 N件」「理念に届かない N件」チップが使っている。
+  //    チップは行クリックで該当ステップへ飛べる＝直す導線があるのに対し、
+  //    ここの info は同じ内容を読み上げるだけで数十件を占有していたため出力をやめた。
 
   // ===== §10 未来設計（C案）の整合性チェック（すべて info・自動修正なし） =====
   // DE が0件（M1適用直後・未入力）の会社では以下すべて発火しない＝既存挙動不変。

@@ -12,7 +12,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { fetchElementsCatalog, KIND_LABELS, type ElementKind, type ElementRef } from '@/lib/brand/elements-catalog'
-import { buildBrandMapGraph, type BrandMapGraph, type ProofFkRow, type RelationRow } from '@/lib/brand/map-data'
+import {
+  buildBrandMapGraph,
+  findUnreachableFromPhilosophy,
+  type BrandMapGraph,
+  type ProofFkRow,
+  type RelationRow,
+} from '@/lib/brand/map-data'
 import OntologyBuilderSection, { type OntologyStatus } from './OntologyBuilderSection'
 import { ONTOLOGY_DATA_CHANGED_EVENT, ONTOLOGY_GOTO_STEP_EVENT } from './ontology-events'
 import BrandMapSection from './BrandMapSection'
@@ -20,7 +26,7 @@ import BrandMap3D from './BrandMap3D'
 import OutputTestPanel from './OutputTestPanel'
 import type { ValuePropositionRef } from './ProofPointsSection'
 import { Button } from '@/components/ui/button'
-import { ChevronDown, Maximize2, MoreHorizontal, X } from 'lucide-react'
+import { ArrowRight, ChevronDown, Maximize2, MoreHorizontal, X } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -71,6 +77,9 @@ export default function OntologySummaryHub({
   const [status, setStatus] = useState<OntologyStatus | null>(null)
   const [graph, setGraph] = useState<BrandMapGraph | null>(null)
   const [catalog, setCatalog] = useState<ElementRef[]>([])
+  // 「理念に届かない要素」＝線はあるが理念から辿り着けない要素（＝島）。
+  // 線が1本も無いものは「未接続」チップが扱うのでここから除く（2つのチップの件数を重ねない）。
+  const [unreachableItems, setUnreachableItems] = useState<ElementRef[]>([])
   // 「…」メニューで畳んでいる表示（既定はすべてオフ＝ミニマル）
   const [showCounts, setShowCounts] = useState(false)
   const [showLegend, setShowLegend] = useState(false)
@@ -113,13 +122,17 @@ export default function OntologySummaryHub({
     for (const p of (philR.data as { id: string; element_type: string }[] | null) || []) {
       philTypes[p.id] = p.element_type
     }
+    const rels = (relR.data as RelationRow[] | null) || []
+    const fks = (ppR.data as ProofFkRow[] | null) || []
+    const g = buildBrandMapGraph(cat, rels, philTypes, fks)
     setCatalog(cat)
-    setGraph(
-      buildBrandMapGraph(
-        cat,
-        (relR.data as RelationRow[] | null) || [],
-        philTypes,
-        (ppR.data as ProofFkRow[] | null) || [],
+    setGraph(g)
+    // 到達可能性は integrity.ts と同じ共有関数で判定する（別実装にすると数字が食い違うため）。
+    // そこから「線が1本も無いもの」＝未接続チップの担当分を除いた残りが島。
+    const connected = new Set(g.nodes.map((n) => n.ref))
+    setUnreachableItems(
+      findUnreachableFromPhilosophy(cat, rels, philTypes, fks).filter((e) =>
+        connected.has(`${e.kind}:${e.id}`),
       ),
     )
   }, [companyId])
@@ -236,9 +249,11 @@ export default function OntologySummaryHub({
             <PopoverTrigger asChild>
               <button
                 type="button"
-                className="inline-flex items-center gap-1 py-1 px-2.5 rounded-md text-[12px] font-semibold bg-amber-100 text-amber-800 border-0 cursor-pointer hover:bg-amber-200"
+                className="group inline-flex items-center gap-1.5 py-1 px-2.5 rounded-md text-[12px] font-semibold bg-amber-100 text-amber-800 border border-amber-300 cursor-pointer shadow-sm transition-all hover:bg-amber-200 hover:shadow hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
               >
-                未接続 {unconnected}件 <span className="font-normal opacity-80">→ 繋ぎに行く</span>
+                未接続 {unconnected}件
+                <span className="font-medium underline underline-offset-2 decoration-amber-500/60 group-hover:decoration-amber-700">繋ぎに行く</span>
+                <ArrowRight size={12} className="transition-transform group-hover:translate-x-0.5" />
               </button>
             </PopoverTrigger>
             <PopoverContent align="start" className="w-80 p-0">
@@ -277,15 +292,69 @@ export default function OntologySummaryHub({
         ) : (
           <Chip label="" value="すべて接続済み" tone="green" />
         )}
+
+        {/* 理念に届かない要素（＝島）。線はあるのに理念まで辿れないもの。
+            「未接続」とは別問題なので別チップにする（件数は重ならない＝線ゼロは未接続側が担当）。 */}
+        {unreachableItems.length > 0 && (
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className="group inline-flex items-center gap-1.5 py-1 px-2.5 rounded-md text-[12px] font-semibold bg-amber-100 text-amber-800 border border-amber-300 cursor-pointer shadow-sm transition-all hover:bg-amber-200 hover:shadow hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+              >
+                理念に届かない {unreachableItems.length}件
+                <span className="font-medium underline underline-offset-2 decoration-amber-500/60 group-hover:decoration-amber-700">
+                  繋ぎに行く
+                </span>
+                <ArrowRight size={12} className="transition-transform group-hover:translate-x-0.5" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-80 p-0">
+              <div className="p-3 border-b border-border">
+                <p className="text-[13px] font-bold text-foreground m-0">理念まで辿れない要素</p>
+                <p className="text-[11px] text-muted-foreground m-0 mt-0.5">
+                  線はありますが、たどっても理念に行き着きません。行をクリックすると、その要素を扱うステップへ移動します
+                </p>
+              </div>
+              <div className="max-h-64 overflow-auto">
+                {unreachableItems.map((e) => (
+                  <button
+                    key={`${e.kind}:${e.id}`}
+                    type="button"
+                    onClick={() => gotoStep(STEP_BY_KIND[e.kind] ?? STEP_RELATIONS)}
+                    className="flex w-full items-start gap-2 border-0 border-b border-border bg-background px-3 py-2 text-left cursor-pointer hover:bg-muted last:border-b-0"
+                  >
+                    <span className="mt-0.5 shrink-0 rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold text-gray-700">
+                      {KIND_LABELS[e.kind]}
+                    </span>
+                    <span className="text-[12px] text-foreground break-words">{e.label || '（無題）'}</span>
+                  </button>
+                ))}
+              </div>
+              <div className="p-2 border-t border-border">
+                <button
+                  type="button"
+                  onClick={() => gotoStep(STEP_RELATIONS)}
+                  className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-[12px] font-semibold text-foreground cursor-pointer hover:bg-muted"
+                >
+                  関係性ステップで理念に繋ぐ →
+                </button>
+              </div>
+            </PopoverContent>
+          </Popover>
+        )}
+
         {/* 理念（ミッション/ビジョン/バリュー）が未登録のときだけ促す。旧ステップ1の前提チェックの置き換え */}
         {c && c.mission + c.vision + c.value === 0 && (
           <Popover>
             <PopoverTrigger asChild>
               <button
                 type="button"
-                className="inline-flex items-center gap-1 py-1 px-2.5 rounded-md text-[12px] font-semibold bg-amber-100 text-amber-800 border-0 cursor-pointer hover:bg-amber-200"
+                className="group inline-flex items-center gap-1.5 py-1 px-2.5 rounded-md text-[12px] font-semibold bg-amber-100 text-amber-800 border border-amber-300 cursor-pointer shadow-sm transition-all hover:bg-amber-200 hover:shadow hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
               >
-                理念が未登録 <span className="font-normal opacity-80">→ 登録する</span>
+                理念が未登録
+                <span className="font-medium underline underline-offset-2 decoration-amber-500/60 group-hover:decoration-amber-700">登録する</span>
+                <ArrowRight size={12} className="transition-transform group-hover:translate-x-0.5" />
               </button>
             </PopoverTrigger>
             <PopoverContent align="start" className="w-80">
@@ -306,9 +375,11 @@ export default function OntologySummaryHub({
             <PopoverTrigger asChild>
               <button
                 type="button"
-                className="inline-flex items-center gap-1 py-1 px-2.5 rounded-md text-[12px] font-semibold bg-amber-100 text-amber-800 border-0 cursor-pointer hover:bg-amber-200"
+                className="group inline-flex items-center gap-1.5 py-1 px-2.5 rounded-md text-[12px] font-semibold bg-amber-100 text-amber-800 border border-amber-300 cursor-pointer shadow-sm transition-all hover:bg-amber-200 hover:shadow hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
               >
-                提供価値が未登録 <span className="font-normal opacity-80">→ 登録する</span>
+                提供価値が未登録
+                <span className="font-medium underline underline-offset-2 decoration-amber-500/60 group-hover:decoration-amber-700">登録する</span>
+                <ArrowRight size={12} className="transition-transform group-hover:translate-x-0.5" />
               </button>
             </PopoverTrigger>
             <PopoverContent align="start" className="w-80">
@@ -384,22 +455,17 @@ export default function OntologySummaryHub({
         </div>
       )}
 
-      {/* 出力テスト（オントロジーの効果を注入あり/なしで比較） */}
-      <div className="mb-3">
-        <OutputTestPanel companyId={companyId} />
-      </div>
-
       {/* 編集する（構築完了なら畳む）。ウィザードは常時マウント＝件数の通知とステップ遷移イベントの購読を切らさない。
           開閉は grid-template-rows 0fr→1fr のアニメーション（中身の実高さに追随するので高さの決め打ち不要）。
           display:none を使わないぶん畳んだ中身にキーボードが入ってしまうため inert で無効化する。 */}
-      <div ref={editRef}>
+      <div ref={editRef} className="mb-3">
         <button
           type="button"
           onClick={() => {
             editUserToggled.current = true
             setEditOpen((v) => !v)
           }}
-          className="inline-flex w-full items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 text-[13px] font-semibold text-foreground cursor-pointer hover:bg-muted"
+          className="inline-flex w-full items-center gap-2 rounded-lg border border-border bg-background p-4 text-[13px] font-semibold text-foreground cursor-pointer hover:bg-muted"
           aria-expanded={editOpen}
         >
           <ChevronDown
@@ -428,6 +494,9 @@ export default function OntologySummaryHub({
           </div>
         </div>
       </div>
+
+      {/* 出力テスト（オントロジーの効果を注入あり/なしで比較） */}
+      <OutputTestPanel companyId={companyId} />
     </div>
   )
 }

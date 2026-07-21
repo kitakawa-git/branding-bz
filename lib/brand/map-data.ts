@@ -184,3 +184,72 @@ export function concentricLayout(nodes: MapNode[], width: number, height: number
   }
   return pos
 }
+
+// ---- 理念からの到達可能性（「理念に届かない要素」＝島） ----
+// integrity.ts の判定とスーパー管理のチップで同じ数字を出すための共有純関数。
+// ここを唯一の実装にする（以前は integrity.ts にインラインで書かれており、
+// チップ側の unconnectedCount と基準が違って別々の数字が出ていた）。
+//
+// 判定ルール:
+// - 根＝ミッション。無ければビジョン、どちらも無ければバリュー全件。
+// - 辺＝関係（向きは無視・無向）＋実績の直接FK（proof_points.value_proposition_id）。
+// - 検出対象＝理念（根自身を除く）/提供価値/実績/表現ルール。
+//   ペルソナは対象外（理念由来でなくてよい）だが、経路としては通過できる。
+// - 根が1つも無い会社（理念未登録）は判定しない＝空配列（全要素が島になり煩雑なため）。
+
+/** 到達可能性の計算に使う辺。kind は string で受ける（未来設計の desired_evidence を含むため） */
+export type ReachabilityEdge = {
+  source_kind: string
+  source_id: string
+  target_kind: string
+  target_id: string
+}
+
+export function findUnreachableFromPhilosophy(
+  catalog: ElementRef[],
+  edges: ReachabilityEdge[],
+  philTypes: Record<string, string>, // philosophy_elements の id → element_type
+  proofFks: ProofFkRow[] = [],
+): ElementRef[] {
+  const philsOf = (t: string) =>
+    catalog.filter((e) => e.kind === 'philosophy_element' && philTypes[e.id] === t)
+  const roots = (() => {
+    const m = philsOf('mission')
+    if (m.length > 0) return m
+    const v = philsOf('vision')
+    if (v.length > 0) return v
+    return philsOf('value')
+  })()
+  if (roots.length === 0) return []
+
+  const adj = new Map<string, string[]>()
+  const addEdge = (a: string, b: string) => {
+    if (!adj.has(a)) adj.set(a, [])
+    if (!adj.has(b)) adj.set(b, [])
+    adj.get(a)!.push(b)
+    adj.get(b)!.push(a)
+  }
+  for (const r of edges) addEdge(`${r.source_kind}:${r.source_id}`, `${r.target_kind}:${r.target_id}`)
+  for (const p of proofFks) {
+    if (p.value_proposition_id) addEdge(`value_proposition:${p.value_proposition_id}`, `proof_point:${p.id}`)
+  }
+
+  const reachable = new Set<string>(roots.map((e) => `philosophy_element:${e.id}`))
+  const queue = [...reachable]
+  for (let i = 0; i < queue.length; i++) {
+    for (const nb of adj.get(queue[i]) || []) {
+      if (!reachable.has(nb)) {
+        reachable.add(nb)
+        queue.push(nb)
+      }
+    }
+  }
+
+  const rootIds = new Set(roots.map((e) => e.id))
+  return catalog.filter(
+    (e) =>
+      e.kind !== 'persona' &&
+      !(e.kind === 'philosophy_element' && rootIds.has(e.id)) &&
+      !reachable.has(`${e.kind}:${e.id}`),
+  )
+}
