@@ -745,6 +745,9 @@ export default function QuizDetailPage() {
                       <div className="space-y-1 mb-2">
                         {q.options.map((o) => {
                           const correct = o.id === q.correct_option_id
+                          // 4択(single_choice)は a/b/c/d の1文字IDを表示。
+                          // ◯×(true_false)は id が 'true'/'false' で幅からはみ出て「正しい/誤り」と重なるため非表示。
+                          const showIdBadge = q.question_type === 'single_choice'
                           return (
                             <div
                               key={o.id}
@@ -757,7 +760,9 @@ export default function QuizDetailPage() {
                               ) : (
                                 <span className="size-[13px] shrink-0" />
                               )}
-                              <span className="uppercase font-mono text-[10px] w-3 shrink-0">{o.id}</span>
+                              {showIdBadge && (
+                                <span className="uppercase font-mono text-[10px] w-3 shrink-0">{o.id}</span>
+                              )}
                               <span>{o.text}</span>
                             </div>
                           )
