@@ -28,6 +28,7 @@ type GovernanceRule = {
   ng_example: string | null
   ok_example: string | null
   severity: string
+  source: string | null
   sort_order: number
 }
 
@@ -61,6 +62,16 @@ const SEVERITIES: { value: string; label: string; cls: string }[] = [
   { value: 'warn', label: '原則遵守', cls: 'bg-amber-100 text-amber-800' },
   { value: 'info', label: '参考', cls: 'bg-gray-100 text-gray-600' },
 ]
+
+// governance_rules.source → 表示名。実データは manual / personality_diagnosis の2種（2026-07-21時点）。
+// ai_draft は「AI草案から承認登録」した分（従来 manual と同値で区別できなかったのを分離）。
+// 未知の値はそのまま出す（勝手に「手入力」に丸めない＝出所を偽らない）。
+const SOURCE_LABELS: Record<string, string> = {
+  manual: '手入力',
+  ai_draft: 'AI草案',
+  personality_diagnosis: '診断由来',
+}
+const sourceLabel = (v: string | null) => (v ? SOURCE_LABELS[v] ?? v : '手入力')
 
 const labelOf = (list: { value: string; label: string }[], v: string | null) =>
   list.find((x) => x.value === v)?.label ?? v ?? '—'
@@ -263,7 +274,8 @@ export default function GovernanceRulesSection({
         company_id: companyId,
         rule_type: d.rule_type,
         scope: d.scope,
-        source: 'manual',
+        // AI草案由来を手入力と区別できるようにする（従来は 'manual' で混ざっていた）
+        source: 'ai_draft',
         target_value_proposition_id: null,
         rule_text: d.rule_text.trim(),
         ng_example: d.ng_example.trim() || null,
@@ -505,15 +517,35 @@ export default function GovernanceRulesSection({
                         {vpTitle(row.target_value_proposition_id)}
                       </span>
                     )}
+                    {/* 出所（手入力／AI草案／診断由来）。種別バッジと区別するため枠線＋淡色 */}
+                    <span className="py-0.5 px-2 border border-border text-muted-foreground rounded text-xs font-medium">
+                      {sourceLabel(row.source)}
+                    </span>
                   </div>
                   <p className="text-sm font-bold text-foreground whitespace-pre-line break-words">
                     {row.rule_text}
                   </p>
-                  {row.ng_example && (
-                    <p className="text-[13px] text-red-600 mt-1 break-words">NG: {row.ng_example}</p>
-                  )}
-                  {row.ok_example && (
-                    <p className="text-[13px] text-green-700 break-words">OK: {row.ok_example}</p>
+                  {/* NG例・OK例はポータル（BrandPersonalityCard の表現ルール）と同じ2カラムの色付きボックス。
+                      片方だけのときは1カラムになる（grid の自動配置に任せる）。 */}
+                  {(row.ng_example || row.ok_example) && (
+                    <div
+                      className={`mt-2 grid gap-2 grid-cols-1 ${
+                        row.ng_example && row.ok_example ? 'sm:grid-cols-2' : ''
+                      }`}
+                    >
+                      {row.ng_example && (
+                        <div className="rounded-md bg-red-50 px-3 py-2">
+                          <p className="text-[11px] font-bold text-red-600 mb-0.5 m-0">NG例</p>
+                          <p className="text-[13px] text-red-700/90 leading-relaxed m-0 break-words">{row.ng_example}</p>
+                        </div>
+                      )}
+                      {row.ok_example && (
+                        <div className="rounded-md bg-green-50 px-3 py-2">
+                          <p className="text-[11px] font-bold text-green-700 mb-0.5 m-0">OK例</p>
+                          <p className="text-[13px] text-green-800/90 leading-relaxed m-0 break-words">{row.ok_example}</p>
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
