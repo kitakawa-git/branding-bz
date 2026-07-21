@@ -16,7 +16,7 @@ import { Plus, Trash2, Pencil, Check, X, ChevronUp, ChevronDown, Sparkles } from
 import { toast } from 'sonner'
 import { AIButton } from '@/components/shared/AIButton'
 import { RuleExampleBoxes } from '@/components/shared/RuleExampleBoxes'
-import { RULE_TYPES, SEVERITIES, ruleTypeLabel, severityMeta, sourceLabel } from '@/lib/brand/rule-display'
+import { RULE_TYPES, SEVERITIES, ruleTypeLabel, severityMeta } from '@/lib/brand/rule-display'
 import type { ValuePropositionRef } from './ProofPointsSection'
 import type { RuleExtractDraft } from '@/lib/brand/draft-extraction'
 
@@ -30,7 +30,6 @@ type GovernanceRule = {
   ng_example: string | null
   ok_example: string | null
   severity: string
-  source: string | null
   sort_order: number
 }
 
@@ -474,10 +473,8 @@ export default function GovernanceRulesSection({
                         {vpTitle(row.target_value_proposition_id)}
                       </span>
                     )}
-                    {/* 出所（手入力／AI草案／診断由来）。種別バッジと区別するため枠線＋淡色 */}
-                    <span className="py-0.5 px-2 border border-border text-muted-foreground rounded text-xs font-medium">
-                      {sourceLabel(row.source)}
-                    </span>
+                    {/* 出所（手入力／診断由来）は表示しない。AIの生成には影響せず、
+                        source は連携時の置換判定にのみ使われるため（再連携で診断由来の行は作り直される）。 */}
                   </div>
                   <p className="text-sm font-bold text-foreground whitespace-pre-line break-words">
                     {row.rule_text}

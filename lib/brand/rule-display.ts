@@ -22,18 +22,13 @@ export const SEVERITIES: { value: string; label: string; cls: string }[] = [
   { value: 'info', label: '参考', cls: 'bg-gray-100 text-gray-600' },
 ]
 
-// governance_rules.source → 表示名。DBの CHECK 制約が 'manual' | 'personality_diagnosis' に
-// 限定しているため、この2種類しか入らない（AI草案から登録した分も 'manual' に含まれ区別できない）。
-// 未知の値はそのまま出す（勝手に「手入力」に丸めない＝出所を偽らない）。
-const SOURCE_LABELS: Record<string, string> = {
-  manual: '手入力',
-  personality_diagnosis: '診断由来',
-}
+// ※ governance_rules.source は画面に出さない方針（AIの生成に影響しないため）。
+//    値は連携時の置換判定にのみ使う（personality connect が診断由来の行だけ入れ替える）。
+//    表示が必要になったら 'manual'=手入力 / 'personality_diagnosis'=診断由来 で復活させる。
 
 export const ruleTypeLabel = (v: string | null) =>
   RULE_TYPES.find((x) => x.value === v)?.label ?? v ?? '—'
 export const severityMeta = (v: string) => SEVERITIES.find((s) => s.value === v)
-export const sourceLabel = (v: string | null) => (v ? SOURCE_LABELS[v] ?? v : '手入力')
 
 // 診断の severity（low/medium/high）→ governance_rules の語彙（info/warn/block）。
 // connect API と同じ対応表（表示でも同じ見え方にする）。
