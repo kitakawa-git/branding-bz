@@ -67,6 +67,9 @@ const STEPS: { num: number; label: string; full: string; why: string }[] = [
 // 最終ステップ（点検・補足質問）。自動点検の取得トリガと完了時の既定表示に使う。
 const LAST_STEP = STEPS[STEPS.length - 1].num
 
+// ステップ見出し行の右端に置くアクションの受け皿（各セクションが portal で差し込む）
+const STEP_ACTION_SLOT_ID = 'ontology-step-action'
+
 export default function OntologyBuilderSection({
   companyId,
   valuePropositions,
@@ -323,9 +326,14 @@ export default function OntologyBuilderSection({
       ) : current ? (
         <div className="border border-border rounded-lg p-4 bg-background mt-2">
           <div className="mb-3">
-            <p className="text-sm font-bold text-foreground m-0">
-              ステップ{current.num}: {current.full}
-            </p>
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-sm font-bold text-foreground m-0">
+                ステップ{current.num}: {current.full}
+              </p>
+              {/* 各ステップの主アクション置き場。実体は各セクション側が portal で差し込む
+                  （状態はセクションが持つため、ここは空の受け皿だけを用意する） */}
+              <div id={STEP_ACTION_SLOT_ID} className="shrink-0" />
+            </div>
             <p className="inline-flex items-center gap-1.5 text-[13px] text-blue-900 bg-blue-100/60 rounded-md px-2.5 py-1 m-0 mt-1.5">
               <Info size={13} className="shrink-0" />
               {current.why}
@@ -334,7 +342,12 @@ export default function OntologyBuilderSection({
 
           {/* 各ステップに機能の実体を埋め込み（カード外に重複セクションは無い＝実体は各1箇所） */}
           {current.num === 1 && (
-            <ProofPointsSection companyId={companyId} valuePropositions={valuePropositions} onDataChanged={broadcastDataChanged} />
+            <ProofPointsSection
+              companyId={companyId}
+              valuePropositions={valuePropositions}
+              onDataChanged={broadcastDataChanged}
+              headerActionSlotId={STEP_ACTION_SLOT_ID}
+            />
           )}
           {current.num === 2 && (
             <GovernanceRulesSection companyId={companyId} valuePropositions={valuePropositions} onDataChanged={broadcastDataChanged} />

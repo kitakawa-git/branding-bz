@@ -7,6 +7,7 @@
 // - 「AI草案を生成」: 登録済みデータから実績候補を抽出（/api/superadmin/draft-extraction・押した時だけ）。
 //   候補は1件ずつ承認/編集/却下。承認・編集して登録した時のみ通常の作成経路でINSERTされる。
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { supabase } from '@/lib/supabase'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -99,11 +100,15 @@ export default function ProofPointsSection({
   companyId,
   valuePropositions,
   onDataChanged,
+  headerActionSlotId,
 }: {
   companyId: string
   valuePropositions: ValuePropositionRef[]
   // データ再取得のたびに通知（ウィザードのステップ判定更新用・任意）
   onDataChanged?: () => void
+  // 指定すると「AI草案を生成」をこのidの要素へ portal する（ステップ見出し行に置くため）。
+  // 未指定・要素が無い場合は従来どおりセクション下部のボタン行に出す。
+  headerActionSlotId?: string
 }) {
   const [rows, setRows] = useState<ProofPoint[]>([])
   const [loading, setLoading] = useState(true)
@@ -119,6 +124,8 @@ export default function ProofPointsSection({
   const [mEditingId, setMEditingId] = useState<string | null>(null) // 'new:<ppId>' または測定値ID
   const [mDraft, setMDraft] = useState<MDraft>(emptyMDraft())
   const [mSaving, setMSaving] = useState(false)
+  // 見出し行のアクション置き場（マウント後に解決。無ければ従来位置にフォールバック）
+  const [actionSlot, setActionSlot] = useState<HTMLElement | null>(null)
 
   const vpTitle = (id: string | null) =>
     id ? valuePropositions.find((v) => v.id === id)?.title ?? '（削除済みの提供価値）' : '全般'
@@ -176,6 +183,11 @@ export default function ProofPointsSection({
     fetchMeasurements()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [companyId])
+
+  // portal 先の解決はマウント後（親が同じコミットで描画する受け皿を掴む）
+  useEffect(() => {
+    setActionSlot(headerActionSlotId ? document.getElementById(headerActionSlotId) : null)
+  }, [headerActionSlotId])
 
   const startAddMeasurement = (ppId: string) => {
     setMDraft(emptyMDraft())
@@ -419,6 +431,14 @@ export default function ProofPointsSection({
     setEditingId('new')
     dismissAiDraft(index)
   }
+
+  // 「AI草案を生成」ボタン本体。置き場所（見出し行 or セクション下部）だけが変わる。
+  const aiExtractButton = (
+    <Button type="button" onClick={runAiExtract} disabled={aiLoading || loading} className="py-2 px-4 text-[13px]">
+      <Sparkles size={16} />
+      {aiLoading ? '生成中...' : 'AI草案を生成'}
+    </Button>
+  )
 
   const renderAiDrafts = () => {
     if (aiDrafts === null) return null
@@ -818,12 +838,13 @@ export default function ProofPointsSection({
             <Plus size={16} />
             実績を追加
           </Button>
-          <Button type="button" onClick={runAiExtract} disabled={aiLoading || loading} className="py-2 px-4 text-[13px]">
-            <Sparkles size={16} />
-            {aiLoading ? '生成中...' : 'AI草案を生成'}
-          </Button>
+          {/* スロットが無いときだけここに出す（ある場合は見出し行へ portal） */}
+          {!actionSlot && aiExtractButton}
         </div>
       )}
+
+      {/* ステップ見出し行へ差し込み */}
+      {actionSlot && createPortal(aiExtractButton, actionSlot)}
 
       {renderAiDrafts()}
     </div>
