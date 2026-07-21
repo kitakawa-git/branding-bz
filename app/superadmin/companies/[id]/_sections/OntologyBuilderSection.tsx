@@ -258,8 +258,13 @@ export default function OntologyBuilderSection({
       {/* ステッパー（/tools/personality の StepProgressBar と同じ装飾・全幅） */}
       <div className="w-full mb-3">
         <div className="relative">
-          {/* ベースライン（グレー一本線：最初の丸中心〜最後の丸中心） */}
-          <div className="absolute top-[15px] left-4 right-4 h-0.5 bg-gray-200" />
+          {/* ベースライン（グレー一本線：最初の丸中心〜最後の丸中心）。
+              各ステップは flex-1 の等幅なので、丸の中心は端から「1区画の半分」＝ 50/N %。
+              ラベル幅に依存する固定値（旧: left-4）だと線が丸からはみ出す。 */}
+          <div
+            className="absolute top-[15px] h-0.5 bg-gray-200"
+            style={{ left: `${50 / STEPS.length}%`, right: `${50 / STEPS.length}%` }}
+          />
 
           {/* 完了ライン（アクセント色：先頭から連続して完了している分だけ上書き） */}
           {(() => {
@@ -268,14 +273,17 @@ export default function OntologyBuilderSection({
             if (progress <= 0) return null
             return (
               <div
-                className="absolute top-[15px] left-4 h-0.5 bg-ds-app-accent transition-all"
-                style={{ width: `calc((100% - 32px) * ${progress})` }}
+                className="absolute top-[15px] h-0.5 bg-ds-app-accent transition-all"
+                style={{
+                  left: `${50 / STEPS.length}%`,
+                  width: `calc((100% - ${100 / STEPS.length}%) * ${progress})`,
+                }}
               />
             )
           })()}
 
-          {/* ステップ丸（justify-between で均等配置） */}
-          <div className="relative flex justify-between">
+          {/* ステップ丸（flex-1 の等幅セル＝丸の中心が等間隔になる） */}
+          <div className="relative flex">
             {STEPS.map((s) => {
               const done = stepDone(s.num)
               const active = activeStep === s.num
@@ -284,7 +292,7 @@ export default function OntologyBuilderSection({
                   key={s.num}
                   type="button"
                   onClick={() => setActiveStep(s.num)}
-                  className="flex flex-col items-center bg-transparent border-0 p-0 cursor-pointer group"
+                  className="flex flex-1 min-w-0 flex-col items-center bg-transparent border-0 p-0 cursor-pointer group"
                 >
                   <span
                     className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition-colors ${
