@@ -15,7 +15,6 @@ import {
   diagnosisSeverityToRule,
   ruleTypeLabel,
   severityMeta,
-  sourceLabel,
   unregisteredProposals,
 } from '@/lib/brand/rule-display'
 import type { ToneRule } from '../../../lib/diagnosis'
@@ -27,7 +26,6 @@ type DbRule = {
   ng_example: string | null
   ok_example: string | null
   severity: string
-  source: string | null
   sort_order: number
 }
 
@@ -53,7 +51,7 @@ export function ToneRulesSection({
       try {
         const { data } = await supabase
           .from('governance_rules')
-          .select('id, rule_type, rule_text, ng_example, ok_example, severity, source, sort_order')
+          .select('id, rule_type, rule_text, ng_example, ok_example, severity, sort_order')
           .eq('company_id', companyId)
         if (cancelled) return
         const rows = ((data as DbRule[] | null) || []).filter((r) => (r.rule_text || '').trim())
@@ -101,9 +99,9 @@ export function ToneRulesSection({
               <span className="py-0.5 px-2 bg-gray-100 text-gray-600 rounded text-xs font-semibold">
                 {ruleTypeLabel(r.rule_type)}
               </span>
-              <span className="py-0.5 px-2 border border-border text-muted-foreground rounded text-xs font-medium">
-                {sourceLabel(r.source)}
-              </span>
+              {/* 出所（診断由来／手入力）はこの画面では出さない。AIの生成には一切影響しないため。
+                  ※ source は連携時の置換判定にのみ使う（再連携で診断由来の行は作り直される）。
+                    運用者向けの出所表示はスーパー管理の一覧に残してある。 */}
             </div>
             <p className="text-sm font-bold text-foreground whitespace-pre-line break-words m-0">{r.rule_text}</p>
             <RuleExampleBoxes ngExample={r.ng_example} okExample={r.ok_example} />
