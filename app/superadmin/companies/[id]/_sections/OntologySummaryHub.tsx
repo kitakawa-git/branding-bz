@@ -384,7 +384,9 @@ export default function OntologySummaryHub({
             （5ステップ{pending > 0 ? `・保留 ${pending}` : ''}）
           </span>
         </button>
-        <div className={editOpen ? 'border border-border border-t-0 rounded-b-lg p-3 bg-background' : 'hidden'}>
+        {/* p-4＝16px。globals.css の「カード内パディング16px統一」は .rounded-lg を対象にしており
+            ここ（rounded-b-lg）は対象外のため、直接16pxを指定して基準に揃える。 */}
+        <div className={editOpen ? 'border border-border border-t-0 rounded-b-lg p-4 bg-background' : 'hidden'}>
           <OntologyBuilderSection
             companyId={companyId}
             valuePropositions={valuePropositions}
