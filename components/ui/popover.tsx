@@ -30,4 +30,7 @@ const PopoverContent = React.forwardRef<
 ))
 PopoverContent.displayName = PopoverPrimitive.Content.displayName
 
-export { Popover, PopoverTrigger, PopoverContent, PopoverAnchor }
+// 中身のボタンを押したらポップオーバーを閉じたいときに使う（asChild で行ボタンを包む）
+const PopoverClose = PopoverPrimitive.Close
+
+export { Popover, PopoverTrigger, PopoverContent, PopoverAnchor, PopoverClose }

@@ -20,7 +20,7 @@ import {
   type RelationRow,
 } from '@/lib/brand/map-data'
 import OntologyBuilderSection, { type OntologyStatus } from './OntologyBuilderSection'
-import { ONTOLOGY_DATA_CHANGED_EVENT, ONTOLOGY_GOTO_STEP_EVENT } from './ontology-events'
+import { ONTOLOGY_DATA_CHANGED_EVENT, ONTOLOGY_GOTO_STEP_EVENT, type OntologyFocusRef } from './ontology-events'
 import BrandMapSection from './BrandMapSection'
 import BrandMap3D from './BrandMap3D'
 import OutputTestPanel from './OutputTestPanel'
@@ -35,22 +35,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Popover, PopoverClose, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 
 // ウィザードは5ステップ（1実績・2言葉のルール・3未来設計・4関係性・5補足質問）。
 // 旧ステップ1「基本情報の確認」は廃止し、前提の未登録は上部の警告チップへ移した。
 const STEP_RELATIONS = 4
 
-// 未接続要素をどのステップで直すか（種別 → ステップ番号）。
-// 理念・提供価値・ペルソナはウィザードで作らないので、「繋ぐ」＝関係性ステップへ送る。
-const STEP_BY_KIND: Record<ElementKind, number> = {
-  philosophy_element: STEP_RELATIONS,
-  value_proposition: STEP_RELATIONS,
-  proof_point: 1,
-  governance_rule: 2,
-  desired_evidence: 3,
-  persona: STEP_RELATIONS,
-}
+// 繋がっていない要素の行クリックは種別によらず関係性ステップ（＝繋ぐ場所）へ送る。
+// 以前は種別ごとに担当ステップへ散らしていたが、目的は「繋ぐこと」なので焦点パネルに集約した。
 
 const Chip = ({ label, value, tone = 'gray' }: { label: string; value: string; tone?: 'gray' | 'green' | 'amber' }) => {
   const cls =
@@ -100,12 +92,35 @@ export default function OntologySummaryHub({
 
   // チップ/導線 → ウィザードの該当ステップへ。畳んでいる場合は開いてからスクロールする。
   // （ウィザードは hidden で常時マウント＝イベント購読と件数通知を切らさない）
-  const gotoStep = (step: number) => {
+  const gotoStep = (step: number, focus?: OntologyFocusRef | null) => {
     editUserToggled.current = true // 遷移で開いた状態を status の再通知で閉じない
     setEditOpen(true)
-    window.dispatchEvent(new CustomEvent(ONTOLOGY_GOTO_STEP_EVENT, { detail: step }))
+    window.dispatchEvent(new CustomEvent(ONTOLOGY_GOTO_STEP_EVENT, { detail: { step, focus: focus ?? null } }))
     requestAnimationFrame(() => editRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
   }
+
+  // 「繋がっていない要素」の行クリック。単にステップへ飛ばすのではなく、
+  // その要素を焦点として関係性ステップへ渡す＝繋ぎ先のAI提案まで一気に出す。
+  // ポップオーバーは PopoverClose で閉じる（行ボタン側で包む）。
+  const gotoRelationsWithFocus = (e: ElementRef) => {
+    gotoStep(STEP_RELATIONS, { kind: e.kind, id: e.id, label: e.label })
+  }
+
+  // 「未接続」「理念に届かない」両方のポップオーバーで使う行。体裁も挙動も共通。
+  const renderFocusRow = (e: ElementRef) => (
+    <PopoverClose asChild key={`${e.kind}:${e.id}`}>
+      <button
+        type="button"
+        onClick={() => gotoRelationsWithFocus(e)}
+        className="flex w-full items-start gap-2 border-0 border-b border-border bg-background px-3 py-2 text-left cursor-pointer hover:bg-muted last:border-b-0"
+      >
+        <span className="mt-0.5 shrink-0 rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold text-gray-700">
+          {KIND_LABELS[e.kind]}
+        </span>
+        <span className="text-[12px] text-foreground break-words">{e.label || '（無題）'}</span>
+      </button>
+    </PopoverClose>
+  )
 
   // グラフ（島・未接続チップとプレゼンモードの3Dで共用）。マップと同じ純関数で導出。
   const fetchMapStats = useCallback(async () => {
@@ -260,24 +275,10 @@ export default function OntologySummaryHub({
               <div className="p-3 border-b border-border">
                 <p className="text-[13px] font-bold text-foreground m-0">まだ繋がっていない要素</p>
                 <p className="text-[11px] text-muted-foreground m-0 mt-0.5">
-                  行をクリックすると、その要素を扱うステップへ移動します
+                  行をクリックすると、関係性ステップでその要素の繋ぎ先をAIが提案します
                 </p>
               </div>
-              <div className="max-h-64 overflow-auto">
-                {unconnectedItems.map((e) => (
-                  <button
-                    key={`${e.kind}:${e.id}`}
-                    type="button"
-                    onClick={() => gotoStep(STEP_BY_KIND[e.kind] ?? STEP_RELATIONS)}
-                    className="flex w-full items-start gap-2 border-0 border-b border-border bg-background px-3 py-2 text-left cursor-pointer hover:bg-muted last:border-b-0"
-                  >
-                    <span className="mt-0.5 shrink-0 rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold text-gray-700">
-                      {KIND_LABELS[e.kind]}
-                    </span>
-                    <span className="text-[12px] text-foreground break-words">{e.label || '（無題）'}</span>
-                  </button>
-                ))}
-              </div>
+              <div className="max-h-64 overflow-auto">{unconnectedItems.map(renderFocusRow)}</div>
               <div className="p-2 border-t border-border">
                 <button
                   type="button"
@@ -313,24 +314,10 @@ export default function OntologySummaryHub({
               <div className="p-3 border-b border-border">
                 <p className="text-[13px] font-bold text-foreground m-0">理念まで辿れない要素</p>
                 <p className="text-[11px] text-muted-foreground m-0 mt-0.5">
-                  線はありますが、たどっても理念に行き着きません。行をクリックすると、その要素を扱うステップへ移動します
+                  線はありますが、たどっても理念に行き着きません。行をクリックすると、関係性ステップでその要素の繋ぎ先をAIが提案します
                 </p>
               </div>
-              <div className="max-h-64 overflow-auto">
-                {unreachableItems.map((e) => (
-                  <button
-                    key={`${e.kind}:${e.id}`}
-                    type="button"
-                    onClick={() => gotoStep(STEP_BY_KIND[e.kind] ?? STEP_RELATIONS)}
-                    className="flex w-full items-start gap-2 border-0 border-b border-border bg-background px-3 py-2 text-left cursor-pointer hover:bg-muted last:border-b-0"
-                  >
-                    <span className="mt-0.5 shrink-0 rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold text-gray-700">
-                      {KIND_LABELS[e.kind]}
-                    </span>
-                    <span className="text-[12px] text-foreground break-words">{e.label || '（無題）'}</span>
-                  </button>
-                ))}
-              </div>
+              <div className="max-h-64 overflow-auto">{unreachableItems.map(renderFocusRow)}</div>
               <div className="p-2 border-t border-border">
                 <button
                   type="button"

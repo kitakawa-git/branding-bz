@@ -24,7 +24,12 @@ import GovernanceRulesSection from './GovernanceRulesSection'
 import ElementRelationsSection from './ElementRelationsSection'
 import DesiredEvidenceSection from './DesiredEvidenceSection'
 import IntegrityCheckSection from './IntegrityCheckSection'
-import { ONTOLOGY_DATA_CHANGED_EVENT, ONTOLOGY_GOTO_STEP_EVENT } from './ontology-events'
+import {
+  ONTOLOGY_DATA_CHANGED_EVENT,
+  ONTOLOGY_GOTO_STEP_EVENT,
+  parseGotoDetail,
+  type OntologyFocusRef,
+} from './ontology-events'
 
 type Counts = {
   mission: number
@@ -84,6 +89,8 @@ export default function OntologyBuilderSection({
   const [counts, setCounts] = useState<Counts>(ZERO_COUNTS)
   const [loading, setLoading] = useState(true)
   const [activeStep, setActiveStep] = useState<number | null>(null) // 初回ロード後に自動設定
+  // 「この要素の繋ぎ先を考えたい」で遷移してきたときの焦点要素（関係性ステップの焦点パネル用）
+  const [focusElement, setFocusElement] = useState<OntologyFocusRef | null>(null)
   // 自動点検（決定論チェック＋保留カバレッジ）の結果（null=未取得）
   const [inspection, setInspection] = useState<Inspection | null>(null)
   const [inspectionLoading, setInspectionLoading] = useState(false)
@@ -206,11 +213,16 @@ export default function OntologyBuilderSection({
     window.dispatchEvent(new Event(ONTOLOGY_DATA_CHANGED_EVENT))
   }, [])
 
-  // ハブのクイックアクションからのステップ切替を購読
+  // ハブのクイックアクションからのステップ切替を購読。
+  // focus 付き（未接続チップの行クリック）のときは焦点要素も受け取り、遷移先ステップへ渡す。
+  // 焦点パネルは遷移後にマウントされるので、遷移先で直接イベントを購読せずここで状態として持つ。
   useEffect(() => {
     const handler = (e: Event) => {
-      const step = (e as CustomEvent).detail
-      if (typeof step === 'number' && step >= 1 && step <= LAST_STEP) setActiveStep(step)
+      const parsed = parseGotoDetail((e as CustomEvent).detail)
+      if (!parsed) return
+      if (parsed.step < 1 || parsed.step > LAST_STEP) return
+      setActiveStep(parsed.step)
+      setFocusElement(parsed.focus)
     }
     window.addEventListener(ONTOLOGY_GOTO_STEP_EVENT, handler)
     return () => window.removeEventListener(ONTOLOGY_GOTO_STEP_EVENT, handler)
@@ -296,7 +308,10 @@ export default function OntologyBuilderSection({
                 <button
                   key={s.num}
                   type="button"
-                  onClick={() => setActiveStep(s.num)}
+                  onClick={() => {
+                    setActiveStep(s.num)
+                    setFocusElement(null) // ステッパーで自分から移動したときは焦点を落とす
+                  }}
                   className="flex flex-1 min-w-0 flex-col items-center bg-transparent border-0 p-0 cursor-pointer group"
                 >
                   <span
@@ -365,6 +380,8 @@ export default function OntologyBuilderSection({
               companyId={companyId}
               onDataChanged={broadcastDataChanged}
               headerActionSlotId={STEP_ACTION_SLOT_ID}
+              focusElement={focusElement}
+              onFocusClear={() => setFocusElement(null)}
             />
           )}
           {current.num === 5 && (
