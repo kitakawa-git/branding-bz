@@ -74,23 +74,23 @@ export default function OntologySummaryHub({
   const [showLegend, setShowLegend] = useState(false)
   const [presentOpen, setPresentOpen] = useState(false)
   const [presentSelected, setPresentSelected] = useState<string | null>(null)
-  // 「編集する」折りたたみ。構築完了なら畳む・未完了なら開く（初回に status が来た時だけ決める）
+  // 「編集する」折りたたみ。既定は「構築完了なら畳む・未完了なら開く」で status に追従する。
+  // ただし利用者が自分で開閉したら、その意思を優先して以後は自動で動かさない。
   const [editOpen, setEditOpen] = useState(false)
-  const editDecided = useRef(false)
+  const editUserToggled = useRef(false)
   const editRef = useRef<HTMLDivElement>(null)
 
   const onStatusChange = useCallback((s: OntologyStatus) => {
     setStatus(s)
-    // 初回だけ：構築完了なら「編集する」を畳んでおく（未完了は開いたまま）
-    if (!editDecided.current) {
-      editDecided.current = true
-      setEditOpen(!s.complete)
-    }
+    // 構築完了なら畳む・未完了なら開く。判定は非同期で後から確定するため毎回追従させる
+    // （初回の暫定値で固定すると、完了になっても開いたままになる）。
+    if (!editUserToggled.current) setEditOpen(!s.complete)
   }, [])
 
   // チップ/導線 → ウィザードの該当ステップへ。畳んでいる場合は開いてからスクロールする。
   // （ウィザードは hidden で常時マウント＝イベント購読と件数通知を切らさない）
   const gotoStep = (step: number) => {
+    editUserToggled.current = true // 遷移で開いた状態を status の再通知で閉じない
     setEditOpen(true)
     window.dispatchEvent(new CustomEvent(ONTOLOGY_GOTO_STEP_EVENT, { detail: step }))
     requestAnimationFrame(() => editRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
@@ -346,7 +346,10 @@ export default function OntologySummaryHub({
       <div ref={editRef}>
         <button
           type="button"
-          onClick={() => setEditOpen((v) => !v)}
+          onClick={() => {
+            editUserToggled.current = true
+            setEditOpen((v) => !v)
+          }}
           className="inline-flex w-full items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 text-[13px] font-semibold text-foreground cursor-pointer hover:bg-muted"
           aria-expanded={editOpen}
         >
