@@ -31,17 +31,19 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 
-// 関係性ステップの番号（ステップ4に「未来設計」が入ったため5）
-const STEP_RELATIONS = 5
+// ウィザードは5ステップ（1実績・2言葉のルール・3未来設計・4関係性・5補足質問）。
+// 旧ステップ1「基本情報の確認」は廃止し、前提の未登録は上部の警告チップへ移した。
+const STEP_RELATIONS = 4
 
-// 未接続要素をどのステップで直すか（種別 → ステップ番号）
+// 未接続要素をどのステップで直すか（種別 → ステップ番号）。
+// 理念・提供価値・ペルソナはウィザードで作らないので、「繋ぐ」＝関係性ステップへ送る。
 const STEP_BY_KIND: Record<ElementKind, number> = {
-  philosophy_element: 1,
-  value_proposition: 1,
-  proof_point: 2,
-  governance_rule: 3,
-  desired_evidence: 4,
-  persona: STEP_RELATIONS, // ペルソナ専用ステップは無いので「関係性」で繋ぐ
+  philosophy_element: STEP_RELATIONS,
+  value_proposition: STEP_RELATIONS,
+  proof_point: 1,
+  governance_rule: 2,
+  desired_evidence: 3,
+  persona: STEP_RELATIONS,
 }
 
 const Chip = ({ label, value, tone = 'gray' }: { label: string; value: string; tone?: 'gray' | 'green' | 'amber' }) => {
@@ -256,6 +258,29 @@ export default function OntologySummaryHub({
         ) : (
           <Chip label="" value="すべて接続済み" tone="green" />
         )}
+        {/* 理念（ミッション/ビジョン/バリュー）が未登録のときだけ促す。旧ステップ1の前提チェックの置き換え */}
+        {c && c.mission + c.vision + c.value === 0 && (
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className="inline-flex items-center gap-1 py-1 px-2.5 rounded-md text-[12px] font-semibold bg-amber-100 text-amber-800 border-0 cursor-pointer hover:bg-amber-200"
+              >
+                理念が未登録 <span className="font-normal opacity-80">→ 登録する</span>
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-80">
+              <p className="text-[13px] text-foreground m-0">
+                ミッション・ビジョン・バリューが未登録です。理念はこの体系すべての土台になるため、先に登録してください。
+              </p>
+              <p className="text-[12px] text-muted-foreground m-0 mt-2">
+                登録先は<strong className="text-foreground">この企業の</strong>管理画面「ブランドの考え方」です（AIサジェストが使えます）。
+                管理画面は各社のログインで開くため、ここからは直接遷移しません。
+              </p>
+            </PopoverContent>
+          </Popover>
+        )}
+
         {/* 提供価値は未登録のときだけ促す（登録済みなら消える） */}
         {c && c.vp === 0 && (
           <Popover>
@@ -356,7 +381,7 @@ export default function OntologySummaryHub({
           {editOpen ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
           編集する
           <span className="font-normal text-muted-foreground">
-            （6ステップ{pending > 0 ? `・保留 ${pending}` : ''}）
+            （5ステップ{pending > 0 ? `・保留 ${pending}` : ''}）
           </span>
         </button>
         <div className={editOpen ? 'border border-border border-t-0 rounded-b-lg p-3 bg-background' : 'hidden'}>

@@ -5,18 +5,18 @@
 // - 現在ステップのパネルに既存セクションコンポーネントをそのまま埋め込んで再利用する
 //   （ロジックの複製なし。ページ下部の個別カードは従来どおり詳細管理用に残る）。
 // - ステップは強制しない（クリックで任意のステップへ移動可。ガイドであって檻ではない）。
-// - 決定論チェックは自動実行: ステップ5を開いたとき＋ステップ2〜4で承認登録した直後
-//   （onDataChanged 経由）に走り、ステップ5冒頭に点検サマリを常時表示する。
+// - 決定論チェックは自動実行: 最終ステップ（補足質問）を開いたとき＋各ステップで承認登録した直後
+//   （onDataChanged 経由）に走り、最終ステップ冒頭に点検サマリを常時表示する。
 //   手動の「チェック実行」ボタンはウィザードには無い（AI判定含め、下部の既存
 //   「整合性チェック」カードに従来どおり残る。検出表示はそのまま＝穴の事実は隠さない）。
 // - Step 5 の完了判定:「プロファイリング対象の warn（裏づけのない約束）が、解消済みまたは
-//   保留済み（profiling_acknowledgments）で全件カバーされている」＋ステップ1〜4充足ガード。
+//   保留済み（profiling_acknowledgments）で全件カバーされている」＋基礎データ充足ガード。
 //   判定値は /api/superadmin/profiling の uncoveredWarnCount（lib/brand/profiling.ts で算出）。
 //   点検サマリは同レスポンスの baseline（integrity.ts のカテゴリ文字列がキー。リネーム時は要同時更新）。
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
-import { Check, Info } from 'lucide-react'
+import { Info } from 'lucide-react'
 import ProfilingSection from './ProfilingSection'
 import ProofPointsSection, { type ValuePropositionRef } from './ProofPointsSection'
 import GovernanceRulesSection from './GovernanceRulesSection'
@@ -51,18 +51,21 @@ export type Inspection = {
 export type OntologyStatus = {
   counts: { mission: number; vision: number; value: number; vp: number; proof: number; rule: number; relation: number }
   inspection: Inspection | null
-  complete: boolean // ウィザード完了（解消可能warn 0＋ステップ1〜4充足）
+  complete: boolean // ウィザード完了（解消可能warn 0＋基礎データ充足）
   pendingCount: number // 保留件数
 }
 
+// 旧ステップ1「基本情報の確認」は削除し、前提の未登録はカード上部の警告チップへ移した（理念／提供価値）。
+// ここは「このウィザードで実際に登録・編集するもの」だけを並べる。
 const STEPS: { num: number; label: string; full: string; why: string }[] = [
-  { num: 1, label: '基本情報', full: '基本情報の確認', why: '理念と提供価値が、この後のすべての土台になります' },
-  { num: 2, label: '実績・エピソード', full: '実績・エピソードを集める', why: '提供価値に沿った実績・エピソードがあるほど、AIの提案が御社ならではの内容になります' },
-  { num: 3, label: '言葉のルール', full: '言葉のルールを決める', why: '「言わせたくないこと」を決めるほど、AIの言葉づかいが御社らしくなります' },
-  { num: 4, label: '未来設計', full: 'これから獲得する証拠を決める', why: 'いま無い証拠を「獲得目標」として置くと、理想までの道のりが可視化され、事実（実績）と願望を混ぜずに扱えます（任意）' },
-  { num: 5, label: '関係性', full: '際立つ関係性を洗い出す', why: '要素どうしが支え合う関係・ぶつかる関係を登録すると、AIが正しい根拠と避けるべき表現を判断できるようになります' },
-  { num: 6, label: '補足質問', full: '補足質問', why: 'ここまでに登録された内容を精査して、不足している点を質問でお聞きします' },
+  { num: 1, label: '実績・エピソード', full: '実績・エピソードを集める', why: '提供価値に沿った実績・エピソードがあるほど、AIの提案が御社ならではの内容になります' },
+  { num: 2, label: '言葉のルール', full: '言葉のルールを決める', why: '「言わせたくないこと」を決めるほど、AIの言葉づかいが御社らしくなります' },
+  { num: 3, label: '未来設計', full: 'これから獲得する証拠を決める', why: 'いま無い証拠を「獲得目標」として置くと、理想までの道のりが可視化され、事実（実績）と願望を混ぜずに扱えます（任意）' },
+  { num: 4, label: '関係性', full: '際立つ関係性を洗い出す', why: '要素どうしが支え合う関係・ぶつかる関係を登録すると、AIが正しい根拠と避けるべき表現を判断できるようになります' },
+  { num: 5, label: '補足質問', full: '補足質問', why: 'ここまでに登録された内容を精査して、不足している点を質問でお聞きします' },
 ]
+// 最終ステップ（点検・補足質問）。自動点検の取得トリガと完了時の既定表示に使う。
+const LAST_STEP = STEPS[STEPS.length - 1].num
 
 export default function OntologyBuilderSection({
   companyId,
@@ -83,7 +86,7 @@ export default function OntologyBuilderSection({
 
   // 完了状態はすべてデータから導出（進捗テーブルなし）
   // Step5 は warn 0件だけだと「データが空＝検出対象なし」の会社まで完了扱いになるため、
-  // ステップ1〜4の充足を前提条件にする。
+  // 理念（チップで促す）と実績・ルール・関係の充足を前提条件にする。
   // 提供価値は任意（推奨）扱い。必須は理念（mission/vision/value）と実績・ルール・関係のみ。
   const basicsDone =
     counts.mission > 0 &&
@@ -96,18 +99,16 @@ export default function OntologyBuilderSection({
     (num: number): boolean => {
       switch (num) {
         case 1:
-          return counts.mission > 0 && counts.vision > 0 && counts.value > 0
-        case 2:
           return counts.proof > 0
-        case 3:
+        case 2:
           return counts.rule > 0
-        case 4:
+        case 3:
           // 未来設計（獲得目標）は任意ステップ。完了判定・自動遷移をブロックしないため常に done 扱い
           // （既存企業は0件のままでもウィザードの進行・完了が従来どおりになる）。
           return true
-        case 5:
+        case 4:
           return counts.relation > 0
-        case 6:
+        case 5:
           // 対象warnが「解消済みまたは保留済み」で全件カバーされていれば完了
           return inspection !== null && inspection.uncoveredWarnCount === 0 && basicsDone
         default:
@@ -146,7 +147,7 @@ export default function OntologyBuilderSection({
   useEffect(() => {
     if (loading || activeStep !== null) return
     const firstIncomplete = STEPS.find((s) => !stepDone(s.num))
-    setActiveStep(firstIncomplete ? firstIncomplete.num : 5)
+    setActiveStep(firstIncomplete ? firstIncomplete.num : LAST_STEP)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading])
 
@@ -175,9 +176,9 @@ export default function OntologyBuilderSection({
     }
   }, [companyId])
 
-  // ステップ5を開いたら自動点検（未取得時のみ。データ変化時は onChildDataChanged が再実行する）
+  // 最終ステップを開いたら自動点検（未取得時のみ。データ変化時は onChildDataChanged が再実行する）
   useEffect(() => {
-    if (activeStep === 5 && inspection === null && !inspectionLoading) fetchInspection()
+    if (activeStep === LAST_STEP && inspection === null && !inspectionLoading) fetchInspection()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeStep])
 
@@ -205,7 +206,7 @@ export default function OntologyBuilderSection({
   useEffect(() => {
     const handler = (e: Event) => {
       const step = (e as CustomEvent).detail
-      if (typeof step === 'number' && step >= 1 && step <= 5) setActiveStep(step)
+      if (typeof step === 'number' && step >= 1 && step <= LAST_STEP) setActiveStep(step)
     }
     window.addEventListener(ONTOLOGY_GOTO_STEP_EVENT, handler)
     return () => window.removeEventListener(ONTOLOGY_GOTO_STEP_EVENT, handler)
@@ -225,53 +226,6 @@ export default function OntologyBuilderSection({
 
   const current = STEPS.find((s) => s.num === activeStep) ?? null
 
-  // ---- Step 1: 基本情報チェックリスト（このウィザードでは作らない・既存編集画面へ案内） ----
-  const renderStep1 = () => {
-    const items: { label: string; ok: boolean; hint: string; required: boolean }[] = [
-      { label: 'ミッション', ok: counts.mission > 0, hint: '管理画面「ブランドの考え方」で登録（AIサジェスト可）', required: true },
-      { label: 'ビジョン', ok: counts.vision > 0, hint: '管理画面「ブランドの考え方」で登録（AIサジェスト可）', required: true },
-      { label: 'バリュー', ok: counts.value > 0, hint: '管理画面「ブランドの考え方」で登録（AIサジェスト可）', required: true },
-      { label: '提供価値（推奨）', ok: counts.vp > 0, hint: '管理画面「ブランド戦略」で登録。実績・点検の精度が上がります', required: false },
-    ]
-    // 必須項目のみで完了判定（提供価値は任意のため不足案内には含めない）
-    const missing = items.filter((i) => i.required && !i.ok)
-    return (
-      <div>
-        <div className="space-y-1.5 mb-3">
-          {items.map((i) => (
-            <div key={i.label} className="flex items-center gap-2 text-sm">
-              {i.ok ? (
-                <span className="inline-flex items-center justify-center size-5 rounded-full bg-green-100 text-green-700 shrink-0">
-                  <Check size={12} />
-                </span>
-              ) : (
-                <span className="inline-flex items-center justify-center size-5 rounded-full bg-gray-100 text-gray-400 shrink-0 text-[11px]">
-                  —
-                </span>
-              )}
-              <span className={i.ok ? 'text-foreground' : 'text-muted-foreground'}>{i.label}</span>
-              {!i.ok && <span className="text-xs text-muted-foreground">→ {i.hint}</span>}
-            </div>
-          ))}
-        </div>
-        {missing.length > 0 ? (
-          <p className="text-[13px] text-muted-foreground m-0">
-            不足分はこのウィザードでは作成しません。該当企業の管理画面（ブランドの考え方／ブランド戦略）の編集機能・AIサジェストで登録してから戻ってきてください
-          </p>
-        ) : counts.vp === 0 ? (
-          // 提供価値の未登録はカード上部の警告チップに一本化（ここでは色を使わず事実だけ添える）
-          <p className="text-[13px] text-muted-foreground m-0">
-            提供価値は未登録です（任意）。登録すると実績の裏づけ・点検・AI草案の精度が上がります
-          </p>
-        ) : (
-          <p className="text-sm text-green-700 border border-green-200 bg-green-50 rounded-lg p-3 m-0">
-            基本情報は揃っています。次のステップへ進んでください
-          </p>
-        )}
-      </div>
-    )
-  }
-
   // ---- Step 5: 完了バナー ----
   // 点検数値のサマリ表示はサマリーハブの点検チップに一本化済み（ここでは出さない）。
   const renderCompletionBanner = () => {
@@ -280,7 +234,7 @@ export default function OntologyBuilderSection({
     if (!basicsDone) {
       return (
         <p className="text-[13px] text-muted-foreground border border-border bg-muted/40 rounded-lg p-3 mb-4">
-          解消すべき検出は0件ですが、データがまだ少ないため検出対象がない状態です。先にステップ1〜4を埋めてください
+          解消すべき検出は0件ですが、データがまだ少ないため検出対象がない状態です。先に実績・言葉のルール・関係性を埋めてください（理念が未登録なら上部のチップから登録してください）
         </p>
       )
     }
@@ -370,21 +324,20 @@ export default function OntologyBuilderSection({
             </p>
           </div>
 
-          {current.num === 1 && renderStep1()}
-          {/* Step2〜5: 機能の実体を埋め込み（カード外に重複セクションは無い＝実体は各1箇所） */}
-          {current.num === 2 && (
+          {/* 各ステップに機能の実体を埋め込み（カード外に重複セクションは無い＝実体は各1箇所） */}
+          {current.num === 1 && (
             <ProofPointsSection companyId={companyId} valuePropositions={valuePropositions} onDataChanged={broadcastDataChanged} />
           )}
-          {current.num === 3 && (
+          {current.num === 2 && (
             <GovernanceRulesSection companyId={companyId} valuePropositions={valuePropositions} onDataChanged={broadcastDataChanged} />
           )}
-          {current.num === 4 && (
+          {current.num === 3 && (
             <DesiredEvidenceSection companyId={companyId} onDataChanged={broadcastDataChanged} />
           )}
-          {current.num === 5 && (
+          {current.num === 4 && (
             <ElementRelationsSection companyId={companyId} onDataChanged={broadcastDataChanged} />
           )}
-          {current.num === 6 && (
+          {current.num === 5 && (
             <>
               {renderCompletionBanner()}
               <IntegrityCheckSection companyId={companyId} />
