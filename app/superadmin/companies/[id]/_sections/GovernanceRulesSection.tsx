@@ -58,12 +58,11 @@ const SEVERITIES: { value: string; label: string; cls: string }[] = [
   { value: 'info', label: '参考', cls: 'bg-gray-100 text-gray-600' },
 ]
 
-// governance_rules.source → 表示名。実データは manual / personality_diagnosis の2種（2026-07-21時点）。
-// ai_draft は「AI草案から承認登録」した分（従来 manual と同値で区別できなかったのを分離）。
+// governance_rules.source → 表示名。DBの CHECK 制約が 'manual' | 'personality_diagnosis' に
+// 限定しているため、この2種類しか入らない（AI草案から登録した分も 'manual' に含まれ区別できない）。
 // 未知の値はそのまま出す（勝手に「手入力」に丸めない＝出所を偽らない）。
 const SOURCE_LABELS: Record<string, string> = {
   manual: '手入力',
-  ai_draft: 'AI草案',
   personality_diagnosis: '診断由来',
 }
 const sourceLabel = (v: string | null) => (v ? SOURCE_LABELS[v] ?? v : '手入力')
@@ -269,8 +268,9 @@ export default function GovernanceRulesSection({
         company_id: companyId,
         rule_type: d.rule_type,
         scope: d.scope,
-        // AI草案由来を手入力と区別できるようにする（従来は 'manual' で混ざっていた）
-        source: 'ai_draft',
+        // DBの CHECK 制約が source を 'manual' | 'personality_diagnosis' に限定しているため manual。
+        // AI草案由来を区別したい場合は、先に制約へ値を追加するマイグレーションが必要。
+        source: 'manual',
         target_value_proposition_id: null,
         rule_text: d.rule_text.trim(),
         ng_example: d.ng_example.trim() || null,
