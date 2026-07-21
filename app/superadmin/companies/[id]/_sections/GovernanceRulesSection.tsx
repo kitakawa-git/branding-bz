@@ -340,9 +340,26 @@ export default function GovernanceRulesSection({
                   </span>
                 </div>
                 <p className="text-sm font-bold text-foreground break-words m-0">{d.rule_text}</p>
-                {d.ng_example && <p className="text-[13px] text-red-600 mt-0.5 break-words m-0">NG: {d.ng_example}</p>}
-                {d.ok_example && <p className="text-[13px] text-green-700 break-words m-0">OK: {d.ok_example}</p>}
-                <p className="text-[11px] text-muted-foreground mt-1 m-0">根拠: {d.rationale}</p>
+                {/* 登録済み一覧と同じ2カラムの色付きボックス（草案と登録後で見え方を変えない） */}
+                {(d.ng_example || d.ok_example) && (
+                  <div
+                    className={`mt-2 grid gap-2 grid-cols-1 ${d.ng_example && d.ok_example ? 'sm:grid-cols-2' : ''}`}
+                  >
+                    {d.ng_example && (
+                      <div className="rounded-md bg-red-50 px-3 py-2">
+                        <p className="text-[11px] font-bold text-red-600 mb-0.5 m-0">NG例</p>
+                        <p className="text-[13px] text-red-700/90 leading-relaxed m-0 break-words">{d.ng_example}</p>
+                      </div>
+                    )}
+                    {d.ok_example && (
+                      <div className="rounded-md bg-green-50 px-3 py-2">
+                        <p className="text-[11px] font-bold text-green-700 mb-0.5 m-0">OK例</p>
+                        <p className="text-[13px] text-green-800/90 leading-relaxed m-0 break-words">{d.ok_example}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+                <p className="text-[11px] text-muted-foreground mt-2 m-0">根拠: {d.rationale}</p>
                 <div className="flex flex-wrap gap-2 mt-2">
                   <Button type="button" size="sm" onClick={() => approveAiDraft(d, i)} disabled={aiRegistering !== null}>
                     <Check size={14} />
