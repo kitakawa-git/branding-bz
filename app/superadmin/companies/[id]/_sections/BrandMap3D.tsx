@@ -1,75 +1,28 @@
 'use client'
 
-// ブランドマップ「3Dビュー」（俯瞰・提案用。日常編集は2Dタブのまま）
-// - Three.js は使わない。Canvas 2D の疑似3D（回転行列＋透視投影＋z順ソート描画）。
-//   依存追加なし・バンドル増なし。ノード数十規模ならこれで十分滑らかに回る。
-// - 見た目は業務ツール寄り（明るい背景・2Dタブと同じ配色）。装飾的な演出は入れない。
-// - 表示専用（読み取りのみ）。データは BrandMapSection の取得結果を props で受け取り、再fetchしない。
+// ブランドマップの唯一のビューア（3D）。カード内インライン と ⛶全画面プレゼンモード の両方をこれ1つで賄う。
+// - Three.js は使わない。Canvas 2D の疑似3D（回転行列＋透視投影＋z順ソート描画）。依存追加なし。
+// - inline: 明るい背景・自動回転オフ・毎回同じ初期アングル（正面斜め上）＋全体が収まる自動フィット。
+//   fullscreen: 暗い背景・自動回転オン。差分はこの2つだけで、操作・描画は共通。
+// - 表示専用（読み取りのみ）。データは呼び出し側の取得結果を props で受け取り、再fetchしない。
 //   ただし獲得目標だけは判定/進捗API（読み取り専用）から進捗を補う（失敗・0件でも安全に動く）。
-// - タブが3Dのときだけ rAF ループを回す（isActive=false で停止・アンマウントで必ず cancel）。
+// - isActive のときだけ rAF ループを回す（false で停止・アンマウントで必ず cancel）。
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { RotateCcw, Pause, Play } from 'lucide-react'
-import { KIND_LABELS, relationLabel } from '@/lib/brand/elements-catalog'
-import { FK_EVIDENCE_TYPE, type BrandMapGraph, type MapNode } from '@/lib/brand/map-data'
+import { type BrandMapGraph, type MapNode } from '@/lib/brand/map-data'
+import { edgeStyle, nodeColor, nodeKindLabel, summarizeHover } from '@/lib/brand/map-display'
 import type { DesiredEvidenceEvaluationDto } from '@/app/api/superadmin/desired-evidence/evaluations/route'
 
 const VIEW_W = 760
 const VIEW_H = 480
 const FOCAL = 900 // 透視投影の焦点距離（大きいほどパースが弱い）
+const CAM_Z = 520 // カメラ距離のオフセット
 
-// 2Dタブ（BrandMapSection の nodeColor / NODE_LEGEND）と同じ配色。
-// ※ペルソナの2Dは var(--ds-app-accent) だが、Canvas は CSS変数を解決できないため実値で持つ。
-const NODE_COLOR: Record<string, string> = {
-  philosophy: '#7c3aed',
-  service: '#6b7280',
-  value_proposition: '#ec4899',
-  proof_point: '#16a34a',
-  persona: '#2563eb',
-  governance_rule: '#ea580c',
-  desired_evidence: '#d97706',
-}
-
-const nodeColorKey = (n: MapNode): string => {
-  if (n.kind === 'philosophy_element') return n.philType === 'service' ? 'service' : 'philosophy'
-  if (n.kind === 'value_proposition') return 'value_proposition'
-  if (n.kind === 'proof_point') return 'proof_point'
-  if (n.kind === 'governance_rule') return 'governance_rule'
-  if (n.kind === 'desired_evidence') return 'desired_evidence'
-  return 'persona'
-}
-const nodeColor3D = (n: MapNode): string => NODE_COLOR[nodeColorKey(n)]
-const nodeKindLabel3D = (n: MapNode): string =>
-  n.kind === 'philosophy_element' && n.philType === 'service' ? '事業' : KIND_LABELS[n.kind]
-
-// エッジ色は2Dタブの EDGE_STYLE と同色・同太さ。未来設計の4種は獲得目標色に合わせ、
-// requires / toBeEvidencedBy（＝これから満たす約束）だけ点線にする。
-const EDGE_3D: Record<string, { stroke: string; dash: boolean; width: number }> = {
-  guides: { stroke: '#7c3aed', dash: false, width: 1.5 },
-  evidencedBy: { stroke: '#16a34a', dash: false, width: 1.5 },
-  [FK_EVIDENCE_TYPE]: { stroke: '#86efac', dash: false, width: 1 },
-  promisedTo: { stroke: '#2563eb', dash: false, width: 1.5 },
-  communicatedAs: { stroke: '#0d9488', dash: false, width: 1.5 },
-  constrainedBy: { stroke: '#ea580c', dash: true, width: 1.5 },
-  conflictsWith: { stroke: '#dc2626', dash: true, width: 2.5 },
-  aspiresTo: { stroke: '#d97706', dash: false, width: 1.5 },
-  requires: { stroke: '#d97706', dash: true, width: 1.5 },
-  toBeEvidencedBy: { stroke: '#d97706', dash: true, width: 1.5 },
-  verifies: { stroke: '#16a34a', dash: false, width: 1.5 },
-}
-const edge3D = (t: string) => EDGE_3D[t] ?? { stroke: '#9ca3af', dash: false, width: 1.2 }
-const relLabel3D = (t: string) => (t === FK_EVIDENCE_TYPE ? '裏づけ（直接）' : relationLabel(t))
-
-const LEGEND: { label: string; color: string }[] = [
-  { label: '理念', color: NODE_COLOR.philosophy },
-  { label: '事業', color: NODE_COLOR.service },
-  { label: '提供価値', color: NODE_COLOR.value_proposition },
-  { label: '実績', color: NODE_COLOR.proof_point },
-  { label: 'ペルソナ', color: NODE_COLOR.persona },
-  { label: 'ルール', color: NODE_COLOR.governance_rule },
-  { label: '獲得目標', color: NODE_COLOR.desired_evidence },
-]
+// 毎回同じ初期アングル（正面やや斜め上）。リセットもここへ戻す。
+const INIT_ROT_X = -0.34
+const INIT_ROT_Y = 0.4
 
 const truncate = (s: string, n: number) => (s.length > n ? s.slice(0, n) + '…' : s)
 
@@ -94,7 +47,6 @@ function layout3D(nodes: MapNode[]): Map<string, P3> {
   const center = phil.find((n) => n.philType === 'mission') ?? phil[0] ?? null
   if (center) pos.set(center.ref, { x: 0, y: 0, z: 0 })
 
-  // リング配置（等間隔角度＝決定論。ySpread で上下にわずかに散らす）
   const ring = (list: MapNode[], radius: number, ySpread: number, yBase = 0, phase = 0) => {
     const items = list.filter((n) => !pos.has(n.ref))
     items.forEach((n, i) => {
@@ -117,29 +69,49 @@ function layout3D(nodes: MapNode[]): Map<string, P3> {
   return pos
 }
 
+/** 全要素が画面に収まる初期ズーム（ノードが少なければ寄る・多ければ引く。決定論） */
+function fitZoom(positions: Map<string, P3>): number {
+  let maxR = 1
+  let maxY = 1
+  for (const p of positions.values()) {
+    maxR = Math.max(maxR, Math.hypot(p.x, p.z))
+    maxY = Math.max(maxY, Math.abs(p.y))
+  }
+  const s0 = FOCAL / (FOCAL + CAM_Z) // 中心付近の投影スケール
+  const zx = (VIEW_W * 0.40) / (maxR * s0)
+  const zy = (VIEW_H * 0.38) / ((maxR * 0.5 + maxY) * s0) // 傾けた分 y 方向にも伸びる
+  return Math.max(0.5, Math.min(1.2, Math.min(zx, zy)))
+}
+
 export default function BrandMap3D({
   graph,
   companyId,
   selected,
   onSelect,
   isActive,
+  fullscreen = false,
 }: {
   graph: BrandMapGraph
   companyId: string
   selected: string | null
   onSelect: (ref: string | null) => void
   isActive: boolean
+  fullscreen?: boolean
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const wrapRef = useRef<HTMLDivElement>(null)
   const rafRef = useRef<number | null>(null)
 
-  const [autoRotate, setAutoRotate] = useState(true)
+  // 全画面（プレゼン）は自動回転オン、カード内は落ち着かせてオフ
+  const [autoRotate, setAutoRotate] = useState(fullscreen)
   const [hover, setHover] = useState<string | null>(null)
   const [evals, setEvals] = useState<Record<string, DesiredEvidenceEvaluationDto>>({})
 
+  const positions = useMemo(() => layout3D(graph.nodes), [graph.nodes])
+  const initialZoom = useMemo(() => fitZoom(positions), [positions])
+
   // 毎フレーム更新する値は ref（再レンダリングを起こさない）
-  const cam = useRef({ rotX: -0.34, rotY: 0.4, zoom: 1 })
+  const cam = useRef({ rotX: INIT_ROT_X, rotY: INIT_ROT_Y, zoom: initialZoom })
   const camTarget = useRef<{ rotX: number; rotY: number; zoom: number } | null>(null)
   const dragging = useRef<{ x: number; y: number } | null>(null)
   const pinch = useRef<number | null>(null)
@@ -147,13 +119,17 @@ export default function BrandMap3D({
   const projected = useRef<Projected[]>([])
   const hoverRef = useRef<string | null>(null)
   const selectedRef = useRef<string | null>(null)
-  const autoRef = useRef(true)
+  const autoRef = useRef(fullscreen)
 
   useEffect(() => { hoverRef.current = hover }, [hover])
   useEffect(() => { selectedRef.current = selected }, [selected])
   useEffect(() => { autoRef.current = autoRotate }, [autoRotate])
+  // グラフが変わったら初期構図に戻す（毎回同じ見え方を担保）
+  useEffect(() => {
+    cam.current = { rotX: INIT_ROT_X, rotY: INIT_ROT_Y, zoom: initialZoom }
+    camTarget.current = null
+  }, [initialZoom])
 
-  const positions = useMemo(() => layout3D(graph.nodes), [graph.nodes])
   const nodeByRef = useMemo(() => new Map(graph.nodes.map((n) => [n.ref, n])), [graph.nodes])
 
   // 隣接（ホバー/選択時のハイライト用）
@@ -217,11 +193,18 @@ export default function BrandMap3D({
     if (!ctx) return
 
     let disposed = false
+    // 全画面は暗め、カード内はカードに馴染む明るい配色
+    const BG = fullscreen ? '#0b1020' : '#f8fafc'
+    const LABEL_BG = fullscreen ? 'rgba(8,12,26,0.78)' : 'rgba(255,255,255,0.86)'
+    const LABEL_FG = fullscreen ? '#e5e7eb' : '#111827'
+    const NODE_RING = fullscreen ? '#0b1020' : '#ffffff'
 
     const resize = () => {
       const dpr = Math.min(2, window.devicePixelRatio || 1)
       const cssW = wrapRef.current?.clientWidth || VIEW_W
-      const cssH = (cssW * VIEW_H) / VIEW_W
+      const cssH = fullscreen
+        ? Math.max(320, (wrapRef.current?.clientHeight || (cssW * VIEW_H) / VIEW_W))
+        : (cssW * VIEW_H) / VIEW_W
       canvas.width = Math.round(cssW * dpr)
       canvas.height = Math.round(cssH * dpr)
       canvas.style.height = `${cssH}px`
@@ -242,7 +225,7 @@ export default function BrandMap3D({
       const sinX = Math.sin(rotX)
       const y2 = p.y * cosX - z1 * sinX
       const z2 = p.y * sinX + z1 * cosX
-      const scale = (FOCAL / (FOCAL + z2 + 520)) * zoom
+      const scale = (FOCAL / (FOCAL + z2 + CAM_Z)) * zoom
       return { sx: cx + x1 * scale, sy: cy + y2 * scale, scale, depth: z2 }
     }
 
@@ -252,7 +235,7 @@ export default function BrandMap3D({
       const cx = cssW / 2
       const cy = cssH / 2
 
-      // カメラ更新（フォーカス中はイージング。自動回転はドラッグ/注目中は止める）
+      // カメラ更新（注目中はイージング。自動回転はドラッグ/注目中は止める）
       if (camTarget.current) {
         const t = camTarget.current
         let dY = t.rotY - cam.current.rotY
@@ -268,9 +251,8 @@ export default function BrandMap3D({
         cam.current.rotY += 0.0025
       }
 
-      // 背景（明るい業務ツール寄り）
       ctx.clearRect(0, 0, cssW, cssH)
-      ctx.fillStyle = '#f8fafc'
+      ctx.fillStyle = BG
       ctx.fillRect(0, 0, cssW, cssH)
 
       // 投影
@@ -292,21 +274,19 @@ export default function BrandMap3D({
         .filter((x) => x.s && x.t) as { e: (typeof graph.edges)[number]; s: Projected; t: Projected }[]
       edges.sort((a, b) => (b.s.depth + b.t.depth) / 2 - (a.s.depth + a.t.depth) / 2)
       for (const { e, s, t } of edges) {
-        const st = edge3D(e.relation_type)
+        const st = edgeStyle(e.relation_type)
         const lit = !focus || e.source === focus || e.target === focus
         const depthA = Math.max(0.15, Math.min(1, (s.scale + t.scale) / 2))
-        ctx.globalAlpha = (lit ? 0.85 : 0.14) * depthA
+        ctx.globalAlpha = (lit ? 0.85 : 0.12) * depthA
         ctx.strokeStyle = st.stroke
         ctx.lineWidth = st.width * Math.max(0.6, (s.scale + t.scale) / 2)
         ctx.setLineDash(st.dash ? [5, 5] : [])
         // 軽いアーチ（中心側へ膨らませる）
         const mx = (s.sx + t.sx) / 2
         const my = (s.sy + t.sy) / 2
-        const qx = mx + (cx - mx) * 0.18
-        const qy = my + (cy - my) * 0.18 - 10
         ctx.beginPath()
         ctx.moveTo(s.sx, s.sy)
-        ctx.quadraticCurveTo(qx, qy, t.sx, t.sy)
+        ctx.quadraticCurveTo(mx + (cx - mx) * 0.18, my + (cy - my) * 0.18 - 10, t.sx, t.sy)
         ctx.stroke()
       }
       ctx.setLineDash([])
@@ -320,26 +300,24 @@ export default function BrandMap3D({
 
       for (const { n, p } of drawList) {
         const lit = isLit(n.ref)
+        const focused = selectedRef.current === n.ref || hoverRef.current === n.ref
         const base = 5 + Math.min(7, n.degree * 1.1)
-        const r = Math.max(1.6, base * p.scale)
-        const color = nodeColor3D(n)
+        const r = Math.max(1.8, base * p.scale * (focused ? 1.18 : 1))
+        const color = nodeColor(n)
         // 奥ほど薄く（深度フェード）。発光は使わずフラットな円。
-        const alpha = (lit ? 1 : 0.2) * Math.max(0.3, Math.min(1, p.scale * 1.1))
+        ctx.globalAlpha = (lit ? 1 : 0.2) * Math.max(0.3, Math.min(1, p.scale * 1.1))
 
-        ctx.globalAlpha = alpha
         ctx.fillStyle = color
         ctx.beginPath()
         ctx.arc(p.sx, p.sy, r, 0, Math.PI * 2)
         ctx.fill()
 
-        // 2Dタブと同じく白フチ。注目中は太くし、外側にも色リングを足す。
-        const isFocused = selectedRef.current === n.ref || hoverRef.current === n.ref
-        ctx.strokeStyle = '#ffffff'
-        ctx.lineWidth = isFocused ? 2.5 : 1.2
+        ctx.strokeStyle = NODE_RING
+        ctx.lineWidth = focused ? 2.5 : 1.2
         ctx.beginPath()
         ctx.arc(p.sx, p.sy, r, 0, Math.PI * 2)
         ctx.stroke()
-        if (isFocused) {
+        if (focused) {
           ctx.strokeStyle = color
           ctx.lineWidth = 1.5
           ctx.beginPath()
@@ -351,11 +329,10 @@ export default function BrandMap3D({
 
       // ラベル（手前のものだけ・小さすぎるものは可読性優先で省く）
       for (const { n, p } of [...drawList].reverse()) {
-        const lit = isLit(n.ref)
         const focused = hoverRef.current === n.ref || selectedRef.current === n.ref
         if (!focused) {
-          if (!lit) continue
-          if (p.scale < 0.72) continue
+          if (!isLit(n.ref)) continue
+          if (p.scale < 0.62) continue
           if (graph.nodes.length > 34 && n.kind !== 'philosophy_element' && n.kind !== 'desired_evidence') continue
         }
         const text = focused ? labelOf.get(n.ref) || n.label : truncate(labelOf.get(n.ref) || n.label, 14)
@@ -365,10 +342,10 @@ export default function BrandMap3D({
         const bx = p.sx - w / 2 - 4
         const by = p.sy + 10 * Math.max(0.6, p.scale)
         ctx.globalAlpha = focused ? 0.95 : 0.75
-        ctx.fillStyle = 'rgba(255,255,255,0.86)'
+        ctx.fillStyle = LABEL_BG
         ctx.fillRect(bx, by, w + 8, fs + 6)
         ctx.globalAlpha = focused ? 1 : 0.9
-        ctx.fillStyle = '#111827'
+        ctx.fillStyle = LABEL_FG
         ctx.textBaseline = 'top'
         ctx.fillText(text, bx + 4, by + 3)
         ctx.globalAlpha = 1
@@ -384,7 +361,7 @@ export default function BrandMap3D({
       rafRef.current = null
       ro.disconnect()
     }
-  }, [isActive, graph.nodes, graph.edges, positions, neighborsOf, labelOf])
+  }, [isActive, fullscreen, graph.nodes, graph.edges, positions, neighborsOf, labelOf])
 
   // ---- ピッキング（投影座標で最近傍） ----
   const pickAt = (clientX: number, clientY: number): string | null => {
@@ -417,7 +394,6 @@ export default function BrandMap3D({
   const onPointerMove = (e: React.PointerEvent) => {
     if (pointers.current.has(e.pointerId)) pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
 
-    // ピンチズーム
     if (pointers.current.size === 2 && pinch.current !== null) {
       const [a, b] = Array.from(pointers.current.values())
       const d = Math.hypot(a.x - b.x, a.y - b.y)
@@ -427,7 +403,6 @@ export default function BrandMap3D({
       return
     }
 
-    // 1本指／マウスドラッグ＝回転
     if (dragging.current) {
       const dx = e.clientX - dragging.current.x
       const dy = e.clientY - dragging.current.y
@@ -438,7 +413,6 @@ export default function BrandMap3D({
       return
     }
 
-    // ホバー（ピッキング）
     const ref = pickAt(e.clientX, e.clientY)
     if (ref !== hoverRef.current) setHover(ref)
   }
@@ -454,7 +428,7 @@ export default function BrandMap3D({
     camTarget.current = null
   }
 
-  // クリック＝注目（カメラがそのノード方向へ回り込む）＋既存の詳細パネル連動
+  // クリック＝注目（カメラが回り込む）＋呼び出し側の詳細パネル連動
   const onClick = (e: React.MouseEvent) => {
     const ref = pickAt(e.clientX, e.clientY)
     if (!ref) {
@@ -468,39 +442,39 @@ export default function BrandMap3D({
     }
     onSelect(ref)
     const p = positions.get(ref)
-    if (p) camTarget.current = { rotY: Math.atan2(p.x, p.z) + Math.PI, rotX: -0.22, zoom: 1.55 }
+    if (p) camTarget.current = { rotY: Math.atan2(p.x, p.z) + Math.PI, rotX: -0.22, zoom: Math.max(1.2, initialZoom * 1.3) }
   }
 
   const reset = () => {
-    cam.current = { rotX: -0.34, rotY: 0.4, zoom: 1 }
+    cam.current = { rotX: INIT_ROT_X, rotY: INIT_ROT_Y, zoom: initialZoom }
     camTarget.current = null
     onSelect(null)
     setHover(null)
   }
 
-  // ツールチップ（HTML）
-  const hoverNode = hover ? nodeByRef.get(hover) : null
-  const hoverProj = hover ? projected.current.find((p) => p.ref === hover) : null
-  const hoverEdges = useMemo(() => {
-    if (!hover) return []
-    return graph.edges.filter((e) => e.source === hover || e.target === hover)
-  }, [hover, graph.edges])
+  // 左下の説明バー（ホバー中の要素のつながりを1行で）
+  const hoverSummary = useMemo(() => (hover ? summarizeHover(graph, hover) : null), [graph, hover])
 
   return (
-    <div>
+    <div className={fullscreen ? 'flex h-full flex-col' : undefined}>
       <div className="flex flex-wrap items-center gap-2 mb-2">
-        <span className="text-[11px] text-muted-foreground">ドラッグで回転・ホイールでズーム・クリックで注目</span>
+        <span className={`text-[11px] ${fullscreen ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
+          ドラッグで回転・ホイールで拡大縮小・クリックで詳細
+        </span>
         <div className="grow" />
         <Button type="button" variant="outline" size="sm" className="h-7 text-[12px]" onClick={() => setAutoRotate((v) => !v)}>
           {autoRotate ? <Pause size={13} /> : <Play size={13} />}
           {autoRotate ? '自動回転を止める' : '自動回転'}
         </Button>
-        <Button type="button" variant="outline" size="icon" className="size-7" onClick={reset} title="リセット">
+        <Button type="button" variant="outline" size="icon" className="size-7" onClick={reset} title="初期表示に戻す">
           <RotateCcw size={13} />
         </Button>
       </div>
 
-      <div ref={wrapRef} className="relative border border-border rounded-lg overflow-hidden bg-[#f8fafc]">
+      <div
+        ref={wrapRef}
+        className={`relative border border-border rounded-lg overflow-hidden ${fullscreen ? 'grow bg-[#0b1020]' : 'bg-[#f8fafc]'}`}
+      >
         <canvas
           ref={canvasRef}
           className="block w-full select-none"
@@ -517,47 +491,29 @@ export default function BrandMap3D({
           onClick={onClick}
         />
 
-        {hoverNode && hoverProj && (
-          <div
-            className="pointer-events-none absolute z-10 max-w-[260px] rounded-md border border-border bg-background/95 p-2 shadow-lg"
-            style={{
-              left: Math.min(Math.max(8, hoverProj.sx + 14), (wrapRef.current?.clientWidth || VIEW_W) - 270),
-              top: Math.max(8, hoverProj.sy - 10),
-            }}
-          >
-            <p className="m-0 text-[12px] font-bold text-foreground break-words">{labelOf.get(hoverNode.ref) || hoverNode.label}</p>
-            <p className="m-0 mt-0.5 text-[11px]" style={{ color: nodeColor3D(hoverNode) }}>
-              {nodeKindLabel3D(hoverNode)}・接続 {hoverNode.degree}本
+        {/* ホバー説明バー（左下） */}
+        <div className="absolute bottom-2 left-2 right-2 pointer-events-none">
+          {hoverSummary ? (
+            <p
+              className={`m-0 inline-block max-w-full rounded-md border px-2.5 py-1.5 text-[12px] shadow-sm break-words ${
+                fullscreen ? 'border-white/15 bg-[#0b1020]/95 text-gray-100' : 'border-border bg-background/95 text-foreground'
+              }`}
+            >
+              <span className="font-bold">{hoverSummary.name}</span>
+              <span className="opacity-70">（{hoverSummary.kind}）</span>
+              {hoverSummary.parts.length > 0 && (
+                <>
+                  <span className="opacity-70"> — </span>
+                  {hoverSummary.parts.join('・')}
+                </>
+              )}
             </p>
-            {hoverEdges.slice(0, 5).map((e) => {
-              const isSource = e.source === hover
-              const other = nodeByRef.get(isSource ? e.target : e.source)
-              return (
-                <p key={e.id} className="m-0 mt-0.5 text-[11px] text-muted-foreground break-words">
-                  {isSource ? '→ ' : '← '}
-                  {other ? `「${truncate(other.label, 16)}」` : '（不明）'} を{relLabel3D(e.relation_type)}
-                </p>
-              )
-            })}
-            {hoverEdges.length > 5 && <p className="m-0 mt-0.5 text-[11px] text-muted-foreground">ほか{hoverEdges.length - 5}件</p>}
-          </div>
-        )}
-      </div>
-
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-[11px] text-muted-foreground">
-        {LEGEND.map((l) => (
-          <span key={l.label} className="inline-flex items-center gap-1">
-            <span className="inline-block size-2.5 rounded-full" style={{ background: l.color }} />
-            {l.label}
-          </span>
-        ))}
-        <span className="mx-1 text-border">|</span>
-        <span className="inline-flex items-center gap-1">
-          <svg width="22" height="6">
-            <line x1="0" y1="3" x2="22" y2="3" stroke={NODE_COLOR.desired_evidence} strokeWidth={1.5} strokeDasharray="5 5" />
-          </svg>
-          未来へのつながり（必要とする・裏づけ予定）
-        </span>
+          ) : (
+            <p className={`m-0 text-[11px] ${fullscreen ? 'text-gray-400/80' : 'text-muted-foreground/70'}`}>
+              要素にカーソルを合わせるとつながりを表示します
+            </p>
+          )}
+        </div>
       </div>
     </div>
   )

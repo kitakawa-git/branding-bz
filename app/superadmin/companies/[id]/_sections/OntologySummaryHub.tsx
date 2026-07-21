@@ -11,7 +11,7 @@
 //   クイックアクションは各セクションへのアンカー移動のみで、機能の実体は持たない。
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { fetchElementsCatalog } from '@/lib/brand/elements-catalog'
+import { fetchElementsCatalog, KIND_LABELS, type ElementKind, type ElementRef } from '@/lib/brand/elements-catalog'
 import { buildBrandMapGraph, type BrandMapGraph, type ProofFkRow, type RelationRow } from '@/lib/brand/map-data'
 import OntologyBuilderSection, { type OntologyStatus } from './OntologyBuilderSection'
 import { ONTOLOGY_DATA_CHANGED_EVENT, ONTOLOGY_GOTO_STEP_EVENT } from './ontology-events'
@@ -29,10 +29,21 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 
 // 関係性ステップの番号（ステップ4に「未来設計」が入ったため5）
 const STEP_RELATIONS = 5
 const STEP_QUESTIONS = 6
+
+// 未接続要素をどのステップで直すか（種別 → ステップ番号）
+const STEP_BY_KIND: Record<ElementKind, number> = {
+  philosophy_element: 1,
+  value_proposition: 1,
+  proof_point: 2,
+  governance_rule: 3,
+  desired_evidence: 4,
+  persona: STEP_RELATIONS, // ペルソナ専用ステップは無いので「関係性」で繋ぐ
+}
 
 const Chip = ({ label, value, tone = 'gray' }: { label: string; value: string; tone?: 'gray' | 'green' | 'amber' }) => {
   const cls =
@@ -58,10 +69,10 @@ export default function OntologySummaryHub({
 }) {
   const [status, setStatus] = useState<OntologyStatus | null>(null)
   const [graph, setGraph] = useState<BrandMapGraph | null>(null)
+  const [catalog, setCatalog] = useState<ElementRef[]>([])
   // 「…」メニューで畳んでいる表示（既定はすべてオフ＝ミニマル）
   const [showCounts, setShowCounts] = useState(false)
   const [showLegend, setShowLegend] = useState(false)
-  const [aligned, setAligned] = useState(false)
   const [presentOpen, setPresentOpen] = useState(false)
   const [presentSelected, setPresentSelected] = useState<string | null>(null)
 
@@ -74,7 +85,7 @@ export default function OntologySummaryHub({
 
   // グラフ（島・未接続チップとプレゼンモードの3Dで共用）。マップと同じ純関数で導出。
   const fetchMapStats = useCallback(async () => {
-    const [catalog, relR, philR, ppR] = await Promise.all([
+    const [cat, relR, philR, ppR] = await Promise.all([
       fetchElementsCatalog(supabase, companyId),
       supabase
         .from('element_relations')
@@ -87,9 +98,10 @@ export default function OntologySummaryHub({
     for (const p of (philR.data as { id: string; element_type: string }[] | null) || []) {
       philTypes[p.id] = p.element_type
     }
+    setCatalog(cat)
     setGraph(
       buildBrandMapGraph(
-        catalog,
+        cat,
         (relR.data as RelationRow[] | null) || [],
         philTypes,
         (ppR.data as ProofFkRow[] | null) || [],
@@ -136,6 +148,10 @@ export default function OntologySummaryHub({
       : { label: '構築中', tone: 'amber' as const }
 
   const unconnected = graph?.unconnectedCount ?? null
+  // 未接続要素の実体（3Dでは探しにくいのでリストで補完する）
+  const unconnectedItems = graph
+    ? catalog.filter((e) => !graph.nodes.some((n) => n.ref === `${e.kind}:${e.id}`))
+    : []
 
   return (
     <div>
@@ -163,9 +179,6 @@ export default function OntologySummaryHub({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>マップの表示</DropdownMenuLabel>
-            <DropdownMenuCheckboxItem checked={aligned} onCheckedChange={(v) => setAligned(!!v)}>
-              整列レイアウト
-            </DropdownMenuCheckboxItem>
             <DropdownMenuCheckboxItem checked={showLegend} onCheckedChange={(v) => setShowLegend(!!v)}>
               凡例
             </DropdownMenuCheckboxItem>
@@ -185,13 +198,48 @@ export default function OntologySummaryHub({
         {unconnected === null ? (
           <Chip label="" value="読込中..." />
         ) : unconnected > 0 ? (
-          <button
-            type="button"
-            onClick={() => gotoStep(STEP_RELATIONS)}
-            className="inline-flex items-center gap-1 py-1 px-2.5 rounded-md text-[12px] font-semibold bg-amber-100 text-amber-800 border-0 cursor-pointer hover:bg-amber-200"
-          >
-            未接続 {unconnected}件 <span className="font-normal opacity-80">→ 繋ぎに行く</span>
-          </button>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className="inline-flex items-center gap-1 py-1 px-2.5 rounded-md text-[12px] font-semibold bg-amber-100 text-amber-800 border-0 cursor-pointer hover:bg-amber-200"
+              >
+                未接続 {unconnected}件 <span className="font-normal opacity-80">→ 繋ぎに行く</span>
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-80 p-0">
+              <div className="p-3 border-b border-border">
+                <p className="text-[13px] font-bold text-foreground m-0">まだ繋がっていない要素</p>
+                <p className="text-[11px] text-muted-foreground m-0 mt-0.5">
+                  行をクリックすると、その要素を扱うステップへ移動します
+                </p>
+              </div>
+              <div className="max-h-64 overflow-auto">
+                {unconnectedItems.map((e) => (
+                  <button
+                    key={`${e.kind}:${e.id}`}
+                    type="button"
+                    onClick={() => gotoStep(STEP_BY_KIND[e.kind] ?? STEP_RELATIONS)}
+                    className="flex w-full items-start gap-2 border-0 border-b border-border bg-background px-3 py-2 text-left cursor-pointer hover:bg-muted last:border-b-0"
+                  >
+                    <span className="mt-0.5 shrink-0 rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold text-gray-700">
+                      {KIND_LABELS[e.kind]}
+                    </span>
+                    <span className="text-[12px] text-foreground break-words">{e.label || '（無題）'}</span>
+                  </button>
+                ))}
+              </div>
+              <div className="p-2 border-t border-border">
+                <button
+                  type="button"
+                  onClick={() => gotoStep(STEP_RELATIONS)}
+                  className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-[12px] font-semibold text-foreground cursor-pointer hover:bg-muted"
+                >
+                  関係性ステップでまとめて繋ぐ →
+                </button>
+              </div>
+            </PopoverContent>
+          </Popover>
         ) : (
           <Chip label="" value="すべて接続済み" tone="green" />
         )}
@@ -222,13 +270,13 @@ export default function OntologySummaryHub({
 
       {/* ブランドマップ（常設・唯一の置き場） */}
       <div className="mb-3">
-        <BrandMapSection companyId={companyId} aligned={aligned} showLegend={showLegend} />
+        <BrandMapSection companyId={companyId} showLegend={showLegend} />
       </div>
 
       {/* プレゼンモード（全画面3D）。開いている間だけ描画ループが回る */}
       {presentOpen && graph && (
         <div
-          className="fixed inset-0 z-50 bg-background p-4 sm:p-6 overflow-auto"
+          className="fixed inset-0 z-50 flex flex-col bg-background p-4 sm:p-6"
           role="dialog"
           aria-modal="true"
           aria-label="ブランドオントロジー プレゼンモード"
@@ -240,13 +288,16 @@ export default function OntologySummaryHub({
               <X size={15} />
             </Button>
           </div>
-          <BrandMap3D
-            graph={graph}
-            companyId={companyId}
-            selected={presentSelected}
-            onSelect={setPresentSelected}
-            isActive
-          />
+          <div className="grow min-h-0">
+            <BrandMap3D
+              graph={graph}
+              companyId={companyId}
+              selected={presentSelected}
+              onSelect={setPresentSelected}
+              isActive
+              fullscreen
+            />
+          </div>
         </div>
       )}
 
