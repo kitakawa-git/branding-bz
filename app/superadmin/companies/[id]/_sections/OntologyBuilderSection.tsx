@@ -5,10 +5,12 @@
 // - 現在ステップのパネルに既存セクションコンポーネントをそのまま埋め込んで再利用する
 //   （ロジックの複製なし。ページ下部の個別カードは従来どおり詳細管理用に残る）。
 // - ステップは強制しない（クリックで任意のステップへ移動可。ガイドであって檻ではない）。
-// - 決定論チェックは自動実行: 最終ステップ（補足質問）を開いたとき＋各ステップで承認登録した直後
-//   （onDataChanged 経由）に走り、最終ステップ冒頭に点検サマリを常時表示する。
-//   手動の「チェック実行」ボタンはウィザードには無い（AI判定含め、下部の既存
-//   「整合性チェック」カードに従来どおり残る。検出表示はそのまま＝穴の事実は隠さない）。
+// - 整合性チェック（IntegrityCheckSection）はステップ横断の機能のためステップの外に置く。
+//   結果はカード末尾、実行ボタンだけカード上部の行へ portal する
+//   （以前はステップ5の中にあり、見出し「補足質問」の横に「AI判定を実行」が並んで
+//     ステップの主アクションと誤読されるため移した）。
+// - 保留カバレッジ（/api/superadmin/profiling）は最終ステップを開いたとき＋各ステップで
+//   承認登録した直後（onDataChanged 経由）に取得し、完了判定と点検サマリに使う。
 // - Step 5 の完了判定:「プロファイリング対象の warn（裏づけのない約束）が、解消済みまたは
 //   保留済み（profiling_acknowledgments）で全件カバーされている」＋基礎データ充足ガード。
 //   判定値は /api/superadmin/profiling の uncoveredWarnCount（lib/brand/profiling.ts で算出）。
@@ -68,6 +70,9 @@ const LAST_STEP = STEPS[STEPS.length - 1].num
 
 // ステップ見出し行の右端に置くアクションの受け皿（各セクションが portal で差し込む）
 const STEP_ACTION_SLOT_ID = 'ontology-step-action'
+// カード全体のアクション置き場。整合性チェックは特定ステップの機能ではなく
+// 体系全体（理念・提供価値・スローガン等）を横断して検査するため、ステップの外に出す。
+const CARD_ACTION_SLOT_ID = 'ontology-card-action'
 
 export default function OntologyBuilderSection({
   companyId,
@@ -258,6 +263,11 @@ export default function OntologyBuilderSection({
   return (
     <div>
       {/* ステッパー（/tools/personality の StepProgressBar と同じ装飾・全幅） */}
+      {/* カード全体のアクション（整合性チェックのAI判定）。ステップ横断の機能なのでステップの外に置く */}
+      <div className="flex justify-end">
+        <div id={CARD_ACTION_SLOT_ID} />
+      </div>
+
       {/* ステッパーの上下は 24px（カード内パディング16px＋mt-2）。下は次ブロックの mt-6 と相殺されて24px */}
       <div className="w-full mt-2 mb-3">
         <div className="relative">
@@ -368,13 +378,17 @@ export default function OntologyBuilderSection({
           {current.num === 5 && (
             <>
               {renderCompletionBanner()}
-              <IntegrityCheckSection companyId={companyId} headerActionSlotId={STEP_ACTION_SLOT_ID} />
-              <div className="border-t border-border my-5" />
               <ProfilingSection companyId={companyId} onDataChanged={broadcastDataChanged} autoStart />
             </>
           )}
         </div>
       ) : null}
+
+      {/* 体系全体の点検（整合性チェック）。ステップ横断の機能なのでステップの外・カード末尾に置き、
+          実行ボタンだけを上部のカードアクション行へ portal する。 */}
+      <div className="mt-6">
+        <IntegrityCheckSection companyId={companyId} headerActionSlotId={CARD_ACTION_SLOT_ID} />
+      </div>
     </div>
   )
 }
