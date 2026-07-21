@@ -32,6 +32,7 @@ import {
   type ProofFkRow,
   type RelationRow,
 } from '@/lib/brand/map-data'
+import BrandMap3D from './BrandMap3D'
 
 const W = 760
 const H = 480
@@ -77,7 +78,7 @@ type SimNode = SimulationNodeDatum & { id: string }
 export default function BrandMapSection({ companyId }: { companyId: string }) {
   const [loading, setLoading] = useState(true)
   const [graph, setGraph] = useState<BrandMapGraph | null>(null)
-  const [tab, setTab] = useState<'force' | 'circle'>('force')
+  const [tab, setTab] = useState<'force' | 'circle' | 'space'>('force')
   const [selected, setSelected] = useState<string | null>(null)
   const [hover, setHover] = useState<string | null>(null)
   const [forcePos, setForcePos] = useState<Map<string, LayoutPos>>(new Map())
@@ -268,6 +269,13 @@ export default function BrandMapSection({ companyId }: { companyId: string }) {
           >
             構造マップ
           </button>
+          <button
+            type="button"
+            onClick={() => setTab('space')}
+            className={`px-3 py-1.5 text-[13px] font-semibold border-0 cursor-pointer ${tab === 'space' ? 'bg-ds-app-accent text-white' : 'bg-background text-muted-foreground hover:text-foreground'}`}
+          >
+            3Dビュー
+          </button>
         </div>
         <div className="grow" />
         {tab === 'force' && (
@@ -285,8 +293,13 @@ export default function BrandMapSection({ companyId }: { companyId: string }) {
         )}
       </div>
 
-      {/* マップ本体 */}
-      <div className="border border-border rounded-lg bg-background overflow-hidden">
+      {/* 3Dビュー（俯瞰・提案用。日常編集は2Dタブのまま） */}
+      {tab === 'space' && (
+        <BrandMap3D graph={graph} companyId={companyId} selected={selected} onSelect={setSelected} isActive />
+      )}
+
+      {/* マップ本体（2D） */}
+      <div className={`border border-border rounded-lg bg-background overflow-hidden${tab === 'space' ? ' hidden' : ''}`}>
         <svg
           ref={svgRef}
           viewBox={`0 0 ${W} ${H}`}
@@ -369,8 +382,8 @@ export default function BrandMapSection({ companyId }: { companyId: string }) {
         </svg>
       </div>
 
-      {/* 凡例 */}
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-[11px] text-muted-foreground">
+      {/* 凡例（2Dのみ。3Dは自前の凡例を持つ） */}
+      <div className={`flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-[11px] text-muted-foreground${tab === 'space' ? ' hidden' : ''}`}>
         {NODE_LEGEND.map((l) => (
           <span key={l.label} className="inline-flex items-center gap-1">
             <span className="inline-block size-2.5 rounded-full" style={{ background: l.color }} />
