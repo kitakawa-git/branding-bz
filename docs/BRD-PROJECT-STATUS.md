@@ -369,6 +369,17 @@
 - [ ] コピーライティングツール（/tools/copy）
 
 ### 🔵 保留
+- [ ] **【バックログ・設計済み】管理画面からの表現ルール追加生成（パーソナリティ診断ベース）**
+  - **内容**: `brand_personalities`（診断結果）を入力に `tone_rule` を追加生成する API＋UI。診断ツールを一度通した企業が、あとから表現ルールだけ増やせるようにする。
+  - **前提（調査済み）**: 診断ツールの連携（`/api/tools/personality/connect`）は既に `governance_rules` へ直接書いている（`rule_type='tone_rule'` / `scope='global'` / `source='personality_diagnosis'`）。ポータルの「表現ルール」もスーパー管理のステップ2も同じテーブルを見ているので、**「スーパー管理で参照する」仕組みは新規に作る必要がない**。
+  - **確定済みの設計判断**:
+    - 置き場所 = `/admin/brand/personality`
+    - 診断未実施の企業では生成ボタンを出さず「先にパーソナリティ診断を」と案内する
+    - `source='admin_generated'` を使う。**診断connectは `source='personality_diagnosis'` を全削除→再INSERTする置換方式**のため、同じ source にすると再診断で追加分が消える
+    - 企業adminは `governance_rules` にRLSで直接書き込めない（`select` と `superadmin_all` のみ）ため、service_role＋`admin_users` 判定の専用APIが必須
+    - 生成は候補提示 → 1件ずつ承認（AI草案パネルと同じ作法。いきなり本登録しない）
+    - 役割分担: `draft-extraction`＝禁止語・主張ルール（事業データから）／本機能＝トーンルール（人格から）
+  - **着手条件**: 実企業（またはID INC.）が診断→連携を実運用し、ルール追加の実需要が見えたとき。
 - [ ] RAG（pgvector）によるAIブランドアドバイザー
 - [ ] 理解度スコアを `brand_score_snapshots` / スコア推移グラフへ統合（知識も時系列で追う）
 - [ ] generate-questions の出題バリエーション微調整（短文ビジョンのTF逐語化・否定形の単調さ）
