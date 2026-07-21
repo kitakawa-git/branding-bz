@@ -11,6 +11,7 @@
 // - 0件・API失敗時は空配列を返す（例外を上げない）。
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { callClaude } from '@/lib/claude-api'
+import { FALLBACK_RULE_TYPE } from '@/lib/brand/rule-display'
 
 export type ProofExtractDraft = {
   title: string
@@ -34,7 +35,7 @@ export type RuleExtractDraft = {
 export const NEEDS_CONFIRMATION_TEMPLATE = '【要確認】数値・詳細をクライアントに確認'
 
 const PROOF_SOURCE_TYPES = new Set(['jisseki', 'jirei', 'data', 'voice', 'award', 'other'])
-const RULE_TYPES = new Set(['banned_word', 'discouraged_expression', 'tone_rule', 'claim_rule', 'compliance_rule'])
+const RULE_TYPES = new Set(['banned_word', 'tone_rule', 'compliance_rule'])
 const SCOPES = new Set(['global', 'claim', 'benefit', 'audience', 'service', 'action_guideline'])
 const SEVERITIES = new Set(['block', 'warn', 'info'])
 
@@ -232,7 +233,7 @@ const RULE_SYSTEM = `あなたはブランド管理者のアシスタントで�
 - 法令・規制に言及する場合、法令名の引用は確実なもののみ。少しでも不確かなら「広告表現の規制」程度の表現に留める。
 - 「既存の表現ルール（提案禁止）」と趣旨が重複する候補は出さない。
 - ng_example / ok_example は自然で具体的な例文。固有の数値・固有名詞は創作しない（一般的な言い回し例は可）。
-- rule_type は banned_word / discouraged_expression / tone_rule / claim_rule / compliance_rule。
+- rule_type は banned_word（使ってはいけない語そのもの）/ tone_rule（話し方・語り口）/ compliance_rule（法令や自社方針として根拠なく言い切ってはいけないこと）の3つから最も近いもの。
 - scope は global / claim / benefit / audience / service / action_guideline（迷ったら global）。
 - severity は block（絶対遵守・法規制系）/ warn（原則遵守）/ info（参考）。
 - 確信できる候補のみ。多くても6件程度。候補が無ければ空配列 [] を返す。
@@ -268,7 +269,7 @@ export function validateRuleDrafts(raw: unknown[], existingRuleTexts: string[]):
     if (seen.some((s) => s.includes(key) || key.includes(s))) continue
     seen.push(key)
     out.push({
-      rule_type: RULE_TYPES.has(f?.rule_type) ? (f.rule_type as string) : 'discouraged_expression',
+      rule_type: RULE_TYPES.has(f?.rule_type) ? (f.rule_type as string) : FALLBACK_RULE_TYPE,
       scope: SCOPES.has(f?.scope) ? (f.scope as string) : 'global',
       rule_text,
       ng_example: typeof f?.ng_example === 'string' ? f.ng_example.trim() : '',

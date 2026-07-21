@@ -31,10 +31,10 @@ type AiFinding = {
   confidence: 'high' | 'medium'
 }
 
+// 区分は3つ（lib/brand/rule-display と同じ。banned_word は決定論側で処理するためAI判定には出ない）
 const RULE_TYPE_JP: Record<string, string> = {
   tone_rule: 'トーンルール',
-  claim_rule: '主張ルール',
-  discouraged_expression: '非推奨表現',
+  compliance_rule: 'コンプラルール',
 }
 
 export default function IntegrityCheckSection({

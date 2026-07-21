@@ -359,6 +359,10 @@ export default function GovernanceRulesSection({
               </option>
             ))}
           </select>
+          {/* 3区分は「語なのか／話し方なのか／断定なのか」で選ぶ。迷いを減らすため説明を出す */}
+          <p className="text-[11px] text-muted-foreground mt-1 m-0">
+            {RULE_TYPES.find((s) => s.value === draft.rule_type)?.hint}
+          </p>
         </div>
         <div className="flex-1">
           <label className="text-xs font-bold text-foreground mb-1.5 block">重要度</label>

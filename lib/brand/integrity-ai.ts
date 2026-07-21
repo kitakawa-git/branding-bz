@@ -13,12 +13,14 @@
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { callClaude } from '@/lib/claude-api'
 
-const TARGET_RULE_TYPES = ['tone_rule', 'claim_rule', 'discouraged_expression'] as const
+// banned_word は決定論側（integrity.ts）で処理済みのため対象外（二重報告防止）。
+// compliance_rule は旧 claim_rule / discouraged_expression の統合先。従来ここから漏れており
+// 「コンプラに分類すると意味判定されない」状態だったので必ず含める。
+const TARGET_RULE_TYPES = ['tone_rule', 'compliance_rule'] as const
 
 const RULE_TYPE_JP: Record<string, string> = {
   tone_rule: 'トーンルール',
-  claim_rule: '主張ルール',
-  discouraged_expression: '非推奨表現',
+  compliance_rule: 'コンプラルール',
 }
 const PHIL_JP: Record<string, string> = {
   mission: 'ミッション',

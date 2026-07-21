@@ -33,7 +33,7 @@ export type CopyOntologyBlocks = {
   intentStrings: string[]    // INTENT素材の生フレーズ（引用禁止対象。Stage3 継承重複の照合元）
   factText: string           // FACT素材の生コーパス（Stage3 数字捏造照合元＝proof+承認表現）
   painPoints: string[]       // 対象ペルソナの pain_points（Stage3 藁人形判定の素材）
-  bannedTerms: string[]      // governance_rules(banned_word/discouraged_expression)の生語（Stage3 クリシェ密度の照合元）
+  bannedTerms: string[]      // governance_rules(banned_word)の生語（Stage3 クリシェ密度の照合元）
 }
 
 const SEVERITY_LABEL: Record<string, string> = { block: '絶対遵守', warn: '原則遵守', info: '参考' }
@@ -291,8 +291,7 @@ export async function buildCopyOntologyBlocks(
   const rulesBlock = ruleLines.join('\n')
 
   // bannedTerms: クリシェ密度の照合元（禁止語の生語＝rule_text＋ng_example）。
-  // ※ rule_type の実在値は banned_word / claim_rule / compliance_rule / tone_rule。
-  //   禁止語彙は banned_word のみ（かつては非実在の 'discouraged_expression' を見ていて常に空だった）。
+  // ※ rule_type の実在値は banned_word / tone_rule / compliance_rule の3つ。禁止語彙は banned_word のみ。
   const bannedTerms = extractBannedTerms(rules)
 
   // quotablePhrases：communicatedAs承認フレーズ＋スローガン（Stage3のマスク用に温存）

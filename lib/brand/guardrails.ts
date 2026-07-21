@@ -40,11 +40,10 @@ const SOURCE_TYPE_LABEL: Record<string, string> = {
   award: '受賞',
   other: 'その他',
 }
+// 区分は3つ（DBの CHECK 制約と一致）。旧 claim_rule / discouraged_expression は compliance_rule へ統合済み。
 const RULE_TYPE_LABEL: Record<string, string> = {
   banned_word: '禁止ワード',
-  discouraged_expression: '非推奨表現',
   tone_rule: 'トーンルール',
-  claim_rule: '主張ルール',
   compliance_rule: 'コンプラルール',
 }
 const SEVERITY_LABEL: Record<string, string> = {

@@ -2,13 +2,19 @@
 // 純データ＋純関数のみ（React・DOM・DBに依存しない）。
 // ※ scope はUIから撤去済み（注入絞り込みが未接続のため）。ここでも扱わない。
 
-export const RULE_TYPES: { value: string; label: string }[] = [
-  { value: 'banned_word', label: '禁止ワード' },
-  { value: 'discouraged_expression', label: '非推奨表現' },
-  { value: 'tone_rule', label: 'トーンルール' },
-  { value: 'claim_rule', label: '主張ルール' },
-  { value: 'compliance_rule', label: 'コンプラルール' },
+// 区分は3つ（DBの CHECK 制約と一致・20260721113654 で5→3に統合）。
+// 旧 claim_rule / discouraged_expression は compliance_rule へ統合済み。
+export const RULE_TYPES: { value: string; label: string; hint: string }[] = [
+  { value: 'banned_word', label: '禁止ワード', hint: '使ってはいけない語そのもの（例：「必ず」「絶対」）' },
+  { value: 'tone_rule', label: 'トーンルール', hint: '話し方・語り口（例：専門用語を避ける、問いかけで締める）' },
+  {
+    value: 'compliance_rule',
+    label: 'コンプラルール',
+    hint: '法令や自社方針として、根拠なく言い切ってはいけないこと（例：業界No.1、必ず成果が出ます、地域最安値）',
+  },
 ]
+/** AI分類が判定に迷ったときの寄せ先 */
+export const FALLBACK_RULE_TYPE = 'compliance_rule'
 
 export const SEVERITIES: { value: string; label: string; cls: string }[] = [
   { value: 'block', label: '絶対遵守', cls: 'bg-red-100 text-red-700' },

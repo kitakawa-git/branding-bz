@@ -9,6 +9,7 @@
 // - セッション末尾に整合性チェック（決定論）を再実行し、カテゴリ別件数の改善を表示する。
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { RULE_TYPES } from '@/lib/brand/rule-display'
 import { Button } from '@/components/ui/button'
 import { AutoResizeTextarea } from '@/components/ui/auto-resize-textarea'
 import { Play, Check, X, Info, Sparkles, SkipForward, RotateCcw } from 'lucide-react'
@@ -30,13 +31,6 @@ const SOURCE_TYPES: { value: string; label: string }[] = [
   { value: 'voice', label: '顧客の声' },
   { value: 'award', label: '受賞' },
   { value: 'other', label: 'その他' },
-]
-const RULE_TYPES: { value: string; label: string }[] = [
-  { value: 'banned_word', label: '禁止ワード' },
-  { value: 'discouraged_expression', label: '非推奨表現' },
-  { value: 'tone_rule', label: 'トーンルール' },
-  { value: 'claim_rule', label: '主張ルール' },
-  { value: 'compliance_rule', label: 'コンプラルール' },
 ]
 const SEVERITIES: { value: string; label: string }[] = [
   { value: 'block', label: '絶対遵守' },

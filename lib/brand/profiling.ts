@@ -11,6 +11,7 @@
 // - 「まだ無い」「わからない」等の回答は何も登録しない（検出は残り、次回また聞ける）。
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { callClaude } from '@/lib/claude-api'
+import { FALLBACK_RULE_TYPE } from '@/lib/brand/rule-display'
 import { fetchElementsCatalog, type ElementKind } from '@/lib/brand/elements-catalog'
 import { runIntegrityChecks } from '@/lib/brand/integrity'
 import { backingNoun, isProofLinked, isTargetBacked, resolveBackingTargets, type BackingKind } from '@/lib/brand/backing-targets'
@@ -210,7 +211,7 @@ export type RuleDraft = {
 export type StructuredDraft = ProofDraft | RuleDraft
 
 const PROOF_SOURCE_TYPES = new Set(['jisseki', 'jirei', 'data', 'voice', 'award', 'other'])
-const RULE_TYPES = new Set(['banned_word', 'discouraged_expression', 'tone_rule', 'claim_rule', 'compliance_rule'])
+const RULE_TYPES = new Set(['banned_word', 'tone_rule', 'compliance_rule'])
 const SEVERITIES = new Set(['block', 'warn', 'info'])
 
 const PROOF_SYSTEM = `あなたはブランド管理者のアシスタントです。経営者の回答を、ブランドの「証拠・実績」レコードの草案に構造化してください。
@@ -233,7 +234,7 @@ const RULE_SYSTEM = `あなたはブランド管理者のアシスタントで�
 - rule_text は「〜と言わない／〜という表現をしない」の形で1文に整理（情報の追加禁止）。
 - 数値は回答の表記のまま転記する。言い換え・単位変換・桁の書き換えをしない。
 - ng_example / ok_example は回答から直接導ける場合のみ書く。導けなければ空文字 "" にする。
-- rule_type は banned_word（禁止ワード）/ discouraged_expression（非推奨表現）/ tone_rule（トーン）/ claim_rule（主張）/ compliance_rule（コンプラ）から最も近いもの。
+- rule_type は banned_word（使ってはいけない語そのもの）/ tone_rule（話し方・語り口）/ compliance_rule（法令や自社方針として根拠なく言い切ってはいけないこと）の3つから最も近いもの。
 - severity は回答のニュアンスから block（絶対遵守）または warn（原則遵守）。迷ったら warn。
 - 回答に実質的な情報が無い場合（「わからない」「特にない」「まだ無い」「なし」等のみの場合）は、JSONオブジェクトの代わりに null とだけ出力する。
 
@@ -361,7 +362,7 @@ export async function structureAnswer(
       if (!rule_text) return ng(NO_INFO_REASON)
       const ng_example = typeof obj.ng_example === 'string' ? obj.ng_example.trim() : ''
       const ok_example = typeof obj.ok_example === 'string' ? obj.ok_example.trim() : ''
-      const rule_type = RULE_TYPES.has(obj.rule_type) ? (obj.rule_type as string) : 'discouraged_expression'
+      const rule_type = RULE_TYPES.has(obj.rule_type) ? (obj.rule_type as string) : FALLBACK_RULE_TYPE
       const severity = SEVERITIES.has(obj.severity) ? (obj.severity as string) : 'warn'
       const missing = findUngroundedNumbers([rule_text, ng_example, ok_example], answer)
       if (missing.length > 0) {
