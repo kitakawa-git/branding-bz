@@ -258,7 +258,8 @@ export default function OntologyBuilderSection({
   return (
     <div>
       {/* ステッパー（/tools/personality の StepProgressBar と同じ装飾・全幅） */}
-      <div className="w-full mb-3">
+      {/* ステッパーの上下は 24px（カード内パディング16px＋mt-2）。下は次ブロックの mt-6 と相殺されて24px */}
+      <div className="w-full mt-2 mb-3">
         <div className="relative">
           {/* ベースライン（グレー一本線：最初の丸中心〜最後の丸中心）。
               各ステップは flex-1 の等幅なので、丸の中心は端から「1区画の半分」＝ 50/N %。
@@ -323,7 +324,7 @@ export default function OntologyBuilderSection({
       {loading ? (
         <p className="text-muted-foreground text-sm m-0">読み込み中...</p>
       ) : current ? (
-        <div className="mt-4">
+        <div className="mt-6">
           {/* 見出し・説明は各ツール（/tools/stp 等）のステップ見出しと同じ体裁に揃える
               （見出し: text-2xl font-bold・行に mb-2 ／ 説明: mb-4 text-[13px] text-muted-foreground）。
               mb-2 は h4 ではなく行に持たせる＝右のアクションが文字の中心と揃う。 */}
