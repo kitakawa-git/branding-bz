@@ -629,22 +629,16 @@ export default function ProfilingSection({
         </div>
       )}
 
-      {questions !== null && questions.length === 0 && !finished && (
+      {/* 質問も保留も無いときは何も出さない（穴が無い旨は「オントロジー構築完了」バナーが伝えている）。
+          保留があるときだけ、呼び戻すボタンとセットで案内する。 */}
+      {questions !== null && questions.length === 0 && !finished && pendingCount > 0 && (
         <div className="mt-3">
-          {pendingCount > 0 ? (
-            <>
-              <p className="text-sm text-foreground border border-border bg-muted/40 rounded-lg p-3 mb-2">
-                未回答の質問はありません（保留中 {pendingCount}件）。保留した項目は後からいつでも回答できます
-              </p>
-              <Button type="button" variant="outline" onClick={() => generate(true)} disabled={generating} className="py-2 px-4 text-[13px]">
-                保留した質問をもう一度見る（{pendingCount}）
-              </Button>
-            </>
-          ) : (
-            <p className="text-sm text-foreground border border-green-200 bg-green-50 rounded-lg p-3 mb-0">
-              質問はありません。整合性チェックで検出された穴（裏づけのない約束・どの約束にも繋がっていない実績・矛盾・禁則ゼロ）が無い状態です
-            </p>
-          )}
+          <p className="text-sm text-foreground border border-border bg-muted/40 rounded-lg p-3 mb-2">
+            未回答の質問はありません（保留中 {pendingCount}件）。保留した項目は後からいつでも回答できます
+          </p>
+          <Button type="button" variant="outline" onClick={() => generate(true)} disabled={generating} className="py-2 px-4 text-[13px]">
+            保留した質問をもう一度見る（{pendingCount}）
+          </Button>
         </div>
       )}
 
