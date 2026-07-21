@@ -194,7 +194,7 @@ export default function BrandMap3D({
 
     let disposed = false
     // 全画面は暗め、カード内はカードに馴染む明るい配色
-    const BG = fullscreen ? '#0b1020' : '#f8fafc'
+    const BG = fullscreen ? '#0b1020' : '#ffffff'
     const LABEL_BG = fullscreen ? 'rgba(8,12,26,0.78)' : 'rgba(255,255,255,0.86)'
     const LABEL_FG = fullscreen ? '#e5e7eb' : '#111827'
     const NODE_RING = fullscreen ? '#0b1020' : '#ffffff'
@@ -473,7 +473,7 @@ export default function BrandMap3D({
 
       <div
         ref={wrapRef}
-        className={`relative border border-border rounded-lg overflow-hidden ${fullscreen ? 'grow bg-[#0b1020]' : 'bg-[#f8fafc]'}`}
+        className={`relative border border-border rounded-lg overflow-hidden ${fullscreen ? 'grow bg-[#0b1020]' : 'bg-white'}`}
       >
         <canvas
           ref={canvasRef}
