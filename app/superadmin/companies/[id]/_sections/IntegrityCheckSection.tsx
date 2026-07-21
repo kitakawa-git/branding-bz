@@ -6,8 +6,9 @@
 // - 「AI判定を実行」: governance_rules の tone/claim/discouraged を Claude が実テキストに対して評価
 //   （/api/superadmin/integrity-ai・POST・押した時だけ）。違反箇所＋理由＋修正案を表示。修正案は表示のみ（自動適用しない）。
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { supabase } from '@/lib/supabase'
-import { Button } from '@/components/ui/button'
+import { AIButton } from '@/components/shared/AIButton'
 import { AlertTriangle, Info, ShieldCheck, Sparkles, Copy } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -36,11 +37,25 @@ const RULE_TYPE_JP: Record<string, string> = {
   discouraged_expression: '非推奨表現',
 }
 
-export default function IntegrityCheckSection({ companyId }: { companyId: string }) {
+export default function IntegrityCheckSection({
+  companyId,
+  headerActionSlotId,
+}: {
+  companyId: string
+  // 指定すると「AI判定を実行」をこのidの要素へ portal する（ステップ見出し行に置くため）。
+  // 未指定・要素が無い場合は従来どおりセクション先頭に出す。
+  headerActionSlotId?: string
+}) {
   const [findings, setFindings] = useState<Finding[] | null>(null)
   const [running, setRunning] = useState(false)
   const [aiFindings, setAiFindings] = useState<AiFinding[] | null>(null)
   const [aiRunning, setAiRunning] = useState(false)
+  // 見出し行のアクション置き場（マウント後に解決）
+  const [actionSlot, setActionSlot] = useState<HTMLElement | null>(null)
+
+  useEffect(() => {
+    setActionSlot(headerActionSlotId ? document.getElementById(headerActionSlotId) : null)
+  }, [headerActionSlotId])
 
   const token = async () => (await supabase.auth.getSession()).data.session?.access_token || ''
 
@@ -142,14 +157,21 @@ export default function IntegrityCheckSection({ companyId }: { companyId: string
     (a, b) => (a.severity === 'block' ? 0 : 1) - (b.severity === 'block' ? 0 : 1),
   )
 
+  // AIアクションは共通の AIButton（sm＝px-3 py-1.5 text-xs gap-1.5）。
+  // 置き場所はステップ見出し行（slot）優先、無ければ従来どおりセクション先頭。
+  const aiRunButton = (
+    <AIButton type="button" size="sm" onClick={runAi} disabled={aiRunning}>
+      {aiRunning ? 'AI判定中...' : 'AI判定を実行'}
+    </AIButton>
+  )
+
   return (
     <div>
-      <div className="flex flex-wrap gap-2">
-        <Button type="button" onClick={runAi} disabled={aiRunning} className="py-2 px-4 text-[13px]">
-          <Sparkles size={16} />
-          {aiRunning ? 'AI判定中...' : 'AI判定を実行'}
-        </Button>
-      </div>
+      {actionSlot ? (
+        createPortal(aiRunButton, actionSlot)
+      ) : (
+        <div className="flex flex-wrap gap-2">{aiRunButton}</div>
+      )}
 
       {/* 決定論チェックは自動実行（読み込み中表示のみ） */}
       {running && findings === null && (

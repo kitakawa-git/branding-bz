@@ -15,6 +15,7 @@ import { AutoResizeTextarea } from '@/components/ui/auto-resize-textarea'
 import { Plus, Trash2, Pencil, Check, X, ChevronUp, ChevronDown, Sparkles, AlertTriangle, Ruler } from 'lucide-react'
 import { toast } from 'sonner'
 import type { ProofExtractDraft } from '@/lib/brand/draft-extraction'
+import { AIButton } from '@/components/shared/AIButton'
 import MetricPicker, { type MetricSelection } from './MetricPicker'
 
 export type ValuePropositionRef = { id: string; title: string }
@@ -433,11 +434,11 @@ export default function ProofPointsSection({
   }
 
   // 「AI草案を生成」ボタン本体。置き場所（見出し行 or セクション下部）だけが変わる。
+  // AIアクションは共通の AIButton（グラデーション・グロー型）に統一。sm＝px-3 py-1.5 text-xs gap-1.5。
   const aiExtractButton = (
-    <Button type="button" onClick={runAiExtract} disabled={aiLoading || loading} className="py-2 px-4 text-[13px]">
-      <Sparkles size={16} />
+    <AIButton type="button" size="sm" onClick={runAiExtract} disabled={aiLoading || loading}>
       {aiLoading ? '生成中...' : 'AI草案を生成'}
-    </Button>
+    </AIButton>
   )
 
   const renderAiDrafts = () => {

@@ -7,10 +7,10 @@
 // - 結果は永続化しない（その場の確認用・精度確認＋クライアントデモ）。API・生成条件は不変。
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Button } from '@/components/ui/button'
+import { AIButton } from '@/components/shared/AIButton'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { Sparkles, Check, Info } from 'lucide-react'
+import { Check, Info } from 'lucide-react'
 import { toast } from 'sonner'
 import { OUTPUT_TEST_TOPICS, type OutputTestTopic, type OutputTestResult } from '@/lib/brand/output-test-types'
 import { collectKeyPhrases, highlightSegments } from '@/lib/brand/output-highlight'
@@ -126,10 +126,10 @@ export default function OutputTestPanel({ companyId }: { companyId: string }) {
             </option>
           ))}
         </select>
-        <Button type="button" onClick={run} disabled={loading} className="h-9 px-4 text-[13px]">
-          <Sparkles size={15} />
+        {/* AIアクションは共通の AIButton に統一（sm＝px-3 py-1.5 text-xs gap-1.5） */}
+        <AIButton type="button" size="sm" onClick={run} disabled={loading}>
           {loading ? '生成中...' : result ? '再生成する' : '比較する'}
-        </Button>
+        </AIButton>
       </div>
 
       {result?.noOntology && (

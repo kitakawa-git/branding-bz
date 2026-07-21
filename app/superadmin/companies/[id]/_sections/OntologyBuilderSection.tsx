@@ -361,7 +361,7 @@ export default function OntologyBuilderSection({
           {current.num === 5 && (
             <>
               {renderCompletionBanner()}
-              <IntegrityCheckSection companyId={companyId} />
+              <IntegrityCheckSection companyId={companyId} headerActionSlotId={STEP_ACTION_SLOT_ID} />
               <div className="border-t border-border my-5" />
               <ProfilingSection companyId={companyId} onDataChanged={broadcastDataChanged} autoStart />
             </>
