@@ -289,7 +289,7 @@ export function AppSidebar() {
                 <DropdownMenuItem asChild className="h-11 px-3 gap-2 text-base font-medium rounded-md">
                   <Link href="/portal" className="no-underline">
                     <ArrowLeftRight className="size-4" />
-                    サービス画面
+                    ポータル画面
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />

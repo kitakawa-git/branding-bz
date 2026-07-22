@@ -55,9 +55,10 @@ export default function CompanyDetailPage() {
   const [viewStats, setViewStats] = useState({ total: 0, month: 0, week: 0 })
 
   // 編集用フォーム
+  // ※ brand_color_primary/secondary は 2026-04-06 に「AI・表示側の参照を brand_visuals へ移行」
+  //   の際に一度スーパー管理からも撤去されたが復活していた孤立列。表示側は brand_visuals.color_palette が正本。
+  //   唯一の残存参照は CIマニュアルPDF (lib/ci-manual/data-fetcher.ts) のみ。DB列は温存し UI のみ再撤去した。
   const [editName, setEditName] = useState('')
-  const [editBrandColorPrimary, setEditBrandColorPrimary] = useState('#1a1a1a')
-  const [editBrandColorSecondary, setEditBrandColorSecondary] = useState('#666666')
   const [editWebsiteUrl, setEditWebsiteUrl] = useState('')
 
   useEffect(() => {
@@ -73,8 +74,6 @@ export default function CompanyDetailPage() {
         if (companyData) {
           setCompany(companyData)
           setEditName(companyData.name || '')
-          setEditBrandColorPrimary(companyData.brand_color_primary || '#1a1a1a')
-          setEditBrandColorSecondary(companyData.brand_color_secondary || '#666666')
           setEditWebsiteUrl(companyData.website_url || '')
         }
 
@@ -163,8 +162,6 @@ export default function CompanyDetailPage() {
       .from('companies')
       .update({
         name: editName,
-        brand_color_primary: editBrandColorPrimary,
-        brand_color_secondary: editBrandColorSecondary,
         website_url: editWebsiteUrl,
       })
       .eq('id', companyId)
@@ -285,52 +282,10 @@ export default function CompanyDetailPage() {
               />
             </div>
 
-            {/* スローガン / MVV の編集はブランドガイドライン（/admin/brand/guidelines）へ一本化。
-                companies.slogan / mvv は廃止（表示は brand_guidelines 側を参照）。 */}
-
-            <div className="mb-5">
-              <Label className="mb-1.5 font-bold">ブランドカラー（プライマリ）</Label>
-              <div className="flex items-center gap-3">
-                <input
-                  type="color"
-                  value={editBrandColorPrimary}
-                  onChange={(e) => setEditBrandColorPrimary(e.target.value)}
-                  className="w-12 h-12 border border-border rounded-lg cursor-pointer p-0.5"
-                />
-                <Input
-                  type="text"
-                  value={editBrandColorPrimary}
-                  onChange={(e) => setEditBrandColorPrimary(e.target.value)}
-                  className="h-10 w-[140px]"
-                />
-                <div
-                  className="w-20 h-10 rounded-md border border-border"
-                  style={{ backgroundColor: editBrandColorPrimary }}
-                />
-              </div>
-            </div>
-
-            <div className="mb-5">
-              <Label className="mb-1.5 font-bold">ブランドカラー（セカンダリ）</Label>
-              <div className="flex items-center gap-3">
-                <input
-                  type="color"
-                  value={editBrandColorSecondary}
-                  onChange={(e) => setEditBrandColorSecondary(e.target.value)}
-                  className="w-12 h-12 border border-border rounded-lg cursor-pointer p-0.5"
-                />
-                <Input
-                  type="text"
-                  value={editBrandColorSecondary}
-                  onChange={(e) => setEditBrandColorSecondary(e.target.value)}
-                  className="h-10 w-[140px]"
-                />
-                <div
-                  className="w-20 h-10 rounded-md border border-border"
-                  style={{ backgroundColor: editBrandColorSecondary }}
-                />
-              </div>
-            </div>
+            {/* スローガン / MVV / ブランドカラー(primary/secondary) の編集は
+                各社の管理画面（/admin/brand/guidelines・/admin/brand/visuals）へ一本化。
+                companies.slogan / mvv / brand_color_primary / brand_color_secondary は
+                表示に使われていない孤立列（正本は brand_guidelines / brand_visuals）。 */}
 
             <div className="mb-5">
               <Label className="mb-1.5 font-bold">Webサイト URL</Label>
