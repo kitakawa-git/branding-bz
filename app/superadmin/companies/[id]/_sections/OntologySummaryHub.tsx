@@ -21,6 +21,7 @@ import {
 } from '@/lib/brand/map-data'
 import OntologyBuilderSection, { type OntologyStatus } from './OntologyBuilderSection'
 import { ONTOLOGY_DATA_CHANGED_EVENT, ONTOLOGY_GOTO_STEP_EVENT, type OntologyFocusRef } from './ontology-events'
+import { computeBuildScore, deriveBuildScoreInput, type BuildScore } from '@/lib/brand/build-score'
 import BrandMapSection from './BrandMapSection'
 import BrandMap3D from './BrandMap3D'
 import OutputTestPanel from './OutputTestPanel'
@@ -44,20 +45,19 @@ const STEP_RELATIONS = 4
 // 繋がっていない要素の行クリックは種別によらず関係性ステップ（＝繋ぐ場所）へ送る。
 // 以前は種別ごとに担当ステップへ散らしていたが、目的は「繋ぐこと」なので焦点パネルに集約した。
 
-const Chip = ({ label, value, tone = 'gray' }: { label: string; value: string; tone?: 'gray' | 'green' | 'amber' }) => {
-  const cls =
-    tone === 'green'
-      ? 'bg-green-100 text-green-800'
-      : tone === 'amber'
-        ? 'bg-amber-100 text-amber-800'
-        : 'bg-gray-100 text-gray-700'
-  return (
-    <span className={`inline-flex items-center gap-1 py-1 px-2.5 rounded-md text-[12px] font-semibold ${cls}`}>
-      <span className="font-normal opacity-80">{label}</span>
-      {value}
-    </span>
-  )
+const CHIP_TONES: Record<'gray' | 'green' | 'amber' | 'blue', string> = {
+  gray: 'bg-gray-100 text-gray-700',
+  green: 'bg-green-100 text-green-800',
+  amber: 'bg-amber-100 text-amber-800',
+  blue: 'bg-blue-100 text-blue-800',
 }
+
+const Chip = ({ label, value, tone = 'gray' }: { label: string; value: string; tone?: keyof typeof CHIP_TONES }) => (
+  <span className={`inline-flex items-center gap-1 py-1 px-2.5 rounded-md text-[12px] font-semibold ${CHIP_TONES[tone]}`}>
+    <span className="font-normal opacity-80">{label}</span>
+    {value}
+  </span>
+)
 
 export default function OntologySummaryHub({
   companyId,
@@ -68,6 +68,8 @@ export default function OntologySummaryHub({
 }) {
   const [status, setStatus] = useState<OntologyStatus | null>(null)
   const [graph, setGraph] = useState<BrandMapGraph | null>(null)
+  // 構築度（決定論・非保存）。fetchMapStats のデータから表示時に算出する
+  const [buildScore, setBuildScore] = useState<BuildScore | null>(null)
   const [catalog, setCatalog] = useState<ElementRef[]>([])
   // 「理念に届かない要素」＝線はあるが理念から辿り着けない要素（＝島）。
   // 線が1本も無いものは「未接続」チップが扱うのでここから除く（2つのチップの件数を重ねない）。
@@ -124,7 +126,7 @@ export default function OntologySummaryHub({
 
   // グラフ（島・未接続チップとプレゼンモードの3Dで共用）。マップと同じ純関数で導出。
   const fetchMapStats = useCallback(async () => {
-    const [cat, relR, philR, ppR] = await Promise.all([
+    const [cat, relR, philR, ppR, ruleR] = await Promise.all([
       fetchElementsCatalog(supabase, companyId),
       supabase
         .from('element_relations')
@@ -132,6 +134,8 @@ export default function OntologySummaryHub({
         .eq('company_id', companyId),
       supabase.from('philosophy_elements').select('id, element_type').eq('company_id', companyId),
       supabase.from('proof_points').select('id, value_proposition_id').eq('company_id', companyId),
+      // 構築度「ルールの質」用（NG/OK例の充足）。読み取りのみ
+      supabase.from('governance_rules').select('ng_example, ok_example').eq('company_id', companyId),
     ])
     const philTypes: Record<string, string> = {}
     for (const p of (philR.data as { id: string; element_type: string }[] | null) || []) {
@@ -148,6 +152,17 @@ export default function OntologySummaryHub({
     setUnreachableItems(
       findUnreachableFromPhilosophy(cat, rels, philTypes, fks).filter((e) =>
         connected.has(`${e.kind}:${e.id}`),
+      ),
+    )
+    // 構築度（決定論・非保存）。接続性・裏づけはチップ/integrityと同じ共有関数で導出される
+    setBuildScore(
+      computeBuildScore(
+        deriveBuildScoreInput({
+          catalog: cat,
+          philTypes,
+          relations: rels,
+          rules: (ruleR.data as { ng_example: string | null; ok_example: string | null }[] | null) || [],
+        }),
       ),
     )
   }, [companyId])
@@ -203,11 +218,77 @@ export default function OntologySummaryHub({
   const conflicts = insp?.baseline['矛盾の明示'] ?? null
   const pending = status?.pendingCount ?? 0
 
-  const statusChip = !status
-    ? { label: '読込中...', tone: 'gray' as const }
-    : status.complete
-      ? { label: pending > 0 ? `構築完了（保留 ${pending}）` : '構築完了', tone: 'green' as const }
-      : { label: '構築中', tone: 'amber' as const }
+  // 「構築度」バッジ（旧「構築完了/構築中」バッジの置き換え）。
+  // 軸ごとの改善導線: どのステップへ飛べば上がるか（elements はウィザード外の要素も含むため導線なし）
+  const SCORE_AXIS_STEP: Record<string, number | undefined> = {
+    connectivity: STEP_RELATIONS,
+    backing: 1,
+    rules: 2,
+  }
+  const renderScoreChip = () => {
+    if (!buildScore) return <Chip label="" value="読込中..." />
+    const s = buildScore
+    return (
+      <Popover>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            className={`inline-flex items-center gap-1 py-1 px-2.5 rounded-md text-[12px] font-semibold border-0 cursor-pointer hover:opacity-80 ${CHIP_TONES[s.band.tone]}`}
+            title="クリックで内訳を表示"
+          >
+            構築度 {s.total}
+            <span className="font-normal opacity-80">（{s.band.label}）</span>
+          </button>
+        </PopoverTrigger>
+        <PopoverContent align="start" className="w-80 p-3">
+          <p className="text-[13px] font-bold text-foreground m-0">構築度 {s.total} / 100</p>
+          <p className="text-[11px] text-muted-foreground m-0 mt-0.5 mb-2.5">
+            体系の構造的な完成度です（ブランドの良し悪しの評価ではありません）
+          </p>
+          <div className="space-y-2.5">
+            {s.axes.map((a) => {
+              const step = SCORE_AXIS_STEP[a.key]
+              return (
+                <div key={a.key}>
+                  <div className="flex items-center justify-between text-[11px] font-semibold text-foreground">
+                    <span>{a.label}</span>
+                    <span>
+                      {a.score}/{a.max}
+                    </span>
+                  </div>
+                  <div className="mt-0.5 h-1.5 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-ds-app-accent"
+                      style={{ width: `${a.max > 0 ? Math.round((a.score / a.max) * 100) : 0}%` }}
+                    />
+                  </div>
+                  <div className="mt-0.5 flex items-start justify-between gap-2">
+                    <p className="text-[11px] text-muted-foreground m-0">{a.hint}</p>
+                    {step !== undefined && a.score < a.max && (
+                      <PopoverClose asChild>
+                        <button
+                          type="button"
+                          onClick={() => gotoStep(step)}
+                          className="shrink-0 border-0 bg-transparent p-0 text-[11px] font-semibold text-ds-app-accent underline underline-offset-2 cursor-pointer hover:text-ds-app-accent-hover"
+                        >
+                          直しに行く →
+                        </button>
+                      </PopoverClose>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+          {/* ボーナスは別行・控えめに（未実施でも減点しない旨は hint が伝える） */}
+          <div className="mt-2.5 pt-2 border-t border-border flex items-start justify-between gap-2 text-[11px] text-muted-foreground">
+            <span>未来設計: {s.bonusHint}</span>
+            <span className="shrink-0 font-semibold">+{s.bonus}</span>
+          </div>
+        </PopoverContent>
+      </Popover>
+    )
+  }
 
   const unconnected = graph?.unconnectedCount ?? null
   // 未接続要素の実体（3Dでは探しにくいのでリストで補完する）
@@ -220,7 +301,7 @@ export default function OntologySummaryHub({
       {/* ヘッダ: タイトル＋状態チップ＋（右）プレゼンモード・メニュー */}
       <div className="flex flex-wrap items-center gap-2 mb-1">
         <h3 className="text-base font-bold text-foreground m-0">ブランドオントロジー</h3>
-        <Chip label="" value={statusChip.label} tone={statusChip.tone} />
+        {renderScoreChip()}
         <div className="grow" />
         <Button
           type="button"

@@ -1,6 +1,8 @@
 'use client'
 
 // スーパー管理画面: 企業一覧ページ
+// 構築度列: 決定論・非保存（詳細ページのバッジと同じ lib/brand/build-score で表示時に算出）。
+// 会社ごとにクエリを繰り返さず、対象テーブルを全社ぶん一括取得してメモリで会社別に集計する。
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
@@ -10,6 +12,9 @@ import { Button } from '@/components/ui/button'
 import { Building2, Plus, ArrowRight } from 'lucide-react'
 import { Fab, FabButton } from '@/components/ui/fab'
 import { CompanyCreateDialog } from './CompanyCreateDialog'
+import { computeBuildScore, deriveBuildScoreInput, type BuildScore } from '@/lib/brand/build-score'
+import type { ElementKind, ElementRef } from '@/lib/brand/elements-catalog'
+import type { RelationRow } from '@/lib/brand/map-data'
 
 type CompanyWithCount = {
   id: string
@@ -20,10 +25,77 @@ type CompanyWithCount = {
   admin_count: number
 }
 
+const SCORE_TONES: Record<string, string> = {
+  amber: 'bg-amber-100 text-amber-800',
+  blue: 'bg-blue-100 text-blue-800',
+  green: 'bg-green-100 text-green-800',
+}
+
+// 全社ぶんの要素・関係・ルールを一括で読み、会社ごとに構築度を算出する（書き込みなし）。
+// ラベルはスコア計算に使わないため空文字でよい（deriveBuildScoreInput は kind/id と件数だけ見る）。
+async function fetchBuildScores(): Promise<Record<string, BuildScore>> {
+  const [philR, vpR, ppR, ruleR, personaR, deR, relR] = await Promise.all([
+    supabase.from('philosophy_elements').select('id, company_id, element_type'),
+    supabase.from('value_propositions').select('id, company_id'),
+    supabase.from('proof_points').select('id, company_id'),
+    supabase.from('governance_rules').select('id, company_id, ng_example, ok_example'),
+    supabase.from('brand_personas').select('id, company_id'),
+    supabase.from('desired_evidence').select('id, company_id'),
+    supabase
+      .from('element_relations')
+      .select('id, company_id, source_kind, source_id, target_kind, target_id, relation_type, note'),
+  ])
+
+  type Row = { id: string; company_id: string }
+  const byCompany = new Map<
+    string,
+    {
+      catalog: ElementRef[]
+      philTypes: Record<string, string>
+      relations: RelationRow[]
+      rules: { ng_example: string | null; ok_example: string | null }[]
+    }
+  >()
+  const bucket = (cid: string) => {
+    let b = byCompany.get(cid)
+    if (!b) {
+      b = { catalog: [], philTypes: {}, relations: [], rules: [] }
+      byCompany.set(cid, b)
+    }
+    return b
+  }
+  const addKind = (rows: Row[] | null, kind: ElementKind) => {
+    for (const r of rows || []) bucket(r.company_id).catalog.push({ kind, id: r.id, label: '' })
+  }
+  for (const r of (philR.data as (Row & { element_type: string })[] | null) || []) {
+    const b = bucket(r.company_id)
+    b.catalog.push({ kind: 'philosophy_element', id: r.id, label: '' })
+    b.philTypes[r.id] = r.element_type
+  }
+  addKind(vpR.data as Row[] | null, 'value_proposition')
+  addKind(ppR.data as Row[] | null, 'proof_point')
+  addKind(personaR.data as Row[] | null, 'persona')
+  addKind(deR.data as Row[] | null, 'desired_evidence')
+  for (const r of (ruleR.data as (Row & { ng_example: string | null; ok_example: string | null })[] | null) || []) {
+    const b = bucket(r.company_id)
+    b.catalog.push({ kind: 'governance_rule', id: r.id, label: '' })
+    b.rules.push({ ng_example: r.ng_example, ok_example: r.ok_example })
+  }
+  for (const r of ((relR.data as (RelationRow & { company_id: string })[] | null) || [])) {
+    bucket(r.company_id).relations.push(r)
+  }
+
+  const out: Record<string, BuildScore> = {}
+  for (const [cid, b] of byCompany) out[cid] = computeBuildScore(deriveBuildScoreInput(b))
+  return out
+}
+
 export default function CompaniesPage() {
   const [companies, setCompanies] = useState<CompanyWithCount[]>([])
   const [loading, setLoading] = useState(true)
   const [createOpen, setCreateOpen] = useState(false)
+  // 構築度（会社id → スコア）。一覧本体とは独立に読み込む（失敗しても一覧は出す）
+  const [scores, setScores] = useState<Record<string, BuildScore> | null>(null)
 
   const fetchCompanies = useCallback(async () => {
     try {
@@ -74,6 +146,13 @@ export default function CompaniesPage() {
 
   useEffect(() => {
     fetchCompanies()
+    // 構築度は別トラックで取得（読み取りのみ・失敗しても一覧表示は妨げない）
+    fetchBuildScores()
+      .then(setScores)
+      .catch((err) => {
+        console.error('[SuperAdmin] 構築度の算出エラー:', err)
+        setScores({})
+      })
   }, [fetchCompanies])
 
   // ============================================
@@ -139,6 +218,7 @@ export default function CompaniesPage() {
                     <th className="px-4 py-3 font-medium">企業名</th>
                     <th className="px-4 py-3 font-medium text-center">従業員数</th>
                     <th className="px-4 py-3 font-medium text-center">管理者</th>
+                    <th className="px-4 py-3 font-medium text-center">構築度</th>
                     <th className="px-4 py-3 font-medium">作成日</th>
                     <th className="px-4 py-3 font-medium">操作</th>
                   </tr>
@@ -170,6 +250,26 @@ export default function CompaniesPage() {
                       </td>
                       <td className="px-4 py-3 text-center">
                         <span className="text-xs text-foreground">{company.admin_count}名</span>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        {scores === null ? (
+                          <Skeleton className="h-4 w-16 mx-auto" />
+                        ) : (() => {
+                          const s = scores[company.id]
+                          // 要素が1つも無い会社はスコア0の羅列にせず「未着手」と示す
+                          if (!s || s.total === 0) {
+                            return <span className="text-xs text-muted-foreground">未着手</span>
+                          }
+                          return (
+                            <span
+                              className={`inline-flex items-center gap-1 py-0.5 px-2 rounded-md text-[11px] font-semibold ${SCORE_TONES[s.band.tone] ?? 'bg-gray-100 text-gray-700'}`}
+                              title={`${s.band.label}：${s.axes.map((a) => `${a.label} ${a.score}/${a.max}`).join('・')}${s.bonus > 0 ? `・ボーナス+${s.bonus}` : ''}`}
+                            >
+                              {s.total}
+                              <span className="font-normal opacity-80">{s.band.label}</span>
+                            </span>
+                          )
+                        })()}
                       </td>
                       <td className="px-4 py-3">
                         <span className="text-xs text-muted-foreground">
