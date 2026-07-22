@@ -186,16 +186,16 @@ export function concentricLayout(nodes: MapNode[], width: number, height: number
 }
 
 // ---- 理念からの到達可能性（「理念に届かない要素」＝島） ----
-// integrity.ts の判定とスーパー管理のチップで同じ数字を出すための共有純関数。
-// ここを唯一の実装にする（以前は integrity.ts にインラインで書かれており、
-// チップ側の unconnectedCount と基準が違って別々の数字が出ていた）。
+// スーパー管理のチップと構築度スコアで同じ数字を出すための共有純関数（唯一の実装）。
 //
 // 判定ルール:
-// - 根＝ミッション。無ければビジョン、どちらも無ければバリュー全件。
+// - 根＝ミッション・ビジョン・バリューの全件（M/V/V は常に根）。
+//   ※ 旧仕様は mission→vision→value の優先順位フォールバックで、ミッションがある会社では
+//     ビジョンやバリューが「理念に届かない」側に落ちる直感に反する挙動だった（2026-07-21修正）。
 // - 辺＝関係（向きは無視・無向）＋実績の直接FK（proof_points.value_proposition_id）。
 // - 検出対象＝理念（根自身を除く）/提供価値/実績/表現ルール。
 //   ペルソナは対象外（理念由来でなくてよい）だが、経路としては通過できる。
-// - 根が1つも無い会社（理念未登録）は判定しない＝空配列（全要素が島になり煩雑なため）。
+// - 根が1つも無い会社（M/V/V 全て未登録）は判定しない＝空配列（全要素が島になり煩雑なため）。
 
 /** 到達可能性の計算に使う辺。kind は string で受ける（未来設計の desired_evidence を含むため） */
 export type ReachabilityEdge = {
@@ -211,15 +211,10 @@ export function findUnreachableFromPhilosophy(
   philTypes: Record<string, string>, // philosophy_elements の id → element_type
   proofFks: ProofFkRow[] = [],
 ): ElementRef[] {
-  const philsOf = (t: string) =>
-    catalog.filter((e) => e.kind === 'philosophy_element' && philTypes[e.id] === t)
-  const roots = (() => {
-    const m = philsOf('mission')
-    if (m.length > 0) return m
-    const v = philsOf('vision')
-    if (v.length > 0) return v
-    return philsOf('value')
-  })()
+  // M/V/V は常に根（優先順位フォールバックはしない）
+  const roots = catalog.filter(
+    (e) => e.kind === 'philosophy_element' && ['mission', 'vision', 'value'].includes(philTypes[e.id]),
+  )
   if (roots.length === 0) return []
 
   const adj = new Map<string, string[]>()

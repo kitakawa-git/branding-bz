@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict'
 import { computeBuildScore, deriveBuildScoreInput, type BuildScoreInput } from './build-score'
 import type { ElementRef } from './elements-catalog'
-import type { RelationRow } from './map-data'
+import { findUnreachableFromPhilosophy, type RelationRow } from './map-data'
 
 const base = (over: Partial<BuildScoreInput> = {}): BuildScoreInput => ({
   counts: { mission: 1, vision: 1, value: 2, vp: 3, proof: 5, rule: 3, persona: 2, desiredEvidence: 1 },
@@ -76,11 +76,13 @@ assert.ok(rootlessConn.hint.includes('理念'))
 const catalog: ElementRef[] = [
   { kind: 'philosophy_element', id: 'ph1', label: 'ミッション' },
   { kind: 'philosophy_element', id: 'ph2', label: 'バリューA' },
+  { kind: 'philosophy_element', id: 'ph3', label: 'ビジョン（線なし）' },
   { kind: 'value_proposition', id: 'vp1', label: '提供価値A' },
   { kind: 'proof_point', id: 'pp1', label: '実績A' },
+  { kind: 'proof_point', id: 'pp2', label: '実績B（線なし）' },
   { kind: 'persona', id: 'pe1', label: 'ペルソナA' },
 ]
-const philTypes = { ph1: 'mission', ph2: 'value' }
+const philTypes = { ph1: 'mission', ph2: 'value', ph3: 'vision' }
 const rel = (id: string, sk: string, sid: string, rt: string, tk: string, tid: string): RelationRow => ({
   id,
   source_kind: sk as RelationRow['source_kind'],
@@ -105,17 +107,26 @@ const derived = deriveBuildScoreInput({
 })
 assert.equal(derived.counts.mission, 1)
 assert.equal(derived.counts.value, 1)
+assert.equal(derived.counts.vision, 1)
 assert.equal(derived.counts.vp, 1)
-assert.equal(derived.counts.proof, 1)
+assert.equal(derived.counts.proof, 2)
 assert.equal(derived.counts.persona, 1)
 assert.equal(derived.counts.rule, 2)
 assert.equal(derived.backing.targets, 1) // 提供価値があるのでVPモード
 assert.equal(derived.backing.backed, 1) // vp1 は evidencedBy 済み
 assert.equal(derived.backing.noun, '提供価値')
 assert.equal(derived.rules.withExamples, 1)
-assert.equal(derived.connectivity.unconnected, 2) // バリューph2・ペルソナpe1 は線なし
-assert.equal(derived.connectivity.unreachable, 1) // ph2（バリュー）だけ＝ペルソナは対象外
+assert.equal(derived.connectivity.unconnected, 4) // ph2・ph3・pp2・pe1 は線なし
+// M/V/V は常に根＝線が無くても「理念に届かない」には出ない。非根（実績pp2）だけが残る
+assert.equal(derived.connectivity.unreachable, 1)
 assert.equal(derived.connectivity.islands, 1)
+
+// 根の定義を直接確認: ビジョン/バリューは線が無くても unreachable に含まれない
+const unreachableRefs = findUnreachableFromPhilosophy(catalog, relations, philTypes, [])
+assert.deepEqual(
+  unreachableRefs.map((e) => e.id),
+  ['pp2'],
+)
 // 空企業でも derive が例外を出さない
 const emptyDerived = deriveBuildScoreInput({ catalog: [], philTypes: {}, relations: [], rules: [] })
 assert.equal(computeBuildScore(emptyDerived).total, 0)
