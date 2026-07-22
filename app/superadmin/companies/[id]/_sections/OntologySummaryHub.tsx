@@ -27,7 +27,7 @@ import BrandMap3D from './BrandMap3D'
 import OutputTestPanel from './OutputTestPanel'
 import type { ValuePropositionRef } from './ProofPointsSection'
 import { Button } from '@/components/ui/button'
-import { ArrowRight, ChevronDown, Maximize2, MoreHorizontal, X } from 'lucide-react'
+import { ChevronDown, Maximize2, MoreHorizontal, X } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -50,6 +50,14 @@ const CHIP_TONES: Record<'gray' | 'green' | 'amber' | 'blue', string> = {
   green: 'bg-green-100 text-green-800',
   amber: 'bg-amber-100 text-amber-800',
   blue: 'bg-blue-100 text-blue-800',
+}
+
+// 構築度チップ（押せるチップ）のトーン。未接続・提供価値未登録チップと同じ視覚言語
+// （枠線＋shadow-sm＋hoverで一段濃く＋持ち上がる）をバンド色ごとに用意する。
+const SCORE_CHIP_TONES: Record<'amber' | 'blue' | 'green', string> = {
+  amber: 'bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200 focus-visible:ring-amber-400',
+  blue: 'bg-blue-100 text-blue-800 border-blue-300 hover:bg-blue-200 focus-visible:ring-blue-400',
+  green: 'bg-green-100 text-green-800 border-green-300 hover:bg-green-200 focus-visible:ring-green-400',
 }
 
 const Chip = ({ label, value, tone = 'gray' }: { label: string; value: string; tone?: keyof typeof CHIP_TONES }) => (
@@ -233,11 +241,14 @@ export default function OntologySummaryHub({
         <PopoverTrigger asChild>
           <button
             type="button"
-            className={`inline-flex items-center gap-1 py-1 px-2.5 rounded-md text-[12px] font-semibold border-0 cursor-pointer hover:opacity-80 ${CHIP_TONES[s.band.tone]}`}
+            aria-label="構築度の内訳を見る"
             title="クリックで内訳を表示"
+            className={`inline-flex items-center gap-1.5 py-1 px-2.5 rounded-md text-[12px] font-semibold border cursor-pointer shadow-sm transition-all hover:shadow hover:-translate-y-px active:translate-y-0 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 ${SCORE_CHIP_TONES[s.band.tone]}`}
           >
             構築度 {s.total}
             <span className="font-normal opacity-80">（{s.band.label}）</span>
+            {/* 押すと内訳が開くことの視覚的な手がかり */}
+            <ChevronDown size={14} className="opacity-70" aria-hidden="true" />
           </button>
         </PopoverTrigger>
         <PopoverContent align="start" className="w-80 p-3">
@@ -349,7 +360,7 @@ export default function OntologySummaryHub({
               >
                 未接続 {unconnected}件
                 <span className="font-medium underline underline-offset-2 decoration-amber-500/60 group-hover:decoration-amber-700">繋ぎに行く</span>
-                <ArrowRight size={12} className="transition-transform group-hover:translate-x-0.5" />
+                <ChevronDown size={14} className="opacity-70" aria-hidden="true" />
               </button>
             </PopoverTrigger>
             <PopoverContent align="start" className="w-80 p-0">
@@ -388,7 +399,7 @@ export default function OntologySummaryHub({
                 <span className="font-medium underline underline-offset-2 decoration-amber-500/60 group-hover:decoration-amber-700">
                   繋ぎに行く
                 </span>
-                <ArrowRight size={12} className="transition-transform group-hover:translate-x-0.5" />
+                <ChevronDown size={14} className="opacity-70" aria-hidden="true" />
               </button>
             </PopoverTrigger>
             <PopoverContent align="start" className="w-80 p-0">
@@ -422,7 +433,7 @@ export default function OntologySummaryHub({
               >
                 理念が未登録
                 <span className="font-medium underline underline-offset-2 decoration-amber-500/60 group-hover:decoration-amber-700">登録する</span>
-                <ArrowRight size={12} className="transition-transform group-hover:translate-x-0.5" />
+                <ChevronDown size={14} className="opacity-70" aria-hidden="true" />
               </button>
             </PopoverTrigger>
             <PopoverContent align="start" className="w-80">
@@ -447,7 +458,7 @@ export default function OntologySummaryHub({
               >
                 提供価値が未登録
                 <span className="font-medium underline underline-offset-2 decoration-amber-500/60 group-hover:decoration-amber-700">登録する</span>
-                <ArrowRight size={12} className="transition-transform group-hover:translate-x-0.5" />
+                <ChevronDown size={14} className="opacity-70" aria-hidden="true" />
               </button>
             </PopoverTrigger>
             <PopoverContent align="start" className="w-80">
