@@ -16,7 +16,7 @@
 | ステータス（**コード案件**） | その repo の `docs/<CODE>-PROJECT-STATUS.md` | Drive 案件フォルダ／outputs |
 | ステータス（**非開発案件**） | Drive 案件フォルダ直下 `<CODE>-PROJECT-STATUS.md` | repo／outputs |
 | 横断ボード（全プロジェクト俯瞰） | Drive ハブ `PROJECTS-STATUS.md` | commit hash 等の細部を書かない（高レベルのみ） |
-| 資料・成果物（Excel/PDF/画像/スライド） | Drive 案件フォルダ | repo／outputs に残す |
+| 資料・成果物・アーティファクト（Excel/PDF/画像/スライド/生成物） | 該当プロジェクトの Drive 案件フォルダ（c###） | repo／outputs／汎用 Artifacts バケツに残す |
 | 認証情報（.env 等） | 各自の手元のみ | Git・公開 Drive に置く |
 
 ## 2. 絶対ルール（破らない）
@@ -27,6 +27,7 @@
 3. **コード作業の前に必ず `git pull --ff-only`。** 古い状態で作業して二重作業しない。
 4. **ステータスは `<CODE>-PROJECT-STATUS.md` 1ファイルを上書き。** 日付つきコピー・別名を作らない。
 5. **コードのパスは ASCII・スペースなし。** Drive 資料は日本語可だが `/`・スペース・括弧は避ける。
+6. **アーティファクト（生成物）は成果物と同じ扱い。** プロジェクト固有は該当 `c###` フォルダ、横断のものだけハブの `共有成果物/`。汎用 `Artifacts/` バケツにプロジェクト固有物を溜めない。
 
 ## 3. 実際に起きた誤り（再発させない）
 
