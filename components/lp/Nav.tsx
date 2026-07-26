@@ -11,6 +11,7 @@ const linksBefore = [
   { href: '/features', label: '機能' },
 ]
 const linksAfter = [
+  { href: '/wiki', label: '用語wiki' },
   { href: '/plan', label: '料金' },
   { href: '/faq', label: 'よくある質問' },
   { href: '/contact', label: 'お問い合わせ' },

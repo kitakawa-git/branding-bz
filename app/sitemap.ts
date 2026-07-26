@@ -1,5 +1,7 @@
 import type { MetadataRoute } from 'next'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { WIKI_CATEGORIES } from '@/lib/types/wiki'
+import { fetchPublishedTermSlugs } from '@/lib/wiki/queries'
 
 const BASE_URL = 'https://branding.bz'
 
@@ -25,6 +27,7 @@ const STATIC_PAGES: Array<{
   { path: '/faq', lastModified: '2026-07-14', changeFrequency: 'monthly', priority: 0.7 },
   { path: '/news', lastModified: '2026-07-14', changeFrequency: 'weekly', priority: 0.8 },
   { path: '/contact', lastModified: '2026-07-14', changeFrequency: 'yearly', priority: 0.6 },
+  { path: '/wiki', lastModified: '2026-07-27', changeFrequency: 'weekly', priority: 0.9 },
   { path: '/tools/colors', lastModified: '2026-07-14', changeFrequency: 'monthly', priority: 0.9 },
   { path: '/tools/stp', lastModified: '2026-07-14', changeFrequency: 'monthly', priority: 0.9 },
   { path: '/tools/persona', lastModified: '2026-07-14', changeFrequency: 'monthly', priority: 0.9 },
@@ -62,5 +65,29 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // 取得失敗時は静的エントリのみを返す（sitemap 全体を落とさない）
   }
 
-  return [...staticEntries, ...newsEntries]
+  // /wiki/[slug] と /wiki/category/[slug] を公開済み用語から動的に生成。
+  // 公開（status='published'）が0件のうちは何も出さない＝監修前の用語をクロールさせない。
+  let wikiEntries: MetadataRoute.Sitemap = []
+  try {
+    const terms = await fetchPublishedTermSlugs()
+    if (terms.length > 0) {
+      const termEntries: MetadataRoute.Sitemap = terms.map((t) => ({
+        url: `${BASE_URL}/wiki/${encodeURIComponent(t.slug)}`,
+        lastModified: new Date(t.updated_at),
+        changeFrequency: 'monthly' as const,
+        priority: 0.7,
+      }))
+      const categoryEntries: MetadataRoute.Sitemap = WIKI_CATEGORIES.map((c) => ({
+        url: `${BASE_URL}/wiki/category/${encodeURIComponent(c.value)}`,
+        lastModified: new Date('2026-07-27'),
+        changeFrequency: 'weekly' as const,
+        priority: 0.6,
+      }))
+      wikiEntries = [...categoryEntries, ...termEntries]
+    }
+  } catch {
+    // 取得失敗時は wiki を除いて返す（sitemap 全体を落とさない）
+  }
+
+  return [...staticEntries, ...newsEntries, ...wikiEntries]
 }

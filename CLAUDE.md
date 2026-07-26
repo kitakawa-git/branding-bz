@@ -217,7 +217,29 @@ id (uuid), company_id (FK→companies), name, position, department, bio, photo_u
 - NEXT_PUBLIC_SUPABASE_ANON_KEY
 - SUPABASE_SERVICE_ROLE_KEY（API Routeでのみ使用）
 
+## ブランディング用語wiki（/wiki・2026-07-27〜）
+
+- テーブルは `wiki_terms` / `wiki_term_sources` / `wiki_term_quotes` / `wiki_term_relations`
+  （migration `20260726163924_create_wiki_terms.sql`）。**公開制御は `wiki_terms.status`** の1本。
+  `published` だけが RLS で anon から読める。`review` は監修待ち＝公開ページに出ない。
+- 段階公開はカテゴリ単位の UPDATE で行う（監修が済んだカテゴリから）:
+  `update wiki_terms set status='published' where '基礎・核心' = any(categories);`
+- シードは `npx tsx scripts/seed-wiki.ts`（冪等・slug で upsert）。**すでに published の用語は review に戻さない**。
+  子テーブルは term_id 単位で全消し→再投入する。
+- **公開wikiのデータ取得は service_role ではなく anon キー（`lib/wiki/queries.ts`）**。理由2つ:
+  ① RLS の `status='published'` がそのまま公開判定になるので、アプリ側で条件を書き忘れても未監修の用語が漏れない
+  ② `SUPABASE_SERVICE_ROLE_KEY` を置いていない Vercel Preview でも generateStaticParams / ISR が落ちない。
+  **SSG/ISR のページで `getSupabaseAdmin()` を呼ぶと Preview ビルドが collect page data で落ちる**
+  （2026-07-16 の API route と同じ事故。`/news` が `getSupabaseAdmin()` を使えているのは `force-dynamic` だから）。
+- カテゴリは `lib/types/wiki.ts` の `WIKI_CATEGORIES`（7件）が正本。seed 側で
+  「特化・応用 (ID INC.独自)」→「特化・応用」に正規化している。
+- slug は日本語（terms.json 由来・230語中 ASCII は10語）。URL は percent-encode されるので
+  リンク生成は必ず `encodeURIComponent(slug)`、受け取りは `decodeURIComponent(slug)` を通すこと。
+
 ### 既知の注意点
+- **Node 20 では `scripts/*.ts` の Supabase クライアント生成が落ちる**
+  （`Node.js 20 detected without native WebSocket support` — supabase-js が realtime を初期化するため）。
+  スクリプト実行は Node 22 以上で行う: `PATH="$HOME/.nvm/versions/node/v22.23.1/bin:$PATH" npx tsx scripts/xxx.ts`
 - WebサイトURLはhttps://自動補完あり
 - provided_valuesはPostgreSQL配列型（text[]）
 - QRコードは1000x1000px高解像度対応
