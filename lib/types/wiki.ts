@@ -25,7 +25,7 @@ export type WikiSourceFilter = 'all' | 'has_quote' | 'bc_support' | 'id_tips' | 
 
 export const WIKI_SOURCE_FILTER_LABELS: Record<WikiSourceFilter, string> = {
   all: 'すべての出典',
-  has_quote: '北川の発言あり',
+  has_quote: 'ポッドキャストの引用あり',
   bc_support: 'brandcommit サポート由来',
   id_tips: 'ID INC. Tips 由来',
   ai_supplement: 'AI補完（監修中）',

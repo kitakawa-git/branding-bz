@@ -22,7 +22,7 @@ export default function TermCard({ term }: { term: WikiTermSummary }) {
         {term.has_quote && (
           <span className="inline-flex items-center gap-1 rounded-full border border-emerald-400/20 bg-emerald-500/15 px-2.5 py-0.5 text-xs font-medium text-emerald-300">
             <Mic size={12} />
-            北川の発言
+            ポッドキャスト
           </span>
         )}
       </div>
