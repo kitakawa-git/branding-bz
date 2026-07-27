@@ -5,12 +5,27 @@ import SourceList from '@/components/wiki/SourceList'
 import type { WikiTermDetail } from '@/lib/types/wiki'
 
 /* 用語詳細の本体。
-   読み順: 用語名＋英訳＋カテゴリ → 一文でいうと → 詳細定義 → 関連用語 → ID INC.の視点 → 参考ソース */
+   読み順: 用語名＋英訳＋カテゴリ → 一文でいうと → 詳細定義 → 関連用語 → ポッドキャスト引用 → 参考ソース */
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+/* longTitle: 文章に近い長い見出し用。字送り 0.15em のままだとモバイルで無駄に折り返すので詰める。 */
+function Section({
+  title,
+  children,
+  longTitle = false,
+}: {
+  title: React.ReactNode
+  children: React.ReactNode
+  longTitle?: boolean
+}) {
   return (
     <section className="mt-12">
-      <h2 className="mb-4 text-sm font-semibold tracking-[0.15em] text-blue-400">{title}</h2>
+      <h2
+        className={`mb-4 text-sm font-semibold text-blue-400 ${
+          longTitle ? 'tracking-wide' : 'tracking-[0.15em]'
+        }`}
+      >
+        {title}
+      </h2>
       {children}
     </section>
   )
@@ -53,14 +68,18 @@ export default function TermDetail({ term }: { term: WikiTermDetail }) {
         </Section>
       )}
 
-      {/* 北川引用 */}
+      {/* ポッドキャスト引用 */}
       {term.quotes.length > 0 && (
-        <Section title="ID INC. の視点">
-          <p className="mb-4 text-sm leading-relaxed text-white/45">
-            ポッドキャスト「
-            <span className="text-white/60">育てるブランディング</span>
-            」での ID INC. 代表 北川巧の発言から。
-          </p>
+        <Section
+          longTitle
+          /* 番組名はモバイルで「育／てる」のように途中で割れないよう分割禁止にする */
+          title={
+            <>
+              ID INC. のポッドキャスト
+              <span className="whitespace-nowrap">「育てるブランディング」より</span>
+            </>
+          }
+        >
           <div className="flex flex-col gap-4">
             {term.quotes.map((q) => (
               <QuoteBlock key={q.id} quote={q} />

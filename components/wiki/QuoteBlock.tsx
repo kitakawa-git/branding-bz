@@ -1,14 +1,15 @@
 import { ExternalLink, Quote } from 'lucide-react'
 import type { WikiTermQuote } from '@/lib/types/wiki'
 
-/* 北川発言の引用ブロック（ID INC. の視点）。
-   Quotation の JSON-LD も同じデータからこの場で出力し、表示と構造化データを1ソースに揃える。 */
+/* ポッドキャスト「育てるブランディング」からの引用ブロック。
+   Quotation の JSON-LD も同じデータからこの場で出力し、表示と構造化データを1ソースに揃える。
+   ※ 表示側で個人名を出さない方針にしたため、話者は個人ではなく ID INC.（Organization）に帰属させる。 */
 export default function QuoteBlock({ quote }: { quote: WikiTermQuote }) {
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Quotation',
     text: quote.quote,
-    spokenByCharacter: { '@type': 'Person', name: '北川 巧' },
+    spokenByCharacter: { '@type': 'Organization', name: 'ID INC.' },
     ...(quote.spotify_url ? { citation: quote.spotify_url } : {}),
   }
 
