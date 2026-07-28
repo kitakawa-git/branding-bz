@@ -30,7 +30,12 @@ const PLANS = [
     members: '—',
     support: '—',
     perPerson: '—',
-    features: ['AIツール体験（月3回）', '生成結果の画面確認', '名刺ページの公開閲覧'],
+    features: [
+      'AIツール体験（月3回）',
+      '生成結果の画面確認',
+      '名刺ページの公開閲覧',
+      'ブランド用語wiki 閲覧',
+    ],
     ctaLabel: '無料で始める',
     ctaHref: '/tools/colors',
     ctaStyle: 'outline' as const,
@@ -54,12 +59,13 @@ const PLANS = [
       'ブランドページ閲覧',
       '閲覧解析＋アウタースコア',
       'マイクロフィードバック',
+      'PWA対応（ホーム画面に追加）',
     ],
     ctaLabel: 'まずは名刺から始める',
     ctaHref: '/signup',
     ctaStyle: 'secondary' as const,
     reference:
-      'NFC名刺カード ¥3,000〜5,000＋月額なし → ブランドページ・解析・スコア付きで月¥4,980',
+      'デジタル名刺SaaS 1人あたり月300〜800円 → 30名で月9,000〜24,000円。branding.bz は人数無制限（30名まで）で月¥4,980',
     isHighlight: false,
   },
   {
@@ -70,12 +76,14 @@ const PLANS = [
     priceSuffix: '/月（税別）',
     description:
       'AIでブランドを構築し、名刺で届ける。コンサルの1/10以下の投資で、ブランド戦略を自社で策定。',
-    scale: '5〜50名',
+    scale: '10〜50名',
     members: '50名',
     support: 'メール',
-    perPerson: '¥396〜3,960',
+    perPerson: '¥396〜1,980',
     features: [
-      'AI生成 無制限',
+      'AIミニアプリ 4本 使い放題：',
+      'ブランドカラー定義 / STP分析',
+      'ペルソナビルダー / パーソナリティ診断',
       'PDF出力＋本体連携',
       'ブランド掲示 編集＋閲覧',
       'CIマニュアルPDF',
@@ -94,18 +102,25 @@ const PLANS = [
     price: '¥59,800',
     priceSuffix: '/月（税別）',
     description:
-      '構築から浸透・計測まで全機能。インナーサーベイ×アウタースコアで、ブランド浸透度を定量化。',
+      '構築から浸透・計測まで全機能。社員が学び、理解し、体現する仕組みと、それを数値で追う計測基盤。',
     scale: '50〜300名',
     members: '300名',
     support: 'メール＋チャット',
     perPerson: '¥199〜1,196',
     features: [
       'Standard全機能に加えて：',
-      'インナーサーベイ＋AI設問',
+      '― 浸透 ―',
+      'ビデオラーニング',
+      'ブランド理解度テスト',
+      'Good Jobタイムライン',
+      'お知らせ配信＋Web Push',
+      'KPI・目標管理',
+      '― 計測 ―',
+      'インナーサーベイ＋AI設問生成',
       '統合ブランドスコア',
+      'スコア推移の自動記録',
       '部署別ヒートマップ',
       'ギャップ分析',
-      'KPI・Good Jobタイムライン',
     ],
     ctaLabel: 'フル機能で導入する',
     ctaHref: '/contact',
@@ -116,9 +131,9 @@ const PLANS = [
 ]
 
 const UPSELL_STEPS = [
-  { name: 'Free', subtitle: '体験する', trigger: 'PDF・連携ボタンを\n押した瞬間' },
-  { name: 'Card', subtitle: '発信する', trigger: 'ブランド掲示を\n編集したい' },
-  { name: 'Standard', subtitle: '構築する', trigger: '社員に浸透させたい\n浸透度を測りたい' },
+  { name: 'Free', subtitle: '体験する', trigger: 'AI提案を\n保存・出力したい' },
+  { name: 'Card', subtitle: '発信する', trigger: 'ブランドを\nAIで作りたい' },
+  { name: 'Standard', subtitle: '構築する', trigger: '社員に\n浸透させたい' },
   { name: 'Premium', subtitle: '浸透＋計測', trigger: '全社のブランド力を\n数値で把握したい' },
 ]
 
@@ -129,6 +144,8 @@ const COMMON_ITEMS = [
   'SSL暗号化通信',
   'プランの変更・解約はいつでも可能',
   '名刺カードは追加発注可（実費）',
+  'PWA対応・スマホのホーム画面に追加可能',
+  'ブランド用語wiki（238語）は誰でも無料閲覧',
 ]
 
 export default function LpPlanPage() {
@@ -183,7 +200,7 @@ export default function LpPlanPage() {
 
                 <ul className="mb-4 space-y-2">
                   {plan.features.map((feature, idx) =>
-                    feature.endsWith('：') ? (
+                    feature.endsWith('：') || feature.startsWith('―') ? (
                       <li key={idx} className="text-xs font-semibold tracking-wide text-white/40">
                         {feature}
                       </li>
