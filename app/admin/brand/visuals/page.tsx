@@ -19,7 +19,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
-import { getPageCache, setPageCache } from '@/lib/page-cache'
+import { getPageCache, setPageCache, clearPageCache } from '@/lib/page-cache'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { AutoResizeTextarea } from '@/components/ui/auto-resize-textarea'
@@ -61,8 +61,8 @@ type ColorCategory = keyof ColorPalette
 
 const COLOR_CATEGORIES: { key: ColorCategory; label: string; minColors: number }[] = [
   { key: 'brand_colors', label: 'プライマリカラー', minColors: 1 },
-  { key: 'secondary_colors', label: 'セカンダリカラー', minColors: 1 },
-  { key: 'accent_colors', label: 'アクセントカラー', minColors: 1 },
+  { key: 'secondary_colors', label: 'セカンダリカラー', minColors: 0 },
+  { key: 'accent_colors', label: 'アクセントカラー', minColors: 0 },
   { key: 'utility_colors', label: 'その他', minColors: 0 },
 ]
 
@@ -851,6 +851,8 @@ export default function BrandVisualsPage() {
           portalSubtitle: portalSubtitle.trim(),
           portalSubtitlesData: updatedSubtitles,
         })
+        // ポータル側の同データキャッシュを無効化（同一ブラウザで管理画面→ポータル遷移時の反映漏れ防止）
+        clearPageCache(`portal-visuals-${companyId}`)
       } else {
         toast.error('保存に失敗しました: ' + result.error)
       }

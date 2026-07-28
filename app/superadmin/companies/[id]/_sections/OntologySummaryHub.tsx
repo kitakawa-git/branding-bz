@@ -356,10 +356,10 @@ export default function OntologySummaryHub({
             <PopoverTrigger asChild>
               <button
                 type="button"
-                className="group inline-flex items-center gap-1.5 py-1 px-2.5 rounded-md text-[12px] font-semibold bg-amber-100 text-amber-800 border border-amber-300 cursor-pointer shadow-sm transition-all hover:bg-amber-200 hover:shadow hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+                className="inline-flex items-center gap-1.5 py-1 px-2.5 rounded-md text-[12px] font-semibold bg-amber-100 text-amber-800 border border-amber-300 cursor-pointer shadow-sm transition-all hover:bg-amber-200 hover:shadow hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
               >
                 未接続 {unconnected}件
-                <span className="font-medium underline underline-offset-2 decoration-amber-500/60 group-hover:decoration-amber-700">繋ぎに行く</span>
+                <span className="font-medium">繋ぎに行く</span>
                 <ChevronDown size={14} className="opacity-70" aria-hidden="true" />
               </button>
             </PopoverTrigger>
@@ -393,10 +393,10 @@ export default function OntologySummaryHub({
             <PopoverTrigger asChild>
               <button
                 type="button"
-                className="group inline-flex items-center gap-1.5 py-1 px-2.5 rounded-md text-[12px] font-semibold bg-amber-100 text-amber-800 border border-amber-300 cursor-pointer shadow-sm transition-all hover:bg-amber-200 hover:shadow hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+                className="inline-flex items-center gap-1.5 py-1 px-2.5 rounded-md text-[12px] font-semibold bg-amber-100 text-amber-800 border border-amber-300 cursor-pointer shadow-sm transition-all hover:bg-amber-200 hover:shadow hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
               >
                 理念に届かない {unreachableItems.length}件
-                <span className="font-medium underline underline-offset-2 decoration-amber-500/60 group-hover:decoration-amber-700">
+                <span className="font-medium">
                   繋ぎに行く
                 </span>
                 <ChevronDown size={14} className="opacity-70" aria-hidden="true" />
@@ -429,10 +429,10 @@ export default function OntologySummaryHub({
             <PopoverTrigger asChild>
               <button
                 type="button"
-                className="group inline-flex items-center gap-1.5 py-1 px-2.5 rounded-md text-[12px] font-semibold bg-amber-100 text-amber-800 border border-amber-300 cursor-pointer shadow-sm transition-all hover:bg-amber-200 hover:shadow hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+                className="inline-flex items-center gap-1.5 py-1 px-2.5 rounded-md text-[12px] font-semibold bg-amber-100 text-amber-800 border border-amber-300 cursor-pointer shadow-sm transition-all hover:bg-amber-200 hover:shadow hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
               >
                 理念が未登録
-                <span className="font-medium underline underline-offset-2 decoration-amber-500/60 group-hover:decoration-amber-700">登録する</span>
+                <span className="font-medium">登録する</span>
                 <ChevronDown size={14} className="opacity-70" aria-hidden="true" />
               </button>
             </PopoverTrigger>
@@ -454,10 +454,10 @@ export default function OntologySummaryHub({
             <PopoverTrigger asChild>
               <button
                 type="button"
-                className="group inline-flex items-center gap-1.5 py-1 px-2.5 rounded-md text-[12px] font-semibold bg-amber-100 text-amber-800 border border-amber-300 cursor-pointer shadow-sm transition-all hover:bg-amber-200 hover:shadow hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+                className="inline-flex items-center gap-1.5 py-1 px-2.5 rounded-md text-[12px] font-semibold bg-amber-100 text-amber-800 border border-amber-300 cursor-pointer shadow-sm transition-all hover:bg-amber-200 hover:shadow hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
               >
                 提供価値が未登録
-                <span className="font-medium underline underline-offset-2 decoration-amber-500/60 group-hover:decoration-amber-700">登録する</span>
+                <span className="font-medium">登録する</span>
                 <ChevronDown size={14} className="opacity-70" aria-hidden="true" />
               </button>
             </PopoverTrigger>

@@ -9,3 +9,8 @@ export function getPageCache<T>(key: string): T | null {
 export function setPageCache<T>(key: string, data: T): void {
   cache.set(key, data)
 }
+
+// 指定キーのキャッシュを無効化（別画面の同データキャッシュを保存直後に消したい時に使用）
+export function clearPageCache(key: string): void {
+  cache.delete(key)
+}
