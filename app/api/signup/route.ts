@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { generateRandomSlug } from '@/lib/generate-slug'
+import { getEmailDomain, isFreeEmailDomain, FREE_EMAIL_REJECTION_MESSAGE } from '@/lib/constants/free-email-domains'
 
 // HTMLエスケープ（XSS対策）
 function escapeHtml(str: string): string {
@@ -68,6 +69,14 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // フリーメール（Gmail等の非企業ドメイン）は登録拒否。会社のメールアドレスのみ受け入れる。
+    if (isFreeEmailDomain(email)) {
+      return NextResponse.json(
+        { error: FREE_EMAIL_REJECTION_MESSAGE },
+        { status: 400 }
+      )
+    }
+
     // ステップ2: Auth user作成
     const { data: authData, error: createUserError } = await supabaseAdmin.auth.admin.createUser({
       email,
@@ -87,7 +96,7 @@ export async function POST(request: NextRequest) {
 
     // 競合ドメイン照合（ID INC. の競合ブロックリスト）。
     // フリーメールはドメインで判定できないため competitor_flag=false のまま superadmin の人手判断に委ねる。
-    const domain = email.split('@')[1]?.toLowerCase()
+    const domain = getEmailDomain(email)
     let competitorFlag = false
     if (domain) {
       const { data: blocked } = await supabaseAdmin
@@ -124,8 +133,8 @@ export async function POST(request: NextRequest) {
 
 
     // ステップ3.5: email_domain を設定（ドメイン認証用）
-    const FREE_DOMAINS = ['gmail.com','googlemail.com','yahoo.co.jp','yahoo.com','ymail.com','outlook.com','outlook.jp','hotmail.com','hotmail.co.jp','live.com','live.jp','msn.com','icloud.com','me.com','mac.com','aol.com','protonmail.com','proton.me','zoho.com','mail.com','gmx.com']
-    if (domain && !FREE_DOMAINS.includes(domain)) {
+    // フリーメールは上流で拒否済みだが、念のためここでもガードする。
+    if (domain && !isFreeEmailDomain(email)) {
       await supabaseAdmin
         .from('companies')
         .update({ email_domain: domain })

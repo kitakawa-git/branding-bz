@@ -11,6 +11,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { Input } from '@/components/ui/input'
 import { Building2, Plus, Clock } from 'lucide-react'
+import { isFreeEmailDomain, FREE_EMAIL_REJECTION_MESSAGE } from '@/lib/constants/free-email-domains'
 
 interface MatchedCompany {
   id: string
@@ -43,6 +44,7 @@ export default function SignupPage() {
 
   const validateStep1 = (): boolean => {
     if (!email) { setError('メールアドレスを入力してください'); return false }
+    if (isFreeEmailDomain(email)) { setError(FREE_EMAIL_REJECTION_MESSAGE); return false }
     if (password.length < 6) { setError('パスワードは6文字以上で入力してください'); return false }
     if (password !== passwordConfirm) { setError('パスワードが一致しません'); return false }
     return true

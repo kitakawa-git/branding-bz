@@ -2,17 +2,7 @@
 // POST /api/signup/check-domain
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
-
-// フリーメールドメイン一覧（これらは企業マッチング対象外）
-const FREE_EMAIL_DOMAINS = new Set([
-  'gmail.com', 'googlemail.com',
-  'yahoo.co.jp', 'yahoo.com', 'ymail.com',
-  'outlook.com', 'outlook.jp', 'hotmail.com', 'hotmail.co.jp',
-  'live.com', 'live.jp', 'msn.com',
-  'icloud.com', 'me.com', 'mac.com',
-  'aol.com', 'protonmail.com', 'proton.me',
-  'zoho.com', 'mail.com', 'gmx.com',
-])
+import { FREE_EMAIL_DOMAINS } from '@/lib/constants/free-email-domains'
 
 export async function POST(request: NextRequest) {
   try {
