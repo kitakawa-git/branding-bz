@@ -241,7 +241,7 @@ export default function MarketSurveyDetailPage() {
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-4 text-center">
             <p className="mb-1 text-xs text-muted-foreground">市場浸透</p>
-            <span className="text-3xl font-bold text-ds-app-accent">
+            <span className="text-3xl font-bold text-green-600">
               {marketScore !== null ? marketScore.toFixed(1) : '-'}
             </span>
             {marketScore === null && (
@@ -269,7 +269,7 @@ export default function MarketSurveyDetailPage() {
                         s?.status === 'scored'
                           ? isWeakest
                             ? 'text-orange-600'
-                            : 'text-ds-app-accent'
+                            : 'text-green-600'
                           : 'text-muted-foreground'
                       }`}
                     >
@@ -308,8 +308,8 @@ export default function MarketSurveyDetailPage() {
                   <PolarRadiusAxis domain={[0, 100]} tick={{ fontSize: 9, fill: '#9ca3af' }} />
                   <Radar
                     dataKey="score"
-                    stroke="#2563eb"
-                    fill="#3b82f6"
+                    stroke="#16a34a"
+                    fill="#22c55e"
                     fillOpacity={0.35}
                   />
                   <Tooltip formatter={(v: number) => [`${v}点`, 'スコア']} />
@@ -334,7 +334,7 @@ export default function MarketSurveyDetailPage() {
                     競合ポジション（{MARKET_STAGE_LABELS[stage]}）
                   </h2>
                   <p className="mb-3 text-xs text-muted-foreground">
-                    同じ設問での他社との位置関係。青が自社です。
+                    同じ設問での他社との位置関係。緑が自社です。
                   </p>
                   <ResponsiveContainer width="100%" height={Math.max(240, rows.length * 22)}>
                     <BarChart data={rows} layout="vertical" margin={{ left: 8, right: 24 }}>
@@ -348,7 +348,7 @@ export default function MarketSurveyDetailPage() {
                       <Tooltip formatter={(v: number) => [`${v.toFixed(1)}%`, '']} />
                       <Bar dataKey="value" radius={[0, 3, 3, 0]}>
                         {rows.map((r, i) => (
-                          <RCell key={i} fill={r.isSelf ? '#2563eb' : '#d1d5db'} />
+                          <RCell key={i} fill={r.isSelf ? '#16a34a' : '#d1d5db'} />
                         ))}
                       </Bar>
                     </BarChart>
@@ -379,8 +379,8 @@ export default function MarketSurveyDetailPage() {
                 s?.status === 'scored' && highest !== null && s.score === highest
 
               const bars = [
-                { key: '自社', value: s?.raw_percent ?? null, color: 'bg-ds-app-accent-soft' },
-                { key: '競合平均', value: bm?.competitorAvg ?? null, color: 'bg-green-500' },
+                { key: '自社', value: s?.raw_percent ?? null, color: 'bg-green-500' },
+                { key: '競合平均', value: bm?.competitorAvg ?? null, color: 'bg-ds-app-accent-soft' },
                 { key: '競合トップ', value: bm?.competitorMax ?? null, color: 'bg-orange-400' },
               ]
 
@@ -442,7 +442,7 @@ export default function MarketSurveyDetailPage() {
                               isWeakest
                                 ? 'text-orange-600'
                                 : isBest
-                                  ? 'text-ds-app-accent'
+                                  ? 'text-green-600'
                                   : 'text-foreground'
                             }`}
                           >
@@ -464,10 +464,10 @@ export default function MarketSurveyDetailPage() {
 
           <div className="mt-3 flex flex-wrap items-center gap-4 text-[10px] text-muted-foreground">
             <span className="flex items-center gap-1">
-              <span className="inline-block size-2.5 rounded-sm bg-ds-app-accent-soft" />自社
+              <span className="inline-block size-2.5 rounded-sm bg-green-500" />自社
             </span>
             <span className="flex items-center gap-1">
-              <span className="inline-block size-2.5 rounded-sm bg-green-500" />競合平均
+              <span className="inline-block size-2.5 rounded-sm bg-ds-app-accent-soft" />競合平均
             </span>
             <span className="flex items-center gap-1">
               <span className="inline-block size-2.5 rounded-sm bg-orange-400" />競合トップ

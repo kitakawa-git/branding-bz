@@ -257,7 +257,7 @@ export default function MarketSurveysPage() {
                   <div className="mb-2 flex items-center gap-3">
                     <Progress
                       value={mappingRate}
-                      className="h-1.5 flex-1 [&>div]:bg-ds-app-accent-soft"
+                      className="h-1.5 flex-1 [&>div]:bg-green-500"
                     />
                     <span className="shrink-0 text-[10px] text-muted-foreground">
                       5段階のうち {s.resolved_stage_count} 件を設定済み
