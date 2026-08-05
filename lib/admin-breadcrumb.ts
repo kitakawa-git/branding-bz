@@ -5,6 +5,12 @@
 export type AdminCrumb = {
   section?: string // サイドバーのグループ名（リンクなしの薄字）
   title: string // 現在ページ名
+  /**
+   * サブページ（/xxx/[id] 等）で使う crumb。
+   * 未指定ならサブページは親と同じ crumb を継承する。
+   * 一覧→詳細で表示を変えたいページだけ指定する。
+   */
+  child?: Omit<AdminCrumb, 'child'>
 }
 
 // 完全一致を優先、なければ最長プレフィックス一致で解決する
@@ -18,7 +24,13 @@ const breadcrumbMap: Record<string, AdminCrumb> = {
   '/admin/analytics/learning': { section: 'ダッシュボード', title: '視聴分析' },
   // 浸透セクション（サイドバーのグループ名に合わせる）
   // 詳細ページ（/surveys/[id] 等）はプレフィックス一致でこのcrumbを継承する
-  '/admin/brand-score/surveys': { section: '浸透', title: 'サーベイ管理' },
+  '/admin/brand-score/surveys': {
+    section: '浸透',
+    title: 'サーベイ管理',
+    // 詳細画面は「サーベイ管理 › 詳細」。ページ本体に調査名のH1があるため
+    // パンくずでは調査名を繰り返さない
+    child: { section: 'サーベイ管理', title: '詳細' },
+  },
   '/admin/brand-score/quizzes': { section: '浸透', title: '理解度テスト' },
   '/admin/learning': { section: '浸透', title: 'ラーニング' },
   // サイドバーでグループに属さない項目はセクションなし
@@ -51,5 +63,7 @@ export function resolveAdminCrumb(pathname: string): AdminCrumb | null {
       }
     }
   }
-  return best?.crumb ?? null
+  if (!best) return null
+  // child があればサブページ用の crumb を返す（無ければ親をそのまま継承）
+  return best.crumb.child ?? best.crumb
 }
