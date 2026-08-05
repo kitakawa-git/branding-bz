@@ -4,6 +4,14 @@
 import { SupabaseClient } from '@supabase/supabase-js'
 import { fetchAllRows } from './fetch-all-rows'
 import { resolveStage, ALL_STAGES, type FunnelStage } from './funnel-stages'
+import {
+  OUTER_TRACK_WEIGHTS,
+  computeDigitalMetrics,
+  weightedAverage,
+} from './outer-metrics'
+import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
+import { computeMarketScore } from './market-stage-score'
+import type { MarketStageStatus } from './market-stages'
 
 // ────────────────────────────────────────────
 // 型定義
@@ -29,6 +37,12 @@ export interface SnapshotResult {
   outer_transition: number | null
   outer_engagement: number | null
   outer_impression: number | null
+  /** 市場浸透（外部調査由来）。調査が無ければ null */
+  outer_market: number | null
+  /** デジタル接点（名刺ログ由来）。従来の outer_score と同じ値 */
+  outer_digital: number | null
+  outer_market_stages: Record<string, number> | null
+  outer_market_survey_id: string | null
   // 総合
   total_score: number | null
   rank: string
@@ -53,20 +67,8 @@ export function getRank(score: number | null): string {
   return 'D'
 }
 
-/** 0-100にクランプ */
-function clamp(v: number): number {
-  return Math.max(0, Math.min(100, Math.round(v)))
-}
-
-/** 線形マッピング: 0→0, mid→50, max→100 */
-function linearScore(value: number, midValue: number, maxValue: number): number {
-  if (value <= 0) return 0
-  if (value >= maxValue) return 100
-  if (value <= midValue) {
-    return (value / midValue) * 50
-  }
-  return 50 + ((value - midValue) / (maxValue - midValue)) * 50
-}
+// clamp / linearScore は lib/brand-score/outer-metrics.ts へ移設した
+// （outer-score API と式が重複していたため）
 
 /** カテゴリ別スコア算出（1-5スケールの平均を0-100に正規化） */
 function calcCategoryScore(
@@ -244,6 +246,15 @@ async function calculateOuterScore(
   cutoff.setDate(cutoff.getDate() - periodDays)
   const cutoffISO = cutoff.toISOString()
 
+  // 0. スマート名刺のオン/オフ。オフなら名刺ページが非公開でログが溜まらないので、
+  //    デジタル接点は「未計測」として扱う（0点にはしない）
+  const { data: company } = await supabase
+    .from('companies')
+    .select('card_enabled')
+    .eq('id', companyId)
+    .single()
+  const cardEnabled = isFeatureEnabled(company, 'card_enabled')
+
   // 1. 社員数
   const { count: memberCount } = await supabase
     .from('profiles')
@@ -310,48 +321,94 @@ async function calculateOuterScore(
     }
   }
 
-  // 6. スコア算出
-  const weights = {
-    reach: 0.20,
-    interest: 0.20,
-    transition: 0.25,
-    engagement: 0.20,
-    impression: 0.15,
-  }
-
-  // 到達力: UU数/社員数×10 → 0-100
-  const reachScore = clamp(members > 0 ? (uniqueVisitors / members) * 10 : 0)
-
-  // 関心度: vcard_download/PV×100 → linear(10, 20)
-  const interestPct = totalCardViews > 0 ? (vcardDownloads / totalCardViews) * 100 : 0
-  const interestScore = clamp(linearScore(interestPct, 10, 20))
-
-  // ブランド遷移率: brand_page_click/PV×100 → linear(5, 15)
-  const transitionPct = totalCardViews > 0 ? (brandPageClicks / totalCardViews) * 100 : 0
-  const transitionScore = clamp(linearScore(transitionPct, 5, 15))
-
-  // ブランド関与度: 平均滞在秒数 → linear(30, 90)
-  const engagementScore = clamp(linearScore(avgDuration, 30, 90))
-
-  // 印象一致度: Phase C 未実装 → null
-  const impressionScore = null
-
-  // 総合: 有効指標の加重平均（nullは按分）
-  const activeWeight = weights.reach + weights.interest + weights.transition + weights.engagement
-  const outerTotal = clamp(
-    (reachScore * weights.reach +
-      interestScore * weights.interest +
-      transitionScore * weights.transition +
-      engagementScore * weights.engagement) / activeWeight
+  // 6. スコア算出（式は outer-metrics.ts が持つ。outer-score API と共通）
+  const { scores, digitalScore, unavailable } = computeDigitalMetrics(
+    {
+      members,
+      uniqueVisitors,
+      totalCardViews,
+      vcardDownloads,
+      brandPageClicks,
+      avgDuration,
+    },
+    { cardEnabled }
   )
 
+  // 未計測のときは内訳も残さない。スナップショットに0点が並ぶと
+  // 「測ったうえで0点だった」ように読めてしまう
+  const measured = unavailable === null
+
   return {
-    score: outerTotal,
-    reach: reachScore,
-    interest: interestScore,
-    transition: transitionScore,
-    engagement: engagementScore,
-    impression: impressionScore,
+    score: digitalScore,
+    reach: measured ? scores.reach : null,
+    interest: measured ? scores.interest : null,
+    transition: measured ? scores.transition : null,
+    engagement: measured ? scores.engagement : null,
+    // 印象一致度は未実装。weightedAverage が分母から外している
+    impression: null,
+  }
+}
+
+// ────────────────────────────────────────────
+// 市場浸透スコア算出（外部調査由来）
+// ────────────────────────────────────────────
+
+export interface MarketResult {
+  score: number | null
+  stages: Record<string, number> | null
+  survey_id: string | null
+}
+
+/**
+ * status='active' の市場調査から5段階スコアを取り出して平均する。
+ * 調査が無い企業では全て null を返し、アウタースコアは従来どおり
+ * デジタル接点だけで決まる（既存挙動を変えない）。
+ */
+export async function calculateMarketScore(
+  supabase: SupabaseClient,
+  companyId: string,
+): Promise<MarketResult> {
+  const empty: MarketResult = { score: null, stages: null, survey_id: null }
+
+  // 反映対象は最新の1件。過年度は archived にして外す運用
+  const { data: surveys } = await supabase
+    .from('market_surveys')
+    .select('id')
+    .eq('company_id', companyId)
+    .eq('status', 'active')
+    .order('fielded_to', { ascending: false, nullsFirst: false })
+    .order('created_at', { ascending: false })
+    .limit(1)
+
+  const survey = surveys?.[0]
+  if (!survey) return empty
+
+  const { data: scores } = await supabase
+    .from('market_survey_stage_scores')
+    .select('stage, status, score')
+    .eq('survey_id', survey.id)
+
+  if (!scores || scores.length === 0) return { ...empty, survey_id: survey.id }
+
+  const marketScore = computeMarketScore(
+    scores.map((s) => ({
+      status: s.status as MarketStageStatus,
+      score: s.score === null ? null : Number(s.score),
+    })),
+  )
+
+  // 未計測（absent）の段階は保存しない。0 と区別できなくなるため
+  const stages: Record<string, number> = {}
+  for (const s of scores) {
+    if (s.status === 'scored' && s.score !== null) {
+      stages[s.stage as string] = Number(s.score)
+    }
+  }
+
+  return {
+    score: marketScore,
+    stages: Object.keys(stages).length > 0 ? stages : null,
+    survey_id: survey.id,
   }
 }
 
@@ -372,20 +429,30 @@ export async function calculateSnapshot(
 ): Promise<SnapshotResult> {
   const snapshotDate = new Date().toISOString().split('T')[0]
 
-  // インナー・アウターを並列算出
-  const [inner, outer] = await Promise.all([
+  // インナー・デジタル接点・市場浸透を並列算出
+  const [inner, digital, market] = await Promise.all([
     calculateInnerScore(supabase, companyId),
     calculateOuterScore(supabase, companyId, periodDays),
+    calculateMarketScore(supabase, companyId),
+  ])
+
+  // アウター = 市場浸透 + デジタル接点の加重平均（重みは OUTER_TRACK_WEIGHTS）。
+  // 片方が null ならもう片方が100%になる。
+  // 市場浸透を主にするのは、名刺のアクセスログが「社外にどこまで届いているか」
+  // をほとんど表さないため（実例: 認知率77%の会社のアウターが6.0だった）
+  const outerScore = weightedAverage([
+    { score: market.score, weight: OUTER_TRACK_WEIGHTS.market },
+    { score: digital.score, weight: OUTER_TRACK_WEIGHTS.digital },
   ])
 
   // 総合スコア: inner(50%) + outer(50%)、片方nullなら100%按分
   let totalScore: number | null = null
-  if (inner.score !== null && outer.score !== null) {
-    totalScore = Math.round((inner.score * 0.5 + outer.score * 0.5) * 10) / 10
+  if (inner.score !== null && outerScore !== null) {
+    totalScore = Math.round((inner.score * 0.5 + outerScore * 0.5) * 10) / 10
   } else if (inner.score !== null) {
     totalScore = inner.score
-  } else if (outer.score !== null) {
-    totalScore = outer.score
+  } else if (outerScore !== null) {
+    totalScore = outerScore
   }
 
   const rank = getRank(totalScore)
@@ -401,17 +468,56 @@ export async function calculateSnapshot(
     inner_stages: inner.stages,
     inner_survey_id: inner.survey_id,
     inner_response_rate: inner.response_rate,
-    outer_score: outer.score,
-    outer_reach: outer.reach,
-    outer_interest: outer.interest,
-    outer_transition: outer.transition,
-    outer_engagement: outer.engagement,
-    outer_impression: outer.impression,
+    outer_score: outerScore,
+    outer_reach: digital.reach,
+    outer_interest: digital.interest,
+    outer_transition: digital.transition,
+    outer_engagement: digital.engagement,
+    outer_impression: digital.impression,
+    outer_market: market.score,
+    outer_digital: digital.score,
+    outer_market_stages: market.stages,
+    outer_market_survey_id: market.survey_id,
     total_score: totalScore,
     rank,
     metadata: {
       calculated_at: new Date().toISOString(),
       period_days: periodDays,
+      // アウターの算出式の世代。v1 = デジタル接点のみ / v2 = 市場浸透との合成
+      outer_formula: market.score !== null ? 'v2' : 'v1',
     },
+  }
+}
+
+/**
+ * SnapshotResult → brand_score_snapshots の行。
+ * cron と手動保存APIに同じ列リストが複製されていたため共通化した
+ * （列を足すたびに片方が漏れる）。
+ */
+export function snapshotToRow(s: SnapshotResult): Record<string, unknown> {
+  return {
+    company_id: s.company_id,
+    snapshot_date: s.snapshot_date,
+    period_days: s.period_days,
+    inner_score: s.inner_score,
+    inner_why: s.inner_why,
+    inner_how: s.inner_how,
+    inner_what: s.inner_what,
+    inner_stages: s.inner_stages,
+    inner_survey_id: s.inner_survey_id,
+    inner_response_rate: s.inner_response_rate,
+    outer_score: s.outer_score,
+    outer_reach: s.outer_reach,
+    outer_interest: s.outer_interest,
+    outer_transition: s.outer_transition,
+    outer_engagement: s.outer_engagement,
+    outer_impression: s.outer_impression,
+    outer_market: s.outer_market,
+    outer_digital: s.outer_digital,
+    outer_market_stages: s.outer_market_stages,
+    outer_market_survey_id: s.outer_market_survey_id,
+    total_score: s.total_score,
+    rank: s.rank,
+    metadata: s.metadata,
   }
 }

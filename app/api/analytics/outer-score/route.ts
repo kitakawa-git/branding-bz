@@ -3,35 +3,18 @@
 // 指定企業の外部ブランド浸透度スコアを算出して返す
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { getRank, calculateMarketScore } from '@/lib/brand-score/calculate-snapshot'
+import {
+  OUTER_WEIGHTS,
+  OUTER_TRACK_WEIGHTS,
+  computeDigitalMetrics,
+  weightedAverage,
+} from '@/lib/brand-score/outer-metrics'
+import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
 
-// --- 線形マッピングヘルパー ---
-// value=0→0, value=midValue→50, value>=maxValue→100, 間は線形補間
-function linearScore(value: number, midValue: number, maxValue: number): number {
-  if (value <= 0) return 0
-  if (value >= maxValue) return 100
-  if (value <= midValue) {
-    // 0→0, midValue→50
-    return (value / midValue) * 50
-  }
-  // midValue→50, maxValue→100
-  return 50 + ((value - midValue) / (maxValue - midValue)) * 50
-}
-
-// 0-100にクランプ
-function clamp(v: number): number {
-  return Math.max(0, Math.min(100, Math.round(v)))
-}
-
-// ランク判定
-function getRank(score: number): string {
-  if (score >= 90) return 'S'
-  if (score >= 80) return 'A+'
-  if (score >= 70) return 'A'
-  if (score >= 60) return 'B+'
-  if (score >= 50) return 'B'
-  if (score >= 40) return 'C'
-  return 'D'
-}
+// スコアの算出式は lib/brand-score/outer-metrics.ts に集約している。
+// 以前はこのファイルと calculate-snapshot.ts に同じ式が複製されており、
+// 片方だけ直すと画面とスナップショットが食い違う状態だった。
 
 export async function GET(request: NextRequest) {
   try {
@@ -49,6 +32,15 @@ export async function GET(request: NextRequest) {
     }
 
     const supabase = getSupabaseAdmin()
+
+    // スマート名刺がオフの会社は、名刺ページ自体が非公開なのでアクセスログが
+    // 溜まらない。0件を低評価として扱わないよう、デジタル接点は最初から外す
+    const { data: company } = await supabase
+      .from('companies')
+      .select('card_enabled')
+      .eq('id', companyId)
+      .single()
+    const cardEnabled = isFeatureEnabled(company, 'card_enabled')
 
     // 集計期間の起点
     const cutoff = new Date()
@@ -144,49 +136,44 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // --- スコア算出 ---
-
-    // ■ 到達力（重み20%）: 名刺UU数 ÷ 社員数 × 10 → 0-100クランプ
-    const reachValue = members > 0 ? (uniqueVisitors / members) * 10 : 0
-    const reachScore = clamp(reachValue)
-
-    // ■ 関心度（重み20%）: vcard_download数 ÷ 名刺PV数 × 100
-    // 線形マッピング: 0%→0, 10%→50, 20%以上→100
-    const interestPct = totalCardViews > 0 ? (vcardDownloads / totalCardViews) * 100 : 0
-    const interestScore = clamp(linearScore(interestPct, 10, 20))
-
-    // ■ ブランド遷移率（重み25%）: brand_page_click数 ÷ 名刺PV数 × 100
-    // 線形マッピング: 0%→0, 5%→50, 15%以上→100
-    const transitionPct = totalCardViews > 0 ? (brandPageClicks / totalCardViews) * 100 : 0
-    const transitionScore = clamp(linearScore(transitionPct, 5, 15))
-
-    // ■ ブランド関与度（重み20%）: 平均滞在秒数
-    // 線形マッピング: 0s→0, 30s→50, 90s以上→100
-    const engagementValue = avgDuration
-    const engagementScore = clamp(linearScore(engagementValue, 30, 90))
-
-    // ■ 印象一致度（重み15%）: Phase Cで実装 → null
-    const impressionScore = null
-
-    // --- 総合スコア（有効指標の加重平均、nullは按分） ---
-    const weights = {
-      reach: 0.20,
-      interest: 0.20,
-      transition: 0.25,
-      engagement: 0.20,
-      impression: 0.15,
-    }
-
-    // 印象一致度がnullなので残り85%で按分
-    const activeWeight = weights.reach + weights.interest + weights.transition + weights.engagement
-    const outerScore = clamp(
-      (reachScore * weights.reach +
-        interestScore * weights.interest +
-        transitionScore * weights.transition +
-        engagementScore * weights.engagement) / activeWeight
+    // --- スコア算出（式は outer-metrics.ts が持つ） ---
+    // 印象一致度は未実装のため null。weightedAverage が分母から外すので
+    // 実質は残り4指標の加重平均になる（従来の /0.85 と同値）
+    const { values, scores, digitalScore, unavailable } = computeDigitalMetrics(
+      {
+        members,
+        uniqueVisitors,
+        totalCardViews,
+        vcardDownloads,
+        brandPageClicks,
+        avgDuration,
+      },
+      { cardEnabled }
     )
 
+    // 市場浸透（外部調査）。取り込んで反映中の調査が無ければ null になり、
+    // アウタースコアは従来どおりデジタル接点だけで決まる
+    const market = await calculateMarketScore(supabase, companyId)
+
+    // 画面に「n = 400」と出すためのサンプル数。調査が無ければ null
+    let marketSampleSize: number | null = null
+    if (market.survey_id) {
+      const { data: ms } = await supabase
+        .from('market_surveys')
+        .select('sample_size')
+        .eq('id', market.survey_id)
+        .single()
+      marketSampleSize = (ms?.sample_size as number | null) ?? null
+    }
+
+    const outerScore =
+      weightedAverage([
+        { score: market.score, weight: OUTER_TRACK_WEIGHTS.market },
+        { score: digitalScore, weight: OUTER_TRACK_WEIGHTS.digital },
+      ]) ?? 0
+
     const rank = getRank(outerScore)
+    const r2 = (v: number) => Math.round(v * 100) / 100
 
     return NextResponse.json({
       period_days: period,
@@ -194,12 +181,20 @@ export async function GET(request: NextRequest) {
       unique_visitors: uniqueVisitors,
       member_count: members,
       scores: {
-        reach: { value: Math.round(reachValue * 100) / 100, score: reachScore, weight: weights.reach },
-        interest: { value: Math.round(interestPct * 100) / 100, score: interestScore, weight: weights.interest },
-        transition: { value: Math.round(transitionPct * 100) / 100, score: transitionScore, weight: weights.transition },
-        engagement: { value: Math.round(engagementValue * 100) / 100, score: engagementScore, weight: weights.engagement },
+        reach: { value: r2(values.reach), score: scores.reach, weight: OUTER_WEIGHTS.reach },
+        interest: { value: r2(values.interest), score: scores.interest, weight: OUTER_WEIGHTS.interest },
+        transition: { value: r2(values.transition), score: scores.transition, weight: OUTER_WEIGHTS.transition },
+        engagement: { value: r2(values.engagement), score: scores.engagement, weight: OUTER_WEIGHTS.engagement },
         impression: null,
       },
+      // 2本立ての内訳
+      digital_score: digitalScore,
+      // null の理由。disabled=機能オフ / insufficient_data=PV不足
+      digital_unavailable: unavailable,
+      market_score: market.score,
+      market_stages: market.stages,
+      market_survey_id: market.survey_id,
+      market_sample_size: marketSampleSize,
       outer_score: outerScore,
       rank,
     })

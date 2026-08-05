@@ -27,11 +27,14 @@ export type AdminCrumb = {
 const breadcrumbMap: Record<string, AdminCrumb> = {
   // ダッシュボードは4つのタブを持つ1つの領域。
   // セクションに領域名、タイトルに現在のタブ名を置く（タブ名は
-  // lib/constants/dashboard-tabs.ts の DASHBOARD_TABS と揃えること）
-  '/admin/dashboard': { section: 'ダッシュボード', sectionHref: '/admin/dashboard', title: 'タイムライン分析' },
-  '/admin/brand-score': { section: 'ダッシュボード', sectionHref: '/admin/dashboard', title: 'ブランドスコア' },
-  '/admin/analytics': { section: 'ダッシュボード', sectionHref: '/admin/dashboard', title: 'スマート名刺' },
-  '/admin/analytics/learning': { section: 'ダッシュボード', sectionHref: '/admin/dashboard', title: '視聴分析' },
+  // lib/constants/dashboard-tabs.ts の DASHBOARD_TABS と揃えること）。
+  // セクションの戻り先はブランドスコア（先頭タブ）。サイドバーの
+  // 「ダッシュボード」と同じ場所に着かないと、パンくずで戻ったつもりが
+  // タイムライン分析に飛ばされる
+  '/admin/dashboard': { section: 'ダッシュボード', sectionHref: '/admin/brand-score', title: 'タイムライン分析' },
+  '/admin/brand-score': { section: 'ダッシュボード', sectionHref: '/admin/brand-score', title: 'ブランドスコア' },
+  '/admin/analytics': { section: 'ダッシュボード', sectionHref: '/admin/brand-score', title: 'スマート名刺' },
+  '/admin/analytics/learning': { section: 'ダッシュボード', sectionHref: '/admin/brand-score', title: '視聴分析' },
   // 浸透セクション（サイドバーのグループ名に合わせる）
   // 詳細ページ（/surveys/[id] 等）はプレフィックス一致でこのcrumbを継承する
   '/admin/brand-score/surveys': {
@@ -40,6 +43,12 @@ const breadcrumbMap: Record<string, AdminCrumb> = {
     // 詳細画面は「サーベイ管理 › 詳細」。ページ本体に調査名のH1があるため
     // パンくずでは調査名を繰り返さない
     child: { section: 'サーベイ管理', title: '詳細' },
+  },
+  '/admin/brand-score/market-surveys': {
+    section: '浸透',
+    title: '市場調査',
+    // 詳細・マッピング画面は「市場調査 › …」。sectionHref は resolveAdminCrumb が補う
+    child: { section: '市場調査', title: '詳細' },
   },
   '/admin/brand-score/quizzes': { section: '浸透', title: '理解度テスト' },
   '/admin/learning': { section: '浸透', title: 'ラーニング' },

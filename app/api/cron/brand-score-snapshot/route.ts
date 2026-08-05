@@ -4,7 +4,7 @@
 // スナップショットを集計・保存し、next_snapshot_date を次回日付に更新する
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { calculateSnapshot } from '@/lib/brand-score/calculate-snapshot'
+import { calculateSnapshot, snapshotToRow } from '@/lib/brand-score/calculate-snapshot'
 import { calcNextSnapshotDate, type Frequency } from '@/lib/brand-score/schedule-utils'
 
 export const runtime = 'nodejs'
@@ -60,30 +60,10 @@ export async function GET(request: NextRequest) {
         // 1. スナップショット集計
         const snapshot = await calculateSnapshot(supabase, schedule.company_id, 30)
 
-        // 2. brand_score_snapshots に INSERT
+        // 2. brand_score_snapshots に INSERT（列リストは snapshotToRow が持つ）
         const { error: insertErr } = await supabase
           .from('brand_score_snapshots')
-          .insert({
-            company_id: snapshot.company_id,
-            snapshot_date: snapshot.snapshot_date,
-            period_days: snapshot.period_days,
-            inner_score: snapshot.inner_score,
-            inner_why: snapshot.inner_why,
-            inner_how: snapshot.inner_how,
-            inner_what: snapshot.inner_what,
-          inner_stages: snapshot.inner_stages,
-            inner_survey_id: snapshot.inner_survey_id,
-            inner_response_rate: snapshot.inner_response_rate,
-            outer_score: snapshot.outer_score,
-            outer_reach: snapshot.outer_reach,
-            outer_interest: snapshot.outer_interest,
-            outer_transition: snapshot.outer_transition,
-            outer_engagement: snapshot.outer_engagement,
-            outer_impression: snapshot.outer_impression,
-            total_score: snapshot.total_score,
-            rank: snapshot.rank,
-            metadata: snapshot.metadata,
-          })
+          .insert(snapshotToRow(snapshot))
 
         if (insertErr) {
           console.error(`[Cron] ${schedule.company_id} INSERT エラー:`, insertErr.message)

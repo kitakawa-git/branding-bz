@@ -10,6 +10,11 @@ import {
   STAGE_LABELS,
   type FunnelStage,
 } from '@/lib/brand-score/funnel-stages'
+import {
+  MARKET_STAGES,
+  MARKET_STAGE_LABELS,
+} from '@/lib/brand-score/market-stages'
+import { MIN_CARD_VIEWS_FOR_DIGITAL } from '@/lib/brand-score/outer-metrics'
 import { supabase } from '@/lib/supabase'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
 import Link from 'next/link'
@@ -71,6 +76,7 @@ import {
   CheckCircle,
   Camera,
   Loader2,
+  Globe,
 } from 'lucide-react'
 
 // ── 型定義 ──
@@ -103,6 +109,15 @@ interface OuterScoreData {
   }
   outer_score: number
   rank: string
+  /** 市場浸透（外部調査）。取り込んでいなければ null */
+  market_score: number | null
+  market_stages: Record<string, number> | null
+  /** 調査のサンプル数（n）。インナーの回答率と同じ位置に出す */
+  market_sample_size: number | null
+  /** デジタル接点（名刺ログ）。従来の outer_score と同じ値。未計測なら null */
+  digital_score: number | null
+  /** null の理由。disabled=スマート名刺オフ / insufficient_data=アクセス数不足 */
+  digital_unavailable: 'disabled' | 'insufficient_data' | null
 }
 
 interface GapItem {
@@ -483,6 +498,20 @@ export default function BrandScoreDashboard() {
     ]
   })()
 
+  // 市場浸透の5段階。インナーと同じ形（最下位をオレンジ）で並べ、
+  // 左右のカードを同じ目線で見比べられるようにする
+  const marketStageRows: { label: string; value: number | null; isWeakest: boolean }[] = (() => {
+    const rows = MARKET_STAGES.map((stage, i) => ({
+      label: `${i + 1}. ${MARKET_STAGE_LABELS[stage]}`,
+      value: outerScore?.market_stages?.[stage] ?? null,
+    }))
+    const lowest = rows.reduce<number | null>(
+      (min, r) => (r.value !== null && (min === null || r.value < min) ? r.value : min),
+      null
+    )
+    return rows.map(r => ({ ...r, isWeakest: r.value !== null && r.value === lowest }))
+  })()
+
   // 総合ブランドスコア
   let totalBrandScore: number | null = null
   if (hasInner && hasOuter) {
@@ -614,32 +643,6 @@ export default function BrandScoreDashboard() {
               <SelectItem value="90">90日間</SelectItem>
             </SelectContent>
           </Select>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="outline" size="sm" disabled={isSaving}>
-                {isSaving ? (
-                  <Loader2 size={14} className="animate-spin" />
-                ) : (
-                  <Camera size={14} />
-                )}
-                スコアを記録
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>スコアを記録</AlertDialogTitle>
-                <AlertDialogDescription>
-                  現時点のブランドスコアをスナップショットとして保存します。記録したスコアは推移グラフに反映されます。
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>キャンセル</AlertDialogCancel>
-                <AlertDialogAction onClick={handleSaveSnapshot}>
-                  記録する
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
         </div>
       </div>
 
@@ -856,43 +859,124 @@ export default function BrandScoreDashboard() {
             {hasOuter ? (
               <div className="space-y-4">
                 <div className="text-center mb-2">
-                  <span className={`text-3xl font-bold ${getScoreColor(outerScore!.outer_score)}`}>
+                  {/* スコアの水準ではなく系列色で出す。上のスコア推移の
+                      アウター線（緑）とカードの中身を対応させるため */}
+                  <span className="text-3xl font-bold text-green-600">
                     {outerScore!.outer_score.toFixed(1)}
                   </span>
                 </div>
 
-                {/* 5指標 */}
-                {[
-                  { label: '到達力', value: outerScore!.scores.reach.score },
-                  { label: '関心度', value: outerScore!.scores.interest.score },
-                  { label: 'ブランド遷移率', value: outerScore!.scores.transition.score },
-                  { label: 'ブランド関与度', value: outerScore!.scores.engagement.score },
-                  { label: '印象一致度', value: impressionScore },
-                ].map(item => (
-                  <div key={item.label}>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs text-muted-foreground">{item.label}</span>
-                      {item.value !== null ? (
-                        <span className={`text-sm font-bold ${getScoreColor(item.value)}`}>
-                          {item.value.toFixed(1)}
+                {/* 市場浸透（外部調査）。調査を取り込んでいない企業では出さない
+                    ＝ その場合の見た目は従来と完全に同じ。
+                    段階の並べ方・色はインナースコアと揃える（左右で見比べるため） */}
+                {outerScore!.market_score !== null && (
+                  <>
+                    {/* デジタル接点も出るときだけ、どちらの数字かを示す見出しを付ける。
+                        市場浸透だけのときはアウタースコアと同じ値なので重複になる */}
+                    {outerScore!.digital_unavailable === null && (
+                      <p className="m-0 flex items-center gap-1.5 text-xs font-bold text-foreground">
+                        <Globe size={12} />
+                        市場浸透（外部調査）
+                        <span className="ml-auto text-sm text-green-600">
+                          {outerScore!.market_score.toFixed(1)}
                         </span>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">データ収集中</span>
-                      )}
-                    </div>
-                    <Progress
-                      value={item.value ?? 0}
-                      className={`h-1.5 ${getScoreProgressColor(item.value)}`}
-                    />
-                  </div>
-                ))}
+                      </p>
+                    )}
 
-                <Link
-                  href="/admin/analytics"
-                  className="flex items-center gap-1 text-xs text-ds-app-accent hover:underline"
-                >
-                  アナリティクス詳細 <ArrowRight size={12} />
-                </Link>
+                    {/* バーの基調色はスコア推移グラフのアウター線（green-500）と揃える。
+                        インナーが青・アウターが緑で、上のグラフの凡例とそのまま対応する */}
+                    {marketStageRows.map(item => (
+                      <div key={item.label}>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs text-muted-foreground">{item.label}</span>
+                          <span className={`text-sm font-bold ${item.isWeakest ? 'text-orange-600' : 'text-green-600'}`}>
+                            {item.value !== null ? item.value.toFixed(1) : '-'}
+                          </span>
+                        </div>
+                        <Progress
+                          value={item.value ?? 0}
+                          className={`h-1.5 ${item.isWeakest ? '[&>div]:bg-orange-500' : '[&>div]:bg-green-500'}`}
+                        />
+                      </div>
+                    ))}
+
+                    {/* インナーの回答率と同じ位置。調査の規模を添える */}
+                    {outerScore!.market_sample_size !== null && (
+                      <div className="pt-2 border-t">
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                          <span>サンプル数</span>
+                          <span>n = {outerScore!.market_sample_size}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    <Link
+                      href="/admin/brand-score/market-surveys"
+                      className="flex items-center gap-1 text-xs text-green-600 hover:underline"
+                    >
+                      市場調査 <ArrowRight size={12} />
+                    </Link>
+                  </>
+                )}
+
+                {/* デジタル接点（名刺ログ）。
+                    スマート名刺がオフの会社は名刺ページ自体が非公開なので、
+                    ブロックごと出さない（スコアにも算入していない）。
+                    アクセスが少なすぎる場合は0点を並べず「未計測」と書く */}
+                {outerScore!.digital_unavailable !== 'disabled' && (
+                  <>
+                    {outerScore!.market_score !== null && (
+                      <p className="m-0 flex items-center gap-1.5 text-xs font-bold text-foreground">
+                        <CreditCard size={12} />
+                        デジタル接点（名刺）
+                        <span className="ml-auto text-sm text-foreground">
+                          {outerScore!.digital_score?.toFixed(1) ?? '未計測'}
+                        </span>
+                      </p>
+                    )}
+
+                    {outerScore!.digital_unavailable === 'insufficient_data' ? (
+                      <p className="m-0 rounded-md border bg-background p-3 text-[11px] leading-relaxed text-muted-foreground">
+                        名刺の閲覧が{outerScore!.total_card_views}件で、スコアを出すには
+                        足りません（{MIN_CARD_VIEWS_FOR_DIGITAL}件から）。
+                        数件のアクセスから関心度や遷移率を判断すると実態とずれるため、
+                        アウタースコアには算入していません。
+                      </p>
+                    ) : (
+                      [
+                        { label: '到達力', value: outerScore!.scores.reach.score },
+                        { label: '関心度', value: outerScore!.scores.interest.score },
+                        { label: 'ブランド遷移率', value: outerScore!.scores.transition.score },
+                        { label: 'ブランド関与度', value: outerScore!.scores.engagement.score },
+                        { label: '印象一致度', value: impressionScore },
+                      ].map(item => (
+                        <div key={item.label}>
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-xs text-muted-foreground">{item.label}</span>
+                            {item.value !== null ? (
+                              <span className={`text-sm font-bold ${getScoreColor(item.value)}`}>
+                                {item.value.toFixed(1)}
+                              </span>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">データ収集中</span>
+                            )}
+                          </div>
+                          <Progress
+                            value={item.value ?? 0}
+                            className={`h-1.5 ${getScoreProgressColor(item.value)}`}
+                          />
+                        </div>
+                      ))
+                    )}
+
+                    <Link
+                      href="/admin/analytics"
+                      className="flex items-center gap-1 text-xs text-ds-app-accent hover:underline"
+                    >
+                      アナリティクス詳細 <ArrowRight size={12} />
+                    </Link>
+                  </>
+                )}
               </div>
             ) : (
               <div className="text-center py-6">
@@ -1222,7 +1306,37 @@ export default function BrandScoreDashboard() {
 
       {/* ── 6. 自動記録設定 ── */}
       {companyId && (
-        <SnapshotScheduleCard companyId={companyId} />
+        <SnapshotScheduleCard
+          companyId={companyId}
+          recordSlot={
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" size="sm" className="w-full" disabled={isSaving}>
+                  {isSaving ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <Camera size={14} />
+                  )}
+                  スコアを記録
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>スコアを記録</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    現時点のブランドスコアをスナップショットとして保存します。記録したスコアは推移グラフに反映されます。
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>キャンセル</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleSaveSnapshot}>
+                    記録する
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          }
+        />
       )}
     </div>
   )

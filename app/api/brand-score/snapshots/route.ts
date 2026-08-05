@@ -3,7 +3,7 @@
 // POST /api/brand-score/snapshots → スコア集計して INSERT
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
-import { calculateSnapshot } from '@/lib/brand-score/calculate-snapshot'
+import { calculateSnapshot, snapshotToRow } from '@/lib/brand-score/calculate-snapshot'
 
 // GET: スナップショット一覧を返す（snapshot_date昇順）
 export async function GET(request: NextRequest) {
@@ -87,27 +87,8 @@ export async function POST(request: NextRequest) {
     // 3. brand_score_snapshots に INSERT
     const { data: inserted, error: insertErr } = await supabase
       .from('brand_score_snapshots')
-      .insert({
-        company_id: snapshot.company_id,
-        snapshot_date: snapshot.snapshot_date,
-        period_days: snapshot.period_days,
-        inner_score: snapshot.inner_score,
-        inner_why: snapshot.inner_why,
-        inner_how: snapshot.inner_how,
-        inner_what: snapshot.inner_what,
-        inner_stages: snapshot.inner_stages,
-        inner_survey_id: snapshot.inner_survey_id,
-        inner_response_rate: snapshot.inner_response_rate,
-        outer_score: snapshot.outer_score,
-        outer_reach: snapshot.outer_reach,
-        outer_interest: snapshot.outer_interest,
-        outer_transition: snapshot.outer_transition,
-        outer_engagement: snapshot.outer_engagement,
-        outer_impression: snapshot.outer_impression,
-        total_score: snapshot.total_score,
-        rank: snapshot.rank,
-        metadata: snapshot.metadata,
-      })
+      // 列リストは snapshotToRow が持つ（cron と同じものを使う）
+      .insert(snapshotToRow(snapshot))
       .select()
       .single()
 
