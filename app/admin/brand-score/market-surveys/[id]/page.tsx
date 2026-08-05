@@ -629,7 +629,6 @@ export default function MarketSurveyDetailPage() {
             <span className="flex items-center gap-1">
               <span className="inline-block size-2.5 rounded-sm bg-orange-400" />競合トップ
             </span>
-            <span>バーは生の%、右の数字は0〜100に変換したスコア</span>
           </div>
         </CardContent>
       </Card>
