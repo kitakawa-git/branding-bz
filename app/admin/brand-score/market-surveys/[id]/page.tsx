@@ -522,8 +522,8 @@ export default function MarketSurveyDetailPage() {
           {/* 色の対応は下の凡例が持つので、ここには読み方を書く。
               サーベイ詳細の「回答の内訳」と同じ分量に揃える */}
           <p className="mb-4 text-xs leading-relaxed text-muted-foreground">
-            緑が自社、オレンジはその段階でいちばん高かった1社です。
-            右はスコアと順位で、回答者が{MIN_BENCHMARK_BASE_N}人未満の会社は順位から外しています。
+            オレンジは自社以外でいちばん高い会社です。
+            右はスコアと順位で、回答者{MIN_BENCHMARK_BASE_N}人未満の会社は順位に入れていません。
           </p>
 
           <div>
