@@ -2,12 +2,13 @@
 
 // 市場調査の詳細（市場浸透の5段階）
 // サーベイ詳細の「段階別の詳細」と同じ体裁にして、社内と社外を同じ形で読めるようにする
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Settings2, CalendarDays, Users, Loader2, ClipboardList, Trophy } from 'lucide-react'
 import {
@@ -72,12 +73,20 @@ export default function MarketSurveyDetailPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
+  // タイトルの直接編集。取り込み時のファイル名がそのまま入るので、
+  // 後から読みやすい名前に直したい場面のほうが多い（サーベイ詳細と同じ挙動）
+  const [editingTitle, setEditingTitle] = useState(false)
+  const [titleDraft, setTitleDraft] = useState('')
+  const [savingTitle, setSavingTitle] = useState(false)
+  const titleInputRef = useRef<HTMLInputElement>(null)
+
   const fetchAll = useCallback(async () => {
     try {
       const res = await fetch(`/api/brand-score/market-surveys/${surveyId}`)
       if (!res.ok) return
       const data = await res.json()
       setSurvey(data.survey)
+      setTitleDraft(data.survey?.title ?? '')
       setStageScores(data.stageScores ?? [])
       setRanking(data.ranking ?? {})
       setBlockCount((data.blocks ?? []).length)
@@ -91,6 +100,42 @@ export default function MarketSurveyDetailPage() {
   useEffect(() => {
     fetchAll()
   }, [fetchAll])
+
+  const handleTitleClick = () => {
+    setEditingTitle(true)
+    setTimeout(() => titleInputRef.current?.focus(), 50)
+  }
+
+  // 確定と同時に保存する。保存ボタンを別に置くと押し忘れで戻ってしまう
+  const handleTitleBlur = async () => {
+    setEditingTitle(false)
+    const next = titleDraft.trim()
+    if (!next) {
+      setTitleDraft(survey?.title ?? '')
+      return
+    }
+    if (next === survey?.title) return
+
+    setSavingTitle(true)
+    try {
+      const res = await fetch(`/api/brand-score/market-surveys/${surveyId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: next }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'タイトルの保存に失敗しました')
+      setSurvey(data.survey)
+      setTitleDraft(data.survey.title)
+      toast.success('タイトルを更新しました')
+    } catch (err) {
+      console.error('[MarketSurveyDetail] タイトル保存エラー:', err)
+      toast.error('タイトルを保存できませんでした')
+      setTitleDraft(survey?.title ?? '')
+    } finally {
+      setSavingTitle(false)
+    }
+  }
 
   const toggleActive = async (next: 'active' | 'draft') => {
     setSaving(true)
@@ -148,7 +193,29 @@ export default function MarketSurveyDetailPage() {
       <div className="mb-4 flex items-start justify-between gap-4">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <h1 className="truncate text-2xl font-bold text-foreground">{survey.title}</h1>
+            {editingTitle ? (
+              <Input
+                ref={titleInputRef}
+                value={titleDraft}
+                onChange={(e) => setTitleDraft(e.target.value)}
+                onBlur={handleTitleBlur}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleTitleBlur()
+                }}
+                className="h-auto rounded-none border-x-0 border-b border-t-0 px-1 py-0 text-2xl font-bold focus-visible:ring-0"
+              />
+            ) : (
+              <h1
+                className="truncate cursor-pointer text-2xl font-bold text-foreground transition-colors hover:text-muted-foreground"
+                onClick={handleTitleClick}
+                title="クリックして編集"
+              >
+                {survey.title}
+              </h1>
+            )}
+            {savingTitle && (
+              <Loader2 className="size-4 shrink-0 animate-spin text-muted-foreground" />
+            )}
             <Badge
               variant="secondary"
               className={`shrink-0 px-1.5 py-0 text-[10px] ${cfg.className}`}
