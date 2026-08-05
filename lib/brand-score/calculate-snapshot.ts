@@ -4,6 +4,7 @@
 import { SupabaseClient } from '@supabase/supabase-js'
 import { fetchAllRows } from './fetch-all-rows'
 import { resolveStage, ALL_STAGES, type FunnelStage } from './funnel-stages'
+import { computeDigitalMetrics } from './outer-metrics'
 
 // ────────────────────────────────────────────
 // 型定義
@@ -53,20 +54,8 @@ export function getRank(score: number | null): string {
   return 'D'
 }
 
-/** 0-100にクランプ */
-function clamp(v: number): number {
-  return Math.max(0, Math.min(100, Math.round(v)))
-}
-
-/** 線形マッピング: 0→0, mid→50, max→100 */
-function linearScore(value: number, midValue: number, maxValue: number): number {
-  if (value <= 0) return 0
-  if (value >= maxValue) return 100
-  if (value <= midValue) {
-    return (value / midValue) * 50
-  }
-  return 50 + ((value - midValue) / (maxValue - midValue)) * 50
-}
+// clamp / linearScore は lib/brand-score/outer-metrics.ts へ移設した
+// （outer-score API と式が重複していたため）
 
 /** カテゴリ別スコア算出（1-5スケールの平均を0-100に正規化） */
 function calcCategoryScore(
@@ -310,48 +299,24 @@ async function calculateOuterScore(
     }
   }
 
-  // 6. スコア算出
-  const weights = {
-    reach: 0.20,
-    interest: 0.20,
-    transition: 0.25,
-    engagement: 0.20,
-    impression: 0.15,
-  }
-
-  // 到達力: UU数/社員数×10 → 0-100
-  const reachScore = clamp(members > 0 ? (uniqueVisitors / members) * 10 : 0)
-
-  // 関心度: vcard_download/PV×100 → linear(10, 20)
-  const interestPct = totalCardViews > 0 ? (vcardDownloads / totalCardViews) * 100 : 0
-  const interestScore = clamp(linearScore(interestPct, 10, 20))
-
-  // ブランド遷移率: brand_page_click/PV×100 → linear(5, 15)
-  const transitionPct = totalCardViews > 0 ? (brandPageClicks / totalCardViews) * 100 : 0
-  const transitionScore = clamp(linearScore(transitionPct, 5, 15))
-
-  // ブランド関与度: 平均滞在秒数 → linear(30, 90)
-  const engagementScore = clamp(linearScore(avgDuration, 30, 90))
-
-  // 印象一致度: Phase C 未実装 → null
-  const impressionScore = null
-
-  // 総合: 有効指標の加重平均（nullは按分）
-  const activeWeight = weights.reach + weights.interest + weights.transition + weights.engagement
-  const outerTotal = clamp(
-    (reachScore * weights.reach +
-      interestScore * weights.interest +
-      transitionScore * weights.transition +
-      engagementScore * weights.engagement) / activeWeight
-  )
+  // 6. スコア算出（式は outer-metrics.ts が持つ。outer-score API と共通）
+  const { scores, digitalScore } = computeDigitalMetrics({
+    members,
+    uniqueVisitors,
+    totalCardViews,
+    vcardDownloads,
+    brandPageClicks,
+    avgDuration,
+  })
 
   return {
-    score: outerTotal,
-    reach: reachScore,
-    interest: interestScore,
-    transition: transitionScore,
-    engagement: engagementScore,
-    impression: impressionScore,
+    score: digitalScore ?? 0,
+    reach: scores.reach,
+    interest: scores.interest,
+    transition: scores.transition,
+    engagement: scores.engagement,
+    // 印象一致度は未実装。weightedAverage が分母から外している
+    impression: null,
   }
 }
 
