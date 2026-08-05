@@ -13,6 +13,7 @@ import {
   resolveStageMethod,
   type MappedCell,
 } from './market-stage-score'
+import { extractMarketExtras } from './market-extras'
 
 export interface RunAutoMapResult extends AutoMapResult {
   applied: { stage: string; score: number | null; rawPercent: number | null }[]
@@ -175,6 +176,38 @@ export async function runAutoMap(
       score: computed.score,
       rawPercent: computed.rawPercent,
     })
+  }
+
+  // 印象一致度は5段階と別枠。毎回1600件のセルを読み直すのは重いので、
+  // 段階スコアと同じくここで計算して調査に保存しておく
+  const selfName = result.matchedSelfLabels[0] ?? null
+  const extras = extractMarketExtras(
+    (blockRows ?? []).map((b) => ({
+      id: b.id as string,
+      question_code: b.question_code as string | null,
+      question_text: b.question_text as string | null,
+      is_attribute: b.is_attribute as boolean | null,
+    })),
+    (cellRows ?? []).map((c) => ({
+      block_id: c.block_id,
+      row_label: c.row_label,
+      col_label: c.col_label,
+      value: c.value === null ? null : Number(c.value),
+      base_n: c.base_n,
+    })),
+    selfName
+  )
+
+  if (extras.impression) {
+    const { matches, hits, misses, overs, score, importanceBaseN, imageBaseN } =
+      extras.impression
+    await supabase
+      .from('market_surveys')
+      .update({
+        impression_score: score,
+        impression_detail: { matches, hits, misses, overs, importanceBaseN, imageBaseN },
+      })
+      .eq('id', surveyId)
   }
 
   return { ...result, applied }

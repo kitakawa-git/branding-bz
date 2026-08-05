@@ -52,6 +52,37 @@ type RankRow = { name: string; value: number; isSelf: boolean }
 /** その段階が調査票のどの設問だったか（レポートと突き合わせるため） */
 type StageSource = { code: string | null; label: string | null }
 
+type RankedItem = { label: string; value: number }
+type Listed = { items: RankedItem[]; baseN: number | null } | null
+
+/** 5段階以外の読みどころ。取れなければ null（0にはしない） */
+type Extras = {
+  impression: {
+    importance: RankedItem[]
+    image: RankedItem[]
+    matches: {
+      label: string
+      importanceRank: number
+      importanceValue: number
+      imageRank: number
+      imageValue: number
+    }[]
+    hits: string[]
+    misses: string[]
+    overs: string[]
+    score: number | null
+    importanceBaseN: number | null
+    imageBaseN: number | null
+  } | null
+  personality: {
+    items: { positive: string; negative: string; value: number }[]
+    baseN: number | null
+  } | null
+  contactPoints: Listed
+  services: Listed
+  serviceEvaluation: Listed
+}
+
 type StageScore = {
   stage: MarketStage
   status: 'scored' | 'absent' | 'unmapped'
@@ -74,6 +105,45 @@ const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
   archived: { label: '過年度', className: 'bg-gray-100 text-gray-500' },
 }
 
+
+/**
+ * 項目を降順に並べた横棒。
+ * 上位ほど濃くはせず、母数の注記だけを添える（%の絶対値だけで語らないため）。
+ */
+function RankBars({
+  items,
+  max = 8,
+  suffix = '%',
+}: {
+  items: { label: string; value: number }[]
+  max?: number
+  suffix?: string
+}) {
+  const shown = items.slice(0, max)
+  const top = shown.length > 0 ? Math.max(...shown.map((i) => i.value)) : 0
+  return (
+    <div className="space-y-1.5">
+      {shown.map((it) => (
+        <div key={it.label} className="flex items-center gap-2">
+          <span className="w-[136px] shrink-0 truncate text-[11px] text-muted-foreground" title={it.label}>
+            {it.label}
+          </span>
+          <div className="h-2 min-w-0 flex-1 rounded-full bg-muted">
+            <div
+              className="h-full rounded-full bg-green-500"
+              style={{ width: `${top > 0 ? (it.value / top) * 100 : 0}%` }}
+            />
+          </div>
+          <span className="w-12 shrink-0 text-right text-[11px] tabular-nums text-foreground">
+            {it.value.toFixed(1)}
+            {suffix}
+          </span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export default function MarketSurveyDetailPage() {
   const params = useParams()
   const router = useRouter()
@@ -83,6 +153,7 @@ export default function MarketSurveyDetailPage() {
   const [stageScores, setStageScores] = useState<StageScore[]>([])
   const [ranking, setRanking] = useState<Record<string, RankRow[]>>({})
   const [stageSources, setStageSources] = useState<Record<string, StageSource>>({})
+  const [extras, setExtras] = useState<Extras | null>(null)
   const [blockCount, setBlockCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -104,6 +175,7 @@ export default function MarketSurveyDetailPage() {
       setStageScores(data.stageScores ?? [])
       setRanking(data.ranking ?? {})
       setStageSources(data.stageSources ?? {})
+      setExtras(data.extras ?? null)
       setBlockCount((data.blocks ?? []).length)
     } catch (err) {
       console.error('[MarketSurveyDetail] 取得エラー:', err)
@@ -576,6 +648,185 @@ export default function MarketSurveyDetailPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* ── 5段階以外の読みどころ ──
+          5段階は「どこまで届いたか」の定点観測。ここから下は「なぜそうなったか」で、
+          割り当てを人が決めなくても集計表の構造から機械的に読めるものだけを出す */}
+
+      {/* 印象一致度: 市場が重視する点 × 自社イメージ */}
+      {extras?.impression && (
+        <Card className="mt-4 bg-[hsl(0_0%_97%)] border shadow-none">
+          <CardContent className="p-5">
+            <div className="mb-1 flex items-center justify-between gap-3">
+              <h2 className="m-0 text-sm font-bold text-foreground">
+                印象一致度（市場が重視する点 × 自社イメージ）
+              </h2>
+              {extras.impression.score !== null && (
+                <span className="text-2xl font-bold text-green-600">
+                  {extras.impression.score}
+                </span>
+              )}
+            </div>
+            <p className="mb-4 text-xs leading-relaxed text-muted-foreground">
+              市場が企業を選ぶときに重視する上位5項目のうち、いくつが自社の印象としても
+              上位5項目に入っているかです。
+              {/* 母数が違うので引き算をさせない。ここを書かないと誤読される */}
+              重視点はn={extras.impression.importanceBaseN}の全数、イメージはn=
+              {extras.impression.imageBaseN}の自社認知者と母数が違うため、%の差は意味を持ちません。
+              比べてよいのは順位です。
+            </p>
+
+            <div className="mb-4 grid gap-2 sm:grid-cols-2">
+              {extras.impression.misses.length > 0 && (
+                <div className="rounded-md border bg-background p-3">
+                  <p className="m-0 mb-1 text-[11px] font-bold text-orange-600">
+                    伝わっていない期待
+                  </p>
+                  <p className="m-0 text-[11px] leading-relaxed text-muted-foreground">
+                    {extras.impression.misses.join('・')}
+                    。市場は重視しているのに、自社の印象としては上位に挙がっていません。
+                  </p>
+                </div>
+              )}
+              {extras.impression.overs.length > 0 && (
+                <div className="rounded-md border bg-background p-3">
+                  <p className="m-0 mb-1 text-[11px] font-bold text-foreground">
+                    重視されていないのに強い印象
+                  </p>
+                  <p className="m-0 text-[11px] leading-relaxed text-muted-foreground">
+                    {extras.impression.overs.join('・')}
+                    。伝わってはいますが、選ぶ理由にはなりにくい項目です。
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[420px] text-xs">
+                <thead>
+                  <tr className="border-b text-[10px] text-muted-foreground">
+                    <th className="py-1 text-left font-normal">項目</th>
+                    <th className="py-1 text-right font-normal">市場の重視</th>
+                    <th className="py-1 text-right font-normal">自社イメージ</th>
+                    <th className="py-1 text-right font-normal">順位差</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {extras.impression.matches.slice(0, 10).map((m) => {
+                    const diff = m.importanceRank - m.imageRank
+                    return (
+                      <tr key={m.label} className="border-b border-border/50">
+                        <td className="py-1.5 pr-2">{m.label}</td>
+                        <td className="py-1.5 text-right tabular-nums text-muted-foreground">
+                          {m.importanceRank}位・{m.importanceValue.toFixed(1)}%
+                        </td>
+                        <td className="py-1.5 text-right tabular-nums text-muted-foreground">
+                          {m.imageRank}位・{m.imageValue.toFixed(1)}%
+                        </td>
+                        <td
+                          className={`py-1.5 text-right tabular-nums font-bold ${
+                            diff <= -3
+                              ? 'text-orange-600'
+                              : diff >= 3
+                                ? 'text-green-600'
+                                : 'text-muted-foreground'
+                          }`}
+                        >
+                          {diff > 0 ? `+${diff}` : diff}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <p className="m-0 mt-2 text-[10px] text-muted-foreground">
+              順位差がマイナスなら「重視されている割に印象が薄い」、プラスなら
+              「重視されていない割に印象が強い」。
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+        {/* ブランドパーソナリティ（SD法） */}
+        {extras?.personality && (
+          <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+            <CardContent className="p-5">
+              <h2 className="m-0 mb-1 text-sm font-bold text-foreground">
+                ブランドパーソナリティ
+              </h2>
+              <p className="mb-4 text-xs leading-relaxed text-muted-foreground">
+                対になる言葉のどちらに近いかを聞いたもの。数字は左の言葉に寄った人の割合です
+                （n={extras.personality.baseN}）。
+              </p>
+              <div className="space-y-1.5">
+                {extras.personality.items.map((it) => (
+                  <div key={it.positive} className="flex items-center gap-2">
+                    <span className="w-[86px] shrink-0 truncate text-[11px] text-foreground">
+                      {it.positive}
+                    </span>
+                    <div className="h-2 min-w-0 flex-1 rounded-full bg-muted">
+                      <div
+                        className="h-full rounded-full bg-green-500"
+                        style={{ width: `${Math.min(100, it.value)}%` }}
+                      />
+                    </div>
+                    <span className="w-11 shrink-0 text-right text-[11px] tabular-nums text-foreground">
+                      {it.value.toFixed(1)}%
+                    </span>
+                    <span className="w-[76px] shrink-0 truncate text-right text-[10px] text-muted-foreground">
+                      {it.negative}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* 認知経路 */}
+        {extras?.contactPoints && extras.contactPoints.items.length > 0 && (
+          <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+            <CardContent className="p-5">
+              <h2 className="m-0 mb-1 text-sm font-bold text-foreground">認知経路</h2>
+              <p className="mb-4 text-xs leading-relaxed text-muted-foreground">
+                自社を知った人が、どこで見聞きしたか（n={extras.contactPoints.baseN}）。
+                「認知」の数字が何によって作られているかが分かります。
+              </p>
+              <RankBars items={extras.contactPoints.items} max={8} />
+            </CardContent>
+          </Card>
+        )}
+
+        {/* 事業浸透度 */}
+        {extras?.services && extras.services.items.length > 0 && (
+          <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+            <CardContent className="p-5">
+              <h2 className="m-0 mb-1 text-sm font-bold text-foreground">事業浸透度</h2>
+              <p className="mb-4 text-xs leading-relaxed text-muted-foreground">
+                自社の導入経験者の中で、どのサービスが使われているか（n=
+                {extras.services.baseN}）。「利用」の内訳です。
+              </p>
+              <RankBars items={extras.services.items} max={8} />
+            </CardContent>
+          </Card>
+        )}
+
+        {/* サービス評価 */}
+        {extras?.serviceEvaluation && extras.serviceEvaluation.items.length > 0 && (
+          <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+            <CardContent className="p-5">
+              <h2 className="m-0 mb-1 text-sm font-bold text-foreground">サービス評価</h2>
+              <p className="mb-4 text-xs leading-relaxed text-muted-foreground">
+                自社を知っている人による評価。「あてはまる」と答えた割合です（n=
+                {extras.serviceEvaluation.baseN}）。「評価」の裏付けになります。
+              </p>
+              <RankBars items={extras.serviceEvaluation.items} max={8} />
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   )
 }

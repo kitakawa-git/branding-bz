@@ -114,6 +114,8 @@ interface OuterScoreData {
   market_stages: Record<string, number> | null
   /** 調査のサンプル数（n）。インナーの回答率と同じ位置に出す */
   market_sample_size: number | null
+  /** 印象一致度。市場が重視する点と自社イメージの一致度。未算出なら null */
+  market_impression: number | null
   /** デジタル接点（名刺ログ）。従来の outer_score と同じ値。未計測なら null */
   digital_score: number | null
   /** null の理由。disabled=スマート名刺オフ / insufficient_data=アクセス数不足 */
@@ -900,6 +902,19 @@ export default function BrandScoreDashboard() {
                       </div>
                     ))}
 
+                    {/* 印象一致度は5段階（どこまで届いたか）とは別軸なので、
+                        バーの下に区切って置く。市場調査からしか出せない値 */}
+                    {outerScore!.market_impression !== null && (
+                      <div className="flex items-center justify-between border-t pt-2">
+                        <span className="text-xs text-muted-foreground">
+                          印象一致度（市場調査）
+                        </span>
+                        <span className="text-sm font-bold text-green-600">
+                          {outerScore!.market_impression.toFixed(0)}
+                        </span>
+                      </div>
+                    )}
+
                     {/* インナーの回答率と同じ位置。調査の規模を添える */}
                     {outerScore!.market_sample_size !== null && (
                       <div className="pt-2 border-t">
@@ -948,7 +963,9 @@ export default function BrandScoreDashboard() {
                         { label: '関心度', value: outerScore!.scores.interest.score },
                         { label: 'ブランド遷移率', value: outerScore!.scores.transition.score },
                         { label: 'ブランド関与度', value: outerScore!.scores.engagement.score },
-                        { label: '印象一致度', value: impressionScore },
+                        // 市場調査由来の印象一致度と同じカードに並ぶので、
+                        // どちらの出どころか分かる名前にする
+                        { label: '印象一致度（社内タグ）', value: impressionScore },
                       ].map(item => (
                         <div key={item.label}>
                           <div className="flex items-center justify-between mb-1">

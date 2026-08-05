@@ -7,6 +7,7 @@ import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { fetchAllRows } from '@/lib/brand-score/fetch-all-rows'
 import { MARKET_STAGES } from '@/lib/brand-score/market-stages'
 import { MIN_BENCHMARK_BASE_N } from '@/lib/brand-score/market-stage-score'
+import { extractMarketExtras } from '@/lib/brand-score/market-extras'
 
 type RouteContext = { params: Promise<{ id: string }> }
 
@@ -118,6 +119,16 @@ export async function GET(_request: NextRequest, context: RouteContext) {
       }
     }
 
+    // 5段階以外の読みどころ（印象一致度・パーソナリティ・認知経路・事業浸透度・サービス評価）。
+    // 自社名は5段階の割り当てから取る。人が「これが自社」と決めた唯一の情報のため
+    const selfName =
+      (mappings ?? []).find((m) => m.subject === 'self')
+        ? (cellIndex.get(
+            (mappings ?? []).find((m) => m.subject === 'self')!.cell_id as string
+          )?.row_label ?? null)
+        : null
+    const extras = extractMarketExtras(blocks ?? [], cells, selfName)
+
     return NextResponse.json({
       survey,
       blocks: blocks ?? [],
@@ -125,6 +136,8 @@ export async function GET(_request: NextRequest, context: RouteContext) {
       mappings: mappings ?? [],
       ranking,
       stageSources,
+      selfName,
+      extras,
       // 未登録の段階も unmapped として必ず5件返す（画面がスロットを常に5つ出せるように）
       stageScores: MARKET_STAGES.map((stage) => {
         const hit = (scores ?? []).find((s) => s.stage === stage)
