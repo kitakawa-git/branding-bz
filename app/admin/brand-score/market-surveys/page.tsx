@@ -144,10 +144,12 @@ export default function MarketSurveysPage() {
     }
   }
 
+  // サーベイ一覧と同じ書式。月までだと開始と終了が同じ月のとき
+  // 「2026/06 〜 2026/06」になって期間が読めない
   const formatDate = (s: string | null) => {
     if (!s) return null
     const d = new Date(s)
-    return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}`
+    return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`
   }
 
   if (loading) {
@@ -315,9 +317,6 @@ export default function MarketSurveysPage() {
         <div className="space-y-4">
           {surveys.map(s => {
             const cfg = STATUS_CONFIG[s.status] ?? STATUS_CONFIG.draft
-            const period = [formatDate(s.fielded_from), formatDate(s.fielded_to)]
-              .filter(Boolean)
-              .join(' 〜 ')
             const mappingRate =
               s.total_stage_count > 0
                 ? (s.resolved_stage_count / s.total_stage_count) * 100
@@ -387,22 +386,24 @@ export default function MarketSurveysPage() {
                     </span>
                   </div>
 
+                  {/* メタ情報。サーベイ一覧と同じ並び（件数 → 日付 → 終了） */}
                   <div className="flex flex-wrap items-center gap-4 text-[10px] text-muted-foreground">
-                    {period && (
-                      <span className="flex items-center gap-1">
-                        <CalendarDays size={11} />
-                        {period}
-                      </span>
-                    )}
+                    <span className="flex items-center gap-1">
+                      <BarChart3 size={11} />
+                      設問 {s.block_count}件
+                    </span>
                     {s.sample_size !== null && (
                       <span className="flex items-center gap-1">
                         <Users size={11} />n = {s.sample_size}
                       </span>
                     )}
-                    <span className="flex items-center gap-1">
-                      <BarChart3 size={11} />
-                      設問 {s.block_count}件
-                    </span>
+                    {s.fielded_from && (
+                      <span className="flex items-center gap-1">
+                        <CalendarDays size={11} />
+                        {formatDate(s.fielded_from)}
+                      </span>
+                    )}
+                    {s.fielded_to && <span>終了: {formatDate(s.fielded_to)}</span>}
                   </div>
                 </CardContent>
               </Card>
