@@ -419,10 +419,12 @@ export default function MarketSurveyDetailPage() {
   const highest = scored.length > 0 ? Math.max(...scored.map((s) => s.score!)) : null
   const lowest = scored.length > 0 ? Math.min(...scored.map((s) => s.score!)) : null
 
+  // 一覧・サーベイ管理と同じ書式。月までだと開始と終了が同じ月のとき
+  // 「2026/06 〜 2026/06」になって期間が読めない
   const formatDate = (s: string | null) => {
     if (!s) return null
     const d = new Date(s)
-    return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}`
+    return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`
   }
   const period = [formatDate(survey.fielded_from), formatDate(survey.fielded_to)]
     .filter(Boolean)

@@ -166,6 +166,28 @@ interface Snapshot {
   snapshot_date: string
 }
 
+/** 市場調査1件＝推移の1点。実施日と市場浸透スコアだけ使う */
+interface MarketTrendPoint {
+  date: string
+  market_score: number | null
+}
+
+/** サーベイ1件＝推移の1点。実施日（終了日）とインナースコアだけ使う */
+interface SurveyTrendPoint {
+  date: string
+  inner_score: number | null
+}
+
+/** スコア推移グラフの1行。スナップショットと市場調査を日付で束ねたもの */
+type TrendRow = {
+  snapshot_date: string
+  total_score: number | null
+  inner_score: number | null
+  outer_score: number | null
+  /** その値が調査の実施日のものか（記録した日ではない）。点の大きさを変える */
+  measured: { total: boolean; inner: boolean; outer: boolean }
+}
+
 // ── ヘルパー関数 ──
 
 function getScoreColor(score: number | null): string {
@@ -213,6 +235,34 @@ function getRank(score: number | null): string {
   return 'D'
 }
 
+/**
+ * スコア推移の点。調査を実施した日は大きい塗り丸、記録した日は小さい丸。
+ * 同じ系列でも「測った日」と「記録した日」で意味が違うため、
+ * 線は1本のまま点の見た目だけで出どころを分ける。
+ */
+function measuredDot(key: 'total' | 'inner' | 'outer', color: string) {
+  const Dot = (props: {
+    cx?: number
+    cy?: number
+    payload?: { measured?: { total: boolean; inner: boolean; outer: boolean } }
+  }) => {
+    const { cx, cy, payload } = props
+    if (cx === undefined || cy === undefined) return <g />
+    const isMeasured = payload?.measured?.[key] === true
+    return (
+      <circle
+        cx={cx}
+        cy={cy}
+        r={isMeasured ? 5 : 3}
+        fill={isMeasured ? color : '#fff'}
+        stroke={color}
+        strokeWidth={isMeasured ? 0 : 1.5}
+      />
+    )
+  }
+  return Dot
+}
+
 function getBarColor(rate: number): string {
   if (rate >= 40) return 'bg-green-500'
   if (rate >= 20) return 'bg-ds-app-accent-soft'
@@ -230,6 +280,8 @@ type BrandScoreCache = {
   totalFbCount: number
   prevSnapshot: Snapshot | null
   snapshots: Snapshot[]
+  marketTrend: MarketTrendPoint[]
+  surveyTrend: SurveyTrendPoint[]
   impressionScore: number | null
   knowledgeGap: KnowledgeGapData | null
 }
@@ -258,6 +310,8 @@ export default function BrandScoreDashboard() {
   const [totalFbCount, setTotalFbCount] = useState(cached?.totalFbCount ?? 0)
   const [prevSnapshot, setPrevSnapshot] = useState<Snapshot | null>(cached?.prevSnapshot ?? null)
   const [snapshots, setSnapshots] = useState<Snapshot[]>(cached?.snapshots ?? [])
+  const [marketTrend, setMarketTrend] = useState<MarketTrendPoint[]>(cached?.marketTrend ?? [])
+  const [surveyTrend, setSurveyTrend] = useState<SurveyTrendPoint[]>(cached?.surveyTrend ?? [])
 
   // スナップショット手動保存
   const [isSaving, setIsSaving] = useState(false)
@@ -282,6 +336,8 @@ export default function BrandScoreDashboard() {
       totalFbCount: 0,
       prevSnapshot: null,
       snapshots: [],
+      marketTrend: [],
+      surveyTrend: [],
       impressionScore: null,
       knowledgeGap: null,
     }
@@ -373,6 +429,32 @@ export default function BrandScoreDashboard() {
       })
       .catch(() => {})
 
+    // 市場調査の実施日に打つ点。スナップショットとは別ソース
+    const marketTrendPromise = fetch(
+      `/api/brand-score/market-surveys/trend?company_id=${companyId}`
+    )
+      .then(async (res) => {
+        if (!res.ok) return
+        const data = await res.json()
+        const list = data.points || []
+        setMarketTrend(list)
+        collected.marketTrend = list
+      })
+      .catch(() => {})
+
+    // サーベイを締めた日に打つ点。スナップショットとは別ソース
+    const surveyTrendPromise = fetch(
+      `/api/brand-score/surveys/trend?company_id=${companyId}`
+    )
+      .then(async (res) => {
+        if (!res.ok) return
+        const data = await res.json()
+        const list = data.points || []
+        setSurveyTrend(list)
+        collected.surveyTrend = list
+      })
+      .catch(() => {})
+
     // 理解度（知識）× 共感 ギャップ分析（admin セッションで company 確定）
     const knowledgeGapPromise = fetch(`/api/brand-score/knowledge-gap`)
       .then(async (res) => {
@@ -390,7 +472,7 @@ export default function BrandScoreDashboard() {
     })
 
     // 全部終わったらキャッシュ保存
-    await Promise.allSettled([innerPromise, outerPromise, tagPromise, fbPromise, prevSnapPromise, snapshotsPromise, knowledgeGapPromise])
+    await Promise.allSettled([innerPromise, outerPromise, tagPromise, fbPromise, prevSnapPromise, snapshotsPromise, marketTrendPromise, surveyTrendPromise, knowledgeGapPromise])
 
     // 印象一致度の最終算出（tagMappings と tagCounts と totalFbCount が揃ってから）
     if (collected.totalFbCount >= 30) {
@@ -419,6 +501,8 @@ export default function BrandScoreDashboard() {
       setTotalFbCount(cachedNow.totalFbCount)
       setPrevSnapshot(cachedNow.prevSnapshot)
       setSnapshots(cachedNow.snapshots)
+      setMarketTrend(cachedNow.marketTrend ?? [])
+      setSurveyTrend(cachedNow.surveyTrend ?? [])
       setImpressionScore(cachedNow.impressionScore)
     }
 
@@ -496,6 +580,105 @@ export default function BrandScoreDashboard() {
       { label: '方針共感（HOW）', value: innerScore?.scores.how ?? null, isWeakest: false },
       { label: '行動体現（WHAT）', value: innerScore?.scores.what ?? null, isWeakest: false },
     ]
+  })()
+
+  // スコア推移グラフのデータ。スナップショット（記録した日）と
+  // 市場調査（実施した日）は別ソースなので、日付で束ねて1本の時系列にする。
+  // 市場調査をスナップショットに転記しないのは、あちらが
+  // 「総合＝インナー×50%＋アウター×50%」の合成値で、
+  // 市場浸透だけ過去日に差し込むと総合の意味が壊れるため
+  const trendRows: TrendRow[] = (() => {
+    // サーベイの終了日はタイムスタンプ（2026-07-27T17:31Z＝JSTの7/28）で来る。
+    // 日付だけのスナップショットと束ねるため、表示と同じ現地時刻の日付に丸める
+    const dateKey = (v: string) => {
+      const d = new Date(v)
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    }
+
+    const byDate = new Map<string, TrendRow>()
+    const row = (date: string): TrendRow => {
+      const key = dateKey(date)
+      const hit = byDate.get(key)
+      if (hit) return hit
+      const created: TrendRow = {
+        snapshot_date: key,
+        total_score: null,
+        inner_score: null,
+        outer_score: null,
+        measured: { total: false, inner: false, outer: false },
+      }
+      byDate.set(key, created)
+      return created
+    }
+    for (const s of snapshots) {
+      const r = row(s.snapshot_date)
+      r.total_score = s.total_score
+      r.inner_score = s.inner_score
+      r.outer_score = s.outer_score
+    }
+    // 調査で測った値は、記録日のスコアと同じ系列に入れる。
+    // 「7/28に測ったインナー62.0」と「8/5に記録したインナー62.0」は
+    // 同じ指標の別の日の値なので、線がつながるのが自然。
+    // 記録日に既に値があればそちらを優先する（記録が正本）
+    for (const t of surveyTrend) {
+      if (t.inner_score === null) continue
+      const r = row(t.date)
+      if (r.inner_score === null) {
+        r.inner_score = t.inner_score
+        r.measured.inner = true
+      }
+    }
+
+    // ⚠ 市場浸透をアウターとして扱えるのは、デジタル接点を計測していない
+    //    会社だけ。計測していると実際のアウターは市場浸透0.75＋デジタル0.25で、
+    //    過去日のデジタル接点（直近30日の集計）は遡って計算できない
+    const digitalCounted = outerScore !== null && outerScore.digital_unavailable === null
+
+    if (!digitalCounted) {
+      for (const m of marketTrend) {
+        if (m.market_score === null) continue
+        const r = row(m.date)
+        if (r.outer_score === null) {
+          r.outer_score = m.market_score
+          r.measured.outer = true
+        }
+      }
+
+      // 調査日ベースの総合。インナーと市場調査は実施日が数十日ずれるので、
+      // 近い時期どうしを組にして「2つの調査日の中間」に置く。
+      // 片方の調査日に寄せると、平均なのに一方の測定に属して見えるうえ、
+      // その日の点（インナーなど）と重なって読めなくなる
+      const PAIR_WINDOW_DAYS = 180
+      for (const t of surveyTrend) {
+        if (t.inner_score === null) continue
+        const innerTime = new Date(t.date).getTime()
+        let nearest: MarketTrendPoint | null = null
+        let nearestGap = Infinity
+        for (const m of marketTrend) {
+          if (m.market_score === null) continue
+          const gap = Math.abs(new Date(m.date).getTime() - innerTime)
+          if (gap < nearestGap) {
+            nearest = m
+            nearestGap = gap
+          }
+        }
+        if (!nearest || nearestGap > PAIR_WINDOW_DAYS * 24 * 60 * 60 * 1000) continue
+
+        const midpoint = new Date(
+          (innerTime + new Date(nearest.date).getTime()) / 2
+        ).toISOString()
+        const r = row(midpoint)
+        if (r.total_score === null) {
+          r.total_score =
+            Math.round(((t.inner_score + (nearest.market_score as number)) / 2) * 10) / 10
+          r.measured.total = true
+        }
+      }
+    }
+
+    return [...byDate.values()].sort((a, b) =>
+      a.snapshot_date.localeCompare(b.snapshot_date)
+    )
   })()
 
   // 市場浸透の5段階。インナーと同じ形（最下位をオレンジ）で並べ、
@@ -699,8 +882,13 @@ export default function BrandScoreDashboard() {
             <TrendingUp size={14} />
             スコア推移
           </h2>
+          {/* 点の意味は凡例では表せないので一文で添える。
+              系列は3本のままにして、凡例が増えないようにしている */}
+          <p className="m-0 -mt-2 mb-4 text-xs text-muted-foreground">
+            塗りつぶした点は調査を実施した日、白い点はスコアを記録した日です。
+          </p>
 
-          {snapshots.length === 0 ? (
+          {trendRows.length === 0 ? (
             <div className="text-center py-8">
               <TrendingUp size={32} className="mx-auto mb-2 text-muted-foreground/30" />
               <p className="text-sm text-muted-foreground">
@@ -710,7 +898,7 @@ export default function BrandScoreDashboard() {
           ) : (
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={snapshots} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                <LineChart data={trendRows} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                   <XAxis
                     dataKey="snapshot_date"
@@ -733,19 +921,25 @@ export default function BrandScoreDashboard() {
                       return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`
                     }}
                   />
+                  {/* 凡例の文字は黒。線の色は左の印が担うので、
+                      文字まで色を付けると系列名が読みにくくなる */}
                   <Legend
-                    formatter={(value: string) =>
-                      value === 'total_score' ? '総合'
-                        : value === 'inner_score' ? 'インナー'
-                        : 'アウター'
-                    }
+                    formatter={(value: string) => (
+                      <span className="text-foreground">
+                        {value === 'total_score'
+                          ? '総合'
+                          : value === 'inner_score'
+                            ? 'インナー'
+                            : 'アウター'}
+                      </span>
+                    )}
                   />
                   <Line
                     type="monotone"
                     dataKey="total_score"
                     stroke="#1f2937"
                     strokeWidth={2.5}
-                    dot={{ r: 3 }}
+                    dot={measuredDot('total', '#1f2937')}
                     connectNulls
                   />
                   <Line
@@ -753,7 +947,7 @@ export default function BrandScoreDashboard() {
                     dataKey="inner_score"
                     stroke="var(--ds-app-accent-soft)"
                     strokeWidth={1.5}
-                    dot={{ r: 3 }}
+                    dot={measuredDot('inner', 'var(--ds-app-accent-soft)')}
                     connectNulls
                   />
                   <Line
@@ -761,7 +955,7 @@ export default function BrandScoreDashboard() {
                     dataKey="outer_score"
                     stroke="#22c55e"
                     strokeWidth={1.5}
-                    dot={{ r: 3 }}
+                    dot={measuredDot('outer', '#22c55e')}
                     connectNulls
                   />
                 </LineChart>
@@ -822,7 +1016,7 @@ export default function BrandScoreDashboard() {
 
                 <Link
                   href="/admin/brand-score/surveys"
-                  className="flex items-center gap-1 text-xs text-ds-app-accent hover:underline"
+                  className="flex items-center gap-1 text-xs text-foreground hover:underline"
                 >
                   サーベイ管理 <ArrowRight size={12} />
                 </Link>
@@ -912,7 +1106,7 @@ export default function BrandScoreDashboard() {
 
                     <Link
                       href="/admin/brand-score/market-surveys"
-                      className="flex items-center gap-1 text-xs text-green-600 hover:underline"
+                      className="flex items-center gap-1 text-xs text-foreground hover:underline"
                     >
                       市場調査 <ArrowRight size={12} />
                     </Link>
@@ -971,7 +1165,7 @@ export default function BrandScoreDashboard() {
 
                     <Link
                       href="/admin/analytics"
-                      className="flex items-center gap-1 text-xs text-ds-app-accent hover:underline"
+                      className="flex items-center gap-1 text-xs text-foreground hover:underline"
                     >
                       アナリティクス詳細 <ArrowRight size={12} />
                     </Link>
@@ -1308,6 +1502,7 @@ export default function BrandScoreDashboard() {
       {companyId && (
         <SnapshotScheduleCard
           companyId={companyId}
+          onSnapshotsChanged={fetchAll}
           recordSlot={
             <AlertDialog>
               <AlertDialogTrigger asChild>
