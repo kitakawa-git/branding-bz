@@ -575,9 +575,21 @@ export default function BrandScoreDashboard() {
       </div>
 
       {/* ── 1. ヘッダー ── */}
-      {/* 見出しはパンくず・タブと重複するため置かない。操作ボタンのみ右寄せ */}
-      <div className="flex items-center justify-end mb-6">
+      {/* 見出しはパンくず・タブと重複するため置かない。
+          操作は左寄せ。ダッシュボードタブの期間フィルターと位置を揃える */}
+      <div className="flex items-center mb-4">
         <div className="flex items-center gap-2">
+          {/* 期間をいちばん左に。タイムライン分析タブの期間フィルターと位置が揃う */}
+          <Select value={period} onValueChange={setPeriod}>
+            <SelectTrigger className="w-28 h-9">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="7">7日間</SelectItem>
+              <SelectItem value="30">30日間</SelectItem>
+              <SelectItem value="90">90日間</SelectItem>
+            </SelectContent>
+          </Select>
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="outline" size="sm" disabled={isSaving}>
@@ -604,16 +616,6 @@ export default function BrandScoreDashboard() {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
-          <Select value={period} onValueChange={setPeriod}>
-            <SelectTrigger className="w-28 h-9">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="7">7日間</SelectItem>
-              <SelectItem value="30">30日間</SelectItem>
-              <SelectItem value="90">90日間</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
       </div>
 
