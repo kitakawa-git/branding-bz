@@ -327,6 +327,7 @@ export default function SurveyDetailPage() {
 
   // タイトル編集
   const [editingTitle, setEditingTitle] = useState(false)
+  const [savingTitle, setSavingTitle] = useState(false)
   const [titleDraft, setTitleDraft] = useState('')
   const titleInputRef = useRef<HTMLInputElement>(null)
 
@@ -400,16 +401,42 @@ export default function SurveyDetailPage() {
   }, [survey?.id, survey?.status, companyId, fetchInnerScore])
 
   // ── タイトル編集 ──
+  // 下書きに限らずどの状態でも直せる。取り込んだサーベイはファイル名が
+  // そのままタイトルになるため、公開後に直したい場面のほうが多い
   const handleTitleClick = () => {
-    if (survey?.status !== 'draft') return
     setEditingTitle(true)
     setTimeout(() => titleInputRef.current?.focus(), 50)
   }
 
-  const handleTitleBlur = () => {
+  // 確定と同時に保存する。下書きの「保存」ボタンの流れとは独立させ、
+  // 保存ボタンが出ない状態でも変更が消えないようにする
+  const handleTitleBlur = async () => {
     setEditingTitle(false)
-    if (!titleDraft.trim()) {
+    const next = titleDraft.trim()
+    if (!next) {
       setTitleDraft(initialTitleRef.current)
+      return
+    }
+    if (next === initialTitleRef.current) return
+
+    setSavingTitle(true)
+    try {
+      const res = await fetch(`/api/brand-score/surveys/${surveyId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: next }),
+      })
+      if (!res.ok) throw new Error('タイトルの保存に失敗しました')
+      const data = await res.json()
+      setSurvey(data.survey)
+      initialTitleRef.current = data.survey.title
+      setTitleDraft(data.survey.title)
+      toast.success('タイトルを更新しました')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'タイトルの保存に失敗しました')
+      setTitleDraft(initialTitleRef.current)
+    } finally {
+      setSavingTitle(false)
     }
   }
 
@@ -902,12 +929,15 @@ export default function SurveyDetailPage() {
               />
             ) : (
               <h1
-                className={`text-2xl font-bold text-foreground truncate ${isDraft ? 'cursor-pointer hover:text-muted-foreground transition-colors' : ''}`}
+                className="text-2xl font-bold text-foreground truncate cursor-pointer transition-colors hover:text-muted-foreground"
                 onClick={handleTitleClick}
-                title={isDraft ? 'クリックして編集' : undefined}
+                title="クリックして編集"
               >
                 {survey.title}
               </h1>
+            )}
+            {savingTitle && (
+              <Loader2 className="size-4 shrink-0 animate-spin text-muted-foreground" />
             )}
             <Badge
               variant="secondary"
