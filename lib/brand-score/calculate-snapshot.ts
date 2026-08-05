@@ -4,7 +4,12 @@
 import { SupabaseClient } from '@supabase/supabase-js'
 import { fetchAllRows } from './fetch-all-rows'
 import { resolveStage, ALL_STAGES, type FunnelStage } from './funnel-stages'
-import { computeDigitalMetrics, weightedAverage } from './outer-metrics'
+import {
+  OUTER_TRACK_WEIGHTS,
+  computeDigitalMetrics,
+  weightedAverage,
+} from './outer-metrics'
+import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
 import { computeMarketScore } from './market-stage-score'
 import type { MarketStageStatus } from './market-stages'
 
@@ -241,6 +246,15 @@ async function calculateOuterScore(
   cutoff.setDate(cutoff.getDate() - periodDays)
   const cutoffISO = cutoff.toISOString()
 
+  // 0. スマート名刺のオン/オフ。オフなら名刺ページが非公開でログが溜まらないので、
+  //    デジタル接点は「未計測」として扱う（0点にはしない）
+  const { data: company } = await supabase
+    .from('companies')
+    .select('card_enabled')
+    .eq('id', companyId)
+    .single()
+  const cardEnabled = isFeatureEnabled(company, 'card_enabled')
+
   // 1. 社員数
   const { count: memberCount } = await supabase
     .from('profiles')
@@ -308,21 +322,28 @@ async function calculateOuterScore(
   }
 
   // 6. スコア算出（式は outer-metrics.ts が持つ。outer-score API と共通）
-  const { scores, digitalScore } = computeDigitalMetrics({
-    members,
-    uniqueVisitors,
-    totalCardViews,
-    vcardDownloads,
-    brandPageClicks,
-    avgDuration,
-  })
+  const { scores, digitalScore, unavailable } = computeDigitalMetrics(
+    {
+      members,
+      uniqueVisitors,
+      totalCardViews,
+      vcardDownloads,
+      brandPageClicks,
+      avgDuration,
+    },
+    { cardEnabled }
+  )
+
+  // 未計測のときは内訳も残さない。スナップショットに0点が並ぶと
+  // 「測ったうえで0点だった」ように読めてしまう
+  const measured = unavailable === null
 
   return {
-    score: digitalScore ?? 0,
-    reach: scores.reach,
-    interest: scores.interest,
-    transition: scores.transition,
-    engagement: scores.engagement,
+    score: digitalScore,
+    reach: measured ? scores.reach : null,
+    interest: measured ? scores.interest : null,
+    transition: measured ? scores.transition : null,
+    engagement: measured ? scores.engagement : null,
     // 印象一致度は未実装。weightedAverage が分母から外している
     impression: null,
   }
@@ -415,13 +436,13 @@ export async function calculateSnapshot(
     calculateMarketScore(supabase, companyId),
   ])
 
-  // アウター = 市場浸透60% + デジタル接点40%。
-  // 市場調査が無ければデジタル接点100%になり、従来と完全に同じ値になる。
+  // アウター = 市場浸透 + デジタル接点の加重平均（重みは OUTER_TRACK_WEIGHTS）。
+  // 片方が null ならもう片方が100%になる。
   // 市場浸透を主にするのは、名刺のアクセスログが「社外にどこまで届いているか」
   // をほとんど表さないため（実例: 認知率77%の会社のアウターが6.0だった）
   const outerScore = weightedAverage([
-    { score: market.score, weight: 0.6 },
-    { score: digital.score, weight: 0.4 },
+    { score: market.score, weight: OUTER_TRACK_WEIGHTS.market },
+    { score: digital.score, weight: OUTER_TRACK_WEIGHTS.digital },
   ])
 
   // 総合スコア: inner(50%) + outer(50%)、片方nullなら100%按分

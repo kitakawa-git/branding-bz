@@ -13,6 +13,22 @@ export const OUTER_WEIGHTS = {
   impression: 0.15,
 } as const
 
+/**
+ * アウタースコアの2本立ての重み。
+ * 市場浸透（外部調査）を主にする。名刺のアクセスログは「社外にどこまで
+ * 届いているか」をほとんど表さないため。
+ */
+export const OUTER_TRACK_WEIGHTS = { market: 0.75, digital: 0.25 } as const
+
+/**
+ * デジタル接点のスコアを出すのに最低限必要な名刺PV数。
+ *
+ * これを下回ると「関心度0点・遷移率0点」を数回のアクセスから断じることになる。
+ * 未計測と0点は別物なので、足りなければ null を返して分母から外す
+ * （5段階の absent / unmapped を分けているのと同じ考え方）。
+ */
+export const MIN_CARD_VIEWS_FOR_DIGITAL = 30
+
 /** 0-100 にクランプ（四捨五入込みなのでスコアは整数になる） */
 export function clamp(v: number): number {
   return Math.max(0, Math.min(100, Math.round(v)))
@@ -73,6 +89,9 @@ export interface DigitalRawCounts {
   avgDuration: number
 }
 
+/** デジタル接点のスコアが出せない理由 */
+export type DigitalUnavailableReason = 'disabled' | 'insufficient_data' | null
+
 export interface DigitalMetrics {
   /** 生の値（画面に「5.0回」「12.3%」と出すためのもの） */
   values: {
@@ -87,8 +106,10 @@ export interface DigitalMetrics {
     transition: number
     engagement: number
   }
-  /** 4指標＋印象一致度(null)の加重平均。従来の outer_score と同値 */
+  /** 4指標＋印象一致度(null)の加重平均。出せないときは null */
   digitalScore: number | null
+  /** null のときの理由。画面の出し分けに使う */
+  unavailable: DigitalUnavailableReason
 }
 
 /**
@@ -101,7 +122,10 @@ export interface DigitalMetrics {
  *   遷移率   遷移率% → 0%→0,  5%→50, 15%→100
  *   関与度   平均秒  → 0s→0,  30s→50, 90s→100
  */
-export function computeDigitalMetrics(raw: DigitalRawCounts): DigitalMetrics {
+export function computeDigitalMetrics(
+  raw: DigitalRawCounts,
+  opts: { cardEnabled?: boolean } = {}
+): DigitalMetrics {
   const reachValue = raw.members > 0 ? (raw.uniqueVisitors / raw.members) * 10 : 0
   const interestPct =
     raw.totalCardViews > 0 ? (raw.vcardDownloads / raw.totalCardViews) * 100 : 0
@@ -116,14 +140,30 @@ export function computeDigitalMetrics(raw: DigitalRawCounts): DigitalMetrics {
     engagement: clamp(linearScore(engagementValue, 30, 90)),
   }
 
+  // スマート名刺がオフの会社は、そもそも名刺が公開されていないので測れない。
+  // アクセスが無いのは当たり前で、それを低評価として扱うのは誤り
+  const cardEnabled = opts.cardEnabled !== false
+
+  // データが足りないときも同じ。数回のアクセスから0点と断じない
+  const enoughData = raw.totalCardViews >= MIN_CARD_VIEWS_FOR_DIGITAL
+
+  const unavailable: DigitalUnavailableReason = !cardEnabled
+    ? 'disabled'
+    : !enoughData
+      ? 'insufficient_data'
+      : null
+
   // 印象一致度は未実装のため null。weightedAverage が分母から外す
-  const digitalScore = weightedAverage([
-    { score: scores.reach, weight: OUTER_WEIGHTS.reach },
-    { score: scores.interest, weight: OUTER_WEIGHTS.interest },
-    { score: scores.transition, weight: OUTER_WEIGHTS.transition },
-    { score: scores.engagement, weight: OUTER_WEIGHTS.engagement },
-    { score: null, weight: OUTER_WEIGHTS.impression },
-  ])
+  const digitalScore =
+    unavailable !== null
+      ? null
+      : weightedAverage([
+          { score: scores.reach, weight: OUTER_WEIGHTS.reach },
+          { score: scores.interest, weight: OUTER_WEIGHTS.interest },
+          { score: scores.transition, weight: OUTER_WEIGHTS.transition },
+          { score: scores.engagement, weight: OUTER_WEIGHTS.engagement },
+          { score: null, weight: OUTER_WEIGHTS.impression },
+        ])
 
   return {
     values: {
@@ -134,5 +174,6 @@ export function computeDigitalMetrics(raw: DigitalRawCounts): DigitalMetrics {
     },
     scores,
     digitalScore,
+    unavailable,
   }
 }
