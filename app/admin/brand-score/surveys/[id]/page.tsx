@@ -1037,9 +1037,11 @@ export default function SurveyDetailPage() {
                         return (
                           <div
                             key={stage}
-                            className={`relative rounded-lg px-2 py-1.5 text-center ${isInflection ? 'bg-indigo-50 ring-1 ring-indigo-200' : ''}`}
+                            className="relative rounded-lg px-2 py-1.5 text-center"
                           >
-                            {/* 反転点の境界線。ここから先は「受け取る」から「渡す」に変わる */}
+                            {/* 反転点の境界線。ここから先は「受け取る」から「渡す」に変わる。
+                                段階別の詳細セクションに同じ意味の破線区切りがあるため、
+                                ここは線だけで示しラベルは置かない */}
                             {isInflection && (
                               <span
                                 aria-hidden
@@ -1056,10 +1058,6 @@ export default function SurveyDetailPage() {
                               value={s ?? 0}
                               className={`h-1.5 mt-1.5 ${isWeakest ? '[&>div]:bg-orange-500' : getScoreProgressColor(s)}`}
                             />
-                            {/* 反転点以外も同じ高さを保つため、非表示ではなく透明にする */}
-                            <p className={`m-0 mt-1 text-[10px] font-semibold ${isInflection ? 'text-indigo-600' : 'text-transparent'}`}>
-                              反転点
-                            </p>
                           </div>
                         )
                       })}
