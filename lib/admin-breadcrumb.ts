@@ -9,11 +9,13 @@ export type AdminCrumb = {
 
 // 完全一致を優先、なければ最長プレフィックス一致で解決する
 const breadcrumbMap: Record<string, AdminCrumb> = {
-  '/admin/dashboard': { title: 'ダッシュボード' },
-  '/admin/analytics': { title: 'スマート名刺分析' },
-  '/admin/analytics/learning': { title: '視聴分析' },
-  // タブ側が「ブランドスコア」を名乗るため、パンくずは領域名（ダッシュボード）にする
-  '/admin/brand-score': { title: 'ダッシュボード' },
+  // ダッシュボードは4つのタブを持つ1つの領域。
+  // セクションに領域名、タイトルに現在のタブ名を置く（タブ名は
+  // lib/constants/dashboard-tabs.ts の DASHBOARD_TABS と揃えること）
+  '/admin/dashboard': { section: 'ダッシュボード', title: 'タイムライン分析' },
+  '/admin/brand-score': { section: 'ダッシュボード', title: 'ブランドスコア' },
+  '/admin/analytics': { section: 'ダッシュボード', title: 'スマート名刺' },
+  '/admin/analytics/learning': { section: 'ダッシュボード', title: '視聴分析' },
   '/admin/brand-score/surveys': { title: 'サーベイ管理' },
   '/admin/brand-score/quizzes': { title: '理解度テスト' },
   '/admin/company': { title: '基本情報' },
