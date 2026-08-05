@@ -205,6 +205,15 @@ const CATEGORY_LABELS: Record<string, string> = {
 
 const CATEGORY_ORDER = ['why', 'how', 'what'] as const
 
+// 部署の表示名。DB の値は取り込み時に指定した文字列なので、
+// 画面上の呼び方だけをここで揃える
+const DEPARTMENT_LABELS: Record<string, string> = {
+  BO本社: 'BO（本社含む）',
+}
+
+const departmentLabel = (department: string) =>
+  DEPARTMENT_LABELS[department] ?? department
+
 const CATEGORY_SUBS: Record<string, string> = {
   why: '理念・存在意義',
   how: '方針・進め方',
@@ -1190,10 +1199,14 @@ export default function SurveyDetailPage() {
                     <div className="space-y-3">
                       {[
                         { label: '全社', d: breakdown.overall, strong: true },
-                        ...breakdown.byDepartment.map(d => ({ label: d.department, d, strong: false })),
+                        ...breakdown.byDepartment.map(d => ({
+                          label: departmentLabel(d.department),
+                          d,
+                          strong: false,
+                        })),
                       ].map(row => (
                         <div key={row.label} className="flex items-center gap-3">
-                          <div className="w-[92px] shrink-0">
+                          <div className="w-[116px] shrink-0">
                             <p className={`m-0 text-sm ${row.strong ? 'font-bold text-foreground' : 'text-muted-foreground'}`}>
                               {row.label}
                             </p>
