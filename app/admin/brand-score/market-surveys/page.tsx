@@ -10,7 +10,16 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Progress } from '@/components/ui/progress'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
 import { toast } from 'sonner'
-import { Upload, BarChart3, CalendarDays, Users, MoreHorizontal, Trash2, Loader2 } from 'lucide-react'
+import {
+  Upload,
+  BarChart3,
+  ClipboardList,
+  CalendarDays,
+  Users,
+  MoreHorizontal,
+  Trash2,
+  Loader2,
+} from 'lucide-react'
 import { Fab, FabButton } from '@/components/ui/fab'
 import {
   DropdownMenu,
@@ -213,43 +222,38 @@ export default function MarketSurveysPage() {
       {/* 市場浸透の推移。調査ごとの実施日を横軸にする。
           スナップショットには転記していない（総合スコアの合成が壊れるため）ので、
           割り当てを直せばここも自動で追随する */}
-      {trend.length > 0 && (
+      {trend.length >= 2 && (
         <Card className="mb-4 bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-5">
             <h2 className="m-0 mb-1 text-sm font-bold text-foreground">市場浸透の推移</h2>
             <p className="mb-4 text-xs leading-relaxed text-muted-foreground">
-              調査を実施した時点の数字です。
-              {trend.length < 2
-                ? '前年の調査を取り込むと、段階ごとの動きが線で見られます。'
-                : '認知は伸びても想起が動かない、のような段階ごとの差が見どころです。'}
+              調査を実施した時点の数字です。認知は伸びても想起が動かない、
+              のような段階ごとの差が見どころです。
             </p>
 
-            {/* 1件だと線にならないので、2件目からグラフを出す */}
-            {trend.length >= 2 && (
-              <div className="mb-4 h-56">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart
-                    data={trend.map(t => ({ 実施: formatDate(t.date), 市場浸透: t.market_score }))}
-                    margin={{ top: 4, right: 8, left: -16, bottom: 0 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
-                    <XAxis dataKey="実施" tick={{ fontSize: 11, fill: '#6b7280' }} />
-                    <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: '#9ca3af' }} />
-                    <Tooltip formatter={(v: number) => [`${v}点`, '市場浸透']} />
-                    <Line
-                      type="monotone"
-                      dataKey="市場浸透"
-                      stroke="#16a34a"
-                      strokeWidth={2}
-                      dot={{ r: 4, fill: '#16a34a' }}
-                      connectNulls
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            )}
+            <div className="mb-4 h-56">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart
+                  data={trend.map(t => ({ 実施: formatDate(t.date), 市場浸透: t.market_score }))}
+                  margin={{ top: 4, right: 8, left: -16, bottom: 0 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+                  <XAxis dataKey="実施" tick={{ fontSize: 11, fill: '#6b7280' }} />
+                  <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: '#9ca3af' }} />
+                  <Tooltip formatter={(v: number) => [`${v}点`, '市場浸透']} />
+                  <Line
+                    type="monotone"
+                    dataKey="市場浸透"
+                    stroke="#16a34a"
+                    strokeWidth={2}
+                    dot={{ r: 4, fill: '#16a34a' }}
+                    connectNulls
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+          </div>
 
-            {/* 段階ごとの値。グラフを出さない1件目でもここは読める */}
+            {/* 段階ごとの値。線では読み取れない実数をここで見る */}
             <div className="overflow-x-auto">
               <table className="w-full min-w-[360px] text-xs">
                 <thead>
@@ -389,7 +393,8 @@ export default function MarketSurveysPage() {
                   {/* メタ情報。サーベイ一覧と同じ並び（件数 → 日付 → 終了） */}
                   <div className="flex flex-wrap items-center gap-4 text-[10px] text-muted-foreground">
                     <span className="flex items-center gap-1">
-                      <BarChart3 size={11} />
+                      {/* 設問数のアイコンはサーベイ一覧と同じ ClipboardList */}
+                      <ClipboardList size={11} />
                       設問 {s.block_count}件
                     </span>
                     {s.sample_size !== null && (
