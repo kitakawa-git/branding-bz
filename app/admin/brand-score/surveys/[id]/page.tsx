@@ -53,7 +53,6 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import {
-  ArrowLeft,
   ClipboardList,
   Users,
   Target,
@@ -800,14 +799,23 @@ export default function SurveyDetailPage() {
     <div>
       {/* ── 1. ヘッダー部 ── */}
       <div className="mb-6">
-        {/* 戻るボタン */}
-        <button
-          onClick={() => router.push('/admin/brand-score/surveys')}
-          className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mb-3"
+        {/* 作成日／配信期間。一覧へ戻る導線はパンくずが担うため戻るボタンは置かない */}
+        <div
+          className="mb-3 flex items-center gap-1.5 text-sm text-muted-foreground"
+          suppressHydrationWarning
         >
-          <ArrowLeft size={14} />
-          サーベイ管理
-        </button>
+          <CalendarDays size={14} />
+          <span>{isActive ? '配信期間' : '作成日'}</span>
+          {isActive || survey.status === 'closed' ? (
+            <span>
+              {survey.starts_at ? formatDate(survey.starts_at) : '-'}
+              {' 〜 '}
+              {survey.ends_at ? formatDate(survey.ends_at) : '未定'}
+            </span>
+          ) : (
+            <span>{formatDate(survey.created_at)}</span>
+          )}
+        </div>
 
         <div className="flex items-start justify-between gap-4">
           {/* タイトル + バッジ */}
@@ -922,7 +930,7 @@ export default function SurveyDetailPage() {
       {/* 概要カード。以降のカード間隔（space-y-4 = 16px）に合わせる */}
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-4">
         <CardContent className="p-5">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
                 <ClipboardList size={12} />
@@ -961,24 +969,6 @@ export default function SurveyDetailPage() {
                 </p>
                 <Progress value={survey.response_rate} className="h-1.5" />
               </div>
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
-                <CalendarDays size={12} />
-                {isActive ? '配信期間' : '作成日'}
-              </div>
-              {isActive || survey.status === 'closed' ? (
-                <div className="text-sm text-foreground" suppressHydrationWarning>
-                  <p>{survey.starts_at ? formatDate(survey.starts_at) : '-'}</p>
-                  <p className="text-xs text-muted-foreground">
-                    〜 {survey.ends_at ? formatDate(survey.ends_at) : '未定'}
-                  </p>
-                </div>
-              ) : (
-                <p className="text-sm text-foreground" suppressHydrationWarning>
-                  {formatDate(survey.created_at)}
-                </p>
-              )}
             </div>
           </div>
         </CardContent>
