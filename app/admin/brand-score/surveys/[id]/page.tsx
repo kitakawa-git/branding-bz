@@ -722,6 +722,20 @@ export default function SurveyDetailPage() {
       }, null)
     : null
 
+  // 部門ごとの最弱段階。全社の最弱と一致するとは限らないので個別に出す
+  const weakestStageOf = (department: string): FunnelStage | null =>
+    funnelData
+      ? FUNNEL_STAGES.reduce<FunnelStage | null>((min, stage) => {
+          const v = deptStageScore(department, stage)
+          if (v === null) return min
+          if (min === null) return stage
+          return v < (deptStageScore(department, min) ?? Infinity) ? stage : min
+        }, null)
+      : null
+
+  const weakestSpStage = weakestStageOf('SP')
+  const weakestBoStage = weakestStageOf('BO本社')
+
   // 本社と現場の差が最大の段階
   const maxGap = funnelData
     ? FUNNEL_STAGES.reduce<{ stage: FunnelStage; bo: number; sp: number; gap: number } | null>(
@@ -1261,11 +1275,11 @@ export default function SurveyDetailPage() {
                               <div className="min-w-0 flex-1 pt-0.5">
                                 <div className="space-y-1">
                                   {/* 棒の色は系列（全社/SP/BO）を表す。
-                                      最弱段階は数字だけをオレンジにし、棒は青のままにする */}
+                                      各系列の最弱段階は数字だけをオレンジにし、棒は系列の色のままにする */}
                                   {([
                                     { key: '全社', value: s, color: 'bg-ds-app-accent-soft', highlight: isWeakest },
-                                    { key: 'SP', value: spScore, color: 'bg-green-500', highlight: false },
-                                    { key: 'BO', value: boScore, color: 'bg-orange-400', highlight: false },
+                                    { key: 'SP', value: spScore, color: 'bg-green-500', highlight: weakestSpStage === stage },
+                                    { key: 'BO', value: boScore, color: 'bg-orange-400', highlight: weakestBoStage === stage },
                                   ] as const).map(bar => bar.value === null ? null : (
                                     <div key={bar.key} className="flex items-center gap-2">
                                       <span className="w-7 shrink-0 text-[10px] text-muted-foreground">
