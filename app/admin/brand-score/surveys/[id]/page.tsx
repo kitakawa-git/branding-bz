@@ -1177,12 +1177,13 @@ export default function SurveyDetailPage() {
                               </div>
 
                               {/* 右: スコアと部門値 */}
-                              <div className="w-[116px] shrink-0 text-right">
+                              {/* 「本社54.5 / 現場62.3」が1行に収まる幅を確保する */}
+                              <div className="w-[140px] shrink-0 text-right">
                                 <p className={`m-0 text-base font-bold ${isWeakest ? 'text-orange-600' : 'text-foreground'}`}>
                                   {s !== null ? s.toFixed(1) : '-'}
                                 </p>
                                 {(boScore !== null || spScore !== null) && (
-                                  <p className={`m-0 text-[10px] ${gap !== null && gap >= 10 ? 'text-orange-600 font-semibold' : 'text-muted-foreground'}`}>
+                                  <p className={`m-0 whitespace-nowrap text-[10px] ${gap !== null && gap >= 10 ? 'text-orange-600 font-semibold' : 'text-muted-foreground'}`}>
                                     本社{boScore?.toFixed(1) ?? '-'} / 現場{spScore?.toFixed(1) ?? '-'}
                                   </p>
                                 )}
@@ -1275,11 +1276,12 @@ export default function SurveyDetailPage() {
                                 </div>
                               </div>
 
-                              <div className="w-[116px] shrink-0 text-right">
-                                <p className="m-0 text-[10px] text-orange-600">
+                              {/* 案Bの右カラムと幅を揃える */}
+                              <div className="w-[140px] shrink-0 text-right">
+                                <p className="m-0 whitespace-nowrap text-[10px] text-orange-600">
                                   本社 {bo !== null ? `${bo.toFixed(1)}%` : '-'}
                                 </p>
-                                <p className="m-0 text-[10px] text-green-600">
+                                <p className="m-0 whitespace-nowrap text-[10px] text-green-600">
                                   現場 {sp !== null ? `${sp.toFixed(1)}%` : '-'}
                                 </p>
                               </div>
