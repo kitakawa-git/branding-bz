@@ -84,12 +84,6 @@ import {
   type GroupFunnel,
 } from '@/lib/brand-score/funnel-stages'
 import {
-  LENS_ORDER,
-  LENS_LABELS,
-  LENS_QUESTIONS,
-  DOMAIN_ORDER,
-  DOMAIN_LABELS,
-  DOMAIN_RANGES,
   type Breakdown,
 } from '@/lib/brand-score/question-lens'
 
@@ -195,12 +189,11 @@ const SOURCE_CONFIG: Record<string, { label: string; className: string }> = {
 }
 
 // 設問別スコアの表示軸
-type QuestionAxis = 'lens' | 'domain' | 'stage'
+type QuestionAxis = 'category' | 'stage'
 
 const AXIS_OPTIONS: { key: QuestionAxis; label: string }[] = [
-  { key: 'lens', label: '設問タイプ' },
-  { key: 'domain', label: '領域' },
   { key: 'stage', label: '浸透段階' },
+  { key: 'category', label: '設問タイプ' },
 ]
 
 // カテゴリ表示名
@@ -208,6 +201,14 @@ const CATEGORY_LABELS: Record<string, string> = {
   why: '理念浸透（WHY）',
   how: '方針共感（HOW）',
   what: '行動体現（WHAT）',
+}
+
+const CATEGORY_ORDER = ['why', 'how', 'what'] as const
+
+const CATEGORY_SUBS: Record<string, string> = {
+  why: '理念・存在意義',
+  how: '方針・進め方',
+  what: '行動・成果',
 }
 
 // ── ソート可能な設問行コンポーネント ──
@@ -306,11 +307,10 @@ export default function SurveyDetailPage() {
   const [loading, setLoading] = useState(true)
 
   // インナースコア
-  // 設問別スコアの表示軸（構成要素 / 浸透段階）
+  // 設問別スコアの表示軸（浸透段階 / 設問タイプ WHY/HOW/WHAT）。
   // 既定は浸透段階（評価軸を5段階に統一したため）。
-  // 既定は設問タイプ（施策の種類が直接決まる軸）。
-  // 解決できないサーベイでは下の effectiveAxis がフォールバックする
-  const [questionAxis, setQuestionAxis] = useState<QuestionAxis>('lens')
+  // 段階が解決できないサーベイでは下の effectiveAxis がフォールバックする
+  const [questionAxis, setQuestionAxis] = useState<QuestionAxis>('stage')
   const [innerScore, setInnerScore] = useState<InnerScoreData | null>(null)
   const [innerScoreLoading, setInnerScoreLoading] = useState(false)
 
@@ -773,13 +773,19 @@ export default function SurveyDetailPage() {
 
   // 実際に描画する軸。解決できない軸を選んだままでも空表示にならないよう、
   // 使える軸へ順に落とす
+  // 設問 → WHY/HOW/WHAT。カテゴリは設問側の設定値をそのまま使う
+  const categoryOf = new Map(
+    (innerScore?.by_question ?? []).map(bq => [bq.question_id, bq.category])
+  )
+
   const availableAxes: QuestionAxis[] = []
-  if (breakdown?.hasLens) availableAxes.push('lens')
-  if (breakdown?.hasDomain) availableAxes.push('domain')
   if (questionsByStage && questionsByStage.size > 0) availableAxes.push('stage')
+  if (CATEGORY_ORDER.some(c => [...categoryOf.values()].includes(c))) {
+    availableAxes.push('category')
+  }
 
   const effectiveAxis: QuestionAxis =
-    availableAxes.includes(questionAxis) ? questionAxis : (availableAxes[0] ?? 'lens')
+    availableAxes.includes(questionAxis) ? questionAxis : (availableAxes[0] ?? 'stage')
 
   const questionAxisOptions = AXIS_OPTIONS.filter(o => availableAxes.includes(o.key))
 
@@ -789,15 +795,10 @@ export default function SurveyDetailPage() {
     type Q = Breakdown['byQuestion'][number]
     const buckets: { key: string; label: string; sub?: string; questions: Q[] }[] = []
 
-    if (effectiveAxis === 'lens') {
-      for (const l of LENS_ORDER) {
-        const qs = breakdown.byQuestion.filter(q => q.lens === l)
-        if (qs.length) buckets.push({ key: l, label: LENS_LABELS[l], sub: LENS_QUESTIONS[l], questions: qs })
-      }
-    } else if (effectiveAxis === 'domain') {
-      for (const d of DOMAIN_ORDER) {
-        const qs = breakdown.byQuestion.filter(q => q.domain === d)
-        if (qs.length) buckets.push({ key: d, label: DOMAIN_LABELS[d], sub: DOMAIN_RANGES[d], questions: qs })
+    if (effectiveAxis === 'category') {
+      for (const c of CATEGORY_ORDER) {
+        const qs = breakdown.byQuestion.filter(q => categoryOf.get(q.questionId) === c)
+        if (qs.length) buckets.push({ key: c, label: CATEGORY_LABELS[c], sub: CATEGORY_SUBS[c], questions: qs })
       }
     } else {
       const total = breakdown.byQuestion.length
@@ -1247,15 +1248,10 @@ export default function SurveyDetailPage() {
 
                         return (
                           <div key={stage}>
-                            {/* 反転点の区切り */}
+                            {/* 反転点の区切り。ここから先は「受け取る」から「渡す」に
+                                変わる。説明は不要になったので線だけ残す */}
                             {stage === INFLECTION_STAGE && (
-                              <div className="my-2 flex items-center gap-2">
-                                <span className="flex-1 border-t border-dashed border-indigo-300" />
-                                <span className="text-[10px] text-indigo-600 whitespace-nowrap">
-                                  ここから先は「受け取る」から「渡す」に変わる
-                                </span>
-                                <span className="flex-1 border-t border-dashed border-indigo-300" />
-                              </div>
+                              <div aria-hidden className="my-2 border-t border-border" />
                             )}
 
                             <div className="flex items-start gap-3 py-2">
@@ -1357,11 +1353,7 @@ export default function SurveyDetailPage() {
                         return (
                           <div key={stage}>
                             {stage === INFLECTION_STAGE && (
-                              <div className="my-2 flex items-center gap-2">
-                                <span className="flex-1 border-t border-dashed border-indigo-300" />
-                                <span className="text-[10px] text-indigo-600 whitespace-nowrap">反転点</span>
-                                <span className="flex-1 border-t border-dashed border-indigo-300" />
-                              </div>
+                              <div aria-hidden className="my-2 border-t border-border" />
                             )}
 
                             <div className="flex items-center gap-3 py-1.5">
