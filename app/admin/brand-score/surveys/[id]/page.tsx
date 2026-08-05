@@ -1416,8 +1416,6 @@ export default function SurveyDetailPage() {
                         const isWeakest = weakestStage === stage
                         const boScore = deptStageScore('BO本社', stage)
                         const spScore = deptStageScore('SP', stage)
-                        const gap =
-                          boScore !== null && spScore !== null ? Math.abs(spScore - boScore) : null
 
                         return (
                           <div key={stage}>
@@ -1495,15 +1493,6 @@ export default function SurveyDetailPage() {
                                 </div>
                               </div>
 
-                              {/* 右: スコアと部門値 */}
-                              {/* 各バーの横に数値が出るので、ここは差分だけを示す */}
-                              <div className="w-[84px] shrink-0 text-right">
-                                {gap !== null && (
-                                  <p className={`m-0 whitespace-nowrap text-[10px] ${gap >= 10 ? 'font-semibold text-orange-600' : 'text-muted-foreground'}`}>
-                                    差 {gap.toFixed(1)}pt
-                                  </p>
-                                )}
-                              </div>
                             </div>
                           </div>
                         )
@@ -1513,13 +1502,13 @@ export default function SurveyDetailPage() {
                     {/* 凡例 */}
                     <div className="mt-3 flex flex-wrap items-center gap-4 text-[10px] text-muted-foreground">
                       <span className="flex items-center gap-1">
-                        <span className="inline-block h-2 w-4 rounded-full bg-ds-app-accent-soft" />全社
+                        <span className="inline-block size-2.5 rounded-sm bg-ds-app-accent-soft" />全社
                       </span>
                       <span className="flex items-center gap-1">
-                        <span className="inline-block h-2 w-4 rounded-full bg-green-500" />SP
+                        <span className="inline-block size-2.5 rounded-sm bg-green-500" />SP
                       </span>
                       <span className="flex items-center gap-1">
-                        <span className="inline-block h-2 w-4 rounded-full bg-orange-400" />BO（本社含む）
+                        <span className="inline-block size-2.5 rounded-sm bg-orange-400" />BO（本社含む）
                       </span>
                     </div>
 
