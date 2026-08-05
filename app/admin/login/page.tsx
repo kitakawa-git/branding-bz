@@ -233,6 +233,12 @@ function LoginContent() {
             </button>
           </form>
 
+          <p className="mb-0 mt-4 text-center text-sm">
+            <Link href="/forgot-password" className="text-white/55 underline-offset-2 hover:text-white hover:underline">
+              パスワードをお忘れですか？
+            </Link>
+          </p>
+
           <p className="mb-0 mt-6 text-center text-sm">
             <Link href="/portal/auth" className="font-semibold text-white underline-offset-2 hover:underline">
               メンバーログインはこちら
