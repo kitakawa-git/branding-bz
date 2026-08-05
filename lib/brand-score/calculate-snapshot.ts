@@ -87,6 +87,57 @@ function round1(v: number | null): number | null {
   return Math.round(v * 10) / 10
 }
 
+/**
+ * 1サーベイぶんの回答から、総合スコアと浸透5段階スコアを出す（純関数）。
+ *
+ * 総合は全設問の単純平均。カテゴリに重みを置かないのは、評価軸を5段階へ
+ * 移行して WHY/HOW/WHAT に重みを置く根拠が無くなったため。
+ * ⚠ 過去のスナップショットは旧式（WHY35%/HOW30%/WHAT35%）で記録されている。
+ *
+ * 推移APIとスナップショットの両方から呼ぶ。式を2箇所に書くと、
+ * 片方だけ直したときに同じサーベイが画面ごとに違う点数になる。
+ */
+export function computeSurveyScores(
+  responses: { question_id: string; score: number }[],
+  questions: {
+    id: string
+    sort_order: number
+    reference_data: Record<string, unknown> | null
+  }[]
+): { score: number | null; stages: Record<string, number> | null } {
+  if (responses.length === 0 || questions.length === 0) {
+    return { score: null, stages: null }
+  }
+
+  const score = round1(
+    calcCategoryScore(
+      responses,
+      questions.map((q) => q.id)
+    )
+  )
+
+  const stageByQuestionId = new Map<string, FunnelStage>()
+  for (const q of questions) {
+    const stage = resolveStage(q.sort_order, questions.length, q.reference_data)
+    if (stage) stageByQuestionId.set(q.id, stage)
+  }
+
+  let stages: Record<string, number> | null = null
+  if (stageByQuestionId.size > 0) {
+    stages = {}
+    for (const stage of ALL_STAGES) {
+      const ids = [...stageByQuestionId.entries()]
+        .filter(([, st]) => st === stage)
+        .map(([id]) => id)
+      const v = calcCategoryScore(responses, ids)
+      if (v !== null) stages[stage] = round1(v) as number
+    }
+    if (Object.keys(stages).length === 0) stages = null
+  }
+
+  return { score, stages }
+}
+
 // ────────────────────────────────────────────
 // インナースコア算出
 // ────────────────────────────────────────────
@@ -187,34 +238,19 @@ async function calculateInnerScore(
   const whyScore = calcCategoryScore(responses, categoryQuestionIds.why)
   const howScore = calcCategoryScore(responses, categoryQuestionIds.how)
   const whatScore = calcCategoryScore(responses, categoryQuestionIds.what)
-  const totalScore = calcCategoryScore(responses, questions.map(q => q.id as string))
 
-  // 7. 浸透段階ごとのスコア（段階が解決できない構成では null）
-  const stageByQuestionId = new Map<string, FunnelStage>()
-  for (const q of questions) {
-    const stage = resolveStage(
-      q.sort_order as number,
-      questions.length,
-      q.reference_data as Record<string, unknown> | null
-    )
-    if (stage) stageByQuestionId.set(q.id as string, stage)
-  }
-
-  let stages: Record<string, number> | null = null
-  if (stageByQuestionId.size > 0) {
-    stages = {}
-    for (const stage of ALL_STAGES) {
-      const ids = [...stageByQuestionId.entries()]
-        .filter(([, st]) => st === stage)
-        .map(([id]) => id)
-      const v = calcCategoryScore(responses, ids)
-      if (v !== null) stages[stage] = round1(v) as number
-    }
-    if (Object.keys(stages).length === 0) stages = null
-  }
+  // 7. 総合と浸透段階（式は computeSurveyScores が持つ。推移APIと共通）
+  const { score: totalScore, stages } = computeSurveyScores(
+    responses,
+    questions.map((q) => ({
+      id: q.id as string,
+      sort_order: q.sort_order as number,
+      reference_data: q.reference_data as Record<string, unknown> | null,
+    }))
+  )
 
   return {
-    score: round1(totalScore),
+    score: totalScore,
     why: round1(whyScore),
     how: round1(howScore),
     what: round1(whatScore),
