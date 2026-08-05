@@ -859,7 +859,9 @@ export default function BrandScoreDashboard() {
             {hasOuter ? (
               <div className="space-y-4">
                 <div className="text-center mb-2">
-                  <span className={`text-3xl font-bold ${getScoreColor(outerScore!.outer_score)}`}>
+                  {/* スコアの水準ではなく系列色で出す。上のスコア推移の
+                      アウター線（緑）とカードの中身を対応させるため */}
+                  <span className="text-3xl font-bold text-green-600">
                     {outerScore!.outer_score.toFixed(1)}
                   </span>
                 </div>
