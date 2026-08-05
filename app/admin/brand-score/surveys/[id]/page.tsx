@@ -884,20 +884,6 @@ export default function SurveyDetailPage() {
   const weakestSpStage = weakestStageOf('SP')
   const weakestBoStage = weakestStageOf('BO本社')
 
-  // 本社と現場の差が最大の段階
-  const maxGap = funnelData
-    ? FUNNEL_STAGES.reduce<{ stage: FunnelStage; bo: number; sp: number; gap: number } | null>(
-        (max, stage) => {
-          const bo = deptStageScore('BO本社', stage)
-          const sp = deptStageScore('SP', stage)
-          if (bo === null || sp === null) return max
-          const gap = Math.abs(sp - bo)
-          return !max || gap > max.gap ? { stage, bo, sp, gap } : max
-        },
-        null
-      )
-    : null
-
   // 段階 → その段階に属する設問（設問別スコアの浸透段階ビュー用）
   const questionsByStage = useMemo(() => {
     if (!innerScore || questions.length === 0) return null
@@ -1501,13 +1487,6 @@ export default function SurveyDetailPage() {
                         <span className="inline-block h-2 w-4 rounded-full bg-orange-400" />BO（本社含む）
                       </span>
                     </div>
-
-                    {maxGap && (
-                      <p className="m-0 mt-2 text-[10px] leading-relaxed text-muted-foreground">
-                        {STAGE_LABELS[maxGap.stage]}のSP{maxGap.sp.toFixed(1)}／BO{maxGap.bo.toFixed(1)}が、
-                        5段階で最大の{maxGap.gap.toFixed(1)}pt差です。
-                      </p>
-                    )}
 
                     <InsightNote
                       text={survey.insights?.stages}
