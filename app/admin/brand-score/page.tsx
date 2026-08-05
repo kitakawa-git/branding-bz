@@ -188,6 +188,8 @@ type TrendRow = {
   market_score: number | null
   /** サーベイを締めた日のインナースコア */
   survey_score: number | null
+  /** 上2つを合わせた総合。両方そろった側の日付に置く */
+  survey_total_score: number | null
 }
 
 // ── ヘルパー関数 ──
@@ -581,6 +583,7 @@ export default function BrandScoreDashboard() {
         outer_score: null,
         market_score: null,
         survey_score: null,
+        survey_total_score: null,
       }
       byDate.set(key, created)
       return created
@@ -597,6 +600,38 @@ export default function BrandScoreDashboard() {
     for (const t of surveyTrend) {
       row(t.date).survey_score = t.inner_score
     }
+
+    // 調査日ベースの総合。インナーと市場調査は実施日が数十日ずれるので、
+    // 近い時期どうしを組にして「両方そろった側の日付」に置く。
+    // 中間の日付に置くと、何も測っていない日に点が立つことになる。
+    //
+    // ⚠ ここで使うアウターは市場浸透だけ。デジタル接点を計測している会社では
+    //    実際のアウター（市場浸透0.75＋デジタル0.25）とずれるので出さない。
+    //    過去日のデジタル接点（直近30日の集計）は遡って計算できないため
+    const digitalCounted = outerScore !== null && outerScore.digital_unavailable === null
+    if (!digitalCounted) {
+      const PAIR_WINDOW_DAYS = 180
+      for (const t of surveyTrend) {
+        if (t.inner_score === null) continue
+        const innerTime = new Date(t.date).getTime()
+        let nearest: MarketTrendPoint | null = null
+        let nearestGap = Infinity
+        for (const m of marketTrend) {
+          if (m.market_score === null) continue
+          const gap = Math.abs(new Date(m.date).getTime() - innerTime)
+          if (gap < nearestGap) {
+            nearest = m
+            nearestGap = gap
+          }
+        }
+        if (!nearest || nearestGap > PAIR_WINDOW_DAYS * 24 * 60 * 60 * 1000) continue
+
+        const later = new Date(nearest.date).getTime() > innerTime ? nearest.date : t.date
+        row(later).survey_total_score =
+          Math.round(((t.inner_score + (nearest.market_score as number)) / 2) * 10) / 10
+      }
+    }
+
     return [...byDate.values()].sort((a, b) =>
       a.snapshot_date.localeCompare(b.snapshot_date)
     )
@@ -831,6 +866,7 @@ export default function BrandScoreDashboard() {
                         : name === 'inner_score' ? 'インナー'
                         : name === 'market_score' ? '市場浸透（調査日）'
                         : name === 'survey_score' ? 'インナー（調査日）'
+                        : name === 'survey_total_score' ? '総合（調査日）'
                         : 'アウター'
                       return [value != null ? `${Number(value).toFixed(1)}` : '—', label]
                     }}
@@ -852,7 +888,9 @@ export default function BrandScoreDashboard() {
                               ? '市場浸透（調査日）'
                               : value === 'survey_score'
                                 ? 'インナー（調査日）'
-                                : 'アウター'}
+                                : value === 'survey_total_score'
+                                  ? '総合（調査日）'
+                                  : 'アウター'}
                       </span>
                     )}
                   />
@@ -883,6 +921,15 @@ export default function BrandScoreDashboard() {
                   {/* 調査を実施した日に打つ点。線でつながないのは、
                       スナップショットと同じ頻度で測っているように見せないため。
                       色は対応する線と揃え、丸か線かで測定元を分ける */}
+                  <Line
+                    type="monotone"
+                    dataKey="survey_total_score"
+                    stroke="none"
+                    legendType="circle"
+                    dot={{ r: 5, fill: '#1f2937' }}
+                    activeDot={{ r: 6 }}
+                    connectNulls={false}
+                  />
                   <Line
                     type="monotone"
                     dataKey="survey_score"
