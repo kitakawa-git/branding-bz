@@ -875,23 +875,25 @@ export default function BrandScoreDashboard() {
                       <p className="m-0 flex items-center gap-1.5 text-xs font-bold text-foreground">
                         <Globe size={12} />
                         市場浸透（外部調査）
-                        <span className="ml-auto text-sm text-ds-app-accent">
+                        <span className="ml-auto text-sm text-green-600">
                           {outerScore!.market_score.toFixed(1)}
                         </span>
                       </p>
                     )}
 
+                    {/* バーの基調色はスコア推移グラフのアウター線（green-500）と揃える。
+                        インナーが青・アウターが緑で、上のグラフの凡例とそのまま対応する */}
                     {marketStageRows.map(item => (
                       <div key={item.label}>
                         <div className="flex items-center justify-between mb-1">
                           <span className="text-xs text-muted-foreground">{item.label}</span>
-                          <span className={`text-sm font-bold ${item.isWeakest ? 'text-orange-600' : 'text-ds-app-accent'}`}>
+                          <span className={`text-sm font-bold ${item.isWeakest ? 'text-orange-600' : 'text-green-600'}`}>
                             {item.value !== null ? item.value.toFixed(1) : '-'}
                           </span>
                         </div>
                         <Progress
                           value={item.value ?? 0}
-                          className={`h-1.5 ${item.isWeakest ? '[&>div]:bg-orange-500' : '[&>div]:bg-ds-app-accent-soft'}`}
+                          className={`h-1.5 ${item.isWeakest ? '[&>div]:bg-orange-500' : '[&>div]:bg-green-500'}`}
                         />
                       </div>
                     ))}
@@ -908,7 +910,7 @@ export default function BrandScoreDashboard() {
 
                     <Link
                       href="/admin/brand-score/market-surveys"
-                      className="flex items-center gap-1 text-xs text-ds-app-accent hover:underline"
+                      className="flex items-center gap-1 text-xs text-green-600 hover:underline"
                     >
                       市場調査 <ArrowRight size={12} />
                     </Link>
