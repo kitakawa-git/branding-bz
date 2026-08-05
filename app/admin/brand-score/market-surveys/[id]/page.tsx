@@ -665,7 +665,7 @@ export default function MarketSurveyDetailPage() {
                 %の引き算をさせないことが、この表でいちばん大事な注意 */}
             <p className="mb-4 text-xs leading-relaxed text-muted-foreground">
               市場が重視する順と、自社の印象として挙がる順の比較です。
-              母数が違うので%ではなく順位で見て、順位差がマイナスなら重視される割に印象が薄い項目です。
+              順位差がマイナスなら、重視される割に印象が薄い項目です。
             </p>
 
             <div className="overflow-x-auto">
