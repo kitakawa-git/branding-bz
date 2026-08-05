@@ -9,8 +9,25 @@ import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Progress } from '@/components/ui/progress'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
-import { Upload, BarChart3, CalendarDays, Users } from 'lucide-react'
+import { toast } from 'sonner'
+import { Upload, BarChart3, CalendarDays, Users, MoreHorizontal, Trash2, Loader2 } from 'lucide-react'
 import { Fab, FabButton } from '@/components/ui/fab'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { MarketSurveyImportDialog } from './MarketSurveyImportDialog'
 
 type MarketSurvey = {
@@ -47,6 +64,8 @@ export default function MarketSurveysPage() {
   const [surveys, setSurveys] = useState<MarketSurvey[]>(cached?.surveys ?? [])
   const [loading, setLoading] = useState(!cached)
   const [importOpen, setImportOpen] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<MarketSurvey | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   const fetchSurveys = useCallback(async () => {
     if (!companyId) return
@@ -66,6 +85,30 @@ export default function MarketSurveysPage() {
   useEffect(() => {
     fetchSurveys()
   }, [fetchSurveys])
+
+  const handleDelete = async () => {
+    if (!deleteTarget || deleting) return
+    setDeleting(true)
+    try {
+      const res = await fetch(`/api/brand-score/market-surveys/${deleteTarget.id}`, {
+        method: 'DELETE',
+      })
+      if (!res.ok) {
+        const d = await res.json().catch(() => null)
+        throw new Error(d?.error || `HTTP ${res.status}`)
+      }
+      toast.success('調査を削除しました')
+      setDeleteTarget(null)
+      // キャッシュを捨ててから取り直す
+      setPageCache(cacheKey, null as unknown as ListCache)
+      await fetchSurveys()
+    } catch (err) {
+      console.error('[MarketSurveys] 削除エラー:', err)
+      toast.error('削除に失敗しました')
+    } finally {
+      setDeleting(false)
+    }
+  }
 
   const formatDate = (s: string | null) => {
     if (!s) return null
@@ -99,6 +142,38 @@ export default function MarketSurveysPage() {
 
       <MarketSurveyImportDialog open={importOpen} onOpenChange={setImportOpen} />
 
+      {/* 削除の確認。設問・集計値・割り当ても一緒に消えるので件数を明示する */}
+      <AlertDialog
+        open={deleteTarget !== null}
+        onOpenChange={open => !open && setDeleteTarget(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>この調査を削除しますか</AlertDialogTitle>
+            <AlertDialogDescription>
+              「{deleteTarget?.title}」と、取り込んだ設問{deleteTarget?.block_count}件・
+              5段階の割り当てをすべて削除します。元に戻せません。
+              {deleteTarget?.status === 'active' &&
+                'この調査はアウタースコアに反映中です。削除するとスコアから外れます。'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>キャンセル</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={e => {
+                e.preventDefault()
+                handleDelete()
+              }}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting && <Loader2 size={14} className="animate-spin" />}
+              削除する
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {surveys.length === 0 ? (
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-10 text-center">
@@ -129,13 +204,9 @@ export default function MarketSurveysPage() {
               <Card
                 key={s.id}
                 className="bg-[hsl(0_0%_97%)] border shadow-none cursor-pointer transition-colors hover:bg-[hsl(0_0%_95%)]"
-                onClick={() =>
-                  router.push(
-                    s.status === 'draft'
-                      ? `/admin/brand-score/market-surveys/${s.id}/mapping`
-                      : `/admin/brand-score/market-surveys/${s.id}`
-                  )
-                }
+                // 取り込み時に自動割り当てまで済むので、下書きでも詳細を開く。
+                // 割り当てを直したいときは詳細の「指標の割り当て」から入る
+                onClick={() => router.push(`/admin/brand-score/market-surveys/${s.id}`)}
               >
                 <CardContent className="p-5">
                   <div className="mb-3 flex items-start justify-between gap-3">
@@ -157,6 +228,29 @@ export default function MarketSurveysPage() {
                         </p>
                       )}
                     </div>
+
+                    {/* カード全体が詳細への遷移なので、メニュー側はクリックを止める */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          type="button"
+                          aria-label="操作メニュー"
+                          onClick={e => e.stopPropagation()}
+                          className="-mr-1 -mt-1 shrink-0 rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                        >
+                          <MoreHorizontal size={16} />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" onClick={e => e.stopPropagation()}>
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onSelect={() => setDeleteTarget(s)}
+                        >
+                          <Trash2 size={14} />
+                          削除
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
 
                   {/* 5段階のうち何段階が決まっているか */}
