@@ -184,12 +184,8 @@ type TrendRow = {
   total_score: number | null
   inner_score: number | null
   outer_score: number | null
-  /** 市場調査を実施した日の市場浸透スコア */
-  market_score: number | null
-  /** サーベイを締めた日のインナースコア */
-  survey_score: number | null
-  /** 上2つを合わせた総合。両方そろった側の日付に置く */
-  survey_total_score: number | null
+  /** その値が調査の実施日のものか（記録した日ではない）。点の大きさを変える */
+  measured: { total: boolean; inner: boolean; outer: boolean }
 }
 
 // ── ヘルパー関数 ──
@@ -237,6 +233,34 @@ function getRank(score: number | null): string {
   if (score >= 50) return 'B'
   if (score >= 40) return 'C'
   return 'D'
+}
+
+/**
+ * スコア推移の点。調査を実施した日は大きい塗り丸、記録した日は小さい丸。
+ * 同じ系列でも「測った日」と「記録した日」で意味が違うため、
+ * 線は1本のまま点の見た目だけで出どころを分ける。
+ */
+function measuredDot(key: 'total' | 'inner' | 'outer', color: string) {
+  const Dot = (props: {
+    cx?: number
+    cy?: number
+    payload?: { measured?: { total: boolean; inner: boolean; outer: boolean } }
+  }) => {
+    const { cx, cy, payload } = props
+    if (cx === undefined || cy === undefined) return <g />
+    const isMeasured = payload?.measured?.[key] === true
+    return (
+      <circle
+        cx={cx}
+        cy={cy}
+        r={isMeasured ? 5 : 3}
+        fill={isMeasured ? color : '#fff'}
+        stroke={color}
+        strokeWidth={isMeasured ? 0 : 1.5}
+      />
+    )
+  }
+  return Dot
 }
 
 function getBarColor(rate: number): string {
@@ -581,9 +605,7 @@ export default function BrandScoreDashboard() {
         total_score: null,
         inner_score: null,
         outer_score: null,
-        market_score: null,
-        survey_score: null,
-        survey_total_score: null,
+        measured: { total: false, inner: false, outer: false },
       }
       byDate.set(key, created)
       return created
@@ -594,23 +616,38 @@ export default function BrandScoreDashboard() {
       r.inner_score = s.inner_score
       r.outer_score = s.outer_score
     }
-    for (const m of marketTrend) {
-      row(m.date).market_score = m.market_score
-    }
+    // 調査で測った値は、記録日のスコアと同じ系列に入れる。
+    // 「7/28に測ったインナー62.0」と「8/5に記録したインナー62.0」は
+    // 同じ指標の別の日の値なので、線がつながるのが自然。
+    // 記録日に既に値があればそちらを優先する（記録が正本）
     for (const t of surveyTrend) {
-      row(t.date).survey_score = t.inner_score
+      if (t.inner_score === null) continue
+      const r = row(t.date)
+      if (r.inner_score === null) {
+        r.inner_score = t.inner_score
+        r.measured.inner = true
+      }
     }
 
-    // 調査日ベースの総合。インナーと市場調査は実施日が数十日ずれるので、
-    // 近い時期どうしを組にして「2つの調査日の中間」に置く。
-    // 片方の調査日に寄せると、平均なのに一方の測定に属して見えるうえ、
-    // その日の点（インナーなど）と重なって読めなくなる。
-    //
-    // ⚠ ここで使うアウターは市場浸透だけ。デジタル接点を計測している会社では
-    //    実際のアウター（市場浸透0.75＋デジタル0.25）とずれるので出さない。
-    //    過去日のデジタル接点（直近30日の集計）は遡って計算できないため
+    // ⚠ 市場浸透をアウターとして扱えるのは、デジタル接点を計測していない
+    //    会社だけ。計測していると実際のアウターは市場浸透0.75＋デジタル0.25で、
+    //    過去日のデジタル接点（直近30日の集計）は遡って計算できない
     const digitalCounted = outerScore !== null && outerScore.digital_unavailable === null
+
     if (!digitalCounted) {
+      for (const m of marketTrend) {
+        if (m.market_score === null) continue
+        const r = row(m.date)
+        if (r.outer_score === null) {
+          r.outer_score = m.market_score
+          r.measured.outer = true
+        }
+      }
+
+      // 調査日ベースの総合。インナーと市場調査は実施日が数十日ずれるので、
+      // 近い時期どうしを組にして「2つの調査日の中間」に置く。
+      // 片方の調査日に寄せると、平均なのに一方の測定に属して見えるうえ、
+      // その日の点（インナーなど）と重なって読めなくなる
       const PAIR_WINDOW_DAYS = 180
       for (const t of surveyTrend) {
         if (t.inner_score === null) continue
@@ -630,8 +667,12 @@ export default function BrandScoreDashboard() {
         const midpoint = new Date(
           (innerTime + new Date(nearest.date).getTime()) / 2
         ).toISOString()
-        row(midpoint).survey_total_score =
-          Math.round(((t.inner_score + (nearest.market_score as number)) / 2) * 10) / 10
+        const r = row(midpoint)
+        if (r.total_score === null) {
+          r.total_score =
+            Math.round(((t.inner_score + (nearest.market_score as number)) / 2) * 10) / 10
+          r.measured.total = true
+        }
       }
     }
 
@@ -841,6 +882,11 @@ export default function BrandScoreDashboard() {
             <TrendingUp size={14} />
             スコア推移
           </h2>
+          {/* 点の意味は凡例では表せないので一文で添える。
+              系列は3本のままにして、凡例が増えないようにしている */}
+          <p className="m-0 -mt-2 mb-4 text-xs text-muted-foreground">
+            塗りつぶした点は調査を実施した日、白い点はスコアを記録した日です。
+          </p>
 
           {trendRows.length === 0 ? (
             <div className="text-center py-8">
@@ -867,9 +913,6 @@ export default function BrandScoreDashboard() {
                     formatter={(value: number | string, name: string) => {
                       const label = name === 'total_score' ? '総合'
                         : name === 'inner_score' ? 'インナー'
-                        : name === 'market_score' ? '市場浸透（調査日）'
-                        : name === 'survey_score' ? 'インナー（調査日）'
-                        : name === 'survey_total_score' ? '総合（調査日）'
                         : 'アウター'
                       return [value != null ? `${Number(value).toFixed(1)}` : '—', label]
                     }}
@@ -887,13 +930,7 @@ export default function BrandScoreDashboard() {
                           ? '総合'
                           : value === 'inner_score'
                             ? 'インナー'
-                            : value === 'market_score'
-                              ? '市場浸透（調査日）'
-                              : value === 'survey_score'
-                                ? 'インナー（調査日）'
-                                : value === 'survey_total_score'
-                                  ? '総合（調査日）'
-                                  : 'アウター'}
+                            : 'アウター'}
                       </span>
                     )}
                   />
@@ -902,7 +939,7 @@ export default function BrandScoreDashboard() {
                     dataKey="total_score"
                     stroke="#1f2937"
                     strokeWidth={2.5}
-                    dot={{ r: 3 }}
+                    dot={measuredDot('total', '#1f2937')}
                     connectNulls
                   />
                   <Line
@@ -910,7 +947,7 @@ export default function BrandScoreDashboard() {
                     dataKey="inner_score"
                     stroke="var(--ds-app-accent-soft)"
                     strokeWidth={1.5}
-                    dot={{ r: 3 }}
+                    dot={measuredDot('inner', 'var(--ds-app-accent-soft)')}
                     connectNulls
                   />
                   <Line
@@ -918,38 +955,8 @@ export default function BrandScoreDashboard() {
                     dataKey="outer_score"
                     stroke="#22c55e"
                     strokeWidth={1.5}
-                    dot={{ r: 3 }}
+                    dot={measuredDot('outer', '#22c55e')}
                     connectNulls
-                  />
-                  {/* 調査を実施した日に打つ点。線でつながないのは、
-                      スナップショットと同じ頻度で測っているように見せないため。
-                      色は対応する線と揃え、丸か線かで測定元を分ける */}
-                  <Line
-                    type="monotone"
-                    dataKey="survey_total_score"
-                    stroke="none"
-                    legendType="circle"
-                    dot={{ r: 5, fill: '#1f2937' }}
-                    activeDot={{ r: 6 }}
-                    connectNulls={false}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="survey_score"
-                    stroke="none"
-                    legendType="circle"
-                    dot={{ r: 5, fill: 'var(--ds-app-accent-soft)' }}
-                    activeDot={{ r: 6 }}
-                    connectNulls={false}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="market_score"
-                    stroke="none"
-                    legendType="circle"
-                    dot={{ r: 5, fill: '#16a34a' }}
-                    activeDot={{ r: 6 }}
-                    connectNulls={false}
                   />
                 </LineChart>
               </ResponsiveContainer>
