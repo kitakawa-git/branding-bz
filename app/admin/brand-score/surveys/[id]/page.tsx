@@ -32,14 +32,6 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import {
   Accordion,
   AccordionContent,
   AccordionItem,
@@ -168,15 +160,6 @@ function getScoreProgressColor(score: number | null): string {
   return '[&>div]:bg-red-500'
 }
 
-// ヒートマップセル背景色（0-100）
-function getHeatmapBg(score: number | null): string {
-  if (score === null) return ''
-  if (score >= 80) return 'bg-green-50 text-green-700'
-  if (score >= 60) return 'bg-blue-50 text-ds-app-accent-hover'
-  if (score >= 40) return 'bg-amber-50 text-amber-700'
-  return 'bg-red-50 text-red-700'
-}
-
 // 設問別スコアバー色（1-5）
 function getQuestionBarColor(avg: number | null): string {
   if (avg === null) return 'bg-muted'
@@ -192,23 +175,6 @@ function getRankBadgeClass(rank: string): string {
   if (rank === 'B+' || rank === 'B') return 'bg-amber-100 text-amber-700 border-amber-200'
   if (rank === 'C' || rank === 'D') return 'bg-red-100 text-red-700 border-red-200'
   return 'bg-gray-100 text-gray-500 border-gray-200'
-}
-
-// マトリクスのセル配色。全社総合スコア（62前後）を中央に置いた発散配色。
-// 全セルに数値を出しているので色は補助。低い＝オレンジ、高い＝青。
-function matrixCellStyle(score: number): { bg: string; fg: string } {
-  if (score < 55) return { bg: '#ea580c', fg: '#ffffff' }
-  if (score < 60) return { bg: '#fed7aa', fg: 'inherit' }
-  if (score < 64) return { bg: '#f2f2f3', fg: 'inherit' }
-  if (score < 69) return { bg: '#dbeafe', fg: 'inherit' }
-  return { bg: '#3b82f6', fg: '#ffffff' }
-}
-
-// 役職カテゴリ表示名（取り込みダイアログ・回答画面と表記を揃えること）
-const ROLE_LABELS: Record<string, string> = {
-  executive: '経営層',
-  manager: '管理職',
-  staff: '従業員',
 }
 
 // ステータスバッジ定義
@@ -1328,98 +1294,6 @@ export default function SurveyDetailPage() {
                         </p>
                       )
                     })()}
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* 4-3. 役職別スコア */}
-              {innerScore.by_role.length > 0 && (
-                <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-                  <CardContent className="p-5">
-                    <h3 className="text-sm font-bold text-foreground mb-3">役職別スコア</h3>
-                    <div className="rounded-md border overflow-hidden">
-                      <Table>
-                        <TableHeader>
-                          <TableRow className="bg-muted/40">
-                            <TableHead className="text-xs font-semibold">役職カテゴリ</TableHead>
-                            <TableHead className="text-xs font-semibold text-center">WHY</TableHead>
-                            <TableHead className="text-xs font-semibold text-center">HOW</TableHead>
-                            <TableHead className="text-xs font-semibold text-center">WHAT</TableHead>
-                            <TableHead className="text-xs font-semibold text-center">総合</TableHead>
-                            <TableHead className="text-xs font-semibold text-center">回答数</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {innerScore.by_role.map(r => (
-                            <TableRow key={r.role_category}>
-                              <TableCell className="text-sm font-medium">
-                                {ROLE_LABELS[r.role_category] || r.role_category}
-                              </TableCell>
-                              <TableCell className={`text-sm text-center font-semibold ${getScoreColor(r.why)}`}>
-                                {r.why !== null ? r.why.toFixed(1) : '-'}
-                              </TableCell>
-                              <TableCell className={`text-sm text-center font-semibold ${getScoreColor(r.how)}`}>
-                                {r.how !== null ? r.how.toFixed(1) : '-'}
-                              </TableCell>
-                              <TableCell className={`text-sm text-center font-semibold ${getScoreColor(r.what)}`}>
-                                {r.what !== null ? r.what.toFixed(1) : '-'}
-                              </TableCell>
-                              <TableCell className={`text-sm text-center font-bold ${getScoreColor(r.total)}`}>
-                                {r.total !== null ? r.total.toFixed(1) : '-'}
-                              </TableCell>
-                              <TableCell className="text-sm text-center text-muted-foreground">
-                                {r.count}人
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* 4-4. 部署別ヒートマップ */}
-              {innerScore.by_department.length > 0 && (
-                <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-                  <CardContent className="p-5">
-                    <h3 className="text-sm font-bold text-foreground mb-3">部署別スコア</h3>
-                    <div className="rounded-md border overflow-hidden">
-                      <Table>
-                        <TableHeader>
-                          <TableRow className="bg-muted/40">
-                            <TableHead className="text-xs font-semibold">部署</TableHead>
-                            <TableHead className="text-xs font-semibold text-center">WHY</TableHead>
-                            <TableHead className="text-xs font-semibold text-center">HOW</TableHead>
-                            <TableHead className="text-xs font-semibold text-center">WHAT</TableHead>
-                            <TableHead className="text-xs font-semibold text-center">総合</TableHead>
-                            <TableHead className="text-xs font-semibold text-center">回答数</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {innerScore.by_department.map(d => (
-                            <TableRow key={d.department}>
-                              <TableCell className="text-sm font-medium">{d.department}</TableCell>
-                              <TableCell className={`text-sm text-center font-semibold ${getHeatmapBg(d.why)}`}>
-                                {d.why !== null ? d.why.toFixed(1) : '-'}
-                              </TableCell>
-                              <TableCell className={`text-sm text-center font-semibold ${getHeatmapBg(d.how)}`}>
-                                {d.how !== null ? d.how.toFixed(1) : '-'}
-                              </TableCell>
-                              <TableCell className={`text-sm text-center font-semibold ${getHeatmapBg(d.what)}`}>
-                                {d.what !== null ? d.what.toFixed(1) : '-'}
-                              </TableCell>
-                              <TableCell className={`text-sm text-center font-bold ${getHeatmapBg(d.total)}`}>
-                                {d.total !== null ? d.total.toFixed(1) : '-'}
-                              </TableCell>
-                              <TableCell className="text-sm text-center text-muted-foreground">
-                                {d.count}人
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
                   </CardContent>
                 </Card>
               )}
