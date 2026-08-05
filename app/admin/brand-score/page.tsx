@@ -602,8 +602,9 @@ export default function BrandScoreDashboard() {
     }
 
     // 調査日ベースの総合。インナーと市場調査は実施日が数十日ずれるので、
-    // 近い時期どうしを組にして「両方そろった側の日付」に置く。
-    // 中間の日付に置くと、何も測っていない日に点が立つことになる。
+    // 近い時期どうしを組にして「2つの調査日の中間」に置く。
+    // 片方の調査日に寄せると、平均なのに一方の測定に属して見えるうえ、
+    // その日の点（インナーなど）と重なって読めなくなる。
     //
     // ⚠ ここで使うアウターは市場浸透だけ。デジタル接点を計測している会社では
     //    実際のアウター（市場浸透0.75＋デジタル0.25）とずれるので出さない。
@@ -626,8 +627,10 @@ export default function BrandScoreDashboard() {
         }
         if (!nearest || nearestGap > PAIR_WINDOW_DAYS * 24 * 60 * 60 * 1000) continue
 
-        const later = new Date(nearest.date).getTime() > innerTime ? nearest.date : t.date
-        row(later).survey_total_score =
+        const midpoint = new Date(
+          (innerTime + new Date(nearest.date).getTime()) / 2
+        ).toISOString()
+        row(midpoint).survey_total_score =
           Math.round(((t.inner_score + (nearest.market_score as number)) / 2) * 10) / 10
       }
     }
