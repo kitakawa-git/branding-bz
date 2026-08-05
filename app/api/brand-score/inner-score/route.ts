@@ -8,6 +8,7 @@ import {
   type FunnelStage,
   type RespondentAnswer,
 } from '@/lib/brand-score/funnel-stages'
+import { calcBreakdown, type LensAnswer, type LensQuestion } from '@/lib/brand-score/question-lens'
 
 // インナースコア算出API
 // GET /api/brand-score/inner-score?company_id=xxx&survey_id=yyy
@@ -313,7 +314,24 @@ export async function GET(request: NextRequest) {
       funnel = calcGroupFunnels(answers, stageByQuestionId)
     }
 
+    // 11. 設問タイプ・4領域・回答分布の集計
+    // 平均値だけでは「中立が多いのか、賛否が割れているのか」が見えない。
+    // 施策の性質（説得か情報供給か）が変わるため内訳を出す。
+    const lensQuestions: LensQuestion[] = (questions || []).map((q) => ({
+      questionId: q.id as string,
+      sortOrder: q.sort_order as number,
+      questionText: q.question_text as string,
+      referenceData: q.reference_data as Record<string, unknown> | null,
+    }))
+    const lensAnswers: LensAnswer[] = responses.map((r) => ({
+      questionId: r.question_id,
+      score: r.score,
+      department: r.department,
+    }))
+    const breakdown = calcBreakdown(lensAnswers, lensQuestions)
+
     return NextResponse.json({
+      breakdown,
       funnel: funnel
         ? {
             pass_threshold: PASS_THRESHOLD,

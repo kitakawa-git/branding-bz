@@ -83,6 +83,16 @@ import {
   type FunnelInputQuestion,
   type GroupFunnel,
 } from '@/lib/brand-score/funnel-stages'
+import {
+  LENS_ORDER,
+  LENS_LABELS,
+  LENS_QUESTIONS,
+  LENS_ACTIONS,
+  DOMAIN_ORDER,
+  DOMAIN_LABELS,
+  DOMAIN_RANGES,
+  type Breakdown,
+} from '@/lib/brand-score/question-lens'
 
 // 型定義
 type Survey = {
@@ -134,6 +144,8 @@ type InnerScoreData = {
     question_id: string; question_text: string; category: string
     avg_score: number | null; count: number
   }[]
+  /** 設問タイプ・4領域・回答分布の集計 */
+  breakdown: Breakdown | null
   /** 浸透段階の集計。段階が解決できないサーベイでは null */
   funnel: {
     pass_threshold: number
@@ -159,14 +171,6 @@ function getScoreProgressColor(score: number | null): string {
   return '[&>div]:bg-red-500'
 }
 
-// 設問別スコアバー色（1-5）
-function getQuestionBarColor(avg: number | null): string {
-  if (avg === null) return 'bg-muted'
-  if (avg >= 4) return 'bg-green-500'
-  if (avg >= 3) return 'bg-ds-app-accent-soft'
-  return 'bg-orange-500'
-}
-
 // ランクバッジ色
 function getRankBadgeClass(rank: string): string {
   if (rank === 'S') return 'bg-green-100 text-green-700 border-green-200'
@@ -190,6 +194,15 @@ const SOURCE_CONFIG: Record<string, { label: string; className: string }> = {
   ai_generated: { label: 'AI生成', className: 'bg-purple-100 text-purple-700' },
   custom: { label: 'カスタム', className: 'bg-blue-100 text-ds-app-accent-hover' },
 }
+
+// 設問別スコアの表示軸
+type QuestionAxis = 'lens' | 'domain' | 'stage'
+
+const AXIS_OPTIONS: { key: QuestionAxis; label: string }[] = [
+  { key: 'lens', label: '設問タイプ' },
+  { key: 'domain', label: '領域' },
+  { key: 'stage', label: '浸透段階' },
+]
 
 // カテゴリ表示名
 const CATEGORY_LABELS: Record<string, string> = {
@@ -296,8 +309,9 @@ export default function SurveyDetailPage() {
   // インナースコア
   // 設問別スコアの表示軸（構成要素 / 浸透段階）
   // 既定は浸透段階（評価軸を5段階に統一したため）。
-  // 段階が解決できないサーベイでは構成要素にフォールバックする（下の effectiveAxis）
-  const [questionAxis, setQuestionAxis] = useState<'category' | 'stage'>('stage')
+  // 既定は設問タイプ（施策の種類が直接決まる軸）。
+  // 解決できないサーベイでは下の effectiveAxis がフォールバックする
+  const [questionAxis, setQuestionAxis] = useState<QuestionAxis>('lens')
   const [innerScore, setInnerScore] = useState<InnerScoreData | null>(null)
   const [innerScoreLoading, setInnerScoreLoading] = useState(false)
 
@@ -685,6 +699,7 @@ export default function SurveyDetailPage() {
   // 段階スコアは API の funnel（全回答から算出）を正とする。
   // 画面側の calcFunnel は設問別スコア由来なので、最下位設問など補助情報に使う。
   const funnelData = innerScore?.funnel ?? null
+  const breakdown = innerScore?.breakdown ?? null
 
   const stageScoreOf = (stage: FunnelStage): number | null =>
     funnelData?.overall.stageScores.find(s => s.stage === stage)?.score ?? null
@@ -743,12 +758,54 @@ export default function SurveyDetailPage() {
     return map
   }, [innerScore, questions])
 
-  // 実際に描画する軸。段階が解決できないサーベイでは浸透段階を選べないので、
-  // 既定が 'stage' でも構成要素にフォールバックさせる（空表示を防ぐ）
-  const effectiveAxis: 'category' | 'stage' =
-    questionAxis === 'stage' && questionsByStage && questionsByStage.size > 0
-      ? 'stage'
-      : 'category'
+  // 実際に描画する軸。解決できない軸を選んだままでも空表示にならないよう、
+  // 使える軸へ順に落とす
+  const availableAxes: QuestionAxis[] = []
+  if (breakdown?.hasLens) availableAxes.push('lens')
+  if (breakdown?.hasDomain) availableAxes.push('domain')
+  if (questionsByStage && questionsByStage.size > 0) availableAxes.push('stage')
+
+  const effectiveAxis: QuestionAxis =
+    availableAxes.includes(questionAxis) ? questionAxis : (availableAxes[0] ?? 'lens')
+
+  const questionAxisOptions = AXIS_OPTIONS.filter(o => availableAxes.includes(o.key))
+
+  // 現在の軸で設問をグループ化する。並びは各グループ内スコア昇順
+  const questionGroups = (() => {
+    if (!breakdown) return []
+    type Q = Breakdown['byQuestion'][number]
+    const buckets: { key: string; label: string; sub?: string; questions: Q[] }[] = []
+
+    if (effectiveAxis === 'lens') {
+      for (const l of LENS_ORDER) {
+        const qs = breakdown.byQuestion.filter(q => q.lens === l)
+        if (qs.length) buckets.push({ key: l, label: LENS_LABELS[l], sub: LENS_QUESTIONS[l], questions: qs })
+      }
+    } else if (effectiveAxis === 'domain') {
+      for (const d of DOMAIN_ORDER) {
+        const qs = breakdown.byQuestion.filter(q => q.domain === d)
+        if (qs.length) buckets.push({ key: d, label: DOMAIN_LABELS[d], sub: DOMAIN_RANGES[d], questions: qs })
+      }
+    } else {
+      const total = breakdown.byQuestion.length
+      for (const st of ALL_STAGES) {
+        const qs = breakdown.byQuestion.filter(
+          q => resolveStage(q.sortOrder, total, null) === st
+        )
+        if (qs.length) buckets.push({ key: st, label: STAGE_LABELS[st], sub: STAGE_STATES[st], questions: qs })
+      }
+    }
+
+    return buckets.map(b => {
+      const sorted = [...b.questions].sort((a, c) => a.avg - c.avg)
+      // 群の平均は回答数で重み付けする（本社/現場のみの設問が過大に効かないように）
+      const totalN = sorted.reduce((a, q) => a + q.responseCount, 0)
+      const avg = totalN > 0
+        ? sorted.reduce((a, q) => a + q.avg * q.responseCount, 0) / totalN
+        : null
+      return { ...b, questions: sorted, avg, worstId: sorted[0]?.questionId }
+    })
+  })()
 
   // ── ローディング ──
   if (loading) {
@@ -1073,6 +1130,196 @@ export default function SurveyDetailPage() {
                 </Card>
               </div>
 
+              {/* 4-2b. 回答分布（肯定 / 中立 / 否定） */}
+              {/* 平均値だけでは「中立が多い」のか「賛否が割れている」のかが分からない。
+                  中立は反対ではなく判断材料が届いていない層で、説得ではなく情報供給で動く。
+                  施策の性質が変わるため、平均と同じ高さで見せる */}
+              {breakdown && (
+                <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+                  <CardContent className="p-5">
+                    <h3 className="text-sm font-bold text-foreground mb-1">回答の内訳</h3>
+                    <p className="text-xs text-muted-foreground mb-4">
+                      肯定＝4〜5点 ／ 中立＝3点「どちらとも言えない」 ／ 否定＝1〜2点。
+                      中立は反対ではなく、判断材料が届いていない層。
+                    </p>
+
+                    <div className="space-y-3">
+                      {[
+                        { label: '全社', d: breakdown.overall, strong: true },
+                        ...breakdown.byDepartment.map(d => ({ label: d.department, d, strong: false })),
+                      ].map(row => (
+                        <div key={row.label} className="flex items-center gap-3">
+                          <div className="w-[92px] shrink-0">
+                            <p className={`m-0 text-sm ${row.strong ? 'font-bold text-foreground' : 'text-muted-foreground'}`}>
+                              {row.label}
+                            </p>
+                            <p className="m-0 text-[10px] text-muted-foreground">
+                              {row.d.avg.toFixed(2)} / 5
+                            </p>
+                          </div>
+
+                          {/* 積み上げバー */}
+                          <div className="flex h-6 min-w-0 flex-1 overflow-hidden rounded">
+                            <div
+                              className="flex items-center justify-center bg-ds-app-accent-soft"
+                              style={{ width: `${row.d.positiveRate}%` }}
+                            >
+                              <span className="text-[10px] font-bold text-white whitespace-nowrap">
+                                {row.d.positiveRate}%
+                              </span>
+                            </div>
+                            <div
+                              className="flex items-center justify-center bg-gray-300"
+                              style={{ width: `${row.d.neutralRate}%` }}
+                            >
+                              <span className="text-[10px] font-bold text-gray-700 whitespace-nowrap">
+                                {row.d.neutralRate}%
+                              </span>
+                            </div>
+                            <div
+                              className="flex items-center justify-center bg-orange-400"
+                              style={{ width: `${row.d.negativeRate}%` }}
+                            >
+                              <span className="text-[10px] font-bold text-white whitespace-nowrap">
+                                {row.d.negativeRate}%
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="mt-3 flex flex-wrap items-center gap-4 text-[10px] text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <span className="inline-block size-2.5 rounded-sm bg-ds-app-accent-soft" />肯定（4〜5点）
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <span className="inline-block size-2.5 rounded-sm bg-gray-300" />中立（3点）
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <span className="inline-block size-2.5 rounded-sm bg-orange-400" />否定（1〜2点）
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* 4-2c. 設問タイプ別（感情 / 言語化・実践 / 環境・仕組み） */}
+              {breakdown?.hasLens && breakdown.byLens.length > 0 && (
+                <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+                  <CardContent className="p-5">
+                    <h3 className="text-sm font-bold text-foreground mb-1">設問タイプ別</h3>
+                    <p className="text-xs text-muted-foreground mb-4">
+                      設問が何を問うているかで分けたもの。
+                      「感じるか」と「説明できるか・仕組みがあるか」のどちらが低いかで、打つべき施策の種類が変わる。
+                    </p>
+
+                    <div className="space-y-3">
+                      {breakdown.byLens.map(l => {
+                        const isLowest =
+                          l.score === Math.min(...breakdown.byLens.map(x => x.score))
+                        return (
+                          <div key={l.lens} className="flex items-start gap-3">
+                            <div className="w-[124px] shrink-0">
+                              <p className="m-0 text-sm font-bold text-foreground">
+                                {LENS_LABELS[l.lens]}
+                              </p>
+                              <p className="m-0 text-[10px] text-muted-foreground">
+                                {LENS_QUESTIONS[l.lens]}・{l.questionCount}問
+                              </p>
+                            </div>
+
+                            <div className="min-w-0 flex-1 pt-1">
+                              <div className="h-2.5 rounded-full bg-muted">
+                                <div
+                                  className={`h-full rounded-full ${isLowest ? 'bg-orange-500' : 'bg-ds-app-accent-soft'}`}
+                                  style={{ width: `${l.score}%` }}
+                                />
+                              </div>
+                              <p className="m-0 mt-1.5 text-[10px] leading-snug text-muted-foreground">
+                                {LENS_ACTIONS[l.lens]}
+                              </p>
+                            </div>
+
+                            <div className="w-[112px] shrink-0 text-right">
+                              <p className={`m-0 text-base font-bold ${isLowest ? 'text-orange-600' : 'text-foreground'}`}>
+                                {l.avg.toFixed(2)}
+                              </p>
+                              <p className="m-0 whitespace-nowrap text-[10px] text-muted-foreground">
+                                中立 {l.neutralRate}%
+                              </p>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+
+                    {(() => {
+                      const emotion = breakdown.byLens.find(l => l.lens === 'emotion')
+                      const lowest = breakdown.byLens.reduce((min, l) => (l.score < min.score ? l : min))
+                      if (!emotion || lowest.lens === 'emotion') return null
+                      return (
+                        <p className="m-0 mt-3 text-[10px] leading-relaxed text-muted-foreground">
+                          {LENS_LABELS.emotion}（{emotion.avg.toFixed(2)}）と
+                          {LENS_LABELS[lowest.lens]}（{lowest.avg.toFixed(2)}）の差は
+                          {(emotion.avg - lowest.avg).toFixed(2)}点。
+                          共感そのものは足りており、不足しているのは
+                          {lowest.lens === 'articulation' ? 'それを語る言葉' : '会社側の仕組み'}です。
+                        </p>
+                      )
+                    })()}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* 4-2d. 4領域（分析レポートの区分） */}
+              {breakdown?.hasDomain && breakdown.byDomain.length > 0 && (
+                <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+                  <CardContent className="p-5">
+                    <h3 className="text-sm font-bold text-foreground mb-1">領域別</h3>
+                    <p className="text-xs text-muted-foreground mb-4">
+                      設問番号の並び順による区分。分析レポート・前年資料と突き合わせるための軸。
+                    </p>
+
+                    <div className="space-y-3">
+                      {breakdown.byDomain.map(d => {
+                        const isLowest =
+                          d.score === Math.min(...breakdown.byDomain.map(x => x.score))
+                        return (
+                          <div key={d.domain} className="flex items-center gap-3">
+                            <div className="w-[124px] shrink-0">
+                              <p className="m-0 text-sm font-bold text-foreground">
+                                {DOMAIN_LABELS[d.domain]}
+                              </p>
+                              <p className="m-0 text-[10px] text-muted-foreground">
+                                {DOMAIN_RANGES[d.domain]}・{d.questionCount}問
+                              </p>
+                            </div>
+
+                            <div className="min-w-0 flex-1">
+                              <div className="h-2.5 rounded-full bg-muted">
+                                <div
+                                  className={`h-full rounded-full ${isLowest ? 'bg-orange-500' : 'bg-ds-app-accent-soft'}`}
+                                  style={{ width: `${d.score}%` }}
+                                />
+                              </div>
+                            </div>
+
+                            <div className="w-[112px] shrink-0 text-right">
+                              <p className={`m-0 text-base font-bold ${isLowest ? 'text-orange-600' : 'text-foreground'}`}>
+                                {d.avg.toFixed(2)}
+                              </p>
+                              <p className="m-0 whitespace-nowrap text-[10px] text-muted-foreground">
+                                中立 {d.neutralRate}%
+                              </p>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
               {/* 4-2c. 案B: 段階別の詳細 */}
               {funnelData && (
                 <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
@@ -1312,18 +1559,14 @@ export default function SurveyDetailPage() {
                 </Card>
               )}
 
-              {/* 4-5. 設問別スコア（アコーディオン） */}
-              <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-                <CardContent className="p-5">
-                  <div className="flex items-center justify-between gap-3 mb-4">
-                    <h3 className="text-sm font-bold text-foreground">設問別スコア</h3>
-                    {/* 軸切替。段階が解決できないサーベイでは出さない */}
-                    {questionsByStage && questionsByStage.size > 0 && (
+              {/* 4-5. 設問別スコア（軸切替: 設問タイプ / 領域 / 浸透段階） */}
+              {breakdown && (
+                <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+                  <CardContent className="p-5">
+                    <div className="flex items-center justify-between gap-3 mb-4">
+                      <h3 className="text-sm font-bold text-foreground">設問別スコア</h3>
                       <div className="flex rounded-md border bg-background p-0.5 text-xs">
-                        {([
-                          { key: 'stage', label: '浸透段階' },
-                          { key: 'category', label: '構成要素' },
-                        ] as const).map(opt => (
+                        {questionAxisOptions.map(opt => (
                           <button
                             key={opt.key}
                             type="button"
@@ -1338,123 +1581,75 @@ export default function SurveyDetailPage() {
                           </button>
                         ))}
                       </div>
-                    )}
-                  </div>
-
-                  {/* 構成要素ビュー（既存） */}
-                  {effectiveAxis === 'category' && (
-                    <div>
-                        {(['why', 'how', 'what'] as const).map(cat => {
-                          const catQuestions = innerScore.by_question.filter(q => q.category === cat)
-                          if (catQuestions.length === 0) return null
-                          return (
-                            <div key={cat} className="mb-5 last:mb-0">
-                              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
-                                {CATEGORY_LABELS[cat] || cat}
-                              </p>
-                              <div className="space-y-2">
-                                {catQuestions.map(q => {
-                                  const isLow = q.avg_score !== null && q.avg_score < 3.0
-                                  return (
-                                    <div
-                                      key={q.question_id}
-                                      className={`flex items-center gap-3 py-2 px-3 rounded-md ${isLow ? 'bg-orange-50 border border-orange-200' : 'bg-background'}`}
-                                    >
-                                      <div className="flex-1 min-w-0">
-                                        <p className={`text-sm leading-relaxed ${isLow ? 'text-orange-800' : 'text-foreground'}`}>
-                                          {q.question_text}
-                                        </p>
-                                      </div>
-                                      <div className="flex items-center gap-3 shrink-0">
-                                        {/* 横棒グラフ（5段階中） */}
-                                        <div className="w-20 h-2 bg-muted rounded-full overflow-hidden">
-                                          <div
-                                            className={`h-full rounded-full transition-all ${getQuestionBarColor(q.avg_score)}`}
-                                            style={{ width: `${q.avg_score !== null ? (q.avg_score / 5) * 100 : 0}%` }}
-                                          />
-                                        </div>
-                                        <span className={`text-sm font-bold w-8 text-right ${isLow ? 'text-orange-700' : 'text-foreground'}`}>
-                                          {q.avg_score !== null ? q.avg_score.toFixed(1) : '-'}
-                                        </span>
-                                        <span className="text-[10px] text-muted-foreground w-10 text-right">
-                                          {q.count}件
-                                        </span>
-                                      </div>
-                                    </div>
-                                  )
-                                })}
-                              </div>
-                            </div>
-                          )
-                        })}
                     </div>
-                  )}
 
-                  {/* 浸透段階ビュー */}
-                  {effectiveAxis === 'stage' && questionsByStage && (
                     <div>
-                      {ALL_STAGES.map(stage => {
-                        const list = questionsByStage.get(stage)
-                        if (!list || list.length === 0) return null
-                        const summary = funnel?.stages.find(s => s.stage === stage)
-                        // グループ内最下位（昇順ソート済みなので先頭）
-                        const worstId = list[0]?.question_id
-                        return (
-                          <div key={stage} className="mb-5 last:mb-0">
-                            <div className="flex items-baseline gap-2 mb-2 flex-wrap">
-                              <p className="text-xs font-bold text-foreground">{STAGE_LABELS[stage]}</p>
-                              <p className="text-[10px] text-muted-foreground">{STAGE_STATES[stage]}</p>
-                              <span className="text-[10px] text-muted-foreground ml-auto">
-                                {summary ? `スコア ${summary.score.toFixed(1)} / ` : ''}{list.length}問
-                              </span>
-                            </div>
-                            <div className="space-y-2">
-                              {list.map(q => {
-                                // グループ内最下位「かつ」3.5未満のときだけ強調する。
-                                // 共感のように全体が高い群で最下位に警告色が付くと誤読を招くため。
-                                const isLow =
-                                  q.question_id === worstId &&
-                                  q.avg_score !== null &&
-                                  q.avg_score < 3.5
-                                return (
-                                  <div
-                                    key={q.question_id}
-                                    className={`flex items-center gap-3 py-2 px-3 rounded-md ${isLow ? 'bg-orange-50 border border-orange-200' : 'bg-background'}`}
-                                  >
-                                    {/* 軸を切り替えても対応が追えるよう現行カテゴリを出す */}
-                                    <span className="shrink-0 rounded bg-muted px-1 py-0.5 text-[9px] font-medium text-muted-foreground uppercase w-9 text-center">
-                                      {q.category}
-                                    </span>
-                                    <div className="flex-1 min-w-0">
-                                      <p className={`text-sm leading-relaxed ${isLow ? 'text-orange-800' : 'text-foreground'}`}>
-                                        {q.question_text}
-                                      </p>
-                                    </div>
-                                    <div className="flex items-center gap-3 shrink-0">
-                                      <div className="w-20 h-2 bg-muted rounded-full overflow-hidden">
-                                        <div
-                                          className={`h-full rounded-full transition-all ${getQuestionBarColor(q.avg_score)}`}
-                                          style={{ width: `${q.avg_score !== null ? (q.avg_score / 5) * 100 : 0}%` }}
-                                        />
-                                      </div>
-                                      <span className={`text-sm font-bold w-8 text-right ${isLow ? 'text-orange-700' : 'text-foreground'}`}>
-                                        {q.avg_score !== null ? q.avg_score.toFixed(1) : '-'}
-                                      </span>
-                                      <span className="text-[10px] text-muted-foreground w-10 text-right">
-                                        {q.count}件
-                                      </span>
-                                    </div>
-                                  </div>
-                                )
-                              })}
-                            </div>
+                      {questionGroups.map(group => (
+                        <div key={group.key} className="mb-5 last:mb-0">
+                          <div className="mb-2 flex items-baseline gap-2 flex-wrap">
+                            <p className="m-0 text-xs font-bold text-foreground">{group.label}</p>
+                            {group.sub && (
+                              <p className="m-0 text-[10px] text-muted-foreground">{group.sub}</p>
+                            )}
+                            <span className="ml-auto text-[10px] text-muted-foreground">
+                              {group.avg !== null && `平均 ${group.avg.toFixed(2)} / `}
+                              {group.questions.length}問
+                            </span>
                           </div>
-                        )
-                      })}
+
+                          <div className="space-y-2">
+                            {group.questions.map(q => {
+                              // グループ内最下位かつ 3.5 未満のときだけ強調する。
+                              // 全体が高い群で最下位に警告色が付くと誤読を招くため
+                              const isLow = q.questionId === group.worstId && q.avg < 3.5
+                              return (
+                                <div
+                                  key={q.questionId}
+                                  className={`flex items-center gap-3 py-2 px-3 rounded-md ${isLow ? 'bg-orange-50 border border-orange-200' : 'bg-background'}`}
+                                >
+                                  <span className="w-7 shrink-0 text-right text-[10px] text-muted-foreground">
+                                    Q{q.sortOrder}
+                                  </span>
+                                  <div className="min-w-0 flex-1">
+                                    <p className={`m-0 text-sm leading-relaxed ${isLow ? 'text-orange-800' : 'text-foreground'}`}>
+                                      {q.questionText}
+                                    </p>
+                                  </div>
+                                  {/* 肯定 / 中立 / 否定の積み上げ */}
+                                  <div className="hidden sm:flex h-2.5 w-24 shrink-0 overflow-hidden rounded-full">
+                                    <div className="bg-ds-app-accent-soft" style={{ width: `${q.positiveRate}%` }} />
+                                    <div className="bg-gray-300" style={{ width: `${q.neutralRate}%` }} />
+                                    <div className="bg-orange-400" style={{ width: `${q.negativeRate}%` }} />
+                                  </div>
+                                  <span className={`w-9 shrink-0 text-right text-sm font-bold ${isLow ? 'text-orange-700' : 'text-foreground'}`}>
+                                    {q.avg.toFixed(2)}
+                                  </span>
+                                  <span className="w-12 shrink-0 text-right text-[10px] text-muted-foreground">
+                                    {q.responseCount}件
+                                  </span>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  )}
-                </CardContent>
-              </Card>
+
+                    <div className="mt-3 flex flex-wrap items-center gap-4 text-[10px] text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <span className="inline-block size-2.5 rounded-sm bg-ds-app-accent-soft" />肯定
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <span className="inline-block size-2.5 rounded-sm bg-gray-300" />中立
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <span className="inline-block size-2.5 rounded-sm bg-orange-400" />否定
+                      </span>
+                      <span>各グループ内はスコア昇順</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           ) : !innerScoreLoading && innerScore?.response_count === 0 ? (
             <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
