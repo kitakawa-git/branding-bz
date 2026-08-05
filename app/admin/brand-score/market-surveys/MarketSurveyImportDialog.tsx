@@ -3,8 +3,8 @@
 // 市場調査（GT集計表）の取り込みダイアログ
 // ============================================================
 // 2ステップ。ファイルを選ぶと即プレビュー、内容を確認して取り込む。
-// 「どの設問のどの値がどの指標か」はここでは決めない。取り込み後の
-// マッピング画面で人が割り当てる。
+// 5段階への割り当ては取り込みと同時にサーバ側で自動実行する。
+// 違っていれば詳細画面から個別に直せる。
 import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
@@ -258,10 +258,19 @@ export function MarketSurveyImportDialog({
         return
       }
 
-      toast.success(`取り込みました（設問${data.blockCount}件・集計値${data.cellCount}件）`)
+      const missing: string[] = data.missingStages ?? []
+      toast.success(
+        `取り込みました（設問${data.blockCount}件・集計値${data.cellCount}件）` +
+          (data.autoMapped > 0 ? `。${data.autoMapped}段階を自動で割り当てました` : '')
+      )
+      if (missing.length > 0) {
+        toast.warning(
+          `${missing.length}段階は該当する設問が見つかりませんでした。詳細画面から割り当ててください。`
+        )
+      }
       onOpenChange(false)
       reset()
-      router.push(`/admin/brand-score/market-surveys/${data.surveyId}/mapping`)
+      router.push(`/admin/brand-score/market-surveys/${data.surveyId}`)
     } catch {
       toast.error('取り込みに失敗しました')
     } finally {
@@ -281,8 +290,8 @@ export function MarketSurveyImportDialog({
         <DialogHeader className="min-w-0">
           <DialogTitle>市場調査を取り込む</DialogTitle>
           <DialogDescription className="break-words">
-            調査会社のGT集計表（Excel）を取り込みます。どの設問をどの指標に使うかは、
-            取り込んだあとの画面で割り当てます。
+            調査会社のGT集計表（Excel）を取り込みます。5段階の指標は取り込みと同時に
+            自動で割り当てます。
           </DialogDescription>
         </DialogHeader>
 

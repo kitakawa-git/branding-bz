@@ -12,6 +12,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { getAdminContext } from '@/lib/learning/auth'
+import { runAutoMap } from '@/lib/brand-score/market-auto-map-server'
+import { defaultStageParams } from '@/lib/brand-score/market-stage-score'
 import { listSheetNames, fileSheetToRows } from '@/lib/brand-score/excel-rows'
 import {
   parseGtTable,
@@ -188,6 +190,9 @@ export async function POST(request: NextRequest) {
         source_file_name: file.name,
         source_sheet_name: sheetName,
         status: 'draft',
+        // 物差しは取り込み時点の既定値で凍結する。あとで既定値を変えても
+        // この調査のスコアは動かない（前年比を壊さないため）
+        stage_params: defaultStageParams(),
         parse_warnings: parsed.warnings,
       })
       .select('id')
@@ -271,11 +276,23 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // 取り込みに続けて5段階の候補を自動で当てる。
+    // 41設問×数十セルを人が当てるのは現実的でないため、ここまで一気にやる。
+    // 失敗しても取り込み自体は成功として返す（手動で割り当てられる）
+    let autoMap: Awaited<ReturnType<typeof runAutoMap>> | null = null
+    try {
+      autoMap = await runAutoMap(supabase, survey.id, { apply: true })
+    } catch (err) {
+      console.error('[MarketImport] 自動割り当てエラー:', err)
+    }
+
     return NextResponse.json({
       surveyId: survey.id,
       blockCount: parsed.blocks.length,
       cellCount: cellRows.length,
       warnCount: warns.length,
+      autoMapped: autoMap?.applied.length ?? 0,
+      missingStages: autoMap?.missing ?? [],
     })
   } catch (err) {
     console.error('[MarketImport] 予期しないエラー:', err)

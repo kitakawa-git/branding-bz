@@ -9,7 +9,21 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Settings2, CalendarDays, Users, Loader2 } from 'lucide-react'
+import { Settings2, CalendarDays, Users, Loader2, ClipboardList, Trophy } from 'lucide-react'
+import {
+  ResponsiveContainer,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Radar,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Cell as RCell,
+  Tooltip,
+} from 'recharts'
 import {
   MARKET_STAGES,
   MARKET_STAGE_LABELS,
@@ -28,6 +42,8 @@ type Survey = {
   sample_size: number | null
   status: string
 }
+
+type RankRow = { name: string; value: number; isSelf: boolean }
 
 type StageScore = {
   stage: MarketStage
@@ -51,6 +67,7 @@ export default function MarketSurveyDetailPage() {
 
   const [survey, setSurvey] = useState<Survey | null>(null)
   const [stageScores, setStageScores] = useState<StageScore[]>([])
+  const [ranking, setRanking] = useState<Record<string, RankRow[]>>({})
   const [blockCount, setBlockCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -62,6 +79,7 @@ export default function MarketSurveyDetailPage() {
       const data = await res.json()
       setSurvey(data.survey)
       setStageScores(data.stageScores ?? [])
+      setRanking(data.ranking ?? {})
       setBlockCount((data.blocks ?? []).length)
     } catch (err) {
       console.error('[MarketSurveyDetail] 取得エラー:', err)
@@ -188,6 +206,36 @@ export default function MarketSurveyDetailPage() {
         </div>
       </div>
 
+      {/* 概要 */}
+      <div className="mb-4 grid grid-cols-3 gap-4">
+        {[
+          { icon: <ClipboardList size={14} />, label: '設問数', value: `${blockCount}`, unit: '問' },
+          {
+            icon: <Users size={14} />,
+            label: 'サンプル数',
+            value: survey.sample_size !== null ? `${survey.sample_size}` : '—',
+            unit: '名',
+          },
+          {
+            icon: <Trophy size={14} />,
+            label: '算出できた段階',
+            value: `${scored.length}`,
+            unit: '/ 5',
+          },
+        ].map((s) => (
+          <Card key={s.label} className="bg-[hsl(0_0%_97%)] border shadow-none">
+            <CardContent className="p-5 text-center">
+              <p className="m-0 mb-1 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+                {s.icon}
+                {s.label}
+              </p>
+              <p className="m-0 text-2xl font-bold text-foreground">{s.value}</p>
+              <p className="m-0 text-[10px] text-muted-foreground">{s.unit}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
       {/* 市場浸透スコア */}
       <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-[minmax(150px,1fr)_3fr]">
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
@@ -234,6 +282,83 @@ export default function MarketSurveyDetailPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* 形と競合ポジション */}
+      {scored.length >= 3 && (
+        <div className="mb-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+          {/* 5段階の形。どこが凹んでいるかを一目で見る */}
+          <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+            <CardContent className="p-5">
+              <h2 className="mb-1 text-sm font-bold text-foreground">浸透の形</h2>
+              <p className="mb-3 text-xs text-muted-foreground">
+                5段階のスコア。凹んでいるところが次に手を打つ段階です。
+              </p>
+              <ResponsiveContainer width="100%" height={240}>
+                <RadarChart
+                  data={MARKET_STAGES.map((stage) => {
+                    const sc = stageScores.find((x) => x.stage === stage)
+                    return {
+                      stage: MARKET_STAGE_LABELS[stage],
+                      score: sc?.status === 'scored' ? sc.score : 0,
+                    }
+                  })}
+                >
+                  <PolarGrid stroke="#e5e7eb" />
+                  <PolarAngleAxis dataKey="stage" tick={{ fontSize: 11, fill: '#6b7280' }} />
+                  <PolarRadiusAxis domain={[0, 100]} tick={{ fontSize: 9, fill: '#9ca3af' }} />
+                  <Radar
+                    dataKey="score"
+                    stroke="#2563eb"
+                    fill="#3b82f6"
+                    fillOpacity={0.35}
+                  />
+                  <Tooltip formatter={(v: number) => [`${v}点`, 'スコア']} />
+                </RadarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* 競合ポジション（認知の全社比較） */}
+          {(() => {
+            // 認知が無ければ、割り当てのある段階のうち競合数が最も多いものを使う
+            const stage: MarketStage =
+              (ranking.awareness?.length ?? 0) > 1
+                ? 'awareness'
+                : (MARKET_STAGES.find((st) => (ranking[st]?.length ?? 0) > 1) ?? 'awareness')
+            const rows = ranking[stage] ?? []
+            if (rows.length < 2) return null
+            return (
+              <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+                <CardContent className="p-5">
+                  <h2 className="mb-1 text-sm font-bold text-foreground">
+                    競合ポジション（{MARKET_STAGE_LABELS[stage]}）
+                  </h2>
+                  <p className="mb-3 text-xs text-muted-foreground">
+                    同じ設問での他社との位置関係。青が自社です。
+                  </p>
+                  <ResponsiveContainer width="100%" height={Math.max(240, rows.length * 22)}>
+                    <BarChart data={rows} layout="vertical" margin={{ left: 8, right: 24 }}>
+                      <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 10 }} unit="%" />
+                      <YAxis
+                        type="category"
+                        dataKey="name"
+                        width={128}
+                        tick={{ fontSize: 10, fill: '#6b7280' }}
+                      />
+                      <Tooltip formatter={(v: number) => [`${v.toFixed(1)}%`, '']} />
+                      <Bar dataKey="value" radius={[0, 3, 3, 0]}>
+                        {rows.map((r, i) => (
+                          <RCell key={i} fill={r.isSelf ? '#2563eb' : '#d1d5db'} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            )
+          })()}
+        </div>
+      )}
 
       {/* 段階別の詳細 */}
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">

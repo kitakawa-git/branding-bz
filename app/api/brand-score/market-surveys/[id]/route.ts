@@ -77,11 +77,30 @@ export async function GET(_request: NextRequest, context: RouteContext) {
       supabase.from('market_survey_stage_scores').select('*').eq('survey_id', id),
     ])
 
+    // 段階ごとの「自社＋競合」の並び。詳細画面のランキング表示に使う
+    const cellIndex = new Map(cells.map((c) => [c.id, c]))
+    const ranking: Record<string, { name: string; value: number; isSelf: boolean }[]> = {}
+    for (const m of mappings ?? []) {
+      const c = cellIndex.get(m.cell_id as string)
+      if (!c || c.value === null) continue
+      const stage = m.stage as string
+      if (!ranking[stage]) ranking[stage] = []
+      ranking[stage].push({
+        name: m.subject === 'self' ? c.row_label : ((m.competitor_name as string) ?? c.row_label),
+        value: Number(c.value),
+        isSelf: m.subject === 'self',
+      })
+    }
+    for (const k of Object.keys(ranking)) {
+      ranking[k].sort((a, b) => b.value - a.value)
+    }
+
     return NextResponse.json({
       survey,
       blocks: blocks ?? [],
       cells,
       mappings: mappings ?? [],
+      ranking,
       // 未登録の段階も unmapped として必ず5件返す（画面がスロットを常に5つ出せるように）
       stageScores: MARKET_STAGES.map((stage) => {
         const hit = (scores ?? []).find((s) => s.stage === stage)
