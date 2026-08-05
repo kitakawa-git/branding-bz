@@ -1297,15 +1297,6 @@ export default function SurveyDetailPage() {
                                     </div>
                                   ))}
                                 </div>
-                                {/* この段階の最下位設問 */}
-                                {summary?.weakest && (
-                                  <p className="m-0 mt-1.5 text-[10px] text-muted-foreground leading-snug">
-                                    この段階の最下位　{summary.weakest.questionText}
-                                    <span className="font-semibold text-foreground">
-                                      {summary.weakest.avgScore.toFixed(2)}
-                                    </span>
-                                  </p>
-                                )}
                               </div>
 
                               {/* 右: スコアと部門値 */}
