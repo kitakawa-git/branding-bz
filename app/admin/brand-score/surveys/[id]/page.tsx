@@ -1040,7 +1040,8 @@ export default function SurveyDetailPage() {
           ) : innerScore && innerScore.response_count > 0 ? (
             <div className="space-y-4">              {/* 4-2. スコアカード列（総合 + 5段階） */}
               {/* 評価軸は5段階に統一。WHY/HOW/WHAT は構成要素の内訳として設問別セクションに残す */}
-              <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+              {/* 総合は独立カード、5段階は1枚にまとめる（段階は一連の流れなのでカードで分断しない） */}
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(150px,1fr)_3fr]">
                 <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
                   <CardContent className="p-4 text-center">
                     <p className="text-xs text-muted-foreground mb-1">総合</p>
@@ -1059,33 +1060,38 @@ export default function SurveyDetailPage() {
                   </CardContent>
                 </Card>
 
-                {FUNNEL_STAGES.map((stage, i) => {
-                  const s = stageScoreOf(stage)
-                  const isInflection = stage === INFLECTION_STAGE
-                  const isWeakest = weakestStage === stage
-                  return (
-                    <Card
-                      key={stage}
-                      className={`bg-[hsl(0_0%_97%)] shadow-none ${isInflection ? 'border-indigo-300 border-2' : 'border'}`}
-                    >
-                      <CardContent className="p-4 text-center">
-                        <p className="text-xs text-muted-foreground mb-1">
-                          {i + 1}. {STAGE_LABELS[stage]}
-                        </p>
-                        <span className={`text-2xl font-bold ${isWeakest ? 'text-orange-600' : getScoreColor(s)}`}>
-                          {s !== null ? s.toFixed(1) : '-'}
-                        </span>
-                        <Progress
-                          value={s ?? 0}
-                          className={`h-1.5 mt-2 ${isWeakest ? '[&>div]:bg-orange-500' : getScoreProgressColor(s)}`}
-                        />
-                        {isInflection && (
-                          <p className="mt-1.5 mb-0 text-[10px] font-semibold text-indigo-600">反転点</p>
-                        )}
-                      </CardContent>
-                    </Card>
-                  )
-                })}
+                <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+                  <CardContent className="p-4">
+                    <div className="grid grid-cols-5 gap-2">
+                      {FUNNEL_STAGES.map((stage, i) => {
+                        const s = stageScoreOf(stage)
+                        const isInflection = stage === INFLECTION_STAGE
+                        const isWeakest = weakestStage === stage
+                        return (
+                          <div
+                            key={stage}
+                            className={`rounded-lg px-2 py-1.5 text-center ${isInflection ? 'bg-indigo-50 ring-1 ring-indigo-200' : ''}`}
+                          >
+                            <p className="m-0 text-xs text-muted-foreground">
+                              {i + 1}. {STAGE_LABELS[stage]}
+                            </p>
+                            <span className={`text-2xl font-bold ${isWeakest ? 'text-orange-600' : getScoreColor(s)}`}>
+                              {s !== null ? s.toFixed(1) : '-'}
+                            </span>
+                            <Progress
+                              value={s ?? 0}
+                              className={`h-1.5 mt-1.5 ${isWeakest ? '[&>div]:bg-orange-500' : getScoreProgressColor(s)}`}
+                            />
+                            {/* 反転点以外も同じ高さを保つため、非表示ではなく透明にする */}
+                            <p className={`m-0 mt-1 text-[10px] font-semibold ${isInflection ? 'text-indigo-600' : 'text-transparent'}`}>
+                              反転点
+                            </p>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
 
               {/* 4-2c. 案B: 段階別の詳細 */}
