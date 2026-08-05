@@ -660,11 +660,12 @@ export default function MarketSurveyDetailPage() {
             <h2 className="m-0 mb-1 text-sm font-bold text-foreground">
               市場の期待と自社イメージ
             </h2>
+            {/* 段階別の詳細と同じく、表の見方だけを2文で書く。
+                母数が違う（{importanceBaseN}の全数 / {imageBaseN}の自社認知者）ので
+                %の引き算をさせないことが、この表でいちばん大事な注意 */}
             <p className="mb-4 text-xs leading-relaxed text-muted-foreground">
-              市場が企業を選ぶときに重視する点と、自社が持たれている印象の比較です。
-              {/* 母数が違うので引き算をさせない。ここを書かないと誤読される */}
-              重視点はn={extras.impression.importanceBaseN}の全数、イメージはn=
-              {extras.impression.imageBaseN}の自社認知者と母数が違うため、比べてよいのは順位だけです。
+              市場が重視する順と、自社の印象として挙がる順の比較です。
+              母数が違うので%ではなく順位で見て、順位差がマイナスなら重視される割に印象が薄い項目です。
             </p>
 
             <div className="overflow-x-auto">
