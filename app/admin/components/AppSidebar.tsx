@@ -46,6 +46,7 @@ import {
   BarChart3,
   ClipboardCheck,
   GraduationCap,
+  Globe,
   Settings,
   Crosshair,
   UserRound,
@@ -61,7 +62,7 @@ type NavItem = {
 }
 
 const navItems: NavItem[] = [
-  { href: '/admin/dashboard', label: 'ダッシュボード', icon: LayoutDashboard },
+  { href: '/admin/brand-score', label: 'ダッシュボード', icon: LayoutDashboard },
   { href: '/admin/card-template', label: 'スマート名刺', icon: CreditCard },
   { href: '/admin/kpi', label: '目標・KPI管理', icon: Milestone },
   { href: '/admin/announcements', label: 'お知らせ管理', icon: Bell },
@@ -84,9 +85,11 @@ const buildItems: NavItem[] = [
   { href: '/tools/personality/app', label: 'パーソナリティ診断', icon: Fingerprint },
 ]
 
-// 浸透（branding.bz本体の浸透施策）: サーベイ・理解度テスト・ラーニング
+// 浸透（branding.bz本体の浸透施策）: サーベイ・市場調査・理解度テスト・ラーニング
 const penetrationItems: NavItem[] = [
   { href: '/admin/brand-score/surveys', label: 'サーベイ管理', icon: BarChart3 },
+  // 社外の浸透（外部調査）。サーベイ管理が社内なのと対になる
+  { href: '/admin/brand-score/market-surveys', label: '市場調査', icon: Globe },
   { href: '/admin/brand-score/quizzes', label: '理解度テスト', icon: ClipboardCheck },
   { href: '/admin/learning', label: 'ラーニング', icon: GraduationCap },
 ]
@@ -145,8 +148,8 @@ export function AppSidebar() {
               {visibleNavItems.map((item) => {
                 const Icon = item.icon
                 const isActive =
-                  item.href === '/admin/dashboard'
-                    ? pathname.startsWith('/admin/dashboard') || pathname.startsWith('/admin/analytics') || pathname === '/admin/brand-score'
+                  item.href === '/admin/brand-score'
+                    ? pathname === '/admin/brand-score' || pathname.startsWith('/admin/dashboard') || pathname.startsWith('/admin/analytics')
                     : pathname.startsWith(item.href)
                 return (
                   <SidebarMenuItem key={item.href}>

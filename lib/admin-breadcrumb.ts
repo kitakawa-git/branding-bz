@@ -41,6 +41,12 @@ const breadcrumbMap: Record<string, AdminCrumb> = {
     // パンくずでは調査名を繰り返さない
     child: { section: 'サーベイ管理', title: '詳細' },
   },
+  '/admin/brand-score/market-surveys': {
+    section: '浸透',
+    title: '市場調査',
+    // 詳細・マッピング画面は「市場調査 › …」。sectionHref は resolveAdminCrumb が補う
+    child: { section: '市場調査', title: '詳細' },
+  },
   '/admin/brand-score/quizzes': { section: '浸透', title: '理解度テスト' },
   '/admin/learning': { section: '浸透', title: 'ラーニング' },
   // サイドバーでグループに属さない項目はセクションなし
