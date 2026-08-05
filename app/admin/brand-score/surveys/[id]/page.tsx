@@ -864,6 +864,9 @@ export default function SurveyDetailPage() {
   const deptPass = (department: string, stage: FunnelStage): number | null =>
     deptGroup(department)?.cumulative.find(p => p.stage === stage)?.rate ?? null
 
+  const deptPassCount = (department: string, stage: FunnelStage): number | null =>
+    deptGroup(department)?.cumulative.find(p => p.stage === stage)?.count ?? null
+
   // 5段階のうちスコアが最小／最大の段階（環境・成果は含めない）。
   // 系列（全社/SP/BO）ごとに山と谷が違うので、系列単位で出す
   const extremeStage = (
@@ -1317,11 +1320,8 @@ export default function SurveyDetailPage() {
                     {/* 点数と3区分の対応は下の凡例が持つので、ここには読み方を書く。
                         特に分母（人ではなく回答）は取り違えると解釈を誤る */}
                     <p className="text-xs text-muted-foreground leading-relaxed mb-4">
-                      1本のバーが1つのグループ。バーの長さはどれも同じで、色の割合だけが変わります。
-                      青の切れ目を上下で見比べると、グループごとの差が分かります。
                       数えているのは人数ではなく回答の数（人数×設問数）です。
-                      グレー（中立）が多いのは、反対しているのではなく、まだよく知らないということ。
-                      オレンジ（否定）が多い場合とは、やるべきことが変わります。
+                      グレー（中立）は反対ではなく、まだよく知らないということ。
                     </p>
 
                     <div className="space-y-3">
@@ -1529,8 +1529,8 @@ export default function SurveyDetailPage() {
                   <CardContent className="p-5">
                     <h3 className="text-sm font-bold text-foreground mb-1">段階の通過率</h3>
                     <p className="text-xs text-muted-foreground leading-relaxed mb-4">
-                      スコアではなく人数。その段階まで<span className="font-semibold text-foreground">すべて</span>通過した人の割合
-                      （各段階の平均{funnelData.pass_threshold}点以上を通過とする）
+                      点数ではなく人数。そこまでの段階<span className="font-semibold text-foreground">すべて</span>で
+                      平均{funnelData.pass_threshold}点以上だった人の割合です。
                     </p>
 
                     <div>
@@ -1539,6 +1539,8 @@ export default function SurveyDetailPage() {
                         const solo = funnelData.overall.standalone.find(x => x.stage === stage)
                         const bo = deptPass('BO本社', stage)
                         const sp = deptPass('SP', stage)
+                        const boCount = deptPassCount('BO本社', stage)
+                        const spCount = deptPassCount('SP', stage)
 
                         return (
                           <div key={stage}>
@@ -1576,9 +1578,15 @@ export default function SurveyDetailPage() {
                               <div className="w-[140px] shrink-0 text-right">
                                 <p className="m-0 whitespace-nowrap text-[10px] text-green-600">
                                   SP {sp !== null ? `${sp.toFixed(1)}%` : '-'}
+                                  {spCount !== null && (
+                                    <span className="ml-1">{spCount}人</span>
+                                  )}
                                 </p>
                                 <p className="m-0 whitespace-nowrap text-[10px] text-orange-600">
                                   BO {bo !== null ? `${bo.toFixed(1)}%` : '-'}
+                                  {boCount !== null && (
+                                    <span className="ml-1">{boCount}人</span>
+                                  )}
                                 </p>
                               </div>
                             </div>
@@ -1586,21 +1594,6 @@ export default function SurveyDetailPage() {
                         )
                       })}
                     </div>
-
-                    {(() => {
-                      const last = funnelData.overall.cumulative[FUNNEL_STAGES.length - 1]
-                      const first = funnelData.overall.cumulative[0]
-                      const boLast = deptPass('BO本社', FUNNEL_STAGES[FUNNEL_STAGES.length - 1])
-                      if (!last || !first) return null
-                      return (
-                        <p className="m-0 mt-3 text-[10px] leading-relaxed text-muted-foreground">
-                          5段階すべてを通過しているのは全社{last.rate.toFixed(1)}%
-                          {boLast !== null && `、BOでは${boLast.toFixed(1)}%`}。
-                          最大の脱落は入口の{STAGE_LABELS[FUNNEL_STAGES[0]]}で、
-                          全社の{(100 - first.rate).toFixed(1)}%が最初の関門で落ちています。
-                        </p>
-                      )
-                    })()}
 
                     <InsightNote
                       text={survey.insights?.funnel}
