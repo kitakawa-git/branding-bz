@@ -275,16 +275,18 @@ export function MarketSurveyImportDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
+      {/* 幅は「ビューポート-2rem」と 2xl の小さい方。狭い画面で画面外へはみ出さない。
+          overflow-x-hidden は、中の長い設問文が横スクロールを作らないための保険 */}
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-2xl max-h-[85vh] overflow-y-auto overflow-x-hidden">
+        <DialogHeader className="min-w-0">
           <DialogTitle>市場調査を取り込む</DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="break-words">
             調査会社のGT集計表（Excel）を取り込みます。どの設問をどの指標に使うかは、
             取り込んだあとの画面で割り当てます。
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="min-w-0 space-y-4">
           {/* ドロップゾーン */}
           <div
             onDragEnter={handleDragEnter}
@@ -376,7 +378,7 @@ export function MarketSurveyImportDialog({
                   )}
                 </div>
 
-                <div className="grid grid-cols-3 gap-3 text-sm">
+                <div className="grid min-w-0 grid-cols-3 gap-3 text-sm">
                   <div>
                     <p className="text-muted-foreground text-xs">設問数</p>
                     <p className="text-lg font-bold">{preview.stats.blockCount}</p>
@@ -399,7 +401,7 @@ export function MarketSurveyImportDialog({
                     <AlertTriangle size={16} />
                     読み取れない値が{errorWarnings.length}件あります
                   </p>
-                  <ul className="space-y-1 text-xs text-destructive/90">
+                  <ul className="space-y-1 break-words text-xs text-destructive/90">
                     {errorWarnings.slice(0, 10).map((w, i) => (
                       <li key={i}>
                         {preview.sheetName} {w.row ?? '?'}行目 {w.blockKey}: {w.detail}
@@ -497,7 +499,7 @@ export function MarketSurveyImportDialog({
                     </button>
                   )}
                 </div>
-                <div className="max-h-56 divide-y overflow-y-auto rounded-md border">
+                <div className="max-h-56 min-w-0 divide-y overflow-y-auto rounded-md border">
                   {visibleBlocks.map((b) => (
                     <div
                       key={b.blockKey}

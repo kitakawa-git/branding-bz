@@ -297,7 +297,7 @@ export function SurveyImportDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-2xl max-h-[85vh] overflow-y-auto overflow-x-hidden">
         <DialogHeader>
           <DialogTitle>Googleフォームの回答を取り込む</DialogTitle>
           <DialogDescription>
