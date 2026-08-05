@@ -1046,7 +1046,7 @@ export default function SurveyDetailPage() {
                             {isInflection && (
                               <span
                                 aria-hidden
-                                className="absolute inset-y-0 -left-1 border-l-2 border-dashed border-ds-app-accent"
+                                className="absolute inset-y-0 -left-1 border-l border-dashed border-ds-app-accent"
                               />
                             )}
                             <p className="m-0 text-xs text-muted-foreground">
