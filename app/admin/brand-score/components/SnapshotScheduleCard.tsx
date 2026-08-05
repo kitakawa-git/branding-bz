@@ -32,6 +32,8 @@ import {
 
 interface SnapshotScheduleCardProps {
   companyId: string
+  /** 「スコアを記録」ボタン（記録ダイアログ）。カード内に表示する */
+  recordSlot?: React.ReactNode
 }
 
 const FREQUENCY_OPTIONS: { value: Frequency; label: string }[] = [
@@ -48,7 +50,7 @@ const FREQUENCY_LABELS: Record<Frequency, string> = {
   annual: '年1回',
 }
 
-export function SnapshotScheduleCard({ companyId }: SnapshotScheduleCardProps) {
+export function SnapshotScheduleCard({ companyId, recordSlot }: SnapshotScheduleCardProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -261,7 +263,7 @@ export function SnapshotScheduleCard({ companyId }: SnapshotScheduleCardProps) {
               </>
             ) : (
               <p className="m-0 text-xs text-muted-foreground">
-                自動では記録しません。上の「スコアを記録」で必要なときだけ残します。
+                自動では記録しません。下の「スコアを記録」で必要なときだけ残します。
               </p>
             )}
 
@@ -269,6 +271,8 @@ export function SnapshotScheduleCard({ companyId }: SnapshotScheduleCardProps) {
               <span className="text-muted-foreground">前回記録日</span>
               <span className="font-medium text-foreground">{lastSnapshotDate || '—'}</span>
             </div>
+
+            {recordSlot && <div className="pt-3">{recordSlot}</div>}
           </div>
         </CardContent>
       </Card>
