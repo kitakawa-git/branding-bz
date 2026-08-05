@@ -32,7 +32,10 @@ import {
   MARKET_PIVOT_STAGE,
   type MarketStage,
 } from '@/lib/brand-score/market-stages'
-import { computeMarketScore } from '@/lib/brand-score/market-stage-score'
+import {
+  MIN_BENCHMARK_BASE_N,
+  computeMarketScore,
+} from '@/lib/brand-score/market-stage-score'
 
 type Survey = {
   id: string
@@ -46,13 +49,23 @@ type Survey = {
 
 type RankRow = { name: string; value: number; isSelf: boolean }
 
+/** その段階が調査票のどの設問だったか（レポートと突き合わせるため） */
+type StageSource = { code: string | null; label: string | null }
+
 type StageScore = {
   stage: MarketStage
   status: 'scored' | 'absent' | 'unmapped'
   raw_percent: number | null
   score: number | null
   base_n: number | null
-  benchmark: { competitorMax: number; competitorAvg: number; rank: number; n: number } | null
+  benchmark: {
+    competitorMax: number
+    competitorAvg: number
+    rank: number
+    n: number
+    /** 母数不足で比較から外した競合の数（古い記録には無い） */
+    excluded?: number
+  } | null
 }
 
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
@@ -69,6 +82,7 @@ export default function MarketSurveyDetailPage() {
   const [survey, setSurvey] = useState<Survey | null>(null)
   const [stageScores, setStageScores] = useState<StageScore[]>([])
   const [ranking, setRanking] = useState<Record<string, RankRow[]>>({})
+  const [stageSources, setStageSources] = useState<Record<string, StageSource>>({})
   const [blockCount, setBlockCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -89,6 +103,7 @@ export default function MarketSurveyDetailPage() {
       setTitleDraft(data.survey?.title ?? '')
       setStageScores(data.stageScores ?? [])
       setRanking(data.ranking ?? {})
+      setStageSources(data.stageSources ?? {})
       setBlockCount((data.blocks ?? []).length)
     } catch (err) {
       console.error('[MarketSurveyDetail] 取得エラー:', err)
@@ -404,6 +419,10 @@ export default function MarketSurveyDetailPage() {
                   </h2>
                   <p className="mb-3 text-xs text-muted-foreground">
                     同じ設問での他社との位置関係。緑が自社です。
+                    {(() => {
+                      const ex = stageScores.find((x) => x.stage === stage)?.benchmark?.excluded
+                      return ex ? `回答者${MIN_BENCHMARK_BASE_N}人未満の${ex}社は除いています。` : ''
+                    })()}
                   </p>
                   <ResponsiveContainer width="100%" height={Math.max(240, rows.length * 22)}>
                     <BarChart data={rows} layout="vertical" margin={{ left: 8, right: 24 }}>
@@ -435,7 +454,8 @@ export default function MarketSurveyDetailPage() {
           <h2 className="mb-1 text-sm font-bold text-foreground">段階別の詳細</h2>
           <p className="mb-4 text-xs leading-relaxed text-muted-foreground">
             自社と競合を同じ物差しで並べています。競合の値はスコアには入れず、
-            位置関係を見るためだけに使っています。
+            位置関係を見るためだけに使っています。回答者が{MIN_BENCHMARK_BASE_N}人
+            未満の競合は、少人数の割合が順位を歪めるため比較から外しています。
           </p>
 
           <div>
@@ -469,6 +489,17 @@ export default function MarketSurveyDetailPage() {
                         {MARKET_STAGE_QUESTIONS[stage]}
                         {s?.base_n !== null && s?.base_n !== undefined && `・n=${s.base_n}`}
                       </p>
+                      {/* 調査票のどの設問から来た数字か。レポートと突き合わせるのに要る */}
+                      {stageSources[stage] && (
+                        <p className="m-0 text-[10px] text-muted-foreground/70">
+                          {[
+                            stageSources[stage].code?.toUpperCase(),
+                            stageSources[stage].label,
+                          ]
+                            .filter(Boolean)
+                            .join(' ')}
+                        </p>
+                      )}
                     </div>
 
                     <div className="min-w-0 flex-1 pt-0.5">

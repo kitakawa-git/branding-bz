@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { fetchAllRows } from '@/lib/brand-score/fetch-all-rows'
 import { MARKET_STAGES } from '@/lib/brand-score/market-stages'
+import { MIN_BENCHMARK_BASE_N } from '@/lib/brand-score/market-stage-score'
 
 type RouteContext = { params: Promise<{ id: string }> }
 
@@ -77,22 +78,44 @@ export async function GET(_request: NextRequest, context: RouteContext) {
       supabase.from('market_survey_stage_scores').select('*').eq('survey_id', id),
     ])
 
-    // 段階ごとの「自社＋競合」の並び。詳細画面のランキング表示に使う
+    // 段階ごとの「自社＋競合」の並び。詳細画面のランキング表示に使う。
+    // 母数の小さい競合は順位を歪めるので外す（段階スコアの benchmark と同じ基準）。
+    // 自社は母数に関わらず必ず残す
     const cellIndex = new Map(cells.map((c) => [c.id, c]))
     const ranking: Record<string, { name: string; value: number; isSelf: boolean }[]> = {}
     for (const m of mappings ?? []) {
       const c = cellIndex.get(m.cell_id as string)
       if (!c || c.value === null) continue
+      const isSelf = m.subject === 'self'
+      if (!isSelf && c.base_n !== null && c.base_n < MIN_BENCHMARK_BASE_N) continue
       const stage = m.stage as string
       if (!ranking[stage]) ranking[stage] = []
       ranking[stage].push({
-        name: m.subject === 'self' ? c.row_label : ((m.competitor_name as string) ?? c.row_label),
+        name: isSelf ? c.row_label : ((m.competitor_name as string) ?? c.row_label),
         value: Number(c.value),
-        isSelf: m.subject === 'self',
+        isSelf,
       })
     }
     for (const k of Object.keys(ranking)) {
       ranking[k].sort((a, b) => b.value - a.value)
+    }
+
+    // 段階ごとの「元の設問」。レポートと突き合わせるときに、
+    // 画面の『評価』が調査票のどの設問だったのかが分からないと確認できない
+    const blockIndex = new Map((blocks ?? []).map((b) => [b.id as string, b]))
+    const stageSources: Record<string, { code: string | null; label: string | null }> = {}
+    for (const m of mappings ?? []) {
+      if (m.subject !== 'self') continue
+      const c = cellIndex.get(m.cell_id as string)
+      if (!c) continue
+      const b = blockIndex.get(c.block_id)
+      // 列見出し（「ロイヤリティあり・計」など）が無いときは
+      // 設問文の末尾にある【第1想起】のような目印を使う
+      const bracket = ((b?.question_text as string) ?? '').match(/【([^】]+)】\s*$/)
+      stageSources[m.stage as string] = {
+        code: (b?.question_code as string) ?? null,
+        label: c.col_label ?? bracket?.[1] ?? null,
+      }
     }
 
     return NextResponse.json({
@@ -101,6 +124,7 @@ export async function GET(_request: NextRequest, context: RouteContext) {
       cells,
       mappings: mappings ?? [],
       ranking,
+      stageSources,
       // 未登録の段階も unmapped として必ず5件返す（画面がスロットを常に5つ出せるように）
       stageScores: MARKET_STAGES.map((stage) => {
         const hit = (scores ?? []).find((s) => s.stage === stage)

@@ -2,6 +2,7 @@
 // 実行: npx tsx lib/brand-score/market-stage-score.test.ts
 import assert from 'node:assert/strict'
 import {
+  MIN_BENCHMARK_BASE_N,
   computeStageScore,
   computeMarketScore,
   applyMethod,
@@ -118,7 +119,7 @@ function rival(value: number, name: string): MappedCell {
   assert.equal(applyMethod(0, { kind: 'linear', mid: 50, max: 90 }, null), 0)
 
   // share_of_top は競合トップとの比
-  const bm = { competitorMax: 85, competitorAvg: 40, rank: 2, n: 4 }
+  const bm = { competitorMax: 85, competitorAvg: 40, rank: 2, n: 4, excluded: 0 }
   assert.equal(applyMethod(77.3, { kind: 'share_of_top' }, bm), 91, '77.3/85')
   // 競合が居なければ生値に落とす（0除算しない）
   assert.equal(applyMethod(77.3, { kind: 'share_of_top' }, null), 77)
@@ -196,3 +197,33 @@ function rival(value: number, name: string): MappedCell {
 }
 
 console.log('✓ market-stage-score: 全テスト通過')
+
+// ────────────────────────────────────────────
+// 7. 母数の小さい競合はベンチマークから外す
+// ────────────────────────────────────────────
+{
+  // 実データ（2026年 眼科医調査・ロイヤリティ）を縮めたもの。
+  // キシヤは n=27 で 81.5% だが、母数不足なので順位には入れない
+  const cells: MappedCell[] = [
+    { value: 78.0, baseN: 182, weight: 1, subject: 'self' },
+    { value: 81.5, baseN: 27, weight: 1, subject: 'competitor', competitorName: 'キシヤ' },
+    { value: 76.8, baseN: 56, weight: 1, subject: 'competitor', competitorName: 'B社' },
+    { value: 71.4, baseN: 189, weight: 1, subject: 'competitor', competitorName: 'C社' },
+  ]
+  const r = computeStageScore('evaluation', cells, { kind: 'raw' })
+  assert.equal(r.benchmark?.rank, 1, '母数不足の1社を外せば自社が1位')
+  assert.equal(r.benchmark?.excluded, 1)
+  assert.equal(r.benchmark?.n, 3, '外したぶんは比較対象数に含めない')
+  assert.equal(r.benchmark?.competitorMax, 76.8)
+
+  // 母数が読めないセルは判断材料が無いので残す
+  const unknown: MappedCell[] = [
+    { value: 78.0, baseN: null, weight: 1, subject: 'self' },
+    { value: 90, baseN: null, weight: 1, subject: 'competitor', competitorName: 'D社' },
+  ]
+  const r2 = computeStageScore('evaluation', unknown, { kind: 'raw' })
+  assert.equal(r2.benchmark?.rank, 2)
+  assert.equal(r2.benchmark?.excluded, 0)
+
+  assert.equal(MIN_BENCHMARK_BASE_N, 50)
+}

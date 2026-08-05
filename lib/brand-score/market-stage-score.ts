@@ -63,6 +63,16 @@ export interface MappedCell {
   competitorName?: string | null
 }
 
+/**
+ * 競合として並べるのに最低限必要な母数。
+ *
+ * 「各企業認知者ベース」の設問では、認知率が低い会社ほど母数が小さくなる。
+ * n=27 の 81.5%（22人）を n=182 の 78.0% と同じ土俵で並べると順位が逆転し、
+ * 調査会社のレポートと食い違う。調査票が N数一覧のページをわざわざ置くのは
+ * この落とし穴のため。母数が読めないセルは判断材料が無いので残す。
+ */
+export const MIN_BENCHMARK_BASE_N = 50
+
 export interface StageBenchmark {
   /** 競合の最大値 */
   competitorMax: number
@@ -70,8 +80,10 @@ export interface StageBenchmark {
   competitorAvg: number
   /** 自社を含めた順位（1が最上位） */
   rank: number
-  /** 比較対象数（自社を含む） */
+  /** 比較対象数（自社を含む。母数不足で外したぶんは含まない） */
   n: number
+  /** 母数不足で比較から外した競合の数 */
+  excluded: number
 }
 
 export interface StageComputation {
@@ -150,10 +162,13 @@ export function computeStageScore(
   )
   const baseN = baseNs.size === 1 ? [...baseNs][0] : null
 
-  // 競合との比較。スコア本体には入れず表示にだけ使う
-  const competitorValues = cells
-    .filter((c) => c.subject === 'competitor' && c.value !== null)
-    .map((c) => c.value as number)
+  // 競合との比較。スコア本体には入れず表示にだけ使う。
+  // 母数が小さすぎる会社は順位を歪めるので外す（MIN_BENCHMARK_BASE_N 参照）
+  const competitorCells = cells.filter((c) => c.subject === 'competitor' && c.value !== null)
+  const usable = competitorCells.filter(
+    (c) => c.baseN === null || c.baseN >= MIN_BENCHMARK_BASE_N
+  )
+  const competitorValues = usable.map((c) => c.value as number)
 
   let benchmark: StageBenchmark | null = null
   if (competitorValues.length > 0) {
@@ -166,6 +181,7 @@ export function computeStageScore(
       competitorAvg: round1(competitorAvg),
       rank: higher + 1,
       n: competitorValues.length + 1,
+      excluded: competitorCells.length - usable.length,
     }
   }
 
