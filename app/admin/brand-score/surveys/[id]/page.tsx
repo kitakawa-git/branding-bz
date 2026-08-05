@@ -1259,10 +1259,12 @@ export default function SurveyDetailPage() {
                                   丸印で重ねるより、3者の差が長さで直接比べられる */}
                               <div className="min-w-0 flex-1 pt-0.5">
                                 <div className="space-y-1">
+                                  {/* 棒の色は系列（全社/本社/現場）を表す。
+                                      最弱段階は数字だけをオレンジにし、棒は青のままにする */}
                                   {([
-                                    { key: '全社', value: s, color: isWeakest ? 'bg-orange-500' : 'bg-ds-app-accent-soft' },
-                                    { key: '本社', value: boScore, color: 'bg-orange-400' },
-                                    { key: '現場', value: spScore, color: 'bg-green-500' },
+                                    { key: '全社', value: s, color: 'bg-ds-app-accent-soft', highlight: isWeakest },
+                                    { key: '本社', value: boScore, color: 'bg-orange-400', highlight: false },
+                                    { key: '現場', value: spScore, color: 'bg-green-500', highlight: false },
                                   ] as const).map(bar => bar.value === null ? null : (
                                     <div key={bar.key} className="flex items-center gap-2">
                                       <span className="w-7 shrink-0 text-[10px] text-muted-foreground">
@@ -1274,7 +1276,7 @@ export default function SurveyDetailPage() {
                                           style={{ width: `${bar.value}%` }}
                                         />
                                       </div>
-                                      <span className="w-8 shrink-0 text-right text-[10px] tabular-nums text-muted-foreground">
+                                      <span className={`w-8 shrink-0 text-right text-[10px] tabular-nums ${bar.highlight ? 'font-bold text-orange-600' : 'text-muted-foreground'}`}>
                                         {bar.value.toFixed(1)}
                                       </span>
                                     </div>
