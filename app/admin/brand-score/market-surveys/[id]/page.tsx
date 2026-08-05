@@ -539,9 +539,11 @@ export default function MarketSurveyDetailPage() {
               const isBest =
                 s?.status === 'scored' && highest !== null && s.score === highest
 
+              // 競合平均は出さない。段階ごとに設問の種類が違い（助成想起・純粋想起・
+              // 認知者ベースの評価）、平均の意味が段階ごとにぶれて読み違えるため。
+              // 位置関係は「自社 vs 競合トップ」と右の順位で足りる
               const bars = [
                 { key: '自社', value: s?.raw_percent ?? null, color: 'bg-green-500' },
-                { key: '競合平均', value: bm?.competitorAvg ?? null, color: 'bg-ds-app-accent-soft' },
                 { key: '競合トップ', value: bm?.competitorMax ?? null, color: 'bg-orange-400' },
               ]
 
@@ -580,7 +582,7 @@ export default function MarketSurveyDetailPage() {
                           {bars.map((bar) =>
                             bar.value === null ? null : (
                               <div key={bar.key} className="flex items-center gap-2">
-                                <span className="w-14 shrink-0 text-[10px] text-muted-foreground">
+                                <span className="w-16 shrink-0 text-[10px] text-muted-foreground">
                                   {bar.key}
                                 </span>
                                 <div className="h-2 min-w-0 flex-1 rounded-full bg-muted">
@@ -637,9 +639,6 @@ export default function MarketSurveyDetailPage() {
           <div className="mt-3 flex flex-wrap items-center gap-4 text-[10px] text-muted-foreground">
             <span className="flex items-center gap-1">
               <span className="inline-block size-2.5 rounded-sm bg-green-500" />自社
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="inline-block size-2.5 rounded-sm bg-ds-app-accent-soft" />競合平均
             </span>
             <span className="flex items-center gap-1">
               <span className="inline-block size-2.5 rounded-sm bg-orange-400" />競合トップ
