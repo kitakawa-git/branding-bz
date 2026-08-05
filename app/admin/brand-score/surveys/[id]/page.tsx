@@ -296,7 +296,9 @@ export default function SurveyDetailPage() {
 
   // インナースコア
   // 設問別スコアの表示軸（構成要素 / 浸透段階）
-  const [questionAxis, setQuestionAxis] = useState<'category' | 'stage'>('category')
+  // 既定は浸透段階（評価軸を5段階に統一したため）。
+  // 段階が解決できないサーベイでは構成要素にフォールバックする（下の effectiveAxis）
+  const [questionAxis, setQuestionAxis] = useState<'category' | 'stage'>('stage')
   const [innerScore, setInnerScore] = useState<InnerScoreData | null>(null)
   const [innerScoreLoading, setInnerScoreLoading] = useState(false)
 
@@ -741,6 +743,13 @@ export default function SurveyDetailPage() {
     }
     return map
   }, [innerScore, questions])
+
+  // 実際に描画する軸。段階が解決できないサーベイでは浸透段階を選べないので、
+  // 既定が 'stage' でも構成要素にフォールバックさせる（空表示を防ぐ）
+  const effectiveAxis: 'category' | 'stage' =
+    questionAxis === 'stage' && questionsByStage && questionsByStage.size > 0
+      ? 'stage'
+      : 'category'
 
   // ── ローディング ──
   if (loading) {
@@ -1307,15 +1316,15 @@ export default function SurveyDetailPage() {
                     {questionsByStage && questionsByStage.size > 0 && (
                       <div className="flex rounded-md border bg-background p-0.5 text-xs">
                         {([
-                          { key: 'category', label: '構成要素' },
                           { key: 'stage', label: '浸透段階' },
+                          { key: 'category', label: '構成要素' },
                         ] as const).map(opt => (
                           <button
                             key={opt.key}
                             type="button"
                             onClick={() => setQuestionAxis(opt.key)}
                             className={`px-2.5 py-1 rounded transition-colors ${
-                              questionAxis === opt.key
+                              effectiveAxis === opt.key
                                 ? 'bg-foreground text-background font-semibold'
                                 : 'text-muted-foreground hover:text-foreground'
                             }`}
@@ -1328,7 +1337,7 @@ export default function SurveyDetailPage() {
                   </div>
 
                   {/* 構成要素ビュー（既存） */}
-                  {questionAxis === 'category' && (
+                  {effectiveAxis === 'category' && (
                     <div>
                         {(['why', 'how', 'what'] as const).map(cat => {
                           const catQuestions = innerScore.by_question.filter(q => q.category === cat)
@@ -1377,7 +1386,7 @@ export default function SurveyDetailPage() {
                   )}
 
                   {/* 浸透段階ビュー */}
-                  {questionAxis === 'stage' && questionsByStage && (
+                  {effectiveAxis === 'stage' && questionsByStage && (
                     <div>
                       {ALL_STAGES.map(stage => {
                         const list = questionsByStage.get(stage)
