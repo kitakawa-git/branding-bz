@@ -722,8 +722,6 @@ export default function SurveyDetailPage() {
   const stageScoreOf = (stage: FunnelStage): number | null =>
     funnelData?.overall.stageScores.find(s => s.stage === stage)?.score ?? null
 
-  const envStage = funnelData?.overall.stageScores.find(s => s.stage === 'environment') ?? null
-
   const deptGroup = (department: string): GroupFunnel | undefined =>
     funnelData?.by_department.find(g => g.department === department)
 
@@ -1089,15 +1087,6 @@ export default function SurveyDetailPage() {
                   )
                 })}
               </div>
-
-              {/* 4-2b. 環境・成果指標（段階外） */}
-              {envStage && (
-                <p className="m-0 text-xs text-muted-foreground leading-relaxed">
-                  このほか「会社がどういう状態か」を問う{envStage.questionCount}問を
-                  <span className="font-semibold text-foreground"> 環境・成果指標 {envStage.score?.toFixed(1)} </span>
-                  として別に集計（個人の進行度ではないため段階に含めない）
-                </p>
-              )}
 
               {/* 4-2c. 案B: 段階別の詳細 */}
               {funnelData && (
