@@ -21,7 +21,21 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
-import { Plus, ClipboardList, CalendarDays, Trash2, Loader2, Upload } from 'lucide-react'
+import {
+  Plus,
+  ClipboardList,
+  CalendarDays,
+  Trash2,
+  Loader2,
+  Upload,
+  MoreHorizontal,
+} from 'lucide-react'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Fab, FabButton } from '@/components/ui/fab'
 import { SurveyImportDialog } from './SurveyImportDialog'
 
@@ -317,20 +331,30 @@ export default function SurveysListPage() {
                     >
                       {statusConfig.label}
                     </Badge>
-                    {/* 下書きのほか、取り込みぶんは外部ファイルの写しなので消して入れ直せる */}
+                    {/* 下書きのほか、取り込みぶんは外部ファイルの写しなので消して入れ直せる。
+                        カード全体が詳細への遷移なので、メニュー側はクリックを止める */}
                     {(survey.status === 'draft' || survey.source === 'imported') && (
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-8 w-8 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
-                        aria-label={`${survey.title} を削除`}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setDeleteDialogId(survey.id)
-                        }}
-                      >
-                        <Trash2 size={14} />
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            type="button"
+                            aria-label={`${survey.title} の操作メニュー`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="-mr-1 shrink-0 rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                          >
+                            <MoreHorizontal size={16} />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onSelect={() => setDeleteDialogId(survey.id)}
+                          >
+                            <Trash2 size={14} />
+                            削除
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     )}
                   </div>
 
