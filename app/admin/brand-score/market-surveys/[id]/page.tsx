@@ -23,6 +23,7 @@ import {
   XAxis,
   YAxis,
   Cell as RCell,
+  ReferenceLine,
   Tooltip,
 } from 'recharts'
 import {
@@ -506,6 +507,8 @@ export default function MarketSurveyDetailPage() {
                           <RCell key={i} fill={r.isSelf ? '#16a34a' : '#d1d5db'} />
                         ))}
                       </Bar>
+                      {/* 0%の縦線。バーの下に隠れるので、最後に描いて手前に出す */}
+                      <ReferenceLine x={0} stroke="#666" />
                     </BarChart>
                   </ResponsiveContainer>
                 </CardContent>
