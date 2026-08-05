@@ -106,7 +106,9 @@ const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
 
 /**
  * 項目を降順に並べた横棒。
- * 上位ほど濃くはせず、母数の注記だけを添える（%の絶対値だけで語らないため）。
+ *
+ * バーの長さは0〜100%の実寸。最大値を全幅にすると、認知経路のように
+ * 全項目が3割未満の表でも1位が満杯に見えて、実際より大きく読める。
  */
 function RankBars({
   items,
@@ -117,11 +119,9 @@ function RankBars({
   max?: number
   suffix?: string
 }) {
-  const shown = items.slice(0, max)
-  const top = shown.length > 0 ? Math.max(...shown.map((i) => i.value)) : 0
   return (
     <div className="space-y-1.5">
-      {shown.map((it) => (
+      {items.slice(0, max).map((it) => (
         <div key={it.label} className="flex items-center gap-2">
           <span className="w-[136px] shrink-0 truncate text-[11px] text-muted-foreground" title={it.label}>
             {it.label}
@@ -129,7 +129,7 @@ function RankBars({
           <div className="h-2 min-w-0 flex-1 rounded-full bg-muted">
             <div
               className="h-full rounded-full bg-green-500"
-              style={{ width: `${top > 0 ? (it.value / top) * 100 : 0}%` }}
+              style={{ width: `${Math.min(100, Math.max(0, it.value))}%` }}
             />
           </div>
           <span className="w-12 shrink-0 text-right text-[11px] tabular-nums text-foreground">
@@ -716,34 +716,19 @@ export default function MarketSurveyDetailPage() {
         {extras?.personality && (
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
             <CardContent className="p-5">
-              <h2 className="m-0 mb-1 text-sm font-bold text-foreground">
+              <h2 className="m-0 mb-4 text-sm font-bold text-foreground">
                 ブランドパーソナリティ
               </h2>
-              <p className="mb-4 text-xs leading-relaxed text-muted-foreground">
-                対になる言葉のどちらに近いかを聞いたもの。数字は左の言葉に寄った人の割合です
-                （n={extras.personality.baseN}）。
-              </p>
-              <div className="space-y-1.5">
-                {extras.personality.items.map((it) => (
-                  <div key={it.positive} className="flex items-center gap-2">
-                    <span className="w-[86px] shrink-0 truncate text-[11px] text-foreground">
-                      {it.positive}
-                    </span>
-                    <div className="h-2 min-w-0 flex-1 rounded-full bg-muted">
-                      <div
-                        className="h-full rounded-full bg-green-500"
-                        style={{ width: `${Math.min(100, it.value)}%` }}
-                      />
-                    </div>
-                    <span className="w-11 shrink-0 text-right text-[11px] tabular-nums text-foreground">
-                      {it.value.toFixed(1)}%
-                    </span>
-                    <span className="w-[76px] shrink-0 truncate text-right text-[10px] text-muted-foreground">
-                      {it.negative}
-                    </span>
-                  </div>
-                ))}
-              </div>
+              {/* 対義語（受け身な・いい加減な…）は出さない。
+                  バーの空白が対義語側に見えるが、実際その大半は「どちらともいえない」。
+                  革新的な22.0%の残りは、古くさい7.1%と中立70.9%で意味がまったく違う */}
+              <RankBars
+                items={extras.personality.items.map((it) => ({
+                  label: it.positive,
+                  value: it.value,
+                }))}
+                max={10}
+              />
             </CardContent>
           </Card>
         )}
@@ -752,11 +737,7 @@ export default function MarketSurveyDetailPage() {
         {extras?.contactPoints && extras.contactPoints.items.length > 0 && (
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
             <CardContent className="p-5">
-              <h2 className="m-0 mb-1 text-sm font-bold text-foreground">認知経路</h2>
-              <p className="mb-4 text-xs leading-relaxed text-muted-foreground">
-                自社を知った人が、どこで見聞きしたか（n={extras.contactPoints.baseN}）。
-                「認知」の数字が何によって作られているかが分かります。
-              </p>
+              <h2 className="m-0 mb-4 text-sm font-bold text-foreground">認知経路</h2>
               <RankBars items={extras.contactPoints.items} max={8} />
             </CardContent>
           </Card>
@@ -766,11 +747,7 @@ export default function MarketSurveyDetailPage() {
         {extras?.services && extras.services.items.length > 0 && (
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
             <CardContent className="p-5">
-              <h2 className="m-0 mb-1 text-sm font-bold text-foreground">事業浸透度</h2>
-              <p className="mb-4 text-xs leading-relaxed text-muted-foreground">
-                自社の導入経験者の中で、どのサービスが使われているか（n=
-                {extras.services.baseN}）。「利用」の内訳です。
-              </p>
+              <h2 className="m-0 mb-4 text-sm font-bold text-foreground">事業浸透度</h2>
               <RankBars items={extras.services.items} max={8} />
             </CardContent>
           </Card>
@@ -780,11 +757,7 @@ export default function MarketSurveyDetailPage() {
         {extras?.serviceEvaluation && extras.serviceEvaluation.items.length > 0 && (
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
             <CardContent className="p-5">
-              <h2 className="m-0 mb-1 text-sm font-bold text-foreground">サービス評価</h2>
-              <p className="mb-4 text-xs leading-relaxed text-muted-foreground">
-                自社を知っている人による評価。「あてはまる」と答えた割合です（n=
-                {extras.serviceEvaluation.baseN}）。「評価」の裏付けになります。
-              </p>
+              <h2 className="m-0 mb-4 text-sm font-bold text-foreground">サービス評価</h2>
               <RankBars items={extras.serviceEvaluation.items} max={8} />
             </CardContent>
           </Card>
