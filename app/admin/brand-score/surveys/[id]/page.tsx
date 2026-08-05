@@ -927,52 +927,53 @@ export default function SurveyDetailPage() {
       </div>
 
       {/* ── 2. サーベイ情報カード ── */}
-      {/* 概要カード。以降のカード間隔（space-y-4 = 16px）に合わせる */}
-      <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-4">
-        <CardContent className="p-5">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div>
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
-                <ClipboardList size={12} />
-                設問数
-              </div>
-              <p className="text-lg font-bold text-foreground">
-                {questions.length}
-                <span className="text-xs font-normal text-muted-foreground ml-1">
-                  問
-                </span>
-              </p>
+      {/* ダッシュボード（タイムライン分析）のサマリーカードと同じ体裁に揃える。
+          1指標=1カード、アイコン18px＋見出し text-sm、数値 text-3xl 中央 */}
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4 mb-4">
+        <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+          <CardContent className="p-5 pb-3">
+            <div className="flex items-center gap-2 mb-3">
+              <ClipboardList size={18} className="text-foreground" />
+              <h3 className="text-sm font-semibold text-foreground m-0">設問数</h3>
             </div>
-            <div>
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
-                <Users size={12} />
-                回答数
-              </div>
-              <p className="text-lg font-bold text-foreground">
-                {survey.responded_count}
-                <span className="text-xs font-normal text-muted-foreground ml-1">
-                  / {survey.total_members}人
-                </span>
-              </p>
+            <p className="text-3xl font-bold text-foreground m-0 text-center">
+              {questions.length}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1 text-center">問</p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+          <CardContent className="p-5 pb-3">
+            <div className="flex items-center gap-2 mb-3">
+              <Users size={18} className="text-foreground" />
+              <h3 className="text-sm font-semibold text-foreground m-0">回答数</h3>
             </div>
-            <div>
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
-                <Target size={12} />
-                回答率
-              </div>
-              <div>
-                <p className="text-lg font-bold text-foreground mb-1">
-                  {survey.response_rate}%
-                  <span className="text-xs font-normal text-muted-foreground ml-1">
-                    / 目標{survey.target_response_rate}%
-                  </span>
-                </p>
-                <Progress value={survey.response_rate} className="h-1.5" />
-              </div>
+            <p className="text-3xl font-bold text-foreground m-0 text-center">
+              {survey.responded_count}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1 text-center">
+              /{survey.total_members}人
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+          <CardContent className="p-5 pb-3">
+            <div className="flex items-center gap-2 mb-3">
+              <Target size={18} className="text-foreground" />
+              <h3 className="text-sm font-semibold text-foreground m-0">回答率</h3>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+            <p className="text-3xl font-bold text-foreground m-0 text-center">
+              {survey.response_rate}%
+            </p>
+            <p className="text-xs text-muted-foreground mt-1 text-center">
+              目標{survey.target_response_rate}%
+            </p>
+            <Progress value={survey.response_rate} className="h-1.5 mt-2" />
+          </CardContent>
+        </Card>
+      </div>
 
       {/* ── 3. 回答結果セクション（active/closed時のみ） ── */}
       {(survey.status === 'active' || survey.status === 'closed') && (
@@ -1036,8 +1037,15 @@ export default function SurveyDetailPage() {
                         return (
                           <div
                             key={stage}
-                            className={`rounded-lg px-2 py-1.5 text-center ${isInflection ? 'bg-indigo-50 ring-1 ring-indigo-200' : ''}`}
+                            className={`relative rounded-lg px-2 py-1.5 text-center ${isInflection ? 'bg-indigo-50 ring-1 ring-indigo-200' : ''}`}
                           >
+                            {/* 反転点の境界線。ここから先は「受け取る」から「渡す」に変わる */}
+                            {isInflection && (
+                              <span
+                                aria-hidden
+                                className="absolute inset-y-0 left-0 w-0.5 rounded-full bg-ds-app-accent"
+                              />
+                            )}
                             <p className="m-0 text-xs text-muted-foreground">
                               {i + 1}. {STAGE_LABELS[stage]}
                             </p>
