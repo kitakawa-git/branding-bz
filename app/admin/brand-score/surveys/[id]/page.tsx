@@ -944,7 +944,8 @@ export default function SurveyDetailPage() {
       </div>
 
       {/* ── 2. サーベイ情報カード ── */}
-      <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-6">
+      {/* 概要カード。以降のカード間隔（space-y-4 = 16px）に合わせる */}
+      <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-4">
         <CardContent className="p-5">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
