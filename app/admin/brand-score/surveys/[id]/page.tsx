@@ -203,18 +203,22 @@ const AXIS_OPTIONS: { key: QuestionAxis; label: string }[] = [
   { key: 'category', label: '設問タイプ' },
 ]
 
-/** カード末尾に添えるAI考察 */
+/** カード末尾に添えるAI考察。装飾は構築ツール（STP等）のAI生成ブロックに合わせる */
 function InsightNote({ text, loading }: { text?: string; loading: boolean }) {
   if (!text && !loading) return null
   return (
-    <div className="mt-4 flex items-start gap-2 rounded-md border border-dashed bg-background px-3 py-2.5">
-      <Sparkles className="mt-px size-3.5 shrink-0 text-ds-app-accent" />
+    <div className="mt-4 rounded-lg border border-blue-100 bg-blue-50/30 p-4">
+      <div className="mb-2 flex items-center gap-1.5">
+        <Sparkles className="h-3.5 w-3.5 text-ds-app-accent" />
+        <p className="m-0 text-xs font-bold text-ds-app-accent">考察（AI生成）</p>
+      </div>
       {text ? (
-        <p className="m-0 text-[11px] leading-relaxed text-foreground">{text}</p>
+        <p className="m-0 text-[13px] leading-relaxed text-foreground/80">{text}</p>
       ) : (
-        <p className="m-0 text-[11px] leading-relaxed text-muted-foreground">
-          AIが考察を作成しています…
-        </p>
+        <div className="flex items-center gap-2 text-xs text-gray-500">
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          考察を生成中...
+        </div>
       )}
     </div>
   )
@@ -860,29 +864,31 @@ export default function SurveyDetailPage() {
   const deptPass = (department: string, stage: FunnelStage): number | null =>
     deptGroup(department)?.cumulative.find(p => p.stage === stage)?.rate ?? null
 
-  // 5段階のうちスコア最小（環境・成果は含めない）
-  const weakestStage: FunnelStage | null = funnelData
-    ? FUNNEL_STAGES.reduce<FunnelStage | null>((min, stage) => {
-        const v = stageScoreOf(stage)
-        if (v === null) return min
-        if (min === null) return stage
-        return v < (stageScoreOf(min) ?? Infinity) ? stage : min
-      }, null)
-    : null
-
-  // 部門ごとの最弱段階。全社の最弱と一致するとは限らないので個別に出す
-  const weakestStageOf = (department: string): FunnelStage | null =>
+  // 5段階のうちスコアが最小／最大の段階（環境・成果は含めない）。
+  // 系列（全社/SP/BO）ごとに山と谷が違うので、系列単位で出す
+  const extremeStage = (
+    scoreOf: (stage: FunnelStage) => number | null,
+    pick: 'min' | 'max'
+  ): FunnelStage | null =>
     funnelData
-      ? FUNNEL_STAGES.reduce<FunnelStage | null>((min, stage) => {
-          const v = deptStageScore(department, stage)
-          if (v === null) return min
-          if (min === null) return stage
-          return v < (deptStageScore(department, min) ?? Infinity) ? stage : min
+      ? FUNNEL_STAGES.reduce<FunnelStage | null>((best, stage) => {
+          const v = scoreOf(stage)
+          if (v === null) return best
+          if (best === null) return stage
+          const bv = scoreOf(best) ?? (pick === 'min' ? Infinity : -Infinity)
+          return (pick === 'min' ? v < bv : v > bv) ? stage : best
         }, null)
       : null
 
-  const weakestSpStage = weakestStageOf('SP')
-  const weakestBoStage = weakestStageOf('BO本社')
+  const deptScoreOf = (department: string) => (stage: FunnelStage) =>
+    deptStageScore(department, stage)
+
+  const weakestStage = extremeStage(stageScoreOf, 'min')
+  const strongestStage = extremeStage(stageScoreOf, 'max')
+  const weakestSpStage = extremeStage(deptScoreOf('SP'), 'min')
+  const strongestSpStage = extremeStage(deptScoreOf('SP'), 'max')
+  const weakestBoStage = extremeStage(deptScoreOf('BO本社'), 'min')
+  const strongestBoStage = extremeStage(deptScoreOf('BO本社'), 'max')
 
   // 段階 → その段階に属する設問（設問別スコアの浸透段階ビュー用）
   const questionsByStage = useMemo(() => {
@@ -1308,8 +1314,10 @@ export default function SurveyDetailPage() {
                 <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
                   <CardContent className="p-5">
                     <h3 className="text-sm font-bold text-foreground mb-1">回答の内訳</h3>
+                    {/* 点数と3区分の対応は下の凡例が持つので、ここでは
+                        このカードが平均点と別に存在する理由だけを書く */}
                     <p className="text-xs text-muted-foreground mb-4">
-                      肯定＝4〜5点 ／ 中立＝3点「どちらとも言えない」 ／ 否定＝1〜2点。
+                      平均点に隠れる「割れ方」を見るための分布です。
                       中立は反対ではなく、判断材料が届いていない層。
                     </p>
 
@@ -1436,11 +1444,30 @@ export default function SurveyDetailPage() {
                               <div className="min-w-0 flex-1 pt-0.5">
                                 <div className="space-y-1">
                                   {/* 棒の色は系列（全社/SP/BO）を表す。
-                                      各系列の最弱段階は数字だけをオレンジにし、棒は系列の色のままにする */}
+                                      数字だけを色で強調し、棒は系列の色のままにする。
+                                      その系列で最も低い段階＝オレンジ、最も高い段階＝青 */}
                                   {([
-                                    { key: '全社', value: s, color: 'bg-ds-app-accent-soft', highlight: isWeakest },
-                                    { key: 'SP', value: spScore, color: 'bg-green-500', highlight: weakestSpStage === stage },
-                                    { key: 'BO', value: boScore, color: 'bg-orange-400', highlight: weakestBoStage === stage },
+                                    {
+                                      key: '全社',
+                                      value: s,
+                                      color: 'bg-ds-app-accent-soft',
+                                      worst: isWeakest,
+                                      best: strongestStage === stage,
+                                    },
+                                    {
+                                      key: 'SP',
+                                      value: spScore,
+                                      color: 'bg-green-500',
+                                      worst: weakestSpStage === stage,
+                                      best: strongestSpStage === stage,
+                                    },
+                                    {
+                                      key: 'BO',
+                                      value: boScore,
+                                      color: 'bg-orange-400',
+                                      worst: weakestBoStage === stage,
+                                      best: strongestBoStage === stage,
+                                    },
                                   ] as const).map(bar => bar.value === null ? null : (
                                     <div key={bar.key} className="flex items-center gap-2">
                                       <span className="w-7 shrink-0 text-[10px] text-muted-foreground">
@@ -1452,7 +1479,15 @@ export default function SurveyDetailPage() {
                                           style={{ width: `${bar.value}%` }}
                                         />
                                       </div>
-                                      <span className={`w-8 shrink-0 text-right text-[10px] tabular-nums ${bar.highlight ? 'font-bold text-orange-600' : 'text-muted-foreground'}`}>
+                                      <span
+                                        className={`w-8 shrink-0 text-right text-[10px] tabular-nums ${
+                                          bar.worst
+                                            ? 'font-bold text-orange-600'
+                                            : bar.best
+                                              ? 'font-bold text-ds-app-accent'
+                                              : 'text-muted-foreground'
+                                        }`}
+                                      >
                                         {bar.value.toFixed(1)}
                                       </span>
                                     </div>
