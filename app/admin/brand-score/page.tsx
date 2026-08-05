@@ -169,14 +169,6 @@ function getGapBadgeClass(direction: string): string {
   return 'bg-gray-100 text-gray-600 border-gray-200'
 }
 
-function getHeatmapBg(score: number | null): string {
-  if (score === null) return ''
-  if (score >= 80) return 'bg-green-50 text-green-700'
-  if (score >= 60) return 'bg-blue-50 text-ds-app-accent-hover'
-  if (score >= 40) return 'bg-amber-50 text-amber-700'
-  return 'bg-red-50 text-red-700'
-}
-
 function getRankBadgeClass(rank: string | null): string {
   if (!rank || rank === '-') return 'bg-gray-100 text-gray-500 border-gray-200'
   if (rank === 'S') return 'bg-green-100 text-green-700 border-green-200'
@@ -1200,48 +1192,7 @@ export default function BrandScoreDashboard() {
         </Card>
       )}
 
-      {/* ── 6. 部署別ヒートマップ ── */}
-      {hasInner && innerScore!.by_department.length > 0 && (
-        <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-4">
-          <CardContent className="p-5">
-            <h2 className="text-xs font-bold text-foreground mb-4">部署別スコア</h2>
-            <div className="rounded-md border overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/40">
-                    <TableHead className="text-xs font-semibold">部署</TableHead>
-                    <TableHead className="text-xs font-semibold text-center">WHY</TableHead>
-                    <TableHead className="text-xs font-semibold text-center">HOW</TableHead>
-                    <TableHead className="text-xs font-semibold text-center">WHAT</TableHead>
-                    <TableHead className="text-xs font-semibold text-center">総合</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {innerScore!.by_department.map(d => (
-                    <TableRow key={d.department}>
-                      <TableCell className="text-sm font-medium">{d.department}</TableCell>
-                      <TableCell className={`text-sm text-center font-semibold ${getHeatmapBg(d.why)}`}>
-                        {d.why !== null ? d.why.toFixed(1) : '-'}
-                      </TableCell>
-                      <TableCell className={`text-sm text-center font-semibold ${getHeatmapBg(d.how)}`}>
-                        {d.how !== null ? d.how.toFixed(1) : '-'}
-                      </TableCell>
-                      <TableCell className={`text-sm text-center font-semibold ${getHeatmapBg(d.what)}`}>
-                        {d.what !== null ? d.what.toFixed(1) : '-'}
-                      </TableCell>
-                      <TableCell className={`text-sm text-center font-bold ${getHeatmapBg(d.total)}`}>
-                        {d.total !== null ? d.total.toFixed(1) : '-'}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* ── 7. 自動記録設定 ── */}
+      {/* ── 6. 自動記録設定 ── */}
       {companyId && (
         <SnapshotScheduleCard companyId={companyId} />
       )}
