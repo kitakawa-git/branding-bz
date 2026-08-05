@@ -16,7 +16,15 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Settings2, CalendarDays, Users, Loader2, ClipboardList, Trophy } from 'lucide-react'
+import {
+  CalendarDays,
+  Users,
+  Loader2,
+  ClipboardList,
+  Trophy,
+  RefreshCw,
+  Sparkles,
+} from 'lucide-react'
 import {
   ResponsiveContainer,
   RadarChart,
@@ -52,6 +60,9 @@ type Survey = {
   fielded_to: string | null
   sample_size: number | null
   status: string
+  /** カード別のAI考察。キーは insights API の SECTIONS と対応 */
+  insights: Record<string, string> | null
+  insights_generated_at: string | null
 }
 
 type RankRow = { name: string; value: number; isSelf: boolean }
@@ -116,6 +127,40 @@ const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
  * バーの長さは0〜100%の実寸。最大値を全幅にすると、認知経路のように
  * 全項目が3割未満の表でも1位が満杯に見えて、実際より大きく読める。
  */
+/** カード末尾に添えるAI考察。装飾はサーベイ詳細の InsightNote と同じ */
+function InsightNote({
+  text,
+  loading,
+  /** 2カラムに並ぶカードで、左右の考察の上端を揃えるために下寄せする */
+  pushDown = false,
+}: {
+  text?: string
+  loading: boolean
+  pushDown?: boolean
+}) {
+  if (!text && !loading) return null
+  return (
+    <div
+      className={`rounded-lg border border-blue-100 bg-blue-50/30 p-4 ${
+        pushDown ? 'mt-auto pt-4' : 'mt-4'
+      }`}
+    >
+      <div className="mb-2 flex items-center gap-1.5">
+        <Sparkles className="h-3.5 w-3.5 text-ds-app-accent" />
+        <p className="m-0 text-xs font-bold text-ds-app-accent">考察（AI生成）</p>
+      </div>
+      {text ? (
+        <p className="m-0 text-[13px] leading-relaxed text-foreground/80">{text}</p>
+      ) : (
+        <div className="flex items-center gap-2 text-xs text-gray-500">
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          考察を生成中...
+        </div>
+      )}
+    </div>
+  )
+}
+
 function RankBars({
   items,
   max = 8,
@@ -168,6 +213,8 @@ export default function MarketSurveyDetailPage() {
   const [stageScores, setStageScores] = useState<StageScore[]>([])
   const [ranking, setRanking] = useState<Record<string, RankRow[]>>({})
   const [extras, setExtras] = useState<Extras | null>(null)
+  const [generatingInsights, setGeneratingInsights] = useState(false)
+  const insightsTriedRef = useRef(false)
   const [blockCount, setBlockCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -200,6 +247,98 @@ export default function MarketSurveyDetailPage() {
   useEffect(() => {
     fetchAll()
   }, [fetchAll])
+
+  // ── AI考察 ──
+  // 画面に出ている数字だけを渡し、生成側が新しい数値を作れないようにする
+  const buildInsightSummary = useCallback(() => {
+    const stageRows = MARKET_STAGES.map((stage) => {
+      const x = stageScores.find((v) => v.stage === stage)
+      if (!x || x.status !== 'scored') return null
+      return {
+        段階: MARKET_STAGE_LABELS[stage],
+        スコア: x.score,
+        生の割合: x.raw_percent,
+        回答者数: x.base_n,
+        順位: x.benchmark ? `${x.benchmark.n}社中${x.benchmark.rank}位` : null,
+        競合トップの割合: x.benchmark?.competitorMax ?? null,
+      }
+    }).filter(Boolean)
+
+    const list = (v: { items: { label: string; value: number }[]; baseN: number | null } | null) =>
+      v ? { 回答者数: v.baseN, 項目: v.items.slice(0, 10) } : null
+
+    return {
+      調査名: survey?.title,
+      サンプル数: survey?.sample_size,
+      市場浸透スコア: computeMarketScore(
+        stageScores.map((x) => ({ status: x.status, score: x.score }))
+      ),
+      五段階: stageRows.length > 0 ? stageRows : null,
+      市場の期待と自社イメージ: extras?.impression
+        ? {
+            注記: '重視点は全数ベース、イメージは自社を知っている人ベースで分母が違う',
+            項目: extras.impression.matches.slice(0, 10).map((m) => ({
+              項目: m.label,
+              市場の重視順位: m.importanceRank,
+              市場の重視割合: m.importanceValue,
+              自社イメージ順位: m.imageRank,
+              自社イメージ割合: m.imageValue,
+            })),
+          }
+        : null,
+      ブランドパーソナリティ: extras?.personality
+        ? {
+            回答者数: extras.personality.baseN,
+            項目: extras.personality.items.map((i) => ({
+              性格: i.positive,
+              寄った割合: i.value,
+            })),
+          }
+        : null,
+      認知経路: list(extras?.contactPoints ?? null),
+      事業浸透度: list(extras?.services ?? null),
+      サービス評価: list(extras?.serviceEvaluation ?? null),
+    }
+  }, [survey, stageScores, extras])
+
+  const generateInsights = useCallback(async () => {
+    if (generatingInsights) return
+    setGeneratingInsights(true)
+    try {
+      const res = await fetch(`/api/brand-score/market-surveys/${surveyId}/insights`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ summary: buildInsightSummary() }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => null)
+        throw new Error(data?.error || '考察の生成に失敗しました')
+      }
+      const data = await res.json()
+      setSurvey((prev) =>
+        prev
+          ? {
+              ...prev,
+              insights: data.insights,
+              insights_generated_at: data.insights_generated_at,
+            }
+          : prev
+      )
+    } catch (err) {
+      console.error('[MarketSurveyDetail] AI考察生成エラー:', err)
+      toast.error(err instanceof Error ? err.message : '考察の生成に失敗しました')
+    } finally {
+      setGeneratingInsights(false)
+    }
+  }, [surveyId, buildInsightSummary, generatingInsights])
+
+  // 未生成のときだけ自動で一度走らせる。失敗しても再試行はしない
+  useEffect(() => {
+    if (!survey || survey.insights || stageScores.length === 0) return
+    if (insightsTriedRef.current) return
+    insightsTriedRef.current = true
+    generateInsights()
+  }, [survey, stageScores, generateInsights])
 
   const handleTitleClick = () => {
     setEditingTitle(true)
@@ -271,6 +410,8 @@ export default function MarketSurveyDetailPage() {
   }
 
   const cfg = STATUS_CONFIG[survey.status] ?? STATUS_CONFIG.draft
+  // 初回生成のあいだだけスケルトンを出す。再生成中は前回の考察を出したままにする
+  const insightsLoading = generatingInsights && !survey.insights
   const marketScore = computeMarketScore(
     stageScores.map((s) => ({ status: s.status, score: s.score }))
   )
@@ -345,12 +486,15 @@ export default function MarketSurveyDetailPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() =>
-              router.push(`/admin/brand-score/market-surveys/${surveyId}/mapping`)
-            }
+            onClick={generateInsights}
+            disabled={generatingInsights}
           >
-            <Settings2 size={14} />
-            指標の割り当て
+            {generatingInsights ? (
+              <Loader2 size={14} className="animate-spin" />
+            ) : (
+              <RefreshCw size={14} />
+            )}
+            AI考察を再生成
           </Button>
           {survey.status === 'active' ? (
             <Button
@@ -375,31 +519,32 @@ export default function MarketSurveyDetailPage() {
         </div>
       </div>
 
-      {/* 概要 */}
-      <div className="mb-4 grid grid-cols-3 gap-4">
+      {/* 概要。サーベイ詳細の情報カードと同じ体裁に揃える。
+          1指標=1カード、アイコン18px＋見出し text-sm 左寄せ、数値 text-3xl 中央 */}
+      <div className="mb-4 grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4">
         {[
-          { icon: <ClipboardList size={14} />, label: '設問数', value: `${blockCount}`, unit: '問' },
+          { icon: <ClipboardList size={18} className="text-foreground" />, label: '設問数', value: `${blockCount}`, unit: '問' },
           {
-            icon: <Users size={14} />,
+            icon: <Users size={18} className="text-foreground" />,
             label: 'サンプル数',
             value: survey.sample_size !== null ? `${survey.sample_size}` : '—',
             unit: '名',
           },
           {
-            icon: <Trophy size={14} />,
+            icon: <Trophy size={18} className="text-foreground" />,
             label: '算出できた段階',
             value: `${scored.length}`,
             unit: '/ 5',
           },
         ].map((s) => (
           <Card key={s.label} className="bg-[hsl(0_0%_97%)] border shadow-none">
-            <CardContent className="p-5 text-center">
-              <p className="m-0 mb-1 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+            <CardContent className="p-5 pb-3">
+              <div className="mb-3 flex items-center gap-2">
                 {s.icon}
-                {s.label}
-              </p>
-              <p className="m-0 text-2xl font-bold text-foreground">{s.value}</p>
-              <p className="m-0 text-[10px] text-muted-foreground">{s.unit}</p>
+                <h3 className="m-0 text-sm font-semibold text-foreground">{s.label}</h3>
+              </div>
+              <p className="m-0 text-center text-3xl font-bold text-foreground">{s.value}</p>
+              <p className="mt-1 text-center text-xs text-muted-foreground">{s.unit}</p>
             </CardContent>
           </Card>
         ))}
@@ -660,6 +805,8 @@ export default function MarketSurveyDetailPage() {
               <span className="inline-block size-2.5 rounded-sm bg-orange-400" />競合トップ
             </span>
           </div>
+
+          <InsightNote text={survey.insights?.stages} loading={insightsLoading} />
         </CardContent>
       </Card>
 
@@ -724,6 +871,8 @@ export default function MarketSurveyDetailPage() {
                 </tbody>
               </table>
             </div>
+
+            <InsightNote text={survey.insights?.impression} loading={insightsLoading} />
           </CardContent>
         </Card>
       )}
@@ -731,8 +880,8 @@ export default function MarketSurveyDetailPage() {
       <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
         {/* ブランドパーソナリティ（SD法） */}
         {extras?.personality && (
-          <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-            <CardContent className="p-5">
+          <Card className="h-full bg-[hsl(0_0%_97%)] border shadow-none">
+            <CardContent className="flex h-full flex-col p-5">
               <h2 className="m-0 mb-4 text-sm font-bold text-foreground">
                 ブランドパーソナリティ
               </h2>
@@ -746,36 +895,40 @@ export default function MarketSurveyDetailPage() {
                 }))}
                 max={10}
               />
+              <InsightNote text={survey.insights?.personality} loading={insightsLoading} pushDown />
             </CardContent>
           </Card>
         )}
 
         {/* 認知経路 */}
         {extras?.contactPoints && extras.contactPoints.items.length > 0 && (
-          <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-            <CardContent className="p-5">
+          <Card className="h-full bg-[hsl(0_0%_97%)] border shadow-none">
+            <CardContent className="flex h-full flex-col p-5">
               <h2 className="m-0 mb-4 text-sm font-bold text-foreground">認知経路</h2>
               <RankBars items={extras.contactPoints.items} max={8} />
+              <InsightNote text={survey.insights?.contact} loading={insightsLoading} pushDown />
             </CardContent>
           </Card>
         )}
 
         {/* 事業浸透度 */}
         {extras?.services && extras.services.items.length > 0 && (
-          <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-            <CardContent className="p-5">
+          <Card className="h-full bg-[hsl(0_0%_97%)] border shadow-none">
+            <CardContent className="flex h-full flex-col p-5">
               <h2 className="m-0 mb-4 text-sm font-bold text-foreground">事業浸透度</h2>
               <RankBars items={extras.services.items} max={8} />
+              <InsightNote text={survey.insights?.services} loading={insightsLoading} pushDown />
             </CardContent>
           </Card>
         )}
 
         {/* サービス評価 */}
         {extras?.serviceEvaluation && extras.serviceEvaluation.items.length > 0 && (
-          <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-            <CardContent className="p-5">
+          <Card className="h-full bg-[hsl(0_0%_97%)] border shadow-none">
+            <CardContent className="flex h-full flex-col p-5">
               <h2 className="m-0 mb-4 text-sm font-bold text-foreground">サービス評価</h2>
               <RankBars items={extras.serviceEvaluation.items} max={8} />
+              <InsightNote text={survey.insights?.evaluation} loading={insightsLoading} pushDown />
             </CardContent>
           </Card>
         )}
