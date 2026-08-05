@@ -1445,6 +1445,7 @@ export default function BrandScoreDashboard() {
       {companyId && (
         <SnapshotScheduleCard
           companyId={companyId}
+          onSnapshotsChanged={fetchAll}
           recordSlot={
             <AlertDialog>
               <AlertDialogTrigger asChild>

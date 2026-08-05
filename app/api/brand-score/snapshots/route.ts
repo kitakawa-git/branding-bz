@@ -1,6 +1,7 @@
 // スナップショット API
-// GET  /api/brand-score/snapshots?company_id=xxx → スナップショット一覧（時系列グラフ用）
-// POST /api/brand-score/snapshots → スコア集計して INSERT
+// GET    /api/brand-score/snapshots?company_id=xxx → スナップショット一覧（時系列グラフ用）
+// POST   /api/brand-score/snapshots → スコア集計して INSERT
+// DELETE /api/brand-score/snapshots?company_id=xxx&snapshot_date=YYYY-MM-DD → 1件削除
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { calculateSnapshot, snapshotToRow } from '@/lib/brand-score/calculate-snapshot'
@@ -19,7 +20,7 @@ export async function GET(request: NextRequest) {
 
     const { data, error } = await supabase
       .from('brand_score_snapshots')
-      .select('snapshot_date, total_score, inner_score, outer_score, rank')
+      .select('id, snapshot_date, total_score, inner_score, outer_score, rank')
       .eq('company_id', companyId)
       .order('snapshot_date', { ascending: true })
 
@@ -103,6 +104,48 @@ export async function POST(request: NextRequest) {
     })
   } catch (err) {
     console.error('[Snapshot POST] 予期しないエラー:', err)
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : 'Unknown error' },
+      { status: 500 }
+    )
+  }
+}
+
+// DELETE: 記録した日を1件消す。
+// 誤って記録した日を残したままにすると推移グラフが読めなくなるため、
+// 画面から消せるようにする。company_id を必ず条件に入れて他社の行に触れない
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const companyId = searchParams.get('company_id')
+    const snapshotDate = searchParams.get('snapshot_date')
+
+    if (!companyId || !snapshotDate) {
+      return NextResponse.json(
+        { error: 'company_id と snapshot_date は必須です' },
+        { status: 400 }
+      )
+    }
+
+    const supabase = getSupabaseAdmin()
+    const { data, error } = await supabase
+      .from('brand_score_snapshots')
+      .delete()
+      .eq('company_id', companyId)
+      .eq('snapshot_date', snapshotDate)
+      .select('snapshot_date')
+
+    if (error) {
+      console.error('[Snapshot DELETE] エラー:', error.message)
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+    if (!data || data.length === 0) {
+      return NextResponse.json({ error: '該当する記録が見つかりません' }, { status: 404 })
+    }
+
+    return NextResponse.json({ deleted: data.length })
+  } catch (err) {
+    console.error('[Snapshot DELETE] 予期しないエラー:', err)
     return NextResponse.json(
       { error: err instanceof Error ? err.message : 'Unknown error' },
       { status: 500 }

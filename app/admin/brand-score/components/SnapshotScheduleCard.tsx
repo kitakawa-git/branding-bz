@@ -23,8 +23,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { toast } from 'sonner'
-import { Calendar, Loader2, Settings2 } from 'lucide-react'
+import { Calendar, Loader2, Settings2, Trash2 } from 'lucide-react'
 import {
   type Frequency,
   calcNextSnapshotDate,
@@ -34,7 +44,12 @@ interface SnapshotScheduleCardProps {
   companyId: string
   /** 「スコアを記録」ボタン（記録ダイアログ）。カード内に表示する */
   recordSlot?: React.ReactNode
+  /** 記録を消したときに、親の推移グラフを取り直してもらうための通知 */
+  onSnapshotsChanged?: () => void
 }
+
+/** 記録済みの1件。日付と総合スコアだけ出す */
+type RecordedSnapshot = { snapshot_date: string; total_score: number | null }
 
 const FREQUENCY_OPTIONS: { value: Frequency; label: string }[] = [
   { value: 'monthly', label: '毎月' },
@@ -50,7 +65,11 @@ const FREQUENCY_LABELS: Record<Frequency, string> = {
   annual: '年1回',
 }
 
-export function SnapshotScheduleCard({ companyId, recordSlot }: SnapshotScheduleCardProps) {
+export function SnapshotScheduleCard({
+  companyId,
+  recordSlot,
+  onSnapshotsChanged,
+}: SnapshotScheduleCardProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -59,7 +78,11 @@ export function SnapshotScheduleCard({ companyId, recordSlot }: SnapshotSchedule
   const [enabled, setEnabled] = useState(true)
   const [frequency, setFrequency] = useState<Frequency>('monthly')
   const [anchorDate, setAnchorDate] = useState('')
-  const [lastSnapshotDate, setLastSnapshotDate] = useState<string | null>(null)
+  // 記録済みの日付。誤って記録した日を残すと推移グラフが読めなくなるので、
+  // 一覧から消せるようにする
+  const [records, setRecords] = useState<RecordedSnapshot[]>([])
+  const [deleteTarget, setDeleteTarget] = useState<RecordedSnapshot | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   // モーダル内の編集中の値。キャンセルで捨てられるよう保存済みとは別に持つ
   const [draftFrequency, setDraftFrequency] = useState<Frequency>('monthly')
@@ -82,33 +105,51 @@ export function SnapshotScheduleCard({ companyId, recordSlot }: SnapshotSchedule
     }
   }, [companyId])
 
-  // 前回記録日を取得
-  const fetchLastSnapshot = useCallback(async () => {
+  // 記録済みの日付を取得。
+  // 以前は anon キーで直接テーブルを読んでいたが、RLS で弾かれても
+  // catch で握り潰していたため「前回記録日 —」のまま気づけなかった。
+  // 推移グラフと同じ API（service_role）を使う
+  const fetchRecords = useCallback(async () => {
     try {
-      const { createClient } = await import('@supabase/supabase-js')
-      const supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      )
-      const { data } = await supabase
-        .from('brand_score_snapshots')
-        .select('snapshot_date')
-        .eq('company_id', companyId)
-        .order('snapshot_date', { ascending: false })
-        .limit(1)
-
-      if (data && data.length > 0) {
-        setLastSnapshotDate(data[0].snapshot_date)
-      }
-    } catch {
-      // 無視
+      const res = await fetch(`/api/brand-score/snapshots?company_id=${companyId}`)
+      if (!res.ok) return
+      const data = await res.json()
+      const list = (data.snapshots ?? []) as RecordedSnapshot[]
+      // 新しい順に見せる（消したいのはたいてい直近の誤記録）
+      setRecords([...list].sort((a, b) => b.snapshot_date.localeCompare(a.snapshot_date)))
+    } catch (err) {
+      console.error('[SnapshotSchedule] 記録一覧の取得エラー:', err)
     }
   }, [companyId])
 
+  const handleDelete = async () => {
+    if (!deleteTarget || deleting) return
+    setDeleting(true)
+    try {
+      const res = await fetch(
+        `/api/brand-score/snapshots?company_id=${companyId}&snapshot_date=${deleteTarget.snapshot_date}`,
+        { method: 'DELETE' }
+      )
+      if (!res.ok) {
+        const d = await res.json().catch(() => null)
+        throw new Error(d?.error || `HTTP ${res.status}`)
+      }
+      toast.success('記録を削除しました')
+      setDeleteTarget(null)
+      await fetchRecords()
+      onSnapshotsChanged?.()
+    } catch (err) {
+      console.error('[SnapshotSchedule] 削除エラー:', err)
+      toast.error(err instanceof Error ? err.message : '削除に失敗しました')
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   useEffect(() => {
     fetchSchedule()
-    fetchLastSnapshot()
-  }, [fetchSchedule, fetchLastSnapshot])
+    fetchRecords()
+  }, [fetchSchedule, fetchRecords])
 
   // 次回記録予定日。カードでは保存済みの値、モーダルでは編集中の値で計算する
   const nextDateOf = (anchor: string, freq: Frequency) => {
@@ -267,15 +308,72 @@ export function SnapshotScheduleCard({ companyId, recordSlot }: SnapshotSchedule
               </p>
             )}
 
-            <div className="flex items-center justify-between text-xs pt-1.5 border-t">
-              <span className="text-muted-foreground">前回記録日</span>
-              <span className="font-medium text-foreground">{lastSnapshotDate || '—'}</span>
+            {/* 記録済みの日付。行から直接消せる */}
+            <div className="pt-1.5 border-t">
+              <p className="m-0 mb-1.5 text-xs text-muted-foreground">記録した日</p>
+              {records.length === 0 ? (
+                <p className="m-0 text-xs text-muted-foreground">まだ記録がありません</p>
+              ) : (
+                <div className="space-y-0.5">
+                  {records.map(r => (
+                    <div
+                      key={r.snapshot_date}
+                      className="flex items-center justify-between gap-2 text-xs"
+                    >
+                      <span className="font-medium text-foreground tabular-nums">
+                        {r.snapshot_date}
+                      </span>
+                      <span className="ml-auto tabular-nums text-muted-foreground">
+                        {r.total_score !== null ? r.total_score.toFixed(1) : '—'}
+                      </span>
+                      <button
+                        type="button"
+                        aria-label={`${r.snapshot_date} の記録を削除`}
+                        onClick={() => setDeleteTarget(r)}
+                        className="shrink-0 rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-destructive"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {recordSlot && <div className="pt-3">{recordSlot}</div>}
           </div>
         </CardContent>
       </Card>
+
+      {/* 記録の削除。推移グラフから点が消えるので日付を明示する */}
+      <AlertDialog
+        open={deleteTarget !== null}
+        onOpenChange={open => !open && setDeleteTarget(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>この記録を削除しますか</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteTarget?.snapshot_date} に記録したスコアを削除します。
+              推移グラフからこの日の点が消えます。元に戻せません。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>キャンセル</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={e => {
+                e.preventDefault()
+                handleDelete()
+              }}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting && <Loader2 size={14} className="animate-spin" />}
+              削除する
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* 自動記録の設定 */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
