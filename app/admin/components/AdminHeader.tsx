@@ -1,12 +1,14 @@
 'use client'
 
 // 管理画面ヘッダー（SidebarTrigger + パンくずリスト）
+import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Separator } from '@/components/ui/separator'
 import {
   Breadcrumb,
   BreadcrumbItem,
+  BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
@@ -30,15 +32,33 @@ export function AdminHeader() {
             {crumb.section && (
               <>
                 <BreadcrumbItem>
-                  <span className="text-muted-foreground">{crumb.section}</span>
+                  {crumb.sectionHref ? (
+                    <BreadcrumbLink asChild>
+                      <Link href={crumb.sectionHref} className="text-muted-foreground">
+                        {crumb.section}
+                      </Link>
+                    </BreadcrumbLink>
+                  ) : (
+                    <span className="text-muted-foreground">{crumb.section}</span>
+                  )}
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
               </>
             )}
             <BreadcrumbItem>
-              <BreadcrumbPage className="text-base font-bold">
-                {crumb.title}
-              </BreadcrumbPage>
+              {/* 一覧の名前をそのまま出しているサブページでは、
+                  タイトル側が一覧への戻り導線になる */}
+              {crumb.titleHref ? (
+                <BreadcrumbLink asChild>
+                  <Link href={crumb.titleHref} className="text-base font-bold">
+                    {crumb.title}
+                  </Link>
+                </BreadcrumbLink>
+              ) : (
+                <BreadcrumbPage className="text-base font-bold">
+                  {crumb.title}
+                </BreadcrumbPage>
+              )}
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>

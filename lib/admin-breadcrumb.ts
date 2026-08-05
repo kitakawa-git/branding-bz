@@ -3,8 +3,18 @@
 // 各ページ本体の h1 はこの定義に移管したため削除済み。
 
 export type AdminCrumb = {
-  section?: string // サイドバーのグループ名（リンクなしの薄字）
+  section?: string // 親の領域名。実体のあるページなら sectionHref でリンクにする
+  /**
+   * section の遷移先。サイドバーのグループ名（浸透・ブランド基盤など）は
+   * 対応するページが無いので未指定のまま薄字で置く。
+   */
+  sectionHref?: string
   title: string // 現在ページ名
+  /**
+   * title の遷移先。詳細ページで一覧の名前をそのまま出しているときだけ入る
+   * （resolveAdminCrumb が補う）。一覧ページ自身では未指定。
+   */
+  titleHref?: string
   /**
    * サブページ（/xxx/[id] 等）で使う crumb。
    * 未指定ならサブページは親と同じ crumb を継承する。
@@ -18,10 +28,10 @@ const breadcrumbMap: Record<string, AdminCrumb> = {
   // ダッシュボードは4つのタブを持つ1つの領域。
   // セクションに領域名、タイトルに現在のタブ名を置く（タブ名は
   // lib/constants/dashboard-tabs.ts の DASHBOARD_TABS と揃えること）
-  '/admin/dashboard': { section: 'ダッシュボード', title: 'タイムライン分析' },
-  '/admin/brand-score': { section: 'ダッシュボード', title: 'ブランドスコア' },
-  '/admin/analytics': { section: 'ダッシュボード', title: 'スマート名刺' },
-  '/admin/analytics/learning': { section: 'ダッシュボード', title: '視聴分析' },
+  '/admin/dashboard': { section: 'ダッシュボード', sectionHref: '/admin/dashboard', title: 'タイムライン分析' },
+  '/admin/brand-score': { section: 'ダッシュボード', sectionHref: '/admin/dashboard', title: 'ブランドスコア' },
+  '/admin/analytics': { section: 'ダッシュボード', sectionHref: '/admin/dashboard', title: 'スマート名刺' },
+  '/admin/analytics/learning': { section: 'ダッシュボード', sectionHref: '/admin/dashboard', title: '視聴分析' },
   // 浸透セクション（サイドバーのグループ名に合わせる）
   // 詳細ページ（/surveys/[id] 等）はプレフィックス一致でこのcrumbを継承する
   '/admin/brand-score/surveys': {
@@ -64,6 +74,14 @@ export function resolveAdminCrumb(pathname: string): AdminCrumb | null {
     }
   }
   if (!best) return null
-  // child があればサブページ用の crumb を返す（無ければ親をそのまま継承）
-  return best.crumb.child ?? best.crumb
+
+  // ここに来た時点で「一覧の下のページ」にいる。どちらの分岐でも
+  // 一覧へ戻れるリンクを持たせる（戻るボタンの代わり）
+  if (best.crumb.child) {
+    // child の section は親ページの名前なので、親へのリンクを補う
+    return { sectionHref: best.key, ...best.crumb.child }
+  }
+  // child 指定がないサブページは親の crumb をそのまま出す。
+  // 表示されている名前は一覧のものなので、タイトル側をリンクにする
+  return { ...best.crumb, child: undefined, titleHref: best.key }
 }
