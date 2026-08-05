@@ -28,6 +28,20 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+} from 'recharts'
+import {
+  MARKET_STAGES,
+  MARKET_STAGE_LABELS,
+  type MarketStage,
+} from '@/lib/brand-score/market-stages'
 import { MarketSurveyImportDialog } from './MarketSurveyImportDialog'
 
 type MarketSurvey = {
@@ -46,7 +60,18 @@ type MarketSurvey = {
   total_stage_count: number
 }
 
-type ListCache = { surveys: MarketSurvey[] }
+/** 市場浸透の年次推移の1点＝1調査 */
+type TrendPoint = {
+  survey_id: string
+  title: string
+  date: string
+  date_is_fallback: boolean
+  sample_size: number | null
+  market_score: number | null
+  stages: Record<MarketStage, number | null>
+}
+
+type ListCache = { surveys: MarketSurvey[]; trend: TrendPoint[] }
 
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
   draft: { label: '設定中', className: 'bg-amber-100 text-amber-700' },
@@ -62,6 +87,7 @@ export default function MarketSurveysPage() {
   const cached = companyId ? getPageCache<ListCache>(cacheKey) : null
 
   const [surveys, setSurveys] = useState<MarketSurvey[]>(cached?.surveys ?? [])
+  const [trend, setTrend] = useState<TrendPoint[]>(cached?.trend ?? [])
   const [loading, setLoading] = useState(!cached)
   const [importOpen, setImportOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<MarketSurvey | null>(null)
@@ -70,11 +96,19 @@ export default function MarketSurveysPage() {
   const fetchSurveys = useCallback(async () => {
     if (!companyId) return
     try {
-      const res = await fetch(`/api/brand-score/market-surveys?company_id=${companyId}`)
-      if (!res.ok) return
-      const data = await res.json()
+      const [listRes, trendRes] = await Promise.all([
+        fetch(`/api/brand-score/market-surveys?company_id=${companyId}`),
+        fetch(`/api/brand-score/market-surveys/trend?company_id=${companyId}`),
+      ])
+      if (!listRes.ok) return
+      const data = await listRes.json()
+      const trendData = trendRes.ok ? await trendRes.json() : { points: [] }
       setSurveys(data.surveys ?? [])
-      setPageCache(cacheKey, { surveys: data.surveys ?? [] })
+      setTrend(trendData.points ?? [])
+      setPageCache(cacheKey, {
+        surveys: data.surveys ?? [],
+        trend: trendData.points ?? [],
+      })
     } catch (err) {
       console.error('[MarketSurveys] 取得エラー:', err)
     } finally {
@@ -173,6 +207,95 @@ export default function MarketSurveysPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* 市場浸透の推移。調査ごとの実施日を横軸にする。
+          スナップショットには転記していない（総合スコアの合成が壊れるため）ので、
+          割り当てを直せばここも自動で追随する */}
+      {trend.length > 0 && (
+        <Card className="mb-4 bg-[hsl(0_0%_97%)] border shadow-none">
+          <CardContent className="p-5">
+            <h2 className="m-0 mb-1 text-sm font-bold text-foreground">市場浸透の推移</h2>
+            <p className="mb-4 text-xs leading-relaxed text-muted-foreground">
+              調査を実施した時点の数字です。
+              {trend.length < 2
+                ? '前年の調査を取り込むと、段階ごとの動きが線で見られます。'
+                : '認知は伸びても想起が動かない、のような段階ごとの差が見どころです。'}
+            </p>
+
+            {/* 1件だと線にならないので、2件目からグラフを出す */}
+            {trend.length >= 2 && (
+              <div className="mb-4 h-56">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart
+                    data={trend.map(t => ({ 実施: formatDate(t.date), 市場浸透: t.market_score }))}
+                    margin={{ top: 4, right: 8, left: -16, bottom: 0 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+                    <XAxis dataKey="実施" tick={{ fontSize: 11, fill: '#6b7280' }} />
+                    <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: '#9ca3af' }} />
+                    <Tooltip formatter={(v: number) => [`${v}点`, '市場浸透']} />
+                    <Line
+                      type="monotone"
+                      dataKey="市場浸透"
+                      stroke="#16a34a"
+                      strokeWidth={2}
+                      dot={{ r: 4, fill: '#16a34a' }}
+                      connectNulls
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+
+            {/* 段階ごとの値。グラフを出さない1件目でもここは読める */}
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[360px] text-xs">
+                <thead>
+                  <tr className="border-b text-[10px] text-muted-foreground">
+                    <th className="py-1 text-left font-normal">段階</th>
+                    {trend.map(t => (
+                      <th key={t.survey_id} className="py-1 text-right font-normal">
+                        {formatDate(t.date)}
+                        {t.date_is_fallback && (
+                          <span className="ml-1 text-muted-foreground/60">(取込日)</span>
+                        )}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b border-border/50 font-bold">
+                    <td className="py-1.5 pr-2">市場浸透</td>
+                    {trend.map(t => (
+                      <td
+                        key={t.survey_id}
+                        className="py-1.5 text-right tabular-nums text-green-600"
+                      >
+                        {t.market_score !== null ? t.market_score.toFixed(1) : '—'}
+                      </td>
+                    ))}
+                  </tr>
+                  {MARKET_STAGES.map((stage, i) => (
+                    <tr key={stage} className="border-b border-border/50">
+                      <td className="py-1.5 pr-2 text-muted-foreground">
+                        {i + 1}. {MARKET_STAGE_LABELS[stage]}
+                      </td>
+                      {trend.map(t => (
+                        <td
+                          key={t.survey_id}
+                          className="py-1.5 text-right tabular-nums text-muted-foreground"
+                        >
+                          {t.stages[stage] !== null ? t.stages[stage]!.toFixed(1) : '—'}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {surveys.length === 0 ? (
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
