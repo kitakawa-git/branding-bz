@@ -1314,11 +1314,14 @@ export default function SurveyDetailPage() {
                 <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
                   <CardContent className="p-5">
                     <h3 className="text-sm font-bold text-foreground mb-1">回答の内訳</h3>
-                    {/* 点数と3区分の対応は下の凡例が持つので、ここでは
-                        このカードが平均点と別に存在する理由だけを書く */}
-                    <p className="text-xs text-muted-foreground mb-4">
-                      平均点に隠れる「割れ方」を見るための分布です。
-                      中立は反対ではなく、判断材料が届いていない層。
+                    {/* 点数と3区分の対応は下の凡例が持つので、ここには読み方を書く。
+                        特に分母（人ではなく回答）は取り違えると解釈を誤る */}
+                    <p className="text-xs text-muted-foreground leading-relaxed mb-4">
+                      1本のバーが1つのグループ。バーの長さはどれも同じで、色の割合だけが変わります。
+                      青の切れ目を上下で見比べると、グループごとの差が分かります。
+                      数えているのは人数ではなく回答の数（人数×設問数）です。
+                      グレー（中立）が多いのは、反対しているのではなく、まだよく知らないということ。
+                      オレンジ（否定）が多い場合とは、やるべきことが変わります。
                     </p>
 
                     <div className="space-y-3">
