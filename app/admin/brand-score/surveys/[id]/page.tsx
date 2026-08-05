@@ -66,6 +66,8 @@ import {
   BarChart3,
   AlertCircle,
   Check,
+  Sparkles,
+  RefreshCw,
 } from 'lucide-react'
 import { Fab, FabButton } from '@/components/ui/fab'
 import {
@@ -99,7 +101,12 @@ type Survey = {
   response_rate: number
   responded_count: number
   created_at: string
+  insights: Partial<Record<InsightKey, string>> | null
+  insights_generated_at: string | null
 }
+
+// カード別のAI考察。キーは API 側と揃える
+type InsightKey = 'overview' | 'distribution' | 'stages' | 'funnel'
 
 type Question = {
   id: string
@@ -195,6 +202,71 @@ const AXIS_OPTIONS: { key: QuestionAxis; label: string }[] = [
   { key: 'stage', label: '浸透段階' },
   { key: 'category', label: '設問タイプ' },
 ]
+
+/** カード末尾に添えるAI考察 */
+function InsightNote({ text, loading }: { text?: string; loading: boolean }) {
+  if (!text && !loading) return null
+  return (
+    <div className="mt-4 flex items-start gap-2 rounded-md border border-dashed bg-background px-3 py-2.5">
+      <Sparkles className="mt-px size-3.5 shrink-0 text-ds-app-accent" />
+      {text ? (
+        <p className="m-0 text-[11px] leading-relaxed text-foreground">{text}</p>
+      ) : (
+        <p className="m-0 text-[11px] leading-relaxed text-muted-foreground">
+          AIが考察を作成しています…
+        </p>
+      )}
+    </div>
+  )
+}
+
+/**
+ * AI考察に渡す集計要約。画面に出ている数字だけを渡し、
+ * 生成側が新しい数値を作れないようにする
+ */
+function buildInsightSummary(data: InnerScoreData) {
+  const stageRow = (g: GroupFunnel) => ({
+    対象: g.department ? departmentLabel(g.department) : '全社',
+    回答者数: g.respondentCount,
+    段階スコア: Object.fromEntries(
+      g.stageScores.map(s => [STAGE_LABELS[s.stage], s.score])
+    ),
+    通過率: Object.fromEntries(
+      g.cumulative.map(p => [STAGE_LABELS[p.stage], p.rate])
+    ),
+  })
+
+  const dist = (d: { avg: number; score: number; positiveRate: number; neutralRate: number; negativeRate: number }) => ({
+    平均: d.avg,
+    スコア: d.score,
+    肯定率: d.positiveRate,
+    中立率: d.neutralRate,
+    否定率: d.negativeRate,
+  })
+
+  return {
+    総合スコア: data.scores.total,
+    ランク: data.rank,
+    回答数: data.response_count,
+    回答分布: data.breakdown && {
+      全社: dist(data.breakdown.overall),
+      部署別: data.breakdown.byDepartment.map(d => ({
+        部署: departmentLabel(d.department),
+        ...dist(d),
+      })),
+    },
+    浸透段階: data.funnel && {
+      通過の基準: `各段階の平均${data.funnel.pass_threshold}点以上`,
+      全社: stageRow(data.funnel.overall),
+      部署別: data.funnel.by_department.map(stageRow),
+    },
+    低スコアの設問: [...data.by_question]
+      .filter(q => q.avg_score !== null)
+      .sort((a, b) => (a.avg_score ?? 0) - (b.avg_score ?? 0))
+      .slice(0, 5)
+      .map(q => ({ 設問: q.question_text, 平均: q.avg_score, 回答数: q.count })),
+  }
+}
 
 // カテゴリ表示名
 const CATEGORY_LABELS: Record<string, string> = {
@@ -337,6 +409,8 @@ export default function SurveyDetailPage() {
   // タイトル編集
   const [editingTitle, setEditingTitle] = useState(false)
   const [savingTitle, setSavingTitle] = useState(false)
+  const [generatingInsights, setGeneratingInsights] = useState(false)
+  const insightsTriedRef = useRef(false)
   const [titleDraft, setTitleDraft] = useState('')
   const titleInputRef = useRef<HTMLInputElement>(null)
 
@@ -408,6 +482,44 @@ export default function SurveyDetailPage() {
       fetchInnerScore(survey.id, companyId)
     }
   }, [survey?.id, survey?.status, companyId, fetchInnerScore])
+
+  // ── AI考察 ──
+  // 生成結果はサーベイに保存されるので、2回目以降の表示では生成しない。
+  // 集計が変わったときは「考察を再生成」で作り直す
+  const generateInsights = useCallback(async () => {
+    if (!innerScore) return
+    setGeneratingInsights(true)
+    try {
+      const res = await fetch(`/api/brand-score/surveys/${surveyId}/insights`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ summary: buildInsightSummary(innerScore) }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => null)
+        throw new Error(data?.error || '考察の生成に失敗しました')
+      }
+      const data = await res.json()
+      setSurvey(prev =>
+        prev
+          ? { ...prev, insights: data.insights, insights_generated_at: data.insights_generated_at }
+          : prev
+      )
+    } catch (err) {
+      console.error('[SurveyDetail] AI考察生成エラー:', err)
+      toast.error(err instanceof Error ? err.message : '考察の生成に失敗しました')
+    } finally {
+      setGeneratingInsights(false)
+    }
+  }, [innerScore, surveyId])
+
+  // 未生成のときだけ自動で一度走らせる。失敗しても再試行はしない
+  useEffect(() => {
+    if (!survey || !innerScore || survey.insights) return
+    if (insightsTriedRef.current) return
+    insightsTriedRef.current = true
+    generateInsights()
+  }, [survey, innerScore, generateInsights])
 
   // ── タイトル編集 ──
   // 下書きに限らずどの状態でも直せる。取り込んだサーベイはファイル名が
@@ -958,6 +1070,21 @@ export default function SurveyDetailPage() {
 
           {/* アクションボタン */}
           <div className="flex items-center gap-2 shrink-0">
+            {innerScore && innerScore.response_count > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={generateInsights}
+                disabled={generatingInsights}
+              >
+                {generatingInsights ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <RefreshCw size={14} />
+                )}
+                AI考察を再生成
+              </Button>
+            )}
             {isDraft && (
               <>
                 <Button
@@ -1179,6 +1306,10 @@ export default function SurveyDetailPage() {
                         )
                       })}
                     </div>
+                    <InsightNote
+                      text={survey.insights?.overview}
+                      loading={generatingInsights}
+                    />
                   </CardContent>
                 </Card>
               </div>
@@ -1257,6 +1388,11 @@ export default function SurveyDetailPage() {
                         <span className="inline-block size-2.5 rounded-sm bg-orange-400" />否定（1〜2点）
                       </span>
                     </div>
+
+                    <InsightNote
+                      text={survey.insights?.distribution}
+                      loading={generatingInsights}
+                    />
                   </CardContent>
                 </Card>
               )}
@@ -1372,6 +1508,11 @@ export default function SurveyDetailPage() {
                         5段階で最大の{maxGap.gap.toFixed(1)}pt差です。
                       </p>
                     )}
+
+                    <InsightNote
+                      text={survey.insights?.stages}
+                      loading={generatingInsights}
+                    />
                   </CardContent>
                 </Card>
               )}
@@ -1454,6 +1595,11 @@ export default function SurveyDetailPage() {
                         </p>
                       )
                     })()}
+
+                    <InsightNote
+                      text={survey.insights?.funnel}
+                      loading={generatingInsights}
+                    />
                   </CardContent>
                 </Card>
               )}
