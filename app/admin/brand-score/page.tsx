@@ -5,6 +5,11 @@ import { useState, useEffect, useCallback } from 'react'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '../components/AdminDataProvider'
 import { ALL_IMPRESSION_TAGS as ALL_TAGS } from '@/lib/brand-score/impression-tags'
+import {
+  FUNNEL_STAGES,
+  STAGE_LABELS,
+  type FunnelStage,
+} from '@/lib/brand-score/funnel-stages'
 import { supabase } from '@/lib/supabase'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
 import Link from 'next/link'
@@ -78,6 +83,10 @@ interface InnerScoreData {
   rank: string
   by_department: { department: string; count: number; why: number | null; how: number | null; what: number | null; total: number | null }[]
   by_role: { role_category: string; count: number; why: number | null; how: number | null; what: number | null; total: number | null }[]
+  /** 浸透段階の集計。段階が解決できないサーベイでは null */
+  funnel: {
+    overall: { stageScores: { stage: FunnelStage; score: number | null }[] }
+  } | null
 }
 
 interface OuterScoreData {
@@ -451,6 +460,29 @@ export default function BrandScoreDashboard() {
   const hasMicroFb = totalFbCount > 0
   const hasTagMappings = tagMappings.some(m => m.is_expected)
 
+  // インナースコアの内訳。浸透の5段階を主とし、段階が解決できないサーベイ
+  // （設問数が対応表と合わない等）だけ WHY/HOW/WHAT に落とす。
+  // 最も低い段階は数字とバーをオレンジにする（サーベイ詳細と同じ方式）
+  const innerStageRows: { label: string; value: number | null; isWeakest: boolean }[] = (() => {
+    const stageScores = innerScore?.funnel?.overall.stageScores
+    if (stageScores && stageScores.length > 0) {
+      const rows = FUNNEL_STAGES.map((stage, i) => ({
+        label: `${i + 1}. ${STAGE_LABELS[stage]}`,
+        value: stageScores.find(s => s.stage === stage)?.score ?? null,
+      }))
+      const lowest = rows.reduce<number | null>(
+        (min, r) => (r.value !== null && (min === null || r.value < min) ? r.value : min),
+        null
+      )
+      return rows.map(r => ({ ...r, isWeakest: r.value !== null && r.value === lowest }))
+    }
+    return [
+      { label: '理念浸透（WHY）', value: innerScore?.scores.why ?? null, isWeakest: false },
+      { label: '方針共感（HOW）', value: innerScore?.scores.how ?? null, isWeakest: false },
+      { label: '行動体現（WHAT）', value: innerScore?.scores.what ?? null, isWeakest: false },
+    ]
+  })()
+
   // 総合ブランドスコア
   let totalBrandScore: number | null = null
   if (hasInner && hasOuter) {
@@ -761,22 +793,18 @@ export default function BrandScoreDashboard() {
                   </span>
                 </div>
 
-                {/* WHY / HOW / WHAT */}
-                {[
-                  { label: '理念浸透（WHY）', value: innerScore!.scores.why, weight: '35%' },
-                  { label: '方針共感（HOW）', value: innerScore!.scores.how, weight: '30%' },
-                  { label: '行動体現（WHAT）', value: innerScore!.scores.what, weight: '35%' },
-                ].map(item => (
+                {/* 浸透の5段階。段階が解決できないサーベイでは WHY/HOW/WHAT に落とす */}
+                {innerStageRows.map(item => (
                   <div key={item.label}>
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-xs text-muted-foreground">{item.label}</span>
-                      <span className={`text-sm font-bold ${getScoreColor(item.value)}`}>
+                      <span className={`text-sm font-bold ${item.isWeakest ? 'text-orange-600' : 'text-ds-app-accent'}`}>
                         {item.value !== null ? item.value.toFixed(1) : '-'}
                       </span>
                     </div>
                     <Progress
                       value={item.value ?? 0}
-                      className={`h-1.5 ${getScoreProgressColor(item.value)}`}
+                      className={`h-1.5 ${item.isWeakest ? '[&>div]:bg-orange-500' : '[&>div]:bg-ds-app-accent-soft'}`}
                     />
                   </div>
                 ))}
