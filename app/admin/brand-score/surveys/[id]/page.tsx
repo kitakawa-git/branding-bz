@@ -1075,7 +1075,7 @@ export default function SurveyDetailPage() {
                             <p className="m-0 text-xs text-muted-foreground">
                               {i + 1}. {STAGE_LABELS[stage]}
                             </p>
-                            <span className={`text-2xl font-bold ${isWeakest ? 'text-orange-600' : getScoreColor(s)}`}>
+                            <span className={`text-xl font-bold ${isWeakest ? 'text-orange-600' : getScoreColor(s)}`}>
                               {s !== null ? s.toFixed(1) : '-'}
                             </span>
                             <Progress
