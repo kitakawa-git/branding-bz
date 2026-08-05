@@ -39,10 +39,16 @@ function rival(value: number, name: string): MappedCell {
   assert.equal(recall.score, 67, '16.8% → 67点（そのままなら17点）')
   assert.ok(recall.score! > recall.rawPercent!, '物差しを当てた結果、生値より高くなる')
 
-  // 利用 70.6%（認知者ベース n=170）→ linear(20, 50) は振り切れる
+  // 利用 70.6%（認知者ベース n=170）→ linear(50, 85)
+  // 「導入経験あり・計」は構造的に高く出るので mid を50に置いている
   const usage = computeStageScore('usage', [mine(70.5882352941177, 170)])
-  assert.equal(usage.score, 100, '既定の物差しでは振り切れる（要調整のサイン）')
+  assert.equal(usage.score, 79, '70.6% → 79点（振り切れない）')
   assert.equal(usage.baseN, 170, 'ベースNは220ではなく170')
+
+  // 評価 78.0%（ロイヤリティあり・計）→ linear(60, 90)
+  assert.equal(computeStageScore('evaluation', [mine(78.021978021978, 182)]).score, 80)
+  // 推奨 65.4%（推奨意向あり・計）→ linear(50, 85)
+  assert.equal(computeStageScore('advocacy', [mine(65.3846153846154, 182)]).score, 72)
 }
 
 // ────────────────────────────────────────────

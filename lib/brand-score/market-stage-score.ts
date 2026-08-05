@@ -25,15 +25,30 @@ export type StageMethod =
   | { kind: 'share_of_top' }
 
 /**
- * 段階ごとの既定の物差し。
- * 初回の取り込み結果を見て調整する前提の初期値。
+ * 段階ごとの既定の物差し。実データ2年分（2025・2026）で較正した。
+ *
+ * 段階によって値の性質がまるで違うので、同じ物差しは使えない:
+ *   認知・利用・評価・推奨 … 「〜・計」の合算値。構造的に高く出る（65〜83%）
+ *   想起              … 純粋想起。1位でも2割に届かない（16.8%）
+ *
+ * 当初の初期値では評価・利用・推奨が軒並み100点に振り切れて差がつかなかった。
+ * mid は「その指標での合格ライン」、max は「業界トップ相当」に置いている。
+ *
+ * ⚠️ 変更すると前年比が壊れる。既存の調査は取り込み時に
+ *    market_surveys.stage_params へ凍結済みなので影響しないが、
+ *    ここを変えるのは新規取り込みの初期値を変えることになる。
  */
 export const DEFAULT_STAGE_METHOD: Record<MarketStage, StageMethod> = {
+  // 助成想起。この業界は上位10社が10〜86%に散る
   awareness: { kind: 'linear', mid: 50, max: 90 },
+  // 純粋想起。第1想起は1位でも2割前後にとどまる
   recall: { kind: 'linear', mid: 10, max: 30 },
-  evaluation: { kind: 'linear', mid: 35, max: 60 },
-  usage: { kind: 'linear', mid: 20, max: 50 },
-  advocacy: { kind: 'linear', mid: 25, max: 55 },
+  // 選定意向（ロイヤリティあり・計）。7段階の上位4つの合算で高く出る
+  evaluation: { kind: 'linear', mid: 60, max: 90 },
+  // 導入経験あり・計。認知者ベースなので高く出る
+  usage: { kind: 'linear', mid: 50, max: 85 },
+  // 推奨意向あり・計。7段階の上位3つの合算
+  advocacy: { kind: 'linear', mid: 50, max: 85 },
 }
 
 /** 市場浸透スコアを出すのに最低限必要な段階数。これを下回れば null */

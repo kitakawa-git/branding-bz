@@ -2,8 +2,10 @@
 
 // 市場調査の指標マッピング画面
 // ============================================================
-// 左に5段階のスロット、右に設問一覧。設問のセルをクリックして段階に割り当てる。
-// 自動判定はしない。設問構成は調査ごとに変わり、社名の表記ゆれもあるため。
+// 左に5段階のスロット、右に設問一覧。
+// まず「候補を自動で割り当てる」で機械的に当て、違うところだけ手で直す。
+// 自動割り当ては列ラベルの規約（〜・計）に乗せた決定論的な判定で、
+// 当たらなければ提案0件になるだけ。誤った候補を黙って確定はしない。
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { toast } from 'sonner'
@@ -21,6 +23,7 @@ import {
   ChevronRight,
   Check,
   Users,
+  Wand2,
 } from 'lucide-react'
 import {
   MARKET_STAGES,
@@ -97,6 +100,7 @@ export default function MarketSurveyMappingPage() {
   const [loading, setLoading] = useState(true)
   const [savingStage, setSavingStage] = useState<MarketStage | null>(null)
   const [activating, setActivating] = useState(false)
+  const [autoMapping, setAutoMapping] = useState(false)
 
   // 右ペインの状態
   const [query, setQuery] = useState('')
@@ -246,6 +250,47 @@ export default function MarketSurveyMappingPage() {
     )
   }
 
+  // 候補を機械的に当てる。41設問×数十セルを人が全部当てるのは現実的でないため。
+  // 当てた結果は左のスロットに出るので、違っていれば個別に割り当て直せる
+  const handleAutoMap = async () => {
+    setAutoMapping(true)
+    try {
+      const res = await fetch(
+        `/api/brand-score/market-surveys/${surveyId}/auto-map`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ apply: true }),
+        }
+      )
+      const data = await res.json()
+      if (!res.ok) {
+        toast.error(data.error || '自動割り当てに失敗しました')
+        return
+      }
+
+      const n = (data.applied ?? []).length
+      if (n === 0) {
+        toast.error(
+          'この調査からは候補を見つけられませんでした。手動で割り当ててください。'
+        )
+      } else {
+        const missing: MarketStage[] = data.missing ?? []
+        toast.success(
+          `${n}段階を自動で割り当てました` +
+            (missing.length > 0
+              ? `。${missing.map((m) => MARKET_STAGE_LABELS[m]).join('・')}は候補が見つかりませんでした`
+              : '')
+        )
+      }
+      await fetchAll()
+    } catch {
+      toast.error('自動割り当てに失敗しました')
+    } finally {
+      setAutoMapping(false)
+    }
+  }
+
   const clearStage = async (stage: MarketStage) => {
     await saveStage(stage, { cells: [] })
   }
@@ -312,10 +357,26 @@ export default function MarketSurveyMappingPage() {
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
             <CardContent className="p-5">
               <h2 className="mb-1 text-xs font-bold text-foreground">市場浸透の5段階</h2>
-              <p className="mb-4 text-[11px] leading-relaxed text-muted-foreground">
+              <p className="mb-3 text-[11px] leading-relaxed text-muted-foreground">
                 どの設問のどの値をどの段階に使うかを決めます。該当する設問が無い段階は
                 「この調査では未計測」にしてください。0点として扱われるのを防ぎます。
               </p>
+
+              {/* まず自動で当てて、違うところだけ直す運用を想定している */}
+              <Button
+                variant="outline"
+                size="sm"
+                className="mb-4 w-full"
+                onClick={handleAutoMap}
+                disabled={autoMapping || savingStage !== null}
+              >
+                {autoMapping ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <Wand2 size={14} />
+                )}
+                候補を自動で割り当てる
+              </Button>
 
               <div className="space-y-2">
                 {MARKET_STAGES.map((stage, i) => {
