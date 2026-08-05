@@ -1255,27 +1255,30 @@ export default function SurveyDetailPage() {
                                 </p>
                               </div>
 
-                              {/* 中央: バー + 部門の丸印 */}
-                              <div className="min-w-0 flex-1 pt-1">
-                                <div className="relative h-2.5 rounded-full bg-muted">
-                                  <div
-                                    className={`h-full rounded-full ${isWeakest ? 'bg-orange-500' : 'bg-ds-app-accent-soft'}`}
-                                    style={{ width: `${s ?? 0}%` }}
-                                  />
-                                  {boScore !== null && (
-                                    <span
-                                      className="absolute top-1/2 size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white bg-orange-500"
-                                      style={{ left: `${boScore}%` }}
-                                      title={`本社 ${boScore.toFixed(1)}`}
-                                    />
-                                  )}
-                                  {spScore !== null && (
-                                    <span
-                                      className="absolute top-1/2 size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white bg-green-500"
-                                      style={{ left: `${spScore}%` }}
-                                      title={`現場 ${spScore.toFixed(1)}`}
-                                    />
-                                  )}
+                              {/* 中央: 全社・本社・現場を3本のバーで並べる。
+                                  丸印で重ねるより、3者の差が長さで直接比べられる */}
+                              <div className="min-w-0 flex-1 pt-0.5">
+                                <div className="space-y-1">
+                                  {([
+                                    { key: '全社', value: s, color: isWeakest ? 'bg-orange-500' : 'bg-ds-app-accent-soft' },
+                                    { key: '本社', value: boScore, color: 'bg-orange-400' },
+                                    { key: '現場', value: spScore, color: 'bg-green-500' },
+                                  ] as const).map(bar => bar.value === null ? null : (
+                                    <div key={bar.key} className="flex items-center gap-2">
+                                      <span className="w-7 shrink-0 text-[10px] text-muted-foreground">
+                                        {bar.key}
+                                      </span>
+                                      <div className="h-2 min-w-0 flex-1 rounded-full bg-muted">
+                                        <div
+                                          className={`h-full rounded-full ${bar.color}`}
+                                          style={{ width: `${bar.value}%` }}
+                                        />
+                                      </div>
+                                      <span className="w-8 shrink-0 text-right text-[10px] tabular-nums text-muted-foreground">
+                                        {bar.value.toFixed(1)}
+                                      </span>
+                                    </div>
+                                  ))}
                                 </div>
                                 {/* この段階の最下位設問 */}
                                 {summary?.weakest && (
@@ -1289,14 +1292,11 @@ export default function SurveyDetailPage() {
                               </div>
 
                               {/* 右: スコアと部門値 */}
-                              {/* 「本社54.5 / 現場62.3」が1行に収まる幅を確保する */}
-                              <div className="w-[140px] shrink-0 text-right">
-                                <p className={`m-0 text-base font-bold ${isWeakest ? 'text-orange-600' : 'text-foreground'}`}>
-                                  {s !== null ? s.toFixed(1) : '-'}
-                                </p>
-                                {(boScore !== null || spScore !== null) && (
-                                  <p className={`m-0 whitespace-nowrap text-[10px] ${gap !== null && gap >= 10 ? 'text-orange-600 font-semibold' : 'text-muted-foreground'}`}>
-                                    本社{boScore?.toFixed(1) ?? '-'} / 現場{spScore?.toFixed(1) ?? '-'}
+                              {/* 各バーの横に数値が出るので、ここは差分だけを示す */}
+                              <div className="w-[84px] shrink-0 text-right">
+                                {gap !== null && (
+                                  <p className={`m-0 whitespace-nowrap text-[10px] ${gap >= 10 ? 'font-semibold text-orange-600' : 'text-muted-foreground'}`}>
+                                    差 {gap.toFixed(1)}pt
                                   </p>
                                 )}
                               </div>
@@ -1309,10 +1309,13 @@ export default function SurveyDetailPage() {
                     {/* 凡例 */}
                     <div className="mt-3 flex flex-wrap items-center gap-4 text-[10px] text-muted-foreground">
                       <span className="flex items-center gap-1">
-                        <span className="inline-block size-2.5 rounded-full bg-orange-500" />本社（BO）
+                        <span className="inline-block h-2 w-4 rounded-full bg-ds-app-accent-soft" />全社
                       </span>
                       <span className="flex items-center gap-1">
-                        <span className="inline-block size-2.5 rounded-full bg-green-500" />現場（SP）
+                        <span className="inline-block h-2 w-4 rounded-full bg-orange-400" />本社（BO）
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <span className="inline-block h-2 w-4 rounded-full bg-green-500" />現場（SP）
                       </span>
                     </div>
 
