@@ -566,7 +566,9 @@ export default function MarketSurveyDetailPage() {
                           {bars.map((bar) =>
                             bar.value === null ? null : (
                               <div key={bar.key} className="flex items-center gap-2">
-                                <span className="w-16 shrink-0 text-[10px] text-muted-foreground">
+                                {/* 幅が足りないと「競合トッ／プ」と折り返す。
+                                    行ごとにバーの開始位置がずれるので固定幅＋折り返し禁止 */}
+                                <span className="w-[72px] shrink-0 whitespace-nowrap text-[10px] text-muted-foreground">
                                   {bar.key}
                                 </span>
                                 <div className="h-2 min-w-0 flex-1 rounded-full bg-muted">
