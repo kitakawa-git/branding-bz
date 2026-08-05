@@ -412,7 +412,16 @@ export default function MarketSurveyDetailPage() {
                 const isWeakest =
                   s?.status === 'scored' && lowest !== null && s.score === lowest
                 return (
-                  <div key={stage} className="rounded-lg px-2 py-1.5 text-center">
+                  <div key={stage} className="relative rounded-lg px-2 py-1.5 text-center">
+                    {/* 反転点の境界。ここから先は実際に選ぶ側になる。
+                        grid の gap-2（8px）の中央に置くためタイル左端から4px外へ出す。
+                        意味の説明は段階別の詳細が担うので、ここは線だけ（サーベイ詳細と同じ） */}
+                    {stage === MARKET_PIVOT_STAGE && (
+                      <span
+                        aria-hidden
+                        className="absolute inset-y-0 -left-1 border-l border-border"
+                      />
+                    )}
                     <p className="m-0 text-xs text-muted-foreground">
                       {i + 1}. {MARKET_STAGE_LABELS[stage]}
                     </p>
