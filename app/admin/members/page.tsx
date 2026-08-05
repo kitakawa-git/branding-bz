@@ -464,7 +464,7 @@ export default function MembersPage() {
       <div>
         <Skeleton className="h-8 w-40 mb-6" />
         {/* 作成フォームスケルトン */}
-        <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-6">
+        <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-4">
           <CardContent className="p-5 space-y-4">
             <Skeleton className="h-4 w-32" />
             <Skeleton className="h-10 w-full rounded-md" />
@@ -546,7 +546,7 @@ export default function MembersPage() {
       </Dialog>
 
       {/* ===== 招待リンク ===== */}
-      <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-6">
+      <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-4">
         <CardContent className="p-0">
           <button
             onClick={() => setShowInviteLinks(!showInviteLinks)}
@@ -616,7 +616,7 @@ export default function MembersPage() {
       </Card>
 
       {/* ===== 孤立アカウントクリーンアップ ===== */}
-      <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-6">
+      <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-4">
         <CardContent className="p-0">
           <button
             onClick={() => setShowCleanup(!showCleanup)}
@@ -685,7 +685,7 @@ export default function MembersPage() {
 
       {/* ===== 参加リクエスト ===== */}
       {joinRequests.length > 0 && (
-        <Card className="border-amber-200 bg-amber-50/50 shadow-none mb-6">
+        <Card className="border-amber-200 bg-amber-50/50 shadow-none mb-4">
           <CardContent className="p-5">
             <div className="flex items-center gap-2 mb-3">
               <UserPlus size={16} className="text-amber-600" />

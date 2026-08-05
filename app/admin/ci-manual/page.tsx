@@ -146,7 +146,7 @@ export default function CIManualPage() {
       </Fab>
 
       {/* セクション選択 */}
-      <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-6">
+      <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-4">
         <CardContent className="p-6">
           <h2 className="text-base font-bold text-foreground mb-4">出力セクション</h2>
           <div className="space-y-3">

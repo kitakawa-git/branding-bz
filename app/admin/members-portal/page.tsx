@@ -136,7 +136,7 @@ export default function MembersPortalPage() {
   if (loading) {
     return (
       <div>
-        <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-6">
+        <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-4">
           <CardContent className="p-5 space-y-3">
             <Skeleton className="h-4 w-24" />
             <Skeleton className="h-3 w-64" />
@@ -169,7 +169,7 @@ export default function MembersPortalPage() {
   return (
     <div>
       {/* 招待リンク */}
-      <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-6">
+      <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-4">
         <CardContent className="p-5">
           <h3 className="text-sm font-bold text-foreground mb-2">招待リンク</h3>
           <p className="text-xs text-muted-foreground mb-3 m-0">
@@ -223,7 +223,7 @@ export default function MembersPortalPage() {
       </Card>
 
       {/* アカウント手動作成 */}
-      <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-6">
+      <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-4">
         <CardContent className="p-5">
           <h3 className="text-sm font-bold text-foreground mb-2">アカウント手動作成</h3>
           <p className="text-xs text-muted-foreground mb-4 m-0">名刺プロフィールも同時に作成されます</p>

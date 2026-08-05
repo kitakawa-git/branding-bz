@@ -760,7 +760,7 @@ export default function SurveyDetailPage() {
           <Skeleton className="h-8 w-64" />
           <Skeleton className="h-5 w-16" />
         </div>
-        <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-6">
+        <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-4">
           <CardContent className="p-5">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[1, 2, 3, 4].map(i => (
@@ -1017,7 +1017,7 @@ export default function SurveyDetailPage() {
             <div className="space-y-4">              {/* 4-2. スコアカード列（総合 + 5段階） */}
               {/* 評価軸は5段階に統一。WHY/HOW/WHAT は構成要素の内訳として設問別セクションに残す */}
               {/* 総合は独立カード、5段階は1枚にまとめる（段階は一連の流れなのでカードで分断しない） */}
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(150px,1fr)_3fr]">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(150px,1fr)_3fr]">
                 <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
                   <CardContent className="p-4 text-center">
                     <p className="text-xs text-muted-foreground mb-1">総合</p>
