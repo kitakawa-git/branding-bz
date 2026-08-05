@@ -16,15 +16,18 @@ const breadcrumbMap: Record<string, AdminCrumb> = {
   '/admin/brand-score': { section: 'ダッシュボード', title: 'ブランドスコア' },
   '/admin/analytics': { section: 'ダッシュボード', title: 'スマート名刺' },
   '/admin/analytics/learning': { section: 'ダッシュボード', title: '視聴分析' },
-  '/admin/brand-score/surveys': { title: 'サーベイ管理' },
-  '/admin/brand-score/quizzes': { title: '理解度テスト' },
+  // 浸透セクション（サイドバーのグループ名に合わせる）
+  // 詳細ページ（/surveys/[id] 等）はプレフィックス一致でこのcrumbを継承する
+  '/admin/brand-score/surveys': { section: '浸透', title: 'サーベイ管理' },
+  '/admin/brand-score/quizzes': { section: '浸透', title: '理解度テスト' },
+  '/admin/learning': { section: '浸透', title: 'ラーニング' },
+  // サイドバーでグループに属さない項目はセクションなし
   '/admin/company': { title: '基本情報' },
   '/admin/members': { title: 'アカウント管理' },
   '/admin/members-portal': { title: 'アカウント作成' },
   '/admin/card-template': { title: 'スマート名刺' },
   '/admin/kpi': { title: '目標・KPI管理' },
   '/admin/announcements': { title: 'お知らせ管理' },
-  '/admin/learning': { title: 'ラーニング' },
   '/admin/settings': { title: '設定' },
   // ブランド基盤セクション
   '/admin/brand/guidelines': { section: 'ブランド基盤', title: 'ブランド方針' },
