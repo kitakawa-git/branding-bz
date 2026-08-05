@@ -292,8 +292,10 @@ export function calcBreakdown(answers: LensAnswer[], questions: LensQuestion[]):
   return {
     overall: distribute(answers.map((a) => a.score)),
 
+    // 回答数の多い部署から並べる。母数の大きい側を先に見せたいのと、
+    // 名前の五十音順だと部署名を変えるだけで並びが変わってしまうため
     byDepartment: [...byDeptMap.entries()]
-      .sort((a, b) => a[0].localeCompare(b[0]))
+      .sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]))
       .map(([department, scores]) => ({ department, ...distribute(scores) })),
 
     byLens: LENS_ORDER.filter((l) => byLensMap.has(l)).map((lens) => ({

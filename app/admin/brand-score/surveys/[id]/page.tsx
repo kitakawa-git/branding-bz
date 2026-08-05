@@ -1255,16 +1255,17 @@ export default function SurveyDetailPage() {
                                 </p>
                               </div>
 
-                              {/* 中央: 全社・本社・現場を3本のバーで並べる。
-                                  丸印で重ねるより、3者の差が長さで直接比べられる */}
+                              {/* 中央: 全社・SP・BO を3本のバーで並べる。
+                                  丸印で重ねるより、3者の差が長さで直接比べられる。
+                                  SP（現場）が母数の多い側なので BO より先に置く */}
                               <div className="min-w-0 flex-1 pt-0.5">
                                 <div className="space-y-1">
-                                  {/* 棒の色は系列（全社/本社/現場）を表す。
+                                  {/* 棒の色は系列（全社/SP/BO）を表す。
                                       最弱段階は数字だけをオレンジにし、棒は青のままにする */}
                                   {([
                                     { key: '全社', value: s, color: 'bg-ds-app-accent-soft', highlight: isWeakest },
-                                    { key: '本社', value: boScore, color: 'bg-orange-400', highlight: false },
-                                    { key: '現場', value: spScore, color: 'bg-green-500', highlight: false },
+                                    { key: 'SP', value: spScore, color: 'bg-green-500', highlight: false },
+                                    { key: 'BO', value: boScore, color: 'bg-orange-400', highlight: false },
                                   ] as const).map(bar => bar.value === null ? null : (
                                     <div key={bar.key} className="flex items-center gap-2">
                                       <span className="w-7 shrink-0 text-[10px] text-muted-foreground">
@@ -1314,16 +1315,16 @@ export default function SurveyDetailPage() {
                         <span className="inline-block h-2 w-4 rounded-full bg-ds-app-accent-soft" />全社
                       </span>
                       <span className="flex items-center gap-1">
-                        <span className="inline-block h-2 w-4 rounded-full bg-orange-400" />本社（BO）
+                        <span className="inline-block h-2 w-4 rounded-full bg-green-500" />SP
                       </span>
                       <span className="flex items-center gap-1">
-                        <span className="inline-block h-2 w-4 rounded-full bg-green-500" />現場（SP）
+                        <span className="inline-block h-2 w-4 rounded-full bg-orange-400" />BO（本社含む）
                       </span>
                     </div>
 
                     {maxGap && (
                       <p className="m-0 mt-2 text-[10px] leading-relaxed text-muted-foreground">
-                        {STAGE_LABELS[maxGap.stage]}の本社{maxGap.bo.toFixed(1)}／現場{maxGap.sp.toFixed(1)}が、
+                        {STAGE_LABELS[maxGap.stage]}のSP{maxGap.sp.toFixed(1)}／BO{maxGap.bo.toFixed(1)}が、
                         5段階で最大の{maxGap.gap.toFixed(1)}pt差です。
                       </p>
                     )}
@@ -1386,11 +1387,11 @@ export default function SurveyDetailPage() {
 
                               {/* 案Bの右カラムと幅を揃える */}
                               <div className="w-[140px] shrink-0 text-right">
-                                <p className="m-0 whitespace-nowrap text-[10px] text-orange-600">
-                                  本社 {bo !== null ? `${bo.toFixed(1)}%` : '-'}
-                                </p>
                                 <p className="m-0 whitespace-nowrap text-[10px] text-green-600">
-                                  現場 {sp !== null ? `${sp.toFixed(1)}%` : '-'}
+                                  SP {sp !== null ? `${sp.toFixed(1)}%` : '-'}
+                                </p>
+                                <p className="m-0 whitespace-nowrap text-[10px] text-orange-600">
+                                  BO {bo !== null ? `${bo.toFixed(1)}%` : '-'}
                                 </p>
                               </div>
                             </div>
@@ -1407,7 +1408,7 @@ export default function SurveyDetailPage() {
                       return (
                         <p className="m-0 mt-3 text-[10px] leading-relaxed text-muted-foreground">
                           5段階すべてを通過しているのは全社{last.rate.toFixed(1)}%
-                          {boLast !== null && `、本社では${boLast.toFixed(1)}%`}。
+                          {boLast !== null && `、BOでは${boLast.toFixed(1)}%`}。
                           最大の脱落は入口の{STAGE_LABELS[FUNNEL_STAGES[0]]}で、
                           全社の{(100 - first.rate).toFixed(1)}%が最初の関門で落ちています。
                         </p>
