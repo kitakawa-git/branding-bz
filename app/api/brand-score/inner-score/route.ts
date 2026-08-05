@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { fetchAllRows } from '@/lib/brand-score/fetch-all-rows'
+import {
+  resolveStage,
+  calcGroupFunnels,
+  PASS_THRESHOLD,
+  type FunnelStage,
+  type RespondentAnswer,
+} from '@/lib/brand-score/funnel-stages'
 
 // インナースコア算出API
 // GET /api/brand-score/inner-score?company_id=xxx&survey_id=yyy
@@ -103,10 +110,11 @@ export async function GET(request: NextRequest) {
 
     // 2. 全回答を取得（1000行上限があるためページングして全件取る）
     const { data: responses, error: rErr } = await fetchAllRows<{
-      question_id: string; score: number; department: string | null; role_category: string | null
+      question_id: string; score: number; department: string | null
+      role_category: string | null; submitted_at: string; respondent_id: string | null
     }>(() => supabase
       .from('brand_survey_responses')
-      .select('question_id, score, department, role_category')
+      .select('question_id, score, department, role_category, submitted_at, respondent_id')
       .eq('survey_id', survey.id)
       .order('id')
     )
@@ -118,7 +126,7 @@ export async function GET(request: NextRequest) {
     // 3. 全設問を取得（is_active = true）
     const { data: questions, error: qErr } = await supabase
       .from('brand_survey_questions')
-      .select('id, question_text, category, sort_order')
+      .select('id, question_text, category, sort_order, reference_data')
       .eq('survey_id', survey.id)
       .eq('is_active', true)
       .order('sort_order', { ascending: true })
@@ -278,7 +286,41 @@ export async function GET(request: NextRequest) {
       }
     })
 
+    // 10. 浸透段階の集計（段階スコア・段階×部門・個人単位の累積通過率）
+    // 段階が解決できない設問構成のサーベイでは null を返し、画面側で非表示にする。
+    const totalQuestionCount = (questions || []).length
+    const stageByQuestionId = new Map<string, FunnelStage>()
+    for (const q of questions || []) {
+      const stage = resolveStage(
+        q.sort_order as number,
+        totalQuestionCount,
+        q.reference_data as Record<string, unknown> | null
+      )
+      if (stage) stageByQuestionId.set(q.id as string, stage)
+    }
+
+    let funnel: ReturnType<typeof calcGroupFunnels> | null = null
+    if (stageByQuestionId.size > 0) {
+      // 回答者の識別キー。respondent_id を正とし、未採番の行だけ submitted_at に退避する。
+      // ※ 一部の既存サーベイは全回答行の submitted_at が同一で、回答者を区別する
+      //    情報がそもそも存在しない。その場合は人数が1人に潰れる（元データの制約）。
+      const answers: RespondentAnswer[] = responses.map((r) => ({
+        respondentKey: r.respondent_id ?? r.submitted_at,
+        questionId: r.question_id,
+        score: r.score,
+        department: r.department,
+      }))
+      funnel = calcGroupFunnels(answers, stageByQuestionId)
+    }
+
     return NextResponse.json({
+      funnel: funnel
+        ? {
+            pass_threshold: PASS_THRESHOLD,
+            overall: funnel.overall,
+            by_department: funnel.byDepartment,
+          }
+        : null,
       survey: {
         id: survey.id,
         title: survey.title,

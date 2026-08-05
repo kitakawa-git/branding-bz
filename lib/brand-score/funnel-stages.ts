@@ -37,6 +37,19 @@ export const ALL_STAGES: readonly FunnelStage[] = [...FUNNEL_STAGES, 'environmen
 
 /** 反転点。この段階以降は「渡す側」になる */
 export const PIVOT_STAGE: FunnelStage = 'behavior'
+/** 指示書での呼称。PIVOT_STAGE と同義 */
+export const INFLECTION_STAGE = PIVOT_STAGE
+
+/** 環境・成果指標の設問（32問構成の sort_order）。5段階には含めない */
+export const ENV_ORDERS: readonly number[] = [5, 7, 10, 17, 19, 26, 28, 29, 30]
+
+/**
+ * 「通過」とみなす5段階平均の閾値。
+ * 3.0 が「どちらとも言えない」、4.0 が「そう思う」なので、
+ * 3.5 は中立をはっきり上回る線。
+ * ⚠ 一度決めたら変更しないこと（変えると前年比が無意味になる）。
+ */
+export const PASS_THRESHOLD = 3.5
 
 export const STAGE_LABELS: Record<FunnelStage, string> = {
   awareness: '認知',
@@ -158,15 +171,20 @@ export const PATTERN_MEANINGS: Record<FunnelPattern, string> = {
     '前段階から順に緩やかに減衰する健全な形。最も減衰の大きい1区間だけを選んで対処する。',
 }
 
-/** パターン判定の閾値（pt） */
+/** パターン判定の閾値（pt）。全パターン共通 */
 const PATTERN_THRESHOLD = 5
-const INWARD_THRESHOLD = 10
 
-/** 上流の異常から順に判定する */
+/**
+ * 上流の異常から順に判定する。
+ *
+ * 内向き型は「行動 − 推奨」で見る。指示書には「推奨 − 行動」とあったが、
+ * 内向き型の定義が「実践はしているが外や次の世代に渡せていない」である以上、
+ * 行動が推奨を上回る向きでなければ意味が通らないため、この向きを採る。
+ */
 function detectPattern(scores: Record<FunnelStage, number>): FunnelPattern {
   if (scores.empathy - scores.understanding >= PATTERN_THRESHOLD) return 'empathy_first'
   if (scores.behavior - scores.empathy >= PATTERN_THRESHOLD) return 'behavior_first'
-  if (scores.behavior - scores.advocacy >= INWARD_THRESHOLD) return 'inward'
+  if (scores.behavior - scores.advocacy >= PATTERN_THRESHOLD) return 'inward'
   return 'monotonic_decay'
 }
 
@@ -361,5 +379,143 @@ export function calcFunnel(questions: FunnelInputQuestion[]): FunnelResult | nul
     weakestStage,
     matrix,
     unstagedCount,
+  }
+}
+
+// ────────────────────────────────────────────
+// 段階×グループのスコアと、個人単位の通過率
+// ────────────────────────────────────────────
+
+/** 1回答（1人×1設問）。集計の最小単位 */
+export interface RespondentAnswer {
+  /**
+   * 回答者の識別キー。
+   * ⚠ respondent_id が未採番のデータでは submitted_at を暫定キーとして使う。
+   *    取り込み時に1回答者=1タイムスタンプで揃えているため現状は一意だが、
+   *    これは副産物であって保証ではない（同一秒に2人提出すると1人に統合される）。
+   */
+  respondentKey: string
+  questionId: string
+  /** 1〜5 */
+  score: number
+  department: string | null
+}
+
+export interface StageScore {
+  stage: FunnelStage
+  /** 0〜100。該当回答が無ければ null */
+  score: number | null
+  questionCount: number
+  responseCount: number
+}
+
+export interface PassRate {
+  stage: FunnelStage
+  count: number
+  /** % */
+  rate: number
+}
+
+export interface GroupFunnel {
+  /** null は全社 */
+  department: string | null
+  respondentCount: number
+  stageScores: StageScore[]
+  /** 上流をすべて通過した人の割合（必ず単調減少） */
+  cumulative: PassRate[]
+  /** その段階だけを見たときの通過率 */
+  standalone: PassRate[]
+}
+
+/** 段階スコア（回答数で重み付けした平均を正規化） */
+function stageScoreOf(rows: { score: number }[], questionIds: Set<string>): number | null {
+  if (rows.length === 0) return null
+  const avg = rows.reduce((a, r) => a + r.score, 0) / rows.length
+  return round1(normalize(avg))
+}
+
+/**
+ * 段階×グループのスコアと、個人単位の累積通過率をまとめて算出する。
+ *
+ * 通過の定義: その段階に属する設問の平均が PASS_THRESHOLD 以上。
+ * 累積通過: 認知から当該段階まで、すべての段階を通過している人だけを数える。
+ * そのため必ず単調減少する。
+ */
+export function calcGroupFunnels(
+  answers: RespondentAnswer[],
+  stageByQuestionId: Map<string, FunnelStage>
+): { overall: GroupFunnel; byDepartment: GroupFunnel[] } {
+  // 段階ごとの設問IDを集める
+  const questionIdsByStage = new Map<FunnelStage, Set<string>>()
+  for (const [qid, stage] of stageByQuestionId) {
+    if (!questionIdsByStage.has(stage)) questionIdsByStage.set(stage, new Set())
+    questionIdsByStage.get(stage)!.add(qid)
+  }
+
+  /** 指定グループ（department が null なら全社）で集計する */
+  const build = (department: string | null): GroupFunnel => {
+    const rows = department === null
+      ? answers
+      : answers.filter((a) => a.department === department)
+
+    // 段階スコア（回答をそのまま平均＝回答数で重み付けした平均と同値）
+    const stageScores: StageScore[] = ALL_STAGES.map((stage) => {
+      const ids = questionIdsByStage.get(stage) ?? new Set<string>()
+      const inStage = rows.filter((r) => ids.has(r.questionId))
+      return {
+        stage,
+        score: stageScoreOf(inStage, ids),
+        questionCount: new Set(inStage.map((r) => r.questionId)).size,
+        responseCount: inStage.length,
+      }
+    })
+
+    // 個人ごとの段階別平均 → 通過判定
+    const byRespondent = new Map<string, Map<FunnelStage, { sum: number; count: number }>>()
+    for (const a of rows) {
+      const stage = stageByQuestionId.get(a.questionId)
+      if (!stage) continue
+      if (!byRespondent.has(a.respondentKey)) byRespondent.set(a.respondentKey, new Map())
+      const m = byRespondent.get(a.respondentKey)!
+      const cur = m.get(stage) ?? { sum: 0, count: 0 }
+      cur.sum += a.score
+      cur.count += 1
+      m.set(stage, cur)
+    }
+
+    const respondentCount = byRespondent.size
+    const passedStages: Set<FunnelStage>[] = []
+    for (const m of byRespondent.values()) {
+      const passed = new Set<FunnelStage>()
+      for (const stage of FUNNEL_STAGES) {
+        const e = m.get(stage)
+        if (e && e.count > 0 && e.sum / e.count >= PASS_THRESHOLD) passed.add(stage)
+      }
+      passedStages.push(passed)
+    }
+
+    const pct = (n: number) =>
+      respondentCount > 0 ? Math.round((n / respondentCount) * 1000) / 10 : 0
+
+    const standalone: PassRate[] = FUNNEL_STAGES.map((stage) => {
+      const count = passedStages.filter((p) => p.has(stage)).length
+      return { stage, count, rate: pct(count) }
+    })
+
+    const cumulative: PassRate[] = FUNNEL_STAGES.map((stage, i) => {
+      const upTo = FUNNEL_STAGES.slice(0, i + 1)
+      const count = passedStages.filter((p) => upTo.every((s) => p.has(s))).length
+      return { stage, count, rate: pct(count) }
+    })
+
+    return { department, respondentCount, stageScores, cumulative, standalone }
+  }
+
+  const departments = [...new Set(answers.map((a) => a.department).filter((d): d is string => !!d))]
+  departments.sort()
+
+  return {
+    overall: build(null),
+    byDepartment: departments.map((d) => build(d)),
   }
 }
