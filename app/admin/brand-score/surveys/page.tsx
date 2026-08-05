@@ -21,8 +21,9 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
-import { Plus, ClipboardList, CalendarDays, Trash2, Loader2 } from 'lucide-react'
+import { Plus, ClipboardList, CalendarDays, Trash2, Loader2, Upload } from 'lucide-react'
 import { Fab, FabButton } from '@/components/ui/fab'
+import { SurveyImportDialog } from './SurveyImportDialog'
 
 type Survey = {
   id: string
@@ -39,6 +40,8 @@ type Survey = {
 
 type SurveyWithQuestionCount = Survey & {
   question_count?: number
+  /** 'internal'（社内配信）か 'imported'（外部調査の取り込み） */
+  source?: string
 }
 
 type ListCache = {
@@ -64,6 +67,7 @@ export default function SurveysListPage() {
   const [draftDialogOpen, setDraftDialogOpen] = useState(false)
   const [deleteDialogId, setDeleteDialogId] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [importOpen, setImportOpen] = useState(false)
 
   // サーベイ一覧取得
   const fetchSurveys = async () => {
@@ -219,6 +223,14 @@ export default function SurveysListPage() {
       {/* 新規サーベイ作成 FAB（右下固定・include-bz の FabButton と同装飾） */}
       <Fab>
         <FabButton
+          variant="secondary"
+          onClick={() => setImportOpen(true)}
+          disabled={creating}
+          icon={<Upload size={16} />}
+        >
+          回答を取り込む
+        </FabButton>
+        <FabButton
           onClick={handleCreateClick}
           disabled={creating}
           icon={creating ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
@@ -226,6 +238,9 @@ export default function SurveysListPage() {
           {creating ? '作成中...' : '新規サーベイ作成'}
         </FabButton>
       </Fab>
+
+      {/* Googleフォーム回答の取り込みダイアログ */}
+      <SurveyImportDialog open={importOpen} onOpenChange={setImportOpen} />
 
       {/* draft存在時の確認ダイアログ */}
       <AlertDialog open={draftDialogOpen} onOpenChange={setDraftDialogOpen}>
@@ -302,11 +317,13 @@ export default function SurveysListPage() {
                     >
                       {statusConfig.label}
                     </Badge>
-                    {survey.status === 'draft' && (
+                    {/* 下書きのほか、取り込みぶんは外部ファイルの写しなので消して入れ直せる */}
+                    {(survey.status === 'draft' || survey.source === 'imported') && (
                       <Button
                         variant="outline"
                         size="icon"
                         className="h-8 w-8 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+                        aria-label={`${survey.title} を削除`}
                         onClick={(e) => {
                           e.stopPropagation()
                           setDeleteDialogId(survey.id)

@@ -22,6 +22,12 @@ export const FEATURE_TOGGLES = [
     description:
       'オフにすると、公開名刺ページ（/card/[slug]）が「非公開」表示になり、ポータルの名刺プレビュー・管理画面のQRコード出力/アクセス解析も非表示になります。名刺URL（slug）やプロフィールは削除されず、再オンで一斉に復活します。',
   },
+  {
+    key: 'learning_enabled', // companies のカラム名（boolean NOT NULL DEFAULT true）
+    label: 'ラーニング',
+    description:
+      'オフにすると、ポータルと管理画面の両方からラーニング関連の表示が非表示になります。登録済みの動画・カテゴリー・視聴履歴は削除されず、再オンで復活します。',
+  },
   // 将来追加例:
   // { key: 'survey_enabled', label: 'ブランドサーベイ', description: '...' },
 ] as const

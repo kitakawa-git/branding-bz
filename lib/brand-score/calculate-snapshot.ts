@@ -2,6 +2,7 @@
 // inner-score API / outer-score API のロジックを抽出・統合
 // Cron Job / 手動API の両方から呼ばれる
 import { SupabaseClient } from '@supabase/supabase-js'
+import { fetchAllRows } from './fetch-all-rows'
 
 // ────────────────────────────────────────────
 // 型定義
@@ -121,7 +122,7 @@ async function calculateInnerScore(
   // 1. 対象サーベイを特定（closed優先 → active）
   const { data: closedData } = await supabase
     .from('brand_surveys')
-    .select('id, title, status, total_members')
+    .select('id, title, status, total_members, respondent_count')
     .eq('company_id', companyId)
     .eq('status', 'closed')
     .order('created_at', { ascending: false })
@@ -132,7 +133,7 @@ async function calculateInnerScore(
   if (!survey) {
     const { data: activeData } = await supabase
       .from('brand_surveys')
-      .select('id, title, status, total_members')
+      .select('id, title, status, total_members, respondent_count')
       .eq('company_id', companyId)
       .eq('status', 'active')
       .order('created_at', { ascending: false })
@@ -143,11 +144,14 @@ async function calculateInnerScore(
 
   if (!survey) return empty
 
-  // 2. 全回答を取得
-  const { data: responses, error: rErr } = await supabase
-    .from('brand_survey_responses')
-    .select('question_id, score')
-    .eq('survey_id', survey.id)
+  // 2. 全回答を取得（1000行上限があるためページングして全件取る）
+  const { data: responses, error: rErr } = await fetchAllRows<{ question_id: string; score: number }>(
+    () => supabase
+      .from('brand_survey_responses')
+      .select('question_id, score')
+      .eq('survey_id', survey.id)
+      .order('id')
+  )
 
   if (rErr || !responses || responses.length === 0) return { ...empty, survey_id: survey.id }
 
@@ -161,12 +165,14 @@ async function calculateInnerScore(
   if (!questions || questions.length === 0) return { ...empty, survey_id: survey.id }
 
   // 4. 回答率算出
+  // 外部調査の取り込み（source='imported'）は survey_participants を持たないため、
+  // 取り込み時に記録した respondent_count を分子として使う。
   const { data: participants } = await supabase
     .from('survey_participants')
     .select('id, responded_at')
     .eq('survey_id', survey.id)
 
-  const respondedCount = (participants || []).filter(p => p.responded_at !== null).length
+  const respondedCount = survey.respondent_count ?? (participants || []).filter(p => p.responded_at !== null).length
   const totalMembers = survey.total_members || (participants || []).length
   const responseRate = totalMembers > 0
     ? Math.round((respondedCount / totalMembers) * 1000) / 10

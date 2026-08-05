@@ -1,6 +1,7 @@
 'use client'
 
 // タイムライン ダッシュボード（管理画面）
+import { visibleDashboardTabs } from '@/lib/constants/dashboard-tabs'
 import { useEffect, useState, useMemo } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
@@ -8,7 +9,6 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis, PieChart, Pie, Cell } from 
 import { supabase } from '@/lib/supabase'
 import { fetchPhilosophy } from '@/lib/brand/philosophy'
 import { useAuth } from '../components/AdminDataProvider'
-import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
@@ -174,23 +174,13 @@ function resolveProfile(member: MemberRow): { name: string; photoUrl: string | n
 // Component
 // ============================================
 
-const dashboardTabs = [
-  { label: 'スコア', href: '/admin/brand-score' },
-  { label: 'タイムライン分析', href: '/admin/dashboard' },
-  { label: 'スマート名刺', href: '/admin/analytics' },
-  { label: '視聴分析', href: '/admin/analytics/learning' },
-]
 
 export default function DashboardPage() {
   const { companyId, company } = useAuth()
   const pathname = usePathname()
 
-  // 機能トグル: スマート名刺が無効なら「スマート名刺」タブ（→ /admin/analytics）を非表示にする
-  // ※「タイムライン分析」(→ /admin/dashboard) は brand-score 側のタブと揃えて常時表示する
-  const cardEnabled = isFeatureEnabled(company, 'card_enabled')
-  const visibleTabs = dashboardTabs.filter(
-    (tab) => tab.href !== '/admin/analytics' || cardEnabled
-  )
+  // 機能トグルを踏まえたタブ（定義は lib/constants/dashboard-tabs.ts に集約）
+  const visibleTabs = visibleDashboardTabs(company)
 
   const cacheKey = `dashboard-v2-${companyId}`
   const cached = companyId ? getPageCache<DashboardCache>(cacheKey) : null

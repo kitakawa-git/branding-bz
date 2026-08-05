@@ -52,13 +52,18 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const surveysWithRate = surveys.map(s => ({
-      ...s,
-      response_rate: s.total_members > 0
-        ? Math.round((respondedCountMap.get(s.id) || 0) / s.total_members * 100)
-        : 0,
-      responded_count: respondedCountMap.get(s.id) || 0,
-    }))
+    // 外部調査の取り込み（source='imported'）は survey_participants を持たないため、
+    // 取り込み時に記録した respondent_count を分子として使う。
+    const surveysWithRate = surveys.map(s => {
+      const respondedCount = s.respondent_count ?? (respondedCountMap.get(s.id) || 0)
+      return {
+        ...s,
+        response_rate: s.total_members > 0
+          ? Math.round(respondedCount / s.total_members * 100)
+          : 0,
+        responded_count: respondedCount,
+      }
+    })
 
     return NextResponse.json({ surveys: surveysWithRate })
   } catch (err) {

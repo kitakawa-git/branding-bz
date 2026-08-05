@@ -373,9 +373,10 @@ export default function SurveyRespondPage() {
                   <SelectValue placeholder="選択してください" />
                 </SelectTrigger>
                 <SelectContent>
+                  {/* 表記は管理側（取り込みダイアログ・役職別スコア）と揃えること */}
                   <SelectItem value="executive">経営層</SelectItem>
                   <SelectItem value="manager">管理職</SelectItem>
-                  <SelectItem value="staff">一般</SelectItem>
+                  <SelectItem value="staff">従業員</SelectItem>
                 </SelectContent>
               </Select>
             </div>
