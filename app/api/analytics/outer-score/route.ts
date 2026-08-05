@@ -157,19 +157,13 @@ export async function GET(request: NextRequest) {
 
     // 画面に「n = 400」と出すためのサンプル数。調査が無ければ null
     let marketSampleSize: number | null = null
-    // 印象一致度は取り込み時に計算して保存してある（毎回セルを読み直さない）
-    let marketImpression: number | null = null
     if (market.survey_id) {
       const { data: ms } = await supabase
         .from('market_surveys')
-        .select('sample_size, impression_score')
+        .select('sample_size')
         .eq('id', market.survey_id)
         .single()
       marketSampleSize = (ms?.sample_size as number | null) ?? null
-      marketImpression =
-        ms?.impression_score === null || ms?.impression_score === undefined
-          ? null
-          : Number(ms.impression_score)
     }
 
     const outerScore =
@@ -201,7 +195,6 @@ export async function GET(request: NextRequest) {
       market_stages: market.stages,
       market_survey_id: market.survey_id,
       market_sample_size: marketSampleSize,
-      market_impression: marketImpression,
       outer_score: outerScore,
       rank,
     })

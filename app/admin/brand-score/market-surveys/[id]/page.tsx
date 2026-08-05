@@ -654,49 +654,18 @@ export default function MarketSurveyDetailPage() {
       {extras?.impression && (
         <Card className="mt-4 bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-5">
-            <div className="mb-1 flex items-center justify-between gap-3">
-              <h2 className="m-0 text-sm font-bold text-foreground">
-                印象一致度（市場が重視する点 × 自社イメージ）
-              </h2>
-              {extras.impression.score !== null && (
-                <span className="text-2xl font-bold text-green-600">
-                  {extras.impression.score}
-                </span>
-              )}
-            </div>
+            {/* 点数（5項目中いくつ当たったか）は出さない。周りの0〜100スコアと
+                単位が違ううえ、1項目の増減で20点飛ぶため定点観測に使えない。
+                読みどころは順位の対比そのもの */}
+            <h2 className="m-0 mb-1 text-sm font-bold text-foreground">
+              市場の期待と自社イメージ
+            </h2>
             <p className="mb-4 text-xs leading-relaxed text-muted-foreground">
-              市場が企業を選ぶときに重視する上位5項目のうち、いくつが自社の印象としても
-              上位5項目に入っているかです。
+              市場が企業を選ぶときに重視する点と、自社が持たれている印象の比較です。
               {/* 母数が違うので引き算をさせない。ここを書かないと誤読される */}
               重視点はn={extras.impression.importanceBaseN}の全数、イメージはn=
-              {extras.impression.imageBaseN}の自社認知者と母数が違うため、%の差は意味を持ちません。
-              比べてよいのは順位です。
+              {extras.impression.imageBaseN}の自社認知者と母数が違うため、比べてよいのは順位だけです。
             </p>
-
-            <div className="mb-4 grid gap-2 sm:grid-cols-2">
-              {extras.impression.misses.length > 0 && (
-                <div className="rounded-md border bg-background p-3">
-                  <p className="m-0 mb-1 text-[11px] font-bold text-orange-600">
-                    伝わっていない期待
-                  </p>
-                  <p className="m-0 text-[11px] leading-relaxed text-muted-foreground">
-                    {extras.impression.misses.join('・')}
-                    。市場は重視しているのに、自社の印象としては上位に挙がっていません。
-                  </p>
-                </div>
-              )}
-              {extras.impression.overs.length > 0 && (
-                <div className="rounded-md border bg-background p-3">
-                  <p className="m-0 mb-1 text-[11px] font-bold text-foreground">
-                    重視されていないのに強い印象
-                  </p>
-                  <p className="m-0 text-[11px] leading-relaxed text-muted-foreground">
-                    {extras.impression.overs.join('・')}
-                    。伝わってはいますが、選ぶ理由にはなりにくい項目です。
-                  </p>
-                </div>
-              )}
-            </div>
 
             <div className="overflow-x-auto">
               <table className="w-full min-w-[420px] text-xs">
@@ -737,10 +706,6 @@ export default function MarketSurveyDetailPage() {
                 </tbody>
               </table>
             </div>
-            <p className="m-0 mt-2 text-[10px] text-muted-foreground">
-              順位差がマイナスなら「重視されている割に印象が薄い」、プラスなら
-              「重視されていない割に印象が強い」。
-            </p>
           </CardContent>
         </Card>
       )}
