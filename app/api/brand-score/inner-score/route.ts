@@ -271,7 +271,9 @@ export async function GET(request: NextRequest) {
         question_id: q.id,
         question_text: q.question_text,
         category: q.category,
-        avg_score: entry ? Math.round((entry.sum / entry.count) * 100) / 100 : null,
+        // 小数4桁で返す。表示は toFixed で丸めるが、この値を再集計する側
+        // （浸透ジャーニーのマトリクス）が2桁だと誤差で 0.1 ずれるため。
+        avg_score: entry ? Math.round((entry.sum / entry.count) * 10000) / 10000 : null,
         count: entry ? entry.count : 0,
       }
     })
