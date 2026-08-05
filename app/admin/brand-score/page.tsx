@@ -10,6 +10,10 @@ import {
   STAGE_LABELS,
   type FunnelStage,
 } from '@/lib/brand-score/funnel-stages'
+import {
+  MARKET_STAGES,
+  MARKET_STAGE_LABELS,
+} from '@/lib/brand-score/market-stages'
 import { supabase } from '@/lib/supabase'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
 import Link from 'next/link'
@@ -71,6 +75,7 @@ import {
   CheckCircle,
   Camera,
   Loader2,
+  Globe,
 } from 'lucide-react'
 
 // ── 型定義 ──
@@ -103,6 +108,11 @@ interface OuterScoreData {
   }
   outer_score: number
   rank: string
+  /** 市場浸透（外部調査）。取り込んでいなければ null */
+  market_score: number | null
+  market_stages: Record<string, number> | null
+  /** デジタル接点（名刺ログ）。従来の outer_score と同じ値 */
+  digital_score: number | null
 }
 
 interface GapItem {
@@ -614,32 +624,6 @@ export default function BrandScoreDashboard() {
               <SelectItem value="90">90日間</SelectItem>
             </SelectContent>
           </Select>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="outline" size="sm" disabled={isSaving}>
-                {isSaving ? (
-                  <Loader2 size={14} className="animate-spin" />
-                ) : (
-                  <Camera size={14} />
-                )}
-                スコアを記録
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>スコアを記録</AlertDialogTitle>
-                <AlertDialogDescription>
-                  現時点のブランドスコアをスナップショットとして保存します。記録したスコアは推移グラフに反映されます。
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>キャンセル</AlertDialogCancel>
-                <AlertDialogAction onClick={handleSaveSnapshot}>
-                  記録する
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
         </div>
       </div>
 
@@ -861,7 +845,61 @@ export default function BrandScoreDashboard() {
                   </span>
                 </div>
 
-                {/* 5指標 */}
+                {/* 市場浸透（外部調査）。調査を取り込んでいない企業では出さない
+                    ＝ その場合の見た目は従来と完全に同じ */}
+                {outerScore!.market_score !== null && (
+                  <div className="rounded-md border bg-background p-3">
+                    <div className="mb-2 flex items-center justify-between">
+                      <span className="flex items-center gap-1.5 text-xs font-bold text-foreground">
+                        <Globe size={12} />
+                        市場浸透（外部調査）
+                      </span>
+                      <span className="text-sm font-bold text-ds-app-accent">
+                        {outerScore!.market_score.toFixed(1)}
+                      </span>
+                    </div>
+                    <div className="space-y-1">
+                      {MARKET_STAGES.map((stage, i) => {
+                        const v = outerScore!.market_stages?.[stage] ?? null
+                        return (
+                          <div key={stage} className="flex items-center gap-2">
+                            <span className="w-14 shrink-0 text-[10px] text-muted-foreground">
+                              {i + 1}. {MARKET_STAGE_LABELS[stage]}
+                            </span>
+                            <div className="h-1.5 min-w-0 flex-1 rounded-full bg-muted">
+                              {v !== null && (
+                                <div
+                                  className="h-full rounded-full bg-ds-app-accent-soft"
+                                  style={{ width: `${v}%` }}
+                                />
+                              )}
+                            </div>
+                            <span className="w-8 shrink-0 text-right text-[10px] tabular-nums text-muted-foreground">
+                              {v !== null ? v.toFixed(0) : '—'}
+                            </span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                    <Link
+                      href="/admin/brand-score/market-surveys"
+                      className="mt-2 flex items-center gap-1 text-[10px] text-ds-app-accent hover:underline"
+                    >
+                      市場調査 <ArrowRight size={10} />
+                    </Link>
+                  </div>
+                )}
+
+                {/* デジタル接点（名刺ログ）の5指標 */}
+                {outerScore!.market_score !== null && (
+                  <p className="m-0 flex items-center gap-1.5 text-xs font-bold text-foreground">
+                    <CreditCard size={12} />
+                    デジタル接点（名刺）
+                    <span className="ml-auto text-sm text-foreground">
+                      {outerScore!.digital_score?.toFixed(1) ?? '—'}
+                    </span>
+                  </p>
+                )}
                 {[
                   { label: '到達力', value: outerScore!.scores.reach.score },
                   { label: '関心度', value: outerScore!.scores.interest.score },
@@ -1222,7 +1260,37 @@ export default function BrandScoreDashboard() {
 
       {/* ── 6. 自動記録設定 ── */}
       {companyId && (
-        <SnapshotScheduleCard companyId={companyId} />
+        <SnapshotScheduleCard
+          companyId={companyId}
+          recordSlot={
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" size="sm" className="w-full" disabled={isSaving}>
+                  {isSaving ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <Camera size={14} />
+                  )}
+                  スコアを記録
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>スコアを記録</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    現時点のブランドスコアをスナップショットとして保存します。記録したスコアは推移グラフに反映されます。
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>キャンセル</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleSaveSnapshot}>
+                    記録する
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          }
+        />
       )}
     </div>
   )

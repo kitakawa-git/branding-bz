@@ -3,8 +3,12 @@
 // 指定企業の外部ブランド浸透度スコアを算出して返す
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
-import { getRank } from '@/lib/brand-score/calculate-snapshot'
-import { OUTER_WEIGHTS, computeDigitalMetrics } from '@/lib/brand-score/outer-metrics'
+import { getRank, calculateMarketScore } from '@/lib/brand-score/calculate-snapshot'
+import {
+  OUTER_WEIGHTS,
+  computeDigitalMetrics,
+  weightedAverage,
+} from '@/lib/brand-score/outer-metrics'
 
 // スコアの算出式は lib/brand-score/outer-metrics.ts に集約している。
 // 以前はこのファイルと calculate-snapshot.ts に同じ式が複製されており、
@@ -133,7 +137,16 @@ export async function GET(request: NextRequest) {
       avgDuration,
     })
 
-    const outerScore = digitalScore ?? 0
+    // 市場浸透（外部調査）。取り込んで反映中の調査が無ければ null になり、
+    // アウタースコアは従来どおりデジタル接点だけで決まる
+    const market = await calculateMarketScore(supabase, companyId)
+
+    const outerScore =
+      weightedAverage([
+        { score: market.score, weight: 0.6 },
+        { score: digitalScore, weight: 0.4 },
+      ]) ?? 0
+
     const rank = getRank(outerScore)
     const r2 = (v: number) => Math.round(v * 100) / 100
 
@@ -149,6 +162,11 @@ export async function GET(request: NextRequest) {
         engagement: { value: r2(values.engagement), score: scores.engagement, weight: OUTER_WEIGHTS.engagement },
         impression: null,
       },
+      // 2本立ての内訳
+      digital_score: digitalScore,
+      market_score: market.score,
+      market_stages: market.stages,
+      market_survey_id: market.survey_id,
       outer_score: outerScore,
       rank,
     })
