@@ -1,9 +1,9 @@
 'use client'
 
+import { visibleDashboardTabs } from '@/lib/constants/dashboard-tabs'
 import { useState, useEffect, useCallback } from 'react'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '../components/AdminDataProvider'
-import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
 import { ALL_IMPRESSION_TAGS as ALL_TAGS } from '@/lib/brand-score/impression-tags'
 import { supabase } from '@/lib/supabase'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
@@ -52,7 +52,6 @@ import {
 } from 'recharts'
 import { SnapshotScheduleCard } from './components/SnapshotScheduleCard'
 import {
-  BarChart3,
   ArrowRight,
   TrendingUp,
   Users,
@@ -205,12 +204,6 @@ function getBarColor(rate: number): string {
   return 'bg-gray-300'
 }
 
-const dashboardTabs = [
-  { label: 'スコア', href: '/admin/brand-score' },
-  { label: 'タイムライン分析', href: '/admin/dashboard' },
-  { label: 'スマート名刺', href: '/admin/analytics' },
-  { label: '視聴分析', href: '/admin/analytics/learning' },
-]
 
 // ── キャッシュ型 ──
 type BrandScoreCache = {
@@ -231,11 +224,8 @@ export default function BrandScoreDashboard() {
   const { companyId, company } = useAuth()
   const pathname = usePathname()
 
-  // 機能トグル: スマート名刺が無効なら「スマート名刺」タブ（→ /admin/analytics）を非表示にする
-  const cardEnabled = isFeatureEnabled(company, 'card_enabled')
-  const visibleTabs = dashboardTabs.filter(
-    (tab) => tab.href !== '/admin/analytics' || cardEnabled
-  )
+  // 機能トグルを踏まえたタブ（定義は lib/constants/dashboard-tabs.ts に集約）
+  const visibleTabs = visibleDashboardTabs(company)
 
   const [period, setPeriod] = useState<string>('30')
 
@@ -585,11 +575,8 @@ export default function BrandScoreDashboard() {
       </div>
 
       {/* ── 1. ヘッダー ── */}
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-lg font-bold text-foreground flex items-center gap-2">
-          <BarChart3 size={20} />
-          ブランドスコア
-        </h1>
+      {/* 見出しはパンくず・タブと重複するため置かない。操作ボタンのみ右寄せ */}
+      <div className="flex items-center justify-end mb-6">
         <div className="flex items-center gap-2">
           <AlertDialog>
             <AlertDialogTrigger asChild>

@@ -12,7 +12,8 @@ const breadcrumbMap: Record<string, AdminCrumb> = {
   '/admin/dashboard': { title: 'ダッシュボード' },
   '/admin/analytics': { title: 'スマート名刺分析' },
   '/admin/analytics/learning': { title: '視聴分析' },
-  '/admin/brand-score': { title: 'ブランドスコア' },
+  // タブ側が「ブランドスコア」を名乗るため、パンくずは領域名（ダッシュボード）にする
+  '/admin/brand-score': { title: 'ダッシュボード' },
   '/admin/brand-score/surveys': { title: 'サーベイ管理' },
   '/admin/brand-score/quizzes': { title: '理解度テスト' },
   '/admin/company': { title: '基本情報' },

@@ -40,6 +40,8 @@ import { Plus, Pencil, Trash2, GripVertical, Youtube, FolderOpen, Layers } from 
 import type { LearningVideo, LearningCategory, LearningTheme } from '@/lib/types/learning'
 import { LearningVideoDialog } from './LearningVideoDialog'
 import { LearningStructureManager } from './LearningStructureManager'
+import { useAuth } from '../components/AdminDataProvider'
+import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
 
 type ThemeWithVideos = Pick<LearningTheme, 'id' | 'category_id' | 'name' | 'description' | 'sort_order'> & {
   video_count: number
@@ -158,6 +160,8 @@ function VideoGroup({
 }
 
 export default function AdminLearningPage() {
+  const { company } = useAuth()
+  const learningEnabled = isFeatureEnabled(company, 'learning_enabled')
   const [structure, setStructure] = useState<Structure | null>(null)
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState<string | null>(null)
@@ -251,6 +255,21 @@ export default function AdminLearningPage() {
 
   const openCreate = () => { setEditing(null); setDialogOpen(true) }
   const openEdit = (v: LearningVideo) => { setEditing(v); setDialogOpen(true) }
+
+  // 機能トグル: 無効なら案内のみ表示（フックより後に置くこと）
+  if (!learningEnabled) {
+    return (
+      <div className="max-w-4xl mx-auto px-5 pt-4 pb-10">
+        <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+          <CardContent className="py-16 text-center">
+            <p className="text-muted-foreground text-[15px] m-0">
+              この機能は現在ご利用いただけません
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   return (
     <div>

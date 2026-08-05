@@ -10,8 +10,12 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { ChevronLeft, CheckCircle2, PlayCircle } from 'lucide-react'
 import { YouTubePlayer } from '@/components/learning/YouTubePlayer'
 import type { LearningVideoWithProgress } from '@/lib/types/learning'
+import { usePortalAuth } from '../../components/PortalDataProvider'
+import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
 
 export default function PortalLearningWatchPage() {
+  const { company } = usePortalAuth()
+  const learningEnabled = isFeatureEnabled(company, 'learning_enabled')
   const params = useParams()
   const videoId = params.id as string
 
@@ -52,6 +56,21 @@ export default function PortalLearningWatchPage() {
       cancelled = true
     }
   }, [videoId])
+
+  // 機能トグル: 無効なら案内のみ表示（フックより後に置くこと）
+  if (!learningEnabled) {
+    return (
+      <div className="max-w-4xl mx-auto px-5 pt-4 pb-10">
+        <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+          <CardContent className="py-16 text-center">
+            <p className="text-muted-foreground text-[15px] m-0">
+              この機能は現在ご利用いただけません
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   return (
     <div className="max-w-4xl mx-auto px-5 pt-4 pb-10 space-y-4">

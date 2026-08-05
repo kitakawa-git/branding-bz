@@ -1,6 +1,7 @@
 'use client'
 
 // アクセス解析ページ
+import { visibleDashboardTabs } from '@/lib/constants/dashboard-tabs'
 import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
@@ -59,12 +60,6 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
-const dashboardTabs = [
-  { label: 'スコア', href: '/admin/brand-score' },
-  { label: 'タイムライン分析', href: '/admin/dashboard' },
-  { label: 'スマート名刺', href: '/admin/analytics' },
-  { label: '視聴分析', href: '/admin/analytics/learning' },
-]
 
 export default function AnalyticsPage() {
   const { companyId, company } = useAuth()
@@ -72,6 +67,8 @@ export default function AnalyticsPage() {
 
   // 機能トグル: スマート名刺が無効なら案内のみ表示（名刺閲覧解析を非表示）
   const cardEnabled = isFeatureEnabled(company, 'card_enabled')
+  // 機能トグルを踏まえたタブ（定義は lib/constants/dashboard-tabs.ts に集約）
+  const visibleTabs = visibleDashboardTabs(company)
   const cacheKey = `analytics-${companyId}`
   const cached = companyId ? getPageCache<AnalyticsCache>(cacheKey) : null
   const [loading, setLoading] = useState(!cached)
@@ -268,7 +265,7 @@ export default function AnalyticsPage() {
   return (
     <div>
       <div className="flex gap-6 border-b mb-6">
-        {dashboardTabs.map(tab => (
+        {visibleTabs.map(tab => (
           <Link
             key={tab.href}
             href={tab.href}

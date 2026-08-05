@@ -54,7 +54,9 @@ export async function GET(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: partError.message }, { status: 500 })
     }
 
-    const respondedCount = (participants ?? []).filter(p => p.responded_at).length
+    // 外部調査の取り込み（source='imported'）は survey_participants を持たないため、
+    // 取り込み時に記録した respondent_count を分子として使う。
+    const respondedCount = survey.respondent_count ?? (participants ?? []).filter(p => p.responded_at).length
     const responseRate = survey.total_members > 0
       ? Math.round(respondedCount / survey.total_members * 100)
       : 0
@@ -207,7 +209,7 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
     // 現在のサーベイを取得してステータス確認
     const { data: survey, error: fetchError } = await supabase
       .from('brand_surveys')
-      .select('id, status')
+      .select('id, status, source')
       .eq('id', id)
       .single()
 
@@ -217,7 +219,9 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: fetchError.message }, { status })
     }
 
-    if (survey.status !== 'draft') {
+    // 取り込み（source='imported'）は外部ファイルの写しなので、closed でも消して入れ直せる。
+    // 社内配信ぶんは回答者が提出したデータそのものなので draft 以外は消させない。
+    if (survey.status !== 'draft' && survey.source !== 'imported') {
       return NextResponse.json(
         { error: '配信済みのサーベイは削除できません' },
         { status: 400 }

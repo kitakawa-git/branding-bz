@@ -134,9 +134,11 @@ export function PortalSidebar() {
   const timelineEnabled = isFeatureEnabled(company, 'timeline_enabled')
   const kpiEnabled = isFeatureEnabled(company, 'kpi_enabled')
   const cardEnabled = isFeatureEnabled(company, 'card_enabled')
+  const learningEnabled = isFeatureEnabled(company, 'learning_enabled')
   const visibleEngagementItems = engagementItems.filter((item) => {
     if (item.href === '/portal/timeline') return timelineEnabled
     if (item.href === '/portal/kpi') return kpiEnabled
+    if (item.href === '/portal/learning') return learningEnabled
     return true
   })
 

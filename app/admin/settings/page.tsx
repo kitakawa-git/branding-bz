@@ -60,8 +60,10 @@ export default function AdminSettingsPage() {
       toast.success('設定を更新しました')
     } catch (err) {
       // 失敗時はトーストのみ。company は変更していないのでトグルは元の状態のまま
+      // API は原因（未作成カラム名など）を返すので、握りつぶさず表示する
       console.error('[Settings] 更新エラー:', err)
-      toast.error('設定の更新に失敗しました')
+      const detail = err instanceof Error ? err.message : ''
+      toast.error(detail ? `設定の更新に失敗しました：${detail}` : '設定の更新に失敗しました')
     } finally {
       setSavingKey(null)
     }

@@ -98,9 +98,14 @@ export function AppSidebar() {
   // 機能トグル: 無効な機能のメニュー項目を非表示にする
   const kpiEnabled = isFeatureEnabled(company, 'kpi_enabled')
   const cardEnabled = isFeatureEnabled(company, 'card_enabled')
+  const learningEnabled = isFeatureEnabled(company, 'learning_enabled')
   const visibleNavItems = navItems.filter((item) => {
     if (item.href === '/admin/kpi') return kpiEnabled
     if (item.href === '/admin/card-template') return cardEnabled
+    return true
+  })
+  const visiblePenetrationItems = penetrationItems.filter((item) => {
+    if (item.href === '/admin/learning') return learningEnabled
     return true
   })
 
@@ -207,7 +212,7 @@ export function AppSidebar() {
           <SidebarGroupLabel>浸透</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {penetrationItems.map((item) => {
+              {visiblePenetrationItems.map((item) => {
                 const Icon = item.icon
                 return (
                   <SidebarMenuItem key={item.href}>

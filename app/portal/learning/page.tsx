@@ -9,6 +9,8 @@ import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { GraduationCap, PlayCircle, CheckCircle2, Youtube, FolderOpen } from 'lucide-react'
 import type { LearningVideoWithProgress } from '@/lib/types/learning'
+import { usePortalAuth } from '../components/PortalDataProvider'
+import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
 
 type ThemeNode = {
   id: string
@@ -76,6 +78,8 @@ function VideoCard({ video }: { video: LearningVideoWithProgress }) {
 }
 
 export default function PortalLearningPage() {
+  const { company } = usePortalAuth()
+  const learningEnabled = isFeatureEnabled(company, 'learning_enabled')
   const [structure, setStructure] = useState<Structure | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -97,6 +101,21 @@ export default function PortalLearningPage() {
       cancelled = true
     }
   }, [])
+
+  // 機能トグル: 無効なら案内のみ表示（フックより後に置くこと）
+  if (!learningEnabled) {
+    return (
+      <div className="max-w-4xl mx-auto px-5 pt-4 pb-10">
+        <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+          <CardContent className="py-16 text-center">
+            <p className="text-muted-foreground text-[15px] m-0">
+              この機能は現在ご利用いただけません
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   if (loading) {
     return (

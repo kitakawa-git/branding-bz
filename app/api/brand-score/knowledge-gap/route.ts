@@ -10,6 +10,7 @@
 // ============================================================
 import { NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { fetchAllRows } from '@/lib/brand-score/fetch-all-rows'
 import { getAdminContext } from '@/lib/learning/auth'
 import { meanScore, K_ANONYMITY_THRESHOLD } from '@/lib/brand-score/quiz-scoring'
 
@@ -185,7 +186,10 @@ export async function GET() {
 
     if (survey) {
       const [{ data: responses }, { data: sQuestions }] = await Promise.all([
-        supabase.from('brand_survey_responses').select('question_id, score').eq('survey_id', survey.id),
+        // 1000行上限があるためページングして全件取る
+        fetchAllRows<{ question_id: string; score: number }>(() =>
+          supabase.from('brand_survey_responses').select('question_id, score').eq('survey_id', survey.id).order('id')
+        ),
         supabase.from('brand_survey_questions').select('id, category').eq('survey_id', survey.id),
       ])
       const whyIds = new Set<string>()
