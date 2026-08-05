@@ -1052,12 +1052,16 @@ export default function SurveyDetailPage() {
                             <p className="m-0 text-xs text-muted-foreground">
                               {i + 1}. {STAGE_LABELS[stage]}
                             </p>
-                            <span className={`text-xl font-bold ${isWeakest ? 'text-orange-600' : getScoreColor(s)}`}>
+                            {/* 色は「最弱段階かどうか」だけを伝える。
+                                スコアの絶対値で色を変えると、60前後で1〜2ptしか違わない
+                                段階が別の色になり、実際の差より大きな違いに見えてしまう。
+                                段階間の比較は数字とバーの長さが担う（段階別の詳細と同じ方式） */}
+                            <span className={`text-xl font-bold ${isWeakest ? 'text-orange-600' : 'text-ds-app-accent'}`}>
                               {s !== null ? s.toFixed(1) : '-'}
                             </span>
                             <Progress
                               value={s ?? 0}
-                              className={`h-1.5 mt-1.5 ${isWeakest ? '[&>div]:bg-orange-500' : getScoreProgressColor(s)}`}
+                              className={`h-1.5 mt-1.5 ${isWeakest ? '[&>div]:bg-orange-500' : '[&>div]:bg-ds-app-accent-soft'}`}
                             />
                           </div>
                         )
