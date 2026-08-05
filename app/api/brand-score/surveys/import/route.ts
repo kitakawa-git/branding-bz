@@ -13,8 +13,8 @@
 // 片方にしかない設問は追加の設問として登録する（文言は書き換えない）。
 // ============================================================
 import { NextRequest, NextResponse } from 'next/server'
-import ExcelJS from 'exceljs'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { fileToRows } from '@/lib/brand-score/excel-rows'
 import { getAdminContext } from '@/lib/learning/auth'
 import {
   parseGoogleFormRows,
@@ -32,111 +32,8 @@ const VALID_CATEGORIES: SurveyCategory[] = ['why', 'how', 'what']
 // Supabase の一括 INSERT を分割する単位（243名×30問 = 7,290行を想定）
 const INSERT_CHUNK_SIZE = 1000
 
-// ────────────────────────────────────────────
-// ファイル → 2次元配列
-// ────────────────────────────────────────────
-
-/** CSV 1行をパースする（ダブルクォート囲み・エスケープに対応） */
-function parseCsvLine(line: string): string[] {
-  const cells: string[] = []
-  let cur = ''
-  let inQuotes = false
-
-  for (let i = 0; i < line.length; i++) {
-    const ch = line[i]
-    if (inQuotes) {
-      if (ch === '"') {
-        if (line[i + 1] === '"') {
-          cur += '"'
-          i++
-        } else {
-          inQuotes = false
-        }
-      } else {
-        cur += ch
-      }
-    } else if (ch === '"') {
-      inQuotes = true
-    } else if (ch === ',') {
-      cells.push(cur)
-      cur = ''
-    } else {
-      cur += ch
-    }
-  }
-  cells.push(cur)
-  return cells
-}
-
-/** CSV 全文を2次元配列にする（クォート内の改行はセル内改行として扱う） */
-function parseCsv(text: string): unknown[][] {
-  // BOM 除去 + 改行コード正規化
-  const normalized = text.replace(/^﻿/, '').replace(/\r\n/g, '\n').replace(/\r/g, '\n')
-
-  // クォート状態を見ながら論理行に分割する
-  const lines: string[] = []
-  let cur = ''
-  let inQuotes = false
-
-  for (const ch of normalized) {
-    if (ch === '"') {
-      inQuotes = !inQuotes
-      cur += ch
-    } else if (ch === '\n' && !inQuotes) {
-      lines.push(cur)
-      cur = ''
-    } else {
-      cur += ch
-    }
-  }
-  if (cur !== '') lines.push(cur)
-
-  return lines.map(parseCsvLine)
-}
-
-/** exceljs のセル値をプリミティブに正規化する */
-function normalizeCell(value: unknown): unknown {
-  if (value === null || value === undefined) return null
-  if (value instanceof Date) return value
-  if (typeof value === 'object') {
-    const v = value as Record<string, unknown>
-    // 数式セル
-    if ('result' in v) return normalizeCell(v.result)
-    // リッチテキスト
-    if ('richText' in v && Array.isArray(v.richText)) {
-      return (v.richText as { text?: string }[]).map((t) => t.text ?? '').join('')
-    }
-    // ハイパーリンク
-    if ('text' in v) return v.text
-    return String(value)
-  }
-  return value
-}
-
-/** アップロードされたファイルを2次元配列に変換する */
-async function fileToRows(file: File): Promise<unknown[][]> {
-  const arrayBuffer = await file.arrayBuffer()
-
-  if (/\.csv$/i.test(file.name)) {
-    return parseCsv(Buffer.from(arrayBuffer).toString('utf-8'))
-  }
-
-  const workbook = new ExcelJS.Workbook()
-  // exceljs の型定義は Node の Buffer を要求するが、実体は Uint8Array を受け付ける
-  await workbook.xlsx.load(arrayBuffer as Parameters<typeof workbook.xlsx.load>[0])
-
-  const sheet = workbook.worksheets[0]
-  if (!sheet) throw new Error('シートが見つかりません')
-
-  const rows: unknown[][] = []
-  sheet.eachRow({ includeEmpty: true }, (row) => {
-    const values = row.values as unknown[]
-    // exceljs の row.values は 1-based（[0] は常に undefined）
-    rows.push(values.slice(1).map(normalizeCell))
-  })
-
-  return rows
-}
+// ファイル → 2次元配列の変換は lib/brand-score/excel-rows.ts に移設した
+// （市場調査の GT表取り込みでも同じものを使うため）
 
 // ────────────────────────────────────────────
 // POST
