@@ -49,9 +49,6 @@ type Survey = {
 
 type RankRow = { name: string; value: number; isSelf: boolean }
 
-/** その段階が調査票のどの設問だったか（レポートと突き合わせるため） */
-type StageSource = { code: string | null; label: string | null }
-
 type RankedItem = { label: string; value: number }
 type Listed = { items: RankedItem[]; baseN: number | null } | null
 
@@ -152,7 +149,6 @@ export default function MarketSurveyDetailPage() {
   const [survey, setSurvey] = useState<Survey | null>(null)
   const [stageScores, setStageScores] = useState<StageScore[]>([])
   const [ranking, setRanking] = useState<Record<string, RankRow[]>>({})
-  const [stageSources, setStageSources] = useState<Record<string, StageSource>>({})
   const [extras, setExtras] = useState<Extras | null>(null)
   const [blockCount, setBlockCount] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -174,7 +170,6 @@ export default function MarketSurveyDetailPage() {
       setTitleDraft(data.survey?.title ?? '')
       setStageScores(data.stageScores ?? [])
       setRanking(data.ranking ?? {})
-      setStageSources(data.stageSources ?? {})
       setExtras(data.extras ?? null)
       setBlockCount((data.blocks ?? []).length)
     } catch (err) {
@@ -563,17 +558,6 @@ export default function MarketSurveyDetailPage() {
                         {MARKET_STAGE_QUESTIONS[stage]}
                         {s?.base_n !== null && s?.base_n !== undefined && `・n=${s.base_n}`}
                       </p>
-                      {/* 調査票のどの設問から来た数字か。レポートと突き合わせるのに要る */}
-                      {stageSources[stage] && (
-                        <p className="m-0 text-[10px] text-muted-foreground/70">
-                          {[
-                            stageSources[stage].code?.toUpperCase(),
-                            stageSources[stage].label,
-                          ]
-                            .filter(Boolean)
-                            .join(' ')}
-                        </p>
-                      )}
                     </div>
 
                     <div className="min-w-0 flex-1 pt-0.5">

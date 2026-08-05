@@ -101,24 +101,6 @@ export async function GET(_request: NextRequest, context: RouteContext) {
       ranking[k].sort((a, b) => b.value - a.value)
     }
 
-    // 段階ごとの「元の設問」。レポートと突き合わせるときに、
-    // 画面の『評価』が調査票のどの設問だったのかが分からないと確認できない
-    const blockIndex = new Map((blocks ?? []).map((b) => [b.id as string, b]))
-    const stageSources: Record<string, { code: string | null; label: string | null }> = {}
-    for (const m of mappings ?? []) {
-      if (m.subject !== 'self') continue
-      const c = cellIndex.get(m.cell_id as string)
-      if (!c) continue
-      const b = blockIndex.get(c.block_id)
-      // 列見出し（「ロイヤリティあり・計」など）が無いときは
-      // 設問文の末尾にある【第1想起】のような目印を使う
-      const bracket = ((b?.question_text as string) ?? '').match(/【([^】]+)】\s*$/)
-      stageSources[m.stage as string] = {
-        code: (b?.question_code as string) ?? null,
-        label: c.col_label ?? bracket?.[1] ?? null,
-      }
-    }
-
     // 5段階以外の読みどころ（印象一致度・パーソナリティ・認知経路・事業浸透度・サービス評価）。
     // 自社名は5段階の割り当てから取る。人が「これが自社」と決めた唯一の情報のため
     const selfName =
@@ -135,7 +117,6 @@ export async function GET(_request: NextRequest, context: RouteContext) {
       cells,
       mappings: mappings ?? [],
       ranking,
-      stageSources,
       selfName,
       extras,
       // 未登録の段階も unmapped として必ず5件返す（画面がスロットを常に5つ出せるように）
