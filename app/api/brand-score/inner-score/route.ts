@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { fetchAllRows } from '@/lib/brand-score/fetch-all-rows'
 
 // インナースコア算出API
 // GET /api/brand-score/inner-score?company_id=xxx&survey_id=yyy
@@ -58,12 +59,12 @@ export async function GET(request: NextRequest) {
     const supabase = getSupabaseAdmin()
 
     // 1. 対象サーベイを特定
-    let survey: { id: string; title: string; status: string; total_members: number } | null = null
+    let survey: { id: string; title: string; status: string; total_members: number; respondent_count: number | null } | null = null
 
     if (surveyIdParam) {
       const { data, error } = await supabase
         .from('brand_surveys')
-        .select('id, title, status, total_members')
+        .select('id, title, status, total_members, respondent_count')
         .eq('id', surveyIdParam)
         .eq('company_id', companyId)
         .single()
@@ -76,7 +77,7 @@ export async function GET(request: NextRequest) {
       // クローズ済みがなければアクティブを返す
       const { data: closedData } = await supabase
         .from('brand_surveys')
-        .select('id, title, status, total_members')
+        .select('id, title, status, total_members, respondent_count')
         .eq('company_id', companyId)
         .eq('status', 'closed')
         .order('created_at', { ascending: false })
@@ -87,7 +88,7 @@ export async function GET(request: NextRequest) {
       } else {
         const { data: activeData } = await supabase
           .from('brand_surveys')
-          .select('id, title, status, total_members')
+          .select('id, title, status, total_members, respondent_count')
           .eq('company_id', companyId)
           .eq('status', 'active')
           .order('created_at', { ascending: false })
@@ -100,11 +101,15 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // 2. 全回答を取得
-    const { data: responses, error: rErr } = await supabase
+    // 2. 全回答を取得（1000行上限があるためページングして全件取る）
+    const { data: responses, error: rErr } = await fetchAllRows<{
+      question_id: string; score: number; department: string | null; role_category: string | null
+    }>(() => supabase
       .from('brand_survey_responses')
       .select('question_id, score, department, role_category')
       .eq('survey_id', survey.id)
+      .order('id')
+    )
 
     if (rErr) {
       return NextResponse.json({ error: '回答データの取得に失敗しました' }, { status: 500 })
@@ -132,7 +137,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: '参加者データの取得に失敗しました' }, { status: 500 })
     }
 
-    const respondedCount = (participants || []).filter(p => p.responded_at !== null).length
+    // 外部調査の取り込み（source='imported'）は survey_participants を持たないため、
+    // 取り込み時に記録した respondent_count を分子として使う。
+    const respondedCount = survey.respondent_count ?? (participants || []).filter(p => p.responded_at !== null).length
     const totalMembers = survey.total_members || (participants || []).length
     const responseRate = totalMembers > 0
       ? Math.round((respondedCount / totalMembers) * 1000) / 10
@@ -186,16 +193,22 @@ export async function GET(request: NextRequest) {
       deptMap.get(dept)!.push(r)
     }
 
-    // 部署ごとの回答者数をカウント（ユニーク回答者 = 回答の中でユニークな department+回答セット）
-    // 回答者数は設問数で割って推定（1人あたり全設問に回答するため）
-    const activeQuestionCount = (questions || []).length || 1
+    // 群ごとの回答者数を推定する。
+    // サーベイ全体の設問数で割ると、職種別にフォームを分けた取り込み（例: BO版30問 /
+    // SP版30問 → マージ後32問）で実数より少なく出る。その群が実際に回答した
+    // 設問の種類数で割ること。
+    const estimateRespondents = (rows: { question_id: string }[]): number => {
+      const answeredQuestions = new Set(rows.map((r) => r.question_id)).size
+      return answeredQuestions > 0 ? Math.round(rows.length / answeredQuestions) : 0
+    }
+
     const byDepartment: {
       department: string; count: number
       why: number | null; how: number | null; what: number | null; total: number | null
     }[] = []
 
     for (const [dept, deptResponses] of deptMap.entries()) {
-      const respondentCount = Math.round(deptResponses.length / activeQuestionCount)
+      const respondentCount = estimateRespondents(deptResponses)
       // k-匿名性: 回答者3人未満はスキップ
       if (respondentCount < 3) continue
       const dWhy = calcCategoryScore(deptResponses, categoryQuestionIds.why)
@@ -226,7 +239,7 @@ export async function GET(request: NextRequest) {
     }[] = []
 
     for (const [role, roleResponses] of roleMap.entries()) {
-      const respondentCount = Math.round(roleResponses.length / activeQuestionCount)
+      const respondentCount = estimateRespondents(roleResponses)
       const rWhy = calcCategoryScore(roleResponses, categoryQuestionIds.why)
       const rHow = calcCategoryScore(roleResponses, categoryQuestionIds.how)
       const rWhat = calcCategoryScore(roleResponses, categoryQuestionIds.what)

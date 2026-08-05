@@ -77,6 +77,20 @@ import {
   Check,
 } from 'lucide-react'
 import { Fab, FabButton } from '@/components/ui/fab'
+import {
+  calcFunnel,
+  resolveStage,
+  FUNNEL_STAGES,
+  ALL_STAGES,
+  PIVOT_STAGE,
+  STAGE_LABELS,
+  STAGE_QUESTIONS,
+  STAGE_STATES,
+  PATTERN_LABELS,
+  PATTERN_MEANINGS,
+  type FunnelStage,
+  type FunnelInputQuestion,
+} from '@/lib/brand-score/funnel-stages'
 
 // 型定義
 type Survey = {
@@ -173,11 +187,21 @@ function getRankBadgeClass(rank: string): string {
   return 'bg-gray-100 text-gray-500 border-gray-200'
 }
 
-// 役職カテゴリ表示名
+// マトリクスのセル配色。全社総合スコア（62前後）を中央に置いた発散配色。
+// 全セルに数値を出しているので色は補助。低い＝オレンジ、高い＝青。
+function matrixCellStyle(score: number): { bg: string; fg: string } {
+  if (score < 55) return { bg: '#ea580c', fg: '#ffffff' }
+  if (score < 60) return { bg: '#fed7aa', fg: 'inherit' }
+  if (score < 64) return { bg: '#f2f2f3', fg: 'inherit' }
+  if (score < 69) return { bg: '#dbeafe', fg: 'inherit' }
+  return { bg: '#3b82f6', fg: '#ffffff' }
+}
+
+// 役職カテゴリ表示名（取り込みダイアログ・回答画面と表記を揃えること）
 const ROLE_LABELS: Record<string, string> = {
   executive: '経営層',
   manager: '管理職',
-  staff: '一般',
+  staff: '従業員',
 }
 
 // ステータスバッジ定義
@@ -298,6 +322,8 @@ export default function SurveyDetailPage() {
   const [loading, setLoading] = useState(true)
 
   // インナースコア
+  // 設問別スコアの表示軸（構成要素 / 浸透段階）
+  const [questionAxis, setQuestionAxis] = useState<'category' | 'stage'>('category')
   const [innerScore, setInnerScore] = useState<InnerScoreData | null>(null)
   const [innerScoreLoading, setInnerScoreLoading] = useState(false)
 
@@ -658,6 +684,50 @@ export default function SurveyDetailPage() {
     return [...questions].sort((a, b) => a.sort_order - b.sort_order)
   }, [questions])
 
+  // ブランド浸透ジャーニー
+  // inner-score の by_question（スコア）と questions（sort_order・reference_data）を
+  // question_id で結合して算出する。API 追加は不要。
+  const funnel = useMemo(() => {
+    if (!innerScore || questions.length === 0) return null
+    const byId = new Map(questions.map(q => [q.id, q]))
+    const input: FunnelInputQuestion[] = []
+    for (const bq of innerScore.by_question) {
+      const q = byId.get(bq.question_id)
+      if (!q) continue
+      input.push({
+        questionId: bq.question_id,
+        questionText: bq.question_text,
+        sortOrder: q.sort_order,
+        category: bq.category,
+        avgScore: bq.avg_score,
+        count: bq.count,
+        referenceData: q.reference_data,
+      })
+    }
+    return calcFunnel(input)
+  }, [innerScore, questions])
+
+  // 段階 → その段階に属する設問（設問別スコアの浸透段階ビュー用）
+  const questionsByStage = useMemo(() => {
+    if (!innerScore || questions.length === 0) return null
+    const byId = new Map(questions.map(q => [q.id, q]))
+    const total = innerScore.by_question.filter(bq => byId.has(bq.question_id)).length
+    const map = new Map<FunnelStage, InnerScoreData['by_question']>()
+    for (const bq of innerScore.by_question) {
+      const q = byId.get(bq.question_id)
+      if (!q) continue
+      const stage = resolveStage(q.sort_order, total, q.reference_data)
+      if (!stage) continue
+      if (!map.has(stage)) map.set(stage, [])
+      map.get(stage)!.push(bq)
+    }
+    // 各グループ内はスコア昇順
+    for (const list of map.values()) {
+      list.sort((a, b) => (a.avg_score ?? 99) - (b.avg_score ?? 99))
+    }
+    return map
+  }, [innerScore, questions])
+
   // ── ローディング ──
   if (loading) {
     return (
@@ -982,6 +1052,227 @@ export default function SurveyDetailPage() {
                 </Card>
               </div>
 
+              {/* 4-2a. ブランド浸透ジャーニー */}
+              {funnel && (
+                <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+                  <CardContent className="p-5">
+                    <div className="flex items-start justify-between gap-3 mb-1">
+                      <h3 className="text-sm font-bold text-foreground">ブランド浸透ジャーニー</h3>
+                      <Badge variant="outline" className="text-[10px] shrink-0 bg-background">
+                        {PATTERN_LABELS[funnel.pattern]}
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-relaxed mb-4">
+                      {PATTERN_MEANINGS[funnel.pattern]}
+                    </p>
+
+                    {/* 5段階カード + 矢印 */}
+                    <div className="flex items-stretch gap-1 overflow-x-auto pb-1">
+                      {FUNNEL_STAGES.map((stage, i) => {
+                        const s = funnel.stages.find(x => x.stage === stage)!
+                        const isWeakest = funnel.weakestStage === stage
+                        // 反転点以降は「渡す側」。背景で切り替わりを示す
+                        const isGiving = FUNNEL_STAGES.indexOf(stage) >= FUNNEL_STAGES.indexOf(PIVOT_STAGE)
+                        const t = i > 0 ? funnel.transitions[i - 1] : null
+                        const ringColor = isWeakest ? '#f97316' : 'var(--ds-app-accent, #3b82f6)'
+                        return (
+                          <div key={stage} className="flex items-stretch gap-1">
+                            {/* 段階間の矢印 */}
+                            {t && (
+                              <div className="flex flex-col items-center justify-center px-1 shrink-0 w-16">
+                                <span className={`text-[10px] font-bold ${t.delta >= 0 ? 'text-green-600' : 'text-orange-600'}`}>
+                                  {t.delta >= 0 ? '+' : ''}{t.delta.toFixed(1)}pt
+                                </span>
+                                <span className="text-muted-foreground text-xs leading-none my-0.5">→</span>
+                                <span className="text-[10px] text-muted-foreground">{t.rate.toFixed(1)}%</span>
+                              </div>
+                            )}
+
+                            <div
+                              className={`relative w-44 shrink-0 rounded-lg border p-3 ${isGiving ? 'bg-indigo-50/60' : 'bg-background'}`}
+                            >
+                              {isWeakest && (
+                                <Badge className="absolute top-2 right-2 bg-orange-100 text-orange-700 border-orange-200 text-[9px] px-1.5 py-0">
+                                  最も低い
+                                </Badge>
+                              )}
+                              <p className="text-[10px] text-muted-foreground">STEP {i + 1}</p>
+                              <p className="text-sm font-bold text-foreground">{STAGE_LABELS[stage]}</p>
+                              <p className="text-[10px] text-muted-foreground mb-2">{STAGE_QUESTIONS[stage]}</p>
+
+                              {/* ドーナツリング */}
+                              <div className="flex justify-center my-2">
+                                <svg width="72" height="72" viewBox="0 0 72 72">
+                                  <circle cx="36" cy="36" r="30" fill="none" stroke="#e5e7eb" strokeWidth="7" />
+                                  <circle
+                                    cx="36" cy="36" r="30" fill="none"
+                                    stroke={ringColor}
+                                    strokeWidth="7"
+                                    strokeLinecap="round"
+                                    strokeDasharray={`${(s.score / 100) * 188.5} 188.5`}
+                                    transform="rotate(-90 36 36)"
+                                  />
+                                  <text
+                                    x="36" y="36" textAnchor="middle" dominantBaseline="central"
+                                    className="fill-foreground" fontSize="16" fontWeight="bold"
+                                  >
+                                    {s.score.toFixed(1)}
+                                  </text>
+                                </svg>
+                              </div>
+
+                              <p className="text-[10px] text-muted-foreground leading-snug min-h-[2.5rem]">
+                                {STAGE_STATES[stage]}
+                              </p>
+
+                              {/* 含まれる現行カテゴリ */}
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {s.categories.map(c => (
+                                  <span key={c} className="rounded bg-muted px-1 py-0.5 text-[9px] font-medium text-muted-foreground uppercase">
+                                    {c}
+                                  </span>
+                                ))}
+                              </div>
+
+                              {/* この段階の最下位設問 */}
+                              {s.weakest && (
+                                <div className="mt-2 pt-2 border-t">
+                                  <p className="text-[9px] text-muted-foreground mb-0.5">この段階の最下位</p>
+                                  <p className="text-[10px] text-foreground leading-snug line-clamp-3" title={s.weakest.questionText}>
+                                    {s.weakest.questionText}
+                                  </p>
+                                  <p className="text-[10px] font-bold text-foreground mt-0.5">
+                                    {s.weakest.avgScore.toFixed(2)}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+
+                    {/* 凡例 */}
+                    <div className="flex flex-wrap items-center gap-4 mt-3 text-[10px] text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <span className="inline-block w-3 h-3 rounded border bg-background" />
+                        受け取る段階
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <span className="inline-block w-3 h-3 rounded border bg-indigo-50/60" />
+                        渡す段階（反転点より先）
+                      </span>
+                      <span>
+                        ボトルネック: {STAGE_LABELS[funnel.bottleneck.from]}→{STAGE_LABELS[funnel.bottleneck.to]}（{funnel.bottleneck.rate.toFixed(1)}%）
+                      </span>
+                    </div>
+
+                    <div className="mt-2 space-y-0.5 text-[10px] text-muted-foreground leading-relaxed">
+                      <p>
+                        転換率の100%超えは下流が上流を上回っている状態で、良い兆候ではなく順序が飛ばされているサインです。
+                      </p>
+                      {(() => {
+                        const env = funnel.stages.find(s => s.stage === 'environment')
+                        return env ? (
+                          <p>
+                            環境・成果指標{env.questionCount}問（会社の状態を問う設問）は個人の進行度ではないため、ジャーニーに含めず別集計しています（スコア {env.score.toFixed(1)}）。
+                          </p>
+                        ) : null
+                      })()}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* 4-2b. 2つの軸の掛け合わせ */}
+              {funnel && (
+                <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+                  <CardContent className="p-5">
+                    <h3 className="text-sm font-bold text-foreground mb-1">2つの軸の掛け合わせ</h3>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      縦が「何が」弱いか（構成要素）、横が「どこで」止まっているか（浸透段階）。
+                    </p>
+                    <div className="rounded-md border overflow-x-auto bg-background">
+                      <table className="w-full text-xs">
+                        <thead>
+                          <tr className="bg-muted/40">
+                            <th className="px-2 py-2 text-left font-semibold whitespace-nowrap">構成要素</th>
+                            {ALL_STAGES.map(stage => (
+                              <th
+                                key={stage}
+                                className={`px-2 py-2 text-center font-semibold whitespace-nowrap ${stage === 'environment' ? 'border-l' : ''}`}
+                              >
+                                {STAGE_LABELS[stage]}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {(['why', 'how', 'what'] as const).map(cat => {
+                            const catScore = innerScore.scores[cat]
+                            return (
+                              <tr key={cat} className="border-t">
+                                <td className="px-2 py-2 whitespace-nowrap">
+                                  <span className="font-semibold">{CATEGORY_LABELS[cat]}</span>
+                                  <span className="ml-1 text-muted-foreground">
+                                    {catScore !== null ? catScore.toFixed(1) : '-'}
+                                  </span>
+                                </td>
+                                {ALL_STAGES.map(stage => {
+                                  const cell = funnel.matrix[cat]?.[stage]
+                                  const border = stage === 'environment' ? 'border-l' : ''
+                                  if (!cell) {
+                                    return (
+                                      <td key={stage} className={`px-2 py-2 text-center text-muted-foreground/50 ${border}`}>
+                                        —
+                                      </td>
+                                    )
+                                  }
+                                  const { bg, fg } = matrixCellStyle(cell.score)
+                                  return (
+                                    <td key={stage} className={`px-2 py-2 text-center ${border}`} style={{ backgroundColor: bg, color: fg }}>
+                                      <span className="text-sm font-bold">{cell.score.toFixed(1)}</span>
+                                      <span className="ml-1 text-[10px] opacity-70">({cell.questionCount})</span>
+                                    </td>
+                                  )
+                                })}
+                              </tr>
+                            )
+                          })}
+                          {/* 段階スコアの再掲 */}
+                          <tr className="border-t bg-muted/20">
+                            <td className="px-2 py-2 font-semibold whitespace-nowrap">段階スコア</td>
+                            {ALL_STAGES.map(stage => {
+                              const s = funnel.stages.find(x => x.stage === stage)
+                              return (
+                                <td
+                                  key={stage}
+                                  className={`px-2 py-2 text-center font-bold ${stage === 'environment' ? 'border-l' : ''}`}
+                                >
+                                  {s ? s.score.toFixed(1) : '—'}
+                                </td>
+                              )
+                            })}
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* 凡例 */}
+                    <div className="flex flex-wrap items-center gap-2 mt-2 text-[10px] text-muted-foreground">
+                      <span>低い</span>
+                      {['#ea580c', '#fed7aa', '#f2f2f3', '#dbeafe', '#3b82f6'].map(c => (
+                        <span key={c} className="inline-block w-6 h-3 rounded-sm border" style={{ backgroundColor: c }} />
+                      ))}
+                      <span>高い</span>
+                      <span className="ml-1">
+                        中央は全社{innerScore.scores.total !== null ? innerScore.scores.total.toFixed(1) : '-'}
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
               {/* 4-3. 役職別スコア */}
               {innerScore.by_role.length > 0 && (
                 <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
@@ -1077,8 +1368,35 @@ export default function SurveyDetailPage() {
               {/* 4-5. 設問別スコア（アコーディオン） */}
               <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
                 <CardContent className="p-5">
-                  <h3 className="text-sm font-bold text-foreground mb-4">設問別スコア</h3>
-                  <div>
+                  <div className="flex items-center justify-between gap-3 mb-4">
+                    <h3 className="text-sm font-bold text-foreground">設問別スコア</h3>
+                    {/* 軸切替。段階が解決できないサーベイでは出さない */}
+                    {questionsByStage && questionsByStage.size > 0 && (
+                      <div className="flex rounded-md border bg-background p-0.5 text-xs">
+                        {([
+                          { key: 'category', label: '構成要素' },
+                          { key: 'stage', label: '浸透段階' },
+                        ] as const).map(opt => (
+                          <button
+                            key={opt.key}
+                            type="button"
+                            onClick={() => setQuestionAxis(opt.key)}
+                            className={`px-2.5 py-1 rounded transition-colors ${
+                              questionAxis === opt.key
+                                ? 'bg-foreground text-background font-semibold'
+                                : 'text-muted-foreground hover:text-foreground'
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 構成要素ビュー（既存） */}
+                  {questionAxis === 'category' && (
+                    <div>
                         {(['why', 'how', 'what'] as const).map(cat => {
                           const catQuestions = innerScore.by_question.filter(q => q.category === cat)
                           if (catQuestions.length === 0) return null
@@ -1122,7 +1440,72 @@ export default function SurveyDetailPage() {
                             </div>
                           )
                         })}
-                  </div>
+                    </div>
+                  )}
+
+                  {/* 浸透段階ビュー */}
+                  {questionAxis === 'stage' && questionsByStage && (
+                    <div>
+                      {ALL_STAGES.map(stage => {
+                        const list = questionsByStage.get(stage)
+                        if (!list || list.length === 0) return null
+                        const summary = funnel?.stages.find(s => s.stage === stage)
+                        // グループ内最下位（昇順ソート済みなので先頭）
+                        const worstId = list[0]?.question_id
+                        return (
+                          <div key={stage} className="mb-5 last:mb-0">
+                            <div className="flex items-baseline gap-2 mb-2 flex-wrap">
+                              <p className="text-xs font-bold text-foreground">{STAGE_LABELS[stage]}</p>
+                              <p className="text-[10px] text-muted-foreground">{STAGE_STATES[stage]}</p>
+                              <span className="text-[10px] text-muted-foreground ml-auto">
+                                {summary ? `スコア ${summary.score.toFixed(1)} / ` : ''}{list.length}問
+                              </span>
+                            </div>
+                            <div className="space-y-2">
+                              {list.map(q => {
+                                // グループ内最下位「かつ」3.5未満のときだけ強調する。
+                                // 共感のように全体が高い群で最下位に警告色が付くと誤読を招くため。
+                                const isLow =
+                                  q.question_id === worstId &&
+                                  q.avg_score !== null &&
+                                  q.avg_score < 3.5
+                                return (
+                                  <div
+                                    key={q.question_id}
+                                    className={`flex items-center gap-3 py-2 px-3 rounded-md ${isLow ? 'bg-orange-50 border border-orange-200' : 'bg-background'}`}
+                                  >
+                                    {/* 軸を切り替えても対応が追えるよう現行カテゴリを出す */}
+                                    <span className="shrink-0 rounded bg-muted px-1 py-0.5 text-[9px] font-medium text-muted-foreground uppercase w-9 text-center">
+                                      {q.category}
+                                    </span>
+                                    <div className="flex-1 min-w-0">
+                                      <p className={`text-sm leading-relaxed ${isLow ? 'text-orange-800' : 'text-foreground'}`}>
+                                        {q.question_text}
+                                      </p>
+                                    </div>
+                                    <div className="flex items-center gap-3 shrink-0">
+                                      <div className="w-20 h-2 bg-muted rounded-full overflow-hidden">
+                                        <div
+                                          className={`h-full rounded-full transition-all ${getQuestionBarColor(q.avg_score)}`}
+                                          style={{ width: `${q.avg_score !== null ? (q.avg_score / 5) * 100 : 0}%` }}
+                                        />
+                                      </div>
+                                      <span className={`text-sm font-bold w-8 text-right ${isLow ? 'text-orange-700' : 'text-foreground'}`}>
+                                        {q.avg_score !== null ? q.avg_score.toFixed(1) : '-'}
+                                      </span>
+                                      <span className="text-[10px] text-muted-foreground w-10 text-right">
+                                        {q.count}件
+                                      </span>
+                                    </div>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
