@@ -733,12 +733,18 @@ export default function BrandScoreDashboard() {
                       return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`
                     }}
                   />
+                  {/* 凡例の文字は黒。線の色は左の印が担うので、
+                      文字まで色を付けると系列名が読みにくくなる */}
                   <Legend
-                    formatter={(value: string) =>
-                      value === 'total_score' ? '総合'
-                        : value === 'inner_score' ? 'インナー'
-                        : 'アウター'
-                    }
+                    formatter={(value: string) => (
+                      <span className="text-foreground">
+                        {value === 'total_score'
+                          ? '総合'
+                          : value === 'inner_score'
+                            ? 'インナー'
+                            : 'アウター'}
+                      </span>
+                    )}
                   />
                   <Line
                     type="monotone"
@@ -822,7 +828,7 @@ export default function BrandScoreDashboard() {
 
                 <Link
                   href="/admin/brand-score/surveys"
-                  className="flex items-center gap-1 text-xs text-ds-app-accent hover:underline"
+                  className="flex items-center gap-1 text-xs text-foreground hover:underline"
                 >
                   サーベイ管理 <ArrowRight size={12} />
                 </Link>
@@ -912,7 +918,7 @@ export default function BrandScoreDashboard() {
 
                     <Link
                       href="/admin/brand-score/market-surveys"
-                      className="flex items-center gap-1 text-xs text-green-600 hover:underline"
+                      className="flex items-center gap-1 text-xs text-foreground hover:underline"
                     >
                       市場調査 <ArrowRight size={12} />
                     </Link>
@@ -971,7 +977,7 @@ export default function BrandScoreDashboard() {
 
                     <Link
                       href="/admin/analytics"
-                      className="flex items-center gap-1 text-xs text-ds-app-accent hover:underline"
+                      className="flex items-center gap-1 text-xs text-foreground hover:underline"
                     >
                       アナリティクス詳細 <ArrowRight size={12} />
                     </Link>
