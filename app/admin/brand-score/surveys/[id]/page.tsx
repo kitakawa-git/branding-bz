@@ -87,7 +87,6 @@ import {
   LENS_ORDER,
   LENS_LABELS,
   LENS_QUESTIONS,
-  LENS_ACTIONS,
   DOMAIN_ORDER,
   DOMAIN_LABELS,
   DOMAIN_RANGES,
@@ -1204,122 +1203,6 @@ export default function SurveyDetailPage() {
                 </Card>
               )}
 
-              {/* 4-2c. 設問タイプ別（感情 / 言語化・実践 / 環境・仕組み） */}
-              {breakdown?.hasLens && breakdown.byLens.length > 0 && (
-                <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-                  <CardContent className="p-5">
-                    <h3 className="text-sm font-bold text-foreground mb-1">設問タイプ別</h3>
-                    <p className="text-xs text-muted-foreground mb-4">
-                      設問が何を問うているかで分けたもの。
-                      「感じるか」と「説明できるか・仕組みがあるか」のどちらが低いかで、打つべき施策の種類が変わる。
-                    </p>
-
-                    <div className="space-y-3">
-                      {breakdown.byLens.map(l => {
-                        const isLowest =
-                          l.score === Math.min(...breakdown.byLens.map(x => x.score))
-                        return (
-                          <div key={l.lens} className="flex items-start gap-3">
-                            <div className="w-[124px] shrink-0">
-                              <p className="m-0 text-sm font-bold text-foreground">
-                                {LENS_LABELS[l.lens]}
-                              </p>
-                              <p className="m-0 text-[10px] text-muted-foreground">
-                                {LENS_QUESTIONS[l.lens]}・{l.questionCount}問
-                              </p>
-                            </div>
-
-                            <div className="min-w-0 flex-1 pt-1">
-                              <div className="h-2.5 rounded-full bg-muted">
-                                <div
-                                  className={`h-full rounded-full ${isLowest ? 'bg-orange-500' : 'bg-ds-app-accent-soft'}`}
-                                  style={{ width: `${l.score}%` }}
-                                />
-                              </div>
-                              <p className="m-0 mt-1.5 text-[10px] leading-snug text-muted-foreground">
-                                {LENS_ACTIONS[l.lens]}
-                              </p>
-                            </div>
-
-                            <div className="w-[112px] shrink-0 text-right">
-                              <p className={`m-0 text-base font-bold ${isLowest ? 'text-orange-600' : 'text-foreground'}`}>
-                                {l.avg.toFixed(2)}
-                              </p>
-                              <p className="m-0 whitespace-nowrap text-[10px] text-muted-foreground">
-                                中立 {l.neutralRate}%
-                              </p>
-                            </div>
-                          </div>
-                        )
-                      })}
-                    </div>
-
-                    {(() => {
-                      const emotion = breakdown.byLens.find(l => l.lens === 'emotion')
-                      const lowest = breakdown.byLens.reduce((min, l) => (l.score < min.score ? l : min))
-                      if (!emotion || lowest.lens === 'emotion') return null
-                      return (
-                        <p className="m-0 mt-3 text-[10px] leading-relaxed text-muted-foreground">
-                          {LENS_LABELS.emotion}（{emotion.avg.toFixed(2)}）と
-                          {LENS_LABELS[lowest.lens]}（{lowest.avg.toFixed(2)}）の差は
-                          {(emotion.avg - lowest.avg).toFixed(2)}点。
-                          共感そのものは足りており、不足しているのは
-                          {lowest.lens === 'articulation' ? 'それを語る言葉' : '会社側の仕組み'}です。
-                        </p>
-                      )
-                    })()}
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* 4-2d. 4領域（分析レポートの区分） */}
-              {breakdown?.hasDomain && breakdown.byDomain.length > 0 && (
-                <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-                  <CardContent className="p-5">
-                    <h3 className="text-sm font-bold text-foreground mb-1">領域別</h3>
-                    <p className="text-xs text-muted-foreground mb-4">
-                      設問番号の並び順による区分。分析レポート・前年資料と突き合わせるための軸。
-                    </p>
-
-                    <div className="space-y-3">
-                      {breakdown.byDomain.map(d => {
-                        const isLowest =
-                          d.score === Math.min(...breakdown.byDomain.map(x => x.score))
-                        return (
-                          <div key={d.domain} className="flex items-center gap-3">
-                            <div className="w-[124px] shrink-0">
-                              <p className="m-0 text-sm font-bold text-foreground">
-                                {DOMAIN_LABELS[d.domain]}
-                              </p>
-                              <p className="m-0 text-[10px] text-muted-foreground">
-                                {DOMAIN_RANGES[d.domain]}・{d.questionCount}問
-                              </p>
-                            </div>
-
-                            <div className="min-w-0 flex-1">
-                              <div className="h-2.5 rounded-full bg-muted">
-                                <div
-                                  className={`h-full rounded-full ${isLowest ? 'bg-orange-500' : 'bg-ds-app-accent-soft'}`}
-                                  style={{ width: `${d.score}%` }}
-                                />
-                              </div>
-                            </div>
-
-                            <div className="w-[112px] shrink-0 text-right">
-                              <p className={`m-0 text-base font-bold ${isLowest ? 'text-orange-600' : 'text-foreground'}`}>
-                                {d.avg.toFixed(2)}
-                              </p>
-                              <p className="m-0 whitespace-nowrap text-[10px] text-muted-foreground">
-                                中立 {d.neutralRate}%
-                              </p>
-                            </div>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
               {/* 4-2c. 案B: 段階別の詳細 */}
               {funnelData && (
                 <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
@@ -1342,10 +1225,7 @@ export default function SurveyDetailPage() {
                       {FUNNEL_STAGES.map((stage, i) => {
                         const s = stageScoreOf(stage)
                         const summary = funnel?.stages.find(x => x.stage === stage)
-                        const t = i > 0 ? funnel?.transitions[i - 1] : null
                         const isWeakest = weakestStage === stage
-                        const isBottleneck =
-                          !!t && !!funnel && t.from === funnel.bottleneck.from && t.to === funnel.bottleneck.to
                         const boScore = deptStageScore('BO本社', stage)
                         const spScore = deptStageScore('SP', stage)
                         const gap =
@@ -1353,24 +1233,6 @@ export default function SurveyDetailPage() {
 
                         return (
                           <div key={stage}>
-                            {/* 段階の間の転換率 */}
-                            {t && (
-                              <div className="flex items-center gap-2 py-1.5 pl-[124px]">
-                                <span className="text-muted-foreground text-xs">↓</span>
-                                <span className={`text-xs font-semibold ${t.delta >= 0 ? 'text-green-600' : 'text-orange-600'}`}>
-                                  {t.delta >= 0 ? '+' : ''}{t.delta.toFixed(1)}pt
-                                </span>
-                                <span className="text-xs text-muted-foreground">
-                                  転換率 {t.rate.toFixed(1)}%
-                                </span>
-                                {isBottleneck && (
-                                  <Badge className="bg-orange-100 text-orange-700 border-orange-200 text-[9px] px-1.5 py-0">
-                                    最大の漏れ
-                                  </Badge>
-                                )}
-                              </div>
-                            )}
-
                             {/* 反転点の区切り */}
                             {stage === INFLECTION_STAGE && (
                               <div className="my-2 flex items-center gap-2">
@@ -1452,7 +1314,6 @@ export default function SurveyDetailPage() {
                       <span className="flex items-center gap-1">
                         <span className="inline-block size-2.5 rounded-full bg-green-500" />現場（SP）
                       </span>
-                      <span>転換率の100%超えは、順序が飛ばされているサインです</span>
                     </div>
 
                     {maxGap && (
@@ -1479,19 +1340,11 @@ export default function SurveyDetailPage() {
                       {FUNNEL_STAGES.map((stage, i) => {
                         const cum = funnelData.overall.cumulative.find(x => x.stage === stage)
                         const solo = funnelData.overall.standalone.find(x => x.stage === stage)
-                        const prev = i > 0 ? funnelData.overall.cumulative[i - 1] : null
-                        const drop = prev && cum ? cum.rate - prev.rate : null
                         const bo = deptPass('BO本社', stage)
                         const sp = deptPass('SP', stage)
 
                         return (
                           <div key={stage}>
-                            {drop !== null && (
-                              <div className="py-1 pl-[124px] text-[10px] text-orange-600">
-                                {drop.toFixed(1)}pt 脱落
-                              </div>
-                            )}
-
                             {stage === INFLECTION_STAGE && (
                               <div className="my-2 flex items-center gap-2">
                                 <span className="flex-1 border-t border-dashed border-indigo-300" />
