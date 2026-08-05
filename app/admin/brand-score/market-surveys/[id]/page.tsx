@@ -191,8 +191,10 @@ export default function MarketSurveyDetailPage() {
     <div>
       {/* ヘッダー */}
       <div className="mb-4 flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
+        {/* 編集に切り替わると Input が幅いっぱいに伸びる。flex-1 が無いと
+            入力欄が文字数ぶんに縮んでしまう（サーベイ詳細と同じ組み方） */}
+        <div className="min-w-0 flex-1">
+          <div className="flex min-w-0 items-center gap-2">
             {editingTitle ? (
               <Input
                 ref={titleInputRef}
