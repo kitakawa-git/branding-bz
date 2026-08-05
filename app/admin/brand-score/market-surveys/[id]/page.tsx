@@ -139,24 +139,24 @@ function InsightNote({
   pushDown?: boolean
 }) {
   if (!text && !loading) return null
+  // 下寄せは外側の余白で作る。枠に mt-auto を付けると、本文が長いカードでは
+  // 余白が 0 になって最後の行に貼りついてしまう
   return (
-    <div
-      className={`rounded-lg border border-blue-100 bg-blue-50/30 p-4 ${
-        pushDown ? 'mt-auto pt-4' : 'mt-4'
-      }`}
-    >
-      <div className="mb-2 flex items-center gap-1.5">
-        <Sparkles className="h-3.5 w-3.5 text-ds-app-accent" />
-        <p className="m-0 text-xs font-bold text-ds-app-accent">考察（AI生成）</p>
-      </div>
-      {text ? (
-        <p className="m-0 text-[13px] leading-relaxed text-foreground/80">{text}</p>
-      ) : (
-        <div className="flex items-center gap-2 text-xs text-gray-500">
-          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          考察を生成中...
+    <div className={pushDown ? 'mt-auto pt-4' : 'mt-4'}>
+      <div className="rounded-lg border border-blue-100 bg-blue-50/30 p-4">
+        <div className="mb-2 flex items-center gap-1.5">
+          <Sparkles className="h-3.5 w-3.5 text-ds-app-accent" />
+          <p className="m-0 text-xs font-bold text-ds-app-accent">考察（AI生成）</p>
         </div>
-      )}
+        {text ? (
+          <p className="m-0 text-[13px] leading-relaxed text-foreground/80">{text}</p>
+        ) : (
+          <div className="flex items-center gap-2 text-xs text-gray-500">
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            考察を生成中...
+          </div>
+        )}
+      </div>
     </div>
   )
 }
