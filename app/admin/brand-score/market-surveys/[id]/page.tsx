@@ -519,10 +519,11 @@ export default function MarketSurveyDetailPage() {
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
         <CardContent className="p-5">
           <h2 className="mb-1 text-sm font-bold text-foreground">段階別の詳細</h2>
+          {/* 色の対応は下の凡例が持つので、ここには読み方を書く。
+              サーベイ詳細の「回答の内訳」と同じ分量に揃える */}
           <p className="mb-4 text-xs leading-relaxed text-muted-foreground">
-            自社と競合を同じ物差しで並べています。競合の値はスコアには入れず、
-            位置関係を見るためだけに使っています。回答者が{MIN_BENCHMARK_BASE_N}人
-            未満の競合は、少人数の割合が順位を歪めるため比較から外しています。
+            緑が自社、オレンジはその段階でいちばん高かった1社です。
+            右はスコアと順位で、回答者が{MIN_BENCHMARK_BASE_N}人未満の会社は順位から外しています。
           </p>
 
           <div>
