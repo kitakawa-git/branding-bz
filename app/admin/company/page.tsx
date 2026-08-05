@@ -434,7 +434,7 @@ export default function CompanyPage() {
 
   return (
     <div>
-      <form id="company-form" onSubmit={handleSubmit} className="space-y-6">
+      <form id="company-form" onSubmit={handleSubmit} className="space-y-4">
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-5">
             {/* ロゴ */}

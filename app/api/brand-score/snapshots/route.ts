@@ -95,6 +95,7 @@ export async function POST(request: NextRequest) {
         inner_why: snapshot.inner_why,
         inner_how: snapshot.inner_how,
         inner_what: snapshot.inner_what,
+        inner_stages: snapshot.inner_stages,
         inner_survey_id: snapshot.inner_survey_id,
         inner_response_rate: snapshot.inner_response_rate,
         outer_score: snapshot.outer_score,

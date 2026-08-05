@@ -220,7 +220,7 @@ export default function AnalyticsPage() {
           <Skeleton className="h-5 w-24 mb-2" />
         </div>
         {/* 全体サマリー（実体は3枚） */}
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-3 mb-3">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4 mb-4">
           {[1, 2, 3].map(i => (
             <Card key={i} className="bg-[hsl(0_0%_97%)] border shadow-none">
               <CardContent className="p-5 pb-3">
@@ -234,14 +234,14 @@ export default function AnalyticsPage() {
           ))}
         </div>
         {/* 日別推移チャート */}
-        <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-3">
+        <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-4">
           <CardContent className="p-5">
             <Skeleton className="h-4 w-28 mb-3" />
             <Skeleton className="h-[250px] w-full rounded-lg" />
           </CardContent>
         </Card>
         {/* 2カラム: ランキング + 最近のアクセス */}
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(360px,1fr))] gap-3">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(360px,1fr))] gap-4">
           {[1, 2].map(col => (
             <Card key={col} className="bg-[hsl(0_0%_97%)] border shadow-none">
               <CardContent className="p-5">
@@ -281,7 +281,7 @@ export default function AnalyticsPage() {
       </div>
 
       {/* === 全体サマリー === */}
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-3 mb-3">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4 mb-4">
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-5 pb-3">
             <div className="flex items-center gap-2 mb-3">
@@ -320,7 +320,7 @@ export default function AnalyticsPage() {
       </div>
 
       {/* === 日別推移（過去30日） === */}
-      <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-3">
+      <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-4">
         <CardContent className="p-5">
           <div className="flex items-center gap-2 mb-3">
             <BarChart3 size={18} className="text-foreground" />
@@ -371,7 +371,7 @@ export default function AnalyticsPage() {
       </Card>
 
       {/* 2カラム: ランキング + 最近のアクセス */}
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(360px,1fr))] gap-3">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(360px,1fr))] gap-4">
         {/* === 社員別ランキング === */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-5">

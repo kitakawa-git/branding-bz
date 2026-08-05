@@ -714,7 +714,7 @@ export default function BrandGuidelinesPage() {
 
   if (loading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* スローガン＋コンセプトビジュアル＋動画＋メッセージ */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-5 space-y-4">
@@ -784,7 +784,7 @@ export default function BrandGuidelinesPage() {
 
   return (
     <div>
-      <form id="guidelines-form" onSubmit={handleSubmit} className="space-y-6">
+      <form id="guidelines-form" onSubmit={handleSubmit} className="space-y-4">
         {/* Card 1: スローガン＋コンセプトビジュアル＋ブランド動画＋メッセージ */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-5 space-y-8">

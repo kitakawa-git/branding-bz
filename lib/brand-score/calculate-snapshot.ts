@@ -3,6 +3,7 @@
 // Cron Job / 手動API の両方から呼ばれる
 import { SupabaseClient } from '@supabase/supabase-js'
 import { fetchAllRows } from './fetch-all-rows'
+import { resolveStage, ALL_STAGES, type FunnelStage } from './funnel-stages'
 
 // ────────────────────────────────────────────
 // 型定義
@@ -17,6 +18,8 @@ export interface SnapshotResult {
   inner_why: number | null
   inner_how: number | null
   inner_what: number | null
+  /** 浸透段階ごとのスコア（jsonb 列に保存）。段階未設定のサーベイでは null */
+  inner_stages: Record<string, number> | null
   inner_survey_id: string | null
   inner_response_rate: number | null
   // アウター
@@ -76,21 +79,6 @@ function calcCategoryScore(
   return ((avg - 1) / 4) * 100
 }
 
-/** インナー総合スコア算出（WHY:35%, HOW:30%, WHAT:35% の加重平均） */
-function calcInnerTotal(
-  whyScore: number | null,
-  howScore: number | null,
-  whatScore: number | null,
-): number | null {
-  const parts: { score: number; weight: number }[] = []
-  if (whyScore !== null) parts.push({ score: whyScore, weight: 0.35 })
-  if (howScore !== null) parts.push({ score: howScore, weight: 0.30 })
-  if (whatScore !== null) parts.push({ score: whatScore, weight: 0.35 })
-  if (parts.length === 0) return null
-  const totalWeight = parts.reduce((sum, p) => sum + p.weight, 0)
-  return parts.reduce((sum, p) => sum + p.score * (p.weight / totalWeight), 0)
-}
-
 /** 小数第1位に丸め */
 function round1(v: number | null): number | null {
   if (v === null) return null
@@ -106,6 +94,8 @@ interface InnerResult {
   why: number | null
   how: number | null
   what: number | null
+  /** 浸透段階ごとのスコア。段階が解決できない構成では null */
+  stages: Record<string, number> | null
   survey_id: string | null
   response_rate: number | null
 }
@@ -115,7 +105,7 @@ async function calculateInnerScore(
   companyId: string,
 ): Promise<InnerResult> {
   const empty: InnerResult = {
-    score: null, why: null, how: null, what: null,
+    score: null, why: null, how: null, what: null, stages: null,
     survey_id: null, response_rate: null,
   }
 
@@ -158,7 +148,7 @@ async function calculateInnerScore(
   // 3. 全設問を取得（is_active = true）
   const { data: questions } = await supabase
     .from('brand_survey_questions')
-    .select('id, category')
+    .select('id, category, sort_order, reference_data')
     .eq('survey_id', survey.id)
     .eq('is_active', true)
 
@@ -188,16 +178,45 @@ async function calculateInnerScore(
   }
 
   // 6. スコア算出
+  // WHY/HOW/WHAT は内訳として残すが、総合は全設問の単純平均に統一した
+  // （評価軸を5段階へ移行したため、特定カテゴリに重みを置く根拠が無くなった）。
+  // ⚠ 過去のスナップショットは旧式（WHY35%/HOW30%/WHAT35%）で記録されている。
+  //   移行時点では両者が一致していたが、推移グラフは基準が混在する点に注意。
   const whyScore = calcCategoryScore(responses, categoryQuestionIds.why)
   const howScore = calcCategoryScore(responses, categoryQuestionIds.how)
   const whatScore = calcCategoryScore(responses, categoryQuestionIds.what)
-  const totalScore = calcInnerTotal(whyScore, howScore, whatScore)
+  const totalScore = calcCategoryScore(responses, questions.map(q => q.id as string))
+
+  // 7. 浸透段階ごとのスコア（段階が解決できない構成では null）
+  const stageByQuestionId = new Map<string, FunnelStage>()
+  for (const q of questions) {
+    const stage = resolveStage(
+      q.sort_order as number,
+      questions.length,
+      q.reference_data as Record<string, unknown> | null
+    )
+    if (stage) stageByQuestionId.set(q.id as string, stage)
+  }
+
+  let stages: Record<string, number> | null = null
+  if (stageByQuestionId.size > 0) {
+    stages = {}
+    for (const stage of ALL_STAGES) {
+      const ids = [...stageByQuestionId.entries()]
+        .filter(([, st]) => st === stage)
+        .map(([id]) => id)
+      const v = calcCategoryScore(responses, ids)
+      if (v !== null) stages[stage] = round1(v) as number
+    }
+    if (Object.keys(stages).length === 0) stages = null
+  }
 
   return {
     score: round1(totalScore),
     why: round1(whyScore),
     how: round1(howScore),
     what: round1(whatScore),
+    stages,
     survey_id: survey.id,
     response_rate: responseRate,
   }
@@ -379,6 +398,7 @@ export async function calculateSnapshot(
     inner_why: inner.why,
     inner_how: inner.how,
     inner_what: inner.what,
+    inner_stages: inner.stages,
     inner_survey_id: inner.survey_id,
     inner_response_rate: inner.response_rate,
     outer_score: outer.score,

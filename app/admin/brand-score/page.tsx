@@ -618,7 +618,7 @@ export default function BrandScoreDashboard() {
       </div>
 
       {/* ── 2. 総合ブランドスコアカード ── */}
-      <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-6">
+      <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-4">
         <CardContent className="p-6">
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm text-muted-foreground">総合ブランドスコア</span>
@@ -664,7 +664,7 @@ export default function BrandScoreDashboard() {
       </Card>
 
       {/* ── 2.5. スコア推移グラフ ── */}
-      <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-6">
+      <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-4">
         <CardContent className="p-5">
           <h2 className="text-xs font-bold text-foreground mb-4 flex items-center gap-1.5">
             <TrendingUp size={14} />
@@ -1058,7 +1058,7 @@ export default function BrandScoreDashboard() {
 
       {/* ── 4. 印象タグ分布 ── */}
       {hasMicroFb && (
-        <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-6">
+        <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-4">
           <CardContent className="p-5">
             <h2 className="text-xs font-bold text-foreground mb-1 flex items-center gap-1.5">
               <MessageSquare size={14} />
@@ -1115,7 +1115,7 @@ export default function BrandScoreDashboard() {
 
       {/* ── 5. ギャップ分析 ── */}
       {hasMicroFb && hasTagMappings && (
-        <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-6">
+        <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-4">
           <CardContent className="p-5">
             <h2 className="text-xs font-bold text-foreground mb-4 flex items-center gap-1.5">
               <AlertTriangle size={14} />
@@ -1200,7 +1200,7 @@ export default function BrandScoreDashboard() {
 
       {/* ── 6. 部署別ヒートマップ ── */}
       {hasInner && innerScore!.by_department.length > 0 && (
-        <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-6">
+        <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-4">
           <CardContent className="p-5">
             <h2 className="text-xs font-bold text-foreground mb-4">部署別スコア</h2>
             <div className="rounded-md border overflow-hidden">

@@ -32,14 +32,6 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import {
   Accordion,
   AccordionContent,
   AccordionItem,
@@ -77,6 +69,21 @@ import {
   Check,
 } from 'lucide-react'
 import { Fab, FabButton } from '@/components/ui/fab'
+import {
+  calcFunnel,
+  resolveStage,
+  FUNNEL_STAGES,
+  ALL_STAGES,
+  INFLECTION_STAGE,
+  STAGE_LABELS,
+  STAGE_QUESTIONS,
+  STAGE_STATES,
+  PATTERN_LABELS,
+  PATTERN_MEANINGS,
+  type FunnelStage,
+  type FunnelInputQuestion,
+  type GroupFunnel,
+} from '@/lib/brand-score/funnel-stages'
 
 // 型定義
 type Survey = {
@@ -128,6 +135,12 @@ type InnerScoreData = {
     question_id: string; question_text: string; category: string
     avg_score: number | null; count: number
   }[]
+  /** 浸透段階の集計。段階が解決できないサーベイでは null */
+  funnel: {
+    pass_threshold: number
+    overall: GroupFunnel
+    by_department: GroupFunnel[]
+  } | null
 }
 
 // スコア色分け（0-100）
@@ -147,15 +160,6 @@ function getScoreProgressColor(score: number | null): string {
   return '[&>div]:bg-red-500'
 }
 
-// ヒートマップセル背景色（0-100）
-function getHeatmapBg(score: number | null): string {
-  if (score === null) return ''
-  if (score >= 80) return 'bg-green-50 text-green-700'
-  if (score >= 60) return 'bg-blue-50 text-ds-app-accent-hover'
-  if (score >= 40) return 'bg-amber-50 text-amber-700'
-  return 'bg-red-50 text-red-700'
-}
-
 // 設問別スコアバー色（1-5）
 function getQuestionBarColor(avg: number | null): string {
   if (avg === null) return 'bg-muted'
@@ -171,13 +175,6 @@ function getRankBadgeClass(rank: string): string {
   if (rank === 'B+' || rank === 'B') return 'bg-amber-100 text-amber-700 border-amber-200'
   if (rank === 'C' || rank === 'D') return 'bg-red-100 text-red-700 border-red-200'
   return 'bg-gray-100 text-gray-500 border-gray-200'
-}
-
-// 役職カテゴリ表示名
-const ROLE_LABELS: Record<string, string> = {
-  executive: '経営層',
-  manager: '管理職',
-  staff: '一般',
 }
 
 // ステータスバッジ定義
@@ -298,6 +295,10 @@ export default function SurveyDetailPage() {
   const [loading, setLoading] = useState(true)
 
   // インナースコア
+  // 設問別スコアの表示軸（構成要素 / 浸透段階）
+  // 既定は浸透段階（評価軸を5段階に統一したため）。
+  // 段階が解決できないサーベイでは構成要素にフォールバックする（下の effectiveAxis）
+  const [questionAxis, setQuestionAxis] = useState<'category' | 'stage'>('stage')
   const [innerScore, setInnerScore] = useState<InnerScoreData | null>(null)
   const [innerScoreLoading, setInnerScoreLoading] = useState(false)
 
@@ -658,6 +659,98 @@ export default function SurveyDetailPage() {
     return [...questions].sort((a, b) => a.sort_order - b.sort_order)
   }, [questions])
 
+  // ブランド浸透ジャーニー
+  // inner-score の by_question（スコア）と questions（sort_order・reference_data）を
+  // question_id で結合して算出する。API 追加は不要。
+  const funnel = useMemo(() => {
+    if (!innerScore || questions.length === 0) return null
+    const byId = new Map(questions.map(q => [q.id, q]))
+    const input: FunnelInputQuestion[] = []
+    for (const bq of innerScore.by_question) {
+      const q = byId.get(bq.question_id)
+      if (!q) continue
+      input.push({
+        questionId: bq.question_id,
+        questionText: bq.question_text,
+        sortOrder: q.sort_order,
+        category: bq.category,
+        avgScore: bq.avg_score,
+        count: bq.count,
+        referenceData: q.reference_data,
+      })
+    }
+    return calcFunnel(input)
+  }, [innerScore, questions])
+
+  // ── 案B/案C 用の参照ヘルパー ──
+  // 段階スコアは API の funnel（全回答から算出）を正とする。
+  // 画面側の calcFunnel は設問別スコア由来なので、最下位設問など補助情報に使う。
+  const funnelData = innerScore?.funnel ?? null
+
+  const stageScoreOf = (stage: FunnelStage): number | null =>
+    funnelData?.overall.stageScores.find(s => s.stage === stage)?.score ?? null
+
+  const deptGroup = (department: string): GroupFunnel | undefined =>
+    funnelData?.by_department.find(g => g.department === department)
+
+  const deptStageScore = (department: string, stage: FunnelStage): number | null =>
+    deptGroup(department)?.stageScores.find(s => s.stage === stage)?.score ?? null
+
+  const deptPass = (department: string, stage: FunnelStage): number | null =>
+    deptGroup(department)?.cumulative.find(p => p.stage === stage)?.rate ?? null
+
+  // 5段階のうちスコア最小（環境・成果は含めない）
+  const weakestStage: FunnelStage | null = funnelData
+    ? FUNNEL_STAGES.reduce<FunnelStage | null>((min, stage) => {
+        const v = stageScoreOf(stage)
+        if (v === null) return min
+        if (min === null) return stage
+        return v < (stageScoreOf(min) ?? Infinity) ? stage : min
+      }, null)
+    : null
+
+  // 本社と現場の差が最大の段階
+  const maxGap = funnelData
+    ? FUNNEL_STAGES.reduce<{ stage: FunnelStage; bo: number; sp: number; gap: number } | null>(
+        (max, stage) => {
+          const bo = deptStageScore('BO本社', stage)
+          const sp = deptStageScore('SP', stage)
+          if (bo === null || sp === null) return max
+          const gap = Math.abs(sp - bo)
+          return !max || gap > max.gap ? { stage, bo, sp, gap } : max
+        },
+        null
+      )
+    : null
+
+  // 段階 → その段階に属する設問（設問別スコアの浸透段階ビュー用）
+  const questionsByStage = useMemo(() => {
+    if (!innerScore || questions.length === 0) return null
+    const byId = new Map(questions.map(q => [q.id, q]))
+    const total = innerScore.by_question.filter(bq => byId.has(bq.question_id)).length
+    const map = new Map<FunnelStage, InnerScoreData['by_question']>()
+    for (const bq of innerScore.by_question) {
+      const q = byId.get(bq.question_id)
+      if (!q) continue
+      const stage = resolveStage(q.sort_order, total, q.reference_data)
+      if (!stage) continue
+      if (!map.has(stage)) map.set(stage, [])
+      map.get(stage)!.push(bq)
+    }
+    // 各グループ内はスコア昇順
+    for (const list of map.values()) {
+      list.sort((a, b) => (a.avg_score ?? 99) - (b.avg_score ?? 99))
+    }
+    return map
+  }, [innerScore, questions])
+
+  // 実際に描画する軸。段階が解決できないサーベイでは浸透段階を選べないので、
+  // 既定が 'stage' でも構成要素にフォールバックさせる（空表示を防ぐ）
+  const effectiveAxis: 'category' | 'stage' =
+    questionAxis === 'stage' && questionsByStage && questionsByStage.size > 0
+      ? 'stage'
+      : 'category'
+
   // ── ローディング ──
   if (loading) {
     return (
@@ -667,7 +760,7 @@ export default function SurveyDetailPage() {
           <Skeleton className="h-8 w-64" />
           <Skeleton className="h-5 w-16" />
         </div>
-        <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-6">
+        <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-4">
           <CardContent className="p-5">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[1, 2, 3, 4].map(i => (
@@ -826,7 +919,8 @@ export default function SurveyDetailPage() {
       </div>
 
       {/* ── 2. サーベイ情報カード ── */}
-      <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-6">
+      {/* 概要カード。以降のカード間隔（space-y-4 = 16px）に合わせる */}
+      <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-4">
         <CardContent className="p-5">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
@@ -920,13 +1014,13 @@ export default function SurveyDetailPage() {
               </Card>
             </div>
           ) : innerScore && innerScore.response_count > 0 ? (
-            <div className="space-y-4">
-              {/* 4-2. スコアカード横並び */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {/* 総合インナースコア */}
+            <div className="space-y-4">              {/* 4-2. スコアカード列（総合 + 5段階） */}
+              {/* 評価軸は5段階に統一。WHY/HOW/WHAT は構成要素の内訳として設問別セクションに残す */}
+              {/* 総合は独立カード、5段階は1枚にまとめる（段階は一連の流れなのでカードで分断しない） */}
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(150px,1fr)_3fr]">
                 <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
                   <CardContent className="p-4 text-center">
-                    <p className="text-xs text-muted-foreground mb-1">総合インナースコア</p>
+                    <p className="text-xs text-muted-foreground mb-1">総合</p>
                     <div className="flex items-center justify-center gap-2 mb-2">
                       <span className={`text-3xl font-bold ${getScoreColor(innerScore.scores.total)}`}>
                         {innerScore.scores.total !== null ? innerScore.scores.total.toFixed(1) : '-'}
@@ -941,135 +1035,276 @@ export default function SurveyDetailPage() {
                     />
                   </CardContent>
                 </Card>
-                {/* WHY */}
+
                 <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-                  <CardContent className="p-4 text-center">
-                    <p className="text-xs text-muted-foreground mb-1">理念浸透（WHY）</p>
-                    <span className={`text-2xl font-bold ${getScoreColor(innerScore.scores.why)}`}>
-                      {innerScore.scores.why !== null ? innerScore.scores.why.toFixed(1) : '-'}
-                    </span>
-                    <Progress
-                      value={innerScore.scores.why ?? 0}
-                      className={`h-1.5 mt-2 ${getScoreProgressColor(innerScore.scores.why)}`}
-                    />
-                  </CardContent>
-                </Card>
-                {/* HOW */}
-                <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-                  <CardContent className="p-4 text-center">
-                    <p className="text-xs text-muted-foreground mb-1">方針共感（HOW）</p>
-                    <span className={`text-2xl font-bold ${getScoreColor(innerScore.scores.how)}`}>
-                      {innerScore.scores.how !== null ? innerScore.scores.how.toFixed(1) : '-'}
-                    </span>
-                    <Progress
-                      value={innerScore.scores.how ?? 0}
-                      className={`h-1.5 mt-2 ${getScoreProgressColor(innerScore.scores.how)}`}
-                    />
-                  </CardContent>
-                </Card>
-                {/* WHAT */}
-                <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-                  <CardContent className="p-4 text-center">
-                    <p className="text-xs text-muted-foreground mb-1">行動体現（WHAT）</p>
-                    <span className={`text-2xl font-bold ${getScoreColor(innerScore.scores.what)}`}>
-                      {innerScore.scores.what !== null ? innerScore.scores.what.toFixed(1) : '-'}
-                    </span>
-                    <Progress
-                      value={innerScore.scores.what ?? 0}
-                      className={`h-1.5 mt-2 ${getScoreProgressColor(innerScore.scores.what)}`}
-                    />
+                  <CardContent className="p-4">
+                    <div className="grid grid-cols-5 gap-2">
+                      {FUNNEL_STAGES.map((stage, i) => {
+                        const s = stageScoreOf(stage)
+                        const isInflection = stage === INFLECTION_STAGE
+                        const isWeakest = weakestStage === stage
+                        return (
+                          <div
+                            key={stage}
+                            className={`rounded-lg px-2 py-1.5 text-center ${isInflection ? 'bg-indigo-50 ring-1 ring-indigo-200' : ''}`}
+                          >
+                            <p className="m-0 text-xs text-muted-foreground">
+                              {i + 1}. {STAGE_LABELS[stage]}
+                            </p>
+                            <span className={`text-xl font-bold ${isWeakest ? 'text-orange-600' : getScoreColor(s)}`}>
+                              {s !== null ? s.toFixed(1) : '-'}
+                            </span>
+                            <Progress
+                              value={s ?? 0}
+                              className={`h-1.5 mt-1.5 ${isWeakest ? '[&>div]:bg-orange-500' : getScoreProgressColor(s)}`}
+                            />
+                            {/* 反転点以外も同じ高さを保つため、非表示ではなく透明にする */}
+                            <p className={`m-0 mt-1 text-[10px] font-semibold ${isInflection ? 'text-indigo-600' : 'text-transparent'}`}>
+                              反転点
+                            </p>
+                          </div>
+                        )
+                      })}
+                    </div>
                   </CardContent>
                 </Card>
               </div>
 
-              {/* 4-3. 役職別スコア */}
-              {innerScore.by_role.length > 0 && (
+              {/* 4-2c. 案B: 段階別の詳細 */}
+              {funnelData && (
                 <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
                   <CardContent className="p-5">
-                    <h3 className="text-sm font-bold text-foreground mb-3">役職別スコア</h3>
-                    <div className="rounded-md border overflow-hidden">
-                      <Table>
-                        <TableHeader>
-                          <TableRow className="bg-muted/40">
-                            <TableHead className="text-xs font-semibold">役職カテゴリ</TableHead>
-                            <TableHead className="text-xs font-semibold text-center">WHY</TableHead>
-                            <TableHead className="text-xs font-semibold text-center">HOW</TableHead>
-                            <TableHead className="text-xs font-semibold text-center">WHAT</TableHead>
-                            <TableHead className="text-xs font-semibold text-center">総合</TableHead>
-                            <TableHead className="text-xs font-semibold text-center">回答数</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {innerScore.by_role.map(r => (
-                            <TableRow key={r.role_category}>
-                              <TableCell className="text-sm font-medium">
-                                {ROLE_LABELS[r.role_category] || r.role_category}
-                              </TableCell>
-                              <TableCell className={`text-sm text-center font-semibold ${getScoreColor(r.why)}`}>
-                                {r.why !== null ? r.why.toFixed(1) : '-'}
-                              </TableCell>
-                              <TableCell className={`text-sm text-center font-semibold ${getScoreColor(r.how)}`}>
-                                {r.how !== null ? r.how.toFixed(1) : '-'}
-                              </TableCell>
-                              <TableCell className={`text-sm text-center font-semibold ${getScoreColor(r.what)}`}>
-                                {r.what !== null ? r.what.toFixed(1) : '-'}
-                              </TableCell>
-                              <TableCell className={`text-sm text-center font-bold ${getScoreColor(r.total)}`}>
-                                {r.total !== null ? r.total.toFixed(1) : '-'}
-                              </TableCell>
-                              <TableCell className="text-sm text-center text-muted-foreground">
-                                {r.count}人
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+                    <div className="flex items-start justify-between gap-3 mb-1">
+                      <h3 className="text-sm font-bold text-foreground">段階別の詳細</h3>
+                      {funnel && (
+                        <Badge variant="outline" className="text-[10px] shrink-0 bg-background">
+                          {PATTERN_LABELS[funnel.pattern]}
+                        </Badge>
+                      )}
                     </div>
+                    {funnel && (
+                      <p className="text-xs text-muted-foreground leading-relaxed mb-4">
+                        {PATTERN_MEANINGS[funnel.pattern]}
+                      </p>
+                    )}
+
+                    <div>
+                      {FUNNEL_STAGES.map((stage, i) => {
+                        const s = stageScoreOf(stage)
+                        const summary = funnel?.stages.find(x => x.stage === stage)
+                        const t = i > 0 ? funnel?.transitions[i - 1] : null
+                        const isWeakest = weakestStage === stage
+                        const isBottleneck =
+                          !!t && !!funnel && t.from === funnel.bottleneck.from && t.to === funnel.bottleneck.to
+                        const boScore = deptStageScore('BO本社', stage)
+                        const spScore = deptStageScore('SP', stage)
+                        const gap =
+                          boScore !== null && spScore !== null ? Math.abs(spScore - boScore) : null
+
+                        return (
+                          <div key={stage}>
+                            {/* 段階の間の転換率 */}
+                            {t && (
+                              <div className="flex items-center gap-2 py-1.5 pl-[124px]">
+                                <span className="text-muted-foreground text-xs">↓</span>
+                                <span className={`text-xs font-semibold ${t.delta >= 0 ? 'text-green-600' : 'text-orange-600'}`}>
+                                  {t.delta >= 0 ? '+' : ''}{t.delta.toFixed(1)}pt
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                  転換率 {t.rate.toFixed(1)}%
+                                </span>
+                                {isBottleneck && (
+                                  <Badge className="bg-orange-100 text-orange-700 border-orange-200 text-[9px] px-1.5 py-0">
+                                    最大の漏れ
+                                  </Badge>
+                                )}
+                              </div>
+                            )}
+
+                            {/* 反転点の区切り */}
+                            {stage === INFLECTION_STAGE && (
+                              <div className="my-2 flex items-center gap-2">
+                                <span className="flex-1 border-t border-dashed border-indigo-300" />
+                                <span className="text-[10px] text-indigo-600 whitespace-nowrap">
+                                  ここから先は「受け取る」から「渡す」に変わる
+                                </span>
+                                <span className="flex-1 border-t border-dashed border-indigo-300" />
+                              </div>
+                            )}
+
+                            <div className="flex items-start gap-3 py-2">
+                              {/* 左: 段階名 */}
+                              <div className="w-[124px] shrink-0">
+                                <p className="m-0 text-sm font-bold text-foreground">
+                                  {i + 1}. {STAGE_LABELS[stage]}
+                                </p>
+                                <p className="m-0 text-[10px] text-muted-foreground">
+                                  {STAGE_QUESTIONS[stage]}・{summary?.questionCount ?? 0}問
+                                </p>
+                              </div>
+
+                              {/* 中央: バー + 部門の丸印 */}
+                              <div className="min-w-0 flex-1 pt-1">
+                                <div className="relative h-2.5 rounded-full bg-muted">
+                                  <div
+                                    className={`h-full rounded-full ${isWeakest ? 'bg-orange-500' : 'bg-ds-app-accent-soft'}`}
+                                    style={{ width: `${s ?? 0}%` }}
+                                  />
+                                  {boScore !== null && (
+                                    <span
+                                      className="absolute top-1/2 size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white bg-orange-500"
+                                      style={{ left: `${boScore}%` }}
+                                      title={`本社 ${boScore.toFixed(1)}`}
+                                    />
+                                  )}
+                                  {spScore !== null && (
+                                    <span
+                                      className="absolute top-1/2 size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white bg-green-500"
+                                      style={{ left: `${spScore}%` }}
+                                      title={`現場 ${spScore.toFixed(1)}`}
+                                    />
+                                  )}
+                                </div>
+                                {/* この段階の最下位設問 */}
+                                {summary?.weakest && (
+                                  <p className="m-0 mt-1.5 text-[10px] text-muted-foreground leading-snug">
+                                    この段階の最下位　{summary.weakest.questionText}
+                                    <span className="font-semibold text-foreground">
+                                      {summary.weakest.avgScore.toFixed(2)}
+                                    </span>
+                                  </p>
+                                )}
+                              </div>
+
+                              {/* 右: スコアと部門値 */}
+                              {/* 「本社54.5 / 現場62.3」が1行に収まる幅を確保する */}
+                              <div className="w-[140px] shrink-0 text-right">
+                                <p className={`m-0 text-base font-bold ${isWeakest ? 'text-orange-600' : 'text-foreground'}`}>
+                                  {s !== null ? s.toFixed(1) : '-'}
+                                </p>
+                                {(boScore !== null || spScore !== null) && (
+                                  <p className={`m-0 whitespace-nowrap text-[10px] ${gap !== null && gap >= 10 ? 'text-orange-600 font-semibold' : 'text-muted-foreground'}`}>
+                                    本社{boScore?.toFixed(1) ?? '-'} / 現場{spScore?.toFixed(1) ?? '-'}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+
+                    {/* 凡例 */}
+                    <div className="mt-3 flex flex-wrap items-center gap-4 text-[10px] text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <span className="inline-block size-2.5 rounded-full bg-orange-500" />本社（BO）
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <span className="inline-block size-2.5 rounded-full bg-green-500" />現場（SP）
+                      </span>
+                      <span>転換率の100%超えは、順序が飛ばされているサインです</span>
+                    </div>
+
+                    {maxGap && (
+                      <p className="m-0 mt-2 text-[10px] leading-relaxed text-muted-foreground">
+                        {STAGE_LABELS[maxGap.stage]}の本社{maxGap.bo.toFixed(1)}／現場{maxGap.sp.toFixed(1)}が、
+                        5段階で最大の{maxGap.gap.toFixed(1)}pt差です。
+                      </p>
+                    )}
                   </CardContent>
                 </Card>
               )}
 
-              {/* 4-4. 部署別ヒートマップ */}
-              {innerScore.by_department.length > 0 && (
+              {/* 4-2d. 案C: 段階の通過率 */}
+              {funnelData && (
                 <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
                   <CardContent className="p-5">
-                    <h3 className="text-sm font-bold text-foreground mb-3">部署別スコア</h3>
-                    <div className="rounded-md border overflow-hidden">
-                      <Table>
-                        <TableHeader>
-                          <TableRow className="bg-muted/40">
-                            <TableHead className="text-xs font-semibold">部署</TableHead>
-                            <TableHead className="text-xs font-semibold text-center">WHY</TableHead>
-                            <TableHead className="text-xs font-semibold text-center">HOW</TableHead>
-                            <TableHead className="text-xs font-semibold text-center">WHAT</TableHead>
-                            <TableHead className="text-xs font-semibold text-center">総合</TableHead>
-                            <TableHead className="text-xs font-semibold text-center">回答数</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {innerScore.by_department.map(d => (
-                            <TableRow key={d.department}>
-                              <TableCell className="text-sm font-medium">{d.department}</TableCell>
-                              <TableCell className={`text-sm text-center font-semibold ${getHeatmapBg(d.why)}`}>
-                                {d.why !== null ? d.why.toFixed(1) : '-'}
-                              </TableCell>
-                              <TableCell className={`text-sm text-center font-semibold ${getHeatmapBg(d.how)}`}>
-                                {d.how !== null ? d.how.toFixed(1) : '-'}
-                              </TableCell>
-                              <TableCell className={`text-sm text-center font-semibold ${getHeatmapBg(d.what)}`}>
-                                {d.what !== null ? d.what.toFixed(1) : '-'}
-                              </TableCell>
-                              <TableCell className={`text-sm text-center font-bold ${getHeatmapBg(d.total)}`}>
-                                {d.total !== null ? d.total.toFixed(1) : '-'}
-                              </TableCell>
-                              <TableCell className="text-sm text-center text-muted-foreground">
-                                {d.count}人
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+                    <h3 className="text-sm font-bold text-foreground mb-1">段階の通過率</h3>
+                    <p className="text-xs text-muted-foreground leading-relaxed mb-4">
+                      スコアではなく人数。その段階まで<span className="font-semibold text-foreground">すべて</span>通過した人の割合
+                      （各段階の平均{funnelData.pass_threshold}点以上を通過とする）
+                    </p>
+
+                    <div>
+                      {FUNNEL_STAGES.map((stage, i) => {
+                        const cum = funnelData.overall.cumulative.find(x => x.stage === stage)
+                        const solo = funnelData.overall.standalone.find(x => x.stage === stage)
+                        const prev = i > 0 ? funnelData.overall.cumulative[i - 1] : null
+                        const drop = prev && cum ? cum.rate - prev.rate : null
+                        const bo = deptPass('BO本社', stage)
+                        const sp = deptPass('SP', stage)
+
+                        return (
+                          <div key={stage}>
+                            {drop !== null && (
+                              <div className="py-1 pl-[124px] text-[10px] text-orange-600">
+                                {drop.toFixed(1)}pt 脱落
+                              </div>
+                            )}
+
+                            {stage === INFLECTION_STAGE && (
+                              <div className="my-2 flex items-center gap-2">
+                                <span className="flex-1 border-t border-dashed border-indigo-300" />
+                                <span className="text-[10px] text-indigo-600 whitespace-nowrap">反転点</span>
+                                <span className="flex-1 border-t border-dashed border-indigo-300" />
+                              </div>
+                            )}
+
+                            <div className="flex items-center gap-3 py-1.5">
+                              <div className="w-[124px] shrink-0">
+                                <p className="m-0 text-sm font-bold text-foreground">
+                                  {i + 1}. {STAGE_LABELS[stage]}
+                                </p>
+                                <p className="m-0 text-[10px] text-muted-foreground">
+                                  単独では {solo?.rate.toFixed(1)}%
+                                </p>
+                              </div>
+
+                              <div className="min-w-0 flex-1">
+                                <div className="h-6 rounded bg-muted">
+                                  <div
+                                    className="flex h-full items-center justify-end gap-2 rounded bg-ds-app-accent-soft px-2"
+                                    style={{ width: `${cum?.rate ?? 0}%` }}
+                                  >
+                                    <span className="text-[10px] font-bold text-white whitespace-nowrap">
+                                      {cum?.rate.toFixed(1)}%
+                                    </span>
+                                    <span className="text-[10px] text-white/80 whitespace-nowrap">
+                                      {cum?.count}人
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* 案Bの右カラムと幅を揃える */}
+                              <div className="w-[140px] shrink-0 text-right">
+                                <p className="m-0 whitespace-nowrap text-[10px] text-orange-600">
+                                  本社 {bo !== null ? `${bo.toFixed(1)}%` : '-'}
+                                </p>
+                                <p className="m-0 whitespace-nowrap text-[10px] text-green-600">
+                                  現場 {sp !== null ? `${sp.toFixed(1)}%` : '-'}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })}
                     </div>
+
+                    {(() => {
+                      const last = funnelData.overall.cumulative[FUNNEL_STAGES.length - 1]
+                      const first = funnelData.overall.cumulative[0]
+                      const boLast = deptPass('BO本社', FUNNEL_STAGES[FUNNEL_STAGES.length - 1])
+                      if (!last || !first) return null
+                      return (
+                        <p className="m-0 mt-3 text-[10px] leading-relaxed text-muted-foreground">
+                          5段階すべてを通過しているのは全社{last.rate.toFixed(1)}%
+                          {boLast !== null && `、本社では${boLast.toFixed(1)}%`}。
+                          最大の脱落は入口の{STAGE_LABELS[FUNNEL_STAGES[0]]}で、
+                          全社の{(100 - first.rate).toFixed(1)}%が最初の関門で落ちています。
+                        </p>
+                      )
+                    })()}
                   </CardContent>
                 </Card>
               )}
@@ -1077,8 +1312,35 @@ export default function SurveyDetailPage() {
               {/* 4-5. 設問別スコア（アコーディオン） */}
               <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
                 <CardContent className="p-5">
-                  <h3 className="text-sm font-bold text-foreground mb-4">設問別スコア</h3>
-                  <div>
+                  <div className="flex items-center justify-between gap-3 mb-4">
+                    <h3 className="text-sm font-bold text-foreground">設問別スコア</h3>
+                    {/* 軸切替。段階が解決できないサーベイでは出さない */}
+                    {questionsByStage && questionsByStage.size > 0 && (
+                      <div className="flex rounded-md border bg-background p-0.5 text-xs">
+                        {([
+                          { key: 'stage', label: '浸透段階' },
+                          { key: 'category', label: '構成要素' },
+                        ] as const).map(opt => (
+                          <button
+                            key={opt.key}
+                            type="button"
+                            onClick={() => setQuestionAxis(opt.key)}
+                            className={`px-2.5 py-1 rounded transition-colors ${
+                              effectiveAxis === opt.key
+                                ? 'bg-foreground text-background font-semibold'
+                                : 'text-muted-foreground hover:text-foreground'
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 構成要素ビュー（既存） */}
+                  {effectiveAxis === 'category' && (
+                    <div>
                         {(['why', 'how', 'what'] as const).map(cat => {
                           const catQuestions = innerScore.by_question.filter(q => q.category === cat)
                           if (catQuestions.length === 0) return null
@@ -1122,7 +1384,72 @@ export default function SurveyDetailPage() {
                             </div>
                           )
                         })}
-                  </div>
+                    </div>
+                  )}
+
+                  {/* 浸透段階ビュー */}
+                  {effectiveAxis === 'stage' && questionsByStage && (
+                    <div>
+                      {ALL_STAGES.map(stage => {
+                        const list = questionsByStage.get(stage)
+                        if (!list || list.length === 0) return null
+                        const summary = funnel?.stages.find(s => s.stage === stage)
+                        // グループ内最下位（昇順ソート済みなので先頭）
+                        const worstId = list[0]?.question_id
+                        return (
+                          <div key={stage} className="mb-5 last:mb-0">
+                            <div className="flex items-baseline gap-2 mb-2 flex-wrap">
+                              <p className="text-xs font-bold text-foreground">{STAGE_LABELS[stage]}</p>
+                              <p className="text-[10px] text-muted-foreground">{STAGE_STATES[stage]}</p>
+                              <span className="text-[10px] text-muted-foreground ml-auto">
+                                {summary ? `スコア ${summary.score.toFixed(1)} / ` : ''}{list.length}問
+                              </span>
+                            </div>
+                            <div className="space-y-2">
+                              {list.map(q => {
+                                // グループ内最下位「かつ」3.5未満のときだけ強調する。
+                                // 共感のように全体が高い群で最下位に警告色が付くと誤読を招くため。
+                                const isLow =
+                                  q.question_id === worstId &&
+                                  q.avg_score !== null &&
+                                  q.avg_score < 3.5
+                                return (
+                                  <div
+                                    key={q.question_id}
+                                    className={`flex items-center gap-3 py-2 px-3 rounded-md ${isLow ? 'bg-orange-50 border border-orange-200' : 'bg-background'}`}
+                                  >
+                                    {/* 軸を切り替えても対応が追えるよう現行カテゴリを出す */}
+                                    <span className="shrink-0 rounded bg-muted px-1 py-0.5 text-[9px] font-medium text-muted-foreground uppercase w-9 text-center">
+                                      {q.category}
+                                    </span>
+                                    <div className="flex-1 min-w-0">
+                                      <p className={`text-sm leading-relaxed ${isLow ? 'text-orange-800' : 'text-foreground'}`}>
+                                        {q.question_text}
+                                      </p>
+                                    </div>
+                                    <div className="flex items-center gap-3 shrink-0">
+                                      <div className="w-20 h-2 bg-muted rounded-full overflow-hidden">
+                                        <div
+                                          className={`h-full rounded-full transition-all ${getQuestionBarColor(q.avg_score)}`}
+                                          style={{ width: `${q.avg_score !== null ? (q.avg_score / 5) * 100 : 0}%` }}
+                                        />
+                                      </div>
+                                      <span className={`text-sm font-bold w-8 text-right ${isLow ? 'text-orange-700' : 'text-foreground'}`}>
+                                        {q.avg_score !== null ? q.avg_score.toFixed(1) : '-'}
+                                      </span>
+                                      <span className="text-[10px] text-muted-foreground w-10 text-right">
+                                        {q.count}件
+                                      </span>
+                                    </div>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>

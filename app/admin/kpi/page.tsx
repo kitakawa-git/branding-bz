@@ -591,8 +591,8 @@ export default function AdminKpiPage() {
     return (
       <div>
         <Skeleton className="h-8 w-32 mb-6" />
-        <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-6"><CardContent className="p-5"><Skeleton className="h-5 w-40 mb-4" /><div className="flex gap-3"><Skeleton className="h-9 w-[180px]" /><Skeleton className="h-9 w-[180px]" /><Skeleton className="h-9 w-[180px]" /></div></CardContent></Card>
-        {[1, 2, 3, 4].map(i => <Card key={i} className="bg-[hsl(0_0%_97%)] border shadow-none mb-3"><CardContent className="p-4"><div className="flex items-center gap-3"><Skeleton className="size-9 rounded-full" /><Skeleton className="h-4 w-24" /><Skeleton className="h-3 w-32 ml-auto" /></div></CardContent></Card>)}
+        <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-4"><CardContent className="p-5"><Skeleton className="h-5 w-40 mb-4" /><div className="flex gap-3"><Skeleton className="h-9 w-[180px]" /><Skeleton className="h-9 w-[180px]" /><Skeleton className="h-9 w-[180px]" /></div></CardContent></Card>
+        {[1, 2, 3, 4].map(i => <Card key={i} className="bg-[hsl(0_0%_97%)] border shadow-none mb-4"><CardContent className="p-4"><div className="flex items-center gap-3"><Skeleton className="size-9 rounded-full" /><Skeleton className="h-4 w-24" /><Skeleton className="h-3 w-32 ml-auto" /></div></CardContent></Card>)}
       </div>
     )
   }
@@ -601,7 +601,7 @@ export default function AdminKpiPage() {
     <div>
       {/* ===== 承認待ちバナー ===== */}
       {pendingPeriod && isPeriodExpired && (
-        <Card className="bg-amber-50 border-amber-200 shadow-none mb-6">
+        <Card className="bg-amber-50 border-amber-200 shadow-none mb-4">
           <CardContent className="p-5">
             <div className="flex items-center gap-2 mb-3">
               <Clock size={16} className="text-amber-600" />
@@ -640,7 +640,7 @@ export default function AdminKpiPage() {
       )}
 
       {/* ===== ゴール期間設定 ===== */}
-      <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-6">
+      <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-4">
         <CardContent className="p-5">
           <div className="flex items-center gap-2 mb-4">
             <CalendarDays size={16} className="text-muted-foreground" />

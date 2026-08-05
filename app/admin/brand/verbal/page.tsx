@@ -443,7 +443,7 @@ export default function VerbalIdentityPage() {
 
   if (loading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* コミュニケーションスタイル（コピー＋説明文） */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-5 space-y-3">
@@ -485,7 +485,7 @@ export default function VerbalIdentityPage() {
   return (
     <div>
       {/* タイトルはヘッダーのパンくずに移管 */}
-      <form id="verbal-form" onSubmit={handleSubmit} className="space-y-6">
+      <form id="verbal-form" onSubmit={handleSubmit} className="space-y-4">
         {/* カード1: コミュニケーションスタイル＋表現ルール（統合） */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-5 space-y-8">

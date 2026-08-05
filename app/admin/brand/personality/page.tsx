@@ -283,7 +283,7 @@ export default function BrandPersonalityPage() {
 
   if (loading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* パーソナリティ概要 */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-5 space-y-3">
@@ -326,7 +326,7 @@ export default function BrandPersonalityPage() {
   return (
     <div>
       {/* タイトルはヘッダーのパンくずに移管 */}
-      <form id="personality-form" onSubmit={handleSubmit} className="space-y-6">
+      <form id="personality-form" onSubmit={handleSubmit} className="space-y-4">
         {/* パーソナリティ概要＋特性（1カードに統合） */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-5 space-y-6">

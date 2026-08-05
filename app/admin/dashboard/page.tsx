@@ -431,7 +431,7 @@ export default function DashboardPage() {
           <Skeleton className="h-5 w-32 mb-2" />
           <Skeleton className="h-5 w-28 mb-2" />
         </div>
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-3 mb-3">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4 mb-4">
           {[1, 2, 3, 4].map(i => (
             <Card key={i} className="bg-[hsl(0_0%_97%)] border shadow-none">
               <CardContent className="p-5 pb-3">
@@ -444,7 +444,7 @@ export default function DashboardPage() {
             </Card>
           ))}
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
             <CardContent className="p-5">
               <Skeleton className="h-4 w-40 mb-4" />
@@ -525,7 +525,7 @@ export default function DashboardPage() {
       </div>
 
       {/* === サマリーカード === */}
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-3 mb-3">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4 mb-4">
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-5 pb-3">
             <div className="flex items-center gap-2 mb-3">
@@ -584,7 +584,7 @@ export default function DashboardPage() {
       </div>
 
       {/* === 月別投稿数の推移 === */}
-      <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-3">
+      <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-4">
         <CardContent className="p-5">
           <div className="flex items-center gap-2 mb-3">
             <BarChart3 size={18} className="text-foreground" />
@@ -640,7 +640,7 @@ export default function DashboardPage() {
       </Card>
 
       {/* === カテゴリ分布 + 利用率 === */}
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(360px,1fr))] gap-3 mb-3">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(360px,1fr))] gap-4 mb-4">
         {/* カテゴリ分布 */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-5">
@@ -731,7 +731,7 @@ export default function DashboardPage() {
       </div>
 
       {/* === 個人別投稿ランキング + ストリーク === */}
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(360px,1fr))] gap-3">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(360px,1fr))] gap-4">
         {/* 個人別ランキング */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-5">

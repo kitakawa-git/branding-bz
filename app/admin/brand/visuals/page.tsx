@@ -865,7 +865,7 @@ export default function BrandVisualsPage() {
 
   if (loading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* ロゴ基本形＋ロゴコンセプト＋ロゴガイドライン */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-5 space-y-4">
@@ -932,7 +932,7 @@ export default function BrandVisualsPage() {
 
   return (
     <div>
-      <form id="visuals-form" onSubmit={handleSubmit} className="space-y-8">
+      <form id="visuals-form" onSubmit={handleSubmit} className="space-y-4">
         {/* カード1: ロゴ基本形＆ロゴコンセプト＆ロゴガイドライン */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-5">

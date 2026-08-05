@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { fetchAllRows } from '@/lib/brand-score/fetch-all-rows'
+import {
+  resolveStage,
+  calcGroupFunnels,
+  PASS_THRESHOLD,
+  type FunnelStage,
+  type RespondentAnswer,
+} from '@/lib/brand-score/funnel-stages'
 
 // インナースコア算出API
 // GET /api/brand-score/inner-score?company_id=xxx&survey_id=yyy
@@ -58,12 +66,12 @@ export async function GET(request: NextRequest) {
     const supabase = getSupabaseAdmin()
 
     // 1. 対象サーベイを特定
-    let survey: { id: string; title: string; status: string; total_members: number } | null = null
+    let survey: { id: string; title: string; status: string; total_members: number; respondent_count: number | null } | null = null
 
     if (surveyIdParam) {
       const { data, error } = await supabase
         .from('brand_surveys')
-        .select('id, title, status, total_members')
+        .select('id, title, status, total_members, respondent_count')
         .eq('id', surveyIdParam)
         .eq('company_id', companyId)
         .single()
@@ -76,7 +84,7 @@ export async function GET(request: NextRequest) {
       // クローズ済みがなければアクティブを返す
       const { data: closedData } = await supabase
         .from('brand_surveys')
-        .select('id, title, status, total_members')
+        .select('id, title, status, total_members, respondent_count')
         .eq('company_id', companyId)
         .eq('status', 'closed')
         .order('created_at', { ascending: false })
@@ -87,7 +95,7 @@ export async function GET(request: NextRequest) {
       } else {
         const { data: activeData } = await supabase
           .from('brand_surveys')
-          .select('id, title, status, total_members')
+          .select('id, title, status, total_members, respondent_count')
           .eq('company_id', companyId)
           .eq('status', 'active')
           .order('created_at', { ascending: false })
@@ -100,11 +108,16 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // 2. 全回答を取得
-    const { data: responses, error: rErr } = await supabase
+    // 2. 全回答を取得（1000行上限があるためページングして全件取る）
+    const { data: responses, error: rErr } = await fetchAllRows<{
+      question_id: string; score: number; department: string | null
+      role_category: string | null; submitted_at: string; respondent_id: string | null
+    }>(() => supabase
       .from('brand_survey_responses')
-      .select('question_id, score, department, role_category')
+      .select('question_id, score, department, role_category, submitted_at, respondent_id')
       .eq('survey_id', survey.id)
+      .order('id')
+    )
 
     if (rErr) {
       return NextResponse.json({ error: '回答データの取得に失敗しました' }, { status: 500 })
@@ -113,7 +126,7 @@ export async function GET(request: NextRequest) {
     // 3. 全設問を取得（is_active = true）
     const { data: questions, error: qErr } = await supabase
       .from('brand_survey_questions')
-      .select('id, question_text, category, sort_order')
+      .select('id, question_text, category, sort_order, reference_data')
       .eq('survey_id', survey.id)
       .eq('is_active', true)
       .order('sort_order', { ascending: true })
@@ -132,7 +145,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: '参加者データの取得に失敗しました' }, { status: 500 })
     }
 
-    const respondedCount = (participants || []).filter(p => p.responded_at !== null).length
+    // 外部調査の取り込み（source='imported'）は survey_participants を持たないため、
+    // 取り込み時に記録した respondent_count を分子として使う。
+    const respondedCount = survey.respondent_count ?? (participants || []).filter(p => p.responded_at !== null).length
     const totalMembers = survey.total_members || (participants || []).length
     const responseRate = totalMembers > 0
       ? Math.round((respondedCount / totalMembers) * 1000) / 10
@@ -186,16 +201,22 @@ export async function GET(request: NextRequest) {
       deptMap.get(dept)!.push(r)
     }
 
-    // 部署ごとの回答者数をカウント（ユニーク回答者 = 回答の中でユニークな department+回答セット）
-    // 回答者数は設問数で割って推定（1人あたり全設問に回答するため）
-    const activeQuestionCount = (questions || []).length || 1
+    // 群ごとの回答者数を推定する。
+    // サーベイ全体の設問数で割ると、職種別にフォームを分けた取り込み（例: BO版30問 /
+    // SP版30問 → マージ後32問）で実数より少なく出る。その群が実際に回答した
+    // 設問の種類数で割ること。
+    const estimateRespondents = (rows: { question_id: string }[]): number => {
+      const answeredQuestions = new Set(rows.map((r) => r.question_id)).size
+      return answeredQuestions > 0 ? Math.round(rows.length / answeredQuestions) : 0
+    }
+
     const byDepartment: {
       department: string; count: number
       why: number | null; how: number | null; what: number | null; total: number | null
     }[] = []
 
     for (const [dept, deptResponses] of deptMap.entries()) {
-      const respondentCount = Math.round(deptResponses.length / activeQuestionCount)
+      const respondentCount = estimateRespondents(deptResponses)
       // k-匿名性: 回答者3人未満はスキップ
       if (respondentCount < 3) continue
       const dWhy = calcCategoryScore(deptResponses, categoryQuestionIds.why)
@@ -226,7 +247,7 @@ export async function GET(request: NextRequest) {
     }[] = []
 
     for (const [role, roleResponses] of roleMap.entries()) {
-      const respondentCount = Math.round(roleResponses.length / activeQuestionCount)
+      const respondentCount = estimateRespondents(roleResponses)
       const rWhy = calcCategoryScore(roleResponses, categoryQuestionIds.why)
       const rHow = calcCategoryScore(roleResponses, categoryQuestionIds.how)
       const rWhat = calcCategoryScore(roleResponses, categoryQuestionIds.what)
@@ -258,12 +279,48 @@ export async function GET(request: NextRequest) {
         question_id: q.id,
         question_text: q.question_text,
         category: q.category,
-        avg_score: entry ? Math.round((entry.sum / entry.count) * 100) / 100 : null,
+        // 小数4桁で返す。表示は toFixed で丸めるが、この値を再集計する側
+        // （浸透ジャーニーのマトリクス）が2桁だと誤差で 0.1 ずれるため。
+        avg_score: entry ? Math.round((entry.sum / entry.count) * 10000) / 10000 : null,
         count: entry ? entry.count : 0,
       }
     })
 
+    // 10. 浸透段階の集計（段階スコア・段階×部門・個人単位の累積通過率）
+    // 段階が解決できない設問構成のサーベイでは null を返し、画面側で非表示にする。
+    const totalQuestionCount = (questions || []).length
+    const stageByQuestionId = new Map<string, FunnelStage>()
+    for (const q of questions || []) {
+      const stage = resolveStage(
+        q.sort_order as number,
+        totalQuestionCount,
+        q.reference_data as Record<string, unknown> | null
+      )
+      if (stage) stageByQuestionId.set(q.id as string, stage)
+    }
+
+    let funnel: ReturnType<typeof calcGroupFunnels> | null = null
+    if (stageByQuestionId.size > 0) {
+      // 回答者の識別キー。respondent_id を正とし、未採番の行だけ submitted_at に退避する。
+      // ※ 一部の既存サーベイは全回答行の submitted_at が同一で、回答者を区別する
+      //    情報がそもそも存在しない。その場合は人数が1人に潰れる（元データの制約）。
+      const answers: RespondentAnswer[] = responses.map((r) => ({
+        respondentKey: r.respondent_id ?? r.submitted_at,
+        questionId: r.question_id,
+        score: r.score,
+        department: r.department,
+      }))
+      funnel = calcGroupFunnels(answers, stageByQuestionId)
+    }
+
     return NextResponse.json({
+      funnel: funnel
+        ? {
+            pass_threshold: PASS_THRESHOLD,
+            overall: funnel.overall,
+            by_department: funnel.byDepartment,
+          }
+        : null,
       survey: {
         id: survey.id,
         title: survey.title,

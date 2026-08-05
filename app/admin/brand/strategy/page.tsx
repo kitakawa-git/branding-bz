@@ -747,7 +747,7 @@ export default function BrandStrategyPage() {
 
   if (loading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* Card 1: ターゲット概要＋主なターゲット＋ペルソナ */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-5 space-y-5">
@@ -794,7 +794,7 @@ export default function BrandStrategyPage() {
 
   return (
     <div>
-      <form id="strategy-form" onSubmit={handleSubmit} className="space-y-6">
+      <form id="strategy-form" onSubmit={handleSubmit} className="space-y-4">
         {/* Card 1: ターゲット概要＋主なターゲット＋ターゲット適合マップ（統合） */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-5 space-y-8">

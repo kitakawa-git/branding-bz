@@ -267,7 +267,7 @@ export default function SmartCardPage() {
     <div>
       {/* タイトルはヘッダーのパンくずに移動 */}
       {/* ===== セクション1: 印象タグ設定 ===== */}
-      <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-6">
+      <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-4">
         <CardContent className="p-5">
           <div className="flex items-center justify-between mb-1">
             <h2 className="text-[15px] font-bold text-foreground">印象タグ設定</h2>
@@ -342,7 +342,7 @@ export default function SmartCardPage() {
       </Card>
 
       {/* ===== セクション2: QRコード出力 ===== */}
-      <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-6">
+      <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-4">
         <CardContent className="p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-[15px] font-bold text-foreground">QRコード出力</h2>

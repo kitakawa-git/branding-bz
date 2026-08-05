@@ -143,7 +143,7 @@ export default function AnnouncementDetailPage() {
       <div>
         <Skeleton className="h-4 w-32 mb-3" />
         <Skeleton className="h-8 w-64 mb-6" />
-        <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-6">
+        <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-4">
           <CardContent className="p-5">
             <Skeleton className="h-6 w-48 mb-3" />
             <Skeleton className="h-4 w-full mb-2" />
