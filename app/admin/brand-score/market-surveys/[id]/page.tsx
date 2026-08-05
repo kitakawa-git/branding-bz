@@ -9,6 +9,12 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
+import {
+  Tooltip as UITooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Settings2, CalendarDays, Users, Loader2, ClipboardList, Trophy } from 'lucide-react'
 import {
@@ -120,25 +126,36 @@ function RankBars({
   suffix?: string
 }) {
   return (
-    <div className="space-y-1.5">
-      {items.slice(0, max).map((it) => (
-        <div key={it.label} className="flex items-center gap-2">
-          <span className="w-[136px] shrink-0 truncate text-[11px] text-muted-foreground" title={it.label}>
-            {it.label}
-          </span>
-          <div className="h-2 min-w-0 flex-1 rounded-full bg-muted">
-            <div
-              className="h-full rounded-full bg-green-500"
-              style={{ width: `${Math.min(100, Math.max(0, it.value))}%` }}
-            />
+    <TooltipProvider delayDuration={200}>
+      <div className="space-y-1.5">
+        {items.slice(0, max).map((it) => (
+          <div key={it.label} className="flex items-center gap-2">
+            {/* 選択肢名は「同業者の（眼科医の間での）口コミ」のように長く、
+                幅を広げるとバーが潰れる。省略した名前はホバーで全文を出す */}
+            <UITooltip>
+              <TooltipTrigger asChild>
+                <span className="w-[136px] shrink-0 truncate text-left text-[11px] text-muted-foreground">
+                  {it.label}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs text-xs">
+                {it.label}
+              </TooltipContent>
+            </UITooltip>
+            <div className="h-2 min-w-0 flex-1 rounded-full bg-muted">
+              <div
+                className="h-full rounded-full bg-green-500"
+                style={{ width: `${Math.min(100, Math.max(0, it.value))}%` }}
+              />
+            </div>
+            <span className="w-12 shrink-0 text-right text-[11px] tabular-nums text-foreground">
+              {it.value.toFixed(1)}
+              {suffix}
+            </span>
           </div>
-          <span className="w-12 shrink-0 text-right text-[11px] tabular-nums text-foreground">
-            {it.value.toFixed(1)}
-            {suffix}
-          </span>
-        </div>
-      ))}
-    </div>
+        ))}
+      </div>
+    </TooltipProvider>
   )
 }
 
