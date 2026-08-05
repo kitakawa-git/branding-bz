@@ -1042,10 +1042,11 @@ export default function SurveyDetailPage() {
                             {/* 反転点の境界線。ここから先は「受け取る」から「渡す」に変わる。
                                 段階別の詳細セクションに同じ意味の破線区切りがあるため、
                                 ここは線だけで示しラベルは置かない */}
+                            {/* grid の gap-2（8px）の中央に置くため、タイル左端から 4px 外へ出す */}
                             {isInflection && (
                               <span
                                 aria-hidden
-                                className="absolute inset-y-0 left-0 w-0.5 rounded-full bg-ds-app-accent"
+                                className="absolute inset-y-0 -left-1 border-l-2 border-dashed border-ds-app-accent"
                               />
                             )}
                             <p className="m-0 text-xs text-muted-foreground">
