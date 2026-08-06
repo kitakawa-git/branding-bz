@@ -1553,7 +1553,6 @@ export default function SurveyDetailPage() {
                     <p className="text-xs text-muted-foreground leading-relaxed mb-4">
                       点数ではなく人数。そこまでの段階<span className="font-semibold text-foreground">すべて</span>で
                       平均{funnelData.pass_threshold}点以上だった人の割合です。
-                      上の段階スコアと同じ5点満点の物差しで判定しています。
                     </p>
 
                     <div>
