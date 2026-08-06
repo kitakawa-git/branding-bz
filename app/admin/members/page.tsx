@@ -31,8 +31,9 @@ import {
 import { getPageCache, setPageCache } from '@/lib/page-cache'
 import { MEMBER_ROLE_OPTIONS } from '@/lib/constants/member-roles'
 import { Button } from '@/components/ui/button'
-import { Check, Pencil, Eye, EyeOff, Trash2, Link2, ChevronDown, ChevronUp, Plus, UserPlus, CheckCircle2, XCircle } from 'lucide-react'
+import { Check, Pencil, Eye, EyeOff, Trash2, Link2, ChevronDown, ChevronUp, Plus, Upload, UserPlus, CheckCircle2, XCircle } from 'lucide-react'
 import { Fab, FabButton } from '@/components/ui/fab'
+import { MemberCsvImportDialog } from './MemberCsvImportDialog'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
@@ -130,6 +131,7 @@ export default function MembersPage() {
 
   // アカウント作成フォーム
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
+  const [csvDialogOpen, setCsvDialogOpen] = useState(false)
   const [newEmail, setNewEmail] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [newDisplayName, setNewDisplayName] = useState('')
@@ -610,10 +612,22 @@ export default function MembersPage() {
 
       {/* ===== アカウント作成 FAB（右下固定） ===== */}
       <Fab>
+        <FabButton onClick={() => setCsvDialogOpen(true)} icon={<Upload size={16} />}>
+          CSVで一括登録
+        </FabButton>
         <FabButton onClick={() => setCreateDialogOpen(true)} icon={<Plus size={16} />}>
           アカウントを追加
         </FabButton>
       </Fab>
+
+      <MemberCsvImportDialog
+        open={csvDialogOpen}
+        onOpenChange={setCsvDialogOpen}
+        onCompleted={() => {
+          setPageCache(cacheKey, null as unknown as AdminMembersCache)
+          fetchData()
+        }}
+      />
 
       {/* ===== アカウント作成モーダル ===== */}
       <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
