@@ -228,10 +228,16 @@ function InsightNote({ text, loading }: { text?: string; loading: boolean }) {
  * 生成側が新しい数値を作れないようにする
  */
 function buildInsightSummary(data: InnerScoreData) {
+  // 段階は画面が5点満点で出しているので、AIにも同じ単位で語らせる。
+  // 0〜100 も渡すのは、5点満点だと SP の理解3.54 と行動3.54 のように
+  // 別の値が同じに見え、差を語れなくなる行があるため
   const stageRow = (g: GroupFunnel) => ({
     対象: g.department ? departmentLabel(g.department) : '全社',
     回答者数: g.respondentCount,
-    段階スコア: Object.fromEntries(
+    段階スコア5点満点: Object.fromEntries(
+      g.stageScores.map(s => [STAGE_LABELS[s.stage], s.avg])
+    ),
+    段階スコア0to100: Object.fromEntries(
       g.stageScores.map(s => [STAGE_LABELS[s.stage], s.score])
     ),
     通過率: Object.fromEntries(
