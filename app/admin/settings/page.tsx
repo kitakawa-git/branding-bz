@@ -170,10 +170,10 @@ export default function AdminSettingsPage() {
         <CardContent className="p-5">
           <h2 className="text-base font-bold text-foreground mb-1">区分ごとの表示設定</h2>
           <p className="text-sm text-muted-foreground m-0 mb-2">
-            メンバーの区分（アカウント管理で設定）に応じて、ポータルのページを出し分けます。
+            メンバーの区分（経営層／管理職／従業員・アカウント管理で設定、既定は「従業員」）に応じて、ポータルのページを出し分けます。
           </p>
           <p className="text-xs text-muted-foreground m-0 mb-5 leading-relaxed">
-            ※ 管理者と「区分・未設定」のメンバーは常に表示されます。上の機能自体がオフのページは、区分に関わらず非表示です。
+            ※ 管理者は区分に関わらず常に表示されます。上の「機能の表示設定」でオフにしているページは、区分に関わらず非表示です。
           </p>
 
           <div className="overflow-x-auto">
