@@ -96,7 +96,7 @@ interface InnerScoreData {
 }
 
 interface OuterScoreData {
-  period_days: number
+  period_days: number | null
   total_card_views: number
   unique_visitors: number
   member_count: number
@@ -187,6 +187,25 @@ type TrendRow = {
   /** その値が調査の実施日のものか（記録した日ではない）。点の大きさを変える */
   measured: { total: boolean; inner: boolean; outer: boolean }
 }
+
+/**
+ * 集計期間の選択肢。年単位の定点観測が前提なので日単位の窓は置かない。
+ * 7日ではログが溜まらず、どの会社もほぼ「未計測」になっていた。
+ *
+ * ⚠ 期間を変えると到達力（UU数÷社員数）は窓が長いほど機械的に上がる。
+ *   前年比を見るときは毎回同じ期間で揃えること（全期間は年ごとに窓が伸びる）。
+ */
+const PERIOD_OPTIONS: { value: string; label: string }[] = [
+  { value: '180', label: '6ヶ月' },
+  { value: '365', label: '1年' },
+  { value: '1095', label: '3年' },
+  { value: '1825', label: '5年' },
+  { value: 'all', label: '全期間' },
+]
+
+const PERIOD_LABELS: Record<string, string> = Object.fromEntries(
+  PERIOD_OPTIONS.map((o) => [o.value, o.label])
+)
 
 // ── ヘルパー関数 ──
 
@@ -295,7 +314,9 @@ export default function BrandScoreDashboard() {
   // 機能トグルを踏まえたタブ（定義は lib/constants/dashboard-tabs.ts に集約）
   const visibleTabs = visibleDashboardTabs(company)
 
-  const [period, setPeriod] = useState<string>('30')
+  // 既定は1年。この画面は年単位の定点観測が前提で、30日窓では
+  // 名刺のアクセスが下限（MIN_CARD_VIEWS_FOR_DIGITAL）に届かず未計測になりやすい
+  const [period, setPeriod] = useState<string>('365')
 
   // キャッシュキーは companyId + period 単位（period切替で別データ）
   const cacheKey = `brand-score-${companyId}-${period}`
@@ -324,7 +345,8 @@ export default function BrandScoreDashboard() {
   const fetchAll = useCallback(async () => {
     if (!companyId) return
 
-    const periodDays = parseInt(period)
+    // 全期間は十分に古い日付を起点にして実質フィルタなしにする
+    const periodDays = period === 'all' ? 36500 : parseInt(period)
     const sinceDate = new Date(Date.now() - periodDays * 24 * 60 * 60 * 1000).toISOString()
 
     // 各fetchの結果をキャッシュ用に集約するためのrefオブジェクト
@@ -821,9 +843,11 @@ export default function BrandScoreDashboard() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="7">7日間</SelectItem>
-              <SelectItem value="30">30日間</SelectItem>
-              <SelectItem value="90">90日間</SelectItem>
+              {PERIOD_OPTIONS.map(o => (
+                <SelectItem key={o.value} value={o.value}>
+                  {o.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -1131,7 +1155,8 @@ export default function BrandScoreDashboard() {
 
                     {outerScore!.digital_unavailable === 'insufficient_data' ? (
                       <p className="m-0 rounded-md border bg-background p-3 text-[11px] leading-relaxed text-muted-foreground">
-                        名刺の閲覧が{outerScore!.total_card_views}件で、スコアを出すには
+                        {PERIOD_LABELS[period] ?? period}で名刺の閲覧が
+                        {outerScore!.total_card_views}件で、スコアを出すには
                         足りません（{MIN_CARD_VIEWS_FOR_DIGITAL}件から）。
                         数件のアクセスから関心度や遷移率を判断すると実態とずれるため、
                         アウタースコアには算入していません。
@@ -1365,7 +1390,7 @@ export default function BrandScoreDashboard() {
               印象タグ分布
             </h2>
             <p className="text-xs text-muted-foreground mb-4">
-              直近{period}日間の回答 {totalFbCount}件
+              {period === 'all' ? '' : `直近${PERIOD_LABELS[period] ?? `${period}日`}の`}回答 {totalFbCount}件
             </p>
 
             {totalFbCount >= 30 ? (
