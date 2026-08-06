@@ -431,7 +431,7 @@ export default function DashboardPage() {
           <Skeleton className="h-5 w-32 mb-2" />
           <Skeleton className="h-5 w-28 mb-2" />
         </div>
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4 mb-4">
+        <div className="grid grid-cols-4 gap-4 mb-4">
           {[1, 2, 3, 4].map(i => (
             <Card key={i} className="bg-[hsl(0_0%_97%)] border shadow-none">
               <CardContent className="p-5 pb-3">
@@ -525,7 +525,7 @@ export default function DashboardPage() {
       </div>
 
       {/* === サマリーカード === */}
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4 mb-4">
+      <div className="grid grid-cols-4 gap-4 mb-4">
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-5 pb-3">
             <div className="flex items-center gap-2 mb-3">

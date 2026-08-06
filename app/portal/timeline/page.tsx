@@ -7,6 +7,7 @@ import { fetchWithRetry } from '@/lib/supabase-fetch'
 import { fetchPhilosophy } from '@/lib/brand/philosophy'
 import { usePortalAuth } from '../components/PortalDataProvider'
 import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
+import { isPortalPageVisibleForRole } from '@/lib/constants/member-roles'
 import { getRelativeTime } from '@/lib/time-utils'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -100,7 +101,7 @@ const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 type TimelineCache = { categories: string[]; posts: TimelinePost[] }
 
 export default function PortalTimelinePage() {
-  const { companyId, user, member, profileName, profilePhotoUrl, isAdmin, company } = usePortalAuth()
+  const { companyId, user, member, profileName, profilePhotoUrl, isAdmin, company, roleCategory } = usePortalAuth()
 
   // 機能トグル: タイムラインが無効なら案内のみ表示（リダイレクトはしない）
   const timelineEnabled = isFeatureEnabled(company, 'timeline_enabled')
@@ -731,6 +732,21 @@ export default function PortalTimelinePage() {
           <CardContent className="py-16 text-center">
             <p className="text-muted-foreground text-[15px] m-0">
               この機能は現在ご利用いただけません
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  // 区分ごとの表示設定で非表示（URL直打ち時の防御）
+  if (!isPortalPageVisibleForRole(company, 'timeline', roleCategory, isAdmin)) {
+    return (
+      <div className="max-w-4xl mx-auto px-5 pt-4 pb-10">
+        <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+          <CardContent className="py-16 text-center">
+            <p className="text-muted-foreground text-[15px] m-0">
+              このページはご利用の区分では表示されません
             </p>
           </CardContent>
         </Card>

@@ -29,6 +29,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
+import { MEMBER_ROLE_OPTIONS } from '@/lib/constants/member-roles'
 import { Button } from '@/components/ui/button'
 import { Check, Pencil, Eye, EyeOff, Trash2, Link2, ChevronDown, ChevronUp, Plus, UserPlus, CheckCircle2, XCircle } from 'lucide-react'
 import { Fab, FabButton } from '@/components/ui/fab'
@@ -56,6 +57,7 @@ type MemberWithProfile = {
     slug: string
     card_enabled: boolean
     photo_url: string | null
+    role_category: string | null
   } | null
 }
 
@@ -142,7 +144,7 @@ export default function MembersPage() {
       fetchWithRetry(() =>
         supabase
           .from('members')
-          .select('id, auth_id, display_name, email, is_active, status, created_at, profile:profiles(id, name, slug, card_enabled, photo_url)')
+          .select('id, auth_id, display_name, email, is_active, status, created_at, profile:profiles(id, name, slug, card_enabled, photo_url, role_category)')
           .eq('company_id', companyId)
           .order('created_at', { ascending: false })
       ),
@@ -274,6 +276,38 @@ export default function MembersPage() {
       toast.error('名刺設定の更新に失敗しました')
     } finally {
       setTogglingId(null)
+    }
+  }
+
+  // ============================================
+  // 区分（経営層/管理職/従業員）更新
+  // ============================================
+  const updateRoleCategory = async (profileId: string, value: string) => {
+    // 楽観更新（失敗時に元へ戻す）
+    const prevMembers = members
+    setMembers(prev => prev.map(m =>
+      m.profile?.id === profileId
+        ? { ...m, profile: { ...m.profile!, role_category: value || null } }
+        : m
+    ))
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const token = session?.access_token || ''
+      const res = await fetch(`${supabaseUrl}/rest/v1/profiles?id=eq.${profileId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': anonKey,
+          'Authorization': `Bearer ${token}`,
+          'Prefer': 'return=minimal',
+        },
+        body: JSON.stringify({ role_category: value || null }),
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    } catch (err) {
+      console.error('区分更新エラー:', err)
+      toast.error('区分の更新に失敗しました')
+      setMembers(prevMembers)
     }
   }
 
@@ -752,6 +786,7 @@ export default function MembersPage() {
                 <tr className="border-b text-left text-xs text-muted-foreground">
                   <th className="px-4 py-3 font-medium">名前</th>
                   <th className="px-4 py-3 font-medium">メール</th>
+                  <th className="px-4 py-3 font-medium">区分</th>
                   <th className="px-4 py-3 font-medium">名刺</th>
                   <th className="px-4 py-3 font-medium">ステータス</th>
                   <th className="px-4 py-3 font-medium">登録日</th>
@@ -775,6 +810,22 @@ export default function MembersPage() {
                       </td>
                       <td className="px-4 py-3">
                         <span className="text-xs text-foreground">{member.email}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        {profileId ? (
+                          <select
+                            value={member.profile?.role_category ?? ''}
+                            onChange={(e) => updateRoleCategory(profileId, e.target.value)}
+                            className="h-8 rounded-md border border-input bg-white px-2 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                          >
+                            <option value="">未設定</option>
+                            {MEMBER_ROLE_OPTIONS.map((opt) => (
+                              <option key={opt.value} value={opt.value}>{opt.label}</option>
+                            ))}
+                          </select>
+                        ) : (
+                          <span className="text-muted-foreground text-xs">-</span>
+                        )}
                       </td>
                       <td className="px-4 py-3">
                         {profileId ? (

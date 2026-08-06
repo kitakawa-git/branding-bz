@@ -20,15 +20,22 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const companyId = searchParams.get('company_id')
+    // period=all は期間で絞らない（取り込み以来すべて）。
+    // 年単位の定点観測では30日窓だとログが溜まらず「未計測」になりやすいため、
+    // 年をまたぐ長さを選べるようにしてある
     const periodParam = searchParams.get('period')
-    const period = periodParam ? parseInt(periodParam, 10) : 30
+    const isAllPeriod = periodParam === 'all'
+    const period = isAllPeriod ? null : periodParam ? parseInt(periodParam, 10) : 30
 
     // バリデーション
     if (!companyId) {
       return NextResponse.json({ error: 'company_id is required' }, { status: 400 })
     }
-    if (isNaN(period) || period < 1 || period > 365) {
-      return NextResponse.json({ error: 'period must be 1-365' }, { status: 400 })
+    if (period !== null && (isNaN(period) || period < 1 || period > 3650)) {
+      return NextResponse.json(
+        { error: 'period must be 1-3650 or "all"' },
+        { status: 400 }
+      )
     }
 
     const supabase = getSupabaseAdmin()
@@ -42,9 +49,9 @@ export async function GET(request: NextRequest) {
       .single()
     const cardEnabled = isFeatureEnabled(company, 'card_enabled')
 
-    // 集計期間の起点
+    // 集計期間の起点。全期間なら十分に古い日付を置いて実質フィルタなしにする
     const cutoff = new Date()
-    cutoff.setDate(cutoff.getDate() - period)
+    cutoff.setDate(cutoff.getDate() - (period ?? 36500))
     const cutoffISO = cutoff.toISOString()
 
     // --- 1. 社員数（profiles） ---
@@ -177,6 +184,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       period_days: period,
+      period_is_all: isAllPeriod,
       total_card_views: totalCardViews,
       unique_visitors: uniqueVisitors,
       member_count: members,

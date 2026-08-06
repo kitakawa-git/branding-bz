@@ -39,7 +39,7 @@ type AdminDataContextValue = {
 const AdminDataContext = createContext<AdminDataContextValue | null>(null)
 
 // 機能トグルカラムを含めた companies の select 文字列
-const COMPANY_SELECT = ['name', 'logo_url', ...FEATURE_TOGGLE_COLUMNS].join(', ')
+const COMPANY_SELECT = ['name', 'logo_url', 'portal_role_visibility', ...FEATURE_TOGGLE_COLUMNS].join(', ')
 
 // chrome=false の場合は通常管理画面のサイドバー・ヘッダーを描画せず、
 // 認証/データのコンテキストと children だけを提供する（スーパー管理画面など、

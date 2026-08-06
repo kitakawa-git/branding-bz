@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { usePortalAuth } from './components/PortalDataProvider'
 import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
+import { isPortalPageVisibleForRole } from '@/lib/constants/member-roles'
 import { SurveyBanner } from './components/SurveyBanner'
 import { QuizBanner } from './components/QuizBanner'
 import { getRelativeTime } from '@/lib/time-utils'
@@ -254,12 +255,14 @@ type DashboardCache = {
 }
 
 export default function PortalTopPage() {
-  const { companyId, user, member, slogan, company } = usePortalAuth()
+  const { companyId, user, member, slogan, company, roleCategory, isAdmin } = usePortalAuth()
 
   // 機能トグル: タイムラインが無効なら投稿関連ウィジェットを非表示にする
   const timelineEnabled = isFeatureEnabled(company, 'timeline_enabled')
   // 機能トグル: KPIが無効なら目標・KPI関連のバナー／カードを非表示にする
   const kpiEnabled = isFeatureEnabled(company, 'kpi_enabled')
+  // 区分ごとの表示設定で目標・KPI を出し分け（機能トグルと AND）
+  const kpiVisible = kpiEnabled && isPortalPageVisibleForRole(company, 'kpi', roleCategory, isAdmin)
   const cacheKey = `portal-dashboard-${companyId}-${user?.id}`
   const cached = companyId && user?.id ? getPageCache<DashboardCache>(cacheKey) : null
   const [loading, setLoading] = useState(!cached)
@@ -721,7 +724,7 @@ export default function PortalTopPage() {
           </div>
         </div>
         {/* KPIバナー（ピル型）— KPI機能が有効な企業のみ実描画されるためトグルで出し分け */}
-        {kpiEnabled && <Skeleton className="h-14 w-full rounded-full" />}
+        {kpiVisible && <Skeleton className="h-14 w-full rounded-full" />}
         {/* あなたのタイムライン分析（見出し＋統計カード3枚）— タイムライン機能が有効な企業のみ */}
         {timelineEnabled && (
           <div className="space-y-3">
@@ -757,15 +760,15 @@ export default function PortalTopPage() {
       {/* ===== 1. スローガン ===== */}
       <div className="text-center mb-8">
         {/* スローガン未設定（ブランク）のときは見出しを非表示にする */}
-        {slogan && (
-          <h1 className="text-4xl font-bold text-foreground">
-            {slogan}
-          </h1>
-        )}
         {member && (
-          <p className="text-base sm:text-sm text-muted-foreground m-0 mt-1">
+          <p className="text-4xl font-bold text-foreground m-0">
             ようこそ、{member.display_name} さん
           </p>
+        )}
+        {slogan && (
+          <h1 className="text-base sm:text-sm font-normal text-muted-foreground m-0 mt-1">
+            {slogan}
+          </h1>
         )}
       </div>
 
@@ -909,7 +912,7 @@ export default function PortalTopPage() {
       </div>
 
       {/* ===== 2.5. KPIバナー / サマリー（KPI無効時は非表示） ===== */}
-      {kpiEnabled && !hasGoals && showGoalBanner && (
+      {kpiVisible && !hasGoals && showGoalBanner && (
         <Link href="/portal/kpi?setup=true" className="no-underline block mb-8">
           <div className="rounded-full bg-[#F41189] px-6 py-4 flex items-center justify-between hover:opacity-90 transition-opacity">
             <p className="text-white text-base font-semibold m-0">
@@ -919,7 +922,7 @@ export default function PortalTopPage() {
           </div>
         </Link>
       )}
-      {kpiEnabled && hasGoals && (() => {
+      {kpiVisible && hasGoals && (() => {
         const STATUS_LABELS: Record<string, string> = { not_started: '未着手', in_progress: '進行中', completed: '達成' }
         const STATUS_COLORS: Record<string, string> = { not_started: 'bg-gray-100 text-gray-600', in_progress: 'bg-blue-100 text-ds-app-accent-hover', completed: 'bg-green-100 text-green-700' }
         let totalWeight = 0, weightedSum = 0
@@ -967,7 +970,7 @@ export default function PortalTopPage() {
       })()}
 
       {/* ===== 3. 自己評価バナー（KPI無効時は非表示） ===== */}
-      {kpiEnabled && showReviewBanner && kpiGoals.length > 0 && (
+      {kpiVisible && showReviewBanner && kpiGoals.length > 0 && (
         <button type="button" onClick={openReviewDialog} className="w-full mb-8 cursor-pointer border-0 p-0 bg-transparent">
           <div className="rounded-full bg-[#47C95C] px-6 py-4 flex items-center justify-between hover:opacity-90 transition-opacity">
             <p className="text-white text-base font-semibold m-0">
