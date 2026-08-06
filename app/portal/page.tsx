@@ -271,6 +271,14 @@ export default function PortalTopPage() {
     roleCategory,
     isAdmin
   )
+  // スコアカードから各調査結果へ飛べるようにする。見られない区分にはリンクを出さない
+  const surveyVisible = isPortalPageVisibleForRole(company, 'survey', roleCategory, isAdmin)
+  const marketSurveyVisible = isPortalPageVisibleForRole(
+    company,
+    'market_survey',
+    roleCategory,
+    isAdmin
+  )
   const cacheKey = `portal-dashboard-${companyId}-${user?.id}`
   const cached = companyId && user?.id ? getPageCache<DashboardCache>(cacheKey) : null
   const [loading, setLoading] = useState(!cached)
@@ -924,7 +932,11 @@ export default function PortalTopPage() {
           記録設定やAI再生成などの操作系は出さない */}
       {brandScoreVisible && companyId && (
         <div className="mb-8">
-          <BrandScorePortalSection companyId={companyId} />
+          <BrandScorePortalSection
+            companyId={companyId}
+            surveyHref={surveyVisible ? '/portal/survey' : null}
+            marketSurveyHref={marketSurveyVisible ? '/portal/market-survey' : null}
+          />
         </div>
       )}
 

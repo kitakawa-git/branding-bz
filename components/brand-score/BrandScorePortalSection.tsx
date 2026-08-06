@@ -31,7 +31,17 @@ type CachedData = {
   prevDiff: number | null
 }
 
-export function BrandScorePortalSection({ companyId }: { companyId: string }) {
+export function BrandScorePortalSection({
+  companyId,
+  surveyHref = null,
+  marketSurveyHref = null,
+}: {
+  companyId: string
+  /** サーベイ結果ページへのリンク。区分で見られない場合は null（呼び出し側で判定） */
+  surveyHref?: string | null
+  /** 市場調査ページへのリンク。区分で見られない場合は null */
+  marketSurveyHref?: string | null
+}) {
   // 同一セッションの再訪では前回取得値でそのまま描画（stale-while-revalidate）
   const cacheKey = `portal-brand-score-${companyId}`
   const cached = getPageCache<CachedData>(cacheKey)
@@ -136,6 +146,10 @@ export function BrandScorePortalSection({ companyId }: { companyId: string }) {
       impressionScore={null}
       periodLabel={PERIOD_LABEL}
       readOnly
+      // 管理画面と同じく、それぞれの調査結果ページへ飛べるようにする。
+      // 区分で見られないページはリンクごと出さない
+      innerLink={surveyHref ? { href: surveyHref, label: 'サーベイ結果' } : null}
+      outerLink={marketSurveyHref ? { href: marketSurveyHref, label: '市場調査' } : null}
     />
   )
 }
