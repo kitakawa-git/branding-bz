@@ -170,6 +170,12 @@ export function SurveyResults({ data, questions, insights, insightsLoading }: Pr
     funnelData?.by_department.find(g => g.department === department)
   const deptStageScore = (department: string, stage: FunnelStage): number | null =>
     deptGroup(department)?.stageScores.find(s => s.stage === stage)?.score ?? null
+  // 5点満点は API が返す生の平均をそのまま使う。
+  // 0〜100 から逆算すると小数第2位がずれる（BOの推奨は 3.13 が正、逆算だと 3.12）
+  const stageAvgOf = (stage: FunnelStage): number | null =>
+    funnelData?.overall.stageScores.find(s => s.stage === stage)?.avg ?? null
+  const deptStageAvg = (department: string, stage: FunnelStage): number | null =>
+    deptGroup(department)?.stageScores.find(s => s.stage === stage)?.avg ?? null
   const deptPass = (department: string, stage: FunnelStage): number | null =>
     deptGroup(department)?.cumulative.find(p => p.stage === stage)?.rate ?? null
   const deptPassCount = (department: string, stage: FunnelStage): number | null =>
@@ -266,9 +272,15 @@ export function SurveyResults({ data, questions, insights, insightsLoading }: Pr
 
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-4">
+            {/* 2つの数字の関係が分からないと読めないので必ず添える */}
+            <div className="mb-1.5 flex items-center justify-end gap-3 text-[9.5px] text-muted-foreground">
+              <span>上＝5点満点</span>
+              <span>下＝0〜100</span>
+            </div>
             <div className="grid grid-cols-5 gap-2">
               {FUNNEL_STAGES.map((stage, i) => {
                 const s = stageScoreOf(stage)
+                const a = stageAvgOf(stage)
                 const isInflection = stage === INFLECTION_STAGE
                 const isWeakest = weakestStage === stage
                 return (
@@ -277,17 +289,34 @@ export function SurveyResults({ data, questions, insights, insightsLoading }: Pr
                       <span aria-hidden className="absolute inset-y-0 -left-1 border-l border-border" />
                     )}
                     <p className="m-0 text-xs text-muted-foreground">{i + 1}. {STAGE_LABELS[stage]}</p>
-                    <span className={`text-xl font-bold ${isWeakest ? 'text-orange-600' : 'text-ds-app-accent'}`}>
+                    {/* 主は5点満点。通過率の閾値（3.5点）と物差しが揃う。
+                        0〜100 は総合スコアと突き合わせるために併記する */}
+                    <span className={`block text-xl font-bold leading-tight ${isWeakest ? 'text-orange-600' : 'text-ds-app-accent'}`}>
+                      {a !== null ? a.toFixed(2) : '-'}
+                    </span>
+                    <span className="block text-[9.5px] leading-tight text-muted-foreground tabular-nums">
                       {s !== null ? s.toFixed(1) : '-'}
                     </span>
-                    <Progress
-                      value={s ?? 0}
-                      className={`h-1.5 mt-1.5 ${isWeakest ? '[&>div]:bg-orange-500' : '[&>div]:bg-ds-app-accent-soft'}`}
-                    />
+                    {/* バーは 0〜100 スケールのまま。5点満点を1点起点で描いたものと
+                        同じ形になる。中央の破線は3.0＝どちらとも言えない */}
+                    <div className="relative mt-1.5">
+                      <Progress
+                        value={s ?? 0}
+                        className={`h-1.5 ${isWeakest ? '[&>div]:bg-orange-500' : '[&>div]:bg-ds-app-accent-soft'}`}
+                      />
+                      <span
+                        aria-hidden
+                        className="pointer-events-none absolute left-1/2 top-0 h-full border-l border-dashed border-orange-400/70"
+                      />
+                    </div>
                   </div>
                 )
               })}
             </div>
+            <p className="m-0 mt-2 text-[10px] leading-relaxed text-muted-foreground">
+              たて軸は5点満点。1点が最低なので1から表示している（0点をつけた人はいない）。
+              破線の3.0が「どちらとも言えない」。
+            </p>
             <InsightNote text={insights?.overview} loading={insightsLoading} />
           </CardContent>
         </Card>
@@ -351,13 +380,21 @@ export function SurveyResults({ data, questions, insights, insightsLoading }: Pr
             {funnel && (
               <p className="text-xs text-muted-foreground leading-relaxed mb-4">{PATTERN_MEANINGS[funnel.pattern]}</p>
             )}
+            {/* 2つの数字の関係が分からないと読めないので必ず添える */}
+            <div className="flex items-center justify-end gap-1 pr-0.5 text-[9.5px] text-muted-foreground">
+              <span className="w-9 text-right">5点満点</span>
+              <span className="w-8 text-right">0〜100</span>
+            </div>
             <div>
               {FUNNEL_STAGES.map((stage, i) => {
                 const s = stageScoreOf(stage)
+                const a = stageAvgOf(stage)
                 const summary = funnel?.stages.find(x => x.stage === stage)
                 const isWeakest = weakestStage === stage
                 const boScore = deptStageScore('BO本社', stage)
                 const spScore = deptStageScore('SP', stage)
+                const boAvg = deptStageAvg('BO本社', stage)
+                const spAvg = deptStageAvg('SP', stage)
                 return (
                   <div key={stage}>
                     {stage === INFLECTION_STAGE && <div aria-hidden className="my-2 border-t border-border" />}
@@ -369,18 +406,27 @@ export function SurveyResults({ data, questions, insights, insightsLoading }: Pr
                       <div className="min-w-0 flex-1 pt-0.5">
                         <div className="space-y-1">
                           {([
-                            { key: '全社', value: s, color: 'bg-ds-app-accent-soft', worst: isWeakest, best: strongestStage === stage },
-                            { key: 'SP', value: spScore, color: 'bg-green-500', worst: weakestSpStage === stage, best: strongestSpStage === stage },
-                            { key: 'BO', value: boScore, color: 'bg-orange-400', worst: weakestBoStage === stage, best: strongestBoStage === stage },
+                            { key: '全社', value: s, avg: a, color: 'bg-ds-app-accent-soft', worst: isWeakest, best: strongestStage === stage },
+                            { key: 'SP', value: spScore, avg: spAvg, color: 'bg-green-500', worst: weakestSpStage === stage, best: strongestSpStage === stage },
+                            { key: 'BO', value: boScore, avg: boAvg, color: 'bg-orange-400', worst: weakestBoStage === stage, best: strongestBoStage === stage },
                           ] as const).map(bar => bar.value === null ? null : (
                             <div key={bar.key} className="flex items-center gap-2">
                               <span className="w-7 shrink-0 text-[10px] text-muted-foreground">{bar.key}</span>
-                              <div className="h-2 min-w-0 flex-1 rounded-full bg-muted">
+                              {/* 棒は 0〜100 スケール。5点満点を1点起点で描いたものと
+                                  同じ形になる。中央の破線が3.0＝どちらとも言えない */}
+                              <div className="relative h-2 min-w-0 flex-1 rounded-full bg-muted">
                                 <div className={`h-full rounded-full ${bar.color}`} style={{ width: `${bar.value}%` }} />
+                                <span
+                                  aria-hidden
+                                  className="pointer-events-none absolute left-1/2 top-0 h-full border-l border-dashed border-orange-400/70"
+                                />
                               </div>
-                              <span className={`w-8 shrink-0 text-right text-[10px] tabular-nums ${
-                                bar.worst ? 'font-bold text-orange-600' : bar.best ? 'font-bold text-ds-app-accent' : 'text-muted-foreground'
+                              <span className={`w-9 shrink-0 text-right text-[11px] tabular-nums ${
+                                bar.worst ? 'font-bold text-orange-600' : bar.best ? 'font-bold text-ds-app-accent' : 'font-bold text-foreground'
                               }`}>
+                                {bar.avg !== null ? bar.avg.toFixed(2) : '-'}
+                              </span>
+                              <span className="w-8 shrink-0 text-right text-[9.5px] tabular-nums text-muted-foreground">
                                 {bar.value.toFixed(1)}
                               </span>
                             </div>
@@ -397,6 +443,10 @@ export function SurveyResults({ data, questions, insights, insightsLoading }: Pr
               <span className="flex items-center gap-1"><span className="inline-block size-2.5 rounded-sm bg-green-500" />SP</span>
               <span className="flex items-center gap-1"><span className="inline-block size-2.5 rounded-sm bg-orange-400" />BO（本社含む）</span>
             </div>
+            <p className="m-0 mt-2 text-[10px] leading-relaxed text-muted-foreground">
+              よこ軸は5点満点。1点が最低なので1から表示している（0点をつけた人はいない）。
+              破線の3.0が「どちらとも言えない」。
+            </p>
             <InsightNote text={insights?.stages} loading={insightsLoading} />
           </CardContent>
         </Card>
@@ -410,6 +460,7 @@ export function SurveyResults({ data, questions, insights, insightsLoading }: Pr
             <p className="text-xs text-muted-foreground leading-relaxed mb-4">
               点数ではなく人数。そこまでの段階<span className="font-semibold text-foreground">すべて</span>で
               平均{funnelData.pass_threshold}点以上だった人の割合です。
+              上の段階スコアと同じ5点満点の物差しで判定しています。
             </p>
             <div>
               {FUNNEL_STAGES.map((stage, i) => {

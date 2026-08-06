@@ -405,6 +405,12 @@ export interface StageScore {
   stage: FunnelStage
   /** 0〜100。該当回答が無ければ null */
   score: number | null
+  /**
+   * 1〜5 の平均（生の平均から直接算出）。
+   * ⚠ score から逆算しないこと。丸めた 0〜100 から戻すと小数第2位がずれる
+   *   （実例: BOの推奨は生の平均 3.1252 で 3.13 だが、53.1 から逆算すると 3.12）。
+   */
+  avg: number | null
   questionCount: number
   responseCount: number
 }
@@ -428,10 +434,13 @@ export interface GroupFunnel {
 }
 
 /** 段階スコア（回答数で重み付けした平均を正規化） */
-function stageScoreOf(rows: { score: number }[], questionIds: Set<string>): number | null {
-  if (rows.length === 0) return null
-  const avg = rows.reduce((a, r) => a + r.score, 0) / rows.length
-  return round1(normalize(avg))
+/** 素の平均（1〜5）と 0〜100 スコアを同じ計算から一度に返す */
+function stageStatsOf(
+  rows: { score: number }[]
+): { avg: number | null; score: number | null } {
+  if (rows.length === 0) return { avg: null, score: null }
+  const mean = rows.reduce((a, r) => a + r.score, 0) / rows.length
+  return { avg: round2(mean), score: round1(normalize(mean)) }
 }
 
 /**
@@ -462,9 +471,11 @@ export function calcGroupFunnels(
     const stageScores: StageScore[] = ALL_STAGES.map((stage) => {
       const ids = questionIdsByStage.get(stage) ?? new Set<string>()
       const inStage = rows.filter((r) => ids.has(r.questionId))
+      const stats = stageStatsOf(inStage)
       return {
         stage,
-        score: stageScoreOf(inStage, ids),
+        score: stats.score,
+        avg: stats.avg,
         questionCount: new Set(inStage.map((r) => r.questionId)).size,
         responseCount: inStage.length,
       }
