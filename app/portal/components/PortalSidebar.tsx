@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { usePortalAuth } from './PortalDataProvider'
 import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
-import { isPortalPageVisibleForRole, memberRoleLabel } from '@/lib/constants/member-roles'
+import { isPortalPageVisibleForRole, isStaffRole, memberRoleLabel } from '@/lib/constants/member-roles'
 import { CardPreviewDialog } from './CardPreviewDialog'
 import {
   Sidebar,
@@ -173,7 +173,7 @@ export function PortalSidebar() {
                   )}
                   {/* 従業員はスローガン、それ以外は区分ラベル（経営層/管理職を明示する目的） */}
                   {(() => {
-                    const subText = roleCategory === 'staff' ? slogan : memberRoleLabel(roleCategory)
+                    const subText = isStaffRole(roleCategory) ? slogan : memberRoleLabel(roleCategory)
                     return (
                       <div className={`flex flex-col leading-none ${subText ? 'gap-0.5' : 'justify-center'}`}>
                         <span className="font-semibold">{companyName || 'branding.bz'}</span>
