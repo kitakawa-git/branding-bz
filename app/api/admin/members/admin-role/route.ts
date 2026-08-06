@@ -1,6 +1,11 @@
-// 管理者権限の付与・剥奪
-// POST   /api/admin/members/admin-role  body: { auth_id }  → 管理者にする
+// 管理者権限の取得・付与・剥奪
+// GET    /api/admin/members/admin-role                    → 自社の管理者の auth_id 一覧
+// POST   /api/admin/members/admin-role  body: { auth_id } → 管理者にする
 // DELETE /api/admin/members/admin-role?auth_id=xxx        → 管理者から外す
+//
+// ⚠ admin_users は RLS で「自分の行」しか読めない（スーパー管理者を除く）。
+//   クライアントから select すると他人の管理者状態が取れず、全員 OFF に見える。
+//   一覧は必ずこの GET（service_role）を通すこと。
 //
 // 管理者かどうかは admin_users に行があるかで決まる。これまで行が作られるのは
 // 新規登録した本人（会社を作った人）だけで、画面から増やす手段が無かった。
@@ -33,6 +38,32 @@ async function getAdminContext(
 
   if (!admin?.company_id) return null
   return { companyId: admin.company_id as string, authId: user.id }
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const ctx = await getAdminContext(request)
+    if (!ctx) {
+      return NextResponse.json({ error: '管理者のみ操作できます' }, { status: 403 })
+    }
+
+    const { data, error } = await getSupabaseAdmin()
+      .from('admin_users')
+      .select('auth_id')
+      .eq('company_id', ctx.companyId)
+
+    if (error) {
+      console.error('[AdminRole GET] エラー:', error.message)
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+    return NextResponse.json({ auth_ids: (data ?? []).map((a) => a.auth_id as string) })
+  } catch (err) {
+    console.error('[AdminRole GET] 予期しないエラー:', err)
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : 'Unknown error' },
+      { status: 500 }
+    )
+  }
 }
 
 export async function POST(request: NextRequest) {

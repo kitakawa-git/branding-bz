@@ -144,7 +144,7 @@ export default function MembersPage() {
     setFetchError('')
 
     // fetchWithRetry: タイムアウト6秒 + リトライ1回（setTimeout リーク防止＋短縮）
-    const [membersRes, linksRes, adminsRes] = await Promise.all([
+    const [membersRes, linksRes] = await Promise.all([
       fetchWithRetry(() =>
         supabase
           .from('members')
@@ -158,10 +158,6 @@ export default function MembersPage() {
           .select('*')
           .eq('company_id', companyId)
           .order('created_at', { ascending: false })
-      ),
-      // 管理者は admin_users に行があるかで決まる。members とは別テーブル
-      fetchWithRetry(() =>
-        supabase.from('admin_users').select('auth_id').eq('company_id', companyId)
       ),
     ])
 
@@ -182,15 +178,13 @@ export default function MembersPage() {
       // 参加リクエスト中（pending）のメンバーは別セクションで表示するので一覧から除外
       .filter((m: MemberWithProfile) => m.status !== 'pending')
     const linksData = (linksRes.data ?? []) as InviteLink[]
-    const adminIds = ((adminsRes.data ?? []) as { auth_id: string }[]).map(a => a.auth_id)
 
     setMembers(membersData)
     setInviteLinks(linksData)
-    setAdminAuthIds(adminIds)
     setPageCache(cacheKey, {
       members: membersData,
       inviteLinks: linksData,
-      adminAuthIds: adminIds,
+      adminAuthIds,
     })
     setLoading(false)
   }
@@ -200,6 +194,30 @@ export default function MembersPage() {
     if (getPageCache<AdminMembersCache>(cacheKey)) return
     fetchData()
   }, [companyId, cacheKey])
+
+  // 管理者一覧はサーバー経由で取る。admin_users は RLS で自分の行しか
+  // 読めないため、クライアントから select すると全員 OFF に見える。
+  // 一覧のキャッシュとは別に、開くたびに取り直す（件数が少なく軽い）
+  useEffect(() => {
+    if (!companyId) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        const res = await fetch('/api/admin/members/admin-role', {
+          headers: { Authorization: `Bearer ${session?.access_token || ''}` },
+        })
+        if (!res.ok) return
+        const data = await res.json()
+        if (!cancelled) setAdminAuthIds(data.auth_ids ?? [])
+      } catch (err) {
+        console.error('[Members] 管理者一覧の取得エラー:', err)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [companyId])
 
   // ============================================
   // Join Requests
@@ -301,7 +319,7 @@ export default function MembersPage() {
     const prevMembers = members
     setMembers(prev => prev.map(m =>
       m.profile?.id === profileId
-        ? { ...m, profile: { ...m.profile!, role_category: value || null } }
+        ? { ...m, profile: { ...m.profile!, role_category: value } }
         : m
     ))
     try {
@@ -315,7 +333,7 @@ export default function MembersPage() {
           'Authorization': `Bearer ${token}`,
           'Prefer': 'return=minimal',
         },
-        body: JSON.stringify({ role_category: value || null }),
+        body: JSON.stringify({ role_category: value }),
       })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
     } catch (err) {
