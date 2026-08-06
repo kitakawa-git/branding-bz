@@ -888,11 +888,10 @@ export default function MembersPage() {
                       <td className="px-4 py-3">
                         {profileId ? (
                           <select
-                            value={member.profile?.role_category ?? ''}
+                            value={member.profile?.role_category ?? 'staff'}
                             onChange={(e) => updateRoleCategory(profileId, e.target.value)}
                             className="h-8 rounded-md border border-input bg-white px-2 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                           >
-                            <option value="">未設定</option>
                             {MEMBER_ROLE_OPTIONS.map((opt) => (
                               <option key={opt.value} value={opt.value}>{opt.label}</option>
                             ))}

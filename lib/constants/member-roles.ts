@@ -17,15 +17,15 @@ export const MEMBER_ROLE_LABELS: Record<MemberRole, string> = {
   staff: '従業員',
 }
 
-// 区分の表示ラベル（未設定は空文字を返す）
+// 区分の表示ラベル。null/未知の値は既定の「従業員」（DB は 2026-08-06 から NOT NULL default staff）。
 export function memberRoleLabel(role: string | null | undefined): string {
-  return role ? MEMBER_ROLE_LABELS[role as MemberRole] ?? '' : ''
+  if (role && role in MEMBER_ROLE_LABELS) return MEMBER_ROLE_LABELS[role as MemberRole]
+  return MEMBER_ROLE_LABELS.staff
 }
 
-// 「従業員」かどうか。
-// 未設定（null）は従業員扱いにしない＝既存メンバーの表示を勝手に減らさない安全側。
+// 「従業員」かどうか。null は staff 扱い（既定値と一致）。
 export function isStaffRole(role: string | null | undefined): boolean {
-  return role === 'staff'
+  return role == null || role === 'staff'
 }
 
 // ===== 区分ごとのポータル表示設定 =====
@@ -57,7 +57,8 @@ export const DEFAULT_ROLE_VISIBILITY: RoleVisibilityConfig = {
 }
 
 // 指定ページを、その区分のメンバーが見られるか。
-// 管理者・区分未設定は常に true。機能トグル自体のオン/オフは呼び出し側で別途 AND すること。
+// 管理者は常に true。区分未指定は staff（既定）として扱う（DB は 2026-08-06 から NOT NULL default staff）。
+// 機能トグル自体のオン/オフは呼び出し側で別途 AND すること。
 export function isPortalPageVisibleForRole(
   company: Record<string, unknown> | null | undefined,
   pageKey: string,
@@ -65,8 +66,9 @@ export function isPortalPageVisibleForRole(
   isAdmin: boolean,
 ): boolean {
   if (isAdmin) return true
-  if (!roleCategory) return true
-  const role = roleCategory as MemberRole
+  const role: MemberRole = roleCategory && roleCategory in MEMBER_ROLE_LABELS
+    ? (roleCategory as MemberRole)
+    : 'staff'
   const stored = (company?.portal_role_visibility as RoleVisibilityConfig | undefined)?.[pageKey]
   return stored?.[role] ?? DEFAULT_ROLE_VISIBILITY[pageKey]?.[role] ?? true
 }
