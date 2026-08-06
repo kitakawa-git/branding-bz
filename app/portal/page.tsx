@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase'
 import { usePortalAuth } from './components/PortalDataProvider'
 import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
 import { isPortalPageVisibleForRole } from '@/lib/constants/member-roles'
+import { BrandScorePortalSection } from '@/components/brand-score/BrandScorePortalSection'
 import { SurveyBanner } from './components/SurveyBanner'
 import { QuizBanner } from './components/QuizBanner'
 import { getRelativeTime } from '@/lib/time-utils'
@@ -263,6 +264,13 @@ export default function PortalTopPage() {
   const kpiEnabled = isFeatureEnabled(company, 'kpi_enabled')
   // 区分ごとの表示設定で目標・KPI を出し分け（機能トグルと AND）
   const kpiVisible = kpiEnabled && isPortalPageVisibleForRole(company, 'kpi', roleCategory, isAdmin)
+  // ブランドスコアは既定で管理職以上（従業員には出さない）。会社ごとに設定で変えられる
+  const brandScoreVisible = isPortalPageVisibleForRole(
+    company,
+    'brand_score',
+    roleCategory,
+    isAdmin
+  )
   const cacheKey = `portal-dashboard-${companyId}-${user?.id}`
   const cached = companyId && user?.id ? getPageCache<DashboardCache>(cacheKey) : null
   const [loading, setLoading] = useState(!cached)
@@ -910,6 +918,15 @@ export default function PortalTopPage() {
           })}
         </div>
       </div>
+
+      {/* ===== 2.4. ブランドスコア（区分ごとの表示設定で出し分け） =====
+          表示は管理画面と同じ BrandScoreView。読み取り専用で、
+          記録設定やAI再生成などの操作系は出さない */}
+      {brandScoreVisible && companyId && (
+        <div className="mb-8">
+          <BrandScorePortalSection companyId={companyId} />
+        </div>
+      )}
 
       {/* ===== 2.5. KPIバナー / サマリー（KPI無効時は非表示） ===== */}
       {kpiVisible && !hasGoals && showGoalBanner && (

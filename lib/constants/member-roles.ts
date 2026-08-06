@@ -40,6 +40,7 @@ export const GATEABLE_PORTAL_PAGES: { key: string; label: string; featureKey?: s
   { key: 'timeline', label: 'タイムライン', featureKey: 'timeline_enabled' },
   { key: 'learning', label: 'ラーニング', featureKey: 'learning_enabled' },
   { key: 'survey', label: 'サーベイ結果' },
+  { key: 'brand_score', label: 'ブランドスコア' },
 ]
 
 export type RoleVisibilityConfig = Record<string, Partial<Record<MemberRole, boolean>>>
@@ -50,6 +51,7 @@ export const DEFAULT_ROLE_VISIBILITY: RoleVisibilityConfig = {
   timeline: { executive: true, manager: true, staff: true },
   learning: { executive: true, manager: true, staff: true },
   survey: { executive: true, manager: true, staff: false },
+  brand_score: { executive: true, manager: true, staff: false },
 }
 
 // 指定ページを、その区分のメンバーが見られるか。
