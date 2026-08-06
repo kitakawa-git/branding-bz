@@ -1269,15 +1269,9 @@ export default function SurveyDetailPage() {
 
                 <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
                   <CardContent className="p-4">
-                    {/* 2つの数字の関係が分からないと読めないので必ず添える */}
-                    <div className="mb-1.5 flex items-center justify-end gap-3 text-[9.5px] text-muted-foreground">
-                      <span>上＝5点満点</span>
-                      <span>下＝0〜100</span>
-                    </div>
                     <div className="grid grid-cols-5 gap-2">
                       {FUNNEL_STAGES.map((stage, i) => {
                         const s = stageScoreOf(stage)
-                        const a = stageAvgOf(stage)
                         const isInflection = stage === INFLECTION_STAGE
                         const isWeakest = weakestStage === stage
                         return (
@@ -1304,37 +1298,19 @@ export default function SurveyDetailPage() {
                                 スコアの絶対値で色を変えると、60前後で1〜2ptしか違わない
                                 段階が別の色になり、実際の差より大きな違いに見えてしまう。
                                 段階間の比較は数字とバーの長さが担う（段階別の詳細と同じ方式） */}
-                            {/* 主は5点満点。通過率の閾値（3.5点）と物差しが揃う。
-                                0〜100 は総合スコアと突き合わせるために併記する
-                                （5点満点だと SP の理解3.54 と行動3.54 のように
-                                  別の値が同じに見える行がある） */}
-                            <span className={`block text-xl font-bold leading-tight ${isWeakest ? 'text-orange-600' : 'text-ds-app-accent'}`}>
-                              {a !== null ? a.toFixed(2) : '-'}
-                            </span>
-                            <span className="block text-[9.5px] leading-tight text-muted-foreground tabular-nums">
+                            {/* このカードは総合スコア（0〜100）の真横に並ぶので、
+                                同じ物差しのままにする。5点満点は段階別の詳細で見る */}
+                            <span className={`text-xl font-bold ${isWeakest ? 'text-orange-600' : 'text-ds-app-accent'}`}>
                               {s !== null ? s.toFixed(1) : '-'}
                             </span>
-                            {/* バーは 0〜100 スケールのまま。5点満点を1点起点で描いたものと
-                                同じ形になる（0起点で描くと下2割が誰も答えていない領域になる）。
-                                中央の破線は3.0＝どちらとも言えない */}
-                            <div className="relative mt-1.5">
-                              <Progress
-                                value={s ?? 0}
-                                className={`h-1.5 ${isWeakest ? '[&>div]:bg-orange-500' : '[&>div]:bg-ds-app-accent-soft'}`}
-                              />
-                              <span
-                                aria-hidden
-                                className="pointer-events-none absolute left-1/2 top-0 h-full border-l border-dashed border-orange-400/70"
-                              />
-                            </div>
+                            <Progress
+                              value={s ?? 0}
+                              className={`h-1.5 mt-1.5 ${isWeakest ? '[&>div]:bg-orange-500' : '[&>div]:bg-ds-app-accent-soft'}`}
+                            />
                           </div>
                         )
                       })}
                     </div>
-                    <p className="m-0 mt-2 text-[10px] leading-relaxed text-muted-foreground">
-                      たて軸は5点満点。1点が最低なので1から表示している（0点をつけた人はいない）。
-                      破線の3.0が「どちらとも言えない」。
-                    </p>
                     <InsightNote
                       text={survey.insights?.overview}
                       loading={generatingInsights}
