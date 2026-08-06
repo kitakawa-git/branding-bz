@@ -18,7 +18,6 @@ import {
   STAGE_QUESTIONS,
   STAGE_STATES,
   PATTERN_LABELS,
-  PATTERN_MEANINGS,
   type FunnelStage,
   type FunnelInputQuestion,
   type GroupFunnel,
@@ -356,14 +355,11 @@ export function SurveyResults({ data, questions, insights, insightsLoading }: Pr
                 <Badge variant="outline" className="text-[10px] shrink-0 bg-background">{PATTERN_LABELS[funnel.pattern]}</Badge>
               )}
             </div>
-            {funnel && (
-              <p className="text-xs text-muted-foreground leading-relaxed mb-4">{PATTERN_MEANINGS[funnel.pattern]}</p>
-            )}
-            {/* 2つの数字の関係が分からないと読めないので必ず添える */}
-            <div className="flex items-center justify-end gap-1 pr-0.5 text-[9.5px] text-muted-foreground">
-              <span className="w-9 text-right">5点満点</span>
-              <span className="w-8 text-right">0〜100</span>
-            </div>
+            {/* 見出しの直下は「この表の読み方」を置く。パターンの意味はバッジが担う */}
+            <p className="text-xs text-muted-foreground leading-relaxed mb-4">
+              よこ軸は5点満点。1点が最低なので1から表示している（0点をつけた人はいない）。
+              破線の3.0が「どちらとも言えない」。
+            </p>
             <div>
               {FUNNEL_STAGES.map((stage, i) => {
                 const s = stageScoreOf(stage)
@@ -405,9 +401,6 @@ export function SurveyResults({ data, questions, insights, insightsLoading }: Pr
                               }`}>
                                 {bar.avg !== null ? bar.avg.toFixed(2) : '-'}
                               </span>
-                              <span className="w-8 shrink-0 text-right text-[9.5px] tabular-nums text-muted-foreground">
-                                {bar.value.toFixed(1)}
-                              </span>
                             </div>
                           ))}
                         </div>
@@ -422,10 +415,7 @@ export function SurveyResults({ data, questions, insights, insightsLoading }: Pr
               <span className="flex items-center gap-1"><span className="inline-block size-2.5 rounded-sm bg-green-500" />SP</span>
               <span className="flex items-center gap-1"><span className="inline-block size-2.5 rounded-sm bg-orange-400" />BO（本社含む）</span>
             </div>
-            <p className="m-0 mt-2 text-[10px] leading-relaxed text-muted-foreground">
-              よこ軸は5点満点。1点が最低なので1から表示している（0点をつけた人はいない）。
-              破線の3.0が「どちらとも言えない」。
-            </p>
+
             <InsightNote text={insights?.stages} loading={insightsLoading} />
           </CardContent>
         </Card>
