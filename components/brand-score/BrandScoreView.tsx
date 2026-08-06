@@ -111,6 +111,17 @@ export interface BrandScoreViewProps {
   periodLabel: string
   /** ポータルでは管理画面へのリンクとボタンを出さない */
   readOnly?: boolean
+  /**
+   * インナースコアカード末尾のリンク。
+   * 省略時は管理画面のサーベイ管理（readOnly なら出さない）。
+   * ポータルからは区分で見られる場合だけ `/portal/survey` を渡す。
+   */
+  innerLink?: { href: string; label: string } | null
+  /**
+   * 市場浸透ブロック末尾のリンク。
+   * 省略時は管理画面の市場調査（readOnly なら出さない）。
+   */
+  outerLink?: { href: string; label: string } | null
 }
 
 // ── 表示ヘルパー ──
@@ -189,9 +200,26 @@ export function BrandScoreView({
   impressionScore,
   periodLabel,
   readOnly = false,
+  innerLink,
+  outerLink,
 }: BrandScoreViewProps) {
   const hasInner = innerScore !== null && innerScore.scores.total !== null
   const hasOuter = outerScore !== null && outerScore.outer_score > 0
+
+  // 未指定なら従来どおり管理画面へのリンク（readOnly では出さない）。
+  // null を明示的に渡した場合はリンクなし。
+  const resolvedInnerLink =
+    innerLink !== undefined
+      ? innerLink
+      : readOnly
+        ? null
+        : { href: '/admin/brand-score/surveys', label: 'サーベイ管理' }
+  const resolvedOuterLink =
+    outerLink !== undefined
+      ? outerLink
+      : readOnly
+        ? null
+        : { href: '/admin/brand-score/market-surveys', label: '市場調査' }
 
   // 総合ブランドスコア
   let totalBrandScore: number | null = null
@@ -526,12 +554,12 @@ export function BrandScoreView({
               </div>
             </div>
 
-            {!readOnly && (
+            {resolvedInnerLink && (
               <Link
-                href="/admin/brand-score/surveys"
+                href={resolvedInnerLink.href}
                 className="flex items-center gap-1 text-xs text-foreground hover:underline"
               >
-                サーベイ管理 <ArrowRight size={12} />
+                {resolvedInnerLink.label} <ArrowRight size={12} />
               </Link>
             )}
           </div>
@@ -620,12 +648,12 @@ export function BrandScoreView({
                   </div>
                 )}
 
-                {!readOnly && (
+                {resolvedOuterLink && (
                   <Link
-                    href="/admin/brand-score/market-surveys"
+                    href={resolvedOuterLink.href}
                     className="flex items-center gap-1 text-xs text-foreground hover:underline"
                   >
-                    市場調査 <ArrowRight size={12} />
+                    {resolvedOuterLink.label} <ArrowRight size={12} />
                   </Link>
                 )}
               </>

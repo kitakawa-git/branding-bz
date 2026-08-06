@@ -18,7 +18,6 @@ import {
   STAGE_QUESTIONS,
   STAGE_STATES,
   PATTERN_LABELS,
-  PATTERN_MEANINGS,
   type FunnelStage,
   type FunnelInputQuestion,
   type GroupFunnel,
@@ -170,6 +169,12 @@ export function SurveyResults({ data, questions, insights, insightsLoading }: Pr
     funnelData?.by_department.find(g => g.department === department)
   const deptStageScore = (department: string, stage: FunnelStage): number | null =>
     deptGroup(department)?.stageScores.find(s => s.stage === stage)?.score ?? null
+  // 5点満点は API が返す生の平均をそのまま使う。
+  // 0〜100 から逆算すると小数第2位がずれる（BOの推奨は 3.13 が正、逆算だと 3.12）
+  const stageAvgOf = (stage: FunnelStage): number | null =>
+    funnelData?.overall.stageScores.find(s => s.stage === stage)?.avg ?? null
+  const deptStageAvg = (department: string, stage: FunnelStage): number | null =>
+    deptGroup(department)?.stageScores.find(s => s.stage === stage)?.avg ?? null
   const deptPass = (department: string, stage: FunnelStage): number | null =>
     deptGroup(department)?.cumulative.find(p => p.stage === stage)?.rate ?? null
   const deptPassCount = (department: string, stage: FunnelStage): number | null =>
@@ -277,6 +282,8 @@ export function SurveyResults({ data, questions, insights, insightsLoading }: Pr
                       <span aria-hidden className="absolute inset-y-0 -left-1 border-l border-border" />
                     )}
                     <p className="m-0 text-xs text-muted-foreground">{i + 1}. {STAGE_LABELS[stage]}</p>
+                    {/* このカードは総合スコア（0〜100）の真横に並ぶので、
+                        同じ物差しのままにする。5点満点は段階別の詳細で見る */}
                     <span className={`text-xl font-bold ${isWeakest ? 'text-orange-600' : 'text-ds-app-accent'}`}>
                       {s !== null ? s.toFixed(1) : '-'}
                     </span>
@@ -348,16 +355,21 @@ export function SurveyResults({ data, questions, insights, insightsLoading }: Pr
                 <Badge variant="outline" className="text-[10px] shrink-0 bg-background">{PATTERN_LABELS[funnel.pattern]}</Badge>
               )}
             </div>
-            {funnel && (
-              <p className="text-xs text-muted-foreground leading-relaxed mb-4">{PATTERN_MEANINGS[funnel.pattern]}</p>
-            )}
+            {/* 見出しの直下は「この表の読み方」を置く。パターンの意味はバッジが担う */}
+            <p className="text-xs text-muted-foreground leading-relaxed mb-4">
+              よこ軸は5点満点。1点が最低なので1から表示している（0点をつけた人はいない）。
+              破線の3.0が「どちらとも言えない」。
+            </p>
             <div>
               {FUNNEL_STAGES.map((stage, i) => {
                 const s = stageScoreOf(stage)
+                const a = stageAvgOf(stage)
                 const summary = funnel?.stages.find(x => x.stage === stage)
                 const isWeakest = weakestStage === stage
                 const boScore = deptStageScore('BO本社', stage)
                 const spScore = deptStageScore('SP', stage)
+                const boAvg = deptStageAvg('BO本社', stage)
+                const spAvg = deptStageAvg('SP', stage)
                 return (
                   <div key={stage}>
                     {stage === INFLECTION_STAGE && <div aria-hidden className="my-2 border-t border-border" />}
@@ -369,19 +381,25 @@ export function SurveyResults({ data, questions, insights, insightsLoading }: Pr
                       <div className="min-w-0 flex-1 pt-0.5">
                         <div className="space-y-1">
                           {([
-                            { key: '全社', value: s, color: 'bg-ds-app-accent-soft', worst: isWeakest, best: strongestStage === stage },
-                            { key: 'SP', value: spScore, color: 'bg-green-500', worst: weakestSpStage === stage, best: strongestSpStage === stage },
-                            { key: 'BO', value: boScore, color: 'bg-orange-400', worst: weakestBoStage === stage, best: strongestBoStage === stage },
+                            { key: '全社', value: s, avg: a, color: 'bg-ds-app-accent-soft', worst: isWeakest, best: strongestStage === stage },
+                            { key: 'SP', value: spScore, avg: spAvg, color: 'bg-green-500', worst: weakestSpStage === stage, best: strongestSpStage === stage },
+                            { key: 'BO', value: boScore, avg: boAvg, color: 'bg-orange-400', worst: weakestBoStage === stage, best: strongestBoStage === stage },
                           ] as const).map(bar => bar.value === null ? null : (
                             <div key={bar.key} className="flex items-center gap-2">
                               <span className="w-7 shrink-0 text-[10px] text-muted-foreground">{bar.key}</span>
-                              <div className="h-2 min-w-0 flex-1 rounded-full bg-muted">
+                              {/* 棒は 0〜100 スケール。5点満点を1点起点で描いたものと
+                                  同じ形になる。中央の破線が3.0＝どちらとも言えない */}
+                              <div className="relative h-2 min-w-0 flex-1 rounded-full bg-muted">
                                 <div className={`h-full rounded-full ${bar.color}`} style={{ width: `${bar.value}%` }} />
+                                <span
+                                  aria-hidden
+                                  className="pointer-events-none absolute left-1/2 top-0 h-full border-l border-dashed border-orange-400/70"
+                                />
                               </div>
-                              <span className={`w-8 shrink-0 text-right text-[10px] tabular-nums ${
-                                bar.worst ? 'font-bold text-orange-600' : bar.best ? 'font-bold text-ds-app-accent' : 'text-muted-foreground'
+                              <span className={`w-9 shrink-0 text-right text-[11px] tabular-nums ${
+                                bar.worst ? 'font-bold text-orange-600' : bar.best ? 'font-bold text-ds-app-accent' : 'font-bold text-foreground'
                               }`}>
-                                {bar.value.toFixed(1)}
+                                {bar.avg !== null ? bar.avg.toFixed(2) : '-'}
                               </span>
                             </div>
                           ))}
@@ -397,6 +415,7 @@ export function SurveyResults({ data, questions, insights, insightsLoading }: Pr
               <span className="flex items-center gap-1"><span className="inline-block size-2.5 rounded-sm bg-green-500" />SP</span>
               <span className="flex items-center gap-1"><span className="inline-block size-2.5 rounded-sm bg-orange-400" />BO（本社含む）</span>
             </div>
+
             <InsightNote text={insights?.stages} loading={insightsLoading} />
           </CardContent>
         </Card>
