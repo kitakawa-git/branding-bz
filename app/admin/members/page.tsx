@@ -805,7 +805,7 @@ export default function MembersPage() {
                             {member.profile?.photo_url && <AvatarImage src={member.profile.photo_url} alt={member.display_name} />}
                             <AvatarFallback className="text-xs">{member.display_name.slice(0, 1)}</AvatarFallback>
                           </Avatar>
-                          <span className="text-sm font-bold text-foreground">{member.display_name}</span>
+                          <span className="text-sm font-bold text-foreground whitespace-nowrap">{member.display_name}</span>
                         </div>
                       </td>
                       <td className="px-4 py-3">
