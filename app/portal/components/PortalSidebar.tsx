@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { usePortalAuth } from './PortalDataProvider'
 import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
-import { isPortalPageVisibleForRole } from '@/lib/constants/member-roles'
+import { isPortalPageVisibleForRole, memberRoleLabel } from '@/lib/constants/member-roles'
 import { CardPreviewDialog } from './CardPreviewDialog'
 import {
   Sidebar,
@@ -171,9 +171,12 @@ export function PortalSidebar() {
                       <img src={companyLogoUrl} alt={companyName || ''} className="size-full object-cover" />
                     </div>
                   )}
-                  <div className={`flex flex-col leading-none ${slogan ? 'gap-0.5' : 'justify-center'}`}>
+                  <div className={`flex flex-col leading-none ${slogan || roleCategory ? 'gap-0.5' : 'justify-center'}`}>
                     <span className="font-semibold">{companyName || 'branding.bz'}</span>
                     {slogan && <span className="text-xs text-sidebar-foreground/70">{slogan}</span>}
+                    {memberRoleLabel(roleCategory) && (
+                      <span className="text-xs text-sidebar-foreground/70">{memberRoleLabel(roleCategory)}</span>
+                    )}
                   </div>
                 </Link>
               </SidebarMenuButton>
