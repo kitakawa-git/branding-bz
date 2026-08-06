@@ -757,15 +757,15 @@ export default function PortalTopPage() {
       {/* ===== 1. スローガン ===== */}
       <div className="text-center mb-8">
         {/* スローガン未設定（ブランク）のときは見出しを非表示にする */}
-        {slogan && (
-          <h1 className="text-4xl font-bold text-foreground">
-            {slogan}
-          </h1>
-        )}
         {member && (
-          <p className="text-base sm:text-sm text-muted-foreground m-0 mt-1">
+          <p className="text-4xl font-bold text-foreground m-0">
             ようこそ、{member.display_name} さん
           </p>
+        )}
+        {slogan && (
+          <h1 className="text-base sm:text-sm font-normal text-muted-foreground m-0 mt-1">
+            {slogan}
+          </h1>
         )}
       </div>
 
