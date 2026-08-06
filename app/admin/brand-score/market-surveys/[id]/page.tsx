@@ -218,7 +218,6 @@ export default function MarketSurveyDetailPage() {
   const insightsTriedRef = useRef(false)
   const [blockCount, setBlockCount] = useState(0)
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
 
   // タイトルの直接編集。取り込み時のファイル名がそのまま入るので、
   // 後から読みやすい名前に直したい場面のほうが多い（サーベイ詳細と同じ挙動）
@@ -377,26 +376,6 @@ export default function MarketSurveyDetailPage() {
     }
   }
 
-  const toggleActive = async (next: 'active' | 'draft') => {
-    setSaving(true)
-    try {
-      const res = await fetch(`/api/brand-score/market-surveys/${surveyId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: next }),
-      })
-      const data = await res.json()
-      if (!res.ok) {
-        toast.error(data.error || '更新できませんでした')
-        return
-      }
-      toast.success(next === 'active' ? 'アウタースコアに反映しました' : '反映を止めました')
-      await fetchAll()
-    } finally {
-      setSaving(false)
-    }
-  }
-
   if (loading) {
     return (
       <div className="space-y-4">
@@ -499,26 +478,6 @@ export default function MarketSurveyDetailPage() {
             )}
             AI考察を再生成
           </Button>
-          {survey.status === 'active' ? (
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={saving}
-              onClick={() => toggleActive('draft')}
-            >
-              {saving && <Loader2 size={14} className="animate-spin" />}
-              反映を止める
-            </Button>
-          ) : (
-            <Button
-              size="sm"
-              disabled={saving || scored.length < 3}
-              onClick={() => toggleActive('active')}
-            >
-              {saving && <Loader2 size={14} className="animate-spin" />}
-              アウタースコアに反映
-            </Button>
-          )}
         </div>
       </div>
 

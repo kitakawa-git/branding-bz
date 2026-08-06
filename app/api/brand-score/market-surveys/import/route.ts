@@ -189,7 +189,9 @@ export async function POST(request: NextRequest) {
         sample_size: sampleSize,
         source_file_name: file.name,
         source_sheet_name: sheetName,
-        status: 'draft',
+        // 取り込み中に自動割り当てまで済むので、そのまま使える状態にする。
+        // 実際にスコアへ入るかは「実施日が最新か」と「3段階以上出ているか」で決まる
+        status: 'active',
         // 物差しは取り込み時点の既定値で凍結する。あとで既定値を変えても
         // この調査のスコアは動かない（前年比を壊さないため）
         stage_params: defaultStageParams(),

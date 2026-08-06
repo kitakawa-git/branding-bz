@@ -32,11 +32,6 @@ type SurveyListItem = {
   fielded_to: string | null
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  active: '反映中',
-  archived: '過年度',
-}
-
 export default function PortalMarketSurveyPage() {
   const { companyId, company, roleCategory, isAdmin } = usePortalAuth()
   const visible = isPortalPageVisibleForRole(company, 'market_survey', roleCategory, isAdmin)
@@ -52,7 +47,7 @@ export default function PortalMarketSurveyPage() {
   const [extras, setExtras] = useState<MarketExtrasData | null>(null)
   const [resultLoading, setResultLoading] = useState(false)
 
-  // 一覧を取得。設定中（draft）は割り当てが固まっていないので出さない
+  // 一覧を取得。手で「過年度」にしたものは出さない
   useEffect(() => {
     if (!companyId || !visible) return
     let cancelled = false
@@ -62,7 +57,7 @@ export default function PortalMarketSurveyPage() {
         const res = await fetch(`/api/brand-score/market-surveys?company_id=${companyId}`)
         const data = await res.json()
         const list: SurveyListItem[] = (data.surveys ?? []).filter(
-          (s: SurveyListItem) => s.status !== 'draft'
+          (s: SurveyListItem) => s.status !== 'archived'
         )
         if (cancelled) return
         setSurveys(list)
@@ -134,7 +129,11 @@ export default function PortalMarketSurveyPage() {
                 {surveys.map(s => (
                   <SelectItem key={s.id} value={s.id}>
                     {s.title}
-                    {STATUS_LABELS[s.status] ? `（${STATUS_LABELS[s.status]}）` : ''}
+                    {/* 反映中かどうかは実施日の新しさで決まるので、状態ではなく
+                        いつの調査かを添える */}
+                    {s.fielded_to
+                      ? `（${new Date(s.fielded_to).getFullYear()}年）`
+                      : ''}
                   </SelectItem>
                 ))}
               </SelectContent>
