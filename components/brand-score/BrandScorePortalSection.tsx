@@ -6,6 +6,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { getPageCache, setPageCache } from '@/lib/page-cache'
 import {
   BrandScoreView,
   type BrandScoreInner,
@@ -21,14 +22,27 @@ import {
 const PERIOD_DAYS = '365'
 const PERIOD_LABEL = '1年'
 
+type CachedData = {
+  innerScore: BrandScoreInner | null
+  outerScore: BrandScoreOuter | null
+  snapshots: BrandScoreSnapshot[]
+  marketTrend: TrendPoint[]
+  surveyTrend: TrendPoint[]
+  prevDiff: number | null
+}
+
 export function BrandScorePortalSection({ companyId }: { companyId: string }) {
-  const [loading, setLoading] = useState(true)
-  const [innerScore, setInnerScore] = useState<BrandScoreInner | null>(null)
-  const [outerScore, setOuterScore] = useState<BrandScoreOuter | null>(null)
-  const [snapshots, setSnapshots] = useState<BrandScoreSnapshot[]>([])
-  const [marketTrend, setMarketTrend] = useState<TrendPoint[]>([])
-  const [surveyTrend, setSurveyTrend] = useState<TrendPoint[]>([])
-  const [prevDiff, setPrevDiff] = useState<number | null>(null)
+  // 同一セッションの再訪では前回取得値でそのまま描画（stale-while-revalidate）
+  const cacheKey = `portal-brand-score-${companyId}`
+  const cached = getPageCache<CachedData>(cacheKey)
+
+  const [loading, setLoading] = useState(!cached)
+  const [innerScore, setInnerScore] = useState<BrandScoreInner | null>(cached?.innerScore ?? null)
+  const [outerScore, setOuterScore] = useState<BrandScoreOuter | null>(cached?.outerScore ?? null)
+  const [snapshots, setSnapshots] = useState<BrandScoreSnapshot[]>(cached?.snapshots ?? [])
+  const [marketTrend, setMarketTrend] = useState<TrendPoint[]>(cached?.marketTrend ?? [])
+  const [surveyTrend, setSurveyTrend] = useState<TrendPoint[]>(cached?.surveyTrend ?? [])
+  const [prevDiff, setPrevDiff] = useState<number | null>(cached?.prevDiff ?? null)
 
   const fetchAll = useCallback(async () => {
     try {
@@ -45,39 +59,48 @@ export function BrandScorePortalSection({ companyId }: { companyId: string }) {
         json(`/api/brand-score/surveys/trend?company_id=${companyId}`),
       ])
 
-      setInnerScore(inner ?? null)
-      setOuterScore(outer ?? null)
-
-      const list: BrandScoreSnapshot[] = snaps?.snapshots ?? []
-      setSnapshots(list)
+      const innerResult: BrandScoreInner | null = inner ?? null
+      const outerResult: BrandScoreOuter | null = outer ?? null
+      const snapshotList: BrandScoreSnapshot[] = snaps?.snapshots ?? []
 
       // 前回比。最新から1つ前の記録との差
-      if (list.length >= 2) {
-        const sorted = [...list].sort((a, b) => b.snapshot_date.localeCompare(a.snapshot_date))
+      let prevDiffResult: number | null = null
+      if (snapshotList.length >= 2) {
+        const sorted = [...snapshotList].sort((a, b) => b.snapshot_date.localeCompare(a.snapshot_date))
         const [latest, prev] = sorted
         if (latest.total_score !== null && prev.total_score !== null) {
-          setPrevDiff(Math.round((latest.total_score - prev.total_score) * 10) / 10)
+          prevDiffResult = Math.round((latest.total_score - prev.total_score) * 10) / 10
         }
       }
 
-      setMarketTrend(
-        (market?.points ?? []).map((p: { date: string; market_score: number | null }) => ({
-          date: p.date,
-          score: p.market_score,
-        }))
+      const marketPoints: TrendPoint[] = (market?.points ?? []).map(
+        (p: { date: string; market_score: number | null }) => ({ date: p.date, score: p.market_score })
       )
-      setSurveyTrend(
-        (survey?.points ?? []).map((p: { date: string; inner_score: number | null }) => ({
-          date: p.date,
-          score: p.inner_score,
-        }))
+      const surveyPoints: TrendPoint[] = (survey?.points ?? []).map(
+        (p: { date: string; inner_score: number | null }) => ({ date: p.date, score: p.inner_score })
       )
+
+      setInnerScore(innerResult)
+      setOuterScore(outerResult)
+      setSnapshots(snapshotList)
+      setPrevDiff(prevDiffResult)
+      setMarketTrend(marketPoints)
+      setSurveyTrend(surveyPoints)
+
+      setPageCache<CachedData>(cacheKey, {
+        innerScore: innerResult,
+        outerScore: outerResult,
+        snapshots: snapshotList,
+        marketTrend: marketPoints,
+        surveyTrend: surveyPoints,
+        prevDiff: prevDiffResult,
+      })
     } catch (err) {
       console.error('[BrandScorePortal] 取得エラー:', err)
     } finally {
       setLoading(false)
     }
-  }, [companyId])
+  }, [companyId, cacheKey])
 
   useEffect(() => {
     fetchAll()
