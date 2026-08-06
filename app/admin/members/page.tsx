@@ -80,6 +80,8 @@ type InviteLink = {
 type AdminMembersCache = {
   members: MemberWithProfile[]
   inviteLinks: InviteLink[]
+  /** 管理者の auth_id 一覧（admin_users に行がある人） */
+  adminAuthIds: string[]
 }
 
 // ============================================
@@ -116,6 +118,8 @@ export default function MembersPage() {
 
   // 招待リンク
   const [inviteLinks, setInviteLinks] = useState<InviteLink[]>(cached?.inviteLinks ?? [])
+  const [adminAuthIds, setAdminAuthIds] = useState<string[]>(cached?.adminAuthIds ?? [])
+  const [togglingAdminId, setTogglingAdminId] = useState<string | null>(null)
   const [generatingLink, setGeneratingLink] = useState(false)
   const [showInviteLinks, setShowInviteLinks] = useState(false)
 
@@ -140,7 +144,7 @@ export default function MembersPage() {
     setFetchError('')
 
     // fetchWithRetry: タイムアウト6秒 + リトライ1回（setTimeout リーク防止＋短縮）
-    const [membersRes, linksRes] = await Promise.all([
+    const [membersRes, linksRes, adminsRes] = await Promise.all([
       fetchWithRetry(() =>
         supabase
           .from('members')
@@ -154,6 +158,10 @@ export default function MembersPage() {
           .select('*')
           .eq('company_id', companyId)
           .order('created_at', { ascending: false })
+      ),
+      // 管理者は admin_users に行があるかで決まる。members とは別テーブル
+      fetchWithRetry(() =>
+        supabase.from('admin_users').select('auth_id').eq('company_id', companyId)
       ),
     ])
 
@@ -174,10 +182,16 @@ export default function MembersPage() {
       // 参加リクエスト中（pending）のメンバーは別セクションで表示するので一覧から除外
       .filter((m: MemberWithProfile) => m.status !== 'pending')
     const linksData = (linksRes.data ?? []) as InviteLink[]
+    const adminIds = ((adminsRes.data ?? []) as { auth_id: string }[]).map(a => a.auth_id)
 
     setMembers(membersData)
     setInviteLinks(linksData)
-    setPageCache(cacheKey, { members: membersData, inviteLinks: linksData })
+    setAdminAuthIds(adminIds)
+    setPageCache(cacheKey, {
+      members: membersData,
+      inviteLinks: linksData,
+      adminAuthIds: adminIds,
+    })
     setLoading(false)
   }
 
@@ -308,6 +322,46 @@ export default function MembersPage() {
       console.error('区分更新エラー:', err)
       toast.error('区分の更新に失敗しました')
       setMembers(prevMembers)
+    }
+  }
+
+  // ============================================
+  // 管理者の付与・剥奪
+  // ============================================
+  // 管理者かどうかは admin_users に行があるかで決まる（members とは別テーブル）。
+  // 最後の1人を外すと誰も管理画面に入れなくなるので、判定はサーバー側が持つ
+  const toggleAdmin = async (authId: string, isAdmin: boolean) => {
+    if (togglingAdminId) return
+    setTogglingAdminId(authId)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const token = session?.access_token || ''
+      const res = await fetch(
+        isAdmin
+          ? `/api/admin/members/admin-role?auth_id=${authId}`
+          : '/api/admin/members/admin-role',
+        {
+          method: isAdmin ? 'DELETE' : 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: isAdmin ? undefined : JSON.stringify({ auth_id: authId }),
+        }
+      )
+      const data = await res.json().catch(() => null)
+      if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`)
+
+      const next = isAdmin
+        ? adminAuthIds.filter(id => id !== authId)
+        : [...adminAuthIds, authId]
+      setAdminAuthIds(next)
+      setPageCache(cacheKey, { members, inviteLinks, adminAuthIds: next })
+      toast.success(isAdmin ? '管理者から外しました' : '管理者にしました')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '切り替えに失敗しました')
+    } finally {
+      setTogglingAdminId(null)
     }
   }
 
@@ -788,6 +842,7 @@ export default function MembersPage() {
                   <th className="px-4 py-3 font-medium">メール</th>
                   <th className="px-4 py-3 font-medium">区分</th>
                   <th className="px-4 py-3 font-medium">名刺</th>
+                  <th className="px-4 py-3 font-medium">管理者</th>
                   <th className="px-4 py-3 font-medium">ステータス</th>
                   <th className="px-4 py-3 font-medium">登録日</th>
                   <th className="px-4 py-3 font-medium">操作</th>
@@ -797,6 +852,7 @@ export default function MembersPage() {
                 {members.map((member) => {
                   const cardEnabled = member.profile?.card_enabled ?? false
                   const profileId = member.profile?.id
+                  const isAdminMember = adminAuthIds.includes(member.auth_id)
                   return (
                     <tr key={member.id} className="border-b last:border-b-0 hover:bg-muted/30 transition-colors">
                       <td className="px-4 py-3">
@@ -839,6 +895,17 @@ export default function MembersPage() {
                         ) : (
                           <span className="text-muted-foreground text-xs">-</span>
                         )}
+                      </td>
+                      <td className="px-4 py-3">
+                        {/* 管理画面に入れるかどうか。区分（経営層/管理職/従業員）とは別軸で、
+                            区分は「ポータルで何が見えるか」、こちらは「管理画面に入れるか」 */}
+                        <button
+                          onClick={() => toggleAdmin(member.auth_id, isAdminMember)}
+                          disabled={togglingAdminId === member.auth_id}
+                          className={`py-1 px-3 rounded-xl border-none text-xs font-bold cursor-pointer ${isAdminMember ? 'bg-green-50 text-green-600' : 'bg-muted text-muted-foreground'} ${togglingAdminId === member.auth_id ? 'opacity-50 cursor-default' : ''}`}
+                        >
+                          {isAdminMember ? <><Check size={14} className="inline" /> ON</> : 'OFF'}
+                        </button>
                       </td>
                       <td className="px-4 py-3">
                         <span className={`py-0.5 px-2 rounded text-xs font-bold ${member.is_active ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
