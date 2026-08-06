@@ -32,11 +32,6 @@ type SurveyListItem = {
   insights: Partial<Record<InsightKey, string>> | null
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  active: '実施中',
-  closed: '終了',
-}
-
 export default function PortalSurveyPage() {
   const { companyId, company, roleCategory, isAdmin } = usePortalAuth()
   const visible = isPortalPageVisibleForRole(company, 'survey', roleCategory, isAdmin)
@@ -135,7 +130,6 @@ export default function PortalSurveyPage() {
                 {surveys.map(s => (
                   <SelectItem key={s.id} value={s.id}>
                     {s.title}
-                    {STATUS_LABELS[s.status] ? `（${STATUS_LABELS[s.status]}）` : ''}
                   </SelectItem>
                 ))}
               </SelectContent>
