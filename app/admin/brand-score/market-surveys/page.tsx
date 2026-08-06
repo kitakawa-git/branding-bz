@@ -88,6 +88,20 @@ const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
   archived: { label: '過年度', className: 'bg-gray-100 text-gray-500' },
 }
 
+/**
+ * バッジは保存値ではなく状態から出す。
+ * アウタースコアに入るのは「実施日がいちばん新しく、5段階のうち3つ以上
+ * スコアが出ている調査」1件だけ。人が反映のオン/オフを切り替える運用をやめたため、
+ * どれが現行かは並びから決まる。
+ */
+const MIN_SCORED_STAGES = 3
+
+function badgeFor(s: MarketSurvey, currentId: string | null) {
+  if (s.status === 'archived') return STATUS_CONFIG.archived
+  if (s.resolved_stage_count < MIN_SCORED_STAGES) return STATUS_CONFIG.draft
+  return s.id === currentId ? STATUS_CONFIG.active : STATUS_CONFIG.archived
+}
+
 export default function MarketSurveysPage() {
   const { companyId } = useAuth()
   const router = useRouter()
@@ -153,6 +167,15 @@ export default function MarketSurveysPage() {
     }
   }
 
+  // いまアウタースコアに入っている調査。実施日が新しい順で、
+  // 3段階以上スコアが出ている最初の1件（calculateMarketScore と同じ規則）
+  const currentSurveyId =
+    [...surveys]
+      .filter(s => s.status !== 'archived' && s.resolved_stage_count >= MIN_SCORED_STAGES)
+      .sort((a, b) =>
+        (b.fielded_to ?? b.created_at).localeCompare(a.fielded_to ?? a.created_at)
+      )[0]?.id ?? null
+
   // サーベイ一覧と同じ書式。月までだと開始と終了が同じ月のとき
   // 「2026/06 〜 2026/06」になって期間が読めない
   const formatDate = (s: string | null) => {
@@ -198,7 +221,7 @@ export default function MarketSurveysPage() {
             <AlertDialogDescription>
               「{deleteTarget?.title}」と、取り込んだ設問{deleteTarget?.block_count}件・
               5段階の割り当てをすべて削除します。元に戻せません。
-              {deleteTarget?.status === 'active' &&
+              {deleteTarget?.id === currentSurveyId &&
                 'この調査はアウタースコアに反映中です。削除するとスコアから外れます。'}
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -320,7 +343,7 @@ export default function MarketSurveysPage() {
       ) : (
         <div className="space-y-4">
           {surveys.map(s => {
-            const cfg = STATUS_CONFIG[s.status] ?? STATUS_CONFIG.draft
+            const cfg = badgeFor(s, currentSurveyId)
             const mappingRate =
               s.total_stage_count > 0
                 ? (s.resolved_stage_count / s.total_stage_count) * 100

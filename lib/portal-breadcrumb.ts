@@ -18,6 +18,8 @@ const breadcrumbMap: Record<string, PortalCrumb> = {
   '/portal/timeline': { section: '浸透', title: 'Good Job タイムライン' },
   '/portal/kpi': { section: '浸透', title: '目標・KPI' },
   '/portal/learning': { section: '浸透', title: 'ラーニング' },
+  '/portal/survey': { section: '浸透', title: 'サーベイ結果' },
+  '/portal/market-survey': { section: '浸透', title: '市場調査' },
   // 私たちの「らしさ」セクション（視点ワード｜名詞 の二段表記）
   '/portal/guidelines': { section: '私たちの「らしさ」', perspective: '考え方', title: 'ブランド方針' },
   '/portal/personality': { section: '私たちの「らしさ」', perspective: '感じられ方', title: 'ブランドパーソナリティ' },

@@ -31,8 +31,9 @@ import {
 import { getPageCache, setPageCache } from '@/lib/page-cache'
 import { MEMBER_ROLE_OPTIONS } from '@/lib/constants/member-roles'
 import { Button } from '@/components/ui/button'
-import { Check, Pencil, Eye, EyeOff, Trash2, Link2, ChevronDown, ChevronUp, Plus, UserPlus, CheckCircle2, XCircle } from 'lucide-react'
+import { Check, Pencil, Eye, EyeOff, Trash2, Link2, ChevronDown, ChevronUp, Plus, Upload, UserPlus, CheckCircle2, XCircle } from 'lucide-react'
 import { Fab, FabButton } from '@/components/ui/fab'
+import { MemberCsvImportDialog } from './MemberCsvImportDialog'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
@@ -80,6 +81,8 @@ type InviteLink = {
 type AdminMembersCache = {
   members: MemberWithProfile[]
   inviteLinks: InviteLink[]
+  /** 管理者の auth_id 一覧（admin_users に行がある人） */
+  adminAuthIds: string[]
 }
 
 // ============================================
@@ -116,6 +119,8 @@ export default function MembersPage() {
 
   // 招待リンク
   const [inviteLinks, setInviteLinks] = useState<InviteLink[]>(cached?.inviteLinks ?? [])
+  const [adminAuthIds, setAdminAuthIds] = useState<string[]>(cached?.adminAuthIds ?? [])
+  const [togglingAdminId, setTogglingAdminId] = useState<string | null>(null)
   const [generatingLink, setGeneratingLink] = useState(false)
   const [showInviteLinks, setShowInviteLinks] = useState(false)
 
@@ -126,6 +131,7 @@ export default function MembersPage() {
 
   // アカウント作成フォーム
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
+  const [csvDialogOpen, setCsvDialogOpen] = useState(false)
   const [newEmail, setNewEmail] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [newDisplayName, setNewDisplayName] = useState('')
@@ -177,7 +183,11 @@ export default function MembersPage() {
 
     setMembers(membersData)
     setInviteLinks(linksData)
-    setPageCache(cacheKey, { members: membersData, inviteLinks: linksData })
+    setPageCache(cacheKey, {
+      members: membersData,
+      inviteLinks: linksData,
+      adminAuthIds,
+    })
     setLoading(false)
   }
 
@@ -186,6 +196,30 @@ export default function MembersPage() {
     if (getPageCache<AdminMembersCache>(cacheKey)) return
     fetchData()
   }, [companyId, cacheKey])
+
+  // 管理者一覧はサーバー経由で取る。admin_users は RLS で自分の行しか
+  // 読めないため、クライアントから select すると全員 OFF に見える。
+  // 一覧のキャッシュとは別に、開くたびに取り直す（件数が少なく軽い）
+  useEffect(() => {
+    if (!companyId) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        const res = await fetch('/api/admin/members/admin-role', {
+          headers: { Authorization: `Bearer ${session?.access_token || ''}` },
+        })
+        if (!res.ok) return
+        const data = await res.json()
+        if (!cancelled) setAdminAuthIds(data.auth_ids ?? [])
+      } catch (err) {
+        console.error('[Members] 管理者一覧の取得エラー:', err)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [companyId])
 
   // ============================================
   // Join Requests
@@ -287,7 +321,7 @@ export default function MembersPage() {
     const prevMembers = members
     setMembers(prev => prev.map(m =>
       m.profile?.id === profileId
-        ? { ...m, profile: { ...m.profile!, role_category: value || null } }
+        ? { ...m, profile: { ...m.profile!, role_category: value } }
         : m
     ))
     try {
@@ -301,13 +335,53 @@ export default function MembersPage() {
           'Authorization': `Bearer ${token}`,
           'Prefer': 'return=minimal',
         },
-        body: JSON.stringify({ role_category: value || null }),
+        body: JSON.stringify({ role_category: value }),
       })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
     } catch (err) {
       console.error('区分更新エラー:', err)
       toast.error('区分の更新に失敗しました')
       setMembers(prevMembers)
+    }
+  }
+
+  // ============================================
+  // 管理者の付与・剥奪
+  // ============================================
+  // 管理者かどうかは admin_users に行があるかで決まる（members とは別テーブル）。
+  // 最後の1人を外すと誰も管理画面に入れなくなるので、判定はサーバー側が持つ
+  const toggleAdmin = async (authId: string, isAdmin: boolean) => {
+    if (togglingAdminId) return
+    setTogglingAdminId(authId)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const token = session?.access_token || ''
+      const res = await fetch(
+        isAdmin
+          ? `/api/admin/members/admin-role?auth_id=${authId}`
+          : '/api/admin/members/admin-role',
+        {
+          method: isAdmin ? 'DELETE' : 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: isAdmin ? undefined : JSON.stringify({ auth_id: authId }),
+        }
+      )
+      const data = await res.json().catch(() => null)
+      if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`)
+
+      const next = isAdmin
+        ? adminAuthIds.filter(id => id !== authId)
+        : [...adminAuthIds, authId]
+      setAdminAuthIds(next)
+      setPageCache(cacheKey, { members, inviteLinks, adminAuthIds: next })
+      toast.success(isAdmin ? '管理者から外しました' : '管理者にしました')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '切り替えに失敗しました')
+    } finally {
+      setTogglingAdminId(null)
     }
   }
 
@@ -538,10 +612,22 @@ export default function MembersPage() {
 
       {/* ===== アカウント作成 FAB（右下固定） ===== */}
       <Fab>
+        <FabButton onClick={() => setCsvDialogOpen(true)} icon={<Upload size={16} />}>
+          CSVで一括登録
+        </FabButton>
         <FabButton onClick={() => setCreateDialogOpen(true)} icon={<Plus size={16} />}>
           アカウントを追加
         </FabButton>
       </Fab>
+
+      <MemberCsvImportDialog
+        open={csvDialogOpen}
+        onOpenChange={setCsvDialogOpen}
+        onCompleted={() => {
+          setPageCache(cacheKey, null as unknown as AdminMembersCache)
+          fetchData()
+        }}
+      />
 
       {/* ===== アカウント作成モーダル ===== */}
       <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
@@ -788,6 +874,7 @@ export default function MembersPage() {
                   <th className="px-4 py-3 font-medium">メール</th>
                   <th className="px-4 py-3 font-medium">区分</th>
                   <th className="px-4 py-3 font-medium">名刺</th>
+                  <th className="px-4 py-3 font-medium">管理者</th>
                   <th className="px-4 py-3 font-medium">ステータス</th>
                   <th className="px-4 py-3 font-medium">登録日</th>
                   <th className="px-4 py-3 font-medium">操作</th>
@@ -797,6 +884,7 @@ export default function MembersPage() {
                 {members.map((member) => {
                   const cardEnabled = member.profile?.card_enabled ?? false
                   const profileId = member.profile?.id
+                  const isAdminMember = adminAuthIds.includes(member.auth_id)
                   return (
                     <tr key={member.id} className="border-b last:border-b-0 hover:bg-muted/30 transition-colors">
                       <td className="px-4 py-3">
@@ -805,7 +893,7 @@ export default function MembersPage() {
                             {member.profile?.photo_url && <AvatarImage src={member.profile.photo_url} alt={member.display_name} />}
                             <AvatarFallback className="text-xs">{member.display_name.slice(0, 1)}</AvatarFallback>
                           </Avatar>
-                          <span className="text-sm font-bold text-foreground">{member.display_name}</span>
+                          <span className="text-sm font-bold text-foreground whitespace-nowrap">{member.display_name}</span>
                         </div>
                       </td>
                       <td className="px-4 py-3">
@@ -814,11 +902,10 @@ export default function MembersPage() {
                       <td className="px-4 py-3">
                         {profileId ? (
                           <select
-                            value={member.profile?.role_category ?? ''}
+                            value={member.profile?.role_category ?? 'staff'}
                             onChange={(e) => updateRoleCategory(profileId, e.target.value)}
                             className="h-8 rounded-md border border-input bg-white px-2 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                           >
-                            <option value="">未設定</option>
                             {MEMBER_ROLE_OPTIONS.map((opt) => (
                               <option key={opt.value} value={opt.value}>{opt.label}</option>
                             ))}
@@ -839,6 +926,17 @@ export default function MembersPage() {
                         ) : (
                           <span className="text-muted-foreground text-xs">-</span>
                         )}
+                      </td>
+                      <td className="px-4 py-3">
+                        {/* 管理画面に入れるかどうか。区分（経営層/管理職/従業員）とは別軸で、
+                            区分は「ポータルで何が見えるか」、こちらは「管理画面に入れるか」 */}
+                        <button
+                          onClick={() => toggleAdmin(member.auth_id, isAdminMember)}
+                          disabled={togglingAdminId === member.auth_id}
+                          className={`py-1 px-3 rounded-xl border-none text-xs font-bold cursor-pointer ${isAdminMember ? 'bg-green-50 text-green-600' : 'bg-muted text-muted-foreground'} ${togglingAdminId === member.auth_id ? 'opacity-50 cursor-default' : ''}`}
+                        >
+                          {isAdminMember ? <><Check size={14} className="inline" /> ON</> : 'OFF'}
+                        </button>
                       </td>
                       <td className="px-4 py-3">
                         <span className={`py-0.5 px-2 rounded text-xs font-bold ${member.is_active ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>

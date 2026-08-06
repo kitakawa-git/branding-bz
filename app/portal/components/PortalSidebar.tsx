@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { usePortalAuth } from './PortalDataProvider'
 import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
-import { isPortalPageVisibleForRole } from '@/lib/constants/member-roles'
+import { isPortalPageVisibleForRole, isStaffRole, memberRoleLabel } from '@/lib/constants/member-roles'
 import { CardPreviewDialog } from './CardPreviewDialog'
 import {
   Sidebar,
@@ -44,6 +44,7 @@ import {
   GraduationCap,
   Users,
   ClipboardList,
+  Globe,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -60,6 +61,7 @@ const engagementItems: NavItem[] = [
   { href: '/portal/kpi', label: '目標・KPI', icon: Milestone },
   { href: '/portal/learning', label: 'ラーニング', icon: GraduationCap },
   { href: '/portal/survey', label: 'サーベイ結果', icon: ClipboardList },
+  { href: '/portal/market-survey', label: '市場調査', icon: Globe },
 ]
 
 // 「私たちの『らしさ』」グループ（内部→外部の視点ワード構成）
@@ -144,6 +146,7 @@ export function PortalSidebar() {
     if (item.href === '/portal/kpi') return kpiEnabled && isPortalPageVisibleForRole(company, 'kpi', roleCategory, isAdmin)
     if (item.href === '/portal/learning') return learningEnabled && isPortalPageVisibleForRole(company, 'learning', roleCategory, isAdmin)
     if (item.href === '/portal/survey') return isPortalPageVisibleForRole(company, 'survey', roleCategory, isAdmin)
+    if (item.href === '/portal/market-survey') return isPortalPageVisibleForRole(company, 'market_survey', roleCategory, isAdmin)
     return true
   })
 
@@ -168,10 +171,16 @@ export function PortalSidebar() {
                       <img src={companyLogoUrl} alt={companyName || ''} className="size-full object-cover" />
                     </div>
                   )}
-                  <div className={`flex flex-col leading-none ${slogan ? 'gap-0.5' : 'justify-center'}`}>
-                    <span className="font-semibold">{companyName || 'branding.bz'}</span>
-                    {slogan && <span className="text-xs text-sidebar-foreground/70">{slogan}</span>}
-                  </div>
+                  {/* 従業員はスローガン、それ以外は区分ラベル（経営層/管理職を明示する目的） */}
+                  {(() => {
+                    const subText = isStaffRole(roleCategory) ? slogan : memberRoleLabel(roleCategory)
+                    return (
+                      <div className={`flex flex-col leading-none ${subText ? 'gap-0.5' : 'justify-center'}`}>
+                        <span className="font-semibold">{companyName || 'branding.bz'}</span>
+                        {subText && <span className="text-xs text-sidebar-foreground/70">{subText}</span>}
+                      </div>
+                    )
+                  })()}
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

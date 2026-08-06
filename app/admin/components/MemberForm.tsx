@@ -44,7 +44,7 @@ export function MemberForm({ initialData, companyId }: Props) {
     name: initialData?.name || '',
     position: initialData?.position || '',
     department: initialData?.department || '',
-    role_category: initialData?.role_category || '',
+    role_category: initialData?.role_category || 'staff',
     bio: initialData?.bio || '',
     email: initialData?.email || '',
     phone: initialData?.phone || '',
@@ -79,7 +79,7 @@ export function MemberForm({ initialData, companyId }: Props) {
       name: form.name,
       position: form.position,
       department: form.department,
-      role_category: form.role_category || null,
+      role_category: form.role_category,
       bio: form.bio,
       email: form.email,
       phone: form.phone,
@@ -170,7 +170,6 @@ export function MemberForm({ initialData, companyId }: Props) {
               onChange={(e) => handleChange('role_category', e.target.value)}
               className="flex h-10 w-full rounded-md border border-input bg-white px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             >
-              <option value="">未設定</option>
               {MEMBER_ROLE_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
               ))}

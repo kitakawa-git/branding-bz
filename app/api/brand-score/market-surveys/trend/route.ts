@@ -24,12 +24,13 @@ export async function GET(request: NextRequest) {
 
     const supabase = getSupabaseAdmin()
 
-    // 設定中（draft）は割り当てが固まっていないので推移に載せない
+    // スコアが出せない調査（3段階未満）は下の computeMarketScore が null を返すので
+    // ここでは status で絞らない。手で「過年度」にしたものだけ外す
     const { data: surveys, error } = await supabase
       .from('market_surveys')
       .select('id, title, status, fielded_from, fielded_to, sample_size, imported_at')
       .eq('company_id', companyId)
-      .in('status', ['active', 'archived'])
+      .neq('status', 'archived')
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     if (!surveys || surveys.length === 0) return NextResponse.json({ points: [] })

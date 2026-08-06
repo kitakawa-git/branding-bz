@@ -406,32 +406,49 @@ export async function calculateMarketScore(
 ): Promise<MarketResult> {
   const empty: MarketResult = { score: null, stages: null, survey_id: null }
 
-  // 反映対象は最新の1件。過年度は archived にして外す運用
+  // 反映対象は「実施日がいちばん新しく、スコアが出せている調査」。
+  // 以前は status='active' を人が切り替える運用だったが、日付で決まるものを
+  // 手で入力させているだけだった。来年の調査を取り込めば自動で入れ替わる。
+  // スコアが出せない（3段階未満）調査は computeMarketScore が null を返すので
+  // 順に次の候補へ落ちる
   const { data: surveys } = await supabase
     .from('market_surveys')
     .select('id')
     .eq('company_id', companyId)
-    .eq('status', 'active')
+    .neq('status', 'archived')
     .order('fielded_to', { ascending: false, nullsFirst: false })
     .order('created_at', { ascending: false })
-    .limit(1)
 
-  const survey = surveys?.[0]
-  if (!survey) return empty
+  if (!surveys || surveys.length === 0) return empty
 
-  const { data: scores } = await supabase
-    .from('market_survey_stage_scores')
-    .select('stage, status, score')
-    .eq('survey_id', survey.id)
+  let survey: { id: string } | null = null
+  let marketScore: number | null = null
+  type StageScoreRow = { stage: string; status: string; score: number | null }
+  let scores: StageScoreRow[] | null = null
 
-  if (!scores || scores.length === 0) return { ...empty, survey_id: survey.id }
+  for (const candidate of surveys) {
+    const { data: rows } = await supabase
+      .from('market_survey_stage_scores')
+      .select('stage, status, score')
+      .eq('survey_id', candidate.id as string)
 
-  const marketScore = computeMarketScore(
-    scores.map((s) => ({
-      status: s.status as MarketStageStatus,
-      score: s.score === null ? null : Number(s.score),
-    })),
-  )
+    if (!rows || rows.length === 0) continue
+
+    const value = computeMarketScore(
+      rows.map((s) => ({
+        status: s.status as MarketStageStatus,
+        score: s.score === null ? null : Number(s.score),
+      })),
+    )
+    if (value === null) continue
+
+    survey = { id: candidate.id as string }
+    marketScore = value
+    scores = rows as StageScoreRow[]
+    break
+  }
+
+  if (!survey || !scores) return empty
 
   // 未計測（absent）の段階は保存しない。0 と区別できなくなるため
   const stages: Record<string, number> = {}
