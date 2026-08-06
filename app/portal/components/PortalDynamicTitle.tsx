@@ -12,6 +12,7 @@ const titleMap: Record<string, string> = {
   '/portal/kpi': '目標・KPI',
   '/portal/learning': 'ラーニング',
   '/portal/survey': 'サーベイ結果',
+  '/portal/market-survey': '市場調査',
   '/portal/guidelines': 'ブランド方針',
   '/portal/personality': 'ブランドパーソナリティ',
   '/portal/strategy': 'ブランド戦略',

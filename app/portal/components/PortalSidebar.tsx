@@ -44,6 +44,7 @@ import {
   GraduationCap,
   Users,
   ClipboardList,
+  Globe,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -60,6 +61,7 @@ const engagementItems: NavItem[] = [
   { href: '/portal/kpi', label: '目標・KPI', icon: Milestone },
   { href: '/portal/learning', label: 'ラーニング', icon: GraduationCap },
   { href: '/portal/survey', label: 'サーベイ結果', icon: ClipboardList },
+  { href: '/portal/market-survey', label: '市場調査', icon: Globe },
 ]
 
 // 「私たちの『らしさ』」グループ（内部→外部の視点ワード構成）
@@ -144,6 +146,7 @@ export function PortalSidebar() {
     if (item.href === '/portal/kpi') return kpiEnabled && isPortalPageVisibleForRole(company, 'kpi', roleCategory, isAdmin)
     if (item.href === '/portal/learning') return learningEnabled && isPortalPageVisibleForRole(company, 'learning', roleCategory, isAdmin)
     if (item.href === '/portal/survey') return isPortalPageVisibleForRole(company, 'survey', roleCategory, isAdmin)
+    if (item.href === '/portal/market-survey') return isPortalPageVisibleForRole(company, 'market_survey', roleCategory, isAdmin)
     return true
   })
 

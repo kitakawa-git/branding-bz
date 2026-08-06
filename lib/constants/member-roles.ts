@@ -41,6 +41,7 @@ export const GATEABLE_PORTAL_PAGES: { key: string; label: string; featureKey?: s
   { key: 'learning', label: 'ラーニング', featureKey: 'learning_enabled' },
   { key: 'survey', label: 'サーベイ結果' },
   { key: 'brand_score', label: 'ブランドスコア' },
+  { key: 'market_survey', label: '市場調査' },
 ]
 
 export type RoleVisibilityConfig = Record<string, Partial<Record<MemberRole, boolean>>>
@@ -52,6 +53,7 @@ export const DEFAULT_ROLE_VISIBILITY: RoleVisibilityConfig = {
   learning: { executive: true, manager: true, staff: true },
   survey: { executive: true, manager: true, staff: false },
   brand_score: { executive: true, manager: true, staff: false },
+  market_survey: { executive: true, manager: true, staff: false },
 }
 
 // 指定ページを、その区分のメンバーが見られるか。
