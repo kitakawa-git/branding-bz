@@ -129,7 +129,7 @@ function RashisaGroup({ pathname, onNavClick }: { pathname: string; onNavClick: 
 
 export function PortalSidebar() {
   const pathname = usePathname()
-  const { member, companyName, companyLogoUrl, company, profileName, profilePhotoUrl, profileSlug, roleCategory, isAdmin, signOut } = usePortalAuth()
+  const { member, companyName, companyLogoUrl, company, slogan, profileName, profilePhotoUrl, profileSlug, roleCategory, isAdmin, signOut } = usePortalAuth()
   const [cardPreviewOpen, setCardPreviewOpen] = useState(false)
   // スマホ時は項目タップでサイドバー（モバイルシート）を閉じる
   const { isMobile, setOpenMobile } = useSidebar()
@@ -171,12 +171,16 @@ export function PortalSidebar() {
                       <img src={companyLogoUrl} alt={companyName || ''} className="size-full object-cover" />
                     </div>
                   )}
-                  <div className={`flex flex-col leading-none ${roleCategory ? 'gap-0.5' : 'justify-center'}`}>
-                    <span className="font-semibold">{companyName || 'branding.bz'}</span>
-                    {memberRoleLabel(roleCategory) && (
-                      <span className="text-xs text-sidebar-foreground/70">{memberRoleLabel(roleCategory)}</span>
-                    )}
-                  </div>
+                  {/* 従業員はスローガン、それ以外は区分ラベル（経営層/管理職を明示する目的） */}
+                  {(() => {
+                    const subText = roleCategory === 'staff' ? slogan : memberRoleLabel(roleCategory)
+                    return (
+                      <div className={`flex flex-col leading-none ${subText ? 'gap-0.5' : 'justify-center'}`}>
+                        <span className="font-semibold">{companyName || 'branding.bz'}</span>
+                        {subText && <span className="text-xs text-sidebar-foreground/70">{subText}</span>}
+                      </div>
+                    )
+                  })()}
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
