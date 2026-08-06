@@ -69,6 +69,7 @@ export default function EditMemberPage() {
           name: profile.name || '',
           position: profile.position || '',
           department: profile.department || '',
+          role_category: profile.role_category || '',
           bio: profile.bio || '',
           email: profile.email || '',
           phone: profile.phone || '',

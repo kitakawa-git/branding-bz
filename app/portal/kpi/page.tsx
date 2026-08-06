@@ -6,6 +6,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { usePortalAuth } from '../components/PortalDataProvider'
 import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
+import { isPortalPageVisibleForRole } from '@/lib/constants/member-roles'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
 import { splitBrandCopy } from '@/lib/brand-mvv'
 import { fetchPhilosophy } from '@/lib/brand/philosophy'
@@ -184,10 +185,12 @@ function getPeriodTitle(period: GoalPeriod | null): string {
 // ============================================
 
 export default function KpiPage() {
-  const { companyId, user, company } = usePortalAuth()
+  const { companyId, user, company, roleCategory, isAdmin } = usePortalAuth()
 
   // 機能トグル: KPIが無効なら案内のみ表示（リダイレクトはしない）
   const kpiEnabled = isFeatureEnabled(company, 'kpi_enabled')
+  // 区分ごとの表示設定で出し分け（URL直打ち対策）
+  const kpiVisibleForRole = isPortalPageVisibleForRole(company, 'kpi', roleCategory, isAdmin)
   const searchParams = useSearchParams()
   const router = useRouter()
   const setupTriggered = useRef(false)
@@ -596,6 +599,21 @@ export default function KpiPage() {
           <CardContent className="py-16 text-center">
             <p className="text-muted-foreground text-[15px] m-0">
               この機能は現在ご利用いただけません
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  // 区分ごとの表示設定で非表示（URL直打ち時の防御）
+  if (!kpiVisibleForRole) {
+    return (
+      <div className="max-w-4xl mx-auto px-5 pt-4 pb-10">
+        <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+          <CardContent className="py-16 text-center">
+            <p className="text-muted-foreground text-[15px] m-0">
+              このページはご利用の区分では表示されません
             </p>
           </CardContent>
         </Card>

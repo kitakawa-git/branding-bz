@@ -10,12 +10,14 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
+import { MEMBER_ROLE_OPTIONS } from '@/lib/constants/member-roles'
 
 type ProfileData = {
   id?: string
   name: string
   position: string
   department: string
+  role_category: string
   bio: string
   email: string
   phone: string
@@ -42,6 +44,7 @@ export function MemberForm({ initialData, companyId }: Props) {
     name: initialData?.name || '',
     position: initialData?.position || '',
     department: initialData?.department || '',
+    role_category: initialData?.role_category || '',
     bio: initialData?.bio || '',
     email: initialData?.email || '',
     phone: initialData?.phone || '',
@@ -76,6 +79,7 @@ export function MemberForm({ initialData, companyId }: Props) {
       name: form.name,
       position: form.position,
       department: form.department,
+      role_category: form.role_category || null,
       bio: form.bio,
       email: form.email,
       phone: form.phone,
@@ -157,6 +161,21 @@ export function MemberForm({ initialData, companyId }: Props) {
           <div className="mb-5">
             <h2 className="text-xs font-bold mb-3">部署</h2>
             <Input type="text" value={form.department} onChange={(e) => handleChange('department', e.target.value)} placeholder="経営企画部" className="h-10" />
+          </div>
+
+          <div className="mb-5">
+            <h2 className="text-xs font-bold mb-3">区分</h2>
+            <select
+              value={form.role_category}
+              onChange={(e) => handleChange('role_category', e.target.value)}
+              className="flex h-10 w-full rounded-md border border-input bg-white px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            >
+              <option value="">未設定</option>
+              {MEMBER_ROLE_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+            <p className="text-xs text-muted-foreground mt-1 m-0">ポータルの表示（目標・KPI など）を区分に応じて出し分けます</p>
           </div>
 
           <div className="mb-5">

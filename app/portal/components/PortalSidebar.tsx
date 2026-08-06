@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { usePortalAuth } from './PortalDataProvider'
 import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
+import { isPortalPageVisibleForRole } from '@/lib/constants/member-roles'
 import { CardPreviewDialog } from './CardPreviewDialog'
 import {
   Sidebar,
@@ -42,6 +43,7 @@ import {
   Eye,
   GraduationCap,
   Users,
+  ClipboardList,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -57,6 +59,7 @@ const engagementItems: NavItem[] = [
   { href: '/portal/timeline', label: 'タイムライン', icon: MessageSquareHeart },
   { href: '/portal/kpi', label: '目標・KPI', icon: Milestone },
   { href: '/portal/learning', label: 'ラーニング', icon: GraduationCap },
+  { href: '/portal/survey', label: 'サーベイ結果', icon: ClipboardList },
 ]
 
 // 「私たちの『らしさ』」グループ（内部→外部の視点ワード構成）
@@ -124,7 +127,7 @@ function RashisaGroup({ pathname, onNavClick }: { pathname: string; onNavClick: 
 
 export function PortalSidebar() {
   const pathname = usePathname()
-  const { member, companyName, companyLogoUrl, company, slogan, profileName, profilePhotoUrl, profileSlug, isAdmin, signOut } = usePortalAuth()
+  const { member, companyName, companyLogoUrl, company, slogan, profileName, profilePhotoUrl, profileSlug, roleCategory, isAdmin, signOut } = usePortalAuth()
   const [cardPreviewOpen, setCardPreviewOpen] = useState(false)
   // スマホ時は項目タップでサイドバー（モバイルシート）を閉じる
   const { isMobile, setOpenMobile } = useSidebar()
@@ -135,10 +138,12 @@ export function PortalSidebar() {
   const kpiEnabled = isFeatureEnabled(company, 'kpi_enabled')
   const cardEnabled = isFeatureEnabled(company, 'card_enabled')
   const learningEnabled = isFeatureEnabled(company, 'learning_enabled')
+  // 区分ごとの表示設定（管理画面「設定」）で会社ごとに出し分け。機能トグルと AND する。
   const visibleEngagementItems = engagementItems.filter((item) => {
-    if (item.href === '/portal/timeline') return timelineEnabled
-    if (item.href === '/portal/kpi') return kpiEnabled
-    if (item.href === '/portal/learning') return learningEnabled
+    if (item.href === '/portal/timeline') return timelineEnabled && isPortalPageVisibleForRole(company, 'timeline', roleCategory, isAdmin)
+    if (item.href === '/portal/kpi') return kpiEnabled && isPortalPageVisibleForRole(company, 'kpi', roleCategory, isAdmin)
+    if (item.href === '/portal/learning') return learningEnabled && isPortalPageVisibleForRole(company, 'learning', roleCategory, isAdmin)
+    if (item.href === '/portal/survey') return isPortalPageVisibleForRole(company, 'survey', roleCategory, isAdmin)
     return true
   })
 

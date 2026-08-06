@@ -35,6 +35,7 @@ type PortalDataContextValue = {
   profileName: string | null
   profilePhotoUrl: string | null
   profileSlug: string | null
+  roleCategory: string | null
   isAdmin: boolean
   loading: boolean
   signOut: () => Promise<void>
@@ -43,7 +44,7 @@ type PortalDataContextValue = {
 const PortalDataContext = createContext<PortalDataContextValue | null>(null)
 
 // 機能トグルカラムを含めた companies の select 文字列
-const COMPANY_SELECT = ['name', 'logo_url', 'portal_subtitles', ...FEATURE_TOGGLE_COLUMNS].join(', ')
+const COMPANY_SELECT = ['name', 'logo_url', 'portal_subtitles', 'portal_role_visibility', ...FEATURE_TOGGLE_COLUMNS].join(', ')
 
 // 認証不要のパス
 const publicPaths = ['/portal/login', '/portal/register', '/portal/auth']
@@ -63,6 +64,7 @@ export function PortalDataProvider({ children }: { children: React.ReactNode }) 
   const [profileName, setProfileName] = useState<string | null>(null)
   const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null)
   const [profileSlug, setProfileSlug] = useState<string | null>(null)
+  const [roleCategory, setRoleCategory] = useState<string | null>(null)
   const [isAdmin, setIsAdmin] = useState(false)
   const [loading, setLoading] = useState(true)
 
@@ -83,6 +85,7 @@ export function PortalDataProvider({ children }: { children: React.ReactNode }) 
       setProfileName(null)
       setProfilePhotoUrl(null)
       setProfileSlug(null)
+      setRoleCategory(null)
       setIsAdmin(false)
       setLoading(false)
       if (!isPublicPath) {
@@ -104,13 +107,14 @@ export function PortalDataProvider({ children }: { children: React.ReactNode }) 
       setProfileName(null)
       setProfilePhotoUrl(null)
       setProfileSlug(null)
+      setRoleCategory(null)
       setIsAdmin(false)
       try {
         // member 取得と admin_users 取得を並列化
         const [memberRes, adminRes] = await Promise.all([
           supabase
             .from('members')
-            .select('*, profile:profiles(name, photo_url, slug)')
+            .select('*, profile:profiles(name, photo_url, slug, role_category)')
             .eq('auth_id', user.id)
             .eq('is_active', true)
             .maybeSingle(),
@@ -138,13 +142,14 @@ export function PortalDataProvider({ children }: { children: React.ReactNode }) 
         })
 
         const profileRaw = memberData.profile as
-          | { name: string; photo_url: string; slug: string }
-          | { name: string; photo_url: string; slug: string }[]
+          | { name: string; photo_url: string; slug: string; role_category: string | null }
+          | { name: string; photo_url: string; slug: string; role_category: string | null }[]
           | null
         const profile = Array.isArray(profileRaw) ? profileRaw[0] ?? null : profileRaw
         setProfileName(profile?.name || memberData.display_name || null)
         setProfilePhotoUrl(profile?.photo_url || null)
         setProfileSlug(profile?.slug || null)
+        setRoleCategory(profile?.role_category || null)
 
         setIsAdmin(!!adminRes.data)
 
@@ -206,6 +211,7 @@ export function PortalDataProvider({ children }: { children: React.ReactNode }) 
       profileName,
       profilePhotoUrl,
       profileSlug,
+      roleCategory,
       isAdmin,
       loading: authLoading || loading,
       signOut,
@@ -222,6 +228,7 @@ export function PortalDataProvider({ children }: { children: React.ReactNode }) 
       profileName,
       profilePhotoUrl,
       profileSlug,
+      roleCategory,
       isAdmin,
       authLoading,
       loading,
