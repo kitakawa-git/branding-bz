@@ -111,6 +111,8 @@ export interface BrandScoreViewProps {
   periodLabel: string
   /** ポータルでは管理画面へのリンクとボタンを出さない */
   readOnly?: boolean
+  /** 推移のデータだけ遅れて届く場合。空状態ではなくスケルトンを出す */
+  trendLoading?: boolean
   /**
    * インナースコアカード末尾のリンク。
    * 省略時は管理画面のサーベイ管理（readOnly なら出さない）。
@@ -200,6 +202,7 @@ export function BrandScoreView({
   impressionScore,
   periodLabel,
   readOnly = false,
+  trendLoading = false,
   innerLink,
   outerLink,
 }: BrandScoreViewProps) {
@@ -428,7 +431,11 @@ export function BrandScoreView({
         塗りつぶした点は調査を実施した日、白い点はスコアを記録した日です。
       </p>
 
-      {trendRows.length === 0 ? (
+      {trendRows.length === 0 && trendLoading ? (
+        // 推移だけ取得が遅れているとき。「記録がありません」と出すと
+        // 一瞬だけ誤った案内が見えてしまう
+        <div className="h-64 animate-pulse rounded-lg bg-muted/50" />
+      ) : trendRows.length === 0 ? (
         <div className="text-center py-8">
           <TrendingUp size={32} className="mx-auto mb-2 text-muted-foreground/30" />
           <p className="text-sm text-muted-foreground">

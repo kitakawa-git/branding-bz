@@ -53,63 +53,72 @@ export function BrandScorePortalSection({
   const [marketTrend, setMarketTrend] = useState<TrendPoint[]>(cached?.marketTrend ?? [])
   const [surveyTrend, setSurveyTrend] = useState<TrendPoint[]>(cached?.surveyTrend ?? [])
   const [prevDiff, setPrevDiff] = useState<number | null>(cached?.prevDiff ?? null)
+  const [trendLoading, setTrendLoading] = useState(!cached)
 
+  // 5本すべてを待ってから描くと、いちばん重い inner-score（回答1万行超を
+  // 1000件ずつページングするため 0.7〜1秒かかる）に全体が引きずられる。
+  // スコアカードに必要なのは inner と outer だけなので、そこが揃った時点で
+  // 描き、推移は届き次第あとから差し込む。
   const fetchAll = useCallback(async () => {
-    try {
-      const json = async (url: string) => {
+    const json = async (url: string) => {
+      try {
         const res = await fetch(url)
         return res.ok ? await res.json() : null
+      } catch {
+        return null
       }
-
-      const [inner, outer, snaps, market, survey] = await Promise.all([
-        json(`/api/brand-score/inner-score?company_id=${companyId}`),
-        json(`/api/analytics/outer-score?company_id=${companyId}&period=${PERIOD_DAYS}`),
-        json(`/api/brand-score/snapshots?company_id=${companyId}`),
-        json(`/api/brand-score/market-surveys/trend?company_id=${companyId}`),
-        json(`/api/brand-score/surveys/trend?company_id=${companyId}`),
-      ])
-
-      const innerResult: BrandScoreInner | null = inner ?? null
-      const outerResult: BrandScoreOuter | null = outer ?? null
-      const snapshotList: BrandScoreSnapshot[] = snaps?.snapshots ?? []
-
-      // 前回比。最新から1つ前の記録との差
-      let prevDiffResult: number | null = null
-      if (snapshotList.length >= 2) {
-        const sorted = [...snapshotList].sort((a, b) => b.snapshot_date.localeCompare(a.snapshot_date))
-        const [latest, prev] = sorted
-        if (latest.total_score !== null && prev.total_score !== null) {
-          prevDiffResult = Math.round((latest.total_score - prev.total_score) * 10) / 10
-        }
-      }
-
-      const marketPoints: TrendPoint[] = (market?.points ?? []).map(
-        (p: { date: string; market_score: number | null }) => ({ date: p.date, score: p.market_score })
-      )
-      const surveyPoints: TrendPoint[] = (survey?.points ?? []).map(
-        (p: { date: string; inner_score: number | null }) => ({ date: p.date, score: p.inner_score })
-      )
-
-      setInnerScore(innerResult)
-      setOuterScore(outerResult)
-      setSnapshots(snapshotList)
-      setPrevDiff(prevDiffResult)
-      setMarketTrend(marketPoints)
-      setSurveyTrend(surveyPoints)
-
-      setPageCache<CachedData>(cacheKey, {
-        innerScore: innerResult,
-        outerScore: outerResult,
-        snapshots: snapshotList,
-        marketTrend: marketPoints,
-        surveyTrend: surveyPoints,
-        prevDiff: prevDiffResult,
-      })
-    } catch (err) {
-      console.error('[BrandScorePortal] 取得エラー:', err)
-    } finally {
-      setLoading(false)
     }
+
+    // 先に全部投げる（直列にしない）
+    const innerP = json(`/api/brand-score/inner-score?company_id=${companyId}`)
+    const outerP = json(`/api/analytics/outer-score?company_id=${companyId}&period=${PERIOD_DAYS}`)
+    const snapsP = json(`/api/brand-score/snapshots?company_id=${companyId}`)
+    const marketP = json(`/api/brand-score/market-surveys/trend?company_id=${companyId}`)
+    const surveyP = json(`/api/brand-score/surveys/trend?company_id=${companyId}`)
+
+    // 1) スコアカード
+    const [inner, outer] = await Promise.all([innerP, outerP])
+    const innerResult: BrandScoreInner | null = inner ?? null
+    const outerResult: BrandScoreOuter | null = outer ?? null
+    setInnerScore(innerResult)
+    setOuterScore(outerResult)
+    setLoading(false)
+
+    // 2) 推移（記録した日 + 調査の実施日）
+    const [snaps, market, survey] = await Promise.all([snapsP, marketP, surveyP])
+    const snapshotList: BrandScoreSnapshot[] = snaps?.snapshots ?? []
+
+    // 前回比。最新から1つ前の記録との差
+    let prevDiffResult: number | null = null
+    if (snapshotList.length >= 2) {
+      const sorted = [...snapshotList].sort((a, b) => b.snapshot_date.localeCompare(a.snapshot_date))
+      const [latest, prev] = sorted
+      if (latest.total_score !== null && prev.total_score !== null) {
+        prevDiffResult = Math.round((latest.total_score - prev.total_score) * 10) / 10
+      }
+    }
+
+    const marketPoints: TrendPoint[] = (market?.points ?? []).map(
+      (p: { date: string; market_score: number | null }) => ({ date: p.date, score: p.market_score })
+    )
+    const surveyPoints: TrendPoint[] = (survey?.points ?? []).map(
+      (p: { date: string; inner_score: number | null }) => ({ date: p.date, score: p.inner_score })
+    )
+
+    setSnapshots(snapshotList)
+    setPrevDiff(prevDiffResult)
+    setMarketTrend(marketPoints)
+    setSurveyTrend(surveyPoints)
+    setTrendLoading(false)
+
+    setPageCache<CachedData>(cacheKey, {
+      innerScore: innerResult,
+      outerScore: outerResult,
+      snapshots: snapshotList,
+      marketTrend: marketPoints,
+      surveyTrend: surveyPoints,
+      prevDiff: prevDiffResult,
+    })
   }, [companyId, cacheKey])
 
   useEffect(() => {
@@ -146,6 +155,7 @@ export function BrandScorePortalSection({
       impressionScore={null}
       periodLabel={PERIOD_LABEL}
       readOnly
+      trendLoading={trendLoading}
       // 管理画面と同じく、それぞれの調査結果ページへ飛べるようにする。
       // 区分で見られないページはリンクごと出さない
       innerLink={surveyHref ? { href: surveyHref, label: 'サーベイ結果' } : null}

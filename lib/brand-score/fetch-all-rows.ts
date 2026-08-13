@@ -23,6 +23,18 @@ type RangeableQuery<T> = {
 }
 
 /**
+ * 1回に何ページぶんを並列で取りにいくか。
+ *
+ * 総件数が分からないので「取ってみるまで最終ページか分からない」が、
+ * 1ページずつ順番に待つと往復回数がそのまま待ち時間になる。
+ * 実例: 回答11,760行（12ページ）のサーベイで inner-score が 0.7〜0.9 秒かかり、
+ * その大半がこの往復だった。まとめて投げて往復の回数を1/4にする。
+ *
+ * 大きくしすぎると、最終ページを越えた空振りのリクエストが増える。
+ */
+const BATCH = 4
+
+/**
  * ページングしながら全行を取得する。
  *
  * @param makeQuery ページごとに新しいクエリビルダを返す関数
@@ -36,16 +48,27 @@ export async function fetchAllRows<T>(
 ): Promise<{ data: T[] | null; error: { message: string } | null }> {
   const all: T[] = []
 
-  for (let from = 0; ; from += PAGE_SIZE) {
-    const { data, error } = await makeQuery().range(from, from + PAGE_SIZE - 1)
+  for (let batchStart = 0; ; batchStart += PAGE_SIZE * BATCH) {
+    const pages = await Promise.all(
+      Array.from({ length: BATCH }, (_, i) => {
+        const from = batchStart + i * PAGE_SIZE
+        return makeQuery().range(from, from + PAGE_SIZE - 1)
+      })
+    )
 
-    if (error) return { data: null, error }
+    let done = false
+    for (const { data, error } of pages) {
+      if (error) return { data: null, error }
 
-    const rows = data ?? []
-    all.push(...rows)
+      const rows = data ?? []
+      // 空振り（最終ページより後ろ）に達したら、それ以降は捨てる。
+      // 並列で投げているぶん、順番に見て最初の短いページで打ち切る
+      if (done) continue
+      all.push(...rows)
+      if (rows.length < PAGE_SIZE) done = true
+    }
 
-    // 1ページ分に満たなければ最終ページ
-    if (rows.length < PAGE_SIZE) break
+    if (done) break
   }
 
   return { data: all, error: null }
