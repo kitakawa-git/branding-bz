@@ -32,12 +32,37 @@ type Profile = {
   slug: string
 }
 
+// 従業員（profiles）1件あたりのログイン状況。members 経由で auth ユーザーに紐づく
+type LoginInfo = {
+  profile_id: string
+  /** ログイン用アカウントが作られているか（招待前は false） */
+  has_account: boolean
+  status: string | null
+  last_sign_in_at: string | null
+}
+
 type AdminUser = {
   id: string
   role: string
   is_superadmin: boolean
   created_at: string
   auth_email: string | null
+}
+
+/**
+ * 最終ログインの表示。「まだ招待していない」と「招待したがまだ入っていない」は
+ * 対応が変わるので、どちらも「—」にせず言葉で分ける
+ */
+function formatLastLogin(info: LoginInfo | undefined): string {
+  if (!info || !info.has_account) return 'アカウント未作成'
+  if (!info.last_sign_in_at) return '未ログイン'
+  return new Date(info.last_sign_in_at).toLocaleString('ja-JP', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
 }
 
 export default function CompanyDetailPage() {
@@ -47,6 +72,7 @@ export default function CompanyDetailPage() {
   const [company, setCompany] = useState<Company | null>(null)
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [adminUsers, setAdminUsers] = useState<AdminUser[]>([])
+  const [loginByProfile, setLoginByProfile] = useState<Record<string, LoginInfo>>({})
   const [valueProps, setValueProps] = useState<ValuePropositionRef[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -85,6 +111,26 @@ export default function CompanyDetailPage() {
           .order('created_at', { ascending: false })
 
         setProfiles(profilesData || [])
+
+        // 最終ログイン日時（auth.users はクライアントから読めないので service_role API 経由）
+        try {
+          const { data: { session } } = await supabase.auth.getSession()
+          if (session?.access_token) {
+            const res = await fetch(`/api/superadmin/company-logins/${companyId}`, {
+              headers: { Authorization: `Bearer ${session.access_token}` },
+            })
+            if (res.ok) {
+              const json = await res.json()
+              const map: Record<string, LoginInfo> = {}
+              for (const row of (json.logins || []) as LoginInfo[]) {
+                map[row.profile_id] = row
+              }
+              setLoginByProfile(map)
+            }
+          }
+        } catch {
+          // 取れなくても一覧そのものは表示する
+        }
 
         // 管理者一覧（auth.usersのメールをサブクエリで取得できないので別途処理）
         const { data: adminData } = await supabase
@@ -330,6 +376,7 @@ export default function CompanyDetailPage() {
                   <th className="text-left px-4 py-3 bg-muted text-muted-foreground font-semibold border-b border-border text-xs">役職</th>
                   <th className="text-left px-4 py-3 bg-muted text-muted-foreground font-semibold border-b border-border text-xs">メール</th>
                   <th className="text-left px-4 py-3 bg-muted text-muted-foreground font-semibold border-b border-border text-xs">slug</th>
+                  <th className="text-left px-4 py-3 bg-muted text-muted-foreground font-semibold border-b border-border text-xs">最終ログイン</th>
                 </tr>
               </thead>
               <tbody>
@@ -353,6 +400,9 @@ export default function CompanyDetailPage() {
                       >
                         {profile.slug}
                       </Link>
+                    </td>
+                    <td className="px-4 py-3 border-b border-border text-muted-foreground text-[13px] whitespace-nowrap">
+                      {formatLastLogin(loginByProfile[profile.id])}
                     </td>
                   </tr>
                 ))}
