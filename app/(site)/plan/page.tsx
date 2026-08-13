@@ -157,9 +157,15 @@ export default function LpPlanPage() {
 
       {/* プランカード */}
       <section className="px-6 pb-20">
-        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 pt-5 md:grid-cols-2 lg:grid-cols-4">
+        {/* CTAの高さを揃えるため、カードの中身を「本文／ボタン／注記」の3行に分け、
+            subgrid で4枚の行を共有する。注記の行数がプランごとに違うので、
+            カード内で flex-1 を使うだけではボタンの位置が揃わない */}
+        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 pt-5 md:grid-cols-2 lg:grid-cols-4 lg:grid-rows-[1fr_auto_auto] lg:gap-y-0">
           {PLANS.map((plan) => (
-            <div key={plan.id} className="relative flex flex-col">
+            <div
+              key={plan.id}
+              className="relative flex flex-col lg:row-span-3 lg:grid lg:grid-rows-subgrid"
+            >
               {plan.isHighlight && (
                 <div className="absolute -top-3 inset-x-0 z-20 flex justify-center">
                   <span className="rounded-full bg-gradient-to-r from-orange-400 to-rose-500 px-4 py-1 text-xs font-bold uppercase tracking-widest text-white">
@@ -168,8 +174,10 @@ export default function LpPlanPage() {
                 </div>
               )}
               <GlowCard
-                className={`flex flex-1 flex-col p-6 ${plan.isHighlight ? 'border-orange-400/40 ring-1 ring-orange-400/30' : ''}`}
+                className={`flex flex-1 flex-col p-6 lg:row-span-3 lg:grid lg:grid-rows-subgrid ${plan.isHighlight ? 'border-orange-400/40 ring-1 ring-orange-400/30' : ''}`}
               >
+                {/* 1行目: 本文（プランごとに高さが違う） */}
+                <div className="flex flex-1 flex-col">
                 <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-blue-400">
                   {plan.subtitle}
                 </p>
@@ -214,7 +222,9 @@ export default function LpPlanPage() {
                 </ul>
 
                 <div className="flex-1" />
+                </div>
 
+                {/* 2行目: ボタン。4枚で同じ行を共有するので位置が揃う */}
                 <Link
                   href={plan.ctaHref}
                   className={`flex h-11 w-full items-center justify-center rounded-xl text-sm font-bold transition-transform hover:scale-[1.03] ${
@@ -228,6 +238,7 @@ export default function LpPlanPage() {
                   {plan.ctaLabel}
                 </Link>
 
+                {/* 3行目: 注記。行数が違っても上のボタンには影響しない */}
                 <div className="mt-3 flex min-h-[60px] items-start justify-center">
                   {plan.reference && (
                     <p className="text-center text-xs leading-relaxed text-white/40">{plan.reference}</p>
