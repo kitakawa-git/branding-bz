@@ -6,14 +6,14 @@ import { PageHero, GlowCard } from '@/components/lp/ui'
 export const metadata: Metadata = {
   title: '料金プラン | branding.bz',
   description:
-    'AIブランディングSaaS branding.bz の料金プラン。Free / Brand Card / Brand Standard / Brand Premium の4プランから、あなたのブランドフェーズに最適なプランを選べます。',
+    'AIブランディングSaaS branding.bz の料金プラン。Free / Brand Standard / Brand Premium / Enterprise から、あなたのブランドフェーズに最適なプランを選べます。',
   alternates: {
     canonical: '/plan',
   },
   openGraph: {
     title: '料金プラン | branding.bz',
     description:
-      'AIブランディングSaaS branding.bz の料金プラン。Free / Brand Card / Brand Standard / Brand Premium の4プランから、あなたのブランドフェーズに最適なプランを選べます。',
+      'AIブランディングSaaS branding.bz の料金プラン。Free / Brand Standard / Brand Premium / Enterprise から、あなたのブランドフェーズに最適なプランを選べます。',
     url: 'https://branding.bz/plan',
   },
 }
@@ -31,41 +31,15 @@ const PLANS = [
     support: '—',
     perPerson: '—',
     features: [
-      'AIツール体験（月3回）',
+      'AIツール体験（各ツール 月3回）',
       '生成結果の画面確認',
-      '名刺ページの公開閲覧',
+      '公開名刺ページの閲覧',
       'ブランド用語wiki 閲覧',
     ],
     ctaLabel: '無料で始める',
     ctaHref: '/tools/colors',
     ctaStyle: 'outline' as const,
     reference: null,
-    isHighlight: false,
-  },
-  {
-    id: 'card',
-    name: 'Brand Card',
-    subtitle: '発信する',
-    price: '¥4,980',
-    priceSuffix: '/月（税別）',
-    description:
-      'スマート名刺で、ブランドを社外に届ける。閲覧解析＋アウタースコアで効果を実感。',
-    scale: '5〜30名',
-    members: '30名',
-    support: 'メール',
-    perPerson: '¥166〜996',
-    features: [
-      'スマート名刺カード発行',
-      'ブランドページ閲覧',
-      '閲覧解析＋アウタースコア',
-      'マイクロフィードバック',
-      'PWA対応（ホーム画面に追加）',
-    ],
-    ctaLabel: 'まずは名刺から始める',
-    ctaHref: '/signup',
-    ctaStyle: 'secondary' as const,
-    reference:
-      'デジタル名刺SaaS 1人あたり月300〜800円 → 30名で月9,000〜24,000円。branding.bz は人数無制限（30名まで）で月¥4,980',
     isHighlight: false,
   },
   {
@@ -81,7 +55,7 @@ const PLANS = [
     support: 'メール',
     perPerson: '¥396〜1,980',
     features: [
-      'AIミニアプリ 4本 使い放題：',
+      'AI構築ツール 4本 使い放題：',
       'ブランドカラー定義 / STP分析',
       'ペルソナビルダー / パーソナリティ診断',
       'PDF出力＋本体連携',
@@ -128,13 +102,43 @@ const PLANS = [
     reference: 'コンサル浸透込み 年間500〜1,000万円 → 年間約72万円で1/10以下',
     isHighlight: false,
   },
+  {
+    id: 'enterprise',
+    name: 'Enterprise',
+    subtitle: 'すべてを、伴走つきで',
+    price: '個別見積',
+    priceSuffix: null,
+    description:
+      '300名を超える組織、複数ブランドの統合管理、そして15年のブランディングコンサルティングによる伴走。要件に合わせて設計します。',
+    scale: '300名超',
+    members: '無制限',
+    support: '専任担当',
+    perPerson: '—',
+    features: [
+      'Premium 全機能',
+      'メンバー数 無制限',
+      // SSO・マルチブランドは未実装。商談後に要件ベースで作る方針のため
+      // 確定機能として書かない（誇大表示の回避）
+      'マルチブランド管理（対応予定）',
+      'SSO・監査ログ等の統制要件（対応予定）',
+      'ID INC. による四半期伴走レビュー',
+      '導入オンボーディング・社内研修',
+    ],
+    ctaLabel: 'お問い合わせ',
+    ctaHref: '/contact',
+    ctaStyle: 'outline' as const,
+    reference: null,
+    isHighlight: false,
+  },
 ]
 
+// カード名＝現在地、trigger＝次に進みたくなる瞬間。
+// 最終段（Enterprise）はその先が無いので trigger を持たない
 const UPSELL_STEPS = [
   { name: 'Free', subtitle: '体験する', trigger: 'AI提案を\n保存・出力したい' },
-  { name: 'Card', subtitle: '発信する', trigger: 'ブランドを\nAIで作りたい' },
   { name: 'Standard', subtitle: '構築する', trigger: '社員に\n浸透させたい' },
-  { name: 'Premium', subtitle: '浸透＋計測', trigger: '全社のブランド力を\n数値で把握したい' },
+  { name: 'Premium', subtitle: '浸透＋計測', trigger: '300名を超える\n複数ブランドを束ねたい' },
+  { name: 'Enterprise', subtitle: '伴走つき', trigger: '' },
 ]
 
 const COMMON_ITEMS = [
@@ -230,9 +234,7 @@ export default function LpPlanPage() {
                   className={`flex h-11 w-full items-center justify-center rounded-xl text-sm font-bold transition-transform hover:scale-[1.03] ${
                     plan.ctaStyle === 'primary'
                       ? 'bg-white text-black'
-                      : plan.ctaStyle === 'secondary'
-                        ? 'border border-white/15 bg-white/10 text-white'
-                        : 'border border-white/15 text-white/80'
+                      : 'border border-white/15 text-white/80'
                   }`}
                 >
                   {plan.ctaLabel}
@@ -269,11 +271,14 @@ export default function LpPlanPage() {
                     {step.subtitle}
                   </div>
                   <h3 className="mb-2 text-base font-bold">{step.name}</h3>
-                  <div className="inline-block rounded-lg bg-blue-500/10 px-3 py-1.5">
-                    <p className="whitespace-pre-line text-xs leading-relaxed text-white/50">
-                      {step.trigger}
-                    </p>
-                  </div>
+                  {/* 最終段は trigger を持たないので、空の枠を残さず出さない */}
+                  {step.trigger && (
+                    <div className="inline-block rounded-lg bg-blue-500/10 px-3 py-1.5">
+                      <p className="whitespace-pre-line text-xs leading-relaxed text-white/50">
+                        {step.trigger}
+                      </p>
+                    </div>
+                  )}
                 </GlowCard>
               </div>
             ))}
