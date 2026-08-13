@@ -78,8 +78,12 @@ export function BrandScorePortalSection({
 
     // 1) スコアカード
     const [inner, outer] = await Promise.all([innerP, outerP])
-    const innerResult: BrandScoreInner | null = inner ?? null
-    const outerResult: BrandScoreOuter | null = outer ?? null
+    // サーベイが1件も無い会社では inner-score API が {score: null, message} を返す。
+    // scores を持たない応答は「まだ測っていない」として null に寄せる（管理画面と同じ扱い）。
+    // そのまま渡すと描画側の innerScore.scores.total で落ちる
+    const innerResult: BrandScoreInner | null = inner?.scores ? inner : null
+    const outerResult: BrandScoreOuter | null =
+      outer?.outer_score !== undefined ? outer : null
     setInnerScore(innerResult)
     setOuterScore(outerResult)
     setLoading(false)
@@ -139,7 +143,7 @@ export function BrandScorePortalSection({
 
   // まだ何も測っていない会社では、空のカードを並べても読むものが無い
   const hasAnything =
-    (innerScore?.scores.total ?? null) !== null || (outerScore?.outer_score ?? 0) > 0
+    (innerScore?.scores?.total ?? null) !== null || (outerScore?.outer_score ?? 0) > 0
   if (!hasAnything) return null
 
   return (

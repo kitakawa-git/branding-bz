@@ -206,7 +206,9 @@ export function BrandScoreView({
   innerLink,
   outerLink,
 }: BrandScoreViewProps) {
-  const hasInner = innerScore !== null && innerScore.scores.total !== null
+  // scores ごと欠けた応答（サーベイ未実施の会社）でも落ちないよう ?. で見る。
+  // 以降の innerScore!.scores.total! はすべてこの hasInner が守る
+  const hasInner = innerScore != null && innerScore.scores?.total != null
   const hasOuter = outerScore !== null && outerScore.outer_score > 0
 
   // 未指定なら従来どおり管理画面へのリンク（readOnly では出さない）。
