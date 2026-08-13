@@ -426,11 +426,23 @@ export async function calculateMarketScore(
   type StageScoreRow = { stage: string; status: string; score: number | null }
   let scores: StageScoreRow[] | null = null
 
+  // 候補ごとに問い合わせると調査の数だけ往復が増えるので、まとめて1回で取る。
+  // 「実施日が新しい順に見て最初にスコアが出せたもの」という判定はそのまま
+  const { data: allStageRows } = await supabase
+    .from('market_survey_stage_scores')
+    .select('survey_id, stage, status, score')
+    .in('survey_id', surveys.map((s) => s.id as string))
+
+  const rowsBySurvey = new Map<string, { stage: string; status: string; score: number | null }[]>()
+  for (const row of allStageRows ?? []) {
+    const key = row.survey_id as string
+    const list = rowsBySurvey.get(key)
+    if (list) list.push(row)
+    else rowsBySurvey.set(key, [row])
+  }
+
   for (const candidate of surveys) {
-    const { data: rows } = await supabase
-      .from('market_survey_stage_scores')
-      .select('stage, status, score')
-      .eq('survey_id', candidate.id as string)
+    const rows = rowsBySurvey.get(candidate.id as string)
 
     if (!rows || rows.length === 0) continue
 

@@ -40,108 +40,107 @@ export async function GET(request: NextRequest) {
 
     const supabase = getSupabaseAdmin()
 
-    // スマート名刺がオフの会社は、名刺ページ自体が非公開なのでアクセスログが
-    // 溜まらない。0件を低評価として扱わないよう、デジタル接点は最初から外す
-    const { data: company } = await supabase
-      .from('companies')
-      .select('card_enabled')
-      .eq('id', companyId)
-      .single()
-    const cardEnabled = isFeatureEnabled(company, 'card_enabled')
-
     // 集計期間の起点。全期間なら十分に古い日付を置いて実質フィルタなしにする
     const cutoff = new Date()
     cutoff.setDate(cutoff.getDate() - (period ?? 36500))
     const cutoffISO = cutoff.toISOString()
 
-    // --- 1. 社員数（profiles） ---
-    const { count: memberCount, error: profilesError } = await supabase
-      .from('profiles')
-      .select('id', { count: 'exact', head: true })
-      .eq('company_id', companyId)
+    // --- 1. 互いに独立した問い合わせは同時に投げる ---
+    // 直列にすると Supabase への往復回数がそのまま画面の待ち時間になる。
+    // card_views だけは profile_id 一覧が要るので、この後の第2段で取る
+    const [
+      { data: company },
+      { data: profileRows, count: memberCount, error: profileListError },
+      { data: eventRows, error: eventsError },
+      { data: bpvRows, error: bpvError },
+      market,
+    ] = await Promise.all([
+      // スマート名刺がオフの会社は、名刺ページ自体が非公開なのでアクセスログが
+      // 溜まらない。0件を低評価として扱わないよう、デジタル接点は最初から外す
+      supabase.from('companies').select('card_enabled').eq('id', companyId).single(),
+      // 社員数と profile_id 一覧は同じ条件なので1回で済ませる。
+      // 1000行上限に当たっても count は正確に返るため人数は狂わない
+      supabase.from('profiles').select('id', { count: 'exact' }).eq('company_id', companyId),
+      supabase
+        .from('card_events')
+        .select('event_type')
+        .eq('company_id', companyId)
+        .gte('created_at', cutoffISO),
+      supabase
+        .from('brand_page_views')
+        .select('duration_seconds')
+        .eq('company_id', companyId)
+        .gte('created_at', cutoffISO),
+      // 市場浸透（外部調査）。取り込んだ調査が無ければ null になり、
+      // アウタースコアは従来どおりデジタル接点だけで決まる
+      calculateMarketScore(supabase, companyId),
+    ])
 
-    if (profilesError) {
-      console.error('[OuterScore] profiles クエリエラー:', profilesError.message)
-      return NextResponse.json({ error: profilesError.message }, { status: 500 })
-    }
-    const members = memberCount ?? 0
-
-    // --- 2. 社員のprofile_id一覧（card_views結合用） ---
-    const { data: profileRows, error: profileListError } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('company_id', companyId)
+    const cardEnabled = isFeatureEnabled(company, 'card_enabled')
 
     if (profileListError) {
       console.error('[OuterScore] profiles一覧エラー:', profileListError.message)
       return NextResponse.json({ error: profileListError.message }, { status: 500 })
     }
+    if (eventsError) {
+      console.error('[OuterScore] card_events クエリエラー:', eventsError.message)
+      return NextResponse.json({ error: eventsError.message }, { status: 500 })
+    }
+    if (bpvError) {
+      console.error('[OuterScore] brand_page_views クエリエラー:', bpvError.message)
+      return NextResponse.json({ error: bpvError.message }, { status: 500 })
+    }
+
+    const members = memberCount ?? 0
     const profileIds = (profileRows ?? []).map(r => r.id as string)
 
-    // --- 3. card_views: 名刺PV数 & UU数（ip_addressベース） ---
-    let totalCardViews = 0
-    let uniqueVisitors = 0
-
-    if (profileIds.length > 0) {
-      const { data: viewRows, error: viewsError } = await supabase
-        .from('card_views')
-        .select('ip_address')
-        .in('profile_id', profileIds)
-        .gte('viewed_at', cutoffISO)
-
-      if (viewsError) {
-        console.error('[OuterScore] card_views クエリエラー:', viewsError.message)
-        return NextResponse.json({ error: viewsError.message }, { status: 500 })
-      }
-
-      const rows = viewRows ?? []
-      totalCardViews = rows.length
-      const uniqueIps = new Set(rows.map(r => r.ip_address).filter(Boolean))
-      uniqueVisitors = uniqueIps.size
-    }
-
-    // --- 4. card_events: 各イベント集計 ---
+    // --- 2. card_events: 各イベント集計 ---
     let vcardDownloads = 0
     let brandPageClicks = 0
-
-    {
-      const { data: eventRows, error: eventsError } = await supabase
-        .from('card_events')
-        .select('event_type')
-        .eq('company_id', companyId)
-        .gte('created_at', cutoffISO)
-
-      if (eventsError) {
-        console.error('[OuterScore] card_events クエリエラー:', eventsError.message)
-        return NextResponse.json({ error: eventsError.message }, { status: 500 })
-      }
-
-      for (const row of eventRows ?? []) {
-        if (row.event_type === 'vcard_download') vcardDownloads++
-        if (row.event_type === 'brand_page_click') brandPageClicks++
-      }
+    for (const row of eventRows ?? []) {
+      if (row.event_type === 'vcard_download') vcardDownloads++
+      if (row.event_type === 'brand_page_click') brandPageClicks++
     }
 
-    // --- 5. brand_page_views: 平均滞在時間 ---
+    // --- 3. brand_page_views: 平均滞在時間 ---
     let avgDuration = 0
-
     {
-      const { data: bpvRows, error: bpvError } = await supabase
-        .from('brand_page_views')
-        .select('duration_seconds')
-        .eq('company_id', companyId)
-        .gte('created_at', cutoffISO)
-
-      if (bpvError) {
-        console.error('[OuterScore] brand_page_views クエリエラー:', bpvError.message)
-        return NextResponse.json({ error: bpvError.message }, { status: 500 })
-      }
-
       const durations = (bpvRows ?? []).map(r => r.duration_seconds as number).filter(d => d > 0)
       if (durations.length > 0) {
         avgDuration = durations.reduce((sum, d) => sum + d, 0) / durations.length
       }
     }
+
+    // --- 4. 第2段: 前段の結果が要るものだけ（これも互いに独立なので同時に） ---
+    let totalCardViews = 0
+    let uniqueVisitors = 0
+    // 画面に「n = 400」と出すためのサンプル数。調査が無ければ null
+    let marketSampleSize: number | null = null
+
+    const [viewsResult, sampleResult] = await Promise.all([
+      profileIds.length > 0
+        ? supabase
+            .from('card_views')
+            .select('ip_address')
+            .in('profile_id', profileIds)
+            .gte('viewed_at', cutoffISO)
+        : Promise.resolve({ data: [] as { ip_address: string | null }[], error: null }),
+      market.survey_id
+        ? supabase.from('market_surveys').select('sample_size').eq('id', market.survey_id).single()
+        : Promise.resolve({ data: null, error: null }),
+    ])
+
+    if (viewsResult.error) {
+      console.error('[OuterScore] card_views クエリエラー:', viewsResult.error.message)
+      return NextResponse.json({ error: viewsResult.error.message }, { status: 500 })
+    }
+    {
+      const rows = viewsResult.data ?? []
+      totalCardViews = rows.length
+      const uniqueIps = new Set(rows.map(r => r.ip_address).filter(Boolean))
+      uniqueVisitors = uniqueIps.size
+    }
+    marketSampleSize = ((sampleResult.data as { sample_size: number | null } | null)?.sample_size) ?? null
 
     // --- スコア算出（式は outer-metrics.ts が持つ） ---
     // 印象一致度は未実装のため null。weightedAverage が分母から外すので
@@ -157,21 +156,6 @@ export async function GET(request: NextRequest) {
       },
       { cardEnabled }
     )
-
-    // 市場浸透（外部調査）。取り込んで反映中の調査が無ければ null になり、
-    // アウタースコアは従来どおりデジタル接点だけで決まる
-    const market = await calculateMarketScore(supabase, companyId)
-
-    // 画面に「n = 400」と出すためのサンプル数。調査が無ければ null
-    let marketSampleSize: number | null = null
-    if (market.survey_id) {
-      const { data: ms } = await supabase
-        .from('market_surveys')
-        .select('sample_size')
-        .eq('id', market.survey_id)
-        .single()
-      marketSampleSize = (ms?.sample_size as number | null) ?? null
-    }
 
     const outerScore =
       weightedAverage([

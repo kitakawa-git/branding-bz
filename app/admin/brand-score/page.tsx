@@ -368,27 +368,19 @@ export default function BrandScoreDashboard() {
         collected.tagCounts = counts
       })
 
-    const prevSnapPromise = supabase
-      .from('brand_score_snapshots')
-      .select('total_score, inner_score, outer_score, rank, snapshot_date')
-      .eq('company_id', companyId)
-      .order('snapshot_date', { ascending: false })
-      .limit(1)
-      .then(({ data, error }) => {
-        if (error) return
-        const rows = data || []
-        const snap = rows.length > 0 ? rows[0] : null
-        setPrevSnapshot(snap)
-        collected.prevSnapshot = snap
-      })
-
+    // 前回記録は記録一覧の最後（snapshot_date 昇順）。
+    // 同じ内容をクライアントから直接 brand_score_snapshots に取りに行くと
+    // 往復が1回増えるうえ、RLS で別会社を見たときだけ空になり食い違う
     const snapshotsPromise = fetch(`/api/brand-score/snapshots?company_id=${companyId}`)
       .then(async (res) => {
         if (!res.ok) return
         const data = await res.json()
-        const list = data.snapshots || []
+        const list: Snapshot[] = data.snapshots || []
         setSnapshots(list)
         collected.snapshots = list
+        const snap = list.length > 0 ? list[list.length - 1] : null
+        setPrevSnapshot(snap)
+        collected.prevSnapshot = snap
       })
       .catch(() => {})
 
@@ -430,12 +422,12 @@ export default function BrandScoreDashboard() {
 
     // 最初に最低限の表示を出したいデータが揃ったらloading解除
     // （inner + outer + prevSnapshot があれば総合カードが描画可能）
-    Promise.all([innerPromise, outerPromise, prevSnapPromise]).then(() => {
+    Promise.all([innerPromise, outerPromise, snapshotsPromise]).then(() => {
       setLoading(false)
     })
 
     // 全部終わったらキャッシュ保存
-    await Promise.allSettled([innerPromise, outerPromise, tagPromise, fbPromise, prevSnapPromise, snapshotsPromise, marketTrendPromise, surveyTrendPromise, knowledgeGapPromise])
+    await Promise.allSettled([innerPromise, outerPromise, tagPromise, fbPromise, snapshotsPromise, marketTrendPromise, surveyTrendPromise, knowledgeGapPromise])
 
     // 印象一致度の最終算出（tagMappings と tagCounts と totalFbCount が揃ってから）
     if (collected.totalFbCount >= 30) {

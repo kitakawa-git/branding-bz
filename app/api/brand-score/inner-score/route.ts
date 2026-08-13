@@ -82,66 +82,70 @@ export async function GET(request: NextRequest) {
       survey = data
     } else {
       // クローズ済みサーベイを優先（回答データがある可能性が高い）
-      // クローズ済みがなければアクティブを返す
-      const { data: closedData } = await supabase
-        .from('brand_surveys')
-        .select('id, title, status, total_members, respondent_count')
-        .eq('company_id', companyId)
-        .eq('status', 'closed')
-        .order('created_at', { ascending: false })
-        .limit(1)
-
-      if (closedData && closedData.length > 0) {
-        survey = closedData[0]
-      } else {
-        const { data: activeData } = await supabase
+      // クローズ済みがなければアクティブを返す。
+      // Supabase は1往復ぶんの遅延がそのまま画面の待ち時間になるので、
+      // 「closed が無ければ active」を直列で問い合わせず、同時に投げて選ぶ
+      const [{ data: closedData }, { data: activeData }] = await Promise.all([
+        supabase
+          .from('brand_surveys')
+          .select('id, title, status, total_members, respondent_count')
+          .eq('company_id', companyId)
+          .eq('status', 'closed')
+          .order('created_at', { ascending: false })
+          .limit(1),
+        supabase
           .from('brand_surveys')
           .select('id, title, status, total_members, respondent_count')
           .eq('company_id', companyId)
           .eq('status', 'active')
           .order('created_at', { ascending: false })
-          .limit(1)
+          .limit(1),
+      ])
 
-        if (!activeData || activeData.length === 0) {
-          return NextResponse.json({ score: null, message: 'サーベイデータがありません' })
-        }
+      if (closedData && closedData.length > 0) {
+        survey = closedData[0]
+      } else if (activeData && activeData.length > 0) {
         survey = activeData[0]
+      } else {
+        return NextResponse.json({ score: null, message: 'サーベイデータがありません' })
       }
     }
 
-    // 2. 全回答を取得（1000行上限があるためページングして全件取る）
-    const { data: responses, error: rErr } = await fetchAllRows<{
-      question_id: string; score: number; department: string | null
-      role_category: string | null; submitted_at: string; respondent_id: string | null
-    }>(() => supabase
-      .from('brand_survey_responses')
-      .select('question_id, score, department, role_category, submitted_at, respondent_id')
-      .eq('survey_id', survey.id)
-      .order('id')
-    )
+    // 2〜4. 回答・設問・参加者は互いに独立しているので同時に取る。
+    // 直列にすると Supabase への往復ぶんだけ画面の待ち時間が伸びる
+    const [
+      { data: responses, error: rErr },
+      { data: questions, error: qErr },
+      { data: participants, error: pErr },
+    ] = await Promise.all([
+      // 回答は1000行上限があるためページングして全件取る
+      fetchAllRows<{
+        question_id: string; score: number; department: string | null
+        role_category: string | null; submitted_at: string; respondent_id: string | null
+      }>(() => supabase
+        .from('brand_survey_responses')
+        .select('question_id, score, department, role_category, submitted_at, respondent_id')
+        .eq('survey_id', survey!.id)
+        .order('id')
+      ),
+      supabase
+        .from('brand_survey_questions')
+        .select('id, question_text, category, sort_order, reference_data')
+        .eq('survey_id', survey.id)
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true }),
+      supabase
+        .from('survey_participants')
+        .select('id, responded_at')
+        .eq('survey_id', survey.id),
+    ])
 
     if (rErr) {
       return NextResponse.json({ error: '回答データの取得に失敗しました' }, { status: 500 })
     }
-
-    // 3. 全設問を取得（is_active = true）
-    const { data: questions, error: qErr } = await supabase
-      .from('brand_survey_questions')
-      .select('id, question_text, category, sort_order, reference_data')
-      .eq('survey_id', survey.id)
-      .eq('is_active', true)
-      .order('sort_order', { ascending: true })
-
     if (qErr) {
       return NextResponse.json({ error: '設問データの取得に失敗しました' }, { status: 500 })
     }
-
-    // 4. 回答率算出
-    const { data: participants, error: pErr } = await supabase
-      .from('survey_participants')
-      .select('id, responded_at')
-      .eq('survey_id', survey.id)
-
     if (pErr) {
       return NextResponse.json({ error: '参加者データの取得に失敗しました' }, { status: 500 })
     }
