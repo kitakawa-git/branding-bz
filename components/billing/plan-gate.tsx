@@ -7,11 +7,13 @@
 // 期限が切れた premium にはロックが出る。
 //
 // ロックバッジの配色は Phase 1.5 のプランバッジ（lib/billing/plan-display）と揃える。
+import { useState } from 'react'
 import Link from 'next/link'
 import { Lock, ArrowRight } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
-import { can, minimumPlanFor, type FeatureKey } from '@/lib/billing/entitlements'
+import { can, getEffectivePlan, minimumPlanFor, type FeatureKey } from '@/lib/billing/entitlements'
 import { PLAN_LABELS, PLAN_TONES, PLAN_TONES_ON_DARK } from '@/lib/billing/plan-display'
+import { PlanChangeRequestDialog } from './PlanChangeRequestDialog'
 
 type CompanyLike = { plan?: string | null; plan_expires_at?: string | null } | null | undefined
 
@@ -84,6 +86,7 @@ export function PlanUpsell({
   contactInstead?: boolean
 }) {
   const gate = usePlanGate(company, feature)
+  const [requestOpen, setRequestOpen] = useState(false)
   if (gate.allowed) return null
 
   const isEnterprise = gate.requiredPlan === 'enterprise'
@@ -117,14 +120,33 @@ export function PlanUpsell({
         </ul>
 
         {/* タップ領域 44px（CLAUDE.md のモバイル基準） */}
-        <Link
-          href={toContact ? '/contact' : '/plan'}
-          className="inline-flex h-11 items-center gap-1.5 rounded-xl bg-foreground px-6 text-sm font-bold text-background no-underline transition-transform hover:scale-[1.03]"
-        >
-          {toContact ? 'お問い合わせ' : 'プランを見る'}
-          <ArrowRight size={15} aria-hidden="true" />
-        </Link>
+        {toContact ? (
+          <Link
+            href="/contact"
+            className="inline-flex h-11 items-center gap-1.5 rounded-xl bg-foreground px-6 text-sm font-bold text-background no-underline transition-transform hover:scale-[1.03]"
+          >
+            お問い合わせ
+            <ArrowRight size={15} aria-hidden="true" />
+          </Link>
+        ) : (
+          // 料金ページへ飛ばすと、読んだあと結局どこから申し込むのか分からず途切れる。
+          // その場でプランを選んで依頼まで済ませられるようにする
+          <button
+            type="button"
+            onClick={() => setRequestOpen(true)}
+            className="inline-flex h-11 items-center gap-1.5 rounded-xl bg-foreground px-6 text-sm font-bold text-background transition-transform hover:scale-[1.03]"
+          >
+            プラン変更をリクエストする
+            <ArrowRight size={15} aria-hidden="true" />
+          </button>
+        )}
       </CardContent>
+
+      <PlanChangeRequestDialog
+        open={requestOpen}
+        onOpenChange={setRequestOpen}
+        currentPlan={getEffectivePlan(company)}
+      />
     </Card>
   )
 }

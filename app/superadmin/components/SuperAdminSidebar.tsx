@@ -32,6 +32,7 @@ import {
   MessageSquare,
   Palette,
   UserCheck,
+  CreditCard,
   ArrowLeftRight,
   LogOut,
   CircleUser,
@@ -44,6 +45,7 @@ type NavItem = { href: string; label: string; icon: LucideIcon }
 const navItems: NavItem[] = [
   { href: '/superadmin/companies', label: '企業一覧', icon: Building2 },
   { href: '/superadmin/signup-requests', label: '新規登録の承認', icon: UserCheck },
+  { href: '/superadmin/plan-requests', label: 'プラン変更の依頼', icon: CreditCard },
   { href: '/superadmin/news', label: 'ニュース', icon: Newspaper },
   { href: '/superadmin/inquiries', label: 'お問い合わせ', icon: MessageSquare },
   { href: '/superadmin/design-system', label: 'デザインシステム', icon: Palette },
@@ -51,12 +53,15 @@ const navItems: NavItem[] = [
 
 // 承認待ち件数が変わったとき、承認ページからこのイベントで即時反映させる
 export const SIGNUP_REQUESTS_CHANGED = 'signup-requests-changed'
+export const PLAN_REQUESTS_CHANGED = 'plan-requests-changed'
 
 export function SuperAdminSidebar() {
   const pathname = usePathname()
   const { user, profileName, profilePhotoUrl, signOut } = useAdminData()
   // 承認待ちの新規登録件数（サイドバーの「新規登録の承認」にバッジ表示）
   const [pendingCount, setPendingCount] = useState(0)
+  // 未対応のプラン変更依頼件数
+  const [planRequestCount, setPlanRequestCount] = useState(0)
 
   const loadPendingCount = useCallback(async () => {
     const { count } = await supabase
@@ -66,13 +71,36 @@ export function SuperAdminSidebar() {
     setPendingCount(count ?? 0)
   }, [])
 
+  // plan_change_requests は RLS で自社ぶんしか読めない。superadmin でも
+  // クライアントから直接引くと0件が返るので、service_role の API を通す
+  const loadPlanRequestCount = useCallback(async () => {
+    const token = (await supabase.auth.getSession()).data.session?.access_token
+    if (!token) return
+    try {
+      const res = await fetch('/api/superadmin/plan-change-requests', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!res.ok) return
+      const data = await res.json()
+      setPlanRequestCount((data.requests || []).length)
+    } catch {
+      // バッジが出ないだけなので握りつぶす
+    }
+  }, [])
+
   // 初回・ページ遷移時に再取得。承認/却下の直後はカスタムイベントで即時反映。
   useEffect(() => {
     loadPendingCount()
-    const onChanged = () => loadPendingCount()
-    window.addEventListener(SIGNUP_REQUESTS_CHANGED, onChanged)
-    return () => window.removeEventListener(SIGNUP_REQUESTS_CHANGED, onChanged)
-  }, [loadPendingCount, pathname])
+    loadPlanRequestCount()
+    const onSignup = () => loadPendingCount()
+    const onPlan = () => loadPlanRequestCount()
+    window.addEventListener(SIGNUP_REQUESTS_CHANGED, onSignup)
+    window.addEventListener(PLAN_REQUESTS_CHANGED, onPlan)
+    return () => {
+      window.removeEventListener(SIGNUP_REQUESTS_CHANGED, onSignup)
+      window.removeEventListener(PLAN_REQUESTS_CHANGED, onPlan)
+    }
+  }, [loadPendingCount, loadPlanRequestCount, pathname])
 
   const initials = profileName
     ? profileName.slice(0, 1)
@@ -108,11 +136,13 @@ export function SuperAdminSidebar() {
               {navItems.map((item) => {
                 const Icon = item.icon
                 const isActive = pathname.startsWith(item.href)
-                // 「新規登録の承認」だけ、承認待ち件数を通知バッジで出す
+                // 待たせている件数がある項目だけ通知バッジを出す
                 const badge =
                   item.href === '/superadmin/signup-requests' && pendingCount > 0
                     ? pendingCount
-                    : null
+                    : item.href === '/superadmin/plan-requests' && planRequestCount > 0
+                      ? planRequestCount
+                      : null
                 return (
                   <SidebarMenuItem key={item.href}>
                     <SidebarMenuButton asChild isActive={isActive}>
@@ -126,7 +156,7 @@ export function SuperAdminSidebar() {
                       // top-1/2 + -translate-y-1/2: 既定の top-1.5（上寄せ）を打ち消して項目の上下中央に置く
                       <SidebarMenuBadge
                         className="peer-data-[size=default]/menu-button:top-1/2 -translate-y-1/2 rounded-full bg-red-500 font-bold text-white peer-hover/menu-button:text-white peer-data-[active=true]/menu-button:text-white"
-                        aria-label={`承認待ち ${badge}件`}
+                        aria-label={`未対応 ${badge}件`}
                       >
                         {badge > 99 ? '99+' : badge}
                       </SidebarMenuBadge>
