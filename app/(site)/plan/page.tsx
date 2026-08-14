@@ -25,16 +25,16 @@ const PLANS = [
     subtitle: '体験する',
     price: '¥0',
     priceSuffix: null,
-    description: 'AIブランディングツールを体験。生成結果を画面で確認できます。',
+    description: 'AIツールを体験し、ブランド掲示を自分の手で作り始める。',
     scale: '個人',
     members: '—',
     support: '—',
     perPerson: '—',
     features: [
       'AIツール体験（各ツール 月3回）',
-      '生成結果の画面確認',
-      '公開名刺ページの閲覧',
-      'ブランド用語wiki 閲覧',
+      // Free で自社ブランドを作り始められるようにする（v3の目玉）。
+      // メンバー上限1名なので「社員に見せたい→Standard」の動線になる
+      'ブランド掲示 編集＋閲覧',
     ],
     ctaLabel: '無料で始める',
     ctaHref: '/tools/colors',
@@ -55,11 +55,11 @@ const PLANS = [
     support: 'メール',
     perPerson: '¥396〜1,980',
     features: [
+      'Free 全機能に加えて：',
       'AI構築ツール 4本 使い放題：',
       'ブランドカラー定義 / STP分析',
       'ペルソナビルダー / パーソナリティ診断',
       'PDF出力＋本体連携',
-      'ブランド掲示 編集＋閲覧',
       'CIマニュアルPDF',
       'スマート名刺 全機能',
     ],
@@ -72,29 +72,24 @@ const PLANS = [
   {
     id: 'premium',
     name: 'Premium',
-    subtitle: '構築＋浸透＋発信＋計測する',
+    subtitle: '構築＋浸透＋発信する',
     price: '¥59,800',
     priceSuffix: '/月（税別）',
     description:
-      '構築から浸透・計測まで全機能。社員が学び、理解し、体現する仕組みと、それを数値で追う計測基盤。',
+      '構築から浸透まで全機能。社員が学び、理解し、体現する仕組みを、日常の運用に組み込む。',
     scale: '50〜300名',
     members: '300名',
     support: 'チャット＋電話',
     perPerson: '¥199〜1,196',
+    // 計測グループは Enterprise へ移動（スコアは解釈と打ち手＝伴走とセットで出す）。
+    // Premium が浸透のみになったので「― 浸透 ―」の区切りラベルも不要
     features: [
       'Standard全機能に加えて：',
-      '― 浸透 ―',
       'ビデオラーニング',
       'ブランド理解度テスト',
       'Good Jobタイムライン',
       'お知らせ配信＋Web Push',
       'KPI・目標管理',
-      '― 計測 ―',
-      'インナーサーベイ＋AI設問生成',
-      '統合ブランドスコア',
-      'スコア推移の自動記録',
-      '部署別ヒートマップ',
-      'ギャップ分析',
     ],
     ctaLabel: 'フル機能で導入する',
     ctaHref: '/contact',
@@ -117,11 +112,18 @@ const PLANS = [
     features: [
       'Premium 全機能',
       'メンバー数 無制限',
+      '― 計測（伴走つき） ―',
+      'インナーサーベイ＋AI設問生成',
+      '統合ブランドスコア',
+      'スコア推移の自動記録',
+      '部署別ヒートマップ',
+      'ギャップ分析',
+      '― 体制 ―',
+      'ID INC. による四半期伴走レビュー',
       // SSO・マルチブランドは未実装。商談後に要件ベースで作る方針のため
       // 確定機能として書かない（誇大表示の回避）
       'マルチブランド管理（対応予定）',
       'SSO・監査ログ等の統制要件（対応予定）',
-      'ID INC. による四半期伴走レビュー',
       '導入オンボーディング・社内研修',
     ],
     ctaLabel: 'お問い合わせ',
@@ -135,10 +137,10 @@ const PLANS = [
 // カード名＝現在地、trigger＝次に進みたくなる瞬間。
 // 最終段（Enterprise）はその先が無いので trigger を持たない
 const UPSELL_STEPS = [
-  { name: 'Free', subtitle: '体験する', trigger: 'AI提案を\n保存・出力したい' },
-  { name: 'Standard', subtitle: '構築する', trigger: '社員に\n浸透させたい' },
-  { name: 'Premium', subtitle: '浸透＋計測', trigger: '300名を超える\n複数ブランドを束ねたい' },
-  { name: 'Enterprise', subtitle: '伴走つき', trigger: '' },
+  { name: 'Free', subtitle: '体験する', trigger: 'AIを無制限に使い\n名刺で発信したい' },
+  { name: 'Standard', subtitle: '構築＋発信', trigger: '社員に\n浸透させたい' },
+  { name: 'Premium', subtitle: '浸透する', trigger: '浸透の効果を\n数値で測りたい' },
+  { name: 'Enterprise', subtitle: '計測＋伴走', trigger: '' },
 ]
 
 const COMMON_ITEMS = [
