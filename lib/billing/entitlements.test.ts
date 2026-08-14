@@ -154,7 +154,7 @@ const future = '2026-09-13T12:00:00+09:00'
 
 // ── getMaxMembers ──────────────────────────────────────────
 {
-  assert.equal(getMaxMembers('free'), 1)
+  assert.equal(getMaxMembers('free'), 5)
   assert.equal(getMaxMembers('card'), 30)
   assert.equal(getMaxMembers('standard'), 50)
   assert.equal(getMaxMembers('premium'), 300)
@@ -163,9 +163,9 @@ const future = '2026-09-13T12:00:00+09:00'
 
 // ── fitsWithinMemberLimit ──────────────────────────────────
 {
-  // free は1名。オーナー1人で埋まるので、2人目は入らない
-  assert.equal(fitsWithinMemberLimit(1, 0, 1), true)
-  assert.equal(fitsWithinMemberLimit(1, 1, 1), false, 'free で2人目は入らない')
+  // free は5名。オーナー含めて5人まで
+  assert.equal(fitsWithinMemberLimit(5, 4, 1), true, 'free の5人目は入る')
+  assert.equal(fitsWithinMemberLimit(5, 5, 1), false, 'free で6人目は入らない')
   // ちょうど上限ぴったりは収まる側
   assert.equal(fitsWithinMemberLimit(50, 49, 1), true)
   assert.equal(fitsWithinMemberLimit(50, 50, 1), false)
@@ -175,7 +175,7 @@ const future = '2026-09-13T12:00:00+09:00'
   // enterprise は無制限
   assert.equal(fitsWithinMemberLimit(null, 100000, 500), true)
   // すでに上限を超えている会社（プランを下げた等）でも0人追加なら通す
-  assert.equal(fitsWithinMemberLimit(1, 5, 0), false, '既に超過なら追加0でも通さない')
+  assert.equal(fitsWithinMemberLimit(5, 9, 0), false, '既に超過なら追加0でも通さない')
 }
 
 // ── 販売中プランの定義 ──────────────────────────────────────

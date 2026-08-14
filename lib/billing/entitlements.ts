@@ -85,7 +85,9 @@ const FEATURE_MATRIX: Record<FeatureKey, Record<Plan, boolean>> = {
 
 /** メンバー上限。null は無制限 */
 const MAX_MEMBERS: Record<Plan, number | null> = {
-  free: 1,
+  // 5名。1名だと「自分ひとりで触るもの」になり、社内で見せ合う体験まで届かない。
+  // 小さなチームがひととおり試せて、かつ全社に配るには足りない、が狙い
+  free: 5,
   card: 30, // 温存（販売終了のため実際には使われない）
   standard: 50,
   premium: 300,
