@@ -16,6 +16,8 @@ import { Fab, FabButton } from '@/components/ui/fab'
 import type { CIManualData, SelectedSections } from '@/lib/ci-manual/types'
 import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
 import { FeatureDisabledNotice } from '@/components/billing/feature-disabled'
+import { PlanUpsell } from '@/components/billing/plan-gate'
+import { can } from '@/lib/billing/entitlements'
 
 type SectionConfig = {
   key: keyof SelectedSections
@@ -53,7 +55,12 @@ export default function CIManualPage() {
   const [progressValue, setProgressValue] = useState(0)
 
   useEffect(() => {
-    if (!companyId) return
+    if (!companyId || !company) return
+    // プラン外なら取りに行かない（他のプラン外ページと同じ扱い）
+    if (!can(company, 'ciManualPdf')) {
+      setLoading(false)
+      return
+    }
     ;(async () => {
       setLoading(true)
       try {
@@ -65,7 +72,7 @@ export default function CIManualPage() {
       }
       setLoading(false)
     })()
-  }, [companyId])
+  }, [companyId, company])
 
   const toggleSection = (key: keyof SelectedSections) => {
     setSections((prev) => ({ ...prev, [key]: !prev[key] }))
@@ -121,6 +128,26 @@ export default function CIManualPage() {
 
   // 会社が機能トグルでオフにしている場合は、読み込みより先に閉じる
   if (!isFeatureEnabled(company, 'ci_manual_enabled')) return <FeatureDisabledNotice />
+
+  // プラン外: 出力セクションの操作面を見せても押せないので、他ページと同じ
+  // アップセル面に差し替える（隠さずグレーで見せる方針は「メニューに残す」まで）
+  if (!can(company, 'ciManualPdf')) {
+    return (
+      <div>
+        <PlanUpsell
+          company={company}
+          feature="ciManualPdf"
+          title="CIマニュアル出力を使うには"
+          benefits={[
+            'ブランド方針・ビジュアル・バーバル・戦略を1冊のPDFに',
+            '表紙・目次・奥付まで整った配布できる体裁',
+            '登録済みの内容から自動生成（作り直し不要）',
+            '社内展開や取引先への説明にそのまま使える',
+          ]}
+        />
+      </div>
+    )
+  }
 
   if (loading) {
     return (
