@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { supabase } from '@/lib/supabase'
+import { checkMemberCapacity, memberLimitResponse } from '@/lib/billing/guard'
 
 // HTMLエスケープ（XSS対策）
 function escapeHtml(str: string): string {
@@ -96,6 +97,10 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === 'approve') {
+      // 参加申請中は席を使っていない。承認するとここで1席増えるので上限を見る
+      const capacity = await checkMemberCapacity(companyId)
+      if (!capacity.ok) return memberLimitResponse(capacity)
+
       // 承認: status → active, is_active → true
       const { error: updateError } = await supabaseAdmin
         .from('members')

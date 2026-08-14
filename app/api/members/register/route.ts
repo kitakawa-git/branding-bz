@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { generateRandomSlug } from '@/lib/generate-slug'
+import { checkMemberCapacity, memberLimitResponse } from '@/lib/billing/guard'
 
 export async function POST(req: NextRequest) {
   try {
@@ -25,6 +26,12 @@ export async function POST(req: NextRequest) {
     }
 
     const company_id = invite.company_id
+
+    // 招待リンクは何人でも通れてしまうので、ここでも人数上限を見る。
+    // 断るのは招待された本人なので、文面は「管理者に連絡してほしい」寄りにしたいが、
+    // 上限と現在人数は共通の 403 で返し、画面側で言い換える
+    const capacity = await checkMemberCapacity(company_id)
+    if (!capacity.ok) return memberLimitResponse(capacity)
 
     // 2. Supabase Auth でユーザー作成
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({

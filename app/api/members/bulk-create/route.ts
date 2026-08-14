@@ -14,6 +14,7 @@ import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { supabase } from '@/lib/supabase'
 import { generateRandomSlug } from '@/lib/generate-slug'
 import { MEMBER_ROLE_OPTIONS } from '@/lib/constants/member-roles'
+import { checkMemberCapacity, memberLimitResponse } from '@/lib/billing/guard'
 
 export const maxDuration = 60
 
@@ -67,6 +68,11 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
+
+    // 人数上限。半分だけ作られて途中で止まると後始末が面倒なので、
+    // ファイル全体が収まるかを先に見て、収まらなければ1件も作らない
+    const capacity = await checkMemberCapacity(companyId, rows.length)
+    if (!capacity.ok) return memberLimitResponse(capacity)
 
     const admin = getSupabaseAdmin()
     const results: { email: string; ok: boolean; error?: string }[] = []

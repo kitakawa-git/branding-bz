@@ -11,6 +11,8 @@ import {
   can,
   minimumPlanFor,
   getEffectivePlan,
+  getMaxMembers,
+  fitsWithinMemberLimit,
   type FeatureKey,
   type Plan,
   type PlanBearer,
@@ -108,4 +110,63 @@ export async function fetchCompanyIdForProfile(profileId: string | null | undefi
  */
 export async function canRecordAnalytics(companyId: string | null | undefined): Promise<boolean> {
   return can(await fetchCompanyPlan(companyId), 'cardAnalytics')
+}
+
+/**
+ * メンバーを追加できるか（プランごとの人数上限）。
+ *
+ * 上限そのものは entitlements.getMaxMembers が正本。ここは「今何人いるか」を
+ * 数えて突き合わせるだけ。UI で追加ボタンを隠しても API を直接叩けば通るので、
+ * メンバーを作る経路（個別作成・CSV一括・自己登録・参加申請の承認）はすべて
+ * この関数を通す。
+ *
+ * @param adding これから増やす人数。CSV一括のように複数入れる場合に使う
+ */
+export async function checkMemberCapacity(
+  companyId: string | null | undefined,
+  adding = 1,
+): Promise<{ ok: true } | { ok: false; limit: number; current: number; plan: Plan }> {
+  const company = await fetchCompanyPlan(companyId)
+  const plan = getEffectivePlan(company)
+  const limit = getMaxMembers(plan)
+  if (limit === null) return { ok: true }
+
+  // 数えるのは席を実際に占めている人だけ。参加申請中（status='pending'・
+  // is_active=false）は承認するまで席を使わない。承認する側でこの関数を通す
+  const { count } = await getSupabaseAdmin()
+    .from('members')
+    .select('id', { count: 'exact', head: true })
+    .eq('company_id', companyId as string)
+    .eq('is_active', true)
+  const current = count ?? 0
+
+  if (fitsWithinMemberLimit(limit, current, adding)) return { ok: true }
+  return { ok: false, limit, current, plan }
+}
+
+/**
+ * 人数上限に当たったときの 403。
+ * UI はこの本文をそのまま出せばよいので、次の一手（上位プランへ）まで含める。
+ */
+export function memberLimitResponse(info: { limit: number; current: number; plan: Plan }): NextResponse {
+  return NextResponse.json(
+    {
+      error: 'member_limit_exceeded',
+      message:
+        `${PLAN_LABELS_FOR_ERROR[info.plan] ?? info.plan} プランのメンバー上限は ${info.limit}名です` +
+        `（現在 ${info.current}名）。人数を増やすには上位プランへの変更をリクエストしてください。`,
+      limit: info.limit,
+      current: info.current,
+    },
+    { status: 403 },
+  )
+}
+
+/** エラーメッセージ用の最小限のラベル。表示用の plan-display は 'use client' 側なので持ち込まない */
+const PLAN_LABELS_FOR_ERROR: Record<string, string> = {
+  free: 'Free',
+  card: 'Card',
+  standard: 'Standard',
+  premium: 'Premium',
+  enterprise: 'Enterprise',
 }

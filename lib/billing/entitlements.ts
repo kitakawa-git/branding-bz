@@ -169,6 +169,20 @@ export function getMaxMembers(plan: Plan): number | null {
   return MAX_MEMBERS[plan]
 }
 
+/**
+ * いま current 人いる会社に adding 人足して上限に収まるか。
+ * limit が null（無制限）なら常に収まる。
+ * 「ちょうど上限ぴったり」は収まる側に入れる（50名プランは50人まで使える）。
+ */
+export function fitsWithinMemberLimit(
+  limit: number | null,
+  current: number,
+  adding: number,
+): boolean {
+  if (limit === null) return true
+  return current + adding <= limit
+}
+
 /** 有償プランか。plan_started_at を埋めるかどうかの判断などに使う */
 export function isPaidPlan(plan: Plan): boolean {
   return plan !== 'free'

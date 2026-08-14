@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { generateRandomSlug } from '@/lib/generate-slug'
+import { checkMemberCapacity, memberLimitResponse } from '@/lib/billing/guard'
 
 export async function POST(req: NextRequest) {
   try {
@@ -11,6 +12,10 @@ export async function POST(req: NextRequest) {
     if (!email || !password || !display_name || !company_id) {
       return NextResponse.json({ error: '必須項目が不足しています' }, { status: 400 })
     }
+
+    // 人数上限。Auth ユーザーを作ってから気づくとロールバックが要るので先に見る
+    const capacity = await checkMemberCapacity(company_id)
+    if (!capacity.ok) return memberLimitResponse(capacity)
 
     // 1. Supabase Auth でユーザー作成
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
