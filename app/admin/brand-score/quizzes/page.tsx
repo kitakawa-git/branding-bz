@@ -94,11 +94,15 @@ export default function QuizzesListPage() {
   }
 
   useEffect(() => {
-    if (!companyId) return
+    if (!companyId || !company) return
+    // プラン外の会社では API が 403（plan_required）を返す。取りに行けば必ず失敗し、
+    // アップセル面の上に「取得に失敗しました」という無関係なエラーが重なる。
+    // company が届くのは companyId より後なので、揃うまで待ってから判定する
+    if (!can(company, 'brandQuiz')) return
     if (getPageCache<ListCache>(cacheKey)) return
     fetchQuizzes()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [companyId, cacheKey])
+  }, [companyId, company, cacheKey])
 
   // 新規作成（POST → 詳細へ遷移）
   const handleCreate = async () => {

@@ -171,6 +171,12 @@ export default function AdminLearningPage() {
   const [editing, setEditing] = useState<LearningVideo | null>(null)
 
   const fetchStructure = useCallback(async () => {
+    // プラン外の会社では API が 403（plan_required）を返す。取りに行けば必ず失敗し、
+    // アップセル面の上に「取得に失敗しました」という無関係なエラーが重なる
+    if (!company || !can(company, 'videoLearning')) {
+      setLoading(false)
+      return
+    }
     try {
       const res = await fetch('/api/learning/structure')
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
@@ -182,7 +188,7 @@ export default function AdminLearningPage() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [company])
 
   useEffect(() => { fetchStructure() }, [fetchStructure])
 
