@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { fetchPhilosophy } from '@/lib/brand/philosophy'
+import { guardCompanyFeature } from '@/lib/billing/guard'
 
 // brand_stage の値を正規化（廃止された値を有効な値に変換）
 function normalizeBrandStage(stage: string | null | undefined): string {
@@ -148,6 +149,12 @@ export async function PATCH(request: NextRequest) {
       // 本体アカウントがない場合は何もしない
       return NextResponse.json({ updated: false, reason: 'no_company_account' })
     }
+
+    // 本体（companies）への書き戻しは standard 以上。
+    // GET（構築ツールのプリフィル用の読み取り）は free でも使えるままにする。
+    // free でも構築ツール自体は使えるので、読みまで止めると体験が壊れる
+    const denied = await guardCompanyFeature(adminUser.company_id, 'portalSync')
+    if (denied) return denied
 
     // 現在の competitors を取得してマージ
     const { data: company } = await supabaseAdmin

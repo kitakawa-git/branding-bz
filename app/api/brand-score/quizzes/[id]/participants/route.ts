@@ -10,6 +10,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { getAdminContext } from '@/lib/learning/auth'
+import { guardCompanyFeature } from '@/lib/billing/guard'
 
 type RouteContext = { params: Promise<{ id: string }> }
 
@@ -22,6 +23,8 @@ export async function GET(_request: NextRequest, context: RouteContext) {
     if (!admin) {
       return NextResponse.json({ error: '権限がありません' }, { status: 403 })
     }
+    const denied = await guardCompanyFeature(admin.companyId, 'brandQuiz')
+    if (denied) return denied
 
     const supabase = getSupabaseAdmin()
 

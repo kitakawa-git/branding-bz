@@ -4,6 +4,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { MONTHLY_FREE_LIMIT, MONTHLY_LIMIT_REACHED_MESSAGE, getCurrentMonthStartUtcIso } from '@/lib/tools/free-limits'
+import { can } from '@/lib/billing/entitlements'
+import { fetchCompanyPlan, usageLimitResponse } from '@/lib/billing/guard'
 
 export async function POST(request: NextRequest) {
 
@@ -57,25 +59,8 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // フリーミアム制限チェック: 当月(JST)の完了セッション数（1-1=B / 1-2=JST / 1-3=完了月）
-    // 他3ツールと共通の月次リセット。in_progress は上で既に返しているのでここに来た時点で新規作成扱い。
-    const monthStart = getCurrentMonthStartUtcIso()
-    const { count: completedCount } = await supabaseAdmin
-      .from('mini_app_sessions')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', authId)
-      .eq('app_type', 'brand_colors')
-      .eq('status', 'completed')
-      .gte('updated_at', monthStart)
-
-    if (completedCount !== null && completedCount >= MONTHLY_FREE_LIMIT) {
-      return NextResponse.json(
-        { error: MONTHLY_LIMIT_REACHED_MESSAGE },
-        { status: 403 }
-      )
-    }
-
-    // 既存のbranding.bzアカウントか確認（company_id取得）
+    // 既存のbranding.bzアカウントか確認（company_id取得）。
+    // 月次上限をプランで飛ばすかの判定に使うので、上限チェックより先に引く
     let companyId: string | null = null
     const { data: adminUser } = await supabaseAdmin
       .from('admin_users')
@@ -85,6 +70,25 @@ export async function POST(request: NextRequest) {
 
     if (adminUser) {
       companyId = adminUser.company_id
+    }
+
+    // フリーミアム制限チェック: 当月(JST)の完了セッション数。
+    // standard 以上（buildToolsUnlimited）は上限なしなので数えない。
+    // 未ログイン・会社なしは free 相当として従来どおり上限をかける。
+    const unlimited = can(await fetchCompanyPlan(companyId), 'buildToolsUnlimited')
+    if (!unlimited) {
+      const monthStart = getCurrentMonthStartUtcIso()
+      const { count: completedCount } = await supabaseAdmin
+        .from('mini_app_sessions')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', authId)
+        .eq('app_type', 'brand_colors')
+        .eq('status', 'completed')
+        .gte('updated_at', monthStart)
+
+      if (completedCount !== null && completedCount >= MONTHLY_FREE_LIMIT) {
+        return usageLimitResponse(MONTHLY_LIMIT_REACHED_MESSAGE)
+      }
     }
 
     // 新規セッション作成

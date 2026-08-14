@@ -8,6 +8,7 @@ import { getAdminContext } from '@/lib/learning/auth'
 import { resolveCategoryTheme } from '@/lib/learning/resolve'
 import { extractVideoId, getThumbnailUrl } from '@/lib/youtube'
 import { notifyLearningVideoPublished } from '@/lib/learning/notify'
+import { guardCompanyFeature } from '@/lib/billing/guard'
 
 // お知らせ作成＋web-push（VAPID）のため Node ランタイム必須
 export const runtime = 'nodejs'
@@ -21,6 +22,8 @@ export async function GET(_request: NextRequest, context: RouteContext) {
     if (!admin) {
       return NextResponse.json({ error: '権限がありません' }, { status: 403 })
     }
+    const denied = await guardCompanyFeature(admin.companyId, 'videoLearning')
+    if (denied) return denied
 
     const supabase = getSupabaseAdmin()
     const { data, error } = await supabase
@@ -55,6 +58,8 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     if (!admin) {
       return NextResponse.json({ error: '権限がありません' }, { status: 403 })
     }
+    const denied = await guardCompanyFeature(admin.companyId, 'videoLearning')
+    if (denied) return denied
 
     const body = await request.json().catch(() => null)
     if (!body || typeof body !== 'object') {
@@ -168,6 +173,8 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
     if (!admin) {
       return NextResponse.json({ error: '権限がありません' }, { status: 403 })
     }
+    const denied = await guardCompanyFeature(admin.companyId, 'videoLearning')
+    if (denied) return denied
 
     const supabase = getSupabaseAdmin()
     const { error } = await supabase

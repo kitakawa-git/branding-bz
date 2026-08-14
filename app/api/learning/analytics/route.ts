@@ -5,6 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { getAdminContext } from '@/lib/learning/auth'
+import { guardCompanyFeature } from '@/lib/billing/guard'
 import type {
   LearningAnalytics,
   VideoAnalytics,
@@ -18,6 +19,8 @@ export async function GET(_request: NextRequest) {
     if (!admin) {
       return NextResponse.json({ error: '権限がありません' }, { status: 403 })
     }
+    const denied = await guardCompanyFeature(admin.companyId, 'videoLearning')
+    if (denied) return denied
 
     const supabase = getSupabaseAdmin()
     const companyId = admin.companyId

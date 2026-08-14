@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { guardCompanyFeature } from '@/lib/billing/guard'
 
 export const runtime = 'nodejs'
 
@@ -31,6 +32,11 @@ export async function POST(req: NextRequest) {
     .select('company_id')
     .eq('auth_id', user.id)
     .maybeSingle()
+
+  // Web Push はお知らせ機能に付随するので announcements と同じ standard 以上。
+  // 購読の時点で止めておかないと、通知を受け取れない購読が溜まる
+  const denied = await guardCompanyFeature(member?.company_id, 'announcements')
+  if (denied) return denied
 
   const { error } = await admin.from('push_subscriptions').upsert(
     {

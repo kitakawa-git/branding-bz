@@ -2,6 +2,7 @@
 // POST /api/analytics/card-events
 // 名刺ページ上のボタンクリック等のイベントを card_events テーブルに記録
 import { NextRequest, NextResponse } from 'next/server'
+import { canRecordAnalytics } from '@/lib/billing/guard'
 import { createClient } from '@supabase/supabase-js'
 
 // 許可するイベントタイプ
@@ -28,6 +29,12 @@ export async function POST(request: NextRequest) {
     }
     if (!ALLOWED_EVENT_TYPES.includes(eventType)) {
       return NextResponse.json({ error: `Invalid eventType: ${eventType}` }, { status: 400 })
+    }
+
+    // プラン判定: free では記録を残さない（名刺・ブランドページ自体は見えたまま）。
+    // 閲覧者にエラーは返さず、記録しなかったことだけ伝える
+    if (!(await canRecordAnalytics(companyId))) {
+      return NextResponse.json({ recorded: false, reason: 'plan_required' })
     }
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL

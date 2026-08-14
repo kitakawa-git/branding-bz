@@ -11,6 +11,7 @@
 //                + companies.competitors_analysis（同・競合項目のtraits [{name, traits}]）
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { guardCompanyFeature } from '@/lib/billing/guard'
 
 interface SegmentNode { name: string; description?: string; selected?: boolean }
 interface VariableNode { name?: string; segments?: SegmentNode[] }
@@ -88,6 +89,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'sessionId と companyId が必要です' }, { status: 400 })
     }
 
+    // 本体連携は standard 以上
+    const denied = await guardCompanyFeature(companyId, 'portalSync')
+    if (denied) return denied
+
     const [{ data: rows }, { data: companyRow }] = await Promise.all([
       supabaseAdmin
         .from('brand_personas')
@@ -144,6 +149,10 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
+
+    // 本体連携は standard 以上
+    const denied = await guardCompanyFeature(companyId, 'portalSync')
+    if (denied) return denied
 
     // 後方互換: selections 未指定なら全て連携
     const selections: Required<Selections> = {

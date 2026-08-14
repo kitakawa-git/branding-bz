@@ -4,11 +4,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { getAdminContext } from '@/lib/learning/auth'
+import { guardCompanyFeature } from '@/lib/billing/guard'
 
 export async function GET() {
   try {
     const admin = await getAdminContext()
     if (!admin) return NextResponse.json({ error: '権限がありません' }, { status: 403 })
+    const denied = await guardCompanyFeature(admin.companyId, 'videoLearning')
+    if (denied) return denied
 
     const supabase = getSupabaseAdmin()
     const { data, error } = await supabase
@@ -33,6 +36,8 @@ export async function POST(request: NextRequest) {
   try {
     const admin = await getAdminContext()
     if (!admin) return NextResponse.json({ error: '権限がありません' }, { status: 403 })
+    const denied = await guardCompanyFeature(admin.companyId, 'videoLearning')
+    if (denied) return denied
 
     const body = await request.json().catch(() => null)
     const name = body && typeof body.name === 'string' ? body.name.trim() : ''

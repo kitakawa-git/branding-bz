@@ -4,6 +4,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { MONTHLY_FREE_LIMIT, MONTHLY_LIMIT_REACHED_MESSAGE, getCurrentMonthStartUtcIso } from '@/lib/tools/free-limits'
+import { can } from '@/lib/billing/entitlements'
+import { fetchCompanyPlan, usageLimitResponse } from '@/lib/billing/guard'
 
 // STPセッションのデフォルトデータ
 const DEFAULT_SESSION_DATA = {
@@ -112,9 +114,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'userId が必要です' }, { status: 400 })
     }
 
-    // フリーミアム制限チェック: 当月(JST)の完了セッション数（1-1=B / 1-2=JST / 1-3=完了月）
+    // 会社の実効プランで月次上限を飛ばすか決めるので、上限チェックより先に company_id を引く
+    let companyId: string | null = null
+    const { data: adminUserForPlan } = await supabaseAdmin
+      .from('admin_users')
+      .select('company_id')
+      .eq('auth_id', authId)
+      .maybeSingle()
+    if (adminUserForPlan) companyId = adminUserForPlan.company_id
+
+    // フリーミアム制限チェック: 当月(JST)の完了セッション数（1-1=B / 1-2=JST / 1-3=完了月）。
+    // standard 以上（buildToolsUnlimited）は上限なしなので数えない。
+    // 未ログイン・会社なしは free 相当として従来どおり上限をかける。
+    const unlimited = can(await fetchCompanyPlan(companyId), 'buildToolsUnlimited')
     const monthStart = getCurrentMonthStartUtcIso()
-    const { count: completedCount } = await supabaseAdmin
+    const { count: completedCount } = unlimited ? { count: null } : await supabaseAdmin
       .from('mini_app_sessions')
       .select('id', { count: 'exact', head: true })
       .eq('user_id', authId)
@@ -143,10 +157,7 @@ export async function POST(request: NextRequest) {
         })
       }
 
-      return NextResponse.json(
-        { error: MONTHLY_LIMIT_REACHED_MESSAGE },
-        { status: 403 }
-      )
+      return usageLimitResponse(MONTHLY_LIMIT_REACHED_MESSAGE)
     }
 
     // 進行中のセッションがあればそれを返す（forceNew時はスキップして常に新規作成）
@@ -167,18 +178,6 @@ export async function POST(request: NextRequest) {
         sessionData: existingSession.session_data,
         isExisting: true,
       })
-    }
-
-    // 既存のbranding.bzアカウントか確認（company_id取得）
-    let companyId: string | null = null
-    const { data: adminUser } = await supabaseAdmin
-      .from('admin_users')
-      .select('company_id')
-      .eq('auth_id', authId)
-      .maybeSingle()
-
-    if (adminUser) {
-      companyId = adminUser.company_id
     }
 
     // 新規セッション作成

@@ -2,6 +2,7 @@
 // POST /api/analytics/brand-page-view
 // ブランドページの閲覧行動を brand_page_views テーブルに記録
 import { NextRequest, NextResponse } from 'next/server'
+import { canRecordAnalytics } from '@/lib/billing/guard'
 import { createClient } from '@supabase/supabase-js'
 
 // 許可するページタイプ
@@ -26,6 +27,12 @@ export async function POST(request: NextRequest) {
     }
     if (!ALLOWED_PAGE_TYPES.includes(pageType)) {
       return NextResponse.json({ error: `Invalid pageType: ${pageType}` }, { status: 400 })
+    }
+
+    // プラン判定: free では記録を残さない（名刺・ブランドページ自体は見えたまま）。
+    // 閲覧者にエラーは返さず、記録しなかったことだけ伝える
+    if (!(await canRecordAnalytics(companyId))) {
+      return NextResponse.json({ recorded: false, reason: 'plan_required' })
     }
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL

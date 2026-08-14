@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { getMemberContext } from '@/lib/learning/auth'
+import { guardCompanyFeature } from '@/lib/billing/guard'
 
 type RouteContext = { params: Promise<{ id: string }> }
 
@@ -16,6 +17,8 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     if (!member) {
       return NextResponse.json({ error: '権限がありません' }, { status: 401 })
     }
+    const denied = await guardCompanyFeature(member.companyId, 'videoLearning')
+    if (denied) return denied
 
     const body = await request.json().catch(() => null)
     if (!body || typeof body !== 'object') {

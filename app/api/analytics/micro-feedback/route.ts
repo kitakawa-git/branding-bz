@@ -3,6 +3,7 @@
 // 名刺閲覧者が印象タグを選択して送信
 
 import { NextRequest, NextResponse } from 'next/server'
+import { canRecordAnalytics } from '@/lib/billing/guard'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
 // 許可する印象タグ（8個のみ）
@@ -45,6 +46,12 @@ export async function POST(request: NextRequest) {
         { error: `許可されていないタグが含まれています: ${invalidTags.join(', ')}` },
         { status: 400 },
       )
+    }
+
+    // プラン判定: free では記録を残さない（名刺・ブランドページ自体は見えたまま）。
+    // 閲覧者にエラーは返さず、記録しなかったことだけ伝える
+    if (!(await canRecordAnalytics(companyId))) {
+      return NextResponse.json({ recorded: false, reason: 'plan_required' })
     }
 
     const supabase = getSupabaseAdmin()

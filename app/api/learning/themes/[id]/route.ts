@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { getAdminContext } from '@/lib/learning/auth'
+import { guardCompanyFeature } from '@/lib/billing/guard'
 
 type RouteContext = { params: Promise<{ id: string }> }
 
@@ -12,6 +13,8 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     const { id } = await context.params
     const admin = await getAdminContext()
     if (!admin) return NextResponse.json({ error: '権限がありません' }, { status: 403 })
+    const denied = await guardCompanyFeature(admin.companyId, 'videoLearning')
+    if (denied) return denied
 
     const body = await request.json().catch(() => null)
     if (!body || typeof body !== 'object') {
@@ -77,6 +80,8 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
     const { id } = await context.params
     const admin = await getAdminContext()
     if (!admin) return NextResponse.json({ error: '権限がありません' }, { status: 403 })
+    const denied = await guardCompanyFeature(admin.companyId, 'videoLearning')
+    if (denied) return denied
 
     const supabase = getSupabaseAdmin()
     const { error } = await supabase

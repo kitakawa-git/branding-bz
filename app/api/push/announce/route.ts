@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { sendPushToCompany } from '@/lib/push'
+import { guardCompanyFeature } from '@/lib/billing/guard'
 
 export const runtime = 'nodejs'
 
@@ -36,6 +37,10 @@ export async function POST(req: NextRequest) {
     .eq('company_id', ann.company_id)
     .maybeSingle()
   if (!adminRow) return NextResponse.json({ error: 'forbidden' }, { status: 403 })
+
+  // Web Push はお知らせ機能に付随するので announcements と同じ standard 以上
+  const denied = await guardCompanyFeature(ann.company_id as string, 'announcements')
+  if (denied) return denied
 
   const result = await sendPushToCompany(ann.company_id as string, {
     title: '新しいお知らせ',

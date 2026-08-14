@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { renderToBuffer } from '@react-pdf/renderer'
 import { PersonaPdfDocument, type PersonaPdfGroup } from '@/app/tools/persona/app/components/PersonaPdfDocument'
+import { guardCompanyFeature, fetchCompanyIdForSession } from '@/lib/billing/guard'
 
 interface PersonaLike {
   target_name?: string
@@ -38,6 +39,10 @@ export async function POST(request: NextRequest) {
     if (!sessionId) {
       return NextResponse.json({ error: 'sessionId が必要です' }, { status: 400 })
     }
+
+    // PDF 出力は standard 以上。未ログイン・会社なしのセッションは free 相当で弾かれる
+    const denied = await guardCompanyFeature(await fetchCompanyIdForSession(sessionId), 'pdfExport')
+    if (denied) return denied
 
     const { data: session, error: sessionError } = await supabaseAdmin
       .from('mini_app_sessions')

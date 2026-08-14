@@ -9,6 +9,7 @@
 import { NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { getMemberContext } from '@/lib/learning/auth'
+import { guardCompanyFeature } from '@/lib/billing/guard'
 
 export async function GET() {
   try {
@@ -16,6 +17,8 @@ export async function GET() {
     if (!member) {
       return NextResponse.json({ error: '権限がありません' }, { status: 401 })
     }
+    const denied = await guardCompanyFeature(member.companyId, 'brandQuiz')
+    if (denied) return denied
     const { profileId, companyId } = member
 
     const supabase = getSupabaseAdmin()

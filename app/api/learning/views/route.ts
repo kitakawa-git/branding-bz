@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { getMemberContext } from '@/lib/learning/auth'
+import { guardCompanyFeature } from '@/lib/billing/guard'
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,6 +12,8 @@ export async function POST(request: NextRequest) {
     if (!member) {
       return NextResponse.json({ error: '権限がありません' }, { status: 401 })
     }
+    const denied = await guardCompanyFeature(member.companyId, 'videoLearning')
+    if (denied) return denied
 
     const body = await request.json().catch(() => null)
     const videoId = body && typeof body.video_id === 'string' ? body.video_id : null

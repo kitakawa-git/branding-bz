@@ -9,6 +9,7 @@ import { resolveCategoryTheme } from '@/lib/learning/resolve'
 import { extractVideoId, getThumbnailUrl } from '@/lib/youtube'
 import { notifyLearningVideoPublished } from '@/lib/learning/notify'
 import type { LearningVideo, LearningVideoWithProgress } from '@/lib/types/learning'
+import { guardCompanyFeature } from '@/lib/billing/guard'
 
 // お知らせ作成＋web-push（VAPID）のため Node ランタイム必須
 export const runtime = 'nodejs'
@@ -41,6 +42,8 @@ export async function GET(request: NextRequest) {
       if (!member) {
         return NextResponse.json({ error: '権限がありません' }, { status: 401 })
       }
+    const denied = await guardCompanyFeature(member.companyId, 'videoLearning')
+    if (denied) return denied
 
       const { data: videos, error } = await supabase
         .from('learning_videos')
@@ -102,6 +105,8 @@ export async function GET(request: NextRequest) {
     if (!admin) {
       return NextResponse.json({ error: '権限がありません' }, { status: 403 })
     }
+    const denied = await guardCompanyFeature(admin.companyId, 'videoLearning')
+    if (denied) return denied
 
     const { data: videos, error } = await supabase
       .from('learning_videos')
@@ -131,6 +136,8 @@ export async function POST(request: NextRequest) {
     if (!admin) {
       return NextResponse.json({ error: '権限がありません' }, { status: 403 })
     }
+    const denied = await guardCompanyFeature(admin.companyId, 'videoLearning')
+    if (denied) return denied
 
     const body = await request.json().catch(() => null)
     if (!body || typeof body !== 'object') {

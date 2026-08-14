@@ -10,6 +10,7 @@ import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { getMemberContext } from '@/lib/learning/auth'
 import { gradeAttempt, type ScoringQuestion, type SubmittedAnswer } from '@/lib/brand-score/quiz-scoring'
 import type { RoleCategory } from '@/lib/types/brand-quiz'
+import { guardCompanyFeature } from '@/lib/billing/guard'
 
 type RouteContext = { params: Promise<{ id: string }> }
 
@@ -25,6 +26,8 @@ export async function POST(request: NextRequest, context: RouteContext) {
     if (!member) {
       return NextResponse.json({ error: '権限がありません' }, { status: 401 })
     }
+    const denied = await guardCompanyFeature(member.companyId, 'brandQuiz')
+    if (denied) return denied
     const { profileId, companyId } = member
 
     // 2. 入力（answers のみ。role_category は任意の自己申告。started_at は任意）

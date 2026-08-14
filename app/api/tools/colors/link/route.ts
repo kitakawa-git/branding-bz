@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import type { PaletteProposal } from '@/lib/types/color-tool'
+import { guardCompanyFeature } from '@/lib/billing/guard'
 
 export async function POST(request: NextRequest) {
   try {
@@ -30,6 +31,10 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
+
+    // 本体連携は standard 以上
+    const denied = await guardCompanyFeature(session.company_id, 'portalSync')
+    if (denied) return denied
 
     const { data: project } = await supabaseAdmin
       .from('brand_color_projects')

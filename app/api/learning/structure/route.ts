@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { getAdminContext, getMemberContext } from '@/lib/learning/auth'
 import type { LearningVideo, LearningVideoWithProgress } from '@/lib/types/learning'
+import { guardCompanyFeature } from '@/lib/billing/guard'
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,11 +18,15 @@ export async function GET(request: NextRequest) {
     if (publishedOnly) {
       const member = await getMemberContext()
       if (!member) return NextResponse.json({ error: '権限がありません' }, { status: 401 })
+    const denied = await guardCompanyFeature(member.companyId, 'videoLearning')
+    if (denied) return denied
       companyId = member.companyId
       profileId = member.profileId
     } else {
       const admin = await getAdminContext()
       if (!admin) return NextResponse.json({ error: '権限がありません' }, { status: 403 })
+    const denied = await guardCompanyFeature(admin.companyId, 'videoLearning')
+    if (denied) return denied
       companyId = admin.companyId
     }
 

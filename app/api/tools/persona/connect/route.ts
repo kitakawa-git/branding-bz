@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { mapSessionToPersonaColumns } from '@/lib/tools/persona-mapping'
+import { guardCompanyFeature } from '@/lib/billing/guard'
 
 export async function POST(request: NextRequest) {
 
@@ -17,6 +18,10 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
+
+    // 本体連携は standard 以上
+    const denied = await guardCompanyFeature(companyId, 'portalSync')
+    if (denied) return denied
 
     // 1. セッションデータ取得
     const { data: session, error: sessionError } = await supabaseAdmin

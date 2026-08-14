@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { getAdminContext } from '@/lib/learning/auth'
+import { guardCompanyFeature } from '@/lib/billing/guard'
 
 type OrderItem = { id: string; sort_order: number }
 
@@ -13,6 +14,8 @@ export async function PATCH(request: NextRequest) {
     if (!admin) {
       return NextResponse.json({ error: '権限がありません' }, { status: 403 })
     }
+    const denied = await guardCompanyFeature(admin.companyId, 'videoLearning')
+    if (denied) return denied
 
     const body = await request.json().catch(() => null)
     const orders: OrderItem[] = Array.isArray(body)

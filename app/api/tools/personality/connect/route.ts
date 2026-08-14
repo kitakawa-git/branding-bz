@@ -17,6 +17,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import type { DiagnosisResult } from '@/app/tools/personality/lib/diagnosis'
 import { AAKER_BY_DIMENSION, type AakerDimension } from '@/app/tools/personality/lib/archetypes'
+import { guardCompanyFeature } from '@/lib/billing/guard'
 
 // AI出力の severity（low/medium/high）→ governance_rules の既存語彙（info/warn/block）
 const SEVERITY_MAP: Record<string, string> = {
@@ -155,6 +156,11 @@ export async function POST(request: NextRequest) {
     }
 
     const companyId = ctx.adminCompanyId
+
+    // 本体連携は standard 以上
+    const denied = await guardCompanyFeature(companyId, 'portalSync')
+    if (denied) return denied
+
     const d = ctx.diagnosis
     const written: Record<string, unknown> = {}
 

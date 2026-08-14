@@ -6,6 +6,7 @@ import { renderToBuffer } from '@react-pdf/renderer'
 import { StpPdfDocument } from '@/app/tools/stp/app/components/StpPdfDocument'
 import { checkConsistency } from '@/lib/stp/consistency-check'
 import type { STPSessionData } from '@/app/tools/stp/app/[sessionId]/page'
+import { guardCompanyFeature, fetchCompanyIdForSession } from '@/lib/billing/guard'
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,6 +16,10 @@ export async function POST(request: NextRequest) {
     if (!sessionId) {
       return NextResponse.json({ error: 'sessionId が必要です' }, { status: 400 })
     }
+
+    // PDF 出力は standard 以上。未ログイン・会社なしのセッションは free 相当で弾かれる
+    const denied = await guardCompanyFeature(await fetchCompanyIdForSession(sessionId), 'pdfExport')
+    if (denied) return denied
 
     // セッションデータ取得
     const { data: session, error: sessionError } = await supabaseAdmin
