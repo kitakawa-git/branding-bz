@@ -67,16 +67,19 @@ export function PlanLockBadge({
 
 /**
  * 機能ページのアップセル面。
- * 「何ができるようになるか → どのプランで → 料金ページへ」の順で出す。
+ * 「何ができるようになるか → どのプランで → 依頼する」の順で出す。
  * 使えない理由の説明ではなく、次の一歩を示すのが役目。
+ *
+ * Enterprise も含めて全プランを同じ依頼ボタンに揃える。個別見積だからと
+ * ここだけ問い合わせフォームへ送ると、契約者から見て導線が2種類になり、
+ * 依頼が誰にも届かないまま終わる経路が増える。見積の相談はダイアログの
+ * 伝達事項に書いてもらい、受け口は1つにする。
  */
 export function PlanUpsell({
   company,
   feature,
   title,
   benefits,
-  /** Enterprise は個別見積なので問い合わせへ送る */
-  contactInstead = false,
 }: {
   company: CompanyLike
   feature: FeatureKey
@@ -84,16 +87,12 @@ export function PlanUpsell({
   title: string
   /** そのプランにすると何ができるようになるか。3〜5個 */
   benefits: string[]
-  contactInstead?: boolean
 }) {
   const gate = usePlanGate(company, feature)
   const [requestOpen, setRequestOpen] = useState(false)
   const pathname = usePathname()
   const isAdminArea = pathname?.startsWith('/admin') ?? false
   if (gate.allowed) return null
-
-  const isEnterprise = gate.requiredPlan === 'enterprise'
-  const toContact = contactInstead || isEnterprise
 
   return (
     <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
@@ -122,27 +121,17 @@ export function PlanUpsell({
           ))}
         </ul>
 
-        {/* タップ領域 44px（CLAUDE.md のモバイル基準） */}
-        {toContact ? (
-          <Link
-            href="/contact"
-            className="inline-flex h-11 items-center gap-1.5 rounded-xl bg-foreground px-6 text-sm font-bold text-background no-underline transition-transform hover:scale-[1.03]"
-          >
-            お問い合わせ
-            <ArrowRight size={15} aria-hidden="true" />
-          </Link>
-        ) : (
-          // 料金ページへ飛ばすと、読んだあと結局どこから申し込むのか分からず途切れる。
-          // その場でプランを選んで依頼まで済ませられるようにする
-          <button
-            type="button"
-            onClick={() => setRequestOpen(true)}
-            className="inline-flex h-11 items-center gap-1.5 rounded-xl bg-foreground px-6 text-sm font-bold text-background transition-transform hover:scale-[1.03]"
-          >
-            プラン変更をリクエストする
-            <ArrowRight size={15} aria-hidden="true" />
-          </button>
-        )}
+        {/* タップ領域 44px（CLAUDE.md のモバイル基準）。
+            料金ページへ飛ばすと、読んだあと結局どこから申し込むのか分からず
+            途切れるので、その場でプランを選んで依頼まで済ませられるようにする */}
+        <button
+          type="button"
+          onClick={() => setRequestOpen(true)}
+          className="inline-flex h-11 items-center gap-1.5 rounded-xl bg-foreground px-6 text-sm font-bold text-background transition-transform hover:scale-[1.03]"
+        >
+          プラン変更をリクエストする
+          <ArrowRight size={15} aria-hidden="true" />
+        </button>
 
         {/* 「今は導入しない」人の逃げ道。使えない面を毎回見せられるのは邪魔なので、
             設定でメニューごと消せることをここで知らせる。

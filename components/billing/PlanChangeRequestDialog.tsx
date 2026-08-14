@@ -121,7 +121,10 @@ export function PlanChangeRequestDialog({
               <DialogTitle>依頼を受け付けました</DialogTitle>
               <DialogDescription>
                 {PLAN_LABELS[selected ?? ''] ?? selected} への変更依頼を担当者に送りました。
-                内容を確認したうえでこちらでプランを切り替えます。切り替わるまでは今のプランのままです。
+                {selected === 'enterprise'
+                  ? '個別見積のため、担当者からご連絡してお見積りのうえで切り替えます。'
+                  : '内容を確認したうえでこちらでプランを切り替えます。'}
+                切り替わるまでは今のプランのままです。
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
@@ -203,6 +206,13 @@ export function PlanChangeRequestDialog({
                 )
               })}
             </div>
+
+            {selected === 'enterprise' && (
+              <p className="rounded-lg bg-muted px-3 py-2 text-sm text-muted-foreground">
+                Enterprise は個別見積です。人数・ブランド数・伴走してほしい範囲を下に書いていただけると、
+                こちらからのご連絡が早くなります。
+              </p>
+            )}
 
             <div>
               <label htmlFor="plan-request-note" className="mb-1 block text-sm font-medium">
