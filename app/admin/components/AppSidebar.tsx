@@ -226,7 +226,7 @@ export function AppSidebar() {
                         <span>{item.label}</span>
                         {/* 上限のあるプランだけ。使い切ったことも予告になるので 0 も出す */}
                         {left !== undefined && (
-                          <span className={`ml-auto shrink-0 rounded px-1 py-0.5 text-[9px] font-medium ${left === 0 ? 'bg-gray-100 text-gray-500' : 'bg-gray-100 text-gray-600'}`}>
+                          <span className={`ml-auto shrink-0 rounded px-1 py-0.5 text-[8.5px] font-medium ${left === 0 ? 'bg-gray-100 text-gray-500' : 'bg-gray-100 text-gray-600'}`}>
                             {left === 0 ? '今月分終了' : `残り${left}回`}
                           </span>
                         )}
