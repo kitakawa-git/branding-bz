@@ -79,7 +79,7 @@ const PLANS = [
       '構築から浸透・計測まで全機能。社員が学び、理解し、体現する仕組みと、それを数値で追う計測基盤。',
     scale: '50〜300名',
     members: '300名',
-    support: 'メール＋チャット',
+    support: 'チャット＋電話',
     perPerson: '¥199〜1,196',
     features: [
       'Standard全機能に加えて：',
