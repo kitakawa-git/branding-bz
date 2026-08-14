@@ -67,11 +67,15 @@ const FEATURE_MATRIX: Record<FeatureKey, Record<Plan, boolean>> = {
   smartCard:           { free: false, card: true,  standard: true,  premium: true,  enterprise: true  },
   cardAnalytics:       { free: false, card: true,  standard: true,  premium: true,  enterprise: true  },
   microFeedback:       { free: false, card: true,  standard: true,  premium: true,  enterprise: true  },
-  // v1.3 で premium → standard に降格
+  // v1.3 で premium → standard に降格。
+  // ⚠️ timeline / announcements / kpi はブラウザから supabase-js で直接テーブルを書くため、
+  //    RLS 側にも同じプラン条件がある（migration 20260814140000_rls_plan_conditions）。
+  //    プラン構成を変えるときは、この表と RLS の company_plan_allows(...) の両方を直すこと。
   timeline:            { free: false, card: false, standard: true,  premium: true,  enterprise: true  },
   announcements:       { free: false, card: false, standard: true,  premium: true,  enterprise: true  },
   videoLearning:       { free: false, card: false, standard: false, premium: true,  enterprise: true  },
   brandQuiz:           { free: false, card: false, standard: false, premium: true,  enterprise: true  },
+  // ⚠️ RLS 側にも同条件あり（20260814140000_rls_plan_conditions・goal_kpis / goal_periods）
   kpi:                 { free: false, card: false, standard: false, premium: true,  enterprise: true  },
   // v3 で計測を分割。basic はアウター由来のみ、full は伴走とセットで enterprise
   brandScoreBasic:     { free: false, card: false, standard: false, premium: true,  enterprise: true  },
