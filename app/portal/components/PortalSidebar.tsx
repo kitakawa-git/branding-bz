@@ -8,7 +8,7 @@ import { usePortalAuth } from './PortalDataProvider'
 import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
 import { isPortalPageVisibleForRole, isStaffRole, memberRoleLabel } from '@/lib/constants/member-roles'
 import { PlanLockBadge } from '@/components/billing/plan-gate'
-import type { FeatureKey } from '@/lib/billing/entitlements'
+import { can, type FeatureKey } from '@/lib/billing/entitlements'
 import { CardPreviewDialog } from './CardPreviewDialog'
 import {
   Sidebar,
@@ -149,6 +149,10 @@ export function PortalSidebar() {
   // href の直書き分岐だと項目が増えるたびに書き足す必要があるので、項目側に持たせる
   const visibleEngagementItems = engagementItems.filter(
     (item) =>
+      // プラン外は一般メンバーには出さない。契約を変えられない人に
+      // 使えない項目を見せても迷わせるだけ。管理者にはロック付きで見せ、
+      // 「上げれば使える」ことが分かるようにする（管理画面と同じ扱い）
+      (!item.feature || isAdmin || can(company, item.feature)) &&
       (!item.toggleKey || isFeatureEnabled(company, item.toggleKey)) &&
       (!item.roleKey || isPortalPageVisibleForRole(company, item.roleKey, roleCategory, isAdmin)),
   )
@@ -203,7 +207,7 @@ export function PortalSidebar() {
                         <Link href={item.href} onClick={handleNavClick}>
                           <Icon size={18} />
                           <span>{item.label}</span>
-                          {item.feature && <PlanLockBadge company={company} feature={item.feature} />}
+                          {item.feature && <PlanLockBadge company={company} feature={item.feature} tone="light" />}
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>

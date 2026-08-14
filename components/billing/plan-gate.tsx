@@ -41,14 +41,21 @@ export function usePlanGate(company: CompanyLike, feature: FeatureKey) {
  * 鍵アイコンだけを出す。プラン名を並べると項目名より目立ってしまい、
  * どのメニューの話か読み取りにくくなるため。必要なプランは色で分かれていて、
  * ホバーとスクリーンリーダーには「Standard から」と伝える。
+ *
+ * ⚠️ 置く面の明暗で配色を変える。管理画面のサイドバーは暗く、ポータルの
+ *    サイドバーは明るい。暗い面用（text-green-200 等）を明るい面に置くと
+ *    鍵が地色に溶けて「バッジだけあってアイコンが無い」ように見える。
  */
 export function PlanLockBadge({
   company,
   feature,
+  tone = 'dark',
   className = '',
 }: {
   company: CompanyLike
   feature: FeatureKey
+  /** バッジを置く面の明暗。'dark' は管理画面サイドバー、'light' はポータル */
+  tone?: 'dark' | 'light'
   className?: string
 }) {
   const gate = usePlanGate(company, feature)
@@ -58,7 +65,9 @@ export function PlanLockBadge({
     <span
       title={label}
       aria-label={label}
-      className={`ml-auto inline-flex shrink-0 items-center rounded p-1 ${gate.darkToneClass} ${className}`}
+      className={`ml-auto inline-flex shrink-0 items-center rounded p-1 ${
+        tone === 'light' ? gate.toneClass : gate.darkToneClass
+      } ${className}`}
     >
       <Lock size={11} aria-hidden="true" />
     </span>
@@ -80,6 +89,7 @@ export function PlanUpsell({
   feature,
   title,
   benefits,
+  readOnly = false,
 }: {
   company: CompanyLike
   feature: FeatureKey
@@ -87,6 +97,12 @@ export function PlanUpsell({
   title: string
   /** そのプランにすると何ができるようになるか。3〜5個 */
   benefits: string[]
+  /**
+   * 契約を変えられない人向け（ポータルの一般メンバー）。
+   * 何が使えるようになるかは見せるが、依頼の導線は出さず「管理者へ」と案内する。
+   * 表示を消すだけでは POST を直接叩けるので、API 側でも管理者チェックをしている。
+   */
+  readOnly?: boolean
 }) {
   const gate = usePlanGate(company, feature)
   const [requestOpen, setRequestOpen] = useState(false)
@@ -107,6 +123,7 @@ export function PlanUpsell({
         <h2 className="mb-1 text-base font-bold text-foreground">{title}</h2>
         <p className="mb-4 text-sm text-muted-foreground">
           {gate.requiredLabel} にアップグレードすると使えるようになります。
+          {readOnly && 'プラン変更は管理者にご相談ください。'}
         </p>
 
         <ul className="mx-auto mb-5 max-w-sm space-y-1.5 text-left">
@@ -124,19 +141,21 @@ export function PlanUpsell({
         {/* タップ領域 44px（CLAUDE.md のモバイル基準）。
             料金ページへ飛ばすと、読んだあと結局どこから申し込むのか分からず
             途切れるので、その場でプランを選んで依頼まで済ませられるようにする */}
-        <button
-          type="button"
-          onClick={() => setRequestOpen(true)}
-          className="inline-flex h-11 items-center gap-1.5 rounded-xl bg-foreground px-6 text-sm font-bold text-background transition-transform hover:scale-[1.03]"
-        >
-          プラン変更をリクエストする
-          <ArrowRight size={15} aria-hidden="true" />
-        </button>
+        {!readOnly && (
+          <button
+            type="button"
+            onClick={() => setRequestOpen(true)}
+            className="inline-flex h-11 items-center gap-1.5 rounded-xl bg-foreground px-6 text-sm font-bold text-background transition-transform hover:scale-[1.03]"
+          >
+            プラン変更をリクエストする
+            <ArrowRight size={15} aria-hidden="true" />
+          </button>
+        )}
 
         {/* 「今は導入しない」人の逃げ道。使えない面を毎回見せられるのは邪魔なので、
             設定でメニューごと消せることをここで知らせる。
             管理画面でだけ出す＝設定ページは管理者向けで、ポータルの一般メンバーは開けないため */}
-        {isAdminArea && (
+        {isAdminArea && !readOnly && (
           <p className="mt-4 mb-0">
             <Link
               href="/admin/settings"
