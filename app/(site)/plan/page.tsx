@@ -109,7 +109,7 @@ const PLANS = [
     price: '個別見積',
     priceSuffix: null,
     description:
-      '300名を超える組織、複数ブランドの統合管理、そして15年のブランディングコンサルティングによる伴走。要件に合わせて設計します。',
+      '300名を超える組織、複数ブランドの統合管理、そしてコンサルティングによる伴走。要件に合わせて設計します。',
     scale: '300名超',
     members: '無制限',
     support: '専任担当',
@@ -187,7 +187,17 @@ export default function LpPlanPage() {
                 </p>
                 <h3 className="mb-4 text-xl font-bold">{plan.name}</h3>
                 <div className="mb-3">
-                  <span className="text-3xl font-bold tracking-tight md:text-4xl">{plan.price}</span>
+                  {/* 「個別見積」のような文言の価格は、金額と同じサイズだと
+                      字面が重く見えるので一段下げる */}
+                  <span
+                    className={`font-bold tracking-tight ${
+                      plan.price.startsWith('¥')
+                        ? 'text-3xl md:text-4xl'
+                        : 'text-2xl md:text-3xl'
+                    }`}
+                  >
+                    {plan.price}
+                  </span>
                   {plan.priceSuffix && (
                     <span className="ml-1 text-sm text-white/45">{plan.priceSuffix}</span>
                   )}
