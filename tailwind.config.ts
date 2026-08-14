@@ -5,6 +5,9 @@ const config: Config = {
     content: [
     './app/**/*.{js,ts,jsx,tsx,mdx}',
     './components/**/*.{js,ts,jsx,tsx,mdx}',
+    // lib/ にもクラス名の定数がある（例: plan-display.ts の PLAN_TONES）。
+    // ここを外すと、lib/ にしか無いクラスが CSS に生成されず無視される
+    './lib/**/*.{js,ts,jsx,tsx}',
   ],
   theme: {
   	extend: {

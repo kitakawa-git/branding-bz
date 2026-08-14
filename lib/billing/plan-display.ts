@@ -19,12 +19,26 @@ export const PLAN_LABELS: Record<string, string> = {
 }
 
 /** 上位ほど濃い色。淡色背景は不透明度修飾を使わないので Tailwind の淡色クラスのまま */
+/** 明るい面（管理画面のカード・一覧）用のプランバッジ配色 */
 export const PLAN_TONES: Record<string, string> = {
   free: 'bg-gray-100 text-gray-600',
   card: 'bg-blue-100 text-blue-800',
   standard: 'bg-green-100 text-green-800',
   premium: 'bg-amber-100 text-amber-800',
   enterprise: 'bg-purple-100 text-purple-800',
+}
+
+/**
+ * 暗い面（サイドバー）用のロックバッジ配色。
+ * PLAN_TONES は淡い背景＋濃い文字なので、暗い面ではチップだけが浮いて文字も潰れる。
+ * こちらは背景を透過させ、文字を明るい側に置く。
+ */
+export const PLAN_TONES_ON_DARK: Record<string, string> = {
+  free: 'bg-white/10 text-white/70 ring-1 ring-inset ring-white/15',
+  card: 'bg-blue-400/15 text-blue-200 ring-1 ring-inset ring-blue-300/25',
+  standard: 'bg-green-400/15 text-green-200 ring-1 ring-inset ring-green-300/25',
+  premium: 'bg-amber-400/15 text-amber-200 ring-1 ring-inset ring-amber-300/25',
+  enterprise: 'bg-purple-400/20 text-purple-200 ring-1 ring-inset ring-purple-300/30',
 }
 
 /** 期限切れが近いと判断する日数 */
