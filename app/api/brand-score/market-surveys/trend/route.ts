@@ -14,6 +14,7 @@ import {
   type MarketStageStatus,
 } from '@/lib/brand-score/market-stages'
 import { computeMarketScore } from '@/lib/brand-score/market-stage-score'
+import { guardCompanyFeature } from '@/lib/billing/guard'
 
 export async function GET(request: NextRequest) {
   try {
@@ -21,6 +22,9 @@ export async function GET(request: NextRequest) {
     if (!companyId) {
       return NextResponse.json({ error: 'company_id は必須です' }, { status: 400 })
     }
+
+    const denied = await guardCompanyFeature(companyId, 'brandScoreFull')
+    if (denied) return denied
 
     const supabase = getSupabaseAdmin()
 

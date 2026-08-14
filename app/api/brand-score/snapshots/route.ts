@@ -5,6 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { calculateSnapshot, snapshotToRow } from '@/lib/brand-score/calculate-snapshot'
+import { guardCompanyFeature } from '@/lib/billing/guard'
 
 // GET: スナップショット一覧を返す（snapshot_date昇順）
 export async function GET(request: NextRequest) {
@@ -15,6 +16,9 @@ export async function GET(request: NextRequest) {
     if (!companyId) {
       return NextResponse.json({ error: 'company_id は必須です' }, { status: 400 })
     }
+
+    const denied = await guardCompanyFeature(companyId, 'brandScoreBasic')
+    if (denied) return denied
 
     const supabase = getSupabaseAdmin()
 

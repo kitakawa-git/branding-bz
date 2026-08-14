@@ -9,6 +9,7 @@ import {
   type RespondentAnswer,
 } from '@/lib/brand-score/funnel-stages'
 import { calcBreakdown, type LensAnswer, type LensQuestion } from '@/lib/brand-score/question-lens'
+import { guardCompanyFeature } from '@/lib/billing/guard'
 
 // インナースコア算出API
 // GET /api/brand-score/inner-score?company_id=xxx&survey_id=yyy
@@ -63,6 +64,9 @@ export async function GET(request: NextRequest) {
     if (!companyId) {
       return NextResponse.json({ error: 'company_id は必須です' }, { status: 400 })
     }
+
+    const denied = await guardCompanyFeature(companyId, 'brandScoreFull')
+    if (denied) return denied
 
     const supabase = getSupabaseAdmin()
 

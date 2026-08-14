@@ -52,6 +52,7 @@ import {
 import { toast } from 'sonner'
 import { SnapshotScheduleCard } from './components/SnapshotScheduleCard'
 import { BrandScoreView } from '@/components/brand-score/BrandScoreView'
+import { can } from '@/lib/billing/entitlements'
 import {
   ArrowRight,
   TrendingUp,
@@ -250,6 +251,8 @@ type BrandScoreCache = {
 
 export default function BrandScoreDashboard() {
   const { companyId, company } = useAuth()
+  // 計測の見せ方。Premium は簡易版（アウターのみ）、Enterprise は完全版
+  const brandScoreFull = can(company, 'brandScoreFull')
   const pathname = usePathname()
 
   // 機能トグルを踏まえたタブ（定義は lib/constants/dashboard-tabs.ts に集約）
@@ -662,9 +665,12 @@ export default function BrandScoreDashboard() {
         prevDiff={prevDiff}
         impressionScore={impressionScore}
         periodLabel={PERIOD_LABELS[period] ?? period}
+        variant={brandScoreFull ? 'full' : 'basic'}
       />
 
-      {/* ── 3.5. 理解度（知識）× 共感ギャップ ── */}
+      {/* ── 3.5. 理解度（知識）× 共感ギャップ ──
+          インナー（サーベイ・理解度テスト）由来なので Enterprise 側 */}
+      {brandScoreFull && (
       <div className="grid md:grid-cols-2 gap-4 mb-6">
         {/* 左: 理解度（知識） */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
@@ -833,6 +839,8 @@ export default function BrandScoreDashboard() {
         </Card>
       </div>
 
+      )}
+
       {/* ── 4. 印象タグ分布 ── */}
       {hasMicroFb && (
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-4">
@@ -890,8 +898,9 @@ export default function BrandScoreDashboard() {
         </Card>
       )}
 
-      {/* ── 5. ギャップ分析 ── */}
-      {hasMicroFb && hasTagMappings && (
+      {/* ── 5. ギャップ分析 ──
+          共感（サーベイ）× 知識（理解度テスト）の対比なので Enterprise 側 */}
+      {brandScoreFull && hasMicroFb && hasTagMappings && (
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-4">
           <CardContent className="p-5">
             <h2 className="text-xs font-bold text-foreground mb-4 flex items-center gap-1.5">

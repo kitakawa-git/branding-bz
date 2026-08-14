@@ -111,6 +111,15 @@ export interface BrandScoreViewProps {
   periodLabel: string
   /** ポータルでは管理画面へのリンクとボタンを出さない */
   readOnly?: boolean
+  /**
+   * 計測の見せ方（v3 で Premium=簡易版 / Enterprise=完全版 に分割）。
+   * - 'full'  … インナー由来（サーベイ・統合スコア・推移のインナー系列）＋市場調査まで全部
+   * - 'basic' … アウター由来のみ（名刺・ブランドページの行動データ）。
+   *             総合スコアは inner×50%+outer×50% の合成なので basic では出さず、
+   *             アウタースコアだけを見せる
+   * 判定は呼び出し側で can(company, 'brandScoreFull') を通すこと。
+   */
+  variant?: 'basic' | 'full'
   /** 推移のデータだけ遅れて届く場合。空状態ではなくスケルトンを出す */
   trendLoading?: boolean
   /**
@@ -202,13 +211,18 @@ export function BrandScoreView({
   impressionScore,
   periodLabel,
   readOnly = false,
+  variant = 'full',
   trendLoading = false,
   innerLink,
   outerLink,
 }: BrandScoreViewProps) {
+  // basic ではインナー由来と市場調査を見せない。呼び出し側がデータを渡していても
+  // ここで落とすので、片方だけ直して漏れる事故が起きない
+  const isFull = variant === 'full'
+
   // scores ごと欠けた応答（サーベイ未実施の会社）でも落ちないよう ?. で見る。
   // 以降の innerScore!.scores.total! はすべてこの hasInner が守る
-  const hasInner = innerScore != null && innerScore.scores?.total != null
+  const hasInner = isFull && innerScore != null && innerScore.scores?.total != null
   const hasOuter = outerScore !== null && outerScore.outer_score > 0
 
   // 未指定なら従来どおり管理画面へのリンク（readOnly では出さない）。
@@ -302,8 +316,10 @@ export function BrandScoreView({
     }
     for (const s of snapshots) {
       const r = row(s.snapshot_date)
-      r.total_score = s.total_score
-      r.inner_score = s.inner_score
+      // basic はアウターだけの推移。総合はインナーとの合成なので出さない。
+      // スナップショット自体は全社ぶん記録し続けている（表示だけを絞る）
+      r.total_score = isFull ? s.total_score : null
+      r.inner_score = isFull ? s.inner_score : null
       r.outer_score = s.outer_score
     }
 
@@ -311,12 +327,14 @@ export function BrandScoreView({
     // 「7/28に測ったインナー62.0」と「8/5に記録したインナー62.0」は
     // 同じ指標の別の日の値なので、線がつながるのが自然。
     // 記録日に既に値があればそちらを優先する（記録が正本）
-    for (const t of surveyTrend) {
-      if (t.score === null) continue
-      const r = row(t.date)
-      if (r.inner_score === null) {
-        r.inner_score = t.score
-        r.measured.inner = true
+    if (isFull) {
+      for (const t of surveyTrend) {
+        if (t.score === null) continue
+        const r = row(t.date)
+        if (r.inner_score === null) {
+          r.inner_score = t.score
+          r.measured.inner = true
+        }
       }
     }
 
@@ -325,7 +343,8 @@ export function BrandScoreView({
     //    過去日のデジタル接点（直近30日の集計）は遡って計算できない
     const digitalCounted = outerScore !== null && outerScore.digital_unavailable === null
 
-    if (!digitalCounted) {
+    // 市場調査は Enterprise 側なので basic では系列に混ぜない
+    if (isFull && !digitalCounted) {
       for (const m of marketTrend) {
         if (m.score === null) continue
         const r = row(m.date)
@@ -378,7 +397,10 @@ export function BrandScoreView({
   <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-4">
     <CardContent className="p-6">
       <div className="flex items-center justify-between mb-3">
-        <span className="text-sm text-muted-foreground">総合ブランドスコア</span>
+        {/* basic はインナーを含まないので「総合」と名乗れない（合成の半分が無い） */}
+        <span className="text-sm text-muted-foreground">
+          {isFull ? '総合ブランドスコア' : 'アウタースコア'}
+        </span>
         {prevDiff !== null ? (
           <span className={`text-xs font-medium ${prevDiff >= 0 ? 'text-green-600' : 'text-red-600'}`}>
             前回比 {prevDiff >= 0 ? '+' : ''}{prevDiff}
@@ -405,6 +427,12 @@ export function BrandScoreView({
             <span>インナー {innerScore!.scores.total!.toFixed(1)} × 50%</span>
             <span>アウター {outerScore!.outer_score.toFixed(1)} × 50%</span>
           </>
+        ) : !isFull ? (
+          // basic は名刺・ブランドページの行動データだけで出している旨を明示する
+          <span className="flex items-center gap-1">
+            <Eye size={12} />
+            名刺・ブランドページの行動データから算出
+          </span>
         ) : hasInner ? (
           <span className="flex items-center gap-1">
             <Eye size={12} />
@@ -616,7 +644,8 @@ export function BrandScoreView({
             {/* 市場浸透（外部調査）。調査を取り込んでいない企業では出さない
                 ＝ その場合の見た目は従来と完全に同じ。
                 段階の並べ方・色はインナースコアと揃える（左右で見比べるため） */}
-            {outerScore!.market_score !== null && (
+            {/* 市場調査は Enterprise の「計測（伴走つき）」側。basic では出さない */}
+            {isFull && outerScore!.market_score !== null && (
               <>
                 {/* デジタル接点も出るときだけ、どちらの数字かを示す見出しを付ける。
                     市場浸透だけのときはアウタースコアと同じ値なので重複になる */}

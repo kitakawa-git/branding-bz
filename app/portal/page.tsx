@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase'
 import { usePortalAuth } from './components/PortalDataProvider'
 import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
 import { isPortalPageVisibleForRole } from '@/lib/constants/member-roles'
+import { can } from '@/lib/billing/entitlements'
 import { BrandScorePortalSection } from '@/components/brand-score/BrandScorePortalSection'
 import { SurveyBanner } from './components/SurveyBanner'
 import { QuizBanner } from './components/QuizBanner'
@@ -272,6 +273,8 @@ export default function PortalTopPage() {
     isAdmin
   )
   // スコアカードから各調査結果へ飛べるようにする。見られない区分にはリンクを出さない
+  // 計測の見せ方。Premium は簡易版（アウターのみ）、Enterprise は完全版
+  const brandScoreFull = can(company, 'brandScoreFull')
   const surveyVisible = isPortalPageVisibleForRole(company, 'survey', roleCategory, isAdmin)
   const marketSurveyVisible = isPortalPageVisibleForRole(
     company,
@@ -936,6 +939,7 @@ export default function PortalTopPage() {
             companyId={companyId}
             surveyHref={surveyVisible ? '/portal/survey' : null}
             marketSurveyHref={marketSurveyVisible ? '/portal/market-survey' : null}
+            variant={brandScoreFull ? 'full' : 'basic'}
           />
         </div>
       )}

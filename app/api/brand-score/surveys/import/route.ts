@@ -22,6 +22,7 @@ import {
   type SurveyCategory,
 } from '@/lib/brand-score/import-google-form'
 import { mergeQuestions, buildIndexMap } from '@/lib/brand-score/merge-questions'
+import { guardCompanyFeature } from '@/lib/billing/guard'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -45,6 +46,8 @@ export async function POST(request: NextRequest) {
     if (!admin) {
       return NextResponse.json({ error: '権限がありません' }, { status: 403 })
     }
+    const denied = await guardCompanyFeature(admin.companyId, 'innerSurvey')
+    if (denied) return denied
 
     const form = await request.formData()
     const mode = String(form.get('mode') ?? 'preview')

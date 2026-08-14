@@ -44,7 +44,7 @@ type PortalDataContextValue = {
 const PortalDataContext = createContext<PortalDataContextValue | null>(null)
 
 // 機能トグルカラムを含めた companies の select 文字列
-const COMPANY_SELECT = ['name', 'logo_url', 'portal_subtitles', 'portal_role_visibility', ...FEATURE_TOGGLE_COLUMNS].join(', ')
+const COMPANY_SELECT = ['name', 'plan', 'plan_expires_at', 'logo_url', 'portal_subtitles', 'portal_role_visibility', ...FEATURE_TOGGLE_COLUMNS].join(', ')
 
 // 認証不要のパス
 const publicPaths = ['/portal/login', '/portal/register', '/portal/auth']

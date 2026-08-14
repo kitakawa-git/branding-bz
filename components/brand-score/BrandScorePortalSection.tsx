@@ -35,12 +35,15 @@ export function BrandScorePortalSection({
   companyId,
   surveyHref = null,
   marketSurveyHref = null,
+  variant = 'full',
 }: {
   companyId: string
   /** サーベイ結果ページへのリンク。区分で見られない場合は null（呼び出し側で判定） */
   surveyHref?: string | null
   /** 市場調査ページへのリンク。区分で見られない場合は null */
   marketSurveyHref?: string | null
+  /** 計測の見せ方。呼び出し側で can(company, 'brandScoreFull') を通して決める */
+  variant?: 'basic' | 'full'
 }) {
   // 同一セッションの再訪では前回取得値でそのまま描画（stale-while-revalidate）
   const cacheKey = `portal-brand-score-${companyId}`
@@ -142,8 +145,11 @@ export function BrandScorePortalSection({
   }
 
   // まだ何も測っていない会社では、空のカードを並べても読むものが無い
+  // basic はインナーを見せないので、インナーしか無い会社では空のカードになる。
+  // その場合は出さない
   const hasAnything =
-    (innerScore?.scores?.total ?? null) !== null || (outerScore?.outer_score ?? 0) > 0
+    (variant === 'full' && (innerScore?.scores?.total ?? null) !== null) ||
+    (outerScore?.outer_score ?? 0) > 0
   if (!hasAnything) return null
 
   return (
@@ -159,6 +165,7 @@ export function BrandScorePortalSection({
       impressionScore={null}
       periodLabel={PERIOD_LABEL}
       readOnly
+      variant={variant}
       trendLoading={trendLoading}
       // 管理画面と同じく、それぞれの調査結果ページへ飛べるようにする。
       // 区分で見られないページはリンクごと出さない

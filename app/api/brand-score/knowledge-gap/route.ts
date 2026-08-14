@@ -13,6 +13,7 @@ import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { fetchAllRows } from '@/lib/brand-score/fetch-all-rows'
 import { getAdminContext } from '@/lib/learning/auth'
 import { meanScore, K_ANONYMITY_THRESHOLD } from '@/lib/brand-score/quiz-scoring'
+import { guardCompanyFeature } from '@/lib/billing/guard'
 
 // ギャップ判定のしきい値（定数化）
 const GAP_THRESHOLD = 15 // 共感と知識の差がこれ以上で「先行」と判定
@@ -106,6 +107,10 @@ export async function GET() {
       return NextResponse.json({ error: '権限がありません' }, { status: 403 })
     }
     const companyId = admin.companyId
+
+    const denied = await guardCompanyFeature(companyId, 'brandScoreFull')
+    if (denied) return denied
+
     const supabase = getSupabaseAdmin()
 
     // ── 1. 最新クイズ（active/closed の最新）→ 知識スコア ──

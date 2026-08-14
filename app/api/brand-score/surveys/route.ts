@@ -3,6 +3,7 @@
 // POST /api/brand-score/surveys
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { guardCompanyFeature } from '@/lib/billing/guard'
 
 // GET: サーベイ一覧（回答率付き）
 export async function GET(request: NextRequest) {
@@ -13,6 +14,9 @@ export async function GET(request: NextRequest) {
     if (!companyId) {
       return NextResponse.json({ error: 'company_id is required' }, { status: 400 })
     }
+
+    const denied = await guardCompanyFeature(companyId, 'innerSurvey')
+    if (denied) return denied
 
     const supabase = getSupabaseAdmin()
 
@@ -84,6 +88,9 @@ export async function POST(request: NextRequest) {
     if (!companyId) {
       return NextResponse.json({ error: 'companyId is required' }, { status: 400 })
     }
+
+    const denied = await guardCompanyFeature(companyId, 'innerSurvey')
+    if (denied) return denied
 
     const supabase = getSupabaseAdmin()
 
