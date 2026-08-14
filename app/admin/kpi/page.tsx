@@ -518,8 +518,15 @@ export default function AdminKpiPage() {
   // ============================================
   const handleDeleteGoal = async (goalId: string, memberName: string) => {
     try {
-      const { error } = await supabase.from('personal_goals').delete().eq('id', goalId)
+      // RLS 0行対策: .delete() 単体は弾かれても error が null なので、
+      // .select() で影響行を受け取って 0 件を権限なしとして扱う
+      const { data, error } = await supabase
+        .from('personal_goals').delete().eq('id', goalId).select('id')
       if (error) throw error
+      if (!data?.length) {
+        toast.error('削除する権限がありません')
+        return
+      }
       toast.success(`${memberName}さんの目標を削除しました`)
       setExpandedId(null)
       await fetchData()

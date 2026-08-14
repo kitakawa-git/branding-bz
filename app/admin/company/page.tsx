@@ -286,8 +286,11 @@ export default function CompanyPage() {
       }
       const toDelete = [...existingIds].filter((id) => !kept.has(id))
       if (toDelete.length > 0) {
-        const { error } = await supabase.from('philosophy_elements').delete().in('id', toDelete)
+        // RLS 0行対策: 弾かれても error は null なので影響行で判定する
+        const { data, error } = await supabase
+          .from('philosophy_elements').delete().in('id', toDelete).select('id')
         if (error) throw error
+        if ((data?.length ?? 0) < toDelete.length) throw new Error('削除する権限がありません')
       }
       const business: BusinessContentItem[] = desired.map((b, i) => ({ ...b, id: ids[i], added_index: i }))
       return { ok: true, business }

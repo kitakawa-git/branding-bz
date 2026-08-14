@@ -503,12 +503,18 @@ export default function PortalTimelinePage() {
         }
       }
 
-      const { error } = await supabase
+      // RLS 0行対策: 弾かれても error は null なので影響行で判定する
+      const { data, error } = await supabase
         .from('timeline_posts')
         .delete()
         .eq('id', deleteTargetId)
+        .select('id')
 
       if (error) throw error
+      if (!data?.length) {
+        toast.error('削除する権限がありません')
+        return
+      }
 
       setPosts(prev => prev.filter(p => p.id !== deleteTargetId))
       toast.success('投稿を削除しました')
@@ -541,12 +547,16 @@ export default function PortalTimelinePage() {
 
     try {
       if (wasLiked) {
-        const { error } = await supabase
+        // RLS 0行対策: 弾かれても error は null なので影響行で判定する。
+        // 0 件なら下の catch と同じくロールバックさせたいので throw に寄せる
+        const { data, error } = await supabase
           .from('timeline_likes')
           .delete()
           .eq('post_id', postId)
           .eq('user_id', user.id)
+          .select('post_id')
         if (error) throw error
+        if (!data?.length) throw new Error('削除する権限がありません')
       } else {
         const { error } = await supabase
           .from('timeline_likes')
@@ -675,12 +685,18 @@ export default function PortalTimelinePage() {
     const { postId, commentId } = deleteCommentTarget
 
     try {
-      const { error } = await supabase
+      // RLS 0行対策: 弾かれても error は null なので影響行で判定する
+      const { data, error } = await supabase
         .from('timeline_comments')
         .delete()
         .eq('id', commentId)
+        .select('id')
 
       if (error) throw error
+      if (!data?.length) {
+        toast.error('削除する権限がありません')
+        return
+      }
 
       // Update comment count
       setPosts(prev => prev.map(p =>

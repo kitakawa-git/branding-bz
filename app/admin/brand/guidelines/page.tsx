@@ -550,8 +550,11 @@ export default function BrandGuidelinesPage() {
             if (error) throw error
           }
         } else if (exId) {
-          const { error } = await supabase.from('philosophy_elements').delete().eq('id', exId)
+          // RLS 0行対策: 弾かれても error は null なので影響行で判定する
+          const { data, error } = await supabase
+            .from('philosophy_elements').delete().eq('id', exId).select('id')
           if (error) throw error
+          if (!data?.length) throw new Error('削除する権限がありません')
         }
       }
       await upsertSingleton('mission', combineBrandCopy(guidelines.mission_copy, guidelines.mission_body))
@@ -596,8 +599,11 @@ export default function BrandGuidelinesPage() {
         }
         const toDelete = [...existingIds].filter((id) => !kept.has(id))
         if (toDelete.length > 0) {
-          const { error } = await supabase.from('philosophy_elements').delete().in('id', toDelete)
+          // RLS 0行対策: 弾かれても error は null なので影響行で判定する
+          const { data, error } = await supabase
+            .from('philosophy_elements').delete().in('id', toDelete).select('id')
           if (error) throw error
+          if ((data?.length ?? 0) < toDelete.length) throw new Error('削除する権限がありません')
         }
         return ids
       }

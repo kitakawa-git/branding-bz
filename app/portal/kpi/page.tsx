@@ -438,7 +438,11 @@ export default function KpiPage() {
           .update({ title: setupGoalText.trim(), updated_at: new Date().toISOString() })
           .eq('id', goalId)
         if (error) throw error
-        await supabase.from('goal_kpis').delete().eq('goal_id', goalId)
+        // 目標の作り直し。ここは 0 件でも正常（KPI をまだ作っていない場合）なので、
+        // RLS 0行対策の判定は入れずに error だけ見る
+        const { error: kpiDelErr } = await supabase
+          .from('goal_kpis').delete().eq('goal_id', goalId)
+        if (kpiDelErr) throw kpiDelErr
       } else {
         goalId = crypto.randomUUID()
         const { error } = await supabase
@@ -582,8 +586,14 @@ export default function KpiPage() {
   }
   const handleKpiDelete = async (kpiId: string) => {
     try {
-      const { error } = await supabase.from('goal_kpis').delete().eq('id', kpiId)
+      // RLS 0行対策: 弾かれても error は null なので影響行で判定する
+      const { data, error } = await supabase
+        .from('goal_kpis').delete().eq('id', kpiId).select('id')
       if (error) throw error
+      if (!data?.length) {
+        toast.error('削除する権限がありません')
+        return
+      }
       toast.success('KPIを削除しました')
       await fetchData()
     } catch { toast.error('削除に失敗しました') }
