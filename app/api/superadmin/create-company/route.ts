@@ -119,6 +119,10 @@ export async function POST(request: NextRequest) {
         brand_color_primary: '#1a1a1a',
         brand_color_secondary: '#666666',
         website_url: websiteUrl || '',
+        // companies.approval_status の既定は 'pending'（セルフ登録は superadmin 承認制）。
+        // ここは superadmin 自身が作る経路なので承認済みで作る。
+        // 既定値に任せると、作った直後に自分で承認する二度手間になる
+        approval_status: 'active',
       })
       .select()
       .single()
