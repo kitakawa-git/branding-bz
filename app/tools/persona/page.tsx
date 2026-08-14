@@ -164,7 +164,7 @@ export default function PersonaLandingPage() {
         <div className="mx-auto max-w-4xl">
           <p className="mb-7 text-sm text-white">AIでブランディングを加速させる。</p>
           <h1 className="text-5xl font-bold leading-[1.05] tracking-[-0.03em] md:text-7xl">
-            ペルソナビルダー
+            ペルソナビルダーツール
           </h1>
           <p className="mx-auto mt-7 max-w-2xl text-lg text-white/60 md:text-xl">
             STP分析で決めた「誰に届けるか」を、リアルな顧客像に。

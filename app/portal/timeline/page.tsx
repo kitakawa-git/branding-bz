@@ -1,6 +1,6 @@
 'use client'
 
-// Good Job タイムライン
+// Good Jobタイムライン
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { fetchWithRetry } from '@/lib/supabase-fetch'

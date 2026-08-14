@@ -151,7 +151,7 @@ export default function PersonalityLandingPage() {
         {/* パーソナリティ診断とは？ */}
         <section className="relative px-6 pt-16 pb-20">
           <div className="mx-auto max-w-6xl">
-            <h2 className="mb-8 text-center text-3xl font-bold tracking-tight md:text-4xl">パーソナリティ診断とは？</h2>
+            <h2 className="mb-8 text-center text-3xl font-bold tracking-tight md:text-4xl">パーソナリティ診断ツールとは？</h2>
             <div className="grid gap-5 md:grid-cols-3">
               {CONCEPT_CARDS.map((card) => (
                 <FeatureCard key={card.label} icon={card.icon} label={card.label} title={card.title} description={card.description} />

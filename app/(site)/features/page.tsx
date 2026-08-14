@@ -8,6 +8,8 @@ import {
   CreditCard,
   BarChart3,
   Activity,
+  GraduationCap,
+  ClipboardCheck,
   Headset,
   type LucideIcon,
 } from 'lucide-react'
@@ -19,14 +21,14 @@ import FinalCta from '@/components/lp/FinalCta'
 export const metadata: Metadata = {
   title: '機能紹介 | branding.bz',
   description:
-    'branding.bz の機能紹介。ブランド掲示・Good Jobタイムライン・KPI・スマート名刺・ブランドスコアなど、ブランドの構築・浸透・発信を支える機能をまとめて紹介します。',
+    'branding.bz の機能紹介。ブランド掲示・Good Jobタイムライン・KPI・目標管理・スマート名刺・ブランドスコアなど、ブランドの構築・浸透・発信を支える機能をまとめて紹介します。',
   alternates: {
     canonical: '/features',
   },
   openGraph: {
     title: '機能紹介 | branding.bz',
     description:
-      'branding.bz の機能紹介。ブランド掲示・Good Jobタイムライン・KPI・スマート名刺・ブランドスコアなど、ブランドの構築・浸透・発信を支える機能をまとめて紹介します。',
+      'branding.bz の機能紹介。ブランド掲示・Good Jobタイムライン・KPI・目標管理・スマート名刺・ブランドスコアなど、ブランドの構築・浸透・発信を支える機能をまとめて紹介します。',
     url: 'https://branding.bz/features',
   },
 }
@@ -61,7 +63,7 @@ const groups: { layer: string; lead: string; features: Feature[] }[] = [
       {
         id: 'feature-timeline',
         tag: '浸透',
-        title: 'Good Job タイムライン',
+        title: 'Good Jobタイムライン',
         description:
           '行動指針に基づいた取り組みを、写真付きで手軽にシェア。いいね・コメントで称え合い、ブランドを体現する文化を育てます。',
         icon: MessageSquareHeart,
@@ -69,24 +71,45 @@ const groups: { layer: string; lead: string; features: Feature[] }[] = [
       {
         id: 'feature-kpi',
         tag: '浸透',
-        title: '個人目標と KPI',
+        title: 'KPI・目標管理',
         description:
-          'ブランド行動指針に紐づく個人目標を設定し、達成状況を管理。重み付け・達成時期で、優先順位を見える化します。',
+          'ブランド行動指針に紐づく目標を設定し、達成状況を管理。重み付け・達成時期で、優先順位を見える化します。',
         icon: Milestone,
       },
       {
         tag: '浸透',
-        title: 'お知らせ',
+        title: 'お知らせ配信＋Web Push',
         description:
-          '社内イベントやブランド戦略の進捗を、タイムライン形式で全員に配信。いいね機能付きで、情報共有と反応が一か所にまとまります。',
+          '社内イベントやブランド戦略の進捗を全員に配信。Web Push でスマホの通知にも届くので、見逃されません。',
         icon: Bell,
+      },
+      {
+        tag: '浸透',
+        title: 'ビデオラーニング',
+        description:
+          'ブランドを学ぶ動画をカテゴリ・テーマで配信。誰がどこまで見たかを把握でき、視聴率と完了率で定着の進み具合が分かります。',
+        icon: GraduationCap,
+      },
+      {
+        tag: '浸透',
+        title: 'ブランド理解度テスト',
+        description:
+          '理念や行動指針の理解度を設問で測定。AIが設問案を生成し、部署別・役職別に正答率を集計します。',
+        icon: ClipboardCheck,
       },
       {
         id: 'feature-score',
         tag: '浸透',
-        title: 'ブランドスコア',
+        title: 'ブランドスコア（簡易版）',
         description:
-          '社員サーベイと名刺の行動データを統合し、ブランド浸透度をスコア化。ギャップ分析で「どこに手を打つべきか」が見えます。',
+          '名刺・ブランドページの行動データからアウタースコアを算出。社外にどれだけ届いているかを、追加の手間なく数字で追えます。',
+        icon: Activity,
+      },
+      {
+        tag: '浸透（伴走つき）',
+        title: '統合ブランドスコア',
+        description:
+          'インナーサーベイと行動データを統合して浸透度をスコア化。スコア推移の自動記録とギャップ分析で「どこに手を打つべきか」まで見えます。Enterprise プランでのご提供です。',
         icon: Activity,
       },
     ],
@@ -114,13 +137,34 @@ const groups: { layer: string; lead: string; features: Feature[] }[] = [
   },
   {
     layer: 'サポート',
-    lead: 'ツールだけで終わらせない、プロの伴走。',
+    lead: 'ツールだけで終わらせない、プロの伴走。Enterprise プランの標準内容です。',
     features: [
       {
         tag: 'サポート',
-        title: 'ブランディングサポート',
+        title: 'クリエイティブサポート',
         description:
-          'ブランド構築の専門サポートをオプションで提供。戦略策定からデザイン制作まで、ID INC. のプロが伴走します。',
+          'ブランドに沿った制作物をID INC.が支援。ツールで決めた"らしさ"を、実際のアウトプットに落とし込みます。',
+        icon: Headset,
+      },
+      {
+        tag: 'サポート',
+        title: 'ID INC. による四半期レビュー',
+        description:
+          'スコアと現場の動きを四半期ごとに読み解き、次の打ち手まで一緒に決めます。数字を出して終わりにしません。',
+        icon: Headset,
+      },
+      {
+        tag: 'サポート',
+        title: '市場調査手配',
+        description:
+          '調査会社の手配から設問設計、集計表の取り込みまで代行。市場での立ち位置を定点で追えるようにします。',
+        icon: Headset,
+      },
+      {
+        tag: 'サポート',
+        title: 'ブランド研修・ワークショップ',
+        description:
+          '社員がブランドを自分の言葉で語れるようになるまで、研修とワークショップで伴走します。費用は要件に合わせた個別見積です。',
         icon: Headset,
       },
     ],

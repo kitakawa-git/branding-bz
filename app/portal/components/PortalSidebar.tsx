@@ -62,7 +62,7 @@ type NavItem = {
 const engagementItems: NavItem[] = [
   { href: '/portal', label: 'ダッシュボード', icon: LayoutDashboard },
   { href: '/portal/timeline', label: 'タイムライン', icon: MessageSquareHeart, feature: 'timeline' },
-  { href: '/portal/kpi', label: '目標・KPI', icon: Milestone, feature: 'kpi' },
+  { href: '/portal/kpi', label: 'KPI・目標', icon: Milestone, feature: 'kpi' },
   { href: '/portal/learning', label: 'ラーニング', icon: GraduationCap, feature: 'videoLearning' },
   { href: '/portal/survey', label: 'サーベイ結果', icon: ClipboardList, feature: 'innerSurvey' },
   { href: '/portal/market-survey', label: '市場調査', icon: Globe, feature: 'brandScoreFull' },
