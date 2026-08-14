@@ -21,14 +21,14 @@ import FinalCta from '@/components/lp/FinalCta'
 export const metadata: Metadata = {
   title: '機能紹介 | branding.bz',
   description:
-    'branding.bz の機能紹介。ブランド掲示・Good Jobタイムライン・KPI・目標管理・スマート名刺・ブランドスコアなど、ブランドの構築・浸透・発信を支える機能をまとめて紹介します。',
+    'branding.bz の機能紹介。ブランド掲示・Good Jobタイムライン・目標・KPI管理・スマート名刺・ブランドスコアなど、ブランドの構築・浸透・発信を支える機能をまとめて紹介します。',
   alternates: {
     canonical: '/features',
   },
   openGraph: {
     title: '機能紹介 | branding.bz',
     description:
-      'branding.bz の機能紹介。ブランド掲示・Good Jobタイムライン・KPI・目標管理・スマート名刺・ブランドスコアなど、ブランドの構築・浸透・発信を支える機能をまとめて紹介します。',
+      'branding.bz の機能紹介。ブランド掲示・Good Jobタイムライン・目標・KPI管理・スマート名刺・ブランドスコアなど、ブランドの構築・浸透・発信を支える機能をまとめて紹介します。',
     url: 'https://branding.bz/features',
   },
 }
@@ -71,7 +71,7 @@ const groups: { layer: string; lead: string; features: Feature[] }[] = [
       {
         id: 'feature-kpi',
         tag: '浸透',
-        title: 'KPI・目標管理',
+        title: '目標・KPI管理',
         description:
           'ブランド行動指針に紐づく目標を設定し、達成状況を管理。重み付け・達成時期で、優先順位を見える化します。',
         icon: Milestone,
@@ -137,7 +137,7 @@ const groups: { layer: string; lead: string; features: Feature[] }[] = [
   },
   {
     layer: 'サポート',
-    lead: 'ツールだけで終わらせない、プロの伴走。Enterprise プランの標準内容です。',
+    lead: 'ツールだけで終わらせない、プロの伴走。Enterprise プランのサポート内容です。',
     features: [
       {
         tag: 'サポート',

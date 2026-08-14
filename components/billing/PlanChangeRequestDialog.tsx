@@ -20,27 +20,32 @@ import { Textarea } from '@/components/ui/textarea'
 import { SELLABLE_PLANS, type Plan } from '@/lib/billing/entitlements'
 import { PLAN_LABELS, PLAN_TONES } from '@/lib/billing/plan-display'
 
-/** 料金ページ（app/(site)/plan）と同じ並び・同じ言い回しに揃える */
+/**
+ * 料金ページ（app/(site)/plan）と同じ並び・同じ言い回しに揃える。
+ * ダイアログは幅が狭いので summary は料金ページの description を短縮した版だが、
+ * 使う語（AI構築ツール／CIマニュアル 等）は必ず料金ページと同じにする。
+ * 料金ページの description を直したらここも直す。
+ */
 const PLAN_CARDS: Record<string, { price: string; suffix: string | null; summary: string }> = {
   free: {
     price: '¥0',
     suffix: null,
-    summary: 'AIツールを体験し、ブランド掲示を自分の手で作り始める。',
+    summary: 'AI構築ツールでブランドを言語化し、掲示として形にする。',
   },
   standard: {
     price: '¥19,800',
     suffix: '/月（税別）',
-    summary: 'AIでブランドを構築し、名刺で届ける。',
+    summary: 'AI構築ツール無制限。CIマニュアルとスマート名刺で届ける。',
   },
   premium: {
     price: '¥59,800',
     suffix: '/月（税別）',
-    summary: '構築から浸透まで全機能。社員が学び、理解し、体現する仕組みを組み込む。',
+    summary: '構築から浸透まで全機能。社員が学び、体現できる仕組みに。',
   },
   enterprise: {
     price: '個別見積',
     suffix: null,
-    summary: '300名超の組織、複数ブランドの統合管理、コンサルティングによる伴走。',
+    summary: '300名超の組織や複数ブランドの統合管理を、伴走つきで。',
   },
 }
 

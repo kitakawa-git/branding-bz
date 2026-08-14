@@ -25,11 +25,11 @@ const PLANS = [
     subtitle: '体験する',
     price: '¥0',
     priceSuffix: null,
-    description: 'AIツールを体験し、ブランド掲示を自分の手で作り始める。',
-    scale: '個人',
-    members: '—',
+    description: 'AI構築ツールでブランドを言語化し、掲示として形にする。',
+    scale: '〜5名',
+    members: '5名',
     support: '—',
-    perPerson: '—',
+    perPerson: '¥0',
     features: [
       '― 構築 ―',
       'AI構築ツール（各 月3回まで）',
@@ -38,7 +38,8 @@ const PLANS = [
       'ペルソナビルダーツール',
       'パーソナリティ診断ツール',
       // Free で自社ブランドを作り始められるようにする（v3の目玉）。
-      // メンバー上限1名なので「社員に見せたい→Standard」の動線になる
+      // メンバー上限5名。小さなチームで見せ合うところまでは無料で届き、
+      // 全社に配ろうとすると足りない＝「社員に浸透させたい→Standard」の動線になる
       '― 浸透 ―',
       'ブランド掲示 編集＋閲覧',
     ],
@@ -55,8 +56,8 @@ const PLANS = [
     price: '¥19,800',
     priceSuffix: '/月（税別）',
     description:
-      'AIでブランドを構築し、名刺で届ける。コンサルの1/10以下の投資で、ブランド戦略を自社で策定。',
-    scale: '10〜50名',
+      'AI構築ツールが無制限に。「らしさ」をCIマニュアルにまとめ、名刺と日々の共有で社内外へ届ける。',
+    scale: '5〜50名',
     members: '50名',
     support: 'メール',
     perPerson: '¥396〜1,980',
@@ -140,13 +141,13 @@ const PLANS = [
   },
 ]
 
-// カード名＝現在地、trigger＝次に進みたくなる瞬間。
-// 最終段（Enterprise）はその先が無いので trigger を持たない
+// カード名＝現在地、trigger＝そのプランを選びたくなる瞬間。
+// 最終段（Enterprise）だけはその先が無いので、到達点として書く
 const UPSELL_STEPS = [
   { name: 'Free', subtitle: '体験する', trigger: 'AIを無制限に使い\n名刺で発信したい' },
   { name: 'Standard', subtitle: '構築＋発信', trigger: '社員に\n浸透させたい' },
   { name: 'Premium', subtitle: '浸透する', trigger: '浸透の効果を\n数値で測りたい' },
-  { name: 'Enterprise', subtitle: '計測＋伴走', trigger: '' },
+  { name: 'Enterprise', subtitle: '計測＋伴走', trigger: '数字を打ち手に\nつなげたい' },
 ]
 
 const COMMON_ITEMS = [
@@ -289,7 +290,7 @@ export default function LpPlanPage() {
                     {step.subtitle}
                   </div>
                   <h3 className="mb-2 text-base font-bold">{step.name}</h3>
-                  {/* 最終段は trigger を持たないので、空の枠を残さず出さない */}
+                  {/* trigger 未設定のときに空の枠を残さない */}
                   {step.trigger && (
                     <div className="inline-block rounded-lg bg-blue-500/10 px-3 py-1.5">
                       <p className="whitespace-pre-line text-xs leading-relaxed text-white/50">
