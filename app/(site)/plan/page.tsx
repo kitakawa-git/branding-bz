@@ -116,7 +116,7 @@ const PLANS = [
     support: '専任担当',
     perPerson: '—',
     features: [
-      'Premium 全機能',
+      'Premium全機能に加えて：',
       'メンバー数 無制限',
       '― 計測（伴走つき） ―',
       'インナーサーベイ＋AI設問生成',
