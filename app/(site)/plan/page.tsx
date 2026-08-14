@@ -55,7 +55,6 @@ const PLANS = [
     support: 'メール',
     perPerson: '¥396〜1,980',
     features: [
-      'Free 全機能に加えて：',
       '― 構築 ―',
       'AIツール使用無制限',
       'STP分析',
