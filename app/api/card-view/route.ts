@@ -5,6 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { canRecordAnalytics, fetchCompanyIdForProfile } from '@/lib/billing/guard'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { createClient as createServerSupabase } from '@/lib/supabase/server'
 
 /**
  * 本番の閲覧数だけを数える。
@@ -15,6 +16,42 @@ import { getSupabaseAdmin } from '@/lib/supabase-admin'
 function isProductionTraffic(): boolean {
   if (process.env.VERCEL_ENV) return process.env.VERCEL_ENV === 'production'
   return process.env.NODE_ENV === 'production'
+}
+
+/**
+ * 閲覧者がその会社の中の人（メンバーまたは管理者）かどうか。
+ * 名刺ページ自体はログイン不要なので、社外の閲覧者はここで必ず false になる。
+ * ログアウト状態や別ブラウザからの自分の確認までは弾けないが、
+ * 管理画面を開いたまま自分の名刺を見る、という一番多い経路は防げる。
+ */
+async function isOwnCompanyVisitor(companyId: string): Promise<boolean> {
+  try {
+    const supabaseUser = await createServerSupabase()
+    const {
+      data: { user },
+    } = await supabaseUser.auth.getUser()
+    if (!user) return false
+
+    const admin = getSupabaseAdmin()
+    const [{ data: member }, { data: adminUser }] = await Promise.all([
+      admin
+        .from('members')
+        .select('id')
+        .eq('auth_id', user.id)
+        .eq('company_id', companyId)
+        .maybeSingle(),
+      admin
+        .from('admin_users')
+        .select('id')
+        .eq('auth_id', user.id)
+        .eq('company_id', companyId)
+        .maybeSingle(),
+    ])
+    return member !== null || adminUser !== null
+  } catch {
+    // 判定できなかったときは従来どおり記録する（記録漏れより重複のほうが気付ける）
+    return false
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -50,10 +87,19 @@ export async function POST(request: NextRequest) {
     const country = request.headers.get('x-vercel-ip-country') || null
     const city = request.headers.get('x-vercel-ip-city') || null
 
+    const companyId = await fetchCompanyIdForProfile(profileId)
+
     // プラン判定: free では記録を残さない（名刺ページ自体は見えたままにする）。
     // 配布済みの QR を殺さないための方針。閲覧者にエラーは返さない
-    if (!(await canRecordAnalytics(await fetchCompanyIdForProfile(profileId)))) {
+    if (!(await canRecordAnalytics(companyId))) {
       return NextResponse.json({ recorded: false, reason: 'plan_required' })
+    }
+
+    // 自社の人が自分たちの名刺を開いたぶんは数えない。
+    // この数字は「配った相手にどれだけ届いたか」で、アウタースコアのデジタル接点
+    // にも入るため、社内の確認作業が混ざるとスコアごと上振れする
+    if (companyId && (await isOwnCompanyVisitor(companyId))) {
+      return NextResponse.json({ recorded: false, reason: 'own_company' })
     }
 
     // 5分間重複排除: 同一IP + 同一profileIdの最新レコードを確認
