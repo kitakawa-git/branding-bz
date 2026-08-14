@@ -10,6 +10,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ArrowLeft, ArrowRight, Check, Eye } from 'lucide-react'
 import { Fab, FabButton } from '@/components/ui/fab'
+import { Button } from '@/components/ui/button'
+import { PLAN_LABELS, PLAN_VALUES, resolvePlanDisplay } from '@/lib/billing/plan-display'
 import { type ValuePropositionRef } from './_sections/ProofPointsSection'
 import OntologySummaryHub from './_sections/OntologySummaryHub'
 
@@ -21,6 +23,10 @@ type Company = {
   brand_color_secondary: string | null
   website_url: string | null
   created_at: string
+  plan: string | null
+  plan_started_at: string | null
+  plan_expires_at: string | null
+  is_demo: boolean | null
 }
 
 type Profile = {
@@ -87,6 +93,13 @@ export default function CompanyDetailPage() {
   const [editName, setEditName] = useState('')
   const [editWebsiteUrl, setEditWebsiteUrl] = useState('')
 
+  // プラン編集。会社情報の保存（anon＋RLS）とは別扱いにし、service_role の
+  // API Route 経由で保存する。プラン変更は課金に直結するため
+  const [editPlan, setEditPlan] = useState<string>('free')
+  const [editPlanExpiresAt, setEditPlanExpiresAt] = useState('') // yyyy-mm-dd。空＝無期限
+  const [editIsDemo, setEditIsDemo] = useState(false)
+  const [savingPlan, setSavingPlan] = useState(false)
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -101,6 +114,13 @@ export default function CompanyDetailPage() {
           setCompany(companyData)
           setEditName(companyData.name || '')
           setEditWebsiteUrl(companyData.website_url || '')
+          setEditPlan(companyData.plan || 'free')
+          setEditPlanExpiresAt(
+            companyData.plan_expires_at
+              ? new Date(companyData.plan_expires_at).toISOString().slice(0, 10)
+              : '',
+          )
+          setEditIsDemo(companyData.is_demo ?? false)
         }
 
         // 社員一覧
@@ -224,6 +244,41 @@ export default function CompanyDetailPage() {
     setSaving(false)
   }
 
+  // プランの保存。会社情報と違い service_role の API Route を経由する
+  const handleSavePlan = async () => {
+    setSavingPlan(true)
+    setMessage('')
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch('/api/superadmin/company-plan', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session?.access_token || ''}`,
+        },
+        body: JSON.stringify({
+          company_id: companyId,
+          plan: editPlan,
+          // 空文字は「無期限」。日付だけ渡すとその日の 00:00 を期限にしてしまうので、
+          // 選んだ日いっぱいまで有効になるよう終端に寄せる
+          plan_expires_at: editPlanExpiresAt ? `${editPlanExpiresAt}T23:59:59+09:00` : null,
+          is_demo: editIsDemo,
+        }),
+      })
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(json?.error || `HTTP ${res.status}`)
+
+      setCompany((prev) => (prev ? { ...prev, ...json.company } : prev))
+      setMessage('プランを保存しました')
+      setMessageType('success')
+    } catch (err) {
+      setMessage('プランの保存に失敗しました: ' + (err instanceof Error ? err.message : ''))
+      setMessageType('error')
+    } finally {
+      setSavingPlan(false)
+    }
+  }
+
   if (loading) {
     return (
       <p className="text-muted-foreground text-center p-10">
@@ -303,6 +358,73 @@ export default function CompanyDetailPage() {
           </CardContent>
         </Card>
       </Link>
+
+      {/* === プラン（課金に直結するため service_role の API 経由で保存する） === */}
+      <Card className="bg-muted/50 border shadow-none mb-6">
+        <CardContent className="p-6">
+          <div className="flex items-center gap-2 mb-1">
+            <h3 className="text-base font-bold text-foreground">プラン</h3>
+            {(() => {
+              const p = resolvePlanDisplay({ plan: editPlan, plan_expires_at: company?.plan_expires_at })
+              return (
+                <>
+                  <span className={`inline-flex items-center py-0.5 px-2 rounded-md text-[11px] font-semibold ${p.toneClass}`}>
+                    {p.label}
+                  </span>
+                  {p.note && <span className="text-xs text-muted-foreground">{p.note}</span>}
+                </>
+              )
+            })()}
+          </div>
+          <p className="text-xs text-muted-foreground mb-4">
+            Stripe を入れるまでは、ここがプランを変更する唯一の手段です。
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            <div>
+              <Label className="mb-1.5 font-bold">プラン</Label>
+              <select
+                value={editPlan}
+                onChange={(e) => setEditPlan(e.target.value)}
+                className="flex h-10 w-full rounded-md border border-input bg-white px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              >
+                {PLAN_VALUES.map((v) => (
+                  <option key={v} value={v}>{PLAN_LABELS[v]}</option>
+                ))}
+              </select>
+              <p className="text-xs text-muted-foreground mt-1 m-0">
+                enterprise は商談経由の手動割り当て（セルフサーブ対象外）
+              </p>
+            </div>
+            <div>
+              <Label className="mb-1.5 font-bold">有効期限</Label>
+              <Input
+                type="date"
+                value={editPlanExpiresAt}
+                onChange={(e) => setEditPlanExpiresAt(e.target.value)}
+                className="h-10"
+              />
+              <p className="text-xs text-muted-foreground mt-1 m-0">
+                空欄で無期限。過ぎた日付にすると実効プランは Free になる
+              </p>
+            </div>
+          </div>
+
+          <label className="flex items-center gap-2 mb-4 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={editIsDemo}
+              onChange={(e) => setEditIsDemo(e.target.checked)}
+              className="size-4"
+            />
+            <span className="text-sm text-foreground">デモ企業（実顧客カウントから除外する）</span>
+          </label>
+
+          <Button type="button" onClick={handleSavePlan} disabled={savingPlan} size="sm">
+            {savingPlan ? '保存中...' : 'プランを保存'}
+          </Button>
+        </CardContent>
+      </Card>
 
       {/* === 企業情報編集セクション（設定系・下部） === */}
       <Card className="bg-muted/50 border shadow-none mb-6">

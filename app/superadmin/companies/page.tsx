@@ -13,6 +13,7 @@ import { Building2, Plus, ArrowRight } from 'lucide-react'
 import { Fab, FabButton } from '@/components/ui/fab'
 import { CompanyCreateDialog } from './CompanyCreateDialog'
 import { computeBuildScore, deriveBuildScoreInput, type BuildScore } from '@/lib/brand/build-score'
+import { resolvePlanDisplay } from '@/lib/billing/plan-display'
 import type { ElementKind, ElementRef } from '@/lib/brand/elements-catalog'
 import type { RelationRow } from '@/lib/brand/map-data'
 
@@ -23,6 +24,9 @@ type CompanyWithCount = {
   created_at: string
   member_count: number
   admin_count: number
+  plan: string | null
+  plan_expires_at: string | null
+  is_demo: boolean | null
 }
 
 const SCORE_TONES: Record<string, string> = {
@@ -133,6 +137,10 @@ export default function CompaniesPage() {
             created_at: company.created_at,
             member_count: memberCount || 0,
             admin_count: adminCount || 0,
+            // select('*') なので Phase 1 で足したカラムはそのまま入っている
+            plan: company.plan ?? null,
+            plan_expires_at: company.plan_expires_at ?? null,
+            is_demo: company.is_demo ?? null,
           }
         })
       )
@@ -219,6 +227,7 @@ export default function CompaniesPage() {
                     <th className="px-4 py-3 font-medium text-center">従業員数</th>
                     <th className="px-4 py-3 font-medium text-center">管理者</th>
                     <th className="px-4 py-3 font-medium text-center">構築度</th>
+                    <th className="px-4 py-3 font-medium text-center">プラン</th>
                     <th className="px-4 py-3 font-medium">作成日</th>
                     <th className="px-4 py-3 font-medium">操作</th>
                   </tr>
@@ -243,6 +252,13 @@ export default function CompaniesPage() {
                             </div>
                           )}
                           <span className="text-sm font-bold text-foreground">{company.name}</span>
+                          {/* 実顧客が入ってきたときに一覧で見分けられるようにする。
+                              プランバッジより目立たせない */}
+                          {company.is_demo && (
+                            <span className="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium bg-gray-100 text-gray-500">
+                              デモ
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td className="px-4 py-3 text-center">
@@ -271,6 +287,21 @@ export default function CompaniesPage() {
                           )
                         })()}
                       </td>
+                      <td className="px-4 py-3 text-center">
+                        {(() => {
+                          const p = resolvePlanDisplay(company)
+                          return (
+                            <div className="inline-flex flex-col items-center gap-0.5">
+                              <span className={`inline-flex items-center py-0.5 px-2 rounded-md text-[11px] font-semibold ${p.toneClass}`}>
+                                {p.label}
+                              </span>
+                              {p.note && (
+                                <span className="text-[10px] text-muted-foreground">{p.note}</span>
+                              )}
+                            </div>
+                          )
+                        })()}
+                      </td>
                       <td className="px-4 py-3">
                         <span className="text-xs text-muted-foreground">
                           {new Date(company.created_at).toLocaleDateString('ja-JP')}
@@ -294,8 +325,10 @@ export default function CompaniesPage() {
       </Card>
 
       {/* 統計サマリー */}
+      {/* 実顧客とデモの内訳。デモを実績として読み違えないための表示 */}
       <div className="mt-4 text-xs text-muted-foreground text-right">
-        全{companies.length}社
+        全{companies.length}社（実顧客 {companies.filter((c) => !c.is_demo).length}社 / デモ{' '}
+        {companies.filter((c) => c.is_demo).length}社）
       </div>
     </div>
   )
