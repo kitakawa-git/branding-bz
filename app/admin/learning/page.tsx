@@ -42,6 +42,8 @@ import { LearningVideoDialog } from './LearningVideoDialog'
 import { LearningStructureManager } from './LearningStructureManager'
 import { useAuth } from '../components/AdminDataProvider'
 import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
+import { PlanUpsell } from '@/components/billing/plan-gate'
+import { can } from '@/lib/billing/entitlements'
 
 type ThemeWithVideos = Pick<LearningTheme, 'id' | 'category_id' | 'name' | 'description' | 'sort_order'> & {
   video_count: number
@@ -257,6 +259,25 @@ export default function AdminLearningPage() {
   const openEdit = (v: LearningVideo) => { setEditing(v); setDialogOpen(true) }
 
   // 機能トグル: 無効なら案内のみ表示（フックより後に置くこと）
+  // プラン外: 隠さずアップセル面を出す（実効プランで判定＝期限切れならロック）
+  if (!can(company, 'videoLearning')) {
+    return (
+      <div>
+        <PlanUpsell
+          company={company}
+          feature="videoLearning"
+          title="ビデオラーニングを使うには"
+          benefits={[
+            'カテゴリ・テーマで動画を体系立てて配信',
+            'メンバーごとの視聴状況と完了率を把握',
+            'ポータルから各自が視聴',
+            '理解度テストと組み合わせて浸透を設計',
+          ]}
+        />
+      </div>
+    )
+  }
+
   if (!learningEnabled) {
     return (
       <div className="max-w-4xl mx-auto px-5 pt-4 pb-10">

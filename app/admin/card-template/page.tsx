@@ -23,6 +23,8 @@ import {
 } from '@/components/ui/alert-dialog'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
 import { QrCode, WandSparkles, Loader2, Check } from 'lucide-react'
+import { PlanUpsell } from '@/components/billing/plan-gate'
+import { can } from '@/lib/billing/entitlements'
 import {
   generatePreviewQRDataURL,
   generateHighResQRDataURL,
@@ -243,6 +245,27 @@ export default function SmartCardPage() {
   // レンダリング
   // ============================================
   // 機能トグルがオフ: 内容は表示せず、案内のみ（設定ページから再オン可能）
+  // プラン外: 隠さずアップセル面を出す。
+  // 名刺ページ自体は free でも公開されたまま（配布済みの QR を殺さない）で、
+  // 止まっているのは発行・解析・フィードバックの記録
+  if (!can(company, 'smartCard')) {
+    return (
+      <div>
+        <PlanUpsell
+          company={company}
+          feature="smartCard"
+          title="スマート名刺を使うには"
+          benefits={[
+            'QRコードから社員プロフィール＋ブランドページを表示',
+            '閲覧数・アウタースコアで効果を測定',
+            '閲覧者からの印象タグ（マイクロフィードバック）を収集',
+            '公開中の名刺ページは残りますが、いまは閲覧の記録が止まっています',
+          ]}
+        />
+      </div>
+    )
+  }
+
   if (!cardEnabled) {
     return (
       <div>

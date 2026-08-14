@@ -25,6 +25,8 @@ import { getPageCache, setPageCache } from '@/lib/page-cache'
 import { Plus, Pencil, BarChart3, Trash2 } from 'lucide-react'
 import { Fab, FabButton } from '@/components/ui/fab'
 import { AnnouncementCreateDialog } from './AnnouncementCreateDialog'
+import { PlanUpsell } from '@/components/billing/plan-gate'
+import { can } from '@/lib/billing/entitlements'
 
 const CATEGORY_COLORS: Record<string, string> = {
   '重要': 'bg-red-100 text-red-700',
@@ -48,7 +50,7 @@ type ListCache = {
 }
 
 export default function AnnouncementsListPage() {
-  const { companyId, user } = useAuth()
+  const { companyId, user, company } = useAuth()
   const cacheKey = `admin-announcements-${companyId}`
   const cached = companyId ? getPageCache<ListCache>(cacheKey) : null
   const [announcements, setAnnouncements] = useState<Announcement[]>(cached?.announcements ?? [])
@@ -145,6 +147,25 @@ export default function AnnouncementsListPage() {
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr)
     return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`
+  }
+
+  // プラン外: 隠さずアップセル面を出す（実効プランで判定＝期限切れならロック）
+  if (!can(company, 'announcements')) {
+    return (
+      <div>
+        <PlanUpsell
+          company={company}
+          feature="announcements"
+          title="お知らせ配信を使うには"
+          benefits={[
+            '社内向けのお知らせを作成・公開',
+            'Web Push でスマホに通知',
+            'カテゴリ（重要・イベント・更新）で整理',
+            'ポータルのダッシュボードに最新を表示',
+          ]}
+        />
+      </div>
+    )
   }
 
   if (loading) {

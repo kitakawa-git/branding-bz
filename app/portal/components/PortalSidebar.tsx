@@ -7,6 +7,8 @@ import { usePathname } from 'next/navigation'
 import { usePortalAuth } from './PortalDataProvider'
 import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
 import { isPortalPageVisibleForRole, isStaffRole, memberRoleLabel } from '@/lib/constants/member-roles'
+import { PlanLockBadge } from '@/components/billing/plan-gate'
+import type { FeatureKey } from '@/lib/billing/entitlements'
 import { CardPreviewDialog } from './CardPreviewDialog'
 import {
   Sidebar,
@@ -52,16 +54,18 @@ type NavItem = {
   href: string
   label: string
   icon: LucideIcon
+  /** プラン外なら 🔒＋「◯◯から」バッジを出す（隠さずグレーで見せる） */
+  feature?: FeatureKey
 }
 
 // 浸透グループ
 const engagementItems: NavItem[] = [
   { href: '/portal', label: 'ダッシュボード', icon: LayoutDashboard },
-  { href: '/portal/timeline', label: 'タイムライン', icon: MessageSquareHeart },
-  { href: '/portal/kpi', label: '目標・KPI', icon: Milestone },
-  { href: '/portal/learning', label: 'ラーニング', icon: GraduationCap },
-  { href: '/portal/survey', label: 'サーベイ結果', icon: ClipboardList },
-  { href: '/portal/market-survey', label: '市場調査', icon: Globe },
+  { href: '/portal/timeline', label: 'タイムライン', icon: MessageSquareHeart, feature: 'timeline' },
+  { href: '/portal/kpi', label: '目標・KPI', icon: Milestone, feature: 'kpi' },
+  { href: '/portal/learning', label: 'ラーニング', icon: GraduationCap, feature: 'videoLearning' },
+  { href: '/portal/survey', label: 'サーベイ結果', icon: ClipboardList, feature: 'innerSurvey' },
+  { href: '/portal/market-survey', label: '市場調査', icon: Globe, feature: 'brandScoreFull' },
 ]
 
 // 「私たちの『らしさ』」グループ（内部→外部の視点ワード構成）
@@ -200,6 +204,7 @@ export function PortalSidebar() {
                         <Link href={item.href} onClick={handleNavClick}>
                           <Icon size={18} />
                           <span>{item.label}</span>
+                          {item.feature && <PlanLockBadge company={company} feature={item.feature} />}
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>

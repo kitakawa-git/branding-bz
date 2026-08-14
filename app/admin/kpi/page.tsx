@@ -37,6 +37,8 @@ import {
 import { Switch } from '@/components/ui/switch'
 import { ChevronDown, ChevronUp, AlertCircle, CalendarDays, Trash2, Clock, Archive, Search } from 'lucide-react'
 import { toast } from 'sonner'
+import { PlanUpsell } from '@/components/billing/plan-gate'
+import { can } from '@/lib/billing/entitlements'
 
 // ============================================
 // Types
@@ -573,6 +575,25 @@ export default function AdminKpiPage() {
   // ============================================
   // Render
   // ============================================
+  // プラン外: 隠さずアップセル面を出す（実効プランで判定＝期限切れならロック）
+  if (!can(company, 'kpi')) {
+    return (
+      <div>
+        <PlanUpsell
+          company={company}
+          feature="kpi"
+          title="目標・KPI管理を使うには"
+          benefits={[
+            '全社の目標と個人KPIを紐づけて管理',
+            'メンバーごとの進捗を一覧で把握',
+            '四半期・半期・年間の期間ごとに区切って運用',
+            'ポータルから各自が進捗を更新',
+          ]}
+        />
+      </div>
+    )
+  }
+
   // 機能トグルがオフ: 内容は表示せず、案内のみ（設定ページから再オン可能）
   if (!kpiEnabled) {
     return (

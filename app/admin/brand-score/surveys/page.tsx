@@ -38,6 +38,8 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Fab, FabButton } from '@/components/ui/fab'
 import { SurveyImportDialog } from './SurveyImportDialog'
+import { PlanUpsell } from '@/components/billing/plan-gate'
+import { can } from '@/lib/billing/entitlements'
 
 type Survey = {
   id: string
@@ -71,7 +73,7 @@ const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
 }
 
 export default function SurveysListPage() {
-  const { companyId } = useAuth()
+  const { companyId, company } = useAuth()
   const router = useRouter()
   const cacheKey = `admin-surveys-${companyId}`
   const cached = companyId ? getPageCache<ListCache>(cacheKey) : null
@@ -201,6 +203,25 @@ export default function SurveysListPage() {
   }
 
   // ローディング
+  // プラン外: 隠さずアップセル面を出す（実効プランで判定）
+  if (!can(company, 'innerSurvey')) {
+    return (
+      <div>
+        <PlanUpsell
+          company={company}
+          feature="innerSurvey"
+          title="インナーサーベイを使うには"
+          benefits={[
+            '社員サーベイで理念の浸透度を測る',
+            'AI が設問案を生成',
+            '浸透の5段階（認知→理解→共感→行動→推奨）で可視化',
+            'ID INC. の四半期レビューで打ち手まで伴走',
+          ]}
+        />
+      </div>
+    )
+  }
+
   if (loading) {
     return (
       <div>

@@ -75,7 +75,8 @@ export default function STPAppPage() {
       })
       const data = await res.json()
       if (!res.ok) {
-        setError(data.error || '新規セッションの作成に失敗しました')
+        // 429 は「今月の残り回数」の話なので message を優先する
+        setError(data.message || data.error || '新規セッションの作成に失敗しました')
         setCreating(false)
         return
       }

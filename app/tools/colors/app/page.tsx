@@ -30,7 +30,9 @@ export default function ColorsAppPage() {
 
         if (!res.ok) {
           const data = await res.json()
-          setError(data.error || 'セッション作成に失敗しました')
+          // 429 は「権限がない」ではなく「今月の残り回数」の話なので、
+          // API が返す message（残り回数とリセット日を含む文言）を優先する
+          setError(data.message || data.error || 'セッション作成に失敗しました')
           return
         }
 

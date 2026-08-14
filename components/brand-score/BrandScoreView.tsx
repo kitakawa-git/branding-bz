@@ -428,10 +428,22 @@ export function BrandScoreView({
             <span>アウター {outerScore!.outer_score.toFixed(1)} × 50%</span>
           </>
         ) : !isFull ? (
-          // basic は名刺・ブランドページの行動データだけで出している旨を明示する
-          <span className="flex items-center gap-1">
-            <Eye size={12} />
-            名刺・ブランドページの行動データから算出
+          // basic は名刺・ブランドページの行動データだけで出している旨を明示し、
+          // その場で完全版（Enterprise）への導線を出す。EA 参加者への
+          // アップセル面も兼ねるので、ここが唯一の入口になる
+          <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <span className="flex items-center gap-1">
+              <Eye size={12} />
+              名刺・ブランドページの行動データから算出
+            </span>
+            {!readOnly && (
+              <Link
+                href="/contact"
+                className="flex items-center gap-1 text-foreground hover:underline"
+              >
+                社員サーベイを含む完全版で見る <ArrowRight size={12} />
+              </Link>
+            )}
           </span>
         ) : hasInner ? (
           <span className="flex items-center gap-1">

@@ -52,6 +52,8 @@ import {
   type MarketStage,
 } from '@/lib/brand-score/market-stages'
 import { MarketSurveyImportDialog } from './MarketSurveyImportDialog'
+import { PlanUpsell } from '@/components/billing/plan-gate'
+import { can } from '@/lib/billing/entitlements'
 
 type MarketSurvey = {
   id: string
@@ -103,7 +105,7 @@ function badgeFor(s: MarketSurvey, currentId: string | null) {
 }
 
 export default function MarketSurveysPage() {
-  const { companyId } = useAuth()
+  const { companyId, company } = useAuth()
   const router = useRouter()
 
   const cacheKey = `market-surveys-${companyId}`
@@ -182,6 +184,25 @@ export default function MarketSurveysPage() {
     if (!s) return null
     const d = new Date(s)
     return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`
+  }
+
+  // プラン外: 隠さずアップセル面を出す（実効プランで判定）
+  if (!can(company, 'brandScoreFull')) {
+    return (
+      <div>
+        <PlanUpsell
+          company={company}
+          feature="brandScoreFull"
+          title="市場調査の取り込みを使うには"
+          benefits={[
+            '調査会社の集計表を取り込んで市場浸透を可視化',
+            '認知→想起→評価→利用→推奨の5段階でスコア化',
+            '競合との位置関係を把握',
+            'ID INC. が調査の手配から伴走',
+          ]}
+        />
+      </div>
+    )
   }
 
   if (loading) {

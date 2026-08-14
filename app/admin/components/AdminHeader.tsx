@@ -14,9 +14,12 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
 import { resolveAdminCrumb } from '@/lib/admin-breadcrumb'
+import { useAuth } from './AdminDataProvider'
+import { PlanExpiryNotice } from '@/components/billing/plan-expiry-notice'
 
 export function AdminHeader() {
   const pathname = usePathname()
+  const { company } = useAuth()
   const crumb = resolveAdminCrumb(pathname)
 
   return (
@@ -63,6 +66,13 @@ export function AdminHeader() {
           </BreadcrumbList>
         </Breadcrumb>
       )}
+
+      {/* 期限が近い／切れているときだけ出る控えめな表示。
+          Early Access は plan='premium' + 90日後の期限で運用するので、
+          これがそのまま終了予告を兼ねる（専用の分岐は作らない） */}
+      <div className="ml-auto">
+        <PlanExpiryNotice company={company} />
+      </div>
     </header>
   )
 }

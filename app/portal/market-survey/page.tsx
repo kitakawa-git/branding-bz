@@ -16,6 +16,8 @@ import {
 } from '@/components/ui/select'
 import { Globe } from 'lucide-react'
 import { isPortalPageVisibleForRole } from '@/lib/constants/member-roles'
+import { PlanUpsell } from '@/components/billing/plan-gate'
+import { can } from '@/lib/billing/entitlements'
 import {
   MarketSurveyResults,
   type MarketSurveyMeta,
@@ -94,6 +96,25 @@ export default function PortalMarketSurveyPage() {
   useEffect(() => {
     if (selectedId) loadResult(selectedId)
   }, [selectedId, loadResult])
+
+  // プラン外: 隠さずアップセル面を出す（実効プランで判定）
+  if (!can(company, 'brandScoreFull')) {
+    return (
+      <div className="max-w-4xl mx-auto px-5 pt-4 pb-10">
+        <PlanUpsell
+          company={company}
+          feature="brandScoreFull"
+          title="市場調査を見るには"
+          benefits={[
+            '外部調査から市場での浸透度を可視化',
+            '認知→想起→評価→利用→推奨の5段階',
+            '競合との位置関係を把握',
+            'ID INC. が調査の手配から伴走',
+          ]}
+        />
+      </div>
+    )
+  }
 
   // 区分で非表示
   if (!visible) {

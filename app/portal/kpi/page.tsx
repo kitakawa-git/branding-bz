@@ -46,6 +46,8 @@ import { DatePicker } from '@/components/date-picker'
 import { Milestone, Plus, Pencil, Trash2, AlertCircle, CalendarDays, X, ChevronDown, ChevronUp, Archive } from 'lucide-react'
 import { Fab, FabButton } from '@/components/ui/fab'
 import { toast } from 'sonner'
+import { PlanUpsell } from '@/components/billing/plan-gate'
+import { can } from '@/lib/billing/entitlements'
 
 // ============================================
 // Types
@@ -617,6 +619,25 @@ export default function KpiPage() {
   }
 
   // 区分ごとの表示設定で非表示（URL直打ち時の防御）
+  // プラン外: 隠さずアップセル面を出す（実効プランで判定）
+  if (!can(company, 'kpi')) {
+    return (
+      <div className="max-w-4xl mx-auto px-5 pt-4 pb-10">
+        <PlanUpsell
+          company={company}
+          feature="kpi"
+          title="目標・KPIを使うには"
+          benefits={[
+            '全社の目標に紐づけて個人KPIを設定',
+            '進捗を自分で更新',
+            '期間ごとに区切って振り返る',
+            '管理画面から全社の進捗を把握',
+          ]}
+        />
+      </div>
+    )
+  }
+
   if (!kpiVisibleForRole) {
     return (
       <div className="max-w-4xl mx-auto px-5 pt-4 pb-10">

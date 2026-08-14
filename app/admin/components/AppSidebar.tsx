@@ -3,8 +3,11 @@
 // shadcn/ui Sidebar ベースの管理画面サイドバー（floating）
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import { useAuth } from './AdminDataProvider'
 import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
+import { PlanLockBadge } from '@/components/billing/plan-gate'
+import type { FeatureKey } from '@/lib/billing/entitlements'
 import {
   Sidebar,
   SidebarContent,
@@ -59,13 +62,17 @@ type NavItem = {
   href: string
   label: string
   icon: LucideIcon
+  /** プラン外なら 🔒＋「◯◯から」バッジを出す（隠さずグレーで見せる） */
+  feature?: FeatureKey
+  /** 構築ツール。free/card では今月の残り回数を出す（429 の予告） */
+  appType?: string
 }
 
 const navItems: NavItem[] = [
   { href: '/admin/brand-score', label: 'ダッシュボード', icon: LayoutDashboard },
-  { href: '/admin/card-template', label: 'スマート名刺', icon: CreditCard },
-  { href: '/admin/kpi', label: '目標・KPI管理', icon: Milestone },
-  { href: '/admin/announcements', label: 'お知らせ管理', icon: Bell },
+  { href: '/admin/card-template', label: 'スマート名刺', icon: CreditCard, feature: 'smartCard' },
+  { href: '/admin/kpi', label: '目標・KPI管理', icon: Milestone, feature: 'kpi' },
+  { href: '/admin/announcements', label: 'お知らせ管理', icon: Bell, feature: 'announcements' },
 ]
 
 const brandItems: NavItem[] = [
@@ -74,24 +81,24 @@ const brandItems: NavItem[] = [
   { href: '/admin/brand/visuals', label: 'ビジュアル', icon: Eye },
   { href: '/admin/brand/verbal', label: 'バーバル', icon: MessageSquare },
   { href: '/admin/brand/strategy', label: 'ブランド戦略', icon: Map },
-  { href: '/admin/ci-manual', label: 'CIマニュアル出力', icon: Printer },
+  { href: '/admin/ci-manual', label: 'CIマニュアル出力', icon: Printer, feature: 'ciManualPdf' },
 ]
 
 // 構築（ミニアプリ群）: STP分析・ペルソナビルダー・ブランドカラー定義の各ツールのアプリ画面へ
 const buildItems: NavItem[] = [
-  { href: '/tools/stp/app', label: 'STP分析', icon: Crosshair },
-  { href: '/tools/persona/app', label: 'ペルソナビルダー', icon: UserRound },
-  { href: '/tools/colors/app', label: 'ブランドカラー定義', icon: Palette },
-  { href: '/tools/personality/app', label: 'パーソナリティ診断', icon: Fingerprint },
+  { href: '/tools/stp/app', label: 'STP分析', icon: Crosshair, appType: 'stp' },
+  { href: '/tools/persona/app', label: 'ペルソナビルダー', icon: UserRound, appType: 'persona' },
+  { href: '/tools/colors/app', label: 'ブランドカラー定義', icon: Palette, appType: 'brand_colors' },
+  { href: '/tools/personality/app', label: 'パーソナリティ診断', icon: Fingerprint, appType: 'personality' },
 ]
 
 // 浸透（branding.bz本体の浸透施策）: サーベイ・市場調査・理解度テスト・ラーニング
 const penetrationItems: NavItem[] = [
-  { href: '/admin/brand-score/surveys', label: 'サーベイ管理', icon: BarChart3 },
+  { href: '/admin/brand-score/surveys', label: 'サーベイ管理', icon: BarChart3, feature: 'innerSurvey' },
   // 社外の浸透（外部調査）。サーベイ管理が社内なのと対になる
-  { href: '/admin/brand-score/market-surveys', label: '市場調査', icon: Globe },
-  { href: '/admin/brand-score/quizzes', label: '理解度テスト', icon: ClipboardCheck },
-  { href: '/admin/learning', label: 'ラーニング', icon: GraduationCap },
+  { href: '/admin/brand-score/market-surveys', label: '市場調査', icon: Globe, feature: 'brandScoreFull' },
+  { href: '/admin/brand-score/quizzes', label: '理解度テスト', icon: ClipboardCheck, feature: 'brandQuiz' },
+  { href: '/admin/learning', label: 'ラーニング', icon: GraduationCap, feature: 'videoLearning' },
 ]
 
 export function AppSidebar() {
@@ -111,6 +118,17 @@ export function AppSidebar() {
     if (item.href === '/admin/learning') return learningEnabled
     return true
   })
+
+  // 構築ツールの残り回数（free/card のみ。無制限のプランでは limit=null で何も出ない）
+  const [toolUsage, setToolUsage] = useState<{ limit: number | null; remaining: Record<string, number> | null }>({ limit: null, remaining: null })
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/tools/usage')
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => { if (!cancelled && d) setToolUsage(d) })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [])
 
   const initials = profileName
     ? profileName.slice(0, 1)
@@ -157,6 +175,7 @@ export function AppSidebar() {
                       <Link href={item.href}>
                         <Icon size={18} />
                         <span>{item.label}</span>
+                        {item.feature && <PlanLockBadge company={company} feature={item.feature} />}
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -179,6 +198,7 @@ export function AppSidebar() {
                       <Link href={item.href}>
                         <Icon size={18} />
                         <span>{item.label}</span>
+                        {item.feature && <PlanLockBadge company={company} feature={item.feature} />}
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -195,12 +215,21 @@ export function AppSidebar() {
             <SidebarMenu>
               {buildItems.map((item) => {
                 const Icon = item.icon
+                const left = item.appType && toolUsage.remaining
+                  ? toolUsage.remaining[item.appType]
+                  : undefined
                 return (
                   <SidebarMenuItem key={item.href}>
                     <SidebarMenuButton asChild isActive={pathname.startsWith(item.href)}>
                       <Link href={item.href}>
                         <Icon size={18} />
                         <span>{item.label}</span>
+                        {/* 上限のあるプランだけ。使い切ったことも予告になるので 0 も出す */}
+                        {left !== undefined && (
+                          <span className={`ml-auto shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium ${left === 0 ? 'bg-gray-100 text-gray-500' : 'bg-gray-100 text-gray-600'}`}>
+                            {left === 0 ? '今月分終了' : `残り${left}回`}
+                          </span>
+                        )}
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -223,6 +252,7 @@ export function AppSidebar() {
                       <Link href={item.href}>
                         <Icon size={18} />
                         <span>{item.label}</span>
+                        {item.feature && <PlanLockBadge company={company} feature={item.feature} />}
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>

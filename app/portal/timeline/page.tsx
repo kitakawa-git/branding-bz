@@ -52,6 +52,8 @@ import {
 } from 'lucide-react'
 import { Fab, FabButton } from '@/components/ui/fab'
 import { toast } from 'sonner'
+import { PlanUpsell } from '@/components/billing/plan-gate'
+import { can } from '@/lib/billing/entitlements'
 
 // ============================================
 // Types
@@ -756,6 +758,25 @@ export default function PortalTimelinePage() {
   }
 
   // 区分ごとの表示設定で非表示（URL直打ち時の防御）
+  // プラン外: 隠さずアップセル面を出す（実効プランで判定）
+  if (!can(company, 'timeline')) {
+    return (
+      <div className="max-w-4xl mx-auto px-5 pt-4 pb-10">
+        <PlanUpsell
+          company={company}
+          feature="timeline"
+          title="Good Jobタイムラインを使うには"
+          benefits={[
+            '行動指針に沿った取り組みを社内でシェア',
+            'いいね・コメントで称え合う',
+            '行動指針別に投稿を集計',
+            'ブランドを体現する文化を育てる',
+          ]}
+        />
+      </div>
+    )
+  }
+
   if (!isPortalPageVisibleForRole(company, 'timeline', roleCategory, isAdmin)) {
     return (
       <div className="max-w-4xl mx-auto px-5 pt-4 pb-10">

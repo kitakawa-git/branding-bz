@@ -23,6 +23,8 @@ import {
 import { getPageCache, setPageCache } from '@/lib/page-cache'
 import { Plus, ClipboardCheck, CalendarDays, Trash2, Loader2, Users } from 'lucide-react'
 import { Fab, FabButton } from '@/components/ui/fab'
+import { PlanUpsell } from '@/components/billing/plan-gate'
+import { can } from '@/lib/billing/entitlements'
 
 type Quiz = {
   id: string
@@ -59,7 +61,7 @@ const DEFAULT_FORM = {
 }
 
 export default function QuizzesListPage() {
-  const { companyId } = useAuth()
+  const { companyId, company } = useAuth()
   const router = useRouter()
   const cacheKey = `admin-quizzes-${companyId}`
   const cached = companyId ? getPageCache<ListCache>(cacheKey) : null
@@ -163,6 +165,25 @@ export default function QuizzesListPage() {
     const total = q.total_members ?? 0
     const attempts = q.attempt_count ?? 0
     return total > 0 ? Math.round((attempts / total) * 100) : 0
+  }
+
+  // プラン外: 隠さずアップセル面を出す（実効プランで判定＝期限切れならロック）
+  if (!can(company, 'brandQuiz')) {
+    return (
+      <div>
+        <PlanUpsell
+          company={company}
+          feature="brandQuiz"
+          title="ブランド理解度テストを使うには"
+          benefits={[
+            '理念・行動指針の理解度を設問で測る',
+            'AI が設問案を生成',
+            '部署別・役職別に正答率を集計',
+            '共感（サーベイ）とのギャップ分析につながる',
+          ]}
+        />
+      </div>
+    )
   }
 
   if (loading) {

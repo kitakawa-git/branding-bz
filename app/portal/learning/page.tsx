@@ -12,6 +12,8 @@ import type { LearningVideoWithProgress } from '@/lib/types/learning'
 import { usePortalAuth } from '../components/PortalDataProvider'
 import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
 import { isPortalPageVisibleForRole } from '@/lib/constants/member-roles'
+import { PlanUpsell } from '@/components/billing/plan-gate'
+import { can } from '@/lib/billing/entitlements'
 
 type ThemeNode = {
   id: string
@@ -119,6 +121,24 @@ export default function PortalLearningPage() {
   }
 
   // 区分ごとの表示設定で非表示（URL直打ち時の防御）
+  // プラン外: 隠さずアップセル面を出す（実効プランで判定）
+  if (!can(company, 'videoLearning')) {
+    return (
+      <div className="max-w-4xl mx-auto px-5 pt-4 pb-10">
+        <PlanUpsell
+          company={company}
+          feature="videoLearning"
+          title="ビデオラーニングを使うには"
+          benefits={[
+            'ブランドを学ぶ動画をカテゴリ・テーマで視聴',
+            '視聴状況と完了率が記録される',
+            '理解度テストと組み合わせて定着させる',
+          ]}
+        />
+      </div>
+    )
+  }
+
   if (!isPortalPageVisibleForRole(company, 'learning', roleCategory, isAdmin)) {
     return (
       <div className="max-w-4xl mx-auto px-5 pt-4 pb-10">

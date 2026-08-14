@@ -16,6 +16,8 @@ import {
 } from '@/components/ui/select'
 import { ClipboardList } from 'lucide-react'
 import { isPortalPageVisibleForRole } from '@/lib/constants/member-roles'
+import { PlanUpsell } from '@/components/billing/plan-gate'
+import { can } from '@/lib/billing/entitlements'
 import {
   SurveyResults,
   type InnerScoreData,
@@ -97,6 +99,25 @@ export default function PortalSurveyPage() {
   }, [selectedId, companyId, loadResult])
 
   const selectedSurvey = surveys.find(s => s.id === selectedId) ?? null
+
+  // プラン外: 隠さずアップセル面を出す（実効プランで判定）
+  if (!can(company, 'innerSurvey')) {
+    return (
+      <div className="max-w-4xl mx-auto px-5 pt-4 pb-10">
+        <PlanUpsell
+          company={company}
+          feature="innerSurvey"
+          title="サーベイ結果を見るには"
+          benefits={[
+            '社員サーベイで理念の浸透度を可視化',
+            '浸透の5段階で現在地を把握',
+            '部署ごとの違いを比較',
+            'ID INC. の四半期レビューで打ち手まで伴走',
+          ]}
+        />
+      </div>
+    )
+  }
 
   // 区分で非表示
   if (!visible) {
