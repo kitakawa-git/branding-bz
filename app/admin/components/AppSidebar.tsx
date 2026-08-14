@@ -229,7 +229,7 @@ export function AppSidebar() {
                             text-[9px] を 14px に底上げしてしまうため。サイドバーの項目は
                             button ではなく a なので、あのルールの除外に当たらない */}
                         {left !== undefined && (
-                          <span className={`ml-auto shrink-0 rounded px-1 py-0.5 !text-[10px] !leading-[16px] font-medium ${left === 0 ? 'bg-gray-100 text-gray-500' : 'bg-gray-100 text-gray-600'}`}>
+                          <span className={`ml-auto shrink-0 rounded px-1 py-0.5 !text-[11px] !leading-[16px] font-medium ${left === 0 ? 'bg-gray-100 text-gray-500' : 'bg-gray-100 text-gray-600'}`}>
                             {left === 0 ? '今月分終了' : `残り${left}回`}
                           </span>
                         )}
