@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { PLAN_VALUES } from '@/lib/billing/plan-display'
+import { isPaidPlan, type Plan } from '@/lib/billing/entitlements'
 
 /** リクエスト元がスーパー管理者か確認する。OK なら null、NG ならレスポンスを返す */
 async function requireSuperadmin(
@@ -89,7 +90,7 @@ export async function PATCH(request: NextRequest) {
 
     // プランを有償側へ上げるとき、開始日時が未設定なら埋める（いつからの契約か追えるように）
     const supabaseAdmin = getSupabaseAdmin()
-    if (typeof updates.plan === 'string' && updates.plan !== 'free') {
+    if (typeof updates.plan === 'string' && isPaidPlan(updates.plan as Plan)) {
       const { data: current } = await supabaseAdmin
         .from('companies')
         .select('plan_started_at')

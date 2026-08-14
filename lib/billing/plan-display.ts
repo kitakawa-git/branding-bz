@@ -1,15 +1,14 @@
-// スーパー管理画面でプランを表示するための暫定モジュール（Phase 1.5）。
+// スーパー管理画面でプランを表示するためのモジュール。
 //
-// ⚠️ Phase 2 で lib/billing/entitlements.ts の getEffectivePlan が入ったら、
-//    resolvePlanDisplay の中の期限判定をそれに差し替えること。
-//    ここに閉じ込めてあるのは、一覧ページと詳細ページの2箇所に同じ判定を
-//    書くと片方だけ直す事故が起きるため（プラン判定の二重実装を残さない）。
+// 実効プランの判定そのものは持たない。entitlements.getEffectivePlan に委譲し、
+// ここはラベル・配色・注記の組み立てだけを担う（判定ロジックの実体は1箇所）。
 //
-// 表示専用。ゲート判定には使わない。
+// 表示専用。ゲート判定には使わない（ゲートは can() / requirePlan()）。
+import { getEffectivePlan, SELLABLE_PLANS } from './entitlements'
 
-/** DB の check 制約と同じ並び。card は販売終了のため含めない */
-export const PLAN_VALUES = ['free', 'standard', 'premium', 'enterprise'] as const
-export type PlanValue = (typeof PLAN_VALUES)[number]
+/** 選択肢に出すプラン。card は販売終了なので含まれない */
+export const PLAN_VALUES = SELLABLE_PLANS
+export type PlanValue = (typeof SELLABLE_PLANS)[number]
 
 export const PLAN_LABELS: Record<string, string> = {
   free: 'Free',
@@ -44,16 +43,22 @@ export type PlanDisplay = {
 
 /**
  * 表示用にプランを解決する。
- * plan_expires_at が過去なら free 扱いにする（Phase 2 の getEffectivePlan と同じ考え方）。
+ * 期限切れの判定は getEffectivePlan に任せ、ここは注記の文言だけを組み立てる。
  */
 export function resolvePlanDisplay(
   company: { plan?: string | null; plan_expires_at?: string | null },
   now: Date = new Date(),
 ): PlanDisplay {
   const contracted = company.plan ?? 'free'
+  const effective = getEffectivePlan(company, now)
   const expiresAt = company.plan_expires_at ? new Date(company.plan_expires_at) : null
-  const isExpired = expiresAt !== null && expiresAt.getTime() <= now.getTime()
-  const effective = isExpired ? 'free' : contracted
+  // 「期限切れ」と書けるのは期限日が実在して過ぎているときだけ。
+  // effective !== contracted で判定すると、未知のプラン名（free に落ちる）まで
+  // 期限切れと表示してしまう
+  const isExpired =
+    expiresAt !== null &&
+    !Number.isNaN(expiresAt.getTime()) &&
+    expiresAt.getTime() <= now.getTime()
 
   let note: string | null = null
   if (isExpired) {
