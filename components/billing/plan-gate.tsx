@@ -33,7 +33,12 @@ export function usePlanGate(company: CompanyLike, feature: FeatureKey) {
   }
 }
 
-/** サイドバー等に添える小さなロックバッジ。「Standard から」 */
+/**
+ * サイドバー等に添える小さなロックバッジ。
+ * 鍵アイコンだけを出す。プラン名を並べると項目名より目立ってしまい、
+ * どのメニューの話か読み取りにくくなるため。必要なプランは色で分かれていて、
+ * ホバーとスクリーンリーダーには「Standard から」と伝える。
+ */
 export function PlanLockBadge({
   company,
   feature,
@@ -45,12 +50,14 @@ export function PlanLockBadge({
 }) {
   const gate = usePlanGate(company, feature)
   if (gate.allowed) return null
+  const label = `${gate.requiredLabel}から`
   return (
     <span
-      className={`ml-auto inline-flex shrink-0 items-center gap-1 rounded px-1.5 py-0.5 text-[8px] font-semibold ${gate.darkToneClass} ${className}`}
+      title={label}
+      aria-label={label}
+      className={`ml-auto inline-flex shrink-0 items-center rounded p-1 ${gate.darkToneClass} ${className}`}
     >
-      <Lock size={8} aria-hidden="true" />
-      {gate.requiredLabel}から
+      <Lock size={11} aria-hidden="true" />
     </span>
   )
 }
