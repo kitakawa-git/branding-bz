@@ -11,7 +11,7 @@ import Link from 'next/link'
 import { Lock, ArrowRight } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { can, minimumPlanFor, type FeatureKey } from '@/lib/billing/entitlements'
-import { PLAN_LABELS, PLAN_TONES } from '@/lib/billing/plan-display'
+import { PLAN_LABELS, PLAN_TONES, PLAN_TONES_ON_DARK } from '@/lib/billing/plan-display'
 
 type CompanyLike = { plan?: string | null; plan_expires_at?: string | null } | null | undefined
 
@@ -28,6 +28,8 @@ export function usePlanGate(company: CompanyLike, feature: FeatureKey) {
     requiredPlan,
     requiredLabel: PLAN_LABELS[requiredPlan] ?? requiredPlan,
     toneClass: PLAN_TONES[requiredPlan] ?? PLAN_TONES.free,
+    /** サイドバー（暗い面）用 */
+    darkToneClass: PLAN_TONES_ON_DARK[requiredPlan] ?? PLAN_TONES_ON_DARK.free,
   }
 }
 
@@ -45,9 +47,9 @@ export function PlanLockBadge({
   if (gate.allowed) return null
   return (
     <span
-      className={`ml-auto inline-flex shrink-0 items-center gap-0.5 rounded px-1.5 py-0.5 text-[10px] font-medium ${gate.toneClass} ${className}`}
+      className={`ml-auto inline-flex shrink-0 items-center gap-1 rounded px-1.5 py-0.5 text-[8px] font-semibold ${gate.darkToneClass} ${className}`}
     >
-      <Lock size={9} aria-hidden="true" />
+      <Lock size={8} aria-hidden="true" />
       {gate.requiredLabel}から
     </span>
   )
