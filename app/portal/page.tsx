@@ -263,6 +263,9 @@ export default function PortalTopPage() {
   const timelineEnabled = isFeatureEnabled(company, 'timeline_enabled')
   // 機能トグル: KPIが無効なら目標・KPI関連のバナー／カードを非表示にする
   const kpiEnabled = isFeatureEnabled(company, 'kpi_enabled')
+  // 機能トグル: お知らせ／理解度テストが無効ならダッシュボードのウィジェットも出さない
+  const announcementsEnabled = isFeatureEnabled(company, 'announcements_enabled')
+  const quizEnabled = isFeatureEnabled(company, 'quiz_enabled')
   // 区分ごとの表示設定で目標・KPI を出し分け（機能トグルと AND）
   const kpiVisible = kpiEnabled && isPortalPageVisibleForRole(company, 'kpi', roleCategory, isAdmin)
   // ブランドスコアは既定で管理職以上（従業員には出さない）。会社ごとに設定で変えられる
@@ -797,12 +800,14 @@ export default function PortalTopPage() {
       </div>
 
       {/* ===== 1.4. 未受験 理解度テストバナー ===== */}
-      <div className="mb-4">
-        <QuizBanner />
-      </div>
+      {quizEnabled && (
+        <div className="mb-4">
+          <QuizBanner />
+        </div>
+      )}
 
       {/* ===== 1.5. 最新のお知らせ ===== */}
-      {latestAnnouncements.length > 0 && (
+      {announcementsEnabled && latestAnnouncements.length > 0 && (
         <div className="mb-4">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">

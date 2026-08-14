@@ -34,14 +34,14 @@ export function isStaffRole(role: string | null | undefined): boolean {
 
 // 区分で出し分けできるポータルページ（会社レベルの機能トグルがあるものを対象）。
 // featureKey が false の会社ではそもそも非表示なので、区分設定は「機能が有効な会社」でのみ効く。
-// featureKey が無いページ（サーベイ結果など）は会社レベルの機能トグルを持たず、区分のみで出し分ける。
+// featureKey が無いページ（ブランドスコア）は会社レベルの機能トグルを持たず、区分のみで出し分ける。
 export const GATEABLE_PORTAL_PAGES: { key: string; label: string; featureKey?: string }[] = [
   { key: 'kpi', label: '目標・KPI', featureKey: 'kpi_enabled' },
   { key: 'timeline', label: 'タイムライン', featureKey: 'timeline_enabled' },
   { key: 'learning', label: 'ラーニング', featureKey: 'learning_enabled' },
-  { key: 'survey', label: 'サーベイ結果' },
+  { key: 'survey', label: 'サーベイ結果', featureKey: 'survey_enabled' },
   { key: 'brand_score', label: 'ブランドスコア' },
-  { key: 'market_survey', label: '市場調査' },
+  { key: 'market_survey', label: '市場調査', featureKey: 'market_survey_enabled' },
 ]
 
 export type RoleVisibilityConfig = Record<string, Partial<Record<MemberRole, boolean>>>

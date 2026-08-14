@@ -56,16 +56,20 @@ type NavItem = {
   icon: LucideIcon
   /** プラン外なら 🔒＋「◯◯から」バッジを出す（隠さずグレーで見せる） */
   feature?: FeatureKey
+  /** 機能トグル（companies の *_enabled 列）。off なら項目ごと消す */
+  toggleKey?: string
+  /** 区分ごとの表示設定（GATEABLE_PORTAL_PAGES の key） */
+  roleKey?: string
 }
 
 // 浸透グループ
 const engagementItems: NavItem[] = [
   { href: '/portal', label: 'ダッシュボード', icon: LayoutDashboard },
-  { href: '/portal/timeline', label: 'タイムライン', icon: MessageSquareHeart, feature: 'timeline' },
-  { href: '/portal/kpi', label: 'KPI・目標', icon: Milestone, feature: 'kpi' },
-  { href: '/portal/learning', label: 'ラーニング', icon: GraduationCap, feature: 'videoLearning' },
-  { href: '/portal/survey', label: 'サーベイ結果', icon: ClipboardList, feature: 'innerSurvey' },
-  { href: '/portal/market-survey', label: '市場調査', icon: Globe, feature: 'brandScoreFull' },
+  { href: '/portal/timeline', label: 'タイムライン', icon: MessageSquareHeart, feature: 'timeline', toggleKey: 'timeline_enabled', roleKey: 'timeline' },
+  { href: '/portal/kpi', label: 'KPI・目標', icon: Milestone, feature: 'kpi', toggleKey: 'kpi_enabled', roleKey: 'kpi' },
+  { href: '/portal/learning', label: 'ラーニング', icon: GraduationCap, feature: 'videoLearning', toggleKey: 'learning_enabled', roleKey: 'learning' },
+  { href: '/portal/survey', label: 'サーベイ結果', icon: ClipboardList, feature: 'innerSurvey', toggleKey: 'survey_enabled', roleKey: 'survey' },
+  { href: '/portal/market-survey', label: '市場調査', icon: Globe, feature: 'brandScoreFull', toggleKey: 'market_survey_enabled', roleKey: 'market_survey' },
 ]
 
 // 「私たちの『らしさ』」グループ（内部→外部の視点ワード構成）
@@ -140,19 +144,14 @@ export function PortalSidebar() {
   const handleNavClick = () => { if (isMobile) setOpenMobile(false) }
 
   // 機能トグル: 無効な機能のメニュー項目を非表示にする
-  const timelineEnabled = isFeatureEnabled(company, 'timeline_enabled')
-  const kpiEnabled = isFeatureEnabled(company, 'kpi_enabled')
   const cardEnabled = isFeatureEnabled(company, 'card_enabled')
-  const learningEnabled = isFeatureEnabled(company, 'learning_enabled')
-  // 区分ごとの表示設定（管理画面「設定」）で会社ごとに出し分け。機能トグルと AND する。
-  const visibleEngagementItems = engagementItems.filter((item) => {
-    if (item.href === '/portal/timeline') return timelineEnabled && isPortalPageVisibleForRole(company, 'timeline', roleCategory, isAdmin)
-    if (item.href === '/portal/kpi') return kpiEnabled && isPortalPageVisibleForRole(company, 'kpi', roleCategory, isAdmin)
-    if (item.href === '/portal/learning') return learningEnabled && isPortalPageVisibleForRole(company, 'learning', roleCategory, isAdmin)
-    if (item.href === '/portal/survey') return isPortalPageVisibleForRole(company, 'survey', roleCategory, isAdmin)
-    if (item.href === '/portal/market-survey') return isPortalPageVisibleForRole(company, 'market_survey', roleCategory, isAdmin)
-    return true
-  })
+  // 会社の機能トグルと、区分ごとの表示設定（管理画面「設定」）の AND。
+  // href の直書き分岐だと項目が増えるたびに書き足す必要があるので、項目側に持たせる
+  const visibleEngagementItems = engagementItems.filter(
+    (item) =>
+      (!item.toggleKey || isFeatureEnabled(company, item.toggleKey)) &&
+      (!item.roleKey || isPortalPageVisibleForRole(company, item.roleKey, roleCategory, isAdmin)),
+  )
 
   const profileInitial = profileName
     ? profileName.slice(0, 1)

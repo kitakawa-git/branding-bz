@@ -40,6 +40,8 @@ import { Fab, FabButton } from '@/components/ui/fab'
 import { SurveyImportDialog } from './SurveyImportDialog'
 import { PlanUpsell } from '@/components/billing/plan-gate'
 import { can } from '@/lib/billing/entitlements'
+import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
+import { FeatureDisabledNotice } from '@/components/billing/feature-disabled'
 
 type Survey = {
   id: string
@@ -204,6 +206,9 @@ export default function SurveysListPage() {
 
   // ローディング
   // プラン外: 隠さずアップセル面を出す（実効プランで判定）
+  // 会社が機能トグルでオフにしている場合は、プラン案内より先に閉じる
+  if (!isFeatureEnabled(company, 'survey_enabled')) return <FeatureDisabledNotice />
+
   if (!can(company, 'innerSurvey')) {
     return (
       <div>

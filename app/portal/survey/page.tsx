@@ -18,6 +18,8 @@ import { ClipboardList } from 'lucide-react'
 import { isPortalPageVisibleForRole } from '@/lib/constants/member-roles'
 import { PlanUpsell } from '@/components/billing/plan-gate'
 import { can } from '@/lib/billing/entitlements'
+import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
+import { FeatureDisabledNotice } from '@/components/billing/feature-disabled'
 import {
   SurveyResults,
   type InnerScoreData,
@@ -101,6 +103,9 @@ export default function PortalSurveyPage() {
   const selectedSurvey = surveys.find(s => s.id === selectedId) ?? null
 
   // プラン外: 隠さずアップセル面を出す（実効プランで判定）
+  // 会社が機能トグルでオフにしている場合は、プラン案内より先に閉じる
+  if (!isFeatureEnabled(company, 'survey_enabled')) return <FeatureDisabledNotice />
+
   if (!can(company, 'innerSurvey')) {
     return (
       <div className="max-w-4xl mx-auto px-5 pt-4 pb-10">

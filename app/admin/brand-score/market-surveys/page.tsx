@@ -54,6 +54,8 @@ import {
 import { MarketSurveyImportDialog } from './MarketSurveyImportDialog'
 import { PlanUpsell } from '@/components/billing/plan-gate'
 import { can } from '@/lib/billing/entitlements'
+import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
+import { FeatureDisabledNotice } from '@/components/billing/feature-disabled'
 
 type MarketSurvey = {
   id: string
@@ -187,6 +189,9 @@ export default function MarketSurveysPage() {
   }
 
   // プラン外: 隠さずアップセル面を出す（実効プランで判定）
+  // 会社が機能トグルでオフにしている場合は、プラン案内より先に閉じる
+  if (!isFeatureEnabled(company, 'market_survey_enabled')) return <FeatureDisabledNotice />
+
   if (!can(company, 'brandScoreFull')) {
     return (
       <div>

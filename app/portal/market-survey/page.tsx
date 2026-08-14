@@ -18,6 +18,8 @@ import { Globe } from 'lucide-react'
 import { isPortalPageVisibleForRole } from '@/lib/constants/member-roles'
 import { PlanUpsell } from '@/components/billing/plan-gate'
 import { can } from '@/lib/billing/entitlements'
+import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
+import { FeatureDisabledNotice } from '@/components/billing/feature-disabled'
 import {
   MarketSurveyResults,
   type MarketSurveyMeta,
@@ -98,6 +100,9 @@ export default function PortalMarketSurveyPage() {
   }, [selectedId, loadResult])
 
   // プラン外: 隠さずアップセル面を出す（実効プランで判定）
+  // 会社が機能トグルでオフにしている場合は、プラン案内より先に閉じる
+  if (!isFeatureEnabled(company, 'market_survey_enabled')) return <FeatureDisabledNotice />
+
   if (!can(company, 'brandScoreFull')) {
     return (
       <div className="max-w-4xl mx-auto px-5 pt-4 pb-10">

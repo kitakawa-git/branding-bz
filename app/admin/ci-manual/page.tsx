@@ -14,6 +14,8 @@ import { Progress } from '@/components/ui/progress'
 import { FileDown, Loader2 } from 'lucide-react'
 import { Fab, FabButton } from '@/components/ui/fab'
 import type { CIManualData, SelectedSections } from '@/lib/ci-manual/types'
+import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
+import { FeatureDisabledNotice } from '@/components/billing/feature-disabled'
 
 type SectionConfig = {
   key: keyof SelectedSections
@@ -42,7 +44,7 @@ const DEFAULT_SECTIONS: SelectedSections = {
 }
 
 export default function CIManualPage() {
-  const { companyId } = useAuth()
+  const { companyId, company } = useAuth()
   const [data, setData] = useState<CIManualData | null>(null)
   const [loading, setLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
@@ -116,6 +118,9 @@ export default function CIManualPage() {
   const contentSectionCount = (['guidelines', 'visuals', 'verbal', 'strategy'] as const)
     .filter((k) => sections[k])
     .length
+
+  // 会社が機能トグルでオフにしている場合は、読み込みより先に閉じる
+  if (!isFeatureEnabled(company, 'ci_manual_enabled')) return <FeatureDisabledNotice />
 
   if (loading) {
     return (

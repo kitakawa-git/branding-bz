@@ -7,7 +7,7 @@
 // その前提が伝わらないと「押したのに変わらない」と受け取られるため、
 // 画面には毎回「依頼を受けてこちらで手続きする」と書く。
 import { useEffect, useState } from 'react'
-import { Check, Loader2, Send } from 'lucide-react'
+import { Check, Loader2 } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -227,12 +227,8 @@ export function PlanChangeRequestDialog({
                 disabled={!selected || saving}
                 className="inline-flex h-11 items-center justify-center gap-1.5 rounded-xl bg-foreground px-6 text-sm font-bold text-background disabled:opacity-40"
               >
-                {saving ? (
-                  <Loader2 size={15} className="animate-spin" aria-hidden="true" />
-                ) : (
-                  <Send size={15} aria-hidden="true" />
-                )}
-                {pending ? 'この内容で依頼し直す' : 'この内容で依頼する'}
+                {saving && <Loader2 size={15} className="animate-spin" aria-hidden="true" />}
+                {pending ? 'この内容で変更をリクエストし直す' : 'この内容で変更をリクエスト'}
               </button>
             </DialogFooter>
           </>

@@ -9,6 +9,7 @@
 // ロックバッジの配色は Phase 1.5 のプランバッジ（lib/billing/plan-display）と揃える。
 import { useState } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { Lock, ArrowRight } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { can, getEffectivePlan, minimumPlanFor, type FeatureKey } from '@/lib/billing/entitlements'
@@ -87,6 +88,8 @@ export function PlanUpsell({
 }) {
   const gate = usePlanGate(company, feature)
   const [requestOpen, setRequestOpen] = useState(false)
+  const pathname = usePathname()
+  const isAdminArea = pathname?.startsWith('/admin') ?? false
   if (gate.allowed) return null
 
   const isEnterprise = gate.requiredPlan === 'enterprise'
@@ -139,6 +142,20 @@ export function PlanUpsell({
             プラン変更をリクエストする
             <ArrowRight size={15} aria-hidden="true" />
           </button>
+        )}
+
+        {/* 「今は導入しない」人の逃げ道。使えない面を毎回見せられるのは邪魔なので、
+            設定でメニューごと消せることをここで知らせる。
+            管理画面でだけ出す＝設定ページは管理者向けで、ポータルの一般メンバーは開けないため */}
+        {isAdminArea && (
+          <p className="mt-4 mb-0">
+            <Link
+              href="/admin/settings"
+              className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+            >
+              メニュー項目を非表示にする
+            </Link>
+          </p>
         )}
       </CardContent>
 

@@ -27,6 +27,8 @@ import { Fab, FabButton } from '@/components/ui/fab'
 import { AnnouncementCreateDialog } from './AnnouncementCreateDialog'
 import { PlanUpsell } from '@/components/billing/plan-gate'
 import { can } from '@/lib/billing/entitlements'
+import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
+import { FeatureDisabledNotice } from '@/components/billing/feature-disabled'
 
 const CATEGORY_COLORS: Record<string, string> = {
   '重要': 'bg-red-100 text-red-700',
@@ -150,6 +152,9 @@ export default function AnnouncementsListPage() {
   }
 
   // プラン外: 隠さずアップセル面を出す（実効プランで判定＝期限切れならロック）
+  // 会社が機能トグルでオフにしている場合は、プラン案内より先に閉じる
+  if (!isFeatureEnabled(company, 'announcements_enabled')) return <FeatureDisabledNotice />
+
   if (!can(company, 'announcements')) {
     return (
       <div>

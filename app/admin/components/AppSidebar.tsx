@@ -66,13 +66,18 @@ type NavItem = {
   feature?: FeatureKey
   /** 構築ツール。free/card では今月の残り回数を出す（429 の予告） */
   appType?: string
+  /**
+   * 機能トグル（companies の *_enabled 列）。off なら項目ごと消す。
+   * feature がプラン上の可否なのに対し、こちらは「使わないので見せない」という会社の意思。
+   */
+  toggleKey?: string
 }
 
 const navItems: NavItem[] = [
   { href: '/admin/brand-score', label: 'ダッシュボード', icon: LayoutDashboard },
-  { href: '/admin/card-template', label: 'スマート名刺', icon: CreditCard, feature: 'smartCard' },
-  { href: '/admin/kpi', label: '目標・KPI管理', icon: Milestone, feature: 'kpi' },
-  { href: '/admin/announcements', label: 'お知らせ管理', icon: Bell, feature: 'announcements' },
+  { href: '/admin/card-template', label: 'スマート名刺', icon: CreditCard, feature: 'smartCard', toggleKey: 'card_enabled' },
+  { href: '/admin/kpi', label: '目標・KPI管理', icon: Milestone, feature: 'kpi', toggleKey: 'kpi_enabled' },
+  { href: '/admin/announcements', label: 'お知らせ管理', icon: Bell, feature: 'announcements', toggleKey: 'announcements_enabled' },
 ]
 
 const brandItems: NavItem[] = [
@@ -81,7 +86,7 @@ const brandItems: NavItem[] = [
   { href: '/admin/brand/visuals', label: 'ビジュアル', icon: Eye },
   { href: '/admin/brand/verbal', label: 'バーバル', icon: MessageSquare },
   { href: '/admin/brand/strategy', label: 'ブランド戦略', icon: Map },
-  { href: '/admin/ci-manual', label: 'CIマニュアル出力', icon: Printer, feature: 'ciManualPdf' },
+  { href: '/admin/ci-manual', label: 'CIマニュアル出力', icon: Printer, feature: 'ciManualPdf', toggleKey: 'ci_manual_enabled' },
 ]
 
 // 構築（ミニアプリ群）: STP分析・ペルソナビルダー・ブランドカラー定義の各ツールのアプリ画面へ
@@ -94,30 +99,24 @@ const buildItems: NavItem[] = [
 
 // 浸透（branding.bz本体の浸透施策）: サーベイ・市場調査・理解度テスト・ラーニング
 const penetrationItems: NavItem[] = [
-  { href: '/admin/brand-score/surveys', label: 'サーベイ管理', icon: BarChart3, feature: 'innerSurvey' },
+  { href: '/admin/brand-score/surveys', label: 'サーベイ管理', icon: BarChart3, feature: 'innerSurvey', toggleKey: 'survey_enabled' },
   // 社外の浸透（外部調査）。サーベイ管理が社内なのと対になる
-  { href: '/admin/brand-score/market-surveys', label: '市場調査', icon: Globe, feature: 'brandScoreFull' },
-  { href: '/admin/brand-score/quizzes', label: '理解度テスト', icon: ClipboardCheck, feature: 'brandQuiz' },
-  { href: '/admin/learning', label: 'ラーニング', icon: GraduationCap, feature: 'videoLearning' },
+  { href: '/admin/brand-score/market-surveys', label: '市場調査', icon: Globe, feature: 'brandScoreFull', toggleKey: 'market_survey_enabled' },
+  { href: '/admin/brand-score/quizzes', label: '理解度テスト', icon: ClipboardCheck, feature: 'brandQuiz', toggleKey: 'quiz_enabled' },
+  { href: '/admin/learning', label: 'ラーニング', icon: GraduationCap, feature: 'videoLearning', toggleKey: 'learning_enabled' },
 ]
 
 export function AppSidebar() {
   const pathname = usePathname()
   const { user, companyName, companyLogoUrl, company, isSuperAdmin, profileName, profilePhotoUrl, signOut } = useAuth()
 
-  // 機能トグル: 無効な機能のメニュー項目を非表示にする
-  const kpiEnabled = isFeatureEnabled(company, 'kpi_enabled')
-  const cardEnabled = isFeatureEnabled(company, 'card_enabled')
-  const learningEnabled = isFeatureEnabled(company, 'learning_enabled')
-  const visibleNavItems = navItems.filter((item) => {
-    if (item.href === '/admin/kpi') return kpiEnabled
-    if (item.href === '/admin/card-template') return cardEnabled
-    return true
-  })
-  const visiblePenetrationItems = penetrationItems.filter((item) => {
-    if (item.href === '/admin/learning') return learningEnabled
-    return true
-  })
+  // 機能トグル: 無効な機能のメニュー項目を非表示にする。
+  // href の直書き分岐だと項目が増えるたびに書き足す必要があり、
+  // 実際「トグルはあるのに消えないメニュー」が出たので toggleKey 方式に統一した
+  const isVisible = (item: NavItem) => !item.toggleKey || isFeatureEnabled(company, item.toggleKey)
+  const visibleNavItems = navItems.filter(isVisible)
+  const visibleBrandItems = brandItems.filter(isVisible)
+  const visiblePenetrationItems = penetrationItems.filter(isVisible)
 
   // 構築ツールの残り回数（free/card のみ。無制限のプランでは limit=null で何も出ない）
   const [toolUsage, setToolUsage] = useState<{ limit: number | null; remaining: Record<string, number> | null }>({ limit: null, remaining: null })
@@ -190,7 +189,7 @@ export function AppSidebar() {
           <SidebarGroupLabel>ブランド基盤</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {brandItems.map((item) => {
+              {visibleBrandItems.map((item) => {
                 const Icon = item.icon
                 return (
                   <SidebarMenuItem key={item.href}>

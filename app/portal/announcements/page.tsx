@@ -11,6 +11,8 @@ import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
 import { Heart } from 'lucide-react'
+import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
+import { FeatureDisabledNotice } from '@/components/billing/feature-disabled'
 
 const CATEGORY_COLORS: Record<string, string> = {
   '重要': 'bg-red-100 text-red-700',
@@ -36,7 +38,7 @@ type ListCache = {
 }
 
 export default function PortalAnnouncementsPage() {
-  const { companyId, user } = usePortalAuth()
+  const { companyId, user, company } = usePortalAuth()
   const cacheKey = `portal-announcements-${companyId}-${user?.id}`
   const cached = companyId && user?.id ? getPageCache<ListCache>(cacheKey) : null
   const [announcements, setAnnouncements] = useState<AnnouncementItem[]>(cached?.announcements ?? [])
@@ -102,6 +104,9 @@ export default function PortalAnnouncementsPage() {
   const filtered = selectedCategory === 'すべて'
     ? announcements
     : announcements.filter(a => a.category === selectedCategory)
+
+  // 会社が機能トグルでオフにしている場合は、読み込みより先に閉じる
+  if (!isFeatureEnabled(company, 'announcements_enabled')) return <FeatureDisabledNotice />
 
   if (loading) {
     return (

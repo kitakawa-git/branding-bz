@@ -25,6 +25,8 @@ import { Plus, ClipboardCheck, CalendarDays, Trash2, Loader2, Users } from 'luci
 import { Fab, FabButton } from '@/components/ui/fab'
 import { PlanUpsell } from '@/components/billing/plan-gate'
 import { can } from '@/lib/billing/entitlements'
+import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
+import { FeatureDisabledNotice } from '@/components/billing/feature-disabled'
 
 type Quiz = {
   id: string
@@ -168,6 +170,9 @@ export default function QuizzesListPage() {
   }
 
   // プラン外: 隠さずアップセル面を出す（実効プランで判定＝期限切れならロック）
+  // 会社が機能トグルでオフにしている場合は、プラン案内より先に閉じる
+  if (!isFeatureEnabled(company, 'quiz_enabled')) return <FeatureDisabledNotice />
+
   if (!can(company, 'brandQuiz')) {
     return (
       <div>
