@@ -31,6 +31,7 @@ const PLANS = [
     support: '—',
     perPerson: '—',
     features: [
+      '― 構築 ―',
       'AIツール体験（各ツール 月3回）',
       // Free で自社ブランドを作り始められるようにする（v3の目玉）。
       // メンバー上限1名なので「社員に見せたい→Standard」の動線になる
