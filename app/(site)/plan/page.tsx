@@ -6,14 +6,14 @@ import { PageHero, GlowCard } from '@/components/lp/ui'
 export const metadata: Metadata = {
   title: '料金プラン | branding.bz',
   description:
-    'AIブランディングSaaS branding.bz の料金プラン。Free / Brand Standard / Brand Premium / Enterprise から、あなたのブランドフェーズに最適なプランを選べます。',
+    'AIブランディングSaaS branding.bz の料金プラン。Free / Standard / Premium / Enterprise から、あなたのブランドフェーズに最適なプランを選べます。',
   alternates: {
     canonical: '/plan',
   },
   openGraph: {
     title: '料金プラン | branding.bz',
     description:
-      'AIブランディングSaaS branding.bz の料金プラン。Free / Brand Standard / Brand Premium / Enterprise から、あなたのブランドフェーズに最適なプランを選べます。',
+      'AIブランディングSaaS branding.bz の料金プラン。Free / Standard / Premium / Enterprise から、あなたのブランドフェーズに最適なプランを選べます。',
     url: 'https://branding.bz/plan',
   },
 }
@@ -44,7 +44,7 @@ const PLANS = [
   },
   {
     id: 'standard',
-    name: 'Brand Standard',
+    name: 'Standard',
     subtitle: '構築＋発信する',
     price: '¥19,800',
     priceSuffix: '/月（税別）',
@@ -71,7 +71,7 @@ const PLANS = [
   },
   {
     id: 'premium',
-    name: 'Brand Premium',
+    name: 'Premium',
     subtitle: '構築＋浸透＋発信＋計測する',
     price: '¥59,800',
     priceSuffix: '/月（税別）',
