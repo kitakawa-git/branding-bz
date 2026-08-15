@@ -222,7 +222,7 @@ export function SetupSupportDialog({
               <button
                 type="button"
                 onClick={() => onOpenChange(false)}
-                className="inline-flex h-11 items-center justify-center rounded-xl bg-foreground px-6 text-sm font-bold text-background"
+                className="inline-flex h-11 items-center justify-center rounded-full bg-foreground px-6 text-sm font-bold text-background"
               >
                 閉じる
               </button>
@@ -417,7 +417,7 @@ export function SetupSupportDialog({
                 maxLength={2000}
                 placeholder="つまずいている箇所、決めきれていないことなど"
               />
-              <p className="m-0 mt-1 text-xs text-muted-foreground">
+              <p className="m-0 mt-1 text-center text-xs text-muted-foreground">
                 日程はこの後、担当者からのご連絡で確定します。
               </p>
             </div>
@@ -430,7 +430,7 @@ export function SetupSupportDialog({
                 type="button"
                 onClick={submit}
                 disabled={!canSubmit}
-                className="inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-xl bg-foreground px-6 text-sm font-bold text-background disabled:opacity-40"
+                className="inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-full bg-foreground px-6 text-sm font-bold text-background disabled:opacity-40"
               >
                 {saving ? (
                   <Loader2 size={15} className="animate-spin" aria-hidden="true" />
