@@ -239,7 +239,12 @@ export function OnboardingChecklist({
   const [expandedId, setExpandedId] = useState<OnboardingStepId | null>(null)
   const activeStep =
     openSteps.find((s) => s.id === expandedId) ?? openSteps.find((s) => s.current)
-  const restSteps = openSteps.filter((s) => s.id !== activeStep?.id)
+
+  // 開いたステップは元の位置のまま開く。上に移動させると、押した場所と
+  // 開いた場所がずれて「どれを押したのか」が分からなくなる
+  const activeIdx = activeStep ? openSteps.findIndex((s) => s.id === activeStep.id) : -1
+  const stepsBefore = activeIdx >= 0 ? openSteps.slice(0, activeIdx) : openSteps
+  const stepsAfter = activeIdx >= 0 ? openSteps.slice(activeIdx + 1) : []
 
   const totalMinutes = view.steps.reduce((n, s) => n + parseDurationMinutes(s.duration), 0)
   const remainingMinutes = view.steps
@@ -284,11 +289,19 @@ export function OnboardingChecklist({
 
         {doneSteps.length > 0 && <DoneStepsList steps={doneSteps} />}
 
+        {stepsBefore.length > 0 && (
+          <div className="mb-2 overflow-hidden rounded-xl border border-border bg-white">
+            {stepsBefore.map((step) => (
+              <RestStepRow key={step.id} step={step} onExpand={setExpandedId} />
+            ))}
+          </div>
+        )}
+
         {activeStep && <ActiveStepCard step={activeStep} />}
 
-        {restSteps.length > 0 && (
+        {stepsAfter.length > 0 && (
           <div className="overflow-hidden rounded-xl border border-border bg-white">
-            {restSteps.map((step) => (
+            {stepsAfter.map((step) => (
               <RestStepRow key={step.id} step={step} onExpand={setExpandedId} />
             ))}
           </div>
