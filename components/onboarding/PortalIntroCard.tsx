@@ -48,7 +48,7 @@ export function PortalIntroCard() {
             branding.bz のしくみ
           </h2>
           <p className="m-0 mt-1 text-xs leading-relaxed text-muted-foreground">
-            管理者のみが管理画面でブランド情報の「登録・編集」が行えます。それら情報をポータル画面でメンバー全員と共有。この2つ画面を行き来します。
+            いま見ているのは、メンバー全員が使うポータル画面です。ブランド情報の登録・編集は、管理者だけが管理画面で行います。
           </p>
         </div>
         <button
