@@ -67,14 +67,14 @@ function GradientBanner() {
         完全無料
       </span>
       <p className="relative m-0 text-[18px] font-extrabold">入力にお困りですか？</p>
-      <p className="relative m-0 mb-3.5 mt-1.5 text-[12.5px] leading-relaxed opacity-90">
+      <p className="relative m-0 mb-3.5 mt-1.5 text-sm leading-relaxed opacity-90">
         オンラインで画面を見ながら、担当者が入力をサポートします。
         <br className="hidden sm:block" />
         「何から書けばいいか分からない」の段階からご相談ください。
       </p>
       <Link
         href={SUPPORT_HREF}
-        className="relative inline-flex items-center gap-1.5 rounded-full bg-white px-6 py-2.5 text-[13.5px] font-extrabold text-violet-600 no-underline transition-all hover:-translate-y-px hover:shadow-[0_6px_20px_rgba(0,0,0,0.15)]"
+        className="relative inline-flex items-center gap-1.5 rounded-full bg-white px-6 py-2.5 text-sm font-extrabold text-violet-600 no-underline transition-all hover:-translate-y-px hover:shadow-[0_6px_20px_rgba(0,0,0,0.15)]"
       >
         <Calendar size={14} aria-hidden="true" />
         相談を予約する
