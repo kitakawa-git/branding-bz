@@ -9,6 +9,8 @@ import { createClient as createServerSupabase } from '@/lib/supabase/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { fetchCompanyIdForAuth } from '@/lib/billing/guard'
 import { getEffectivePlan, SELLABLE_PLANS } from '@/lib/billing/entitlements'
+import { PLAN_LABELS } from '@/lib/billing/plan-display'
+import { detailTable, escapeHtml, notifySuperadmin } from '@/lib/mail/superadmin-notify'
 
 /** ログイン中のユーザーと所属会社。どちらか欠けたら 401 */
 async function resolveCaller() {
@@ -78,7 +80,7 @@ export async function POST(request: NextRequest) {
     const admin = getSupabaseAdmin()
     const { data: company } = await admin
       .from('companies')
-      .select('plan, plan_expires_at')
+      .select('name, plan, plan_expires_at')
       .eq('id', companyId)
       .maybeSingle()
 
@@ -115,6 +117,24 @@ export async function POST(request: NextRequest) {
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
+
+    // 保存できてから通知する。バッジはスーパー管理画面を開くまで気づけない
+    const companyName = (company as { name?: string } | null)?.name ?? '(不明な企業)'
+    const label = (p: string) => PLAN_LABELS[p] ?? p
+    await notifySuperadmin({
+      subject: `【branding.bz】プラン変更の依頼${existing ? '（出し直し）' : ''}: ${companyName} → ${label(requestedPlan)}`,
+      html: `
+        <h2>プラン変更の依頼が届きました</h2>
+        ${detailTable([
+          ['会社名', escapeHtml(companyName)],
+          ['依頼者', escapeHtml(user.email ?? '(不明)')],
+          ['変更', `${escapeHtml(label(currentPlan))} → ${escapeHtml(label(requestedPlan))}`],
+          ['伝達事項', escapeHtml(note ?? '(未入力)')],
+        ])}
+        <hr />
+        <p><a href="https://branding.bz/superadmin/plan-requests">スーパー管理で確認する</a></p>
+      `,
+    })
 
     return NextResponse.json({ ok: true, replaced: existing !== null })
   } catch (e) {

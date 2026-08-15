@@ -11,6 +11,7 @@ import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { fetchCompanyIdForAuth } from '@/lib/billing/guard'
 import { computeOnboardingStatus } from '@/lib/onboarding/status'
 import { buildOnboardingView } from '@/lib/onboarding/steps'
+import { detailTable, escapeHtml, notifySuperadmin } from '@/lib/mail/superadmin-notify'
 
 /** ログイン中のユーザーと所属会社。どちらか欠けたら 401 */
 async function resolveCaller() {
@@ -81,7 +82,7 @@ export async function POST(request: NextRequest) {
     const [company, status] = await Promise.all([
       admin
         .from('companies')
-        .select('plan, plan_expires_at')
+        .select('name, plan, plan_expires_at')
         .eq('id', companyId)
         .maybeSingle()
         .then((r) => r.data),
@@ -117,6 +118,25 @@ export async function POST(request: NextRequest) {
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
+
+    // 保存できてから通知する。バッジはスーパー管理画面を開くまで気づけないので、
+    // 詰まっている人を待たせないためにメールでも知らせる
+    const companyName = (company as { name?: string } | null)?.name ?? '(不明な企業)'
+    await notifySuperadmin({
+      subject: `【branding.bz】入力サポートの相談${existing ? '（申し込み直し）' : ''}: ${companyName}`,
+      html: `
+        <h2>入力サポートの相談が届きました</h2>
+        ${detailTable([
+          ['会社名', escapeHtml(companyName)],
+          ['申込者', escapeHtml(user.email ?? '(不明)')],
+          ['セットアップ進捗', `${view.doneCount} / ${view.total}`],
+          ['ご希望の日時', escapeHtml(preferredSlots)],
+          ['相談したいこと', escapeHtml(note ?? '(未入力)')],
+        ])}
+        <hr />
+        <p><a href="https://branding.bz/superadmin/support-requests">スーパー管理で確認する</a></p>
+      `,
+    })
 
     return NextResponse.json({ ok: true, replaced: existing !== null })
   } catch (e) {
