@@ -128,7 +128,7 @@ function freeConfig(plan: Plan): OnboardingConfig {
       },
     ],
     upsell: {
-      text: '登録した「らしさ」を、タイムラインやお知らせで日常に広げるのは Standard から。まずは登録を仕上げましょう。',
+      text: '登録した「らしさ」を、タイムラインやお知らせで日常に広げるのは Standard プランから。まずは登録を仕上げましょう。',
       href: '/plan',
     },
   }
