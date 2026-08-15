@@ -33,6 +33,7 @@ import {
   Palette,
   UserCheck,
   CreditCard,
+  Headset,
   ArrowLeftRight,
   LogOut,
   CircleUser,
@@ -46,6 +47,7 @@ const navItems: NavItem[] = [
   { href: '/superadmin/companies', label: '企業一覧', icon: Building2 },
   { href: '/superadmin/signup-requests', label: '新規登録の承認', icon: UserCheck },
   { href: '/superadmin/plan-requests', label: 'プラン変更の依頼', icon: CreditCard },
+  { href: '/superadmin/support-requests', label: '入力サポートの相談', icon: Headset },
   { href: '/superadmin/news', label: 'ニュース', icon: Newspaper },
   { href: '/superadmin/inquiries', label: 'お問い合わせ', icon: MessageSquare },
   { href: '/superadmin/design-system', label: 'デザインシステム', icon: Palette },
@@ -54,6 +56,7 @@ const navItems: NavItem[] = [
 // 承認待ち件数が変わったとき、承認ページからこのイベントで即時反映させる
 export const SIGNUP_REQUESTS_CHANGED = 'signup-requests-changed'
 export const PLAN_REQUESTS_CHANGED = 'plan-requests-changed'
+export const SUPPORT_REQUESTS_CHANGED = 'support-requests-changed'
 
 export function SuperAdminSidebar() {
   const pathname = usePathname()
@@ -62,6 +65,8 @@ export function SuperAdminSidebar() {
   const [pendingCount, setPendingCount] = useState(0)
   // 未対応のプラン変更依頼件数
   const [planRequestCount, setPlanRequestCount] = useState(0)
+  // 未対応の入力サポート相談件数
+  const [supportRequestCount, setSupportRequestCount] = useState(0)
 
   const loadPendingCount = useCallback(async () => {
     const { count } = await supabase
@@ -71,36 +76,57 @@ export function SuperAdminSidebar() {
     setPendingCount(count ?? 0)
   }, [])
 
-  // plan_change_requests は RLS で自社ぶんしか読めない。superadmin でも
+  // 依頼系のテーブルは RLS で自社ぶんしか読めない。superadmin でも
   // クライアントから直接引くと0件が返るので、service_role の API を通す
-  const loadPlanRequestCount = useCallback(async () => {
-    const token = (await supabase.auth.getSession()).data.session?.access_token
-    if (!token) return
-    try {
-      const res = await fetch('/api/superadmin/plan-change-requests', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) return
-      const data = await res.json()
-      setPlanRequestCount((data.requests || []).length)
-    } catch {
-      // バッジが出ないだけなので握りつぶす
-    }
-  }, [])
+  const loadRequestCount = useCallback(
+    async (path: string, setCount: (n: number) => void) => {
+      const token = (await supabase.auth.getSession()).data.session?.access_token
+      if (!token) return
+      try {
+        const res = await fetch(path, { headers: { Authorization: `Bearer ${token}` } })
+        if (!res.ok) return
+        const data = await res.json()
+        setCount((data.requests || []).length)
+      } catch {
+        // バッジが出ないだけなので握りつぶす
+      }
+    },
+    [],
+  )
+
+  const loadPlanRequestCount = useCallback(
+    () => loadRequestCount('/api/superadmin/plan-change-requests', setPlanRequestCount),
+    [loadRequestCount],
+  )
+  const loadSupportRequestCount = useCallback(
+    () => loadRequestCount('/api/superadmin/setup-support-requests', setSupportRequestCount),
+    [loadRequestCount],
+  )
 
   // 初回・ページ遷移時に再取得。承認/却下の直後はカスタムイベントで即時反映。
   useEffect(() => {
     loadPendingCount()
     loadPlanRequestCount()
+    loadSupportRequestCount()
     const onSignup = () => loadPendingCount()
     const onPlan = () => loadPlanRequestCount()
+    const onSupport = () => loadSupportRequestCount()
     window.addEventListener(SIGNUP_REQUESTS_CHANGED, onSignup)
     window.addEventListener(PLAN_REQUESTS_CHANGED, onPlan)
+    window.addEventListener(SUPPORT_REQUESTS_CHANGED, onSupport)
     return () => {
       window.removeEventListener(SIGNUP_REQUESTS_CHANGED, onSignup)
       window.removeEventListener(PLAN_REQUESTS_CHANGED, onPlan)
+      window.removeEventListener(SUPPORT_REQUESTS_CHANGED, onSupport)
     }
-  }, [loadPendingCount, loadPlanRequestCount, pathname])
+  }, [loadPendingCount, loadPlanRequestCount, loadSupportRequestCount, pathname])
+
+  // 「まだ返していない件数」を持つ項目だけをここに並べる
+  const badgeCounts: Record<string, number> = {
+    '/superadmin/signup-requests': pendingCount,
+    '/superadmin/plan-requests': planRequestCount,
+    '/superadmin/support-requests': supportRequestCount,
+  }
 
   const initials = profileName
     ? profileName.slice(0, 1)
@@ -137,12 +163,8 @@ export function SuperAdminSidebar() {
                 const Icon = item.icon
                 const isActive = pathname.startsWith(item.href)
                 // 待たせている件数がある項目だけ通知バッジを出す
-                const badge =
-                  item.href === '/superadmin/signup-requests' && pendingCount > 0
-                    ? pendingCount
-                    : item.href === '/superadmin/plan-requests' && planRequestCount > 0
-                      ? planRequestCount
-                      : null
+                const count = badgeCounts[item.href] ?? 0
+                const badge = count > 0 ? count : null
                 return (
                   <SidebarMenuItem key={item.href}>
                     <SidebarMenuButton asChild isActive={isActive}>
