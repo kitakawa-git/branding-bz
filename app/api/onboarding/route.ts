@@ -45,9 +45,15 @@ export async function GET() {
     //
     // 招待は「招待リンクの発行」と「管理者以外のメンバーが居る」の OR。
     // 招待リンクを使わず直接追加した会社（テックブリッジ等）を未完了にしないため。
-    // 見え方は brand_visuals と brand_terms の OR。
+    // ビジュアルは brand_visuals の行。
     // companies.brand_color_primary は DEFAULT '#000000' で最初から値が入るため
     // 判定には使えない（使うと初日から完了扱いになる）。
+    //
+    // バーバルは brand_personalities.communication_style（トーン）と brand_terms（用語）の OR。
+    // バーバル画面はトーンだけ保存しても用語の行を作らないので、用語だけを見ると
+    // 説明どおりに操作した人が未完了のまま残る。
+    // なお communication_style はパーソナリティ診断の本体連携でも書かれるため、
+    // 診断から連携した人は画面を開かずに完了になる。中身は実際に入っているので許容する。
     const [
       philosophy,
       post,
@@ -55,6 +61,7 @@ export async function GET() {
       invited,
       visuals,
       terms,
+      tone,
       memberCount,
       companyRow,
     ] = await Promise.all([
@@ -64,6 +71,12 @@ export async function GET() {
       exists('invite_links', companyId),
       exists('brand_visuals', companyId),
       exists('brand_terms', companyId),
+      admin
+        .from('brand_personalities')
+        .select('id', { count: 'exact', head: true })
+        .eq('company_id', companyId)
+        .not('communication_style', 'is', null)
+        .then((r) => (r.count ?? 0) > 0),
       admin
         .from('members')
         .select('id', { count: 'exact', head: true })
@@ -82,7 +95,8 @@ export async function GET() {
       // ロゴは任意なので条件に入れない（画像を持たない会社が永久に未完了になる）
       basics: !!companyRow?.industry_category,
       philosophy,
-      visuals: visuals || terms,
+      visuals,
+      verbal: tone || terms,
       post,
       announcement,
       // 管理者自身も members に居るので、2名以上で「他の人を入れた」と見る

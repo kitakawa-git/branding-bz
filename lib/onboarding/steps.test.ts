@@ -34,14 +34,14 @@ for (const plan of ['standard', 'premium', 'enterprise'] as const) {
   )
 }
 
-// ---- free は専用の4ステップ ----
+// ---- free は専用の5ステップ ----
 {
   const v = buildOnboardingView({ plan: 'free' }, none)
   assert.deepEqual(
     v.steps.map((s) => s.id),
-    ['basics', 'philosophy', 'visuals', 'invite'],
+    ['basics', 'philosophy', 'visuals', 'verbal', 'invite'],
   )
-  assert.equal(v.total, 4, 'free も分母は4。実行できないステップは持たない')
+  assert.equal(v.total, 5, 'free は5ステップ。実行できないステップは持たない')
   assert.equal(v.doneCount, 0)
   assert.equal(v.config.showPlanBadge, true)
   assert.equal(v.config.upsell?.href, '/plan')
@@ -54,7 +54,22 @@ for (const plan of ['standard', 'premium', 'enterprise'] as const) {
   assert.equal(v.steps.find((s) => s.id === 'invite')?.duration, '5名まで無料')
   assert.equal(
     v.steps.find((s) => s.id === 'invite')?.ctaLabelWaiting,
-    'ステップ1〜3のあとで',
+    'ステップ1〜4のあとで',
+  )
+}
+
+// 遷移先は管理画面の分類そのまま（着いた先で迷わせない）
+{
+  const v = buildOnboardingView({ plan: 'free' }, none)
+  assert.deepEqual(
+    v.steps.map((s) => s.href),
+    [
+      '/admin/company',
+      '/admin/brand/guidelines',
+      '/admin/brand/visuals',
+      '/admin/brand/verbal',
+      '/admin/members-portal',
+    ],
   )
 }
 
@@ -72,7 +87,7 @@ for (const plan of ['standard', 'premium', 'enterprise'] as const) {
 {
   const v = buildOnboardingView(
     { plan: 'free' },
-    { basics: true, philosophy: true, visuals: true, invite: true },
+    { basics: true, philosophy: true, visuals: true, verbal: true, invite: true },
   )
   assert.equal(v.allDone, true)
   assert.equal(v.steps.filter((s) => s.current).length, 0)
@@ -82,7 +97,7 @@ for (const plan of ['standard', 'premium', 'enterprise'] as const) {
 {
   const v = buildOnboardingView(
     { plan: 'standard' },
-    { basics: true, visuals: true, philosophy: true, invite: true },
+    { basics: true, visuals: true, verbal: true, philosophy: true, invite: true },
   )
   assert.equal(v.allDone, false, 'post / announcement が残るので未完了')
   assert.equal(v.doneCount, 2)
@@ -96,7 +111,7 @@ for (const plan of ['standard', 'premium', 'enterprise'] as const) {
   )
   assert.deepEqual(
     v.steps.map((s) => s.id),
-    ['basics', 'philosophy', 'visuals', 'invite'],
+    ['basics', 'philosophy', 'visuals', 'verbal', 'invite'],
     '期限切れの premium は free の列になる',
   )
 }
@@ -106,7 +121,7 @@ for (const plan of ['standard', 'premium', 'enterprise'] as const) {
   const c = getOnboardingConfig('card')
   assert.deepEqual(
     c.steps.map((s) => s.id),
-    ['basics', 'philosophy', 'visuals', 'invite'],
+    ['basics', 'philosophy', 'visuals', 'verbal', 'invite'],
   )
   assert.equal(c.steps.find((s) => s.id === 'invite')?.duration, '30名まで無料')
 }

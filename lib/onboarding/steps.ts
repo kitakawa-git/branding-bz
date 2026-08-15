@@ -4,7 +4,7 @@
 // ステップ定義も完了判定もここ1箇所に置く。2箇所に書くと必ず片方だけ直す日が来る。
 //
 // プランごとに別のステップ列を持つ:
-//   free  … ブランド情報の入力に絞った4つ。できることだけで完結させる
+//   free  … ブランド情報の入力に絞った5つ。できることだけで完結させる
 //   それ以外 … 掲示から発信まで一巡する4つ
 // 「standard の列からプラン外に鍵をかける」引き算にすると、free では
 // 「4つのうち2つ押せない」案内になり、できることが埋もれる。
@@ -17,6 +17,7 @@ export type OnboardingStepId =
   | 'basics'
   | 'philosophy'
   | 'visuals'
+  | 'verbal'
   | 'post'
   | 'announcement'
   | 'invite'
@@ -48,12 +49,20 @@ export type OnboardingConfig = {
   upsell?: { text: string; href: string }
 }
 
-/** free 専用。ブランド情報を入力しきることだけに絞る */
+/**
+ * free 専用。ブランド情報を入力しきることだけに絞る。
+ * 並びは管理画面の分類（基本情報 → ブランド方針 → ビジュアル → バーバル）に合わせる。
+ * 受け手側の言い方（考え方／見え方・聞こえ方）だと、登録しに行く画面の名前と
+ * 一致せず、着いた先で「どれを触ればいいのか」が分からなくなる。
+ *
+ * ブランドパーソナリティと戦略はステップにしない
+ * （診断は F2 の下書き支援に置く。戦略は初回に必須ではない）。
+ */
 function freeConfig(plan: Plan): OnboardingConfig {
   const maxMembers = getMaxMembers(plan)
   return {
     heading: 'まず、会社の「らしさ」をかたちにしましょう',
-    lead: '4つのステップでブランド情報を登録すると、ここが会社の全員がブランドと出会う場所になります。AIツールが下書きを手伝います。',
+    lead: '基本情報 → 方針 → ビジュアル → バーバルの順に登録すると、ここが会社の全員がブランドと出会う場所になります。AIツールが下書きを手伝います。',
     showPlanBadge: true,
     steps: [
       {
@@ -66,23 +75,30 @@ function freeConfig(plan: Plan): OnboardingConfig {
       },
       {
         id: 'philosophy',
-        title: '考え方を登録する',
+        title: 'ブランド方針を登録する',
         duration: '約15分',
         description:
           'ミッション・ビジョン・行動指針。まだ言葉になっていなくても大丈夫です。',
-        ctaLabel: '考え方を登録する',
+        ctaLabel: 'ブランド方針を登録する',
         href: '/admin/brand/guidelines',
         assist: { label: 'パーソナリティ診断で下書きを作る', href: '/tools/personality' },
       },
       {
         id: 'visuals',
-        title: '見え方・聞こえ方を登録する',
+        title: 'ビジュアルを登録する',
         duration: '約10分',
-        description:
-          'ブランドカラーと、言葉づかいのトーン。社外に見せる顔が決まります。',
-        ctaLabel: '見え方を登録する',
+        description: 'ブランドカラーとロゴの扱い。社外に見せる顔が決まります。',
+        ctaLabel: 'ビジュアルを登録する',
         href: '/admin/brand/visuals',
         assist: { label: 'カラー定義ツールで下書きを作る', href: '/tools/colors' },
+      },
+      {
+        id: 'verbal',
+        title: 'バーバルを登録する',
+        duration: '約10分',
+        description: '言葉づかいのトーンと用語のルール。社内外での話し方が揃います。',
+        ctaLabel: 'バーバルを登録する',
+        href: '/admin/brand/verbal',
       },
       {
         id: 'invite',
@@ -93,7 +109,7 @@ function freeConfig(plan: Plan): OnboardingConfig {
         description:
           '登録した「らしさ」を、まず身近なメンバーに見てもらいましょう。',
         ctaLabel: '招待リンクを発行する',
-        ctaLabelWaiting: 'ステップ1〜3のあとで',
+        ctaLabelWaiting: 'ステップ1〜4のあとで',
         href: '/admin/members-portal',
       },
     ],
