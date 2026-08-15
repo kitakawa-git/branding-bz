@@ -230,8 +230,9 @@ export function SetupSupportDialog({
           </>
         ) : (
           <>
-            {/* DialogHeader の既定は sm 以上で左寄せ。ここは中央に揃える */}
-            <DialogHeader className="sm:text-center">
+            {/* DialogHeader の既定は sm 以上で左寄せ。ここは中央に揃える。
+                space-y は見出しと説明文の間隔（既定 1.5）を1段階広げるため */}
+            <DialogHeader className="space-y-2 sm:text-center">
               <DialogTitle>入力サポートを申し込む</DialogTitle>
               <DialogDescription>
                 オンラインで画面を見ながら、担当者が入力をサポートします。
