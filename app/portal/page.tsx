@@ -889,30 +889,35 @@ export default function PortalTopPage() {
               すべて見る <ArrowRight size={14} />
             </Link>
           </div>
-          <div className="space-y-2">
-            {latestAnnouncements.map(a => (
-              <Link key={a.id} href={`/portal/announcements/${a.id}`} className="no-underline block">
-                <Card className="border shadow-none hover:shadow-sm transition-shadow">
-                  <CardContent className="p-3">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Badge variant="secondary" className={`text-[10px] px-1.5 py-0 ${ANNOUNCEMENT_CATEGORY_COLORS[a.category] || ANNOUNCEMENT_CATEGORY_COLORS['その他']}`}>
-                        {a.category}
-                      </Badge>
-                      <span className="text-[11px] text-muted-foreground" suppressHydrationWarning>
-                        {getRelativeTime(a.created_at)}
-                      </span>
-                    </div>
-                    <h3 className="text-sm font-semibold text-foreground m-0 mb-0.5">
-                      {a.title}
-                    </h3>
-                    <p className="text-xs text-muted-foreground line-clamp-2 m-0 whitespace-pre-wrap">
-                      {a.content}
-                    </p>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
+          {/* 1件＝1カードだと、お知らせが2〜3本並んだだけで枠線が増えて
+              ダッシュボードが細切れに見える。1枚のカードに畳んで、
+              件どうしの区切りは内側の罫線だけで表す */}
+          <Card className="border shadow-none overflow-hidden">
+            <CardContent className="p-0">
+              {latestAnnouncements.map(a => (
+                <Link
+                  key={a.id}
+                  href={`/portal/announcements/${a.id}`}
+                  className="no-underline block border-t border-border p-3 transition-colors first:border-t-0 hover:bg-muted/40"
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <Badge variant="secondary" className={`text-[10px] px-1.5 py-0 ${ANNOUNCEMENT_CATEGORY_COLORS[a.category] || ANNOUNCEMENT_CATEGORY_COLORS['その他']}`}>
+                      {a.category}
+                    </Badge>
+                    <span className="text-[11px] text-muted-foreground" suppressHydrationWarning>
+                      {getRelativeTime(a.created_at)}
+                    </span>
+                  </div>
+                  <h3 className="text-sm font-semibold text-foreground m-0 mb-0.5">
+                    {a.title}
+                  </h3>
+                  <p className="text-xs text-muted-foreground line-clamp-2 m-0 whitespace-pre-wrap">
+                    {a.content}
+                  </p>
+                </Link>
+              ))}
+            </CardContent>
+          </Card>
         </div>
       )}
 
