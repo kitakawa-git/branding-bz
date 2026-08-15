@@ -613,7 +613,7 @@ export default function BrandScoreDashboard() {
           操作は左寄せ。ダッシュボードタブの期間フィルターと位置を揃える */}
       <div className="flex items-center mb-4">
         <div className="flex items-center gap-2">
-          {/* 期間をいちばん左に。Good Action投稿分析タブの期間フィルターと位置が揃う */}
+          {/* 期間をいちばん左に。Good Action分析タブの期間フィルターと位置が揃う */}
           <Select value={period} onValueChange={setPeriod}>
             <SelectTrigger className="w-28 h-9">
               <SelectValue />
