@@ -68,7 +68,7 @@ type NavItem = {
 // 浸透グループ
 const engagementItems: NavItem[] = [
   { href: '/portal', label: 'ダッシュボード', icon: LayoutDashboard },
-  { href: '/portal/timeline', label: 'Good Action投稿', icon: MessageSquareHeart, feature: 'timeline', toggleKey: 'timeline_enabled', roleKey: 'timeline' },
+  { href: '/portal/timeline', label: 'タイムライン', icon: MessageSquareHeart, feature: 'timeline', toggleKey: 'timeline_enabled', roleKey: 'timeline' },
   { href: '/portal/kpi', label: '目標・KPI', icon: Milestone, feature: 'kpi', toggleKey: 'kpi_enabled', roleKey: 'kpi' },
   { href: '/portal/learning', label: 'ラーニング', icon: GraduationCap, feature: 'videoLearning', toggleKey: 'learning_enabled', roleKey: 'learning' },
   { href: '/portal/survey', label: 'サーベイ結果', icon: ClipboardList, feature: 'innerSurvey', toggleKey: 'survey_enabled', roleKey: 'survey' },
