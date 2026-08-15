@@ -72,10 +72,12 @@ function freeConfig(plan: Plan): OnboardingConfig {
         id: 'basics',
         title: '会社の基本情報を整える',
         duration: '約3分',
-        description: '社名・業種・ロゴ。名刺ページとブランド掲示の土台になります。',
+        // スマート名刺は Standard 以上（smartCard: free = false）。
+        // free の案内で名刺を成果に挙げると、使えない機能を売り込むことになる
+        description: '社名・業種・ロゴ。ブランド掲示とポータルの土台になります。',
         ctaLabel: '基本情報を入力する',
         href: '/admin/company',
-        payoff: 'みんなの名刺ページが動き始めます',
+        payoff: 'ポータルに自社のロゴと会社名が出ます',
       },
       {
         id: 'philosophy',
@@ -102,10 +104,12 @@ function freeConfig(plan: Plan): OnboardingConfig {
         id: 'visuals',
         title: 'ビジュアルを登録する',
         duration: '約10分',
-        description: 'ブランドカラーとロゴの扱い。社外に見せる顔が決まります。',
+        // free には社外向けの面（スマート名刺・公開ブランドページ）が無いので、
+        // 「社外に見せる顔」を成果にしない
+        description: 'ブランドカラーとロゴの扱い。掲示や資料の見た目が揃います。',
         ctaLabel: 'ビジュアルを登録する',
         href: '/admin/brand/visuals',
-        payoff: '社外に見せる顔が統一されます',
+        payoff: '全員が同じ色とロゴを使えるようになります',
         assist: { label: 'カラー定義ツールで下書きを作る', href: '/tools/colors' },
       },
       {
