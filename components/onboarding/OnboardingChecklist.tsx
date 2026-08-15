@@ -65,7 +65,7 @@ function ProgressShell({
       <div className="min-w-0 flex-1">
         <div className="h-2 overflow-hidden rounded-full bg-border">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-violet-600 to-blue-600 transition-all"
+            className="h-full rounded-full bg-gradient-to-r from-violet-600 to-ds-app-accent transition-all"
             style={{ width: `${percent}%` }}
           />
         </div>
@@ -118,7 +118,7 @@ function ActiveStepCard({ step }: { step: OnboardingStepView }) {
         onClick={() => {
           if (step.href.startsWith('/admin')) armPortalBackCoach()
         }}
-        className="group mb-2 flex items-center gap-4 rounded-xl border-[1.5px] border-ds-app-accent bg-white p-5 no-underline shadow-[0_6px_20px_rgba(37,99,235,0.10)] transition-all hover:-translate-y-0.5 hover:border-blue-700 hover:shadow-[0_10px_28px_rgba(37,99,235,0.16)] focus-visible:ring-2 focus-visible:ring-ds-app-accent"
+        className="group mb-2 flex items-center gap-4 rounded-xl border-[1.5px] border-ds-app-accent bg-white p-5 no-underline shadow-[0_6px_20px_rgba(37,99,235,0.10)] transition-all hover:-translate-y-0.5 hover:border-ds-app-accent-hover hover:shadow-[0_10px_28px_rgba(37,99,235,0.16)] focus-visible:ring-2 focus-visible:ring-ds-app-accent"
       >
         <div className="min-w-0 flex-1">
           <span className="mb-2.5 inline-flex items-center gap-1.5 rounded-full bg-ds-app-accent px-2.5 py-[3px] text-[10.5px] font-bold uppercase tracking-wider text-white">
