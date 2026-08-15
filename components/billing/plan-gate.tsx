@@ -112,7 +112,8 @@ export function PlanUpsell({
 
   return (
     <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-      <CardContent className="p-6 text-center">
+      {/* 下だけ一段深く。最後の要素がボタンで、上下同じ余白だと詰まって見える */}
+      <CardContent className="p-6 pb-8 text-center">
         <span
           className={`mb-3 inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-semibold ${gate.toneClass}`}
         >
