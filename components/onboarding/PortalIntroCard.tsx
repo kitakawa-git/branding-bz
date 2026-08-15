@@ -10,7 +10,7 @@
 // 一度閉じたら二度と出さない。オンボーディング完了時も自動で消える
 // （出す条件を呼び出し側の showOnboarding に乗せているため）。
 import { useState, useEffect } from 'react'
-import { ArrowLeftRight, ArrowUpDown, MapPin } from 'lucide-react'
+import { ArrowLeftRight, ArrowUpDown, MapPin, PenLine } from 'lucide-react'
 
 const DISMISS_KEY = 'portal-intro-dismissed'
 
@@ -108,8 +108,9 @@ export function PortalIntroCard() {
         <div className="flex flex-col rounded-xl border-[hsl(218_14%_26%)] border bg-[hsl(220_13%_21%)] p-3.5">
           <span
             style={{ fontSize: 12 }}
-            className="mb-1.5 font-bold uppercase tracking-wider text-[hsl(216_12%_84%)]"
+            className="mb-1.5 inline-flex items-center gap-1 font-bold uppercase tracking-wider text-[hsl(216_12%_84%)]"
           >
+            <PenLine size={11} aria-hidden="true" />
             登録・編集
           </span>
           <p className="m-0 mb-2.5 text-[18px] font-extrabold text-white">管理画面</p>
