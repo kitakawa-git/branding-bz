@@ -112,12 +112,8 @@ function ActiveStepCard({ step }: { step: OnboardingStepView }) {
     >
       <Link
         href={step.href}
-        className="group relative mb-2 flex items-center gap-4 overflow-hidden rounded-xl border-[1.5px] border-ds-app-accent bg-white p-5 no-underline shadow-[0_6px_20px_rgba(37,99,235,0.10)] transition-all hover:-translate-y-0.5 hover:border-blue-700 hover:shadow-[0_10px_28px_rgba(37,99,235,0.16)] focus-visible:ring-2 focus-visible:ring-ds-app-accent"
+        className="group mb-2 flex items-center gap-4 rounded-xl border-[1.5px] border-ds-app-accent bg-white p-5 no-underline shadow-[0_6px_20px_rgba(37,99,235,0.10)] transition-all hover:-translate-y-0.5 hover:border-blue-700 hover:shadow-[0_10px_28px_rgba(37,99,235,0.16)] focus-visible:ring-2 focus-visible:ring-ds-app-accent"
       >
-        <span
-          aria-hidden="true"
-          className="absolute inset-y-0 right-0 w-1 bg-gradient-to-b from-violet-600 to-blue-600 opacity-0 transition-opacity group-hover:opacity-100"
-        />
         <div className="min-w-0 flex-1">
           <span className="mb-2.5 inline-flex items-center gap-1.5 rounded-full bg-ds-app-accent px-2.5 py-[3px] text-[10.5px] font-bold uppercase tracking-wider text-white">
             STEP {step.index}
