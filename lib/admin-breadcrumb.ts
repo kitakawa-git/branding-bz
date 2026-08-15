@@ -34,7 +34,7 @@ const breadcrumbMap: Record<string, AdminCrumb> = {
   '/admin/setup': { section: 'ダッシュボード', sectionHref: '/admin/brand-score', title: 'セットアップの進捗' },
   '/admin/dashboard': { section: 'ダッシュボード', sectionHref: '/admin/brand-score', title: 'タイムライン分析' },
   '/admin/brand-score': { section: 'ダッシュボード', sectionHref: '/admin/brand-score', title: 'ブランドスコア' },
-  '/admin/analytics': { section: 'ダッシュボード', sectionHref: '/admin/brand-score', title: 'スマート名刺' },
+  '/admin/analytics': { section: 'ダッシュボード', sectionHref: '/admin/brand-score', title: 'スマート名刺分析' },
   '/admin/analytics/learning': { section: 'ダッシュボード', sectionHref: '/admin/brand-score', title: 'ラーニング分析' },
   // 浸透セクション（サイドバーのグループ名に合わせる）
   // 詳細ページ（/surveys/[id] 等）はプレフィックス一致でこのcrumbを継承する

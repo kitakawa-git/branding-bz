@@ -13,7 +13,7 @@ const titleMap: Record<string, string> = {
   '/admin/brand/visuals': 'ビジュアル',
   '/admin/brand/verbal': 'バーバル',
   '/admin/brand/strategy': 'ブランド戦略',
-  '/admin/analytics': 'アクセス解析',
+  '/admin/analytics': 'スマート名刺分析',
   '/admin/analytics/learning': 'ラーニング分析',
   '/admin/card-template': 'QRコード出力',
   '/admin/announcements': 'お知らせ管理',
