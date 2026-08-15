@@ -30,6 +30,7 @@ import { getPageCache, setPageCache } from '@/lib/page-cache'
 import { toast } from 'sonner'
 import { useOnboarding } from '@/components/onboarding/use-onboarding'
 import { OnboardingChecklist } from '@/components/onboarding/OnboardingChecklist'
+import { PortalIntroCard } from '@/components/onboarding/PortalIntroCard'
 import {
   FileText,
   Heart,
@@ -808,11 +809,15 @@ export default function PortalTopPage() {
           ここが出ているあいだは、下のダッシュボード本体は出さない。
           空のカードが並ぶと「中身の無いサービス」に見えてしまうため */}
       {showOnboarding && onboarding.view ? (
-        <OnboardingChecklist
-          company={company}
-          view={onboarding.view}
-          onDismiss={onboarding.dismiss}
-        />
+        <>
+          {/* 出す条件はオンボーディングと同じ。「あとで」を押せば両方消える */}
+          <PortalIntroCard />
+          <OnboardingChecklist
+            company={company}
+            view={onboarding.view}
+            onDismiss={onboarding.dismiss}
+          />
+        </>
       ) : (
       <>
 
