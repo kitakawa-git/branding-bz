@@ -461,7 +461,12 @@ export function BrandScoreView({
     </CardContent>
   </Card>
 
-  {/* ── 2.5. スコア推移グラフ ── */}
+  {/* ── 2.5. スコア推移グラフ ──
+      推移は Enterprise（brandScoreFull）の機能。料金ページでも
+      「スコア推移の自動記録」は Enterprise の欄にしかない。
+      basic では系列データを null にしていた（total/inner）だけで枠は出ていたため、
+      Premium にアウター1本のグラフが見えてしまっていた。カードごと出さない */}
+  {isFull && (
   <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-4">
     <CardContent className="p-5">
       <h2 className="text-xs font-bold text-foreground mb-4 flex items-center gap-1.5">
@@ -554,6 +559,7 @@ export function BrandScoreView({
       )}
     </CardContent>
   </Card>
+  )}
 
   {/* ── 3. インナー × アウター 2カラム ── */}
   <div className="grid md:grid-cols-2 gap-4 mb-6">
