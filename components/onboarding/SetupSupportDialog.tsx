@@ -417,7 +417,7 @@ export function SetupSupportDialog({
                 maxLength={2000}
                 placeholder="つまずいている箇所、決めきれていないことなど"
               />
-              <p className="m-0 mt-1 text-center text-xs text-muted-foreground">
+              <p className="m-0 mt-2 text-center text-xs text-muted-foreground">
                 日程はこの後、担当者からのご連絡で確定します。
               </p>
             </div>
