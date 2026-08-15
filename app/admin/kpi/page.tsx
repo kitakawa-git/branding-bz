@@ -582,7 +582,7 @@ export default function AdminKpiPage() {
         <PlanUpsell
           company={company}
           feature="kpi"
-          title="KPI・目標管理を使うには"
+          title="目標・KPI管理を使うには"
           benefits={[
             '全社の目標と個人KPIを紐づけて管理',
             'メンバーごとの進捗を一覧で把握',

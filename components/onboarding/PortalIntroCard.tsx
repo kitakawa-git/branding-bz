@@ -77,7 +77,7 @@ export function PortalIntroCard() {
           <ul className="m-0 list-disc pl-4 text-[14px] leading-[1.9] text-muted-foreground">
             <li>私たちの「らしさ」4視点</li>
             <li>タイムライン</li>
-            <li>KPI・目標</li>
+            <li>目標・KPI</li>
             <li>ラーニング</li>
           </ul>
         </div>

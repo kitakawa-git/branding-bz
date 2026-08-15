@@ -7,7 +7,7 @@ const footerLinks = {
   features: [
     { href: '/features#feature-brand', label: 'ブランド掲示' },
     { href: '/features#feature-timeline', label: 'タイムライン' },
-    { href: '/features#feature-kpi', label: 'KPI・目標' },
+    { href: '/features#feature-kpi', label: '目標・KPI' },
     { href: '/features#feature-score', label: 'ブランドスコア' },
     { href: '/features#feature-card', label: 'スマート名刺' },
   ],

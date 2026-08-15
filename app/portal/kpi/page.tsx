@@ -627,7 +627,7 @@ export default function KpiPage() {
           readOnly={!isAdmin}
           company={company}
           feature="kpi"
-          title="KPI・目標管理を使うには"
+          title="目標・KPI管理を使うには"
           benefits={[
             '全社の目標に紐づけて個人KPIを設定',
             '進捗を自分で更新',

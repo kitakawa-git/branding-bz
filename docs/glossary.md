@@ -58,7 +58,7 @@
 | スマート名刺 | `smartCard` | Standard 以上 | デジタル名刺 / Web名刺 |
 | ビデオラーニング | `videoLearning` | Premium 以上 | 動画学習 / ラーニング動画 |
 | ブランド理解度テスト | `brandQuiz` | Premium 以上 | クイズ / 理解度チェック |
-| KPI・目標管理 | `kpi` | Premium 以上 | 個人目標と KPI / 目標・KPI / KPI管理 |
+| 目標・KPI管理 | `kpi` | Premium 以上 | 個人目標と KPI / KPI・目標管理（旧称） / KPI管理 |
 | ブランドスコア（簡易版） | `brandScoreBasic` | Premium 以上 | アウタースコアのみ / 簡易スコア |
 | インナーサーベイ＋AI設問生成 | `innerSurvey` | Enterprise | 社員サーベイ / インナー調査 |
 | 統合ブランドスコア | `brandScoreFull` | Enterprise | ブランドスコア完全版 / 統合スコア |
@@ -80,7 +80,7 @@
 
 | 正準表記 | サイドメニュー |
 |---|---|
-| KPI・目標管理 | KPI・目標 |
+| 目標・KPI管理 | 目標・KPI |
 | ビデオラーニング | ラーニング |
 | インナーサーベイ | サーベイ結果（＝結果閲覧画面） |
 | 市場調査手配 | 市場調査 |
