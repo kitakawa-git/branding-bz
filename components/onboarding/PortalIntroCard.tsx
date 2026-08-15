@@ -122,18 +122,6 @@ export function PortalIntroCard() {
           </span>
         </div>
       </div>
-
-      {/* 補足 */}
-      {/* カード地が薄いグレーになったので、bg-muted(#f5f5f5) だと沈んで区別がつかない */}
-      <div className="mt-3.5 rounded-lg border border-border bg-white px-3 py-2.5 text-[11.5px] leading-relaxed text-muted-foreground">
-        <p className="m-0">
-          💡
-          下のステップから管理画面に移動して登録します。登録が終わるとこのポータルに中身が入り、メンバーを招待できる状態になります。
-        </p>
-        <p className="m-0 mt-1">
-          🔒 左メニューの鍵アイコンが付いた機能は Standard 以上でご利用いただけます。
-        </p>
-      </div>
     </div>
   )
 }
