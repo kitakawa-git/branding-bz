@@ -39,7 +39,7 @@ function SidebarCard() {
         <br />
         無料でいたします
       </p>
-      <span className="mt-1.5 inline-flex items-center gap-0.5 text-[10.5px] font-bold">
+      <span className="mt-1.5 inline-flex items-center gap-0.5 text-sm font-bold">
         相談する
         <ChevronRight
           size={10}
