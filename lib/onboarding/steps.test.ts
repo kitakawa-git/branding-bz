@@ -1,85 +1,114 @@
-// buildOnboardingView の単体テスト
+// buildOnboardingView / getOnboardingConfig の単体テスト
 // 実行: npx tsx lib/onboarding/steps.test.ts
 import assert from 'node:assert/strict'
-import { buildOnboardingView, type OnboardingStatus } from './steps'
+import {
+  buildOnboardingView,
+  getOnboardingConfig,
+  type OnboardingStatus,
+} from './steps'
 
-const none: OnboardingStatus = {
-  philosophy: false,
-  post: false,
-  announcement: false,
-  invite: false,
+const none: OnboardingStatus = {}
+
+// ---- standard 以上は v2 でも v1 のまま（回帰させない） ----
+for (const plan of ['standard', 'premium', 'enterprise'] as const) {
+  const v = buildOnboardingView({ plan }, none)
+  assert.deepEqual(
+    v.steps.map((s) => s.id),
+    ['philosophy', 'post', 'announcement', 'invite'],
+    `${plan} のステップは v1 のまま`,
+  )
+  assert.equal(v.total, 4)
+  assert.equal(v.config.heading, 'ようこそ、branding.bz へ')
+  assert.equal(v.config.showPlanBadge, false, 'standard 以上にプランバッジは出さない')
+  assert.equal(v.config.upsell, undefined, 'standard 以上に下部の案内は出さない')
+  // 下書き支援リンクは free 専用
+  assert.equal(v.steps.every((s) => !s.assist), true)
 }
 
-// standard 以上は4ステップすべてが対象
+// standard の招待の待機ラベルも v1 のまま
 {
   const v = buildOnboardingView({ plan: 'standard' }, none)
-  assert.equal(v.total, 4)
+  assert.equal(
+    v.steps.find((s) => s.id === 'invite')?.ctaLabelWaiting,
+    'ステップ2・3のあとで',
+  )
+}
+
+// ---- free は専用の4ステップ ----
+{
+  const v = buildOnboardingView({ plan: 'free' }, none)
+  assert.deepEqual(
+    v.steps.map((s) => s.id),
+    ['basics', 'philosophy', 'visuals', 'invite'],
+  )
+  assert.equal(v.total, 4, 'free も分母は4。実行できないステップは持たない')
   assert.equal(v.doneCount, 0)
-  assert.equal(v.allDone, false)
-  assert.equal(v.steps.filter((s) => s.locked).length, 0)
-  // 現在のステップは最初の未完了1つだけ
+  assert.equal(v.config.showPlanBadge, true)
+  assert.equal(v.config.upsell?.href, '/plan')
+  // 下書き支援は F2 / F3 だけ
+  assert.deepEqual(
+    v.steps.filter((s) => s.assist).map((s) => s.id),
+    ['philosophy', 'visuals'],
+  )
+  // 招待の上限表記は MAX_MEMBERS から引く（直書きしない）
+  assert.equal(v.steps.find((s) => s.id === 'invite')?.duration, '5名まで無料')
+  assert.equal(
+    v.steps.find((s) => s.id === 'invite')?.ctaLabelWaiting,
+    'ステップ1〜3のあとで',
+  )
+}
+
+// 現在ステップは未完了の最初の1つ
+{
+  const v = buildOnboardingView({ plan: 'free' }, { basics: true })
+  assert.equal(v.doneCount, 1)
   assert.deepEqual(
     v.steps.filter((s) => s.current).map((s) => s.id),
     ['philosophy'],
   )
 }
 
-// free は timeline / announcements がプラン外。分母から外す
-{
-  const v = buildOnboardingView({ plan: 'free' }, none)
-  assert.equal(v.total, 2, 'free の分母は実行できる2ステップ')
-  assert.deepEqual(
-    v.steps.filter((s) => s.locked).map((s) => s.id),
-    ['post', 'announcement'],
-  )
-  // ロックされたステップも番号は詰めない（招待は4のまま）
-  assert.equal(v.steps.find((s) => s.id === 'invite')?.index, 4)
-}
-
-// free は ①④ が済めば完了。🔒 の②③が永久に完了をブロックしない
+// free の全完了
 {
   const v = buildOnboardingView(
     { plan: 'free' },
-    { philosophy: true, post: false, announcement: false, invite: true },
-  )
-  assert.equal(v.doneCount, 2)
-  assert.equal(v.total, 2)
-  assert.equal(v.allDone, true, 'free は①④完了で通常ダッシュボードへ')
-}
-
-// standard で同じ状態なら、まだ完了ではない
-{
-  const v = buildOnboardingView(
-    { plan: 'standard' },
-    { philosophy: true, post: false, announcement: false, invite: true },
-  )
-  assert.equal(v.doneCount, 2)
-  assert.equal(v.total, 4)
-  assert.equal(v.allDone, false)
-  assert.deepEqual(
-    v.steps.filter((s) => s.current).map((s) => s.id),
-    ['post'],
-    '完了済みは飛ばして次の未完了が現在ステップ',
-  )
-}
-
-// 全完了
-{
-  const v = buildOnboardingView(
-    { plan: 'premium' },
-    { philosophy: true, post: true, announcement: true, invite: true },
+    { basics: true, philosophy: true, visuals: true, invite: true },
   )
   assert.equal(v.allDone, true)
   assert.equal(v.steps.filter((s) => s.current).length, 0)
 }
 
-// 期限切れは free 扱い（getEffectivePlan 経由の遅延評価が効いているか）
+// standard 側の完了判定に free 用のキーは効かない（列が違う）
+{
+  const v = buildOnboardingView(
+    { plan: 'standard' },
+    { basics: true, visuals: true, philosophy: true, invite: true },
+  )
+  assert.equal(v.allDone, false, 'post / announcement が残るので未完了')
+  assert.equal(v.doneCount, 2)
+}
+
+// 期限切れは free 扱い（getEffectivePlan 経由の遅延評価）
 {
   const v = buildOnboardingView(
     { plan: 'premium', plan_expires_at: '2020-01-01T00:00:00Z' },
     none,
   )
-  assert.equal(v.total, 2, '期限切れの premium は free と同じ扱い')
+  assert.deepEqual(
+    v.steps.map((s) => s.id),
+    ['basics', 'philosophy', 'visuals', 'invite'],
+    '期限切れの premium は free の列になる',
+  )
+}
+
+// card は販売終了だが timeline / announcements を持たないので free と同じ列
+{
+  const c = getOnboardingConfig('card')
+  assert.deepEqual(
+    c.steps.map((s) => s.id),
+    ['basics', 'philosophy', 'visuals', 'invite'],
+  )
+  assert.equal(c.steps.find((s) => s.id === 'invite')?.duration, '30名まで無料')
 }
 
 console.log('✓ lib/onboarding/steps.test.ts 全ケース pass')

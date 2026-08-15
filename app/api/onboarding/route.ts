@@ -39,23 +39,50 @@ export async function GET() {
     }
     const companyId = adminUser.company_id as string
 
-    // ④は招待リンクの発行と、管理者以外のメンバーが居ることの OR。
-    // 招待リンクを使わず直接追加した会社（テックブリッジ等）を未完了にしないため
-    const [philosophy, post, announcement, invited, memberCount] = await Promise.all([
+    // プランによって使うステップが違うので、全ステップぶんの判定をまとめて返し、
+    // どれを見るかは lib/onboarding/steps.ts の定義に任せる。
+    // どれも件数だけを見る（head: true）ので行は読まない。
+    //
+    // 招待は「招待リンクの発行」と「管理者以外のメンバーが居る」の OR。
+    // 招待リンクを使わず直接追加した会社（テックブリッジ等）を未完了にしないため。
+    // 見え方は brand_visuals と brand_terms の OR。
+    // companies.brand_color_primary は DEFAULT '#000000' で最初から値が入るため
+    // 判定には使えない（使うと初日から完了扱いになる）。
+    const [
+      philosophy,
+      post,
+      announcement,
+      invited,
+      visuals,
+      terms,
+      memberCount,
+      companyRow,
+    ] = await Promise.all([
       exists('philosophy_elements', companyId),
       exists('timeline_posts', companyId),
       exists('announcements', companyId),
       exists('invite_links', companyId),
+      exists('brand_visuals', companyId),
+      exists('brand_terms', companyId),
       admin
         .from('members')
         .select('id', { count: 'exact', head: true })
         .eq('company_id', companyId)
         .eq('is_active', true)
         .then((r) => r.count ?? 0),
+      admin
+        .from('companies')
+        .select('industry_category')
+        .eq('id', companyId)
+        .maybeSingle()
+        .then((r) => r.data),
     ])
 
     const status: OnboardingStatus = {
+      // ロゴは任意なので条件に入れない（画像を持たない会社が永久に未完了になる）
+      basics: !!companyRow?.industry_category,
       philosophy,
+      visuals: visuals || terms,
       post,
       announcement,
       // 管理者自身も members に居るので、2名以上で「他の人を入れた」と見る
