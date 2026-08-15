@@ -54,6 +54,7 @@ import { Fab, FabButton } from '@/components/ui/fab'
 import { toast } from 'sonner'
 import { PlanUpsell } from '@/components/billing/plan-gate'
 import { can } from '@/lib/billing/entitlements'
+import { useSearchParams } from 'next/navigation'
 
 // ============================================
 // Types
@@ -130,6 +131,12 @@ export default function PortalTimelinePage() {
   const [posting, setPosting] = useState(false)
   // 投稿フォーム（モーダル）の開閉
   const [composerOpen, setComposerOpen] = useState(false)
+  // 初回セットアップ案内のステップ②から ?compose=1 で直接開く。
+  // 投稿UIはダイアログなので、URL から開ける口が無いと案内の導線が1手増える
+  const searchParams = useSearchParams()
+  useEffect(() => {
+    if (searchParams.get('compose') === '1') setComposerOpen(true)
+  }, [searchParams])
 
   // Edit mode
   const [editingPostId, setEditingPostId] = useState<string | null>(null)

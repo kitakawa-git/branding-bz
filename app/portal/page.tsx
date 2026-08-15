@@ -28,6 +28,8 @@ import { Progress } from '@/components/ui/progress'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
 import { toast } from 'sonner'
+import { useOnboarding } from '@/components/onboarding/use-onboarding'
+import { OnboardingChecklist } from '@/components/onboarding/OnboardingChecklist'
 import {
   FileText,
   Heart,
@@ -258,6 +260,11 @@ type DashboardCache = {
 
 export default function PortalTopPage() {
   const { companyId, user, member, slogan, company, roleCategory, isAdmin } = usePortalAuth()
+
+  // 初回セットアップ案内（管理者のみ）。未セットアップのあいだ、
+  // ダッシュボードの中身をこれに差し替える（着地先は変えない）
+  const onboarding = useOnboarding(company)
+  const showOnboarding = !onboarding.loading && !onboarding.hidden && !onboarding.dismissed
 
   // 機能トグル: タイムラインが無効なら投稿関連ウィジェットを非表示にする
   const timelineEnabled = isFeatureEnabled(company, 'timeline_enabled')
@@ -794,6 +801,18 @@ export default function PortalTopPage() {
         )}
       </div>
 
+      {/* ===== 1.2. 初回セットアップ案内（管理者・未セットアップのときだけ） =====
+          ここが出ているあいだは、下のダッシュボード本体は出さない。
+          空のカードが並ぶと「中身の無いサービス」に見えてしまうため */}
+      {showOnboarding && onboarding.view ? (
+        <OnboardingChecklist
+          company={company}
+          view={onboarding.view}
+          onDismiss={onboarding.dismiss}
+        />
+      ) : (
+      <>
+
       {/* ===== 1.3. 未回答サーベイバナー ===== */}
       {/* 中身（SurveyBanner）は未回答が無いと null を返す。
           empty:hidden が無いと、この枠だけが残って余白として居座る */}
@@ -1277,6 +1296,9 @@ export default function PortalTopPage() {
         </div>
       </div>
       </div>
+      )}
+
+      </>
       )}
 
       {/* ===== 自己評価ダイアログ ===== */}

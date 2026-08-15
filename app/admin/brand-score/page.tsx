@@ -53,6 +53,7 @@ import { toast } from 'sonner'
 import { SnapshotScheduleCard } from './components/SnapshotScheduleCard'
 import { BrandScoreView } from '@/components/brand-score/BrandScoreView'
 import { can } from '@/lib/billing/entitlements'
+import { OnboardingMiniCard } from '@/components/onboarding/OnboardingMiniCard'
 import {
   ArrowRight,
   TrendingUp,
@@ -553,6 +554,7 @@ export default function BrandScoreDashboard() {
             </Link>
           ))}
         </div>
+        <OnboardingMiniCard company={company} />
         <div className="flex items-center justify-between mb-6">
           <Skeleton className="h-7 w-48" />
           <Skeleton className="h-9 w-28" />
@@ -586,6 +588,7 @@ export default function BrandScoreDashboard() {
             </Link>
           ))}
         </div>
+        <OnboardingMiniCard company={company} />
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-10 text-center">
             <TrendingUp size={48} className="mx-auto mb-4 text-muted-foreground/30" />
@@ -631,6 +634,8 @@ export default function BrandScoreDashboard() {
           </Link>
         ))}
       </div>
+
+      <OnboardingMiniCard company={company} />
 
       {/* ── 1. ヘッダー ── */}
       {/* 見出しはパンくず・タブと重複するため置かない。
