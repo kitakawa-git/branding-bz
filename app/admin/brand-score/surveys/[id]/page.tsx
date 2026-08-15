@@ -1172,7 +1172,7 @@ export default function SurveyDetailPage() {
       </div>
 
       {/* ── 2. サーベイ情報カード ── */}
-      {/* ダッシュボード（タイムライン分析）のサマリーカードと同じ体裁に揃える。
+      {/* ダッシュボード（Good Job投稿分析）のサマリーカードと同じ体裁に揃える。
           1指標=1カード、アイコン18px＋見出し text-sm、数値 text-3xl 中央 */}
       <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4 mb-4">
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">

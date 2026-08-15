@@ -6,7 +6,7 @@ import { useAuth } from './AdminDataProvider'
 import { supabase } from '@/lib/supabase'
 
 const titleMap: Record<string, string> = {
-  '/admin/dashboard': 'ダッシュボード',
+  '/admin/dashboard': 'Good Job投稿分析',
   '/admin/members': 'アカウント一覧',
   '/admin/company': '基本情報',
   '/admin/brand/guidelines': 'ブランド方針',

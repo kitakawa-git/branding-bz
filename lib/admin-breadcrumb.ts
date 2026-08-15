@@ -30,9 +30,9 @@ const breadcrumbMap: Record<string, AdminCrumb> = {
   // lib/constants/dashboard-tabs.ts の DASHBOARD_TABS と揃えること）。
   // セクションの戻り先はブランドスコア（先頭タブ）。サイドバーの
   // 「ダッシュボード」と同じ場所に着かないと、パンくずで戻ったつもりが
-  // タイムライン分析に飛ばされる
+  // Good Job投稿分析に飛ばされる
   '/admin/setup': { section: 'ダッシュボード', sectionHref: '/admin/brand-score', title: 'セットアップの進捗' },
-  '/admin/dashboard': { section: 'ダッシュボード', sectionHref: '/admin/brand-score', title: 'タイムライン分析' },
+  '/admin/dashboard': { section: 'ダッシュボード', sectionHref: '/admin/brand-score', title: 'Good Job投稿分析' },
   '/admin/brand-score': { section: 'ダッシュボード', sectionHref: '/admin/brand-score', title: 'ブランドスコア' },
   '/admin/analytics': { section: 'ダッシュボード', sectionHref: '/admin/brand-score', title: 'スマート名刺分析' },
   '/admin/analytics/learning': { section: 'ダッシュボード', sectionHref: '/admin/brand-score', title: 'ラーニング分析' },
