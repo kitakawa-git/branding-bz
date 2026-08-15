@@ -106,10 +106,10 @@ export function PortalIntroCard() {
         {/* 右：ポータル */}
         <div className="flex flex-col rounded-lg border border-ds-app-accent bg-blue-50 p-3.5">
           <span className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-ds-app-accent">
-            全員が見る
+            見せる場所
           </span>
           <p className="m-0 text-[18px] font-extrabold text-foreground">ポータル</p>
-          <p className="m-0 mb-2.5 text-[11.5px] text-muted-foreground">見せる場所</p>
+          <p className="m-0 mb-2.5 text-[11.5px] text-muted-foreground">全員が見る</p>
           <ul className="m-0 list-disc pl-4 text-[11.5px] leading-[1.9] text-muted-foreground">
             <li>私たちの「らしさ」4視点</li>
             <li>タイムライン</li>
