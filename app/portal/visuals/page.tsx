@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/dialog'
 import { LayoutGrid, Columns3, X } from 'lucide-react'
 import Masonry from 'react-masonry-css'
+import { BrandEmptyState } from '@/components/brand/BrandEmptyState'
 
 type LogoItem = { url: string; caption: string; added_index?: number }
 type LogoSection = { title: string; items: LogoItem[] }
@@ -197,7 +198,7 @@ export default function PortalVisualsPage() {
       </Card>
     </div>
   )
-  if (!data) return <div className="text-center py-16 text-muted-foreground text-[15px]">まだ登録されていません</div>
+  if (!data) return <BrandEmptyState label="ビジュアル" description="ブランドカラーとロゴの扱いを登録すると、全員が同じ見た目を使えるようになります。" href="/admin/brand/visuals" />
 
   // 画像があるセクションのみ表示
   const validSections = data.logo_sections.filter(s => s.items && s.items.length > 0)

@@ -16,6 +16,7 @@ import { BrandPageTracker } from '@/components/analytics/BrandPageTracker'
 import { resolveTraitCopy } from '@/lib/brand-mvv'
 import { BrandPersonaCard } from '@/components/shared/BrandPersonaCard'
 import { type PersonalityTraitItem } from '@/components/shared/PersonalityTraitList'
+import { BrandEmptyState } from '@/components/brand/BrandEmptyState'
 
 type TraitItem = { name: string; score: number; copy?: string; description: string; added_index?: number }
 
@@ -96,7 +97,7 @@ export default function PortalPersonalityPage() {
     </div>
   )
 
-  if (!data) return <div className="text-center py-16 text-muted-foreground text-[15px]">まだ登録されていません</div>
+  if (!data) return <BrandEmptyState label="ブランドパーソナリティ" description="ブランドの人格と特性を登録すると、「どんな会社か」の印象が全員に共有されます。" href="/admin/brand/personality" />
 
   // フィルター: 入力済みの特性のみ（ソート対応）
   const filteredTraits = data.traits_sort === 'custom'
@@ -107,7 +108,7 @@ export default function PortalPersonalityPage() {
   const archetype = data.archetype
 
   if (!hasTraits && !data.summary && !archetype) {
-    return <div className="text-center py-16 text-muted-foreground text-[15px]">まだ登録されていません</div>
+    return <BrandEmptyState label="ブランドパーソナリティ" description="ブランドの人格と特性を登録すると、「どんな会社か」の印象が全員に共有されます。" href="/admin/brand/personality" />
   }
 
   return (

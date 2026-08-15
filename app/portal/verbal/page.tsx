@@ -16,6 +16,7 @@ import { BrandExpressionTabs } from '../components/BrandExpressionTabs'
 import { BrandPersonalityCard } from '@/components/shared/BrandPersonalityCard'
 import { Input } from '@/components/ui/input'
 import { Search } from 'lucide-react'
+import { BrandEmptyState } from '@/components/brand/BrandEmptyState'
 
 type Term = {
   preferred_term: string
@@ -179,7 +180,7 @@ export default function PortalVerbalIdentityPage() {
   const hasPersonality = hasComm || hasTags || hasRules
 
   if (!hasTerms && !hasPersonality) {
-    return <div className="text-center py-16 text-muted-foreground text-[15px]">まだ登録されていません</div>
+    return <BrandEmptyState label="バーバル" description="言葉づかいのトーンと用語のルールを登録すると、話し方や書き方が揃います。" href="/admin/brand/verbal" />
   }
 
   return (

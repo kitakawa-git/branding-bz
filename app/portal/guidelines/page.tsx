@@ -20,6 +20,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
 import { BrandPageTracker } from '@/components/analytics/BrandPageTracker'
 import { ConceptVisualSlideshow } from './ConceptVisualSlideshow'
+import { BrandEmptyState } from '@/components/brand/BrandEmptyState'
 
 type ValueItem = { name: string; description: string; added_index?: number }
 type HistoryItem = { year: string; event: string }
@@ -190,7 +191,7 @@ export default function PortalGuidelinesPage() {
       </Card>
     </div>
   )
-  if (!data) return <div className="text-center py-16 text-muted-foreground text-[15px]">まだ登録されていません</div>
+  if (!data) return <BrandEmptyState label="ブランド方針" description="ミッション・ビジョン・行動指針を登録すると、全員がここで会社の考え方を確認できます。" href="/admin/brand/guidelines" />
 
   // フィルター: 入力済みのバリューのみ（ソート対応）
   const filteredValues = data.values_sort === 'custom'

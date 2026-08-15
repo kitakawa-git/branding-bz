@@ -25,6 +25,7 @@ import { TargetDeepDive } from '@/components/shared/TargetDeepDive'
 import { TargetFitMapPreview } from '@/components/shared/TargetFitMapPreview'
 import type { PositioningMapData } from '@/lib/types/positioning-map'
 import type { BrandStanceStatement, TargetFitMap } from '@/app/tools/stp/app/[sessionId]/page'
+import { BrandEmptyState } from '@/components/brand/BrandEmptyState'
 
 type Persona = PortalPersona
 
@@ -207,7 +208,7 @@ export default function PortalStrategyPage() {
   const hasDeepDive = !!strengths?.trim() || buyingFactors.length > 0 || competitorsAnalysis.length > 0
   const hasTarget = targetSegments.length > 0 || !!target || hasDeepDive
   const hasContent = hasTarget || personas.some(p => p.name) || positioningMapData || positioningMapUrl || providedValues.length > 0
-  if (!hasContent) return <div className="text-center py-16 text-muted-foreground text-[15px]">まだ登録されていません</div>
+  if (!hasContent) return <BrandEmptyState label="ブランド戦略" description="届けたいお客様像・立ち位置・提供する価値を登録すると、全員がここで確認できます。" href="/admin/brand/strategy" />
 
   const validPersonas = personas.filter(p => p.name)
 

@@ -7,6 +7,7 @@ import { usePortalAuth } from '../components/PortalDataProvider'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
+import { BrandEmptyState } from '@/components/brand/BrandEmptyState'
 
 type ValueItem = {
   title: string
@@ -63,7 +64,7 @@ export default function PortalValuesPage() {
       </Card>
     </div>
   )
-  if (values.length === 0) return <div className="text-center py-16 text-muted-foreground text-[15px]">まだ登録されていません</div>
+  if (values.length === 0) return <BrandEmptyState label="バリュー" description="大切にする価値観を登録すると、全員がここで確認できます。" href="/admin/brand/guidelines" />
 
   return (
     <div className="max-w-4xl mx-auto px-5 pt-4 pb-10 space-y-6">
