@@ -28,7 +28,7 @@ const PLANS = [
     description: 'AI構築ツールでブランドを言語化し、掲示として形にする。',
     scale: '〜5名',
     members: '5名',
-    support: '—',
+    support: 'メール',
     perPerson: '¥0',
     features: [
       '― 構築 ―',
