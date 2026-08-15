@@ -154,7 +154,12 @@ export function PortalSidebar() {
   // hidden は「管理者でない・全ステップ完了」を含むので、これだけで条件を満たす。
   // dismissed は見ない＝ポータルの「あとで」で消す対象ではない
   const onboarding = useOnboarding(company)
-  const showSupportBanner = !onboarding.loading && !onboarding.hidden
+  const setupOpen = !onboarding.loading && !onboarding.hidden
+  const showSupportBanner = setupOpen
+  // セットアップ中は管理画面の先頭タブが「セットアップの進捗」になる。
+  // /admin は無条件に /admin/brand-score へ飛ばすので、ここで直接そのタブへ送る
+  // （管理画面のサイドバー・タブは既に同じ出し分けをしている）
+  const adminHref = setupOpen ? '/admin/setup' : '/admin'
   // 会社の機能トグルと、区分ごとの表示設定（管理画面「設定」）の AND。
   // href の直書き分岐だと項目が増えるたびに書き足す必要があるので、項目側に持たせる
   const visibleEngagementItems = engagementItems.filter(
@@ -294,7 +299,7 @@ export function PortalSidebar() {
                   )}
                   {isAdmin && (
                     <DropdownMenuItem asChild className="h-11 px-3 gap-2 text-base font-medium rounded-md">
-                      <Link href="/admin" className="no-underline" onClick={handleNavClick}>
+                      <Link href={adminHref} className="no-underline" onClick={handleNavClick}>
                         <ArrowLeftRight className="size-4" />
                         管理画面
                       </Link>
