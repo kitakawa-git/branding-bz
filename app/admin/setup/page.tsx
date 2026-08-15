@@ -17,9 +17,9 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 
 export default function SetupProgressPage() {
-  const { company } = useAuth()
+  const { company, user } = useAuth()
   // dismissed は見ない。ポータルで「あとで」を押しても管理画面には残す
-  const onboarding = useOnboarding(company)
+  const onboarding = useOnboarding(company, { userId: user?.id })
 
   return (
     <div>

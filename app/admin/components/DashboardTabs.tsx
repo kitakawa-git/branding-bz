@@ -17,15 +17,17 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { visibleDashboardTabs } from '@/lib/constants/dashboard-tabs'
 import { useOnboarding } from '@/components/onboarding/use-onboarding'
+import { useAuth } from './AdminDataProvider'
 import { can } from '@/lib/billing/entitlements'
 
 type CompanyLike = Parameters<typeof can>[0]
 
 export function DashboardTabs({ company }: { company: CompanyLike }) {
   const pathname = usePathname()
+  const { user } = useAuth()
   // notifyOnComplete はポータルだけ。管理画面でも鳴らすと同じ完了で2回出る。
   // dismissed も見ない（ポータルで「あとで」を押しても管理画面には残す）
-  const onboarding = useOnboarding(company)
+  const onboarding = useOnboarding(company, { userId: user?.id })
   const setupOpen = !onboarding.loading && !onboarding.hidden && !!onboarding.view
 
   // 未完了のあいだは先頭に置く。最初にやることが左端にある状態にしたいのと、

@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react'
 import { useAuth } from './AdminDataProvider'
 import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
 import { PlanLockBadge } from '@/components/billing/plan-gate'
+import { useOnboarding } from '@/components/onboarding/use-onboarding'
 import type { FeatureKey } from '@/lib/billing/entitlements'
 import {
   Sidebar,
@@ -119,6 +120,14 @@ export function AppSidebar() {
   const visibleBrandItems = brandItems.filter(isVisible)
   const visiblePenetrationItems = penetrationItems.filter(isVisible)
 
+  // セットアップが途中なら、ダッシュボードの着地先を「セットアップの進捗」タブにする。
+  // 未完了の人にとっての「まず見る画面」はスコアではなく次にやること。
+  // userId を渡してページキャッシュを DashboardTabs と共有し、遷移のたびに
+  // 行き先が一瞬 brand-score に戻るのを防ぐ
+  const onboarding = useOnboarding(company, { userId: user?.id })
+  const setupOpen = !onboarding.loading && !onboarding.hidden && !!onboarding.view
+  const dashboardHref = setupOpen ? '/admin/setup' : '/admin/brand-score'
+
   // 構築ツールの残り回数（free/card のみ。無制限のプランでは limit=null で何も出ない）
   const [toolUsage, setToolUsage] = useState<{ limit: number | null; remaining: Record<string, number> | null }>({ limit: null, remaining: null })
   useEffect(() => {
@@ -165,14 +174,18 @@ export function AppSidebar() {
             <SidebarMenu>
               {visibleNavItems.map((item) => {
                 const Icon = item.icon
-                const isActive =
-                  item.href === '/admin/brand-score'
-                    ? pathname === '/admin/brand-score' || pathname.startsWith('/admin/dashboard') || pathname.startsWith('/admin/analytics')
-                    : pathname.startsWith(item.href)
+                // ダッシュボードはタブの束。どのタブにいても項目を点灯させる
+                const isDashboard = item.href === '/admin/brand-score'
+                const isActive = isDashboard
+                  ? pathname === '/admin/brand-score' ||
+                    pathname.startsWith('/admin/setup') ||
+                    pathname.startsWith('/admin/dashboard') ||
+                    pathname.startsWith('/admin/analytics')
+                  : pathname.startsWith(item.href)
                 return (
                   <SidebarMenuItem key={item.href}>
                     <SidebarMenuButton asChild isActive={isActive}>
-                      <Link href={item.href}>
+                      <Link href={isDashboard ? dashboardHref : item.href}>
                         <Icon size={18} />
                         <span>{item.label}</span>
                         {item.feature && <PlanLockBadge company={company} feature={item.feature} />}
