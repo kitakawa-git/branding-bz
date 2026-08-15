@@ -230,8 +230,7 @@ export function SetupSupportDialog({
           </>
         ) : (
           <>
-            {/* ダイアログの端まで届かせるため、DialogContent の p-6 を打ち消して敷く */}
-            <DialogHeader className="-mx-6 -mt-6 mb-1 rounded-t-lg bg-gradient-to-br from-violet-50 to-blue-50 px-6 pb-4 pt-5">
+            <DialogHeader>
               <span className="mb-1.5 inline-flex w-fit items-center gap-1 rounded-full bg-emerald-500 px-2.5 py-[3px] text-[10.5px] font-extrabold text-white">
                 <Check size={10} strokeWidth={3} aria-hidden="true" />
                 完全無料・30分
