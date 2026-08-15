@@ -263,7 +263,7 @@ export default function PortalTopPage() {
 
   // 初回セットアップ案内（管理者のみ）。未セットアップのあいだ、
   // ダッシュボードの中身をこれに差し替える（着地先は変えない）
-  const onboarding = useOnboarding(company, { notifyOnComplete: true })
+  const onboarding = useOnboarding(company, { notifyOnComplete: true, userId: user?.id })
   const showOnboarding = !onboarding.loading && !onboarding.hidden && !onboarding.dismissed
 
   // 機能トグル: タイムラインが無効なら投稿関連ウィジェットを非表示にする
@@ -725,7 +725,10 @@ export default function PortalTopPage() {
   // Loading state
   // ============================================
 
-  if (loading) {
+  // 案内を出すかどうか決まる前にダッシュボードを描くと、直後に案内へ
+  // 差し替わって一瞬ちらつく。管理者のときだけ判定を待つ
+  // （メンバーには案内を出さないので待たせる理由がない）
+  if (loading || (isAdmin && onboarding.loading)) {
     return (
       <div className="max-w-4xl mx-auto px-5 py-10 space-y-8">
         {/* スローガン＋ようこそ（中央） */}
