@@ -7,10 +7,10 @@
 |------------|------|------|
 | 3レイヤー構造 | 構築→浸透→発信 のプロダクト全体像 | 構築=AI構築ツール群、浸透=本体SaaS、発信=スマート名刺 |
 | 構築 | 理念・コピー・カラー・ペルソナをAIで策定するAI構築ツール群 | 無料〜フリーミアム |
-| 浸透 | branding.bz本体。ブランド掲示・Good Actionタイムライン・KPI・学習 | 月額サブスク |
+| 浸透 | branding.bz本体。ブランド掲示・Good Action投稿・KPI・学習 | 月額サブスク |
 | 発信 | スマート名刺。QRから個人＋企業ブランドの簡易ページ表示 |  |
 | ブランドスコア | ブランド理解度・浸透度の指標。簡易版=Premium／統合=Enterprise | 表記は「ブランドスコア」。Brand Score とは書かない |
-| Good Action | 社内のブランド体現を称賛し合うタイムライン機能 | 旧称 Good Job（2026-08-15 に改称）。新しい表記に出さない |
+| Good Action | 社内のブランド体現を称賛し合う投稿機能 | 旧称 Good Job（2026-08-15 に改称）。新しい表記に出さない |
 | RLS | Row Level Security（Supabaseの行単位アクセス制御） | 本番前にポリシー精緻化が課題 |
 | デモ企業 | 検証用固定企業（株式会社テックブリッジ / `128a1513`） | プレビュー検証はこの範囲で行う |
 
@@ -52,7 +52,8 @@
 | パーソナリティ診断ツール | – | Free 以上 | パーソナリティ診断 / ブランドパーソナリティ診断 |
 | CIマニュアル出力 | `ciManual` | Standard 以上 | CIマニュアルPDF |
 | ブランド掲示 | `brandGuidelinesEdit` ほか | Free 以上（編集＋閲覧） | ブランドガイドライン / ブランドページ |
-| Good Actionタイムライン | `timeline` | Standard 以上 | Good Job（旧称） / Good Action タイムライン（半角スペース入り） / タイムライン投稿 |
+| Good Action投稿 | `timeline` | Standard 以上 | Good Job（旧称） / Good Actionタイムライン（旧称） / タイムライン投稿 |
+| Good Action分析 | – | Standard 以上 | 管理画面ダッシュボードのタブ名。Good Job投稿分析（旧称） |
 | お知らせ配信＋Web Push | `announcements` | Standard 以上 | お知らせ / 通知機能 |
 | スマート名刺 | `smartCard` | Standard 以上 | デジタル名刺 / Web名刺 |
 | ビデオラーニング | `videoLearning` | Premium 以上 | 動画学習 / ラーニング動画 |
@@ -79,7 +80,6 @@
 
 | 正準表記 | サイドメニュー |
 |---|---|
-| Good Actionタイムライン | タイムライン |
 | KPI・目標管理 | KPI・目標 |
 | ビデオラーニング | ラーニング |
 | インナーサーベイ | サーベイ結果（＝結果閲覧画面） |
