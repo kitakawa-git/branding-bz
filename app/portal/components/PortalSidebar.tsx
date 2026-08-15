@@ -7,7 +7,7 @@ import { usePathname } from 'next/navigation'
 import { usePortalAuth } from './PortalDataProvider'
 import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
 import { isPortalPageVisibleForRole, isStaffRole, memberRoleLabel } from '@/lib/constants/member-roles'
-import { PlanLockBadge } from '@/components/billing/plan-gate'
+import { PlanLockBadge, PlanUpsell } from '@/components/billing/plan-gate'
 import { can, type FeatureKey } from '@/lib/billing/entitlements'
 import { CardPreviewDialog } from './CardPreviewDialog'
 import {
@@ -30,6 +30,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import {
   Compass,
   Target,
@@ -139,6 +140,7 @@ export function PortalSidebar() {
   const pathname = usePathname()
   const { member, companyName, companyLogoUrl, company, slogan, profileName, profilePhotoUrl, profileSlug, roleCategory, isAdmin, signOut } = usePortalAuth()
   const [cardPreviewOpen, setCardPreviewOpen] = useState(false)
+  const [cardLockedOpen, setCardLockedOpen] = useState(false)
   // スマホ時は項目タップでサイドバー（モバイルシート）を閉じる
   const { isMobile, setOpenMobile } = useSidebar()
   const handleNavClick = () => { if (isMobile) setOpenMobile(false) }
@@ -258,7 +260,16 @@ export function PortalSidebar() {
                     </Link>
                   </DropdownMenuItem>
                   {cardEnabled && (
-                    <DropdownMenuItem onClick={() => { handleNavClick(); setCardPreviewOpen(true) }} className="h-11 px-3 gap-2 text-base font-medium rounded-md">
+                    <DropdownMenuItem
+                      // プラン外ならプレビューは出さず、使えない旨の面を出す。
+                      // 項目ごと消さないのは「隠さずグレーで見せる」方針に合わせるため
+                      onClick={() => {
+                        handleNavClick()
+                        if (can(company, 'smartCard')) setCardPreviewOpen(true)
+                        else setCardLockedOpen(true)
+                      }}
+                      className="h-11 px-3 gap-2 text-base font-medium rounded-md"
+                    >
                       <CreditCard className="size-4" />
                       名刺プレビュー
                       {/* スマート名刺は Standard 以上。明るい面なので tone は light */}
@@ -283,6 +294,24 @@ export function PortalSidebar() {
           </SidebarMenu>
         </SidebarFooter>
       </Sidebar>
+
+      {/* プラン外のときの面。アップセルの体裁は他の画面と共通のものを使う */}
+      <Dialog open={cardLockedOpen} onOpenChange={setCardLockedOpen}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto border-none bg-transparent p-0 shadow-none sm:max-w-md">
+          <DialogTitle className="sr-only">スマート名刺を使うには</DialogTitle>
+          <PlanUpsell
+            company={company}
+            feature="smartCard"
+            title="スマート名刺を使うには"
+            benefits={[
+              'QRコードから社員プロフィール＋ブランドページを表示',
+              '閲覧数・アウタースコアで効果を測定',
+              '閲覧者からの印象タグ（マイクロフィードバック）を収集',
+            ]}
+            readOnly={!isAdmin}
+          />
+        </DialogContent>
+      </Dialog>
 
       {/* 名刺プレビューDialog */}
       <CardPreviewDialog
