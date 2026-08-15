@@ -75,7 +75,7 @@ export function PortalIntroCard() {
           <span className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-[hsl(216_12%_84%)]">
             管理者だけ
           </span>
-          <p className="m-0 text-sm font-extrabold text-white">管理画面</p>
+          <p className="m-0 text-[18px] font-extrabold text-white">管理画面</p>
           <p className="m-0 mb-2.5 text-[11.5px] text-[hsl(216_12%_84%)]">つくる場所</p>
           <ul className="m-0 list-disc pl-4 text-[11.5px] leading-[1.9] text-[hsl(216_12%_84%)]">
             <li>会社の基本情報</li>
@@ -108,7 +108,7 @@ export function PortalIntroCard() {
           <span className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-ds-app-accent">
             全員が見る
           </span>
-          <p className="m-0 text-sm font-extrabold text-foreground">ポータル</p>
+          <p className="m-0 text-[18px] font-extrabold text-foreground">ポータル</p>
           <p className="m-0 mb-2.5 text-[11.5px] text-muted-foreground">見せる場所</p>
           <ul className="m-0 list-disc pl-4 text-[11.5px] leading-[1.9] text-muted-foreground">
             <li>私たちの「らしさ」4視点</li>
