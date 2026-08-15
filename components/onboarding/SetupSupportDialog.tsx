@@ -417,8 +417,7 @@ export function SetupSupportDialog({
                 placeholder="つまずいている箇所、決めきれていないことなど"
               />
               <p className="m-0 mt-1 text-xs text-muted-foreground">
-                「何から書けばいいか分からない」の段階からご相談ください。
-                現在のセットアップの進み具合は自動で担当者に共有されます。
+                日程はこの後、担当者からのご連絡で確定します。
               </p>
             </div>
 
@@ -426,7 +425,8 @@ export function SetupSupportDialog({
 
             <DialogFooter className="items-center border-t border-border pt-4 sm:justify-between">
               <p className="m-0 text-xs text-muted-foreground">
-                日程はこの後、担当者からのご連絡で確定します。
+                「何から書けばいいか分からない」の段階からご相談ください。
+                現在のセットアップの進み具合は自動で担当者に共有されます。
               </p>
               <button
                 type="button"
