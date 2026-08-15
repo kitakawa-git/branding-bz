@@ -145,7 +145,7 @@ export function PlanUpsell({
           <button
             type="button"
             onClick={() => setRequestOpen(true)}
-            className="inline-flex h-11 items-center gap-1.5 rounded-xl bg-foreground px-6 text-sm font-bold text-background transition-transform hover:scale-[1.03]"
+            className="inline-flex h-11 items-center gap-1.5 rounded-full bg-foreground px-6 text-sm font-bold text-background transition-transform hover:scale-[1.03]"
           >
             プラン変更をリクエストする
             <ArrowRight size={15} aria-hidden="true" />
