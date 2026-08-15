@@ -63,14 +63,18 @@ export function PortalIntroCard() {
       {/* 図解：PCは横並び、モバイルは縦積み */}
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_40px_1fr] sm:gap-0">
         {/* 左：管理画面。実物の管理画面サイドバーと同じ地色にして、
-            「あの暗い画面のこと」と一目で結びつくようにする */}
-        <div className="flex flex-col rounded-lg border border-sidebar-border bg-sidebar p-3.5">
-          <span className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-sidebar-foreground/80">
+            「あの暗い画面のこと」と一目で結びつくようにする。
+            ⚠️ bg-sidebar は使えない。globals.css の [data-portal] が
+            --sidebar-* をポータル用の明るい配色に上書きしているので、
+            このカード（ポータル内）では明るいグレーになってしまう。
+            管理画面側の値（:root の --sidebar-background / -foreground / -border）を直に指定する */}
+        <div className="flex flex-col rounded-lg border-[hsl(218_14%_26%)] border bg-[hsl(220_13%_18%)] p-3.5">
+          <span className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-[hsl(216_12%_84%)]">
             管理者だけ
           </span>
           <p className="m-0 text-sm font-extrabold text-white">管理画面</p>
-          <p className="m-0 mb-2.5 text-[11.5px] text-sidebar-foreground">つくる場所</p>
-          <ul className="m-0 list-disc pl-4 text-[11.5px] leading-[1.9] text-sidebar-foreground">
+          <p className="m-0 mb-2.5 text-[11.5px] text-[hsl(216_12%_84%)]">つくる場所</p>
+          <ul className="m-0 list-disc pl-4 text-[11.5px] leading-[1.9] text-[hsl(216_12%_84%)]">
             <li>会社の基本情報</li>
             <li>ブランド方針（MVV）</li>
             <li>パーソナリティ</li>
