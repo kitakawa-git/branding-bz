@@ -231,10 +231,6 @@ export function SetupSupportDialog({
         ) : (
           <>
             <DialogHeader>
-              <span className="mb-1.5 inline-flex w-fit items-center gap-1 rounded-full bg-emerald-500 px-2.5 py-[3px] text-[10.5px] font-extrabold text-white">
-                <Check size={10} strokeWidth={3} aria-hidden="true" />
-                完全無料・30分
-              </span>
               <DialogTitle>入力サポートを申し込む</DialogTitle>
               <DialogDescription>
                 オンラインで画面を見ながら、担当者が入力をサポートします。
