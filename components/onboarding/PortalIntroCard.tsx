@@ -77,7 +77,7 @@ export function PortalIntroCard() {
           </span>
           <p className="m-0 text-[18px] font-extrabold text-white">管理画面</p>
           <p className="m-0 mb-2.5 text-[11.5px] text-[hsl(216_12%_84%)]">管理者のみ</p>
-          <ul className="m-0 list-disc pl-4 text-[11.5px] leading-[1.9] text-[hsl(216_12%_84%)]">
+          <ul className="m-0 list-disc pl-4 text-[14px] leading-[1.9] text-[hsl(216_12%_84%)]">
             <li>会社の基本情報</li>
             <li>ブランド方針（MVV）</li>
             <li>パーソナリティ</li>
@@ -110,7 +110,7 @@ export function PortalIntroCard() {
           </span>
           <p className="m-0 text-[18px] font-extrabold text-foreground">ポータル</p>
           <p className="m-0 mb-2.5 text-[11.5px] text-muted-foreground">メンバー全員</p>
-          <ul className="m-0 list-disc pl-4 text-[11.5px] leading-[1.9] text-muted-foreground">
+          <ul className="m-0 list-disc pl-4 text-[14px] leading-[1.9] text-muted-foreground">
             <li>私たちの「らしさ」4視点</li>
             <li>タイムライン</li>
             <li>KPI・目標</li>
