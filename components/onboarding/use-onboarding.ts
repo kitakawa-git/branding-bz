@@ -11,15 +11,18 @@ import { can } from '@/lib/billing/entitlements'
 import { toast } from 'sonner'
 
 /**
- * このセッションで最後に見た「全ステップ完了か」。
+ * このセッションで最後に見た「全ステップ完了か」を、会社ごとに覚える。
  *
  * モジュール変数にしているのは、ページを移動してフックが作り直されても
  * 「さっきまで未完了だった」を覚えておくため（最後の1つを管理画面で終えて
  * ポータルに戻る、という順路が実際に一番多い）。
  * リロードで消えるのは意図どおり。完了の通知は一度出れば役目が終わるので、
  * DB にも localStorage にも残さない。
+ *
+ * 会社ごとに持つのは、同じタブで別企業を跨いで見たときに、
+ * 未完了の会社Aの基準値を完了済みの会社Bが上書きして誤発火するのを防ぐため。
  */
-let seenAllDone: boolean | null = null
+const seenAllDoneByCompany = new Map<string, boolean>()
 
 type CompanyLike = Parameters<typeof can>[0]
 
@@ -46,6 +49,7 @@ export function useOnboarding(
   const [applicable, setApplicable] = useState(false)
   const [dismissed, setDismissed] = useState(false)
   const [status, setStatus] = useState<OnboardingStatus | null>(null)
+  const [companyId, setCompanyId] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -54,6 +58,7 @@ export function useOnboarding(
       .then((d) => {
         if (cancelled || !d) return
         setApplicable(!!d.applicable)
+        setCompanyId(d.companyId ?? null)
         setDismissed(!!d.dismissedAt)
         setStatus(d.status ?? null)
       })
@@ -78,13 +83,13 @@ export function useOnboarding(
   // 未完了 → 完了に変わった瞬間だけ一度出す。
   // 読み込んだ時点で既に完了している場合（過去に済ませた人）は出さない
   useEffect(() => {
-    if (!notifyOnComplete || allDone === null) return
-    const prev = seenAllDone
-    seenAllDone = allDone
+    if (!notifyOnComplete || allDone === null || !companyId) return
+    const prev = seenAllDoneByCompany.get(companyId)
+    seenAllDoneByCompany.set(companyId, allDone)
     if (prev === false && allDone) {
       toast.success('準備完了です。ここからは社員と同じ画面が表示されます')
     }
-  }, [notifyOnComplete, allDone])
+  }, [notifyOnComplete, allDone, companyId])
 
   return {
     loading,

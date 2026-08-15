@@ -64,6 +64,9 @@ export async function GET() {
 
     return NextResponse.json({
       applicable: true,
+      // 「準備完了」通知の基準値を会社ごとに持つためにクライアントへ返す。
+      // 1値だと、同じタブで別企業を跨いで見たときに誤発火する余地がある
+      companyId,
       status,
       dismissedAt: adminUser.onboarding_dismissed_at ?? null,
     })
