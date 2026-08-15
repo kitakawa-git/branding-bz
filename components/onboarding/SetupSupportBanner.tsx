@@ -11,7 +11,7 @@
 // 視覚言語として揃える。ds系トークンは hex 変数で不透明度修飾が効かないため、
 // ここでは素の Tailwind violet-* / blue-* を使う（白の半透明は標準色なので効く）。
 import Link from 'next/link'
-import { Check, Calendar, ChevronRight, Info } from 'lucide-react'
+import { Check, Calendar, ChevronRight, Headset } from 'lucide-react'
 
 // TODO(北川さん確認): 予約フォームのURL。決まるまでは問い合わせページに送る
 const SUPPORT_HREF = '/contact?subject=setup-support'
@@ -33,7 +33,7 @@ function SidebarCard() {
       className="group animate-in fade-in slide-in-from-bottom-2 block rounded-xl bg-gradient-to-br from-violet-600 to-blue-600 p-4 text-white no-underline duration-700 ease-out transition-all hover:shadow-[0_2px_8px_rgba(124,58,237,0.35)]"
     >
       <p className="m-0 flex items-start gap-1.5 text-base font-bold leading-snug">
-        <Info size={16} className="mt-0.5 shrink-0" aria-hidden="true" />
+        <Headset size={16} className="mt-0.5 shrink-0" aria-hidden="true" />
         入力にお困りですか？
       </p>
       <p className="m-0 mt-2 text-[12px] leading-relaxed opacity-90">
