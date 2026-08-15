@@ -7,30 +7,42 @@
 //   sidebar … ポータルの左サイドバー下部（幅 200px 前後の縦長）
 //   banner  … 管理画面「セットアップの進捗」の下（幅 660px 前後の横長）
 //
+// 申し込みはログインしたまま SetupSupportDialog で完結させる。
+// 以前は外部の問い合わせフォーム（/contact）に飛ばしていたが、
+// サービスサイトに出てしまい「アプリの中で助けてもらえる」感じが切れていた。
+//
 // 紫青のグラデは AIButton と同系統。サービス全体で「特別な機能・サポート」の
 // 視覚言語として揃える。ds系トークンは hex 変数で不透明度修飾が効かないため、
 // ここでは素の Tailwind violet-* / blue-* を使う（白の半透明は標準色なので効く）。
-import Link from 'next/link'
+import { useState } from 'react'
 import { Check, Calendar, ChevronRight, Headset } from 'lucide-react'
-
-// TODO(北川さん確認): 予約フォームのURL。決まるまでは問い合わせページに送る
-const SUPPORT_HREF = '/contact?subject=setup-support'
+import { SetupSupportDialog } from './SetupSupportDialog'
 
 export function SetupSupportBanner({ variant }: { variant: 'sidebar' | 'banner' }) {
-  if (variant === 'sidebar') return <SidebarCard />
-  return <GradientBanner />
+  const [open, setOpen] = useState(false)
+  return (
+    <>
+      {variant === 'sidebar' ? (
+        <SidebarCard onOpen={() => setOpen(true)} />
+      ) : (
+        <GradientBanner onOpen={() => setOpen(true)} />
+      )}
+      <SetupSupportDialog open={open} onOpenChange={setOpen} />
+    </>
+  )
 }
 
 /** ポータル左サイドバー下部：コンパクトカード */
-function SidebarCard() {
+function SidebarCard({ onOpen }: { onOpen: () => void }) {
   return (
-    <Link
-      href={SUPPORT_HREF}
+    <button
+      type="button"
+      onClick={onOpen}
       // 地色は AIButton と同じ紫青グラデ。サービス全体で
       // 「AI・特別なサポート」の視覚言語として揃える
       // 出るのは判定が済んだあと（少し遅れて現れる）ので、
       // ふっと差し込まれると視線を奪う。ゆっくり浮かび上がらせる
-      className="group animate-in fade-in slide-in-from-bottom-2 block rounded-xl bg-gradient-to-br from-violet-600 to-blue-600 p-4 text-white no-underline duration-700 ease-out transition-all hover:shadow-[0_2px_8px_rgba(124,58,237,0.35)]"
+      className="group animate-in fade-in slide-in-from-bottom-2 block w-full cursor-pointer rounded-xl border-0 bg-gradient-to-br from-violet-600 to-blue-600 p-4 text-left text-white no-underline duration-700 ease-out transition-all hover:shadow-[0_2px_8px_rgba(124,58,237,0.35)]"
     >
       <p className="m-0 flex items-start gap-1.5 text-base font-bold leading-snug">
         <Headset size={16} className="mt-0.5 shrink-0" aria-hidden="true" />
@@ -49,12 +61,12 @@ function SidebarCard() {
           aria-hidden="true"
         />
       </span>
-    </Link>
+    </button>
   )
 }
 
 /** 管理画面「セットアップの進捗」の下：グラデーション帯 */
-function GradientBanner() {
+function GradientBanner({ onOpen }: { onOpen: () => void }) {
   return (
     <div className="relative mt-4 overflow-hidden rounded-xl bg-gradient-to-br from-violet-600 to-blue-600 px-5 py-6 text-center text-white">
       {/* うっすら光を通す装飾。装飾なので読み上げ対象にしない */}
@@ -72,13 +84,14 @@ function GradientBanner() {
         <br className="hidden sm:block" />
         「何から書けばいいか分からない」の段階からご相談ください。
       </p>
-      <Link
-        href={SUPPORT_HREF}
-        className="relative inline-flex items-center gap-1.5 rounded-full bg-white px-6 py-2.5 text-sm font-extrabold text-violet-600 no-underline transition-all hover:-translate-y-px hover:shadow-[0_6px_20px_rgba(0,0,0,0.15)]"
+      <button
+        type="button"
+        onClick={onOpen}
+        className="relative inline-flex cursor-pointer items-center gap-1.5 rounded-full border-0 bg-white px-6 py-2.5 text-sm font-extrabold text-violet-600 no-underline transition-all hover:-translate-y-px hover:shadow-[0_6px_20px_rgba(0,0,0,0.15)]"
       >
         <Calendar size={14} aria-hidden="true" />
         相談を予約する
-      </Link>
+      </button>
     </div>
   )
 }
