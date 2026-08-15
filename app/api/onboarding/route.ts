@@ -60,6 +60,8 @@ export async function GET() {
       announcement,
       invited,
       visuals,
+      traitsOrSummary,
+      archetype,
       terms,
       tone,
       memberCount,
@@ -70,6 +72,23 @@ export async function GET() {
       exists('announcements', companyId),
       exists('invite_links', companyId),
       exists('brand_visuals', companyId),
+      // パーソナリティは手入力（特性・要約）と診断連携（アーキタイプ）で
+      // 入る先が違うので、どの経路で登録しても完了になるよう OR で見る
+      admin
+        .from('brand_guidelines')
+        .select('traits, personality_summary')
+        .eq('company_id', companyId)
+        .maybeSingle()
+        .then((r) => {
+          const g = r.data as { traits?: unknown[] | null; personality_summary?: string | null } | null
+          return (g?.traits?.length ?? 0) > 0 || !!g?.personality_summary
+        }),
+      admin
+        .from('brand_personalities')
+        .select('id', { count: 'exact', head: true })
+        .eq('company_id', companyId)
+        .not('archetype', 'is', null)
+        .then((r) => (r.count ?? 0) > 0),
       exists('brand_terms', companyId),
       admin
         .from('brand_personalities')
@@ -95,6 +114,7 @@ export async function GET() {
       // ロゴは任意なので条件に入れない（画像を持たない会社が永久に未完了になる）
       basics: !!companyRow?.industry_category,
       philosophy,
+      personality: traitsOrSummary || archetype,
       visuals,
       verbal: tone || terms,
       post,

@@ -4,7 +4,7 @@
 // ステップ定義も完了判定もここ1箇所に置く。2箇所に書くと必ず片方だけ直す日が来る。
 //
 // プランごとに別のステップ列を持つ:
-//   free  … ブランド情報の入力に絞った5つ。できることだけで完結させる
+//   free  … ブランド情報の入力に絞った6つ。できることだけで完結させる
 //   それ以外 … 掲示から発信まで一巡する4つ
 // 「standard の列からプラン外に鍵をかける」引き算にすると、free では
 // 「4つのうち2つ押せない」案内になり、できることが埋もれる。
@@ -16,6 +16,7 @@ import { getEffectivePlan, getMaxMembers, type Plan } from '@/lib/billing/entitl
 export type OnboardingStepId =
   | 'basics'
   | 'philosophy'
+  | 'personality'
   | 'visuals'
   | 'verbal'
   | 'post'
@@ -55,14 +56,14 @@ export type OnboardingConfig = {
  * 受け手側の言い方（考え方／見え方・聞こえ方）だと、登録しに行く画面の名前と
  * 一致せず、着いた先で「どれを触ればいいのか」が分からなくなる。
  *
- * ブランドパーソナリティと戦略はステップにしない
- * （診断は F2 の下書き支援に置く。戦略は初回に必須ではない）。
+ * 管理画面でメニューが分かれているものは案内も分ける。
+ * ブランド戦略だけはステップにしない（初回に必須ではない）。
  */
 function freeConfig(plan: Plan): OnboardingConfig {
   const maxMembers = getMaxMembers(plan)
   return {
     heading: 'まず、会社の「らしさ」をかたちにしましょう',
-    lead: '基本情報 → 方針 → ビジュアル → バーバルの順に登録すると、ここが会社の全員がブランドと出会う場所になります。AIツールが下書きを手伝います。',
+    lead: '基本情報 → 方針 → パーソナリティ → ビジュアル → バーバルの順に登録すると、ここが会社の全員がブランドと出会う場所になります。AIツールが下書きを手伝います。',
     showPlanBadge: true,
     steps: [
       {
@@ -81,6 +82,15 @@ function freeConfig(plan: Plan): OnboardingConfig {
           'ミッション・ビジョン・行動指針。まだ言葉になっていなくても大丈夫です。',
         ctaLabel: 'ブランド方針を登録する',
         href: '/admin/brand/guidelines',
+      },
+      {
+        id: 'personality',
+        title: 'ブランドパーソナリティを登録する',
+        duration: '約10分',
+        description:
+          'ブランドの人格と特性。どんな性格の会社として見られたいかが決まります。',
+        ctaLabel: 'パーソナリティを登録する',
+        href: '/admin/brand/personality',
         assist: { label: 'パーソナリティ診断で下書きを作る', href: '/tools/personality' },
       },
       {
@@ -109,7 +119,7 @@ function freeConfig(plan: Plan): OnboardingConfig {
         description:
           '登録した「らしさ」を、まず身近なメンバーに見てもらいましょう。',
         ctaLabel: '招待リンクを発行する',
-        ctaLabelWaiting: 'ステップ1〜4のあとで',
+        ctaLabelWaiting: 'ステップ1〜5のあとで',
         href: '/admin/members-portal',
       },
     ],
