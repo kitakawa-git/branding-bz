@@ -67,8 +67,11 @@ export function PortalIntroCard() {
             ⚠️ bg-sidebar は使えない。globals.css の [data-portal] が
             --sidebar-* をポータル用の明るい配色に上書きしているので、
             このカード（ポータル内）では明るいグレーになってしまう。
-            管理画面側の値（:root の --sidebar-background / -foreground / -border）を直に指定する */}
-        <div className="flex flex-col rounded-lg border-[hsl(218_14%_26%)] border bg-[hsl(220_13%_18%)] p-3.5">
+            地色は 220 13% 21%。globals.css の :root は 18% だが、
+            AdminDataProvider が SidebarProvider に 21% を渡して管理画面だけ明るくしている。
+            そちらを変えたらここも合わせる（app/admin/components/AdminDataProvider.tsx）。
+            文字と枠線は上書きが無いので :root の値をそのまま使う */}
+        <div className="flex flex-col rounded-lg border-[hsl(218_14%_26%)] border bg-[hsl(220_13%_21%)] p-3.5">
           <span className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-[hsl(216_12%_84%)]">
             管理者だけ
           </span>
