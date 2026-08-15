@@ -620,9 +620,11 @@ export default function BrandScoreDashboard() {
                   </Link>
                 </Button>
               )}
+              {/* 配布に使う QR は「スマート名刺」にある。メンバー管理には
+                  アカウントの追加と名刺のオンオフしか無く、配布はできない */}
               {isFeatureEnabled(company, 'card_enabled') && (
                 <Button asChild variant="outline" size="sm">
-                  <Link href="/admin/members">
+                  <Link href="/admin/card-template">
                     <CreditCard size={14} />
                     名刺を配布する
                   </Link>

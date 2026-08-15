@@ -780,8 +780,8 @@ export function BrandScoreView({
             </p>
             {!readOnly && (
               <Button asChild size="sm" variant="outline">
-                <Link href="/admin/members">
-                  名刺を管理 <ArrowRight size={12} />
+                <Link href="/admin/card-template">
+                  QRコードを配布 <ArrowRight size={12} />
                 </Link>
               </Button>
             )}
