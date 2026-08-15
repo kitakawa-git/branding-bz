@@ -6,6 +6,10 @@
 // 「どのプランにしたいか」を受け取ってスーパー管理に積み、こちらで反映する。
 // その前提が伝わらないと「押したのに変わらない」と受け取られるため、
 // 画面には毎回「依頼を受けてこちらで手続きする」と書く。
+//
+// ⚠️ 文面に「担当者」を使わない。このダイアログはプランを問わず開けるが、
+//    専任の担当者が付くのは上位プランだけで、Free には付かない。
+//    宛先を書く必要があるところは「ID INC.」とする。
 import { useEffect, useState } from 'react'
 import { Check, Loader2 } from 'lucide-react'
 import {
@@ -117,21 +121,21 @@ export function PlanChangeRequestDialog({
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
         {done ? (
           <>
-            <DialogHeader>
+            <DialogHeader className="space-y-3 sm:text-center">
               <DialogTitle>依頼を受け付けました</DialogTitle>
               <DialogDescription>
-                {PLAN_LABELS[selected ?? ''] ?? selected} への変更依頼を担当者に送りました。
+                {PLAN_LABELS[selected ?? ''] ?? selected} への変更依頼を送りました。
                 {selected === 'enterprise'
-                  ? '個別見積のため、担当者からご連絡してお見積りのうえで切り替えます。'
+                  ? '個別見積のため、ID INC. からご連絡してお見積りのうえで切り替えます。'
                   : '内容を確認したうえでこちらでプランを切り替えます。'}
                 切り替わるまでは今のプランのままです。
               </DialogDescription>
             </DialogHeader>
-            <DialogFooter>
+            <DialogFooter className="sm:justify-center">
               <button
                 type="button"
                 onClick={() => onOpenChange(false)}
-                className="inline-flex h-11 items-center justify-center rounded-xl bg-foreground px-6 text-sm font-bold text-background"
+                className="inline-flex h-11 items-center justify-center rounded-full bg-foreground px-6 text-sm font-bold text-background"
               >
                 閉じる
               </button>
@@ -139,7 +143,7 @@ export function PlanChangeRequestDialog({
           </>
         ) : (
           <>
-            <DialogHeader>
+            <DialogHeader className="space-y-3 sm:text-center">
               <DialogTitle>プラン変更をリクエスト</DialogTitle>
               <DialogDescription>
                 この場でプランは変わりません。依頼を受けてこちらで手続きし、確認のうえ切り替えます。
@@ -216,7 +220,7 @@ export function PlanChangeRequestDialog({
 
             <div>
               <label htmlFor="plan-request-note" className="mb-1 block text-sm font-medium">
-                担当者への伝達事項（任意）
+                伝達事項（任意）
               </label>
               <Textarea
                 id="plan-request-note"
@@ -230,12 +234,12 @@ export function PlanChangeRequestDialog({
 
             {error && <p className="text-sm text-red-600">{error}</p>}
 
-            <DialogFooter>
+            <DialogFooter className="sm:justify-center">
               <button
                 type="button"
                 onClick={submit}
                 disabled={!selected || saving}
-                className="inline-flex h-11 items-center justify-center gap-1.5 rounded-xl bg-foreground px-6 text-sm font-bold text-background disabled:opacity-40"
+                className="inline-flex h-11 items-center justify-center gap-1.5 rounded-full bg-foreground px-6 text-sm font-bold text-background disabled:opacity-40"
               >
                 {saving && <Loader2 size={15} className="animate-spin" aria-hidden="true" />}
                 {pending ? 'この内容で変更をリクエストし直す' : 'この内容で変更をリクエスト'}
