@@ -795,13 +795,45 @@ export default function PortalTopPage() {
       </div>
 
       {/* ===== 1.3. 未回答サーベイバナー ===== */}
-      <div className="mb-4">
+      {/* 中身（SurveyBanner）は未回答が無いと null を返す。
+          empty:hidden が無いと、この枠だけが残って余白として居座る */}
+      <div className="mb-4 empty:hidden">
         <SurveyBanner />
       </div>
 
+      {/* ===== 1.35. 目標・KPI未設定バナー =====
+          サーベイ・理解度テストと同じ「やってください」の通知なので、
+          並べて同じ様式・同じ位置に置く（以前は下のブランドスコアの後にあり、種類が違うものに見えていた） */}
+      {kpiVisible && !hasGoals && showGoalBanner && (
+        <div className="mb-4 bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-4">
+          <div className="shrink-0 text-red-600">
+            <Target size={24} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-base font-semibold text-red-600 m-0">
+              目標とKPIを決めましょう
+            </p>
+            <p className="text-sm text-muted-foreground m-0 mt-0.5 truncate">
+              {goalPeriodType === 'year'
+                ? '年間の目標'
+                : goalPeriodType === 'half'
+                  ? '半年間の目標'
+                  : goalPeriodType === 'quarter'
+                    ? '３ヶ月間の目標'
+                    : '今期の目標'}
+            </p>
+          </div>
+          <Button asChild className="shrink-0 h-11 px-5 rounded-full">
+            <Link href="/portal/kpi?setup=true" className="no-underline">
+              設定
+            </Link>
+          </Button>
+        </div>
+      )}
+
       {/* ===== 1.4. 未受験 理解度テストバナー ===== */}
       {quizEnabled && (
-        <div className="mb-4">
+        <div className="mb-4 empty:hidden">
           <QuizBanner />
         </div>
       )}
@@ -939,7 +971,7 @@ export default function PortalTopPage() {
           表示は管理画面と同じ BrandScoreView。読み取り専用で、
           記録設定やAI再生成などの操作系は出さない */}
       {brandScoreVisible && companyId && (
-        <div className="mb-8">
+        <div className="mb-8 empty:hidden">
           <BrandScorePortalSection
             companyId={companyId}
             surveyHref={surveyVisible ? '/portal/survey' : null}
@@ -949,17 +981,7 @@ export default function PortalTopPage() {
         </div>
       )}
 
-      {/* ===== 2.5. KPIバナー / サマリー（KPI無効時は非表示） ===== */}
-      {kpiVisible && !hasGoals && showGoalBanner && (
-        <Link href="/portal/kpi?setup=true" className="no-underline block mb-8">
-          <div className="rounded-full bg-[#F41189] px-6 py-4 flex items-center justify-between hover:opacity-90 transition-opacity">
-            <p className="text-white text-base font-semibold m-0">
-              {goalPeriodType === 'year' ? '年間' : goalPeriodType === 'half' ? '半年間' : goalPeriodType === 'quarter' ? '３ヶ月間' : ''}目標とKPIを決めましょう！
-            </p>
-            <ArrowRight size={18} className="text-white shrink-0 ml-3" />
-          </div>
-        </Link>
-      )}
+      {/* ===== 2.5. KPIサマリー（KPI無効時は非表示。未設定時のバナーは 1.35 に置く） ===== */}
       {kpiVisible && hasGoals && (() => {
         const STATUS_LABELS: Record<string, string> = { not_started: '未着手', in_progress: '進行中', completed: '達成' }
         const STATUS_COLORS: Record<string, string> = { not_started: 'bg-gray-100 text-gray-600', in_progress: 'bg-blue-100 text-ds-app-accent-hover', completed: 'bg-green-100 text-green-700' }
