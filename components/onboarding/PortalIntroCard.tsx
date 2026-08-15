@@ -40,7 +40,7 @@ export function PortalIntroCard() {
   if (!mounted || dismissed) return null
 
   return (
-    <div className="mb-4 rounded-xl border border-border bg-white p-5">
+    <div className="mb-4 rounded-xl border border-border bg-[hsl(0_0%_97%)] p-5">
       {/* 見出し */}
       <div className="mb-4 flex items-start justify-between gap-4">
         <div className="min-w-0">
@@ -124,7 +124,8 @@ export function PortalIntroCard() {
       </div>
 
       {/* 補足 */}
-      <div className="mt-3.5 rounded-lg bg-muted px-3 py-2.5 text-[11.5px] leading-relaxed text-muted-foreground">
+      {/* カード地が薄いグレーになったので、bg-muted(#f5f5f5) だと沈んで区別がつかない */}
+      <div className="mt-3.5 rounded-lg border border-border bg-white px-3 py-2.5 text-[11.5px] leading-relaxed text-muted-foreground">
         <p className="m-0">
           💡
           下のステップから管理画面に移動して登録します。登録が終わるとこのポータルに中身が入り、メンバーを招待できる状態になります。
