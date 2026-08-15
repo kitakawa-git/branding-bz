@@ -113,7 +113,7 @@ export default function PortalSurveyPage() {
           readOnly={!isAdmin}
           company={company}
           feature="innerSurvey"
-          title="サーベイ結果を見るには"
+          title="インナーサーベイ結果を見るには"
           benefits={[
             '社員サーベイで理念の浸透度を可視化',
             '浸透の5段階で現在地を把握',
