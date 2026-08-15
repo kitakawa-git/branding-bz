@@ -10,7 +10,11 @@
 //
 // カレンダー連携はしないので、その場で日程は確定しない。
 // ただし「確定しません」と否定形で先に言うと不安が残るため、
-// 肯定形（このあと担当者から連絡して確定する）でフッターに置く。
+// 肯定形（このあとスタッフから連絡して確定する）で伝える。
+//
+// ⚠️ 文面に「担当者」を使わない。この案内はプランを問わず出るが、
+//    専任の担当者が付くのは上位プランだけで、Free には付かない。
+//    実態どおり「ID INC. のスタッフ」と書く。
 //
 // ⚠️ API・DB は自由記述時代のまま（preferred_slots は text）。
 //    候補日は送る直前に1行の文字列へ整形する。受け取り側（スーパー管理）は
@@ -214,7 +218,7 @@ export function SetupSupportDialog({
             <DialogHeader>
               <DialogTitle>お申し込みを受け付けました</DialogTitle>
               <DialogDescription>
-                いただいた候補日をもとに、担当者からご連絡して日程を確定します。
+                いただいた候補日をもとに、ID INC. のスタッフからご連絡して日程を確定します。
                 オンラインで画面を見ながら一緒に入力しますので、準備は不要です。
               </DialogDescription>
             </DialogHeader>
@@ -235,7 +239,7 @@ export function SetupSupportDialog({
             <DialogHeader className="space-y-3 sm:text-center">
               <DialogTitle>入力サポートを申し込む</DialogTitle>
               <DialogDescription>
-                オンラインで画面を見ながら、担当者が入力をサポートします。
+                オンラインで画面を見ながら、入力をサポートします。
               </DialogDescription>
             </DialogHeader>
 
@@ -419,7 +423,7 @@ export function SetupSupportDialog({
                 placeholder="つまずいている箇所、決めきれていないことなど"
               />
               <p className="m-0 mt-4 text-center text-xs text-muted-foreground">
-                日程はこの後、担当者からのご連絡で確定します。
+                日程はこの後、スタッフからのご連絡で確定します。
               </p>
             </div>
 

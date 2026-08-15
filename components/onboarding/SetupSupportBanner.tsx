@@ -80,7 +80,7 @@ function GradientBanner({ onOpen }: { onOpen: () => void }) {
       </span>
       <p className="relative m-0 text-[18px] font-extrabold">入力にお困りですか？</p>
       <p className="relative m-0 mb-3.5 mt-1.5 text-sm leading-relaxed opacity-90">
-        オンラインで画面を見ながら、担当者が入力をサポートします。
+        オンラインで画面を見ながら、ID INC. のスタッフが入力をサポートします。
         <br className="hidden sm:block" />
         「何から書けばいいか分からない」の段階からご相談ください。
       </p>
