@@ -82,7 +82,7 @@ export default function BrandMapSection({
   // 空状態
   if (graph.edges.length === 0) {
     return (
-      <p className="text-sm text-foreground border border-border bg-muted/40 rounded-lg p-3 m-0">
+      <p className="text-sm text-foreground border border-border bg-muted/40 rounded-xl p-3 m-0">
         関係が登録されるとマップが表示されます。「編集する」→Step 4（関係性）でAIスキャンを実行するか、関係グラフから手動で追加してください
         {graph.unconnectedCount > 0 && `（現在、未接続の要素 ${graph.unconnectedCount}件）`}
       </p>
@@ -116,7 +116,7 @@ export default function BrandMapSection({
 
       {/* クリック詳細 */}
       {selectedNode && (
-        <div className="border border-border rounded-lg p-3 mt-2 bg-muted/30">
+        <div className="border border-border rounded-xl p-3 mt-2 bg-muted/30">
           <div className="flex items-start justify-between gap-2">
             <div className="flex flex-wrap items-center gap-1.5">
               <span className="py-0.5 px-2 rounded text-[11px] font-semibold text-white" style={{ background: nodeColor(selectedNode) }}>

@@ -109,7 +109,7 @@ export default function OutputTestPanel({ companyId }: { companyId: string }) {
   }
 
   return (
-    <div className="border border-border rounded-lg bg-background p-3">
+    <div className="border border-border rounded-xl bg-background p-3">
       {/* ヘッダー行：問い＋形式＋実行 */}
       <div className="flex flex-wrap items-center gap-2 mb-3">
         <h4 className="text-sm font-bold text-foreground m-0">この体系で、言葉はどう変わる？</h4>
@@ -133,7 +133,7 @@ export default function OutputTestPanel({ companyId }: { companyId: string }) {
       </div>
 
       {result?.noOntology && (
-        <p className="text-[13px] text-amber-700 border border-amber-200 bg-amber-50/60 rounded-lg p-3 m-0 mb-3">
+        <p className="text-[13px] text-amber-700 border border-amber-200 bg-amber-50/60 rounded-xl p-3 m-0 mb-3">
           この会社はオントロジー（理念・提供価値・実績・ルール・関係）が未登録のため、注入あり／なしの結果は同じになります。まず各ステップで登録してください
         </p>
       )}
@@ -151,7 +151,7 @@ export default function OutputTestPanel({ companyId }: { companyId: string }) {
       {/* 比較ステージ（生成前から常設） */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {/* 左: オントロジーなし */}
-        <div className="border border-border bg-muted/30 rounded-lg p-3">
+        <div className="border border-border bg-muted/30 rounded-xl p-3">
           <div className="mb-1.5">
             <span className="py-0.5 px-2 bg-gray-100 text-gray-600 rounded text-[11px] font-bold">
               オントロジーなし（一般的なAI）
@@ -173,7 +173,7 @@ export default function OutputTestPanel({ companyId }: { companyId: string }) {
         </div>
 
         {/* 右: オントロジーあり（この体系を注入） */}
-        <div className="border border-violet-200 bg-violet-50/40 rounded-lg p-3">
+        <div className="border border-violet-200 bg-violet-50/40 rounded-xl p-3">
           <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
             <span className="py-0.5 px-2 bg-violet-100 text-violet-800 rounded text-[11px] font-bold">
               オントロジーあり（この体系を注入）

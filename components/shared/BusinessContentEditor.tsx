@@ -38,7 +38,7 @@ function SortableBusinessItem({
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }
   return (
-    <div ref={setNodeRef} style={style} className="border border-border rounded-lg p-3 mb-2 bg-background">
+    <div ref={setNodeRef} style={style} className="border border-border rounded-xl p-3 mb-2 bg-background">
       <div className="flex gap-2 mb-2 items-center">
         <button type="button" className="p-1 rounded hover:bg-gray-200 cursor-grab active:cursor-grabbing text-muted-foreground shrink-0" {...attributes} {...listeners}>
           <GripVertical size={16} />

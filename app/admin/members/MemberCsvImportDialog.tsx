@@ -150,7 +150,7 @@ export function MemberCsvImportDialog({
             <button
               type="button"
               onClick={() => inputRef.current?.click()}
-              className="flex w-full flex-col items-center gap-2 rounded-lg border border-dashed p-6 text-center transition-colors hover:bg-muted/40"
+              className="flex w-full flex-col items-center gap-2 rounded-xl border border-dashed p-6 text-center transition-colors hover:bg-muted/40"
             >
               {parsing ? (
                 <Loader2 size={20} className="animate-spin text-muted-foreground" />

@@ -832,7 +832,7 @@ export default function PortalTopPage() {
           サーベイ・理解度テストと同じ「やってください」の通知なので、
           並べて同じ様式・同じ位置に置く（以前は下のブランドスコアの後にあり、種類が違うものに見えていた） */}
       {kpiVisible && !hasGoals && showGoalBanner && (
-        <div className="mb-4 bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-4">
+        <div className="mb-4 bg-red-50 border border-red-200 rounded-xl p-4 flex items-center gap-4">
           <div className="shrink-0 text-red-600">
             <Target size={24} />
           </div>
@@ -955,7 +955,7 @@ export default function PortalTopPage() {
       )}
 
       {/* ===== 2.7. 私たちの「らしさ」4象限概観カード ===== */}
-      <div className="mb-4 rounded-lg border border-gray-200 bg-[hsl(0_0%_97%)] p-5">
+      <div className="mb-4 rounded-xl border border-gray-200 bg-[hsl(0_0%_97%)] p-5">
         <div className="flex items-center gap-2 mb-3">
           <h2 className="text-sm font-bold text-foreground tracking-wide m-0">
             私たちの「らしさ」
@@ -1070,7 +1070,7 @@ export default function PortalTopPage() {
 
       {/* ===== 4. あなたのブランドコミット（タイムライン由来。無効時は非表示） ===== */}
       {timelineEnabled && personalStats && (
-      <div className="mb-4 rounded-lg border border-gray-200 bg-[hsl(0_0%_97%)] p-5">
+      <div className="mb-4 rounded-xl border border-gray-200 bg-[hsl(0_0%_97%)] p-5">
       {(() => {
         const catWithData = filteredStats.categoryDistribution.filter(d => d.count > 0)
         const totalCatCount = catWithData.reduce((sum, d) => sum + d.count, 0)

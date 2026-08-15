@@ -249,14 +249,14 @@ export default function OntologyBuilderSection({
     if (inspection.uncoveredWarnCount !== 0) return null
     if (!basicsDone) {
       return (
-        <p className="text-[13px] text-muted-foreground border border-border bg-muted/40 rounded-lg p-3 mb-4">
+        <p className="text-[13px] text-muted-foreground border border-border bg-muted/40 rounded-xl p-3 mb-4">
           解消すべき検出は0件ですが、データがまだ少ないため検出対象がない状態です。先に実績・言葉のルール・関係性を埋めてください（理念が未登録なら上部のチップから登録してください）
         </p>
       )
     }
     const pending = inspection.acknowledgedUnprovenCount
     return (
-      <div className="border border-green-200 bg-green-50 rounded-lg p-4 mb-4">
+      <div className="border border-green-200 bg-green-50 rounded-xl p-4 mb-4">
         <p className="text-sm font-bold text-green-800 m-0 mb-1">
           オントロジー構築完了{pending > 0 ? `（保留 ${pending}件）` : ''} 🎉
         </p>

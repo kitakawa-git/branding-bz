@@ -17,7 +17,7 @@ interface PositioningMapAndStanceProps {
 
 export function PositioningMapAndStance({ positioningMapData, brandStance, emptyStanceMessage, belowMap }: PositioningMapAndStanceProps) {
   return (
-    <div className="rounded-lg border border-gray-200 bg-[hsl(0_0%_97%)] p-5">
+    <div className="rounded-xl border border-gray-200 bg-[hsl(0_0%_97%)] p-5">
       {/* 自社の立ち位置（ターゲット別×N） */}
       {(brandStance.length > 0 || emptyStanceMessage) && (
         <div className="mb-8">
@@ -59,7 +59,7 @@ export function PositioningMapAndStance({ positioningMapData, brandStance, empty
 
       <h2 className="mb-3 text-sm font-bold text-gray-900">ポジショニングマップ</h2>
       {/* マップ */}
-      <div className="rounded-lg border bg-white p-3">
+      <div className="rounded-xl border bg-white p-3">
         <PositioningMap data={positioningMapData} />
       </div>
       {belowMap && <div className="mt-3">{belowMap}</div>}

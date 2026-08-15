@@ -22,7 +22,7 @@ function ScoreBadge({ label, value, tone }: { label: string; value: number; tone
 
 function ReviewBody({ review }: { review: CopyReview }) {
   return (
-    <div className="mt-3 rounded-lg border border-gray-200 bg-white p-4">
+    <div className="mt-3 rounded-xl border border-gray-200 bg-white p-4">
       <div className="mb-3 flex flex-wrap items-center gap-3">
         <ScoreBadge label="コピー力 craft" value={review.craft_score} tone="craft" />
         <ScoreBadge label="整合 brand_fit" value={review.brand_fit_score} tone="fit" />
@@ -114,7 +114,7 @@ export default function ReviewPanel({
     <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
       <CardContent className="p-5">
         {/* before（対象draft） */}
-        <div className="rounded-lg border border-gray-200 bg-white p-4">
+        <div className="rounded-xl border border-gray-200 bg-white p-4">
           <div className="mb-1.5 flex items-center gap-2">
             <Badge variant="secondary" className="text-[11px]">{COPY_ROLE_MATRIX[target.copy_role]?.label ?? target.copy_role}</Badge>
             <span className="text-[11px] text-gray-400">対象ドラフト</span>
@@ -144,7 +144,7 @@ export default function ReviewPanel({
                 const cr = latestReview(c.id)
                 const beforeCraft = targetReview?.craft_score
                 return (
-                  <div key={c.id} className="mb-3 rounded-lg border border-ds-app-accent/40 bg-white p-4">
+                  <div key={c.id} className="mb-3 rounded-xl border border-ds-app-accent/40 bg-white p-4">
                     <div className="mb-1.5 flex items-center gap-2">
                       <Badge variant="outline" className="text-[11px]">リライト #{idx + 1}</Badge>
                       {cr && beforeCraft != null && (

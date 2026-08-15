@@ -159,7 +159,7 @@ export default function PortalGuidelinesPage() {
             <Skeleton className="h-4 w-20 mb-3" />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {[1, 2, 3, 4].map(i => (
-                <div key={i} className="rounded-lg border border-border bg-background p-5">
+                <div key={i} className="rounded-xl border border-border bg-background p-5">
                   <Skeleton className="h-5 w-32 mb-2" />
                   <Skeleton className="h-4 w-full" />
                 </div>
@@ -173,7 +173,7 @@ export default function PortalGuidelinesPage() {
         <CardContent className="p-4 sm:p-5 space-y-3">
           <Skeleton className="h-4 w-24" />
           {[1, 2, 3].map(i => (
-            <div key={i} className="rounded-lg border border-border bg-background p-4 flex items-start gap-4">
+            <div key={i} className="rounded-xl border border-border bg-background p-4 flex items-start gap-4">
               <Skeleton className="size-9 rounded-full shrink-0" />
               <div className="flex-1 space-y-2"><Skeleton className="h-4 w-32" /><Skeleton className="h-3 w-full" /></div>
             </div>
@@ -296,7 +296,7 @@ export default function PortalGuidelinesPage() {
                   <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">バリュー</h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {filteredValues.map((v, i) => (
-                      <div key={i} className="rounded-lg border border-border bg-background p-5">
+                      <div key={i} className="rounded-xl border border-border bg-background p-5">
                         <p className="text-lg font-bold text-foreground mb-1.5 m-0" style={primaryStyle}>
                           {v.name}
                         </p>
@@ -325,7 +325,7 @@ export default function PortalGuidelinesPage() {
               <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">行動指針</h2>
               <div className="space-y-3">
                 {data.action_guidelines.map((g, i) => (
-                  <div key={i} className="relative overflow-hidden rounded-lg border border-border bg-background p-4 pl-5 flex gap-3">
+                  <div key={i} className="relative overflow-hidden rounded-xl border border-border bg-background p-4 pl-5 flex gap-3">
                     {/* 左端の青バー（「私たちの『らしさ』」カードと同装飾：角丸クリップで丸端） */}
                     <div className="absolute left-0 top-0 bottom-0 w-1 bg-ds-app-accent" />
                     <span className="text-xs font-mono text-muted-foreground tabular-nums pt-0.5">

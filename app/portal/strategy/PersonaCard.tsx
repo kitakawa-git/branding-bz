@@ -24,7 +24,7 @@ export function PersonaCard({ persona }: { persona: PortalPersona }) {
     && !(persona.occupation && persona.description.startsWith(persona.occupation + '・'))
 
   return (
-    <div className="rounded-lg border border-border bg-background p-5 h-full">
+    <div className="rounded-xl border border-border bg-background p-5 h-full">
       <div className="mb-3">
         <PersonaAvatarName emoji={persona.avatar_emoji} name={persona.name} className="mb-1" />
         {/* メタ行は最大2行想定。min-h で2行分を確保し、折り返し有無に関わらず

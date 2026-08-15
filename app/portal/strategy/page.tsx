@@ -182,7 +182,7 @@ export default function PortalStrategyPage() {
           <Skeleton className="h-4 w-24" />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {[1, 2].map(i => (
-              <div key={i} className="rounded-lg border border-border bg-background p-5 space-y-3">
+              <div key={i} className="rounded-xl border border-border bg-background p-5 space-y-3">
                 <Skeleton className="h-5 w-32" />
                 <Skeleton className="h-3 w-24" />
                 <Skeleton className="h-12 w-full" />
@@ -319,7 +319,7 @@ export default function PortalStrategyPage() {
 
           {/* 自社の立ち位置（旧画像形式の場合は独立表示） */}
           {brandStanceStatements && brandStanceStatements.statements.length > 0 && (
-            <div className="mt-4 rounded-lg border border-gray-200 bg-white p-5">
+            <div className="mt-4 rounded-xl border border-gray-200 bg-white p-5">
               <h2 className="mb-3 text-sm font-bold text-gray-900">自社の立ち位置</h2>
               <div className="space-y-3.5">
                 {brandStanceStatements.statements.map((s, i) => {
@@ -353,7 +353,7 @@ export default function PortalStrategyPage() {
               <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">提供価値</h2>
               <div className="space-y-3">
                 {providedValues.map((val, i) => (
-                  <div key={i} className="rounded-lg border border-border bg-background p-4 flex items-start gap-4">
+                  <div key={i} className="rounded-xl border border-border bg-background p-4 flex items-start gap-4">
                     <div className="shrink-0 w-9 h-9 rounded-full bg-ds-app-accent text-white flex items-center justify-center text-base font-bold">
                       {i + 1}
                     </div>

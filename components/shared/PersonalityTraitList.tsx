@@ -28,7 +28,7 @@ export function PersonalityTraitList({ traits, bodyTextStyle, className = '' }: 
       {traits.map((trait, i) => (
         <div
           key={`${trait.name}-${i}`}
-          className="rounded-lg border border-border bg-background p-4 flex items-center gap-4"
+          className="rounded-xl border border-border bg-background p-4 flex items-center gap-4"
         >
           <div className="flex-1">
             <p className="text-sm font-bold text-foreground mb-0.5 m-0">{trait.name}</p>

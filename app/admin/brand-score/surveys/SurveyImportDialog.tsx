@@ -385,7 +385,7 @@ export function SurveyImportDialog({
           {preview && (
             <>
               {/* 解析サマリー */}
-              <div className="rounded-lg border bg-muted/40 p-4 space-y-3">
+              <div className="rounded-xl border bg-muted/40 p-4 space-y-3">
                 <p className="flex items-center gap-2 text-sm font-medium">
                   <FileSpreadsheet size={16} />
                   解析結果
@@ -419,7 +419,7 @@ export function SurveyImportDialog({
 
               {/* 未変換ラベルの警告 */}
               {hasUnmapped && (
-                <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 space-y-2">
+                <div className="rounded-xl border border-destructive/50 bg-destructive/10 p-4 space-y-2">
                   <p className="flex items-center gap-2 text-sm font-medium text-destructive">
                     <AlertTriangle size={16} />
                     1〜5に変換できない回答があります
@@ -457,7 +457,7 @@ export function SurveyImportDialog({
                       ? 'ここで付けた部署名が、部署別スコアの比較軸になります。'
                       : 'このファイルの全回答に付与されます。部署は空欄可。'}
                   </p>
-                  <div className="space-y-2 rounded-lg border p-3">
+                  <div className="space-y-2 rounded-xl border p-3">
                     {preview.files.map((f, i) => (
                       <div key={f.fileName} className="min-w-0 space-y-2">
                         {multi && (

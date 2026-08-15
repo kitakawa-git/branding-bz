@@ -52,7 +52,7 @@ export default function PortalValuesPage() {
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
         <CardContent className="p-4 sm:p-5 space-y-3">
           {[1, 2, 3].map(i => (
-            <div key={i} className="rounded-lg border border-border bg-background p-4 flex items-start gap-4">
+            <div key={i} className="rounded-xl border border-border bg-background p-4 flex items-start gap-4">
               <Skeleton className="w-9 h-9 rounded-full shrink-0" />
               <div className="flex-1">
                 <Skeleton className="h-5 w-40 mb-2" />
@@ -72,7 +72,7 @@ export default function PortalValuesPage() {
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
         <CardContent className="p-4 sm:p-5 space-y-3">
           {values.map((val, i) => (
-            <div key={i} className="rounded-lg border border-border bg-background p-4 flex items-start gap-4">
+            <div key={i} className="rounded-xl border border-border bg-background p-4 flex items-start gap-4">
               <div className="shrink-0 w-9 h-9 rounded-full bg-ds-app-accent text-white flex items-center justify-center text-base font-bold">
                 {i + 1}
               </div>

@@ -679,7 +679,7 @@ export function ToolStep1BasicInfo({
               {competitors.length > 0 && (
                 <div className="space-y-3 mb-3">
                   {competitors.map((comp, i) => (
-                    <div key={i} className="flex items-start gap-2 rounded-lg border border-gray-200 bg-white p-3">
+                    <div key={i} className="flex items-start gap-2 rounded-xl border border-gray-200 bg-white p-3">
                       <div className="flex-1 space-y-2">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           <Input

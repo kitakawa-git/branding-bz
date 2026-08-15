@@ -522,7 +522,7 @@ export default function VerbalIdentityPage() {
 
             <div className="space-y-3">
               {toneRules.map((rule, index) => (
-                <div key={rule.id ?? `new-${index}`} className="rounded-lg border border-border bg-background p-3">
+                <div key={rule.id ?? `new-${index}`} className="rounded-xl border border-border bg-background p-3">
                   <div className="flex gap-2 items-center mb-2">
                     <Input
                       value={rule.rule_text}

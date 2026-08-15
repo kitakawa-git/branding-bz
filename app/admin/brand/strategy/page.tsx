@@ -756,14 +756,14 @@ export default function BrandStrategyPage() {
             <Skeleton className="h-4 w-24" />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {[1, 2].map(i => (
-                <div key={i} className="border border-border rounded-lg p-4 space-y-3 bg-background">
+                <div key={i} className="border border-border rounded-xl p-4 space-y-3 bg-background">
                   <Skeleton className="h-10 w-full rounded-md" />
                   <Skeleton className="h-16 w-full rounded-md" />
                 </div>
               ))}
             </div>
             <Skeleton className="h-4 w-20" />
-            <div className="border border-border rounded-lg p-4 space-y-3 bg-background">
+            <div className="border border-border rounded-xl p-4 space-y-3 bg-background">
               <Skeleton className="h-10 w-full rounded-md" />
               <Skeleton className="h-10 w-full rounded-md" />
               <Skeleton className="h-16 w-full rounded-md" />
@@ -880,7 +880,7 @@ export default function BrandStrategyPage() {
               </p>
 
               {personas.map((persona, index) => (
-                <div key={index} className="border border-border rounded-lg p-4 mb-3 bg-background">
+                <div key={index} className="border border-border rounded-xl p-4 mb-3 bg-background">
                   <div className="flex justify-between items-center mb-3">
                     <span className="text-[13px] font-bold text-muted-foreground">
                       ペルソナ {index + 1}
@@ -1250,7 +1250,7 @@ export default function BrandStrategyPage() {
                   </h3>
 
                   {positioningMapData.items.map((item, index) => (
-                    <div key={index} className="border border-border rounded-lg p-4 bg-background">
+                    <div key={index} className="border border-border rounded-xl p-4 bg-background">
                       <div className="flex items-center gap-3 mb-3">
                         <input
                           type="color"
@@ -1419,7 +1419,7 @@ export default function BrandStrategyPage() {
             </p>
 
             {providedValues.map((value, index) => (
-              <div key={index} className="border border-border rounded-lg p-4 mb-3 bg-background">
+              <div key={index} className="border border-border rounded-xl p-4 mb-3 bg-background">
                 <div className="flex justify-between items-center mb-3">
                   <span className="text-[13px] font-bold text-muted-foreground">
                     提供価値 {index + 1}

@@ -206,7 +206,7 @@ const AXIS_OPTIONS: { key: QuestionAxis; label: string }[] = [
 function InsightNote({ text, loading }: { text?: string; loading: boolean }) {
   if (!text && !loading) return null
   return (
-    <div className="mt-4 rounded-lg border border-blue-100 bg-blue-50/30 p-4">
+    <div className="mt-4 rounded-xl border border-blue-100 bg-blue-50/30 p-4">
       <div className="mb-2 flex items-center gap-1.5">
         <Sparkles className="h-3.5 w-3.5 text-ds-app-accent" />
         <p className="m-0 text-xs font-bold text-ds-app-accent">考察（AI生成）</p>

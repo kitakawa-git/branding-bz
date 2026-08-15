@@ -305,7 +305,7 @@ export default function GovernanceRulesSection({
         ) : (
           <div className="space-y-2">
             {aiDrafts.map((d, i) => (
-              <div key={`${d.rule_text}-${i}`} className="border border-violet-200 bg-violet-50/40 rounded-lg p-3">
+              <div key={`${d.rule_text}-${i}`} className="border border-violet-200 bg-violet-50/40 rounded-xl p-3">
                 <div className="flex flex-wrap items-center gap-1.5 mb-1">
                   {severityMeta(d.severity) && (
                     <span className={`py-0.5 px-2 rounded text-[11px] font-semibold ${severityMeta(d.severity)!.cls}`}>
@@ -343,7 +343,7 @@ export default function GovernanceRulesSection({
   }
 
   const renderForm = () => (
-    <div className="border border-blue-200 bg-blue-50/40 rounded-lg p-4 mb-3 space-y-4">
+    <div className="border border-blue-200 bg-blue-50/40 rounded-xl p-4 mb-3 space-y-4">
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="flex-1">
           <label className="text-xs font-bold text-foreground mb-1.5 block">ルール種別</label>
@@ -454,7 +454,7 @@ export default function GovernanceRulesSection({
           editingId === row.id ? (
             <div key={row.id}>{renderForm()}</div>
           ) : (
-            <div key={row.id} className="border border-border rounded-lg p-4 mb-3 bg-background">
+            <div key={row.id} className="border border-border rounded-xl p-4 mb-3 bg-background">
               <div className="flex justify-between items-start gap-3">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-1.5 mb-1">

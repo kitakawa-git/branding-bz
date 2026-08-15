@@ -97,7 +97,7 @@ export function BrandPersonalityCard({
             <h3 className="text-sm font-bold text-foreground mb-2 tracking-wide">表現ルール</h3>
             <div className="space-y-2">
               {toneRules.map((r, i) => (
-                <div key={i} className="rounded-lg border border-border bg-background p-4">
+                <div key={i} className="rounded-xl border border-border bg-background p-4">
                   <p className="text-base font-semibold text-foreground m-0" style={bodyTextStyle}>
                     {r.rule_text}
                   </p>

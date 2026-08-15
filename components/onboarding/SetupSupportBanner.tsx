@@ -30,7 +30,7 @@ function SidebarCard() {
       // 「AI・特別なサポート」の視覚言語として揃える
       // 出るのは判定が済んだあと（少し遅れて現れる）ので、
       // ふっと差し込まれると視線を奪う。ゆっくり浮かび上がらせる
-      className="group animate-in fade-in slide-in-from-bottom-2 block rounded-lg bg-gradient-to-br from-violet-600 to-blue-600 p-4 text-white no-underline duration-700 ease-out transition-all hover:shadow-[0_2px_8px_rgba(124,58,237,0.35)]"
+      className="group animate-in fade-in slide-in-from-bottom-2 block rounded-xl bg-gradient-to-br from-violet-600 to-blue-600 p-4 text-white no-underline duration-700 ease-out transition-all hover:shadow-[0_2px_8px_rgba(124,58,237,0.35)]"
     >
       <p className="m-0 flex items-start gap-1.5 text-base font-bold leading-snug">
         <MessageSquareText size={16} className="mt-0.5 shrink-0" aria-hidden="true" />

@@ -84,7 +84,7 @@ export default function PortalPersonalityPage() {
           <Skeleton className="h-4 w-24" />
           <Skeleton className="h-64 w-full max-w-[440px] mx-auto rounded-lg" />
           {[1, 2, 3].map(i => (
-            <div key={i} className="rounded-lg border border-border bg-background p-4 flex items-center gap-4">
+            <div key={i} className="rounded-xl border border-border bg-background p-4 flex items-center gap-4">
               <div className="flex-1">
                 <Skeleton className="h-5 w-32 mb-2" />
                 <Skeleton className="h-4 w-full" />
@@ -139,7 +139,7 @@ export default function PortalPersonalityPage() {
               <h2 className="text-sm font-bold text-foreground tracking-wide">アーキタイプ</h2>
 
               {/* 主人格（大） */}
-              <div className="rounded-lg border-2 border-ds-app-accent bg-blue-50/40 p-5">
+              <div className="rounded-xl border-2 border-ds-app-accent bg-blue-50/40 p-5">
                 <p className="text-[11px] font-semibold tracking-wide text-ds-app-accent-hover mb-1">主人格</p>
                 <h3 className="text-xl font-bold text-foreground m-0">{archetype.primary.label}</h3>
                 {archetype.primary.copy && (
@@ -151,7 +151,7 @@ export default function PortalPersonalityPage() {
               </div>
 
               {/* 副人格（小） */}
-              <div className="rounded-lg border border-border bg-background p-4">
+              <div className="rounded-xl border border-border bg-background p-4">
                 <p className="text-[11px] font-semibold tracking-wide text-muted-foreground mb-1">副人格</p>
                 <div className="flex items-baseline gap-3 flex-wrap">
                   <h3 className="text-lg font-bold text-foreground m-0">{archetype.secondary.label}</h3>

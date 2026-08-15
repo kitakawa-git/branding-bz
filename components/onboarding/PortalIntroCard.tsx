@@ -63,7 +63,7 @@ export function PortalIntroCard() {
       {/* 図解：PCは横並び、モバイルは縦積み */}
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_40px_1fr] sm:gap-0">
         {/* 左：ポータル。いま見ている画面なので先に置く */}
-        <div className="flex flex-col rounded-lg border border-ds-app-accent bg-blue-50 p-3.5">
+        <div className="flex flex-col rounded-xl border border-ds-app-accent bg-blue-50 p-3.5">
           {/* 12px 指定。globals.css の底上げルール（9〜13px を14pxに上げる）に
               クラスでは勝てないので、この2つのラベルだけ inline style で指定する */}
           <span
@@ -105,7 +105,7 @@ export function PortalIntroCard() {
             AdminDataProvider が SidebarProvider に 21% を渡して管理画面だけ明るくしている。
             そちらを変えたらここも合わせる（app/admin/components/AdminDataProvider.tsx）。
             文字と枠線は上書きが無いので :root の値をそのまま使う */}
-        <div className="flex flex-col rounded-lg border-[hsl(218_14%_26%)] border bg-[hsl(220_13%_21%)] p-3.5">
+        <div className="flex flex-col rounded-xl border-[hsl(218_14%_26%)] border bg-[hsl(220_13%_21%)] p-3.5">
           <span
             style={{ fontSize: 12 }}
             className="mb-1.5 font-bold uppercase tracking-wider text-[hsl(216_12%_84%)]"

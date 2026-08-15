@@ -345,7 +345,7 @@ export default function ProfilingSection({
   const renderDraft = () => {
     if (!draft) return null
     return (
-      <div className="border border-green-200 bg-green-50/40 rounded-lg p-4 mt-3 space-y-3">
+      <div className="border border-green-200 bg-green-50/40 rounded-xl p-4 mt-3 space-y-3">
         <div className="text-xs font-bold text-green-800">構造化草案（承認するまで登録されません。内容は修正できます）</div>
 
         {draft.kind === 'proof_point' && (
@@ -477,7 +477,7 @@ export default function ProfilingSection({
   const renderQuestion = () => {
     if (!current || !questions) return null
     return (
-      <div className="border border-blue-200 bg-blue-50/40 rounded-lg p-4 mt-4">
+      <div className="border border-blue-200 bg-blue-50/40 rounded-xl p-4 mt-4">
         <div className="flex items-center gap-2 mb-2">
           <span className="py-0.5 px-2 bg-blue-100 text-blue-800 rounded text-[11px] font-semibold">
             質問 {idx + 1} / {questions.length}
@@ -586,7 +586,7 @@ export default function ProfilingSection({
     if (!finished) return null
     const categories = Array.from(new Set([...Object.keys(baseline), ...Object.keys(afterCounts || {})]))
     return (
-      <div className="border border-green-200 bg-green-50/40 rounded-lg p-4 mt-4">
+      <div className="border border-green-200 bg-green-50/40 rounded-xl p-4 mt-4">
         <div className="text-xs font-bold text-green-800 mb-2">セッション完了（{registeredCount}件を登録）</div>
         {afterCounts === null ? (
           <p className="text-sm text-muted-foreground m-0">整合性チェックの再実行に失敗したため、改善の比較は表示できません</p>
@@ -633,7 +633,7 @@ export default function ProfilingSection({
           保留があるときだけ、呼び戻すボタンとセットで案内する。 */}
       {questions !== null && questions.length === 0 && !finished && pendingCount > 0 && (
         <div className="mt-3">
-          <p className="text-sm text-foreground border border-border bg-muted/40 rounded-lg p-3 mb-2">
+          <p className="text-sm text-foreground border border-border bg-muted/40 rounded-xl p-3 mb-2">
             未回答の質問はありません（保留中 {pendingCount}件）。保留した項目は後からいつでも回答できます
           </p>
           <Button type="button" variant="outline" onClick={() => generate(true)} disabled={generating} className="py-2 px-4 text-[13px]">

@@ -113,7 +113,7 @@ export default function DraftWorkbench({
         ) : (
           <div className="space-y-3">
             {roots.map((d) => (
-              <div key={d.id} className="rounded-lg border border-gray-200 bg-white p-4">
+              <div key={d.id} className="rounded-xl border border-gray-200 bg-white p-4">
                 <div className="mb-1.5 flex flex-wrap items-center gap-2">
                   <Badge variant="secondary" className="text-[11px]">{COPY_ROLE_MATRIX[d.copy_role]?.label ?? d.copy_role}</Badge>
                   <Badge variant="outline" className="text-[11px]">{REGISTER_LABELS[d.register] ?? d.register}</Badge>

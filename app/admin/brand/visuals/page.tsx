@@ -1002,7 +1002,7 @@ export default function BrandVisualsPage() {
               {visuals.logo_sections.map((section, sIdx) => (
                 <SortableSection key={sIdx} id={`section-${sIdx}`}>
                   {({ attributes, listeners }) => (
-                <div className="border border-border rounded-lg p-4 mb-3 bg-background">
+                <div className="border border-border rounded-xl p-4 mb-3 bg-background">
                   {/* セクションヘッダー */}
                   <div className="flex items-center gap-2 mb-3">
                     <button

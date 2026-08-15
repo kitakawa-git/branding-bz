@@ -266,7 +266,7 @@ export default function PortalAboutPage() {
               <h2 className="text-sm font-bold text-foreground mb-3 tracking-wide">事業内容</h2>
               <div className="space-y-3">
                 {filteredBusiness.map((item, i) => (
-                  <div key={i} className="rounded-lg border border-border bg-background p-4">
+                  <div key={i} className="rounded-xl border border-border bg-background p-4">
                     <span className="text-[18px] font-semibold text-foreground">{item.title}</span>
                     {item.description && (
                       <p className="text-base text-foreground/80 leading-relaxed whitespace-pre-wrap mt-1 m-0">

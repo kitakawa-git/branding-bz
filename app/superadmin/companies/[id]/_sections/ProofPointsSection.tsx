@@ -572,7 +572,7 @@ export default function ProofPointsSection({
 
   // --- 測定値エディタ（実績ごとの展開パネル） ---
   const renderMeasurementForm = (ppId: string) => (
-    <div className="border border-violet-200 bg-violet-50/40 rounded-lg p-3 mb-2 space-y-3">
+    <div className="border border-violet-200 bg-violet-50/40 rounded-xl p-3 mb-2 space-y-3">
       <MetricPicker
         companyId={companyId}
         value={mDraft.metric_key}
@@ -702,7 +702,7 @@ export default function ProofPointsSection({
   }
 
   const renderForm = () => (
-    <div className="border border-blue-200 bg-blue-50/40 rounded-lg p-4 mb-3 space-y-4">
+    <div className="border border-blue-200 bg-blue-50/40 rounded-xl p-4 mb-3 space-y-4">
       <div>
         <label className="text-xs font-bold text-foreground mb-1.5 block">紐づく提供価値</label>
         <select
@@ -804,7 +804,7 @@ export default function ProofPointsSection({
           editingId === row.id ? (
             <div key={row.id}>{renderForm()}</div>
           ) : (
-            <div key={row.id} className="border border-border rounded-lg p-4 mb-3 bg-background">
+            <div key={row.id} className="border border-border rounded-xl p-4 mb-3 bg-background">
               <div className="flex justify-between items-start gap-3">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-1.5 mb-1">

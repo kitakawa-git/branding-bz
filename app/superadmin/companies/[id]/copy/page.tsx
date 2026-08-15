@@ -180,7 +180,7 @@ export default function CopyWorkbenchPage() {
               <button
                 key={p.id}
                 onClick={() => setActiveId(p.id)}
-                className="flex w-full items-center justify-between rounded-lg border border-gray-200 bg-white p-4 text-left transition-colors hover:border-gray-300"
+                className="flex w-full items-center justify-between rounded-xl border border-gray-200 bg-white p-4 text-left transition-colors hover:border-gray-300"
               >
                 <div className="min-w-0">
                   <p className="truncate text-sm font-bold text-gray-900">{p.name}</p>

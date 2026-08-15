@@ -23,7 +23,7 @@ export function TargetSegmentCards({ main, subs, mainExtra, emptySubsMessage }: 
   return (
     <>
       {main && (
-        <div className="relative mb-3.5 rounded-lg border-2 border-ds-app-accent-soft bg-blue-50/50 p-4">
+        <div className="relative mb-3.5 rounded-xl border-2 border-ds-app-accent-soft bg-blue-50/50 p-4">
           <Badge className="absolute -top-[9px] left-[6px] rounded-full px-1.5 py-0 !text-[10px] !leading-[16px] bg-ds-app-accent text-white hover:bg-ds-app-accent-hover">メインターゲット</Badge>
           <p className="text-lg font-bold text-gray-900">{main.name || '未選択'}</p>
           {main.description && (
@@ -36,7 +36,7 @@ export function TargetSegmentCards({ main, subs, mainExtra, emptySubsMessage }: 
       {subs.length > 0 ? (
         <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2">
           {subs.map((sub, i) => (
-            <div key={i} className="relative rounded-lg border-2 border-blue-300 bg-blue-50/30 p-4">
+            <div key={i} className="relative rounded-xl border-2 border-blue-300 bg-blue-50/30 p-4">
               <Badge variant="outline" className="absolute -top-[9px] left-[6px] rounded-full px-1.5 py-0 !text-[10px] !leading-[16px] border-blue-300 bg-white text-blue-300">サブターゲット</Badge>
               <p className="text-base font-bold text-gray-700">{sub.name}</p>
               {sub.description && (

@@ -807,7 +807,7 @@ export default function KpiPage() {
                 {kpis.map(kpi => {
                   const overdue = isOverdue(kpi.deadline, kpi.status)
                   return (
-                    <div key={kpi.id} className="bg-background rounded-lg border p-4">
+                    <div key={kpi.id} className="bg-background rounded-xl border p-4">
                       <div className="flex items-start justify-between gap-3 mb-2">
                         <h3 className="text-sm font-bold text-foreground flex-1">{kpi.title}</h3>
                         <div className="flex items-center gap-1 shrink-0">
@@ -1009,7 +1009,7 @@ export default function KpiPage() {
                         <p className="text-sm text-muted-foreground text-center py-4">この期間には目標が設定されていません</p>
                       ) : (
                         <div className="space-y-3">
-                          <div className="bg-background rounded-lg p-3 border">
+                          <div className="bg-background rounded-xl p-3 border">
                             <Label className="text-[10px] text-muted-foreground uppercase tracking-wider">目標</Label>
                             <p className="text-sm font-semibold text-foreground mt-1 m-0">{archiveData.goal.title}</p>
                           </div>
@@ -1017,7 +1017,7 @@ export default function KpiPage() {
                             <div className="space-y-2">
                               <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">KPI ({archiveData.kpis.length}件)</span>
                               {archiveData.kpis.map(k => (
-                                <div key={k.id} className="bg-background rounded-lg p-3 border">
+                                <div key={k.id} className="bg-background rounded-xl p-3 border">
                                   <div className="flex items-start justify-between gap-2 mb-1">
                                     <span className="text-xs font-semibold text-foreground flex-1">{k.title}</span>
                                     <div className="flex items-center gap-1 shrink-0">
@@ -1162,7 +1162,7 @@ export default function KpiPage() {
               </p>
               <div className="space-y-3">
                 {setupKpis.map((kpi, idx) => (
-                  <div key={kpi.id} className="bg-muted/30 rounded-lg p-3 border space-y-2">
+                  <div key={kpi.id} className="bg-muted/30 rounded-xl p-3 border space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] font-bold text-muted-foreground">KPI {idx + 1}</span>
                       {setupKpis.length > 1 && (

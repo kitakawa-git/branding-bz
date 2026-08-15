@@ -783,7 +783,7 @@ export default function AdminKpiPage() {
                   {/* 展開: 目標 + KPI一覧 */}
                   {isExp && m.goalText && (
                     <div className="border-t px-4 pb-4 pt-3 space-y-3">
-                      <div className="bg-background rounded-lg p-3 border">
+                      <div className="bg-background rounded-xl p-3 border">
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1">
                             <Label className="text-[10px] text-muted-foreground uppercase tracking-wider">目標</Label>
@@ -816,7 +816,7 @@ export default function AdminKpiPage() {
                           {m.kpis.map(k => {
                             const overdue = isOverdue(k.deadline, k.status)
                             return (
-                              <div key={k.id} className="bg-background rounded-lg p-3 border">
+                              <div key={k.id} className="bg-background rounded-xl p-3 border">
                                 <div className="flex items-start justify-between gap-2 mb-1">
                                   <span className="text-xs font-semibold text-foreground flex-1">{k.title}</span>
                                   <div className="flex items-center gap-1 shrink-0">

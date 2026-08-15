@@ -544,7 +544,7 @@ export default function OntologySummaryHub({
             editUserToggled.current = true
             setEditOpen((v) => !v)
           }}
-          className="inline-flex w-full items-center gap-2 rounded-lg border border-border bg-background p-4 text-[13px] font-semibold text-foreground cursor-pointer hover:bg-muted"
+          className="inline-flex w-full items-center gap-2 rounded-xl border border-border bg-background p-4 text-[13px] font-semibold text-foreground cursor-pointer hover:bg-muted"
           aria-expanded={editOpen}
         >
           <ChevronDown

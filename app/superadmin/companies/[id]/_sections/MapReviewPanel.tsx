@@ -56,7 +56,7 @@ export default function MapReviewPanel({ companyId }: { companyId: string }) {
 
   if (loading && !review) {
     return (
-      <p className="text-[13px] text-muted-foreground border border-border bg-muted/40 rounded-lg p-3 m-0">
+      <p className="text-[13px] text-muted-foreground border border-border bg-muted/40 rounded-xl p-3 m-0">
         AIレビューを取得中...（初回のみ自動生成されます）
       </p>
     )
@@ -64,14 +64,14 @@ export default function MapReviewPanel({ companyId }: { companyId: string }) {
 
   if (!review) {
     return (
-      <p className="text-[13px] text-muted-foreground border border-border bg-muted/40 rounded-lg p-3 m-0">
+      <p className="text-[13px] text-muted-foreground border border-border bg-muted/40 rounded-xl p-3 m-0">
         {reason ?? 'AIレビューはまだありません'}
       </p>
     )
   }
 
   return (
-    <div className="rounded-lg border border-blue-100 bg-blue-50/30 p-4">
+    <div className="rounded-xl border border-blue-100 bg-blue-50/30 p-4">
       <div className="flex flex-wrap items-center gap-1.5 mb-2 text-xs font-bold text-ds-app-accent">
         <Sparkles className="h-3.5 w-3.5" />
         レビュー（AI生成）

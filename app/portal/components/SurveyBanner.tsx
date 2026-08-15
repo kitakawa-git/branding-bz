@@ -75,7 +75,7 @@ export function SurveyBanner() {
   if (!survey) return null
 
   return (
-    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center gap-4">
+    <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-center gap-4">
       <div className="shrink-0 text-ds-app-accent">
         <ClipboardList size={24} />
       </div>

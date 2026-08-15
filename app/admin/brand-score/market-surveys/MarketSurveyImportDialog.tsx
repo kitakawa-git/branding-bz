@@ -362,7 +362,7 @@ export function MarketSurveyImportDialog({
           {preview && (
             <>
               {/* 解析サマリー */}
-              <div className="rounded-lg border bg-muted/40 p-4 space-y-3">
+              <div className="rounded-xl border bg-muted/40 p-4 space-y-3">
                 <div className="flex items-center justify-between gap-3">
                   <p className="flex items-center gap-2 text-sm font-medium">
                     <FileSpreadsheet size={16} />
@@ -405,7 +405,7 @@ export function MarketSurveyImportDialog({
 
               {/* 読めなかった値がある場合は取り込ませない */}
               {errorWarnings.length > 0 && (
-                <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 space-y-2">
+                <div className="rounded-xl border border-destructive/50 bg-destructive/10 p-4 space-y-2">
                   <p className="flex items-center gap-2 text-sm font-medium text-destructive">
                     <AlertTriangle size={16} />
                     読み取れない値が{errorWarnings.length}件あります

@@ -818,7 +818,7 @@ export default function MembersPage() {
             </div>
             <div className="space-y-2">
               {joinRequests.map((req) => (
-                <div key={req.id} className="flex items-center justify-between gap-3 p-3 rounded-lg bg-white border border-border">
+                <div key={req.id} className="flex items-center justify-between gap-3 p-3 rounded-xl bg-white border border-border">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold text-foreground m-0 truncate">{req.display_name}</p>
                     <p className="text-xs text-muted-foreground m-0 truncate">{req.email}</p>

@@ -113,7 +113,7 @@ export function PushToggle() {
   // 設定からの解除手順を案内する（購読中＝subscribed のときは通常のオフ操作を優先）。
   if (permission === "denied" && !subscribed) {
     return (
-      <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+      <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
         <div className="flex items-center gap-2 text-sm font-bold text-amber-800">
           <BellOff className="size-4 shrink-0" />
           通知がブロックされています

@@ -136,7 +136,7 @@ function Chips({ label, items }: { label: string; items: string[] }) {
 
 /* 1件分の枠 */
 function ItemCard({ children }: { children: React.ReactNode }) {
-  return <div className="rounded-lg border border-border p-3">{children}</div>
+  return <div className="rounded-xl border border-border p-3">{children}</div>
 }
 
 export default function CompanyViewPage() {

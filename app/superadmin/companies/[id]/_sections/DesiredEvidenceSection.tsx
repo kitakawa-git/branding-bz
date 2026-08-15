@@ -629,7 +629,7 @@ export default function DesiredEvidenceSection({
     })
 
   const renderRuleEditor = () => (
-    <div className="border border-border rounded-lg p-3 bg-white space-y-3">
+    <div className="border border-border rounded-xl p-3 bg-white space-y-3">
       {/* テンプレカード：どうなったら「達成」か */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         {RULE_TEMPLATES.map((t) => {
@@ -852,7 +852,7 @@ export default function DesiredEvidenceSection({
   const renderProgressPanel = () => {
     if (evalError) {
       return (
-        <div className="border border-amber-200 bg-amber-50/60 rounded-lg p-3 mb-3">
+        <div className="border border-amber-200 bg-amber-50/60 rounded-xl p-3 mb-3">
           <p className="text-[13px] text-amber-900 m-0">判定・進捗を取得できませんでした（{evalError}）。登録・編集は通常どおり行えます。</p>
         </div>
       )
@@ -861,13 +861,13 @@ export default function DesiredEvidenceSection({
     if (!overall || overall.coverage_count.total === 0) {
       if (loading) return null
       return (
-        <div className="border border-border rounded-lg p-3 mb-3 bg-background">
+        <div className="border border-border rounded-xl p-3 mb-3 bg-background">
           <p className="text-[13px] text-muted-foreground m-0">実証進捗：獲得目標が未設定です</p>
         </div>
       )
     }
     return (
-      <div className="border border-border rounded-lg p-3 mb-3 bg-background">
+      <div className="border border-border rounded-xl p-3 mb-3 bg-background">
         {renderProgressLine('全体', overall)}
         {visionProgress.map((v) => (
           <div key={v.vision_id}>{renderProgressLine(v.vision_label, v)}</div>
@@ -912,7 +912,7 @@ export default function DesiredEvidenceSection({
         )}
 
         {open ? (
-          <div className="border border-violet-200 bg-violet-50/40 rounded-lg p-3 space-y-3">
+          <div className="border border-violet-200 bg-violet-50/40 rounded-xl p-3 space-y-3">
             <p className="text-[11px] text-muted-foreground m-0">記録の種類：{sourceLabel}（達成条件のタイプから自動で決まります）</p>
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="flex-1">
@@ -987,7 +987,7 @@ export default function DesiredEvidenceSection({
   const renderVpPanel = () => {
     if (vps.length === 0) return null
     return (
-      <div className="border border-border rounded-lg p-3 mb-3 bg-background">
+      <div className="border border-border rounded-xl p-3 mb-3 bg-background">
         <p className="text-[13px] font-bold text-foreground m-0 mb-2">提供価値の状態</p>
         <p className="text-[11px] text-muted-foreground m-0 mb-2">
           「目標」は未来の約束。裏づけがそろったら「現在の約束」へ昇格します（昇格者と日時が残ります）
@@ -1035,7 +1035,7 @@ export default function DesiredEvidenceSection({
   }
 
   const renderForm = () => (
-    <div className="border border-blue-200 bg-blue-50/40 rounded-lg p-4 mb-3 space-y-4">
+    <div className="border border-blue-200 bg-blue-50/40 rounded-xl p-4 mb-3 space-y-4">
       <div>
         <label className="text-xs font-bold text-foreground mb-1.5 block">
           タイトル <span className="text-red-500">*</span>
@@ -1149,7 +1149,7 @@ export default function DesiredEvidenceSection({
           editingId === row.id ? (
             <div key={row.id}>{renderForm()}</div>
           ) : (
-            <div key={row.id} className="border border-border rounded-lg p-4 mb-3 bg-background">
+            <div key={row.id} className="border border-border rounded-xl p-4 mb-3 bg-background">
               <div className="flex justify-between items-start gap-3">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-1.5 mb-1">

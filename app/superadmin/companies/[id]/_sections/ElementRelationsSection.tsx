@@ -409,7 +409,7 @@ export default function ElementRelationsSection({
       })
     }
     return (
-    <div className="border border-blue-200 bg-blue-50/40 rounded-lg p-4 mb-3 space-y-4">
+    <div className="border border-blue-200 bg-blue-50/40 rounded-xl p-4 mb-3 space-y-4">
       <div>
         <label className="text-xs font-bold text-foreground mb-1.5 block">関係</label>
         <select className={SELECT_CLASS} value={draft.relation_type} onChange={(e) => changeRelation(e.target.value)}>
@@ -466,7 +466,7 @@ export default function ElementRelationsSection({
   const renderCandidate = (c: RelationCandidate) => {
     const key = candidateKey(c)
     return (
-      <div key={key} className="border border-violet-200 bg-violet-50/40 rounded-lg p-3">
+      <div key={key} className="border border-violet-200 bg-violet-50/40 rounded-xl p-3">
         <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
           <span className="py-0.5 px-1.5 bg-gray-100 text-gray-600 rounded text-[11px] font-semibold shrink-0">
             {KIND_LABELS[c.source_kind]}
@@ -527,7 +527,7 @@ export default function ElementRelationsSection({
     const label = focusElement.label || labelOf(focusElement.kind, focusElement.id)
     const kindLabel = KIND_LABELS[focusElement.kind as ElementKind] ?? focusElement.kind
     return (
-      <div className="border border-violet-300 bg-violet-50/60 rounded-lg p-4 mb-4">
+      <div className="border border-violet-300 bg-violet-50/60 rounded-xl p-4 mb-4">
         <div className="flex items-start justify-between gap-2 mb-1">
           <div className="flex flex-wrap items-center gap-1.5 min-w-0">
             <Sparkles size={15} className="text-violet-700 shrink-0" />
@@ -554,7 +554,7 @@ export default function ElementRelationsSection({
         ) : focusCandidates === null ? null : focusCandidates.length > 0 ? (
           <div className="space-y-2">{focusCandidates.map(renderCandidate)}</div>
         ) : (
-          <div className="rounded-lg border border-border bg-background p-3">
+          <div className="rounded-xl border border-border bg-background p-3">
             <p className="text-[13px] text-foreground m-0 mb-2">
               {focusFailed
                 ? 'AIの提案を取得できませんでした。手動で繋ぐか、もう一度お試しください'
@@ -590,7 +590,7 @@ export default function ElementRelationsSection({
         <p className="text-muted-foreground text-sm mb-3">関係が登録されていません</p>
       ) : (
         groups.map((g) => (
-          <div key={g.key} className="border border-border rounded-lg p-4 mb-3 bg-background">
+          <div key={g.key} className="border border-border rounded-xl p-4 mb-3 bg-background">
             <div className="flex items-center gap-1.5 mb-2">
               <span className="py-0.5 px-2 bg-blue-100 text-blue-800 rounded text-xs font-semibold shrink-0">
                 {KIND_LABELS[g.kind as ElementKind]}
