@@ -66,7 +66,7 @@ function GradientBanner() {
         <Check size={11} strokeWidth={3} aria-hidden="true" />
         完全無料
       </span>
-      <p className="relative m-0 text-[17px] font-extrabold">入力にお困りですか？</p>
+      <p className="relative m-0 text-[18px] font-extrabold">入力にお困りですか？</p>
       <p className="relative m-0 mb-3.5 mt-1.5 text-[12.5px] leading-relaxed opacity-90">
         オンラインで画面を見ながら、担当者が入力をサポートします。
         <br className="hidden sm:block" />
