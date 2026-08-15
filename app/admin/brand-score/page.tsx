@@ -3,6 +3,7 @@
 import { visibleDashboardTabs } from '@/lib/constants/dashboard-tabs'
 import { useState, useEffect, useCallback } from 'react'
 import { usePathname } from 'next/navigation'
+import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
 import { useAuth } from '../components/AdminDataProvider'
 import { ALL_IMPRESSION_TAGS as ALL_TAGS } from '@/lib/brand-score/impression-tags'
 import {
@@ -60,6 +61,7 @@ import {
   CreditCard,
   MessageSquare,
   ClipboardList,
+  Globe,
   ClipboardCheck,
   Check,
   Minus,
@@ -593,22 +595,39 @@ export default function BrandScoreDashboard() {
           <CardContent className="p-10 text-center">
             <TrendingUp size={48} className="mx-auto mb-4 text-muted-foreground/30" />
             <h2 className="text-base font-bold text-foreground mb-2">ブランドスコアの測定を始めましょう</h2>
+            {/* アウターは市場浸透75%＋デジタル接点25%。名刺だけで測れるかのように
+                書くと、名刺を配ってもスコアが動かない（30件未満は未計測）ときに
+                「壊れている」と受け取られる。主役が市場調査であることを先に書く */}
             <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
-              社内サーベイで「インナースコア」を、名刺閲覧データで「アウタースコア」を測定できます。
+              社内サーベイで「インナースコア」を、市場調査と名刺閲覧データで「アウタースコア」を測定できます。
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Button asChild size="sm">
-                <Link href="/admin/brand-score/surveys">
-                  <ClipboardList size={14} />
-                  サーベイを作成する
-                </Link>
-              </Button>
-              <Button asChild variant="outline" size="sm">
-                <Link href="/admin/members">
-                  <CreditCard size={14} />
-                  名刺を配布する
-                </Link>
-              </Button>
+              {isFeatureEnabled(company, 'survey_enabled') && (
+                <Button asChild size="sm">
+                  <Link href="/admin/brand-score/surveys">
+                    <ClipboardList size={14} />
+                    サーベイを作成する
+                  </Link>
+                </Button>
+              )}
+              {/* アウターの4分の3を占めるのに入口が無かった。プラン外なら
+                  遷移先がアップセル面を出すので、ここでは隠さず出す */}
+              {isFeatureEnabled(company, 'market_survey_enabled') && (
+                <Button asChild variant="outline" size="sm">
+                  <Link href="/admin/brand-score/market-surveys">
+                    <Globe size={14} />
+                    市場調査を取り込む
+                  </Link>
+                </Button>
+              )}
+              {isFeatureEnabled(company, 'card_enabled') && (
+                <Button asChild variant="outline" size="sm">
+                  <Link href="/admin/members">
+                    <CreditCard size={14} />
+                    名刺を配布する
+                  </Link>
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>

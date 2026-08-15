@@ -448,7 +448,8 @@ export function BrandScoreView({
         ) : hasInner ? (
           <span className="flex items-center gap-1">
             <Eye size={12} />
-            アウタースコアのデータ収集中（名刺閲覧データが蓄積されると表示されます）
+            アウタースコアのデータ収集中（市場調査の取り込み、または名刺の閲覧
+            {MIN_CARD_VIEWS_FOR_DIGITAL}件から表示されます）
           </span>
         ) : (
           <span className="flex items-center gap-1">
@@ -774,7 +775,9 @@ export function BrandScoreView({
         ) : (
           <div className="text-center py-6">
             <CreditCard size={32} className="mx-auto mb-2 text-muted-foreground/30" />
-            <p className="text-sm text-muted-foreground mb-3">名刺閲覧データが蓄積されると表示されます</p>
+            <p className="text-sm text-muted-foreground mb-3">
+              名刺の閲覧が{MIN_CARD_VIEWS_FOR_DIGITAL}件たまると表示されます
+            </p>
             {!readOnly && (
               <Button asChild size="sm" variant="outline">
                 <Link href="/admin/members">
