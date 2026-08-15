@@ -10,7 +10,7 @@
 // 一度閉じたら二度と出さない。オンボーディング完了時も自動で消える
 // （出す条件を呼び出し側の showOnboarding に乗せているため）。
 import { useState, useEffect } from 'react'
-import { ArrowRight, ArrowDown, MapPin } from 'lucide-react'
+import { ArrowLeftRight, ArrowUpDown, MapPin } from 'lucide-react'
 
 const DISMISS_KEY = 'portal-intro-dismissed'
 
@@ -87,20 +87,18 @@ export function PortalIntroCard() {
         </div>
 
         {/* 中央：矢印 */}
-        <div className="flex items-center justify-center gap-1.5 sm:flex-col sm:gap-1">
-          <ArrowRight
+        <div className="flex items-center justify-center">
+          {/* 一方通行ではなく行き来。PCは左右、モバイルは上下 */}
+          <ArrowLeftRight
             size={18}
             className="hidden text-muted-foreground sm:block"
             aria-hidden="true"
           />
-          <ArrowDown
+          <ArrowUpDown
             size={18}
             className="text-muted-foreground sm:hidden"
             aria-hidden="true"
           />
-          <span className="text-[9px] tracking-widest text-muted-foreground sm:[writing-mode:vertical-rl]">
-            反映
-          </span>
         </div>
 
         {/* 右：ポータル */}
