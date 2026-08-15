@@ -79,6 +79,9 @@ function GradientBanner() {
         <Calendar size={14} aria-hidden="true" />
         相談を予約する
       </Link>
+      <p className="relative m-0 mt-2.5 text-[10.5px] opacity-80">
+        所要 30分・オンライン・回数制限なし
+      </p>
     </div>
   )
 }
