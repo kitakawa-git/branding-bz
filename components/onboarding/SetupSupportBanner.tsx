@@ -26,20 +26,20 @@ function SidebarCard() {
   return (
     <Link
       href={SUPPORT_HREF}
-      className="group block rounded-lg border border-violet-200 bg-gradient-to-br from-violet-50 to-blue-50 p-2.5 no-underline transition-all hover:border-violet-600 hover:shadow-[0_2px_8px_rgba(124,58,237,0.12)]"
+      // 地色は AIButton と同じ紫青グラデ。サービス全体で
+      // 「AI・特別なサポート」の視覚言語として揃える
+      className="group block rounded-lg bg-gradient-to-br from-violet-600 to-blue-600 p-2.5 text-white no-underline transition-all hover:shadow-[0_2px_8px_rgba(124,58,237,0.35)]"
     >
       <span className="mb-1.5 flex size-[26px] items-center justify-center rounded-md bg-white text-violet-600">
         <MessageSquareText size={14} aria-hidden="true" />
       </span>
-      <p className="m-0 text-[11.5px] font-bold leading-snug text-foreground">
-        入力にお困りですか？
-      </p>
-      <p className="m-0 mt-0.5 text-[10px] leading-relaxed text-muted-foreground">
+      <p className="m-0 text-[11.5px] font-bold leading-snug">入力にお困りですか？</p>
+      <p className="m-0 mt-0.5 text-[10px] leading-relaxed opacity-90">
         オンラインで入力サポート
         <br />
         無料でいたします
       </p>
-      <span className="mt-1.5 inline-flex items-center gap-0.5 text-[10.5px] font-bold text-violet-600">
+      <span className="mt-1.5 inline-flex items-center gap-0.5 text-[10.5px] font-bold">
         相談する
         <ChevronRight
           size={10}
