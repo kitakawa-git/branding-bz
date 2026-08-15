@@ -900,17 +900,19 @@ export default function PortalTopPage() {
                   href={`/portal/announcements/${a.id}`}
                   className="no-underline block border-t border-border p-3 transition-colors first:border-t-0 hover:bg-muted/40"
                 >
-                  <div className="flex items-center gap-2 mb-1">
-                    <Badge variant="secondary" className={`text-[10px] px-1.5 py-0 ${ANNOUNCEMENT_CATEGORY_COLORS[a.category] || ANNOUNCEMENT_CATEGORY_COLORS['その他']}`}>
+                  {/* タイトル・カテゴリ・時刻を1行に畳む。時刻は右端に寄せて、
+                      複数件並んだときに縦のラインが揃うようにする */}
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <h3 className="min-w-0 truncate text-sm font-semibold text-foreground m-0">
+                      {a.title}
+                    </h3>
+                    <Badge variant="secondary" className={`shrink-0 text-[10px] px-1.5 py-0 ${ANNOUNCEMENT_CATEGORY_COLORS[a.category] || ANNOUNCEMENT_CATEGORY_COLORS['その他']}`}>
                       {a.category}
                     </Badge>
-                    <span className="text-[11px] text-muted-foreground" suppressHydrationWarning>
+                    <span className="ml-auto shrink-0 text-[11px] text-muted-foreground" suppressHydrationWarning>
                       {getRelativeTime(a.created_at)}
                     </span>
                   </div>
-                  <h3 className="text-sm font-semibold text-foreground m-0 mb-0.5">
-                    {a.title}
-                  </h3>
                   <p className="text-xs text-muted-foreground line-clamp-2 m-0 whitespace-pre-wrap">
                     {a.content}
                   </p>
