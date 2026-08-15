@@ -105,8 +105,9 @@ export function PortalIntroCard() {
 
         {/* 右：ポータル */}
         <div className="flex flex-col rounded-lg border border-ds-app-accent bg-blue-50 p-3.5">
-          <span className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-ds-app-accent">
-            見せる場所
+          <span className="mb-1.5 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-ds-app-accent">
+            <MapPin size={11} aria-hidden="true" />
+            この画面
           </span>
           <p className="m-0 text-[18px] font-extrabold text-foreground">ポータル</p>
           <p className="m-0 mb-2.5 text-[11.5px] text-muted-foreground">メンバー全員</p>
@@ -116,9 +117,8 @@ export function PortalIntroCard() {
             <li>KPI・目標</li>
             <li>ラーニング</li>
           </ul>
-          <span className="mt-auto inline-flex items-center gap-1 pt-2.5 text-[10.5px] font-bold text-ds-app-accent">
-            <MapPin size={11} aria-hidden="true" />
-            この画面
+          <span className="mt-auto pt-2.5 text-[10.5px] font-bold text-ds-app-accent">
+            見せる場所
           </span>
         </div>
       </div>
