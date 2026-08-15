@@ -1,10 +1,16 @@
 'use client'
 
-// 初回セットアップ案内（ポータル・管理者のみ）。
+// 初回セットアップ案内（ポータル・管理画面の共通。どちらも管理者のみ）。
 //
 // 未セットアップのあいだ、ポータルのダッシュボードの中身をこれに差し替える。
+// 管理画面のダッシュボードでも同じものを出す＝担当者と管理者が同じ画面を見て
+// 話せるようにするため、実装は1つに保つ（以前は管理画面だけ別のコンパクト版で、
+// 進捗の見え方が2種類あった）。
 // 着地先は変えない（リダイレクトしない）ので、迷わせずに次の一手を示すのが役目。
-// 「あとで」で閉じられるが、管理画面の鏡写しカードは全完了まで残す。
+//
+// 面ごとの違いは surface プロパティだけに閉じ込める:
+//   portal … 「あとで」で閉じられる／管理画面へ出るときに戻り方を仕込む
+//   admin  … 閉じられない（全完了まで残す）／戻り方の案内は出さない
 //
 // 見せ方は「次にやる1つに集中させる」形:
 //   完了済み … 緑の1行リストで上に畳む
@@ -105,7 +111,13 @@ function DoneStepsList({ steps }: { steps: OnboardingStepView[] }) {
  *
  * key に step.id を渡して開くたびに作り直し、開く動きを再生させる。
  */
-function ActiveStepCard({ step }: { step: OnboardingStepView }) {
+function ActiveStepCard({
+  step,
+  surface,
+}: {
+  step: OnboardingStepView
+  surface: OnboardingSurface
+}) {
   return (
     <div
       key={step.id}
@@ -113,10 +125,11 @@ function ActiveStepCard({ step }: { step: OnboardingStepView }) {
     >
       <Link
         href={step.href}
-        // 管理画面へ送るときだけ、戻り方の案内を仕込む。
-        // ポータル内で完結するステップ（投稿など）では戻り方に迷わない
+        // ポータルから管理画面へ送るときだけ、戻り方の案内を仕込む。
+        // ポータル内で完結するステップ（投稿など）では戻り方に迷わないし、
+        // 管理画面で開いているときは、そもそもポータルから出ていない
         onClick={() => {
-          if (step.href.startsWith('/admin')) armPortalBackCoach()
+          if (surface === 'portal' && step.href.startsWith('/admin')) armPortalBackCoach()
         }}
         className="group mb-2 flex items-center gap-4 rounded-xl border-[1.5px] border-ds-app-accent bg-white p-5 no-underline shadow-[0_6px_20px_rgba(37,99,235,0.10)] transition-all hover:-translate-y-0.5 hover:border-ds-app-accent-hover hover:shadow-[0_10px_28px_rgba(37,99,235,0.16)] focus-visible:ring-2 focus-visible:ring-ds-app-accent"
       >
@@ -219,14 +232,20 @@ function RestStepRow({
   )
 }
 
+/** どの画面に置いているか。閉じられるか・戻り方を案内するかがこれで決まる */
+export type OnboardingSurface = 'portal' | 'admin'
+
 export function OnboardingChecklist({
   company,
   view,
   onDismiss,
+  surface = 'portal',
 }: {
   company: CompanyLike
   view: OnboardingView
-  onDismiss: () => void
+  /** 省略すると「あとで」を出さない（管理画面は全完了まで残す） */
+  onDismiss?: () => void
+  surface?: OnboardingSurface
 }) {
   const { config } = view
   const percent = view.total > 0 ? Math.round((view.doneCount / view.total) * 100) : 0
@@ -271,13 +290,15 @@ export function OnboardingChecklist({
               {config.lead}
             </p>
           </div>
-          <button
-            type="button"
-            onClick={onDismiss}
-            className="shrink-0 cursor-pointer border-0 bg-transparent p-0 text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
-          >
-            あとで
-          </button>
+          {onDismiss && (
+            <button
+              type="button"
+              onClick={onDismiss}
+              className="shrink-0 cursor-pointer border-0 bg-transparent p-0 text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+            >
+              あとで
+            </button>
+          )}
         </div>
 
         <ProgressShell
@@ -298,7 +319,7 @@ export function OnboardingChecklist({
           </div>
         )}
 
-        {activeStep && <ActiveStepCard step={activeStep} />}
+        {activeStep && <ActiveStepCard step={activeStep} surface={surface} />}
 
         {stepsAfter.length > 0 && (
           <div className="overflow-hidden rounded-xl border border-border bg-white">
