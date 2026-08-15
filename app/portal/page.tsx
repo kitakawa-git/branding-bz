@@ -496,7 +496,9 @@ export default function PortalTopPage() {
         // --- Current period ID ---
         const currentPeriodId = goalPeriodsRes.status === 'fulfilled' ? goalPeriodsRes.value.data?.id || null : null
 
-        // Check if user has any goals (personal_goals) + get title — filtered by current period
+        // 今期の目標（personal_goals）。ここで await すると Group 1 と Group 2 の
+        // 間にもう1往復挟まる。依存しているのは Group 1 の currentPeriodId だけなので、
+        // 組み立てだけ済ませて Group 2 に相乗りさせる（結果は Group 2 の後で読む）
         let goalQuery = supabase
           .from('personal_goals')
           .select('id, title')
@@ -507,26 +509,6 @@ export default function PortalTopPage() {
         } else {
           goalQuery = goalQuery.is('goal_period_id', null)
         }
-        const { data: goalData } = await goalQuery.limit(1).maybeSingle()
-        const hasGoalsData = !!goalData
-        const goalTitleData = goalData?.title || null
-        const currentGoalId = goalData?.id || null
-        setHasGoals(hasGoalsData)
-        setGoalTitle(goalTitleData)
-
-        // --- KPI Items (from goal_kpis) — filtered to current period's goal ---
-        const allKpis = kpiGoalsRes.status === 'fulfilled' ? (kpiGoalsRes.value.data || []) : []
-        const kpiGoalsData: KpiItemSummary[] = allKpis
-          .filter((g: { goal_id: string }) => !currentGoalId || g.goal_id === currentGoalId)
-          .map((g: { id: string; title: string; progress: number; weight: number; status: string; deadline: string | null }) => ({
-            id: g.id,
-            title: g.title,
-            progress: g.progress,
-            weight: g.weight,
-            status: g.status,
-            deadline: g.deadline,
-          }))
-        setKpiGoals(kpiGoalsData)
 
         // --- Goal period ---
         const goalPeriodData = goalPeriodRes.status === 'fulfilled' ? goalPeriodRes.value.data?.goal_period : null
@@ -561,7 +543,7 @@ export default function PortalTopPage() {
           ...new Set(companyRecentData.map((p) => p.user_id)),
         ]
 
-        const [monthlyLikesRes, recentLikesRes, recentCommentsRes, membersRes] =
+        const [monthlyLikesRes, recentLikesRes, recentCommentsRes, membersRes, goalRes] =
           await Promise.allSettled([
             // [0] Likes on my posts (全期間、post_id付き)
             myPostIds.length > 0
@@ -592,7 +574,32 @@ export default function PortalTopPage() {
                   .in('auth_id', companyUserIds)
                   .eq('company_id', companyId)
               : Promise.resolve({ data: [] as { auth_id: string; display_name: string; profile: { name: string } | { name: string }[] | null }[] }),
+            // [4] 今期の目標。Group 1 にしか依存しないのでここに相乗りさせている
+            goalQuery.limit(1).maybeSingle(),
           ])
+
+        // --- 目標と KPI（goalRes を読んでから） ---
+        const goalData =
+          goalRes.status === 'fulfilled'
+            ? ((goalRes.value as { data: { id: string; title: string } | null }).data ?? null)
+            : null
+        const currentGoalId = goalData?.id || null
+        setHasGoals(!!goalData)
+        setGoalTitle(goalData?.title || null)
+
+        // KPI は今期の目標に紐づくものだけ
+        const allKpis = kpiGoalsRes.status === 'fulfilled' ? (kpiGoalsRes.value.data || []) : []
+        const kpiGoalsData: KpiItemSummary[] = allKpis
+          .filter((g: { goal_id: string }) => !currentGoalId || g.goal_id === currentGoalId)
+          .map((g: { id: string; title: string; progress: number; weight: number; status: string; deadline: string | null }) => ({
+            id: g.id,
+            title: g.title,
+            progress: g.progress,
+            weight: g.weight,
+            status: g.status,
+            deadline: g.deadline,
+          }))
+        setKpiGoals(kpiGoalsData)
 
         // Likes received — post_id付きで保持（フィルタ切り替え用）
         let allLikePostIdsData: string[] = []
@@ -704,8 +711,8 @@ export default function PortalTopPage() {
           companyRecentPosts: companyRecentPostsFinal,
           latestAnnouncements: latestAnnouncementsData,
           kpiGoals: kpiGoalsData,
-          hasGoals: hasGoalsData,
-          goalTitle: goalTitleData,
+          hasGoals: !!goalData,
+          goalTitle: goalData?.title || null,
           goalPeriodType: goalPeriodTypeData,
           showGoalBanner: showGoalBannerData,
           showReviewBanner: showReviewBannerData,
