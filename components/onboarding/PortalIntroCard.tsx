@@ -64,7 +64,12 @@ export function PortalIntroCard() {
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_40px_1fr] sm:gap-0">
         {/* 左：ポータル。いま見ている画面なので先に置く */}
         <div className="flex flex-col rounded-lg border border-ds-app-accent bg-blue-50 p-3.5">
-          <span className="mb-1.5 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-ds-app-accent">
+          {/* 12px 指定。globals.css の底上げルール（9〜13px を14pxに上げる）に
+              クラスでは勝てないので、この2つのラベルだけ inline style で指定する */}
+          <span
+            style={{ fontSize: 12 }}
+            className="mb-1.5 inline-flex items-center gap-1 font-bold uppercase tracking-wider text-ds-app-accent"
+          >
             <MapPin size={11} aria-hidden="true" />
             この画面
           </span>
@@ -101,7 +106,10 @@ export function PortalIntroCard() {
             そちらを変えたらここも合わせる（app/admin/components/AdminDataProvider.tsx）。
             文字と枠線は上書きが無いので :root の値をそのまま使う */}
         <div className="flex flex-col rounded-lg border-[hsl(218_14%_26%)] border bg-[hsl(220_13%_21%)] p-3.5">
-          <span className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-[hsl(216_12%_84%)]">
+          <span
+            style={{ fontSize: 12 }}
+            className="mb-1.5 font-bold uppercase tracking-wider text-[hsl(216_12%_84%)]"
+          >
             登録・編集
           </span>
           <p className="m-0 mb-2.5 text-[18px] font-extrabold text-white">管理画面</p>
