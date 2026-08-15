@@ -15,7 +15,7 @@ const breadcrumbMap: Record<string, PortalCrumb> = {
   '/portal/announcements': { title: 'お知らせ' },
   '/portal/profile': { title: 'マイプロフィール' },
   // 浸透セクション
-  '/portal/timeline': { section: '浸透', title: 'Good Job タイムライン' },
+  '/portal/timeline': { section: '浸透', title: 'Good Actionタイムライン' },
   '/portal/kpi': { section: '浸透', title: '目標・KPI' },
   '/portal/learning': { section: '浸透', title: 'ラーニング' },
   '/portal/survey': { section: '浸透', title: 'サーベイ結果' },

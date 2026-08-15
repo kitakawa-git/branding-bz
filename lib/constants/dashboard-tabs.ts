@@ -19,7 +19,7 @@ export type DashboardTab = {
 
 export const DASHBOARD_TABS: readonly DashboardTab[] = [
   { label: 'ブランドスコア', href: '/admin/brand-score' },
-  { label: 'Good Job投稿分析', href: '/admin/dashboard', featureKey: 'timeline_enabled' },
+  { label: 'Good Action投稿分析', href: '/admin/dashboard', featureKey: 'timeline_enabled' },
   { label: 'スマート名刺分析', href: '/admin/analytics', featureKey: 'card_enabled' },
   { label: 'ラーニング分析', href: '/admin/analytics/learning', featureKey: 'learning_enabled' },
 ]

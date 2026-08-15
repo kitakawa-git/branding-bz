@@ -152,7 +152,7 @@ function standardConfig(): OnboardingConfig {
       },
       {
         id: 'post',
-        title: '最初の Good Job を投稿する',
+        title: '最初の Good Action を投稿する',
         duration: '約1分',
         description:
           'タイムラインの最初の1件はあなたの投稿です。社員は入った日に、空でないタイムラインを見ます。',

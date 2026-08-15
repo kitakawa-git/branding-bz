@@ -37,7 +37,7 @@ export type FeatureKey =
   | 'smartCard'
   | 'cardAnalytics'        // 閲覧解析＋アウタースコア
   | 'microFeedback'
-  | 'timeline'             // Good Jobタイムライン
+  | 'timeline'             // Good Actionタイムライン
   | 'announcements'        // お知らせ＋Web Push
   | 'videoLearning'
   | 'brandQuiz'            // ブランド理解度テスト

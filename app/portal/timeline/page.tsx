@@ -1,6 +1,6 @@
 'use client'
 
-// Good Jobタイムライン
+// Good Actionタイムライン
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { fetchWithRetry } from '@/lib/supabase-fetch'
@@ -773,7 +773,7 @@ export default function PortalTimelinePage() {
           readOnly={!isAdmin}
           company={company}
           feature="timeline"
-          title="Good Jobタイムラインを使うには"
+          title="Good Actionタイムラインを使うには"
           benefits={[
             '行動指針に沿った取り組みを社内でシェア',
             'いいね・コメントで称え合う',
@@ -1041,7 +1041,7 @@ export default function PortalTimelinePage() {
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="py-16 text-center">
             <p className="text-muted-foreground text-[15px] m-0">
-              まだ投稿がありません。最初のGood Jobを共有しましょう！
+              まだ投稿がありません。最初のGood Actionを共有しましょう！
             </p>
           </CardContent>
         </Card>

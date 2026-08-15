@@ -21,14 +21,14 @@ import FinalCta from '@/components/lp/FinalCta'
 export const metadata: Metadata = {
   title: '機能紹介 | branding.bz',
   description:
-    'branding.bz の機能紹介。ブランド掲示・Good Jobタイムライン・目標・KPI管理・スマート名刺・ブランドスコアなど、ブランドの構築・浸透・発信を支える機能をまとめて紹介します。',
+    'branding.bz の機能紹介。ブランド掲示・Good Actionタイムライン・目標・KPI管理・スマート名刺・ブランドスコアなど、ブランドの構築・浸透・発信を支える機能をまとめて紹介します。',
   alternates: {
     canonical: '/features',
   },
   openGraph: {
     title: '機能紹介 | branding.bz',
     description:
-      'branding.bz の機能紹介。ブランド掲示・Good Jobタイムライン・目標・KPI管理・スマート名刺・ブランドスコアなど、ブランドの構築・浸透・発信を支える機能をまとめて紹介します。',
+      'branding.bz の機能紹介。ブランド掲示・Good Actionタイムライン・目標・KPI管理・スマート名刺・ブランドスコアなど、ブランドの構築・浸透・発信を支える機能をまとめて紹介します。',
     url: 'https://branding.bz/features',
   },
 }
@@ -63,7 +63,7 @@ const groups: { layer: string; lead: string; features: Feature[] }[] = [
       {
         id: 'feature-timeline',
         tag: '浸透',
-        title: 'Good Jobタイムライン',
+        title: 'Good Actionタイムライン',
         description:
           '行動指針に基づいた取り組みを、写真付きで手軽にシェア。いいね・コメントで称え合い、ブランドを体現する文化を育てます。',
         icon: MessageSquareHeart,

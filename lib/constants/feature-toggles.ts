@@ -6,7 +6,7 @@
 export const FEATURE_TOGGLES = [
   {
     key: 'timeline_enabled', // companies のカラム名（boolean NOT NULL DEFAULT true）
-    label: 'Good Jobタイムライン',
+    label: 'Good Actionタイムライン',
     description:
       'オフにすると、ポータルのタイムラインページとサイドバーメニューが非表示になります。投稿データは削除されません。',
   },
