@@ -110,6 +110,7 @@ export default function PortalSurveyPage() {
     return (
       <div className="max-w-4xl mx-auto px-5 pt-4 pb-10">
         <PlanUpsell
+          readOnly={!isAdmin}
           company={company}
           feature="innerSurvey"
           title="サーベイ結果を見るには"

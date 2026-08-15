@@ -126,6 +126,7 @@ export default function PortalLearningPage() {
     return (
       <div className="max-w-4xl mx-auto px-5 pt-4 pb-10">
         <PlanUpsell
+          readOnly={!isAdmin}
           company={company}
           feature="videoLearning"
           title="ビデオラーニングを使うには"

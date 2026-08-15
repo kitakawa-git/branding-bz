@@ -107,6 +107,7 @@ export default function PortalMarketSurveyPage() {
     return (
       <div className="max-w-4xl mx-auto px-5 pt-4 pb-10">
         <PlanUpsell
+          readOnly={!isAdmin}
           company={company}
           feature="brandScoreFull"
           title="市場調査を見るには"

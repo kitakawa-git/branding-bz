@@ -624,6 +624,7 @@ export default function KpiPage() {
     return (
       <div className="max-w-4xl mx-auto px-5 pt-4 pb-10">
         <PlanUpsell
+          readOnly={!isAdmin}
           company={company}
           feature="kpi"
           title="KPI・目標管理を使うには"

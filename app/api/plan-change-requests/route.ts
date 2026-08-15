@@ -51,6 +51,22 @@ export async function POST(request: NextRequest) {
     if (caller.error) return caller.error
     const { user, companyId } = caller
 
+    // 契約に関わる依頼なので管理者だけ。
+    // UI 側でも一般メンバーには依頼ボタンを出していないが、
+    // 表示を消すのは「見せない」であって「させない」ではないのでここで塞ぐ。
+    // 判定元はポータルの isAdmin と同じ admin_users
+    const { data: adminUser } = await getSupabaseAdmin()
+      .from('admin_users')
+      .select('id')
+      .eq('auth_id', user.id)
+      .maybeSingle()
+    if (!adminUser) {
+      return NextResponse.json(
+        { error: 'プラン変更の依頼は管理者のみ行えます' },
+        { status: 403 },
+      )
+    }
+
     const body = await request.json().catch(() => ({}))
     const requestedPlan = String(body.requestedPlan ?? '')
     const note = body.note ? String(body.note).slice(0, 1000) : null
