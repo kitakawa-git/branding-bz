@@ -261,6 +261,8 @@ export function PortalSidebar() {
                     <DropdownMenuItem onClick={() => { handleNavClick(); setCardPreviewOpen(true) }} className="h-11 px-3 gap-2 text-base font-medium rounded-md">
                       <CreditCard className="size-4" />
                       名刺プレビュー
+                      {/* スマート名刺は Standard 以上。明るい面なので tone は light */}
+                      <PlanLockBadge company={company} feature="smartCard" tone="light" />
                     </DropdownMenuItem>
                   )}
                   {isAdmin && (
