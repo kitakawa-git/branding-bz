@@ -40,7 +40,6 @@ import {
   PieChart as PieChartIcon,
   User,
   Users,
-  Bell,
   Target,
   Compass,
   Smile,
@@ -872,55 +871,51 @@ export default function PortalTopPage() {
         </div>
       )}
 
-      {/* ===== 1.5. 最新のお知らせ ===== */}
+      {/* ===== 1.5. 最新のお知らせ =====
+          1件＝1カードだと、お知らせが2〜3本並んだだけで枠線が増えて
+          ダッシュボードが細切れに見える。1枚のカードに畳んで、
+          件どうしの区切りは内側の罫線だけで表す。
+          見出しと「すべて見る」もカードの中に入れる（ミッションカードと同じ作法） */}
       {announcementsEnabled && latestAnnouncements.length > 0 && (
-        <div className="mb-4">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <Bell size={18} className="text-foreground" />
+        <Card className="border shadow-none overflow-hidden mb-4">
+          <CardContent className="p-0">
+            <div className="flex items-center justify-between px-3 py-3">
               <h2 className="text-sm font-bold text-foreground tracking-wide m-0">
                 最新のお知らせ
               </h2>
+              <Link
+                href="/portal/announcements"
+                className="text-xs text-ds-app-accent hover:underline flex items-center gap-1 no-underline"
+              >
+                すべて見る <ArrowRight size={14} />
+              </Link>
             </div>
-            <Link
-              href="/portal/announcements"
-              className="text-xs text-ds-app-accent hover:underline flex items-center gap-1 no-underline"
-            >
-              すべて見る <ArrowRight size={14} />
-            </Link>
-          </div>
-          {/* 1件＝1カードだと、お知らせが2〜3本並んだだけで枠線が増えて
-              ダッシュボードが細切れに見える。1枚のカードに畳んで、
-              件どうしの区切りは内側の罫線だけで表す */}
-          <Card className="border shadow-none overflow-hidden">
-            <CardContent className="p-0">
-              {latestAnnouncements.map(a => (
-                <Link
-                  key={a.id}
-                  href={`/portal/announcements/${a.id}`}
-                  className="no-underline block border-t border-border p-3 transition-colors first:border-t-0 hover:bg-muted/40"
-                >
-                  {/* タイトル・カテゴリ・時刻を1行に畳む。時刻は右端に寄せて、
-                      複数件並んだときに縦のラインが揃うようにする */}
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <h3 className="min-w-0 truncate text-sm font-semibold text-foreground m-0">
-                      {a.title}
-                    </h3>
-                    <Badge variant="secondary" className={`shrink-0 text-[10px] px-1.5 py-0 ${ANNOUNCEMENT_CATEGORY_COLORS[a.category] || ANNOUNCEMENT_CATEGORY_COLORS['その他']}`}>
-                      {a.category}
-                    </Badge>
-                    <span className="ml-auto shrink-0 text-[11px] text-muted-foreground" suppressHydrationWarning>
-                      {getRelativeTime(a.created_at)}
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted-foreground line-clamp-2 m-0 whitespace-pre-wrap">
-                    {a.content}
-                  </p>
-                </Link>
-              ))}
-            </CardContent>
-          </Card>
-        </div>
+            {latestAnnouncements.map(a => (
+              <Link
+                key={a.id}
+                href={`/portal/announcements/${a.id}`}
+                className="no-underline block border-t border-border p-3 transition-colors hover:bg-muted/40"
+              >
+                {/* タイトル・カテゴリ・時刻を1行に畳む。時刻は右端に寄せて、
+                    複数件並んだときに縦のラインが揃うようにする */}
+                <div className="flex items-center gap-2 mb-0.5">
+                  <h3 className="min-w-0 truncate text-sm font-semibold text-foreground m-0">
+                    {a.title}
+                  </h3>
+                  <Badge variant="secondary" className={`shrink-0 text-[10px] px-1.5 py-0 ${ANNOUNCEMENT_CATEGORY_COLORS[a.category] || ANNOUNCEMENT_CATEGORY_COLORS['その他']}`}>
+                    {a.category}
+                  </Badge>
+                  <span className="ml-auto shrink-0 text-[11px] text-muted-foreground" suppressHydrationWarning>
+                    {getRelativeTime(a.created_at)}
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground line-clamp-2 m-0 whitespace-pre-wrap">
+                  {a.content}
+                </p>
+              </Link>
+            ))}
+          </CardContent>
+        </Card>
       )}
 
       {/* ===== 2. ミッションカード ===== */}
