@@ -31,6 +31,8 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
+import { useOnboarding } from '@/components/onboarding/use-onboarding'
+import { SetupSupportBanner } from '@/components/onboarding/SetupSupportBanner'
 import {
   Compass,
   Target,
@@ -147,6 +149,12 @@ export function PortalSidebar() {
 
   // 機能トグル: 無効な機能のメニュー項目を非表示にする
   const cardEnabled = isFeatureEnabled(company, 'card_enabled')
+
+  // セットアップ中の管理者にだけ入力サポートの案内を出す。
+  // hidden は「管理者でない・全ステップ完了」を含むので、これだけで条件を満たす。
+  // dismissed は見ない＝ポータルの「あとで」で消す対象ではない
+  const onboarding = useOnboarding(company)
+  const showSupportBanner = !onboarding.loading && !onboarding.hidden
   // 会社の機能トグルと、区分ごとの表示設定（管理画面「設定」）の AND。
   // href の直書き分岐だと項目が増えるたびに書き足す必要があるので、項目側に持たせる
   const visibleEngagementItems = engagementItems.filter(
@@ -221,6 +229,14 @@ export function PortalSidebar() {
           <RashisaGroup pathname={pathname} onNavClick={handleNavClick} />
 
         </SidebarContent>
+
+        {/* セットアップ中の管理者にだけ、入力サポートの案内を出す。
+            折りたたみ（アイコンのみ）では幅が足りず崩れるので出さない */}
+        {showSupportBanner && (
+          <div className="px-2 pb-1 group-data-[collapsible=icon]:hidden">
+            <SetupSupportBanner variant="sidebar" />
+          </div>
+        )}
 
         {/* ユーザーメニュー */}
         <SidebarFooter>

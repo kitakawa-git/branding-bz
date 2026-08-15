@@ -12,6 +12,7 @@ import { ArrowRight, CheckCircle } from 'lucide-react'
 import { DashboardTabs } from '../components/DashboardTabs'
 import { useAuth } from '../components/AdminDataProvider'
 import { OnboardingChecklist } from '@/components/onboarding/OnboardingChecklist'
+import { SetupSupportBanner } from '@/components/onboarding/SetupSupportBanner'
 import { useOnboarding } from '@/components/onboarding/use-onboarding'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -28,7 +29,10 @@ export default function SetupProgressPage() {
       {onboarding.loading ? (
         <Skeleton className="h-64 w-full rounded-xl" />
       ) : onboarding.view && !onboarding.hidden ? (
-        <OnboardingChecklist company={company} view={onboarding.view} surface="admin" />
+        <>
+          <OnboardingChecklist company={company} view={onboarding.view} surface="admin" />
+          <SetupSupportBanner variant="banner" />
+        </>
       ) : (
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-10 text-center">
