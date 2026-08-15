@@ -34,7 +34,7 @@ function SidebarCard() {
         <MessageSquareText size={16} className="mt-0.5 shrink-0" aria-hidden="true" />
         入力にお困りですか？
       </p>
-      <p className="m-0 mt-1.5 text-[12px] leading-relaxed opacity-90">
+      <p className="m-0 mt-2 text-[12px] leading-relaxed opacity-90">
         オンラインで入力サポート
         <br />
         無料でいたします
