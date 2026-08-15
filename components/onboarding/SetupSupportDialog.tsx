@@ -230,7 +230,8 @@ export function SetupSupportDialog({
           </>
         ) : (
           <>
-            <DialogHeader>
+            {/* DialogHeader の既定は sm 以上で左寄せ。ここは中央に揃える */}
+            <DialogHeader className="sm:text-center">
               <DialogTitle>入力サポートを申し込む</DialogTitle>
               <DialogDescription>
                 オンラインで画面を見ながら、担当者が入力をサポートします。
@@ -423,7 +424,8 @@ export function SetupSupportDialog({
 
             {error && <p className="text-sm text-red-600">{error}</p>}
 
-            <DialogFooter>
+            {/* 既定は右寄せ。見出しに合わせて中央に置く */}
+            <DialogFooter className="sm:justify-center">
               <button
                 type="button"
                 onClick={submit}
