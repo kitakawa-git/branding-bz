@@ -14,11 +14,16 @@
 //
 // ⚠️ このファイルにプラン分岐を書かない。見出し・ステップ・下部の案内文まで
 //    lib/onboarding/steps.ts の getOnboardingConfig() が返すものを並べるだけにする。
+import { useState } from 'react'
 import Link from 'next/link'
 import { ArrowRight, ArrowUpRight, Check, Lock, Sparkles } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { resolvePlanDisplay } from '@/lib/billing/plan-display'
-import type { OnboardingStepView, OnboardingView } from '@/lib/onboarding/steps'
+import type {
+  OnboardingStepId,
+  OnboardingStepView,
+  OnboardingView,
+} from '@/lib/onboarding/steps'
 import { can } from '@/lib/billing/entitlements'
 
 type CompanyLike = Parameters<typeof can>[0]
@@ -94,12 +99,17 @@ function DoneStepsList({ steps }: { steps: OnboardingStepView[] }) {
 }
 
 /**
- * 次にやる1つ。カード全体がリンクなので、
+ * いま開いている1つ。カード全体がリンクなので、
  * 下書き支援リンクはカードの外に出す（リンクの入れ子は不正）。
+ *
+ * key に step.id を渡して開くたびに作り直し、開く動きを再生させる。
  */
 function ActiveStepCard({ step }: { step: OnboardingStepView }) {
   return (
-    <>
+    <div
+      key={step.id}
+      className="animate-in fade-in zoom-in-95 slide-in-from-top-2 duration-300 ease-out"
+    >
       <Link
         href={step.href}
         className="group relative mb-2 flex items-center gap-4 overflow-hidden rounded-xl border-[1.5px] border-ds-app-accent bg-white p-5 no-underline shadow-[0_6px_20px_rgba(37,99,235,0.10)] transition-all hover:-translate-y-0.5 hover:border-blue-700 hover:shadow-[0_10px_28px_rgba(37,99,235,0.16)] focus-visible:ring-2 focus-visible:ring-ds-app-accent"
@@ -110,7 +120,8 @@ function ActiveStepCard({ step }: { step: OnboardingStepView }) {
         />
         <div className="min-w-0 flex-1">
           <span className="mb-2.5 inline-flex items-center gap-1.5 rounded-full bg-ds-app-accent px-2.5 py-[3px] text-[10.5px] font-bold uppercase tracking-wider text-white">
-            STEP {step.index} · 次にやる
+            STEP {step.index}
+            {step.current && ' · 次にやる'}
           </span>
           <p className="m-0 mb-1.5 text-lg font-bold text-foreground">{step.title}</p>
           <p className="m-0 text-sm leading-relaxed text-muted-foreground">
@@ -145,11 +156,17 @@ function ActiveStepCard({ step }: { step: OnboardingStepView }) {
           </Link>
         </p>
       )}
-    </>
+    </div>
   )
 }
 
-function RestStepRow({ step }: { step: OnboardingStepView }) {
+function RestStepRow({
+  step,
+  onExpand,
+}: {
+  step: OnboardingStepView
+  onExpand: (id: OnboardingStepId) => void
+}) {
   // 先に済ませてほしいステップが残っているものは薄く出す。
   // クリックできないことを DOM でも表すため <div> のままにする
   const waiting = !!step.ctaLabelWaiting && !step.current
@@ -188,13 +205,16 @@ function RestStepRow({ step }: { step: OnboardingStepView }) {
     )
   }
 
+  // 1手目は「開く」。中身（説明・所要・これが終わると何が起きるか）を見てから
+  // 進めるようにする。開いたカードをもう一度押すと遷移する
   return (
-    <Link
-      href={step.href}
-      className="group flex items-center gap-3 border-t border-border px-4 py-3 text-sm no-underline transition-colors first:border-t-0 hover:bg-muted"
+    <button
+      type="button"
+      onClick={() => onExpand(step.id)}
+      className="group flex w-full cursor-pointer items-center gap-3 border-0 border-t border-border bg-transparent px-4 py-3 text-left text-sm transition-colors first:border-t-0 hover:bg-muted"
     >
       {content}
-    </Link>
+    </button>
   )
 }
 
@@ -213,8 +233,13 @@ export function OnboardingChecklist({
   const plan = resolvePlanDisplay(company ?? { plan: 'free' })
 
   const doneSteps = view.steps.filter((s) => s.done)
-  const activeStep = view.steps.find((s) => s.current && !s.done)
-  const restSteps = view.steps.filter((s) => !s.done && !s.current)
+  const openSteps = view.steps.filter((s) => !s.done)
+
+  // 既定は「次にやる」1つ。別のステップを押すと、そちらが開く
+  const [expandedId, setExpandedId] = useState<OnboardingStepId | null>(null)
+  const activeStep =
+    openSteps.find((s) => s.id === expandedId) ?? openSteps.find((s) => s.current)
+  const restSteps = openSteps.filter((s) => s.id !== activeStep?.id)
 
   const totalMinutes = view.steps.reduce((n, s) => n + parseDurationMinutes(s.duration), 0)
   const remainingMinutes = view.steps
@@ -264,7 +289,7 @@ export function OnboardingChecklist({
         {restSteps.length > 0 && (
           <div className="overflow-hidden rounded-xl border border-border bg-white">
             {restSteps.map((step) => (
-              <RestStepRow key={step.id} step={step} />
+              <RestStepRow key={step.id} step={step} onExpand={setExpandedId} />
             ))}
           </div>
         )}
