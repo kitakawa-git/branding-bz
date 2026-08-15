@@ -30,7 +30,7 @@ function SidebarCard() {
       // 「AI・特別なサポート」の視覚言語として揃える
       className="group block rounded-lg bg-gradient-to-br from-violet-600 to-blue-600 p-2.5 text-white no-underline transition-all hover:shadow-[0_2px_8px_rgba(124,58,237,0.35)]"
     >
-      <span className="mb-2 flex" aria-hidden="true">
+      <span className="mb-2.5 flex" aria-hidden="true">
         <MessageSquareText size={16} />
       </span>
       <p className="m-0 text-[11.5px] font-bold leading-snug">入力にお困りですか？</p>
