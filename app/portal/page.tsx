@@ -263,7 +263,7 @@ export default function PortalTopPage() {
 
   // 初回セットアップ案内（管理者のみ）。未セットアップのあいだ、
   // ダッシュボードの中身をこれに差し替える（着地先は変えない）
-  const onboarding = useOnboarding(company)
+  const onboarding = useOnboarding(company, { notifyOnComplete: true })
   const showOnboarding = !onboarding.loading && !onboarding.hidden && !onboarding.dismissed
 
   // 機能トグル: タイムラインが無効なら投稿関連ウィジェットを非表示にする

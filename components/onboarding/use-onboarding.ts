@@ -8,6 +8,18 @@ import {
   type OnboardingView,
 } from '@/lib/onboarding/steps'
 import { can } from '@/lib/billing/entitlements'
+import { toast } from 'sonner'
+
+/**
+ * このセッションで最後に見た「全ステップ完了か」。
+ *
+ * モジュール変数にしているのは、ページを移動してフックが作り直されても
+ * 「さっきまで未完了だった」を覚えておくため（最後の1つを管理画面で終えて
+ * ポータルに戻る、という順路が実際に一番多い）。
+ * リロードで消えるのは意図どおり。完了の通知は一度出れば役目が終わるので、
+ * DB にも localStorage にも残さない。
+ */
+let seenAllDone: boolean | null = null
 
 type CompanyLike = Parameters<typeof can>[0]
 
@@ -21,7 +33,15 @@ export type OnboardingState = {
   dismiss: () => Promise<void>
 }
 
-export function useOnboarding(company: CompanyLike): OnboardingState {
+export function useOnboarding(
+  company: CompanyLike,
+  /**
+   * 完了した瞬間に「準備完了」を出すか。ポータルのカードだけ true にする。
+   * 管理画面の鏡写しカードでも出すと、同じ完了で2回鳴ったり、
+   * 「社員と同じ画面」という文言が管理画面で出て噛み合わなくなる。
+   */
+  { notifyOnComplete = false }: { notifyOnComplete?: boolean } = {},
+): OnboardingState {
   const [loading, setLoading] = useState(true)
   const [applicable, setApplicable] = useState(false)
   const [dismissed, setDismissed] = useState(false)
@@ -53,6 +73,18 @@ export function useOnboarding(company: CompanyLike): OnboardingState {
   }, [])
 
   const view = status ? buildOnboardingView(company, status) : null
+  const allDone = view?.allDone ?? null
+
+  // 未完了 → 完了に変わった瞬間だけ一度出す。
+  // 読み込んだ時点で既に完了している場合（過去に済ませた人）は出さない
+  useEffect(() => {
+    if (!notifyOnComplete || allDone === null) return
+    const prev = seenAllDone
+    seenAllDone = allDone
+    if (prev === false && allDone) {
+      toast.success('準備完了です。ここからは社員と同じ画面が表示されます')
+    }
+  }, [notifyOnComplete, allDone])
 
   return {
     loading,
