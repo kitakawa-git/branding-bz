@@ -62,7 +62,36 @@ export function PortalIntroCard() {
 
       {/* 図解：PCは横並び、モバイルは縦積み */}
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_40px_1fr] sm:gap-0">
-        {/* 左：管理画面。実物の管理画面サイドバーと同じ地色にして、
+        {/* 左：ポータル。いま見ている画面なので先に置く */}
+        <div className="flex flex-col rounded-lg border border-ds-app-accent bg-blue-50 p-3.5">
+          <span className="mb-1.5 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-ds-app-accent">
+            <MapPin size={11} aria-hidden="true" />
+            この画面
+          </span>
+          <p className="m-0 mb-2.5 text-[18px] font-extrabold text-foreground">ポータル</p>
+          <ul className="m-0 list-disc pl-4 text-[14px] leading-[1.9] text-muted-foreground">
+            <li>私たちの「らしさ」4視点</li>
+            <li>タイムライン</li>
+            <li>KPI・目標</li>
+            <li>ラーニング</li>
+          </ul>
+        </div>
+        {/* 中央：矢印 */}
+        <div className="flex items-center justify-center">
+          {/* 一方通行ではなく行き来。PCは左右、モバイルは上下 */}
+          <ArrowLeftRight
+            size={18}
+            className="hidden text-muted-foreground sm:block"
+            aria-hidden="true"
+          />
+          <ArrowUpDown
+            size={18}
+            className="text-muted-foreground sm:hidden"
+            aria-hidden="true"
+          />
+        </div>
+
+        {/* 右：管理画面。実物の管理画面サイドバーと同じ地色にして、
             「あの暗い画面のこと」と一目で結びつくようにする。
             ⚠️ bg-sidebar は使えない。globals.css の [data-portal] が
             --sidebar-* をポータル用の明るい配色に上書きしているので、
@@ -85,35 +114,6 @@ export function PortalIntroCard() {
           </ul>
         </div>
 
-        {/* 中央：矢印 */}
-        <div className="flex items-center justify-center">
-          {/* 一方通行ではなく行き来。PCは左右、モバイルは上下 */}
-          <ArrowLeftRight
-            size={18}
-            className="hidden text-muted-foreground sm:block"
-            aria-hidden="true"
-          />
-          <ArrowUpDown
-            size={18}
-            className="text-muted-foreground sm:hidden"
-            aria-hidden="true"
-          />
-        </div>
-
-        {/* 右：ポータル */}
-        <div className="flex flex-col rounded-lg border border-ds-app-accent bg-blue-50 p-3.5">
-          <span className="mb-1.5 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-ds-app-accent">
-            <MapPin size={11} aria-hidden="true" />
-            この画面
-          </span>
-          <p className="m-0 mb-2.5 text-[18px] font-extrabold text-foreground">ポータル</p>
-          <ul className="m-0 list-disc pl-4 text-[14px] leading-[1.9] text-muted-foreground">
-            <li>私たちの「らしさ」4視点</li>
-            <li>タイムライン</li>
-            <li>KPI・目標</li>
-            <li>ラーニング</li>
-          </ul>
-        </div>
       </div>
     </div>
   )
