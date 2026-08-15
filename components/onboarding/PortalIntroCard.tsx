@@ -62,14 +62,15 @@ export function PortalIntroCard() {
 
       {/* 図解：PCは横並び、モバイルは縦積み */}
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_40px_1fr] sm:gap-0">
-        {/* 左：管理画面 */}
-        <div className="flex flex-col rounded-lg border border-border bg-muted/40 p-3.5">
-          <span className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+        {/* 左：管理画面。実物の管理画面サイドバーと同じ地色にして、
+            「あの暗い画面のこと」と一目で結びつくようにする */}
+        <div className="flex flex-col rounded-lg border border-sidebar-border bg-sidebar p-3.5">
+          <span className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-sidebar-foreground/80">
             管理者だけ
           </span>
-          <p className="m-0 text-sm font-extrabold text-foreground">管理画面</p>
-          <p className="m-0 mb-2.5 text-[11.5px] text-muted-foreground">つくる場所</p>
-          <ul className="m-0 list-disc pl-4 text-[11.5px] leading-[1.9] text-muted-foreground">
+          <p className="m-0 text-sm font-extrabold text-white">管理画面</p>
+          <p className="m-0 mb-2.5 text-[11.5px] text-sidebar-foreground">つくる場所</p>
+          <ul className="m-0 list-disc pl-4 text-[11.5px] leading-[1.9] text-sidebar-foreground">
             <li>会社の基本情報</li>
             <li>ブランド方針（MVV）</li>
             <li>パーソナリティ</li>
