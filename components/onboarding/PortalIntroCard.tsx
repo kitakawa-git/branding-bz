@@ -109,7 +109,7 @@ export function PortalIntroCard() {
             見せる場所
           </span>
           <p className="m-0 text-[18px] font-extrabold text-foreground">ポータル</p>
-          <p className="m-0 mb-2.5 text-[11.5px] text-muted-foreground">全員が見る</p>
+          <p className="m-0 mb-2.5 text-[11.5px] text-muted-foreground">メンバー全員</p>
           <ul className="m-0 list-disc pl-4 text-[11.5px] leading-[1.9] text-muted-foreground">
             <li>私たちの「らしさ」4視点</li>
             <li>タイムライン</li>
