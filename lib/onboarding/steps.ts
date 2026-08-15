@@ -35,8 +35,6 @@ export type OnboardingStep = {
   href: string
   /** 「迷ったら」の下書き支援。完了判定には関与しない */
   assist?: { label: string; href: string }
-  /** これが終わると何が起きるか。次にやるステップでだけ出す */
-  payoff?: string
 }
 
 /** 各ステップが済んでいるか。API が data の existence だけを見て埋める */
@@ -71,13 +69,12 @@ function freeConfig(plan: Plan): OnboardingConfig {
       {
         id: 'basics',
         title: '会社の基本情報を整える',
-        duration: '約3分',
+        duration: '約5分',
         // スマート名刺は Standard 以上（smartCard: free = false）。
         // free の案内で名刺を成果に挙げると、使えない機能を売り込むことになる
         description: '社名・業種・ロゴ。ブランド掲示とポータルの土台になります。',
         ctaLabel: '基本情報を入力する',
         href: '/admin/company',
-        payoff: 'ポータルに自社のロゴと会社名が出ます',
       },
       {
         id: 'philosophy',
@@ -87,7 +84,6 @@ function freeConfig(plan: Plan): OnboardingConfig {
           'ミッション・ビジョン・行動指針。まだ言葉になっていなくても大丈夫です。',
         ctaLabel: 'ブランド方針を登録する',
         href: '/admin/brand/guidelines',
-        payoff: '全員が同じ言葉で会社を語れるようになります',
       },
       {
         id: 'personality',
@@ -97,7 +93,6 @@ function freeConfig(plan: Plan): OnboardingConfig {
           'ブランドの人格と特性。どんな性格の会社として見られたいかが決まります。',
         ctaLabel: 'パーソナリティを登録する',
         href: '/admin/brand/personality',
-        payoff: '「どんな会社か」の印象が揃います',
         assist: { label: 'パーソナリティ診断で下書きを作る', href: '/tools/personality' },
       },
       {
@@ -109,7 +104,6 @@ function freeConfig(plan: Plan): OnboardingConfig {
         description: 'ブランドカラーとロゴの扱い。掲示や資料の見た目が揃います。',
         ctaLabel: 'ビジュアルを登録する',
         href: '/admin/brand/visuals',
-        payoff: '全員が同じ色とロゴを使えるようになります',
         assist: { label: 'カラー定義ツールで下書きを作る', href: '/tools/colors' },
       },
       {
@@ -119,7 +113,6 @@ function freeConfig(plan: Plan): OnboardingConfig {
         description: '言葉づかいのトーンと用語のルール。社内外での話し方が揃います。',
         ctaLabel: 'バーバルを登録する',
         href: '/admin/brand/verbal',
-        payoff: '社内外での話し方が揃います',
       },
       {
         id: 'invite',
@@ -132,7 +125,6 @@ function freeConfig(plan: Plan): OnboardingConfig {
         ctaLabel: '招待リンクを発行する',
         ctaLabelWaiting: 'ステップ1〜5のあとで',
         href: '/admin/members-portal',
-        payoff: 'チームでブランドを共有できます',
       },
     ],
     upsell: {
@@ -157,7 +149,6 @@ function standardConfig(): OnboardingConfig {
           'ミッション・行動指針・ブランドカラーを登録します。AI構築ツールで下書きから作ることもできます。',
         ctaLabel: 'ブランド掲示を登録する',
         href: '/admin/brand/guidelines',
-        payoff: '全員が同じ言葉で会社を語れるようになります',
       },
       {
         id: 'post',
@@ -167,7 +158,6 @@ function standardConfig(): OnboardingConfig {
           'タイムラインの最初の1件はあなたの投稿です。社員は入った日に、空でないタイムラインを見ます。',
         ctaLabel: '投稿する',
         href: '/portal/timeline?compose=1',
-        payoff: '社員が入った日に、空でないタイムラインを見ます',
       },
       {
         id: 'announcement',
@@ -176,7 +166,6 @@ function standardConfig(): OnboardingConfig {
         description: '「branding.bz を始めます」の一言で十分です。',
         ctaLabel: 'お知らせを書く',
         href: '/admin/announcements',
-        payoff: '全員に届く連絡経路ができます',
       },
       {
         id: 'invite',
@@ -186,7 +175,6 @@ function standardConfig(): OnboardingConfig {
         ctaLabel: '招待リンクを発行する',
         ctaLabelWaiting: 'ステップ2・3のあとで',
         href: '/admin/members-portal',
-        payoff: 'チームでブランドを共有できます',
       },
     ],
   }

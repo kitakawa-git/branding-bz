@@ -123,12 +123,11 @@ function ActiveStepCard({ step }: { step: OnboardingStepView }) {
           <p className="m-0 text-sm leading-relaxed text-muted-foreground">
             {step.description}
           </p>
-          <div className="mt-2.5 flex flex-wrap items-center gap-2.5 text-xs text-muted-foreground">
-            {step.duration && (
+          {step.duration && (
+            <div className="mt-2.5 text-xs text-muted-foreground">
               <span className="rounded-full bg-muted px-2 py-0.5">⏱ {step.duration}</span>
-            )}
-            {step.payoff && <span>💡 {step.payoff}</span>}
-          </div>
+            </div>
+          )}
         </div>
         {/* 丸矢印。ds-app-accent は hex 変数で /10 の不透明度修飾が効かない（透明になる）ため、
             地色は同系の blue-50 を使う */}
