@@ -30,10 +30,12 @@ function SidebarCard() {
       // 「AI・特別なサポート」の視覚言語として揃える
       className="group block rounded-lg bg-gradient-to-br from-violet-600 to-blue-600 p-2.5 text-white no-underline transition-all hover:shadow-[0_2px_8px_rgba(124,58,237,0.35)]"
     >
-      <span className="mb-2.5 flex" aria-hidden="true">
-        <MessageSquareText size={16} />
-      </span>
-      <p className="m-0 text-[11.5px] font-bold leading-snug">入力にお困りですか？</p>
+      {/* 見出しの体裁は他のカードの h2 と同じ（text-base font-extrabold）。
+          アイコンは見出しの一部として左に置く */}
+      <h2 className="m-0 flex items-start gap-1.5 text-base font-extrabold leading-snug">
+        <MessageSquareText size={16} className="mt-0.5 shrink-0" aria-hidden="true" />
+        入力にお困りですか？
+      </h2>
       <p className="m-0 mt-0.5 text-[10px] leading-relaxed opacity-90">
         オンラインで入力サポート
         <br />
