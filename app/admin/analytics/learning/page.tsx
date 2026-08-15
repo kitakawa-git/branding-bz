@@ -1,6 +1,6 @@
 'use client'
 
-// 視聴分析（ラーニング視聴分析）— ダッシュボードのタブの一つ。
+// ラーニング分析 — ダッシュボードのタブの一つ。
 // 旧 /admin/learning の「視聴分析」タブから移設。LearningAnalytics は
 // /api/learning/analytics（cookieセッションで企業解決）から自前取得するため props 不要。
 import { DashboardTabs } from '../../components/DashboardTabs'
