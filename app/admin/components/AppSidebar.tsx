@@ -28,6 +28,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { PortalBackCoachMark } from '@/components/onboarding/PortalBackCoachMark'
 import {
   Users,
   Sparkles,
@@ -268,6 +269,9 @@ export function AppSidebar() {
 
       {/* ユーザーメニュー（フッター固定） */}
       <SidebarFooter>
+        {/* ポータルへ戻るリンクはこの下のアカウントメニューの中にあり畳まれている。
+            セットアップ案内から来た人には、1回だけ場所を教える */}
+        <PortalBackCoachMark />
         <SidebarMenu>
           <SidebarMenuItem>
             <DropdownMenu>

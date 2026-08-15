@@ -25,6 +25,7 @@ import type {
   OnboardingView,
 } from '@/lib/onboarding/steps'
 import { can } from '@/lib/billing/entitlements'
+import { armPortalBackCoach } from './PortalBackCoachMark'
 
 type CompanyLike = Parameters<typeof can>[0]
 
@@ -112,6 +113,11 @@ function ActiveStepCard({ step }: { step: OnboardingStepView }) {
     >
       <Link
         href={step.href}
+        // 管理画面へ送るときだけ、戻り方の案内を仕込む。
+        // ポータル内で完結するステップ（投稿など）では戻り方に迷わない
+        onClick={() => {
+          if (step.href.startsWith('/admin')) armPortalBackCoach()
+        }}
         className="group mb-2 flex items-center gap-4 rounded-xl border-[1.5px] border-ds-app-accent bg-white p-5 no-underline shadow-[0_6px_20px_rgba(37,99,235,0.10)] transition-all hover:-translate-y-0.5 hover:border-blue-700 hover:shadow-[0_10px_28px_rgba(37,99,235,0.16)] focus-visible:ring-2 focus-visible:ring-ds-app-accent"
       >
         <div className="min-w-0 flex-1">
