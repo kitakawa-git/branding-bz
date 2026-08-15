@@ -73,10 +73,10 @@ export function PortalIntroCard() {
             文字と枠線は上書きが無いので :root の値をそのまま使う */}
         <div className="flex flex-col rounded-lg border-[hsl(218_14%_26%)] border bg-[hsl(220_13%_21%)] p-3.5">
           <span className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-[hsl(216_12%_84%)]">
-            管理者だけ
+            つくる場所
           </span>
           <p className="m-0 text-[18px] font-extrabold text-white">管理画面</p>
-          <p className="m-0 mb-2.5 text-[11.5px] text-[hsl(216_12%_84%)]">つくる場所</p>
+          <p className="m-0 mb-2.5 text-[11.5px] text-[hsl(216_12%_84%)]">管理者だけ</p>
           <ul className="m-0 list-disc pl-4 text-[11.5px] leading-[1.9] text-[hsl(216_12%_84%)]">
             <li>会社の基本情報</li>
             <li>ブランド方針（MVV）</li>
