@@ -75,8 +75,7 @@ export function PortalIntroCard() {
           <span className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-[hsl(216_12%_84%)]">
             登録・編集
           </span>
-          <p className="m-0 text-[18px] font-extrabold text-white">管理画面</p>
-          <p className="m-0 mb-2.5 text-[11.5px] text-[hsl(216_12%_84%)]">管理者のみ</p>
+          <p className="m-0 mb-2.5 text-[18px] font-extrabold text-white">管理画面</p>
           <ul className="m-0 list-disc pl-4 text-[14px] leading-[1.9] text-[hsl(216_12%_84%)]">
             <li>会社の基本情報</li>
             <li>ブランド方針（MVV）</li>
@@ -107,17 +106,13 @@ export function PortalIntroCard() {
             <MapPin size={11} aria-hidden="true" />
             この画面
           </span>
-          <p className="m-0 text-[18px] font-extrabold text-foreground">ポータル</p>
-          <p className="m-0 mb-2.5 text-[11.5px] text-muted-foreground">メンバー全員</p>
+          <p className="m-0 mb-2.5 text-[18px] font-extrabold text-foreground">ポータル</p>
           <ul className="m-0 list-disc pl-4 text-[14px] leading-[1.9] text-muted-foreground">
             <li>私たちの「らしさ」4視点</li>
             <li>タイムライン</li>
             <li>KPI・目標</li>
             <li>ラーニング</li>
           </ul>
-          <span className="mt-auto pt-2.5 text-[10.5px] font-bold text-ds-app-accent">
-            見せる場所
-          </span>
         </div>
       </div>
     </div>
