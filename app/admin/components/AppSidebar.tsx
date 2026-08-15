@@ -78,8 +78,8 @@ type NavItem = {
 const navItems: NavItem[] = [
   { href: '/admin/brand-score', label: 'ダッシュボード', icon: LayoutDashboard },
   { href: '/admin/card-template', label: 'スマート名刺', icon: CreditCard, feature: 'smartCard', toggleKey: 'card_enabled' },
-  { href: '/admin/kpi', label: '目標・KPI管理', icon: Milestone, feature: 'kpi', toggleKey: 'kpi_enabled' },
-  { href: '/admin/announcements', label: 'お知らせ管理', icon: Bell, feature: 'announcements', toggleKey: 'announcements_enabled' },
+  { href: '/admin/kpi', label: '目標・KPI', icon: Milestone, feature: 'kpi', toggleKey: 'kpi_enabled' },
+  { href: '/admin/announcements', label: 'お知らせ', icon: Bell, feature: 'announcements', toggleKey: 'announcements_enabled' },
 ]
 
 const brandItems: NavItem[] = [
@@ -101,7 +101,7 @@ const buildItems: NavItem[] = [
 
 // 浸透（branding.bz本体の浸透施策）: サーベイ・市場調査・理解度テスト・ラーニング
 const penetrationItems: NavItem[] = [
-  { href: '/admin/brand-score/surveys', label: 'サーベイ管理', icon: BarChart3, feature: 'innerSurvey', toggleKey: 'survey_enabled' },
+  { href: '/admin/brand-score/surveys', label: 'サーベイ', icon: BarChart3, feature: 'innerSurvey', toggleKey: 'survey_enabled' },
   // 社外の浸透（外部調査）。サーベイ管理が社内なのと対になる
   { href: '/admin/brand-score/market-surveys', label: '市場調査', icon: Globe, feature: 'brandScoreFull', toggleKey: 'market_survey_enabled' },
   { href: '/admin/brand-score/quizzes', label: '理解度テスト', icon: ClipboardCheck, feature: 'brandQuiz', toggleKey: 'quiz_enabled' },
