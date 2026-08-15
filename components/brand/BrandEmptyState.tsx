@@ -6,10 +6,12 @@
 // 登録できるのは管理者だけなので、出し分ける:
 //   管理者   … 何を登録する場所かを添えて、管理画面の該当ページへ送る
 //   メンバー … 誰かが登録すれば埋まると分かる一文だけ。押せない導線は出さない
+//
+// 体裁はプラン外のときに出る面（PlanUpsell）に合わせている。
+// ポータルで「まだ見られない」を伝える面は、理由が違っても見た目は揃える。
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { usePortalAuth } from '@/app/portal/components/PortalDataProvider'
 
 export function BrandEmptyState({
@@ -27,23 +29,24 @@ export function BrandEmptyState({
   const { isAdmin } = usePortalAuth()
 
   return (
-    <div className="mx-auto max-w-2xl px-5 py-10">
+    <div className="mx-auto max-w-4xl px-5 pt-4 pb-10">
       <Card className="border bg-[hsl(0_0%_97%)] shadow-none">
-        <CardContent className="p-6 text-center">
-          <p className="m-0 text-base font-bold text-foreground">
+        <CardContent className="p-6 pb-8 text-center">
+          <h2 className="mb-1 text-base font-bold text-foreground">
             {label}はまだ登録されていません
-          </p>
-          <p className="m-0 mt-2 text-base leading-relaxed text-muted-foreground sm:text-sm">
+          </h2>
+          <p className="mb-4 text-sm text-muted-foreground">
             {isAdmin ? description : '管理者が登録すると、ここに表示されます。'}
           </p>
 
           {isAdmin && (
-            <Button asChild className="mt-5 h-11 rounded-xl px-5">
-              <Link href={href} className="no-underline">
-                {label}を登録する
-                <ArrowRight size={15} aria-hidden="true" />
-              </Link>
-            </Button>
+            <Link
+              href={href}
+              className="inline-flex h-11 items-center gap-1.5 rounded-full bg-foreground px-6 text-sm font-bold text-background no-underline transition-transform hover:scale-[1.03]"
+            >
+              {label}を登録する
+              <ArrowRight size={15} aria-hidden="true" />
+            </Link>
           )}
         </CardContent>
       </Card>
