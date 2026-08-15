@@ -883,11 +883,14 @@ export default function PortalTopPage() {
               <h2 className="text-sm font-bold text-foreground tracking-wide m-0">
                 最新のお知らせ
               </h2>
+              {/* 矢印だけ。文字が無くなるので、読み上げ用の名前を付ける。
+                  大きさと色はミッションカードの矢印に合わせる */}
               <Link
                 href="/portal/announcements"
-                className="text-xs text-ds-app-accent hover:underline flex items-center gap-1 no-underline"
+                aria-label="お知らせをすべて見る"
+                className="no-underline"
               >
-                すべて見る <ArrowRight size={14} />
+                <ArrowRight size={18} className="text-muted-foreground" />
               </Link>
             </div>
             {latestAnnouncements.map(a => (
