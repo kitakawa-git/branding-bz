@@ -1,10 +1,8 @@
 'use client'
 
 // タイムライン ダッシュボード（管理画面）
-import { visibleDashboardTabs } from '@/lib/constants/dashboard-tabs'
 import { useEffect, useState, useMemo } from 'react'
-import { usePathname } from 'next/navigation'
-import Link from 'next/link'
+import { DashboardTabs } from '../components/DashboardTabs'
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, PieChart, Pie, Cell } from 'recharts'
 import { supabase } from '@/lib/supabase'
 import { fetchPhilosophy } from '@/lib/brand/philosophy'
@@ -177,10 +175,8 @@ function resolveProfile(member: MemberRow): { name: string; photoUrl: string | n
 
 export default function DashboardPage() {
   const { companyId, company } = useAuth()
-  const pathname = usePathname()
 
   // 機能トグルを踏まえたタブ（定義は lib/constants/dashboard-tabs.ts に集約）
-  const visibleTabs = visibleDashboardTabs(company)
 
   const cacheKey = `dashboard-v2-${companyId}`
   const cached = companyId ? getPageCache<DashboardCache>(cacheKey) : null
@@ -491,21 +487,7 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <div className="flex gap-6 border-b mb-6">
-        {visibleTabs.map(tab => (
-          <Link
-            key={tab.href}
-            href={tab.href}
-            className={`pb-2 text-sm font-semibold border-b-2 -mb-px transition-colors ${
-              pathname === tab.href
-                ? 'border-foreground text-foreground'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            {tab.label}
-          </Link>
-        ))}
-      </div>
+      <DashboardTabs company={company} />
 
       {/* === 期間フィルター === */}
       <div className="flex gap-2 mb-4">

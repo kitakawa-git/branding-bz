@@ -1,10 +1,9 @@
 'use client'
 
-import { visibleDashboardTabs } from '@/lib/constants/dashboard-tabs'
 import { useState, useEffect, useCallback } from 'react'
-import { usePathname } from 'next/navigation'
 import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
 import { useAuth } from '../components/AdminDataProvider'
+import { DashboardTabs } from '../components/DashboardTabs'
 import { ALL_IMPRESSION_TAGS as ALL_TAGS } from '@/lib/brand-score/impression-tags'
 import {
   FUNNEL_STAGES,
@@ -54,7 +53,6 @@ import { toast } from 'sonner'
 import { SnapshotScheduleCard } from './components/SnapshotScheduleCard'
 import { BrandScoreView } from '@/components/brand-score/BrandScoreView'
 import { can } from '@/lib/billing/entitlements'
-import { OnboardingMiniCard } from '@/components/onboarding/OnboardingMiniCard'
 import {
   ArrowRight,
   TrendingUp,
@@ -256,10 +254,8 @@ export default function BrandScoreDashboard() {
   const { companyId, company } = useAuth()
   // 計測の見せ方。Premium は簡易版（アウターのみ）、Enterprise は完全版
   const brandScoreFull = can(company, 'brandScoreFull')
-  const pathname = usePathname()
 
   // 機能トグルを踏まえたタブ（定義は lib/constants/dashboard-tabs.ts に集約）
-  const visibleTabs = visibleDashboardTabs(company)
 
   // 既定は1年。この画面は年単位の定点観測が前提で、30日窓では
   // 名刺のアクセスが下限（MIN_CARD_VIEWS_FOR_DIGITAL）に届かず未計測になりやすい
@@ -541,22 +537,7 @@ export default function BrandScoreDashboard() {
   if (loading) {
     return (
       <div>
-        <div className="flex gap-6 border-b mb-6">
-          {visibleTabs.map(tab => (
-            <Link
-              key={tab.href}
-              href={tab.href}
-              className={`pb-2 text-sm font-semibold border-b-2 -mb-px transition-colors ${
-                pathname === tab.href
-                  ? 'border-foreground text-foreground'
-                  : 'border-transparent text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              {tab.label}
-            </Link>
-          ))}
-        </div>
-        <OnboardingMiniCard company={company} />
+        <DashboardTabs company={company} />
         <div className="flex items-center justify-between mb-6">
           <Skeleton className="h-7 w-48" />
           <Skeleton className="h-9 w-28" />
@@ -575,22 +556,7 @@ export default function BrandScoreDashboard() {
   if (!hasInner && !hasOuter) {
     return (
       <div>
-        <div className="flex gap-6 border-b mb-6">
-          {visibleTabs.map(tab => (
-            <Link
-              key={tab.href}
-              href={tab.href}
-              className={`pb-2 text-sm font-semibold border-b-2 -mb-px transition-colors ${
-                pathname === tab.href
-                  ? 'border-foreground text-foreground'
-                  : 'border-transparent text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              {tab.label}
-            </Link>
-          ))}
-        </div>
-        <OnboardingMiniCard company={company} />
+        <DashboardTabs company={company} />
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-10 text-center">
             <TrendingUp size={48} className="mx-auto mb-4 text-muted-foreground/30" />
@@ -639,24 +605,8 @@ export default function BrandScoreDashboard() {
 
   return (
     <div>
-      {/* ── タブバー ── */}
-      <div className="flex gap-6 border-b mb-6">
-        {visibleTabs.map(tab => (
-          <Link
-            key={tab.href}
-            href={tab.href}
-            className={`pb-2 text-sm font-semibold border-b-2 -mb-px transition-colors ${
-              pathname === tab.href
-                ? 'border-foreground text-foreground'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            {tab.label}
-          </Link>
-        ))}
-      </div>
-
-      <OnboardingMiniCard company={company} />
+      {/* ── セットアップ進捗＋タブバー ── */}
+      <DashboardTabs company={company} />
 
       {/* ── 1. ヘッダー ── */}
       {/* 見出しはパンくず・タブと重複するため置かない。
