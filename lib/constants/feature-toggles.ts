@@ -6,9 +6,9 @@
 export const FEATURE_TOGGLES = [
   {
     key: 'timeline_enabled', // companies のカラム名（boolean NOT NULL DEFAULT true）
-    label: 'Good Actionタイムライン',
+    label: 'Good Action投稿',
     description:
-      'オフにすると、ポータルのタイムラインページとサイドバーメニューが非表示になります。投稿データは削除されません。',
+      'オフにすると、ポータルの Good Action投稿ページとサイドバーメニューが非表示になります。投稿データは削除されません。',
   },
   {
     key: 'kpi_enabled', // companies のカラム名（boolean NOT NULL DEFAULT true）

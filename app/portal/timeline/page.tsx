@@ -1,6 +1,6 @@
 'use client'
 
-// Good Actionタイムライン
+// Good Action投稿
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { fetchWithRetry } from '@/lib/supabase-fetch'
@@ -773,7 +773,7 @@ export default function PortalTimelinePage() {
           readOnly={!isAdmin}
           company={company}
           feature="timeline"
-          title="Good Actionタイムラインを使うには"
+          title="Good Action投稿を使うには"
           benefits={[
             '行動指針に沿った取り組みを社内でシェア',
             'いいね・コメントで称え合う',
