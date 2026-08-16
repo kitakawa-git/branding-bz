@@ -3,7 +3,7 @@
 // POST /api/brand-score/surveys
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
-import { guardCompanyFeature } from '@/lib/billing/guard'
+import {guardCompanyFeature, requireCompanyMember } from '@/lib/billing/guard'
 
 // GET: サーベイ一覧（回答率付き）
 export async function GET(request: NextRequest) {
@@ -14,6 +14,11 @@ export async function GET(request: NextRequest) {
     if (!companyId) {
       return NextResponse.json({ error: 'company_id is required' }, { status: 400 })
     }
+
+    // 呼び出し元がこの会社の人かを確かめる。company_id をクライアントから受けるので、
+    // これが無いと他社の ID を渡すだけで中身が返る（プラン判定は所属の確認にならない）
+    const forbidden = await requireCompanyMember(companyId)
+    if (forbidden) return forbidden
 
     const denied = await guardCompanyFeature(companyId, 'innerSurvey')
     if (denied) return denied
@@ -88,6 +93,11 @@ export async function POST(request: NextRequest) {
     if (!companyId) {
       return NextResponse.json({ error: 'companyId is required' }, { status: 400 })
     }
+
+    // 呼び出し元がこの会社の人かを確かめる。company_id をクライアントから受けるので、
+    // これが無いと他社の ID を渡すだけで中身が返る（プラン判定は所属の確認にならない）
+    const forbidden = await requireCompanyMember(companyId)
+    if (forbidden) return forbidden
 
     const denied = await guardCompanyFeature(companyId, 'innerSurvey')
     if (denied) return denied

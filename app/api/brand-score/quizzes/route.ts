@@ -4,7 +4,7 @@
 // ※ すべて service_role（getSupabaseAdmin）経由。既存 surveys/route.ts に準拠。
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
-import { guardCompanyFeature } from '@/lib/billing/guard'
+import {guardCompanyFeature, requireCompanyMember } from '@/lib/billing/guard'
 
 // GET: クイズ一覧（設問数・受験数付き）
 export async function GET(request: NextRequest) {
@@ -16,6 +16,11 @@ export async function GET(request: NextRequest) {
     if (!companyId) {
       return NextResponse.json({ error: 'companyId is required' }, { status: 400 })
     }
+
+    // 呼び出し元がこの会社の人かを確かめる。company_id をクライアントから受けるので、
+    // これが無いと他社の ID を渡すだけで中身が返る（プラン判定は所属の確認にならない）
+    const forbidden = await requireCompanyMember(companyId)
+    if (forbidden) return forbidden
 
     const denied = await guardCompanyFeature(companyId, 'brandQuiz')
     if (denied) return denied
@@ -101,6 +106,11 @@ export async function POST(request: NextRequest) {
     if (!title) {
       return NextResponse.json({ error: 'title is required' }, { status: 400 })
     }
+
+    // 呼び出し元がこの会社の人かを確かめる。company_id をクライアントから受けるので、
+    // これが無いと他社の ID を渡すだけで中身が返る（プラン判定は所属の確認にならない）
+    const forbidden = await requireCompanyMember(companyId)
+    if (forbidden) return forbidden
 
     const denied = await guardCompanyFeature(companyId, 'brandQuiz')
     if (denied) return denied

@@ -9,7 +9,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { fetchAllRows } from '@/lib/brand-score/fetch-all-rows'
 import { computeSurveyScores } from '@/lib/brand-score/calculate-snapshot'
-import { guardCompanyFeature } from '@/lib/billing/guard'
+import {guardCompanyFeature, requireCompanyMember } from '@/lib/billing/guard'
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,6 +17,11 @@ export async function GET(request: NextRequest) {
     if (!companyId) {
       return NextResponse.json({ error: 'company_id は必須です' }, { status: 400 })
     }
+
+    // 呼び出し元がこの会社の人かを確かめる。company_id をクライアントから受けるので、
+    // これが無いと他社の ID を渡すだけで中身が返る（プラン判定は所属の確認にならない）
+    const forbidden = await requireCompanyMember(companyId)
+    if (forbidden) return forbidden
 
     const denied = await guardCompanyFeature(companyId, 'brandScoreInner')
     if (denied) return denied
