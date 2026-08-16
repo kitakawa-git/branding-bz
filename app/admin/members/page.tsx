@@ -704,8 +704,8 @@ export default function MembersPage() {
                           <td className="px-4 py-2 border-b border-border text-xs text-foreground break-all">
                             /portal/register?token={link.token.substring(0, 8)}...
                           </td>
-                          <td className="px-4 py-2 border-b border-border">
-                            <span className={`py-0.5 px-2 rounded text-xs font-bold ${link.is_active ? 'bg-green-50 text-green-600' : 'bg-muted text-muted-foreground'}`}>
+                          <td className="px-4 py-2 border-b border-border whitespace-nowrap">
+                            <span className={`inline-block py-0.5 px-2 rounded text-xs font-bold whitespace-nowrap ${link.is_active ? 'bg-green-50 text-green-600' : 'bg-muted text-muted-foreground'}`}>
                               {link.is_active ? '有効' : '無効'}
                             </span>
                           </td>
@@ -873,11 +873,12 @@ export default function MembersPage() {
                   <th className="px-4 py-3 font-medium">名前</th>
                   <th className="px-4 py-3 font-medium">メール</th>
                   <th className="px-4 py-3 font-medium">区分</th>
-                  <th className="px-4 py-3 font-medium">名刺</th>
-                  <th className="px-4 py-3 font-medium">管理者</th>
-                  <th className="px-4 py-3 font-medium">ステータス</th>
-                  <th className="px-4 py-3 font-medium">登録日</th>
-                  <th className="px-4 py-3 font-medium">操作</th>
+                  <th className="px-4 py-3 font-medium whitespace-nowrap">名刺</th>
+                  <th className="px-4 py-3 font-medium whitespace-nowrap">管理者</th>
+                  {/* 「ステータス」「有効」は幅が詰まると1文字ずつ折り返してしまう */}
+                  <th className="px-4 py-3 font-medium whitespace-nowrap">ステータス</th>
+                  <th className="px-4 py-3 font-medium whitespace-nowrap">登録日</th>
+                  <th className="px-4 py-3 font-medium whitespace-nowrap">操作</th>
                 </tr>
               </thead>
               <tbody>
@@ -938,8 +939,8 @@ export default function MembersPage() {
                           {isAdminMember ? <><Check size={14} className="inline" /> ON</> : 'OFF'}
                         </button>
                       </td>
-                      <td className="px-4 py-3">
-                        <span className={`py-0.5 px-2 rounded text-xs font-bold ${member.is_active ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <span className={`inline-block py-0.5 px-2 rounded text-xs font-bold whitespace-nowrap ${member.is_active ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
                           {member.is_active ? '有効' : '無効'}
                         </span>
                       </td>
