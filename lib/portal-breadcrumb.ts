@@ -38,7 +38,7 @@ export function resolvePortalCrumb(pathname: string): PortalCrumb | null {
   // ⚠️ 下の最長プレフィックス一致だけだと親の名前がそのまま現在地として出て、
   //    「お知らせ」の詳細を開いても見出しが「お知らせ」のままになり戻り先も無い
   if (/^\/portal\/announcements\/[^/]+$/.test(pathname)) {
-    return { parent: { label: 'お知らせ', href: '/portal/announcements' }, title: '詳細' }
+    return { parent: { label: 'お知らせ一覧', href: '/portal/announcements' }, title: '詳細' }
   }
 
   // 最長プレフィックス一致（サブページ向け）
