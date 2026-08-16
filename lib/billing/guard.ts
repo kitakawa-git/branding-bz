@@ -243,3 +243,32 @@ export async function requireResourceCompany(
 
   return { companyId: data.company_id as string }
 }
+
+/**
+ * 呼び出し元自身の会社を、セッションから解決する。
+ *
+ * 連携（tools 配下の connect 系）のように「ログインしている人が自分の会社に取り込む」
+ * 操作で使う。クライアントから companyId / userId を受け取って信用してはいけない
+ * （受け取ると、他社の ID を渡すだけでその会社に書き込めてしまう）。
+ *
+ * 返り値が error なら return する。通れば自分の会社の companyId と、
+ * セッションの持ち主の authId が返る（セッション所有者の照合に使う）。
+ */
+export async function requireCallerCompany(): Promise<
+  { error: NextResponse; companyId?: undefined; authId?: undefined }
+  | { error?: undefined; companyId: string; authId: string }
+> {
+  const { createClient } = await import('@/lib/supabase/server')
+  const supabaseUser = await createClient()
+  const {
+    data: { user },
+  } = await supabaseUser.auth.getUser()
+  if (!user) {
+    return { error: NextResponse.json({ error: '認証が必要です' }, { status: 401 }) }
+  }
+  const companyId = await fetchCompanyIdForAuth(user.id)
+  if (!companyId) {
+    return { error: NextResponse.json({ error: '所属会社が見つかりません' }, { status: 403 }) }
+  }
+  return { companyId, authId: user.id }
+}

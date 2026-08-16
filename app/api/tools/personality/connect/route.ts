@@ -17,7 +17,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import type { DiagnosisResult } from '@/app/tools/personality/lib/diagnosis'
 import { AAKER_BY_DIMENSION, type AakerDimension } from '@/app/tools/personality/lib/archetypes'
-import { guardCompanyFeature } from '@/lib/billing/guard'
+import {guardCompanyFeature, requireCallerCompany } from '@/lib/billing/guard'
 
 // AI出力の severity（low/medium/high）→ governance_rules の既存語彙（info/warn/block）
 const SEVERITY_MAP: Record<string, string> = {
@@ -75,10 +75,15 @@ async function loadContext(sessionId: string, userId: string): Promise<SessionCo
 export async function GET(request: NextRequest) {
   try {
     const sessionId = request.nextUrl.searchParams.get('sessionId') || ''
-    const userId = request.nextUrl.searchParams.get('userId') || ''
-    if (!sessionId || !userId) {
-      return NextResponse.json({ error: 'sessionId と userId が必要です' }, { status: 400 })
+    if (!sessionId) {
+      return NextResponse.json({ error: 'sessionId が必要です' }, { status: 400 })
     }
+
+    // ⚠️ userId はクエリで受け取らない。受け取ると、他人の userId を渡すだけで
+    //    その人の管理者権限で連携できてしまう（loadContext の所有者照合も無意味になる）
+    const scope = await requireCallerCompany()
+    if (scope.error) return scope.error
+    const userId = scope.authId
 
     const ctx = await loadContext(sessionId, userId)
     if ('error' in ctx) return NextResponse.json({ error: ctx.error }, { status: ctx.status })
@@ -131,7 +136,7 @@ export async function POST(request: NextRequest) {
   try {
     const supabaseAdmin = getSupabaseAdmin()
     const body = await request.json()
-    const { sessionId, userId } = body as { sessionId?: string; userId?: string }
+    const { sessionId } = body as { sessionId?: string }
     const selections = (body.selections || {}) as {
       traits?: boolean
       summary?: boolean
@@ -142,9 +147,14 @@ export async function POST(request: NextRequest) {
     }
     const confirm = (body.confirm || {}) as { overwriteTraits?: boolean; replaceTags?: boolean; overwriteArchetype?: boolean }
 
-    if (!sessionId || !userId) {
-      return NextResponse.json({ error: 'sessionId と userId が必要です' }, { status: 400 })
+    if (!sessionId) {
+      return NextResponse.json({ error: 'sessionId が必要です' }, { status: 400 })
     }
+
+    // ⚠️ userId はクライアントから受け取らない（GET と同じ理由）
+    const scope = await requireCallerCompany()
+    if (scope.error) return scope.error
+    const userId = scope.authId
 
     const ctx = await loadContext(sessionId, userId)
     if ('error' in ctx) return NextResponse.json({ error: ctx.error }, { status: ctx.status })

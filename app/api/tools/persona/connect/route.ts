@@ -4,20 +4,28 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { mapSessionToPersonaColumns } from '@/lib/tools/persona-mapping'
-import { guardCompanyFeature } from '@/lib/billing/guard'
+import {guardCompanyFeature, requireCallerCompany } from '@/lib/billing/guard'
 
 export async function POST(request: NextRequest) {
 
   try {
     const supabaseAdmin = getSupabaseAdmin()
-    const { sessionId, companyId } = await request.json()
+    const { sessionId } = await request.json()
 
-    if (!sessionId || !companyId) {
+    if (!sessionId) {
       return NextResponse.json(
-        { error: 'sessionId と companyId が必要です' },
+        { error: 'sessionId が必要です' },
         { status: 400 }
       )
     }
+
+    // ⚠️ companyId はクライアントから受け取らない。連携は「ログインしている人が
+    //    自分の会社に取り込む」操作で、受け取ると他社の ID を渡すだけでその会社に
+    //    書き込めてしまう。UI 側も未ログインならログイン画面へ送っている
+    const scope = await requireCallerCompany()
+    if (scope.error) return scope.error
+    const companyId = scope.companyId
+
 
     // 本体連携は standard 以上
     const denied = await guardCompanyFeature(companyId, 'portalSync')
