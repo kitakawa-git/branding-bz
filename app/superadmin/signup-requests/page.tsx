@@ -8,6 +8,16 @@ import { supabase } from '@/lib/supabase'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { SIGNUP_REQUESTS_CHANGED } from '@/app/superadmin/components/SuperAdminSidebar'
 import { toast } from 'sonner'
 import { AlertTriangle, Building2, Mail, Clock, Ban, Plus, Trash2 } from 'lucide-react'
@@ -25,6 +35,9 @@ export default function SignupRequestsPage() {
   const [requests, setRequests] = useState<SignupRequest[]>([])
   const [loading, setLoading] = useState(true)
   const [actingId, setActingId] = useState<string | null>(null)
+  // 却下は取り消せない（アカウントごと消える）ので確認を挟む。
+  // window.confirm はブラウザ既定の見た目で、消える対象の重さが伝わらない
+  const [rejectTarget, setRejectTarget] = useState<SignupRequest | null>(null)
 
   const getToken = async () =>
     (await supabase.auth.getSession()).data.session?.access_token || ''
@@ -53,13 +66,8 @@ export default function SignupRequestsPage() {
     fetchRequests()
   }, [fetchRequests])
 
+  // 確認は呼び出し側（却下はダイアログ、承認はそのまま）で済ませてから呼ぶ
   const act = async (req: SignupRequest, action: 'approve' | 'reject') => {
-    if (action === 'reject') {
-      const ok = window.confirm(
-        `「${req.companyName}」の登録を却下します。\nアカウント・企業データは完全に削除され、本人へ却下メールが送られます。\nよろしいですか？`,
-      )
-      if (!ok) return
-    }
     setActingId(req.companyId)
     try {
       const token = await getToken()
@@ -136,7 +144,7 @@ export default function SignupRequestsPage() {
                       variant="outline"
                       size="sm"
                       disabled={actingId === req.companyId}
-                      onClick={() => act(req, 'reject')}
+                      onClick={() => setRejectTarget(req)}
                       className="border-red-200 text-red-700 hover:bg-red-50"
                     >
                       却下
@@ -160,6 +168,39 @@ export default function SignupRequestsPage() {
       <div className="mt-10">
         <BlockedDomainsManager />
       </div>
+
+      <AlertDialog open={rejectTarget !== null} onOpenChange={(o) => !o && setRejectTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              「{rejectTarget?.companyName}」の登録を却下しますか？
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2">
+                <p className="m-0">
+                  アカウントと企業データは完全に削除されます。取り消せません。
+                </p>
+                <p className="m-0">
+                  {rejectTarget?.owner.name}（{rejectTarget?.owner.email}）宛に却下メールが送られます。
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>キャンセル</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                const target = rejectTarget
+                setRejectTarget(null)
+                if (target) act(target, 'reject')
+              }}
+              className="bg-red-600 text-white hover:bg-red-700"
+            >
+              却下する
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
@@ -172,6 +213,7 @@ type BlockedDomain = { id: string; domain: string; label: string | null; note: s
 
 function BlockedDomainsManager() {
   const [domains, setDomains] = useState<BlockedDomain[]>([])
+  const [removeTarget, setRemoveTarget] = useState<BlockedDomain | null>(null)
   const [loading, setLoading] = useState(true)
   const [domain, setDomain] = useState('')
   const [label, setLabel] = useState('')
@@ -213,8 +255,8 @@ function BlockedDomainsManager() {
     load()
   }
 
-  const remove = async (id: string, d: string) => {
-    if (!window.confirm(`${d} をブロックリストから削除しますか？`)) return
+  // 確認はダイアログ側で済ませてから呼ぶ
+  const remove = async (id: string) => {
     const { error } = await supabase.from('blocked_competitor_domains').delete().eq('id', id)
     if (error) {
       toast.error('削除に失敗しました')
@@ -273,7 +315,7 @@ function BlockedDomainsManager() {
                 <span className="grow" />
                 <button
                   type="button"
-                  onClick={() => remove(d.id, d.domain)}
+                  onClick={() => setRemoveTarget(d)}
                   className="text-muted-foreground hover:text-red-600"
                   aria-label="削除"
                 >
@@ -284,6 +326,33 @@ function BlockedDomainsManager() {
           </ul>
         )}
       </CardContent>
+
+      <AlertDialog open={removeTarget !== null} onOpenChange={(o) => !o && setRemoveTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {removeTarget?.domain} をブロックリストから削除しますか？
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              このドメインで新規登録があっても、承認キューに警告が出なくなります。
+              登録済みの企業には影響しません。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>キャンセル</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                const target = removeTarget
+                setRemoveTarget(null)
+                if (target) remove(target.id)
+              }}
+              className="bg-red-600 text-white hover:bg-red-700"
+            >
+              削除する
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   )
 }
