@@ -125,9 +125,6 @@ export default function MembersPage() {
   const [showInviteLinks, setShowInviteLinks] = useState(false)
 
   // 孤立アカウントクリーンアップ
-  const [showCleanup, setShowCleanup] = useState(false)
-  const [cleanupEmail, setCleanupEmail] = useState('')
-  const [cleaningUp, setCleaningUp] = useState(false)
 
   // アカウント作成フォーム
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
@@ -450,41 +447,6 @@ export default function MembersPage() {
   // 孤立アカウントのクリーンアップ
   // （members に存在しないが auth.users に残ってしまったケース用）
   // ============================================
-  const handleCleanupOrphan = async () => {
-    const email = cleanupEmail.trim()
-    if (!email) {
-      toast.error('メールアドレスを入力してください')
-      return
-    }
-    setCleaningUp(true)
-    try {
-      const { data: { session } } = await supabase.auth.getSession()
-      const token = session?.access_token || ''
-
-      const res = await fetch('/api/members/cleanup-orphan', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({ email }),
-      })
-
-      const body = await res.json().catch(() => ({}))
-      if (!res.ok) {
-        throw new Error(body.error || `HTTP ${res.status}`)
-      }
-
-      toast.success(`${email} の残存アカウントを削除しました`)
-      setCleanupEmail('')
-    } catch (err) {
-      console.error('クリーンアップエラー:', err)
-      const msg = err instanceof Error ? err.message : String(err)
-      toast.error(msg)
-    } finally {
-      setCleaningUp(false)
-    }
-  }
 
   // ============================================
   // Invite Link handlers
@@ -729,74 +691,6 @@ export default function MembersPage() {
                 {inviteLinks.length === 0 && (
                   <p className="text-xs text-muted-foreground">招待リンクはまだありません</p>
                 )}
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* ===== 孤立アカウントクリーンアップ ===== */}
-      <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-4">
-        <CardContent className="p-0">
-          <button
-            onClick={() => setShowCleanup(!showCleanup)}
-            className="w-full p-4 flex items-center justify-between hover:bg-muted/30 transition-colors text-left"
-          >
-            <div className="flex items-center gap-2">
-              <Trash2 size={16} className="text-muted-foreground" />
-              <h3 className="text-sm font-bold text-foreground">残存アカウントの削除</h3>
-              <span className="text-xs text-muted-foreground">— 「既に登録されています」エラーが出る時に使用</span>
-            </div>
-            {showCleanup ? <ChevronUp size={16} className="text-muted-foreground" /> : <ChevronDown size={16} className="text-muted-foreground" />}
-          </button>
-
-          {showCleanup && (
-            <div className="px-5 pb-5 border-t">
-              <div className="pt-4">
-                <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
-                  メンバー削除後にAuthデータが残ってしまい、同じメールアドレスで再登録できないケース用の復旧機能です。<br />
-                  メンバー一覧に存在するアカウントには使えません（先に通常の削除を実行してください）。
-                </p>
-                <div className="flex gap-2 items-start">
-                  <Input
-                    type="email"
-                    placeholder="member@example.com"
-                    value={cleanupEmail}
-                    onChange={(e) => setCleanupEmail(e.target.value)}
-                    className="max-w-xs"
-                    disabled={cleaningUp}
-                  />
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-destructive hover:text-destructive"
-                        disabled={!cleanupEmail.trim() || cleaningUp}
-                      >
-                        {cleaningUp ? '削除中...' : '残存アカウントを削除'}
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>残存アカウントを削除しますか？</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          「{cleanupEmail}」に紐づくSupabase Authアカウント（およびprofilesの残骸）を削除します。<br />
-                          メンバー一覧にこのメールアドレスが存在する場合はエラーになります（先に通常の削除を実行してください）。
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>キャンセル</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={handleCleanupOrphan}
-                          className="bg-destructive text-white hover:bg-destructive/90"
-                        >
-                          削除する
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
               </div>
             </div>
           )}
