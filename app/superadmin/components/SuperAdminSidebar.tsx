@@ -28,7 +28,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
-  Building2,
+  Sparkles,
   Newspaper,
   MessageSquare,
   Palette,
@@ -45,7 +45,8 @@ type NavItem = { href: string; label: string; icon: LucideIcon }
 
 // 契約中の企業に対して動くもの。待たせている件数のバッジが付くのもこちら
 const navItems: NavItem[] = [
-  { href: '/superadmin/companies', label: 'ブランド', icon: Building2 },
+  // アイコンは管理画面の「基本情報」と同じ Sparkles。同じものを指しているため
+  { href: '/superadmin/companies', label: 'ブランド', icon: Sparkles },
   { href: '/superadmin/plan-requests', label: 'プラン変更の依頼', icon: CreditCard },
   { href: '/superadmin/support-requests', label: '入力サポートの相談', icon: Headset },
 ]
