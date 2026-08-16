@@ -16,8 +16,7 @@ import {
   DialogContent,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { ArrowLeft, Heart } from 'lucide-react'
-import Link from 'next/link'
+import { Heart } from 'lucide-react'
 
 const CATEGORY_COLORS: Record<string, string> = {
   '重要': 'bg-red-100 text-red-700',
@@ -220,15 +219,6 @@ export default function PortalAnnouncementDetailPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-5 pt-4 pb-10">
-      {/* 戻るリンク */}
-      <Link
-        href="/portal/announcements"
-        className="text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1 no-underline mb-6"
-      >
-        <ArrowLeft size={14} />
-        お知らせ一覧に戻る
-      </Link>
-
       {/* ヘッダー */}
       <div className="mb-4">
         <div className="flex items-center gap-2 mb-2">
