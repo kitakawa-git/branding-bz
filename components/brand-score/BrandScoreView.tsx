@@ -228,6 +228,11 @@ export function BrandScoreView({
   // アウター（市場調査を含む外の目線）は Enterprise 側
   const hasOuter = isFull && outerScore !== null && outerScore.outer_score > 0
 
+  // ポータルの basic は出すカードがインナーと推移の2枚だけなので、横に並べる。
+  // full はインナー×アウターの対比が主役で、そこに推移を混ぜると組が崩れるため縦のまま。
+  // 管理画面は縦に読ませる面なので変えない（readOnly がポータルの目印）
+  const sideBySide = readOnly && !isFull
+
   // 未指定なら従来どおり管理画面へのリンク（readOnly では出さない）。
   // null を明示的に渡した場合はリンクなし。
   const resolvedInnerLink =
@@ -465,13 +470,17 @@ export function BrandScoreView({
     </CardContent>
   </Card>
 
+  {/* ポータルの basic だけ「インナー（左）／推移（右）」の2カラムにする。
+      JSX の順序は変えず、親をグリッドにして order で入れ替える */}
+  <div className={sideBySide ? 'grid gap-4 md:grid-cols-2 md:items-start' : ''}>
+
   {/* ── 2.5. スコア推移グラフ ──
       v4 でインナーの推移は Premium の範囲になったので basic でも出す。
       ただし系列は上の trendRows で絞ってあり、basic ではインナー1本だけが引かれる
       （総合とアウターは null）。⚠️ 枠だけ出して系列を null にする作りは、
       「使えないはずの機能の枠が見える」事故のもとなので、
       出す/出さないを分けるときは必ずカードごと出し分けること */}
-  <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-4">
+  <Card className={`bg-[hsl(0_0%_97%)] border shadow-none ${sideBySide ? 'mb-0 md:order-2' : 'mb-4'}`}>
     <CardContent className="p-5">
       <h2 className="text-xs font-bold text-foreground mb-4 flex items-center gap-1.5">
         <TrendingUp size={14} />
@@ -572,7 +581,7 @@ export function BrandScoreView({
 
   {/* ── 3. インナー × アウター 2カラム ──
       アウターは Enterprise 側なので basic ではインナーだけを全幅で出す */}
-  <div className={`grid gap-4 mb-6 ${isFull ? 'md:grid-cols-2' : ''}`}>
+  <div className={`grid gap-4 ${isFull ? 'mb-6 md:grid-cols-2' : sideBySide ? 'mb-0 md:order-1' : 'mb-6'}`}>
     {/* 左: インナースコア */}
     <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
       <CardContent className="p-5">
@@ -807,6 +816,8 @@ export function BrandScoreView({
       </CardContent>
     </Card>
     )}
+  </div>
+
   </div>
 
     </>
