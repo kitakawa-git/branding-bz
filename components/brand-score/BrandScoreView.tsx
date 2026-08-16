@@ -402,7 +402,12 @@ export function BrandScoreView({
 
   return (
     <>
-  {/* ── 2. 総合ブランドスコアカード ── */}
+  {/* ── 2. 総合ブランドスコアカード ──
+      full では「総合＝インナー×50%＋アウター×50%」で下のカードとは別の数字だが、
+      basic は合成相手がいないのでインナースコアそのもの＝下のカードと同じ数字になる。
+      ポータルは Enterprise 導線も出さない（readOnly）ので重複しか残らず、丸ごと出さない。
+      ⚠️ 「初回測定／前回比」はこのカードにしかないので、basic のポータルでは出なくなる */}
+  {!sideBySide && (
   <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-4">
     <CardContent className="p-6">
       <div className="flex items-center justify-between mb-3">
@@ -469,6 +474,7 @@ export function BrandScoreView({
       </div>
     </CardContent>
   </Card>
+  )}
 
   {/* ポータルの basic だけ「インナー（左）／推移（右）」の2カラムにする。
       JSX の順序は変えず、親をグリッドにして order で入れ替える */}
