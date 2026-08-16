@@ -4,6 +4,7 @@
 // 構築度列: 決定論・非保存（詳細ページのバッジと同じ lib/brand/build-score で表示時に算出）。
 // 会社ごとにクエリを繰り返さず、対象テーブルを全社ぶん一括取得してメモリで会社別に集計する。
 import { useEffect, useState, useCallback } from 'react'
+import SignupApprovalSections from './_sections/SignupApprovalSections'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { Card, CardContent } from '@/components/ui/card'
@@ -212,6 +213,9 @@ export default function CompaniesPage() {
         onOpenChange={setCreateOpen}
         onCreated={fetchCompanies}
       />
+
+      {/* 承認待ちと競合ドメイン。承認すればこの下の一覧に並ぶものなので同じ画面に置く */}
+      <SignupApprovalSections />
 
       {/* ===== 企業一覧テーブル ===== */}
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">

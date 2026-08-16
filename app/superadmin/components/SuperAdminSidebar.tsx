@@ -31,7 +31,6 @@ import {
   Newspaper,
   MessageSquare,
   Palette,
-  UserCheck,
   UserX,
   CreditCard,
   Headset,
@@ -46,7 +45,6 @@ type NavItem = { href: string; label: string; icon: LucideIcon }
 
 const navItems: NavItem[] = [
   { href: '/superadmin/companies', label: '企業一覧', icon: Building2 },
-  { href: '/superadmin/signup-requests', label: '新規登録の承認', icon: UserCheck },
   { href: '/superadmin/plan-requests', label: 'プラン変更の依頼', icon: CreditCard },
   { href: '/superadmin/support-requests', label: '入力サポートの相談', icon: Headset },
   { href: '/superadmin/orphan-accounts', label: '孤立アカウント', icon: UserX },
@@ -125,7 +123,8 @@ export function SuperAdminSidebar() {
 
   // 「まだ返していない件数」を持つ項目だけをここに並べる
   const badgeCounts: Record<string, number> = {
-    '/superadmin/signup-requests': pendingCount,
+    // 承認キューは企業一覧の上のアコーディオンに移したので、バッジもそちらに付ける
+    '/superadmin/companies': pendingCount,
     '/superadmin/plan-requests': planRequestCount,
     '/superadmin/support-requests': supportRequestCount,
   }
