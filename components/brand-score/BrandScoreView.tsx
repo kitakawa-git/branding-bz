@@ -480,8 +480,10 @@ export function BrandScoreView({
       JSX の順序は変えず、親をグリッドにして order で入れ替える */}
   <div
     className={
+      // ポータルの basic は「カードの中にカード」。器はグレー地＋枠＋余白、
+      // 中の2枚は白カードのまま。私たちの「らしさ」と同じ入れ子に揃える
       sideBySide
-        ? 'mb-4 grid overflow-hidden rounded-xl border bg-[hsl(0_0%_97%)] md:grid-cols-2 md:items-stretch'
+        ? 'mb-4 grid gap-4 rounded-xl border border-gray-200 bg-[hsl(0_0%_97%)] p-5 md:grid-cols-2 md:items-stretch'
         : ''
     }
   >
@@ -495,7 +497,7 @@ export function BrandScoreView({
   <Card
     className={
       sideBySide
-        ? 'mb-0 rounded-none border-0 border-t bg-transparent shadow-none md:order-2 md:border-l md:border-t-0'
+        ? 'mb-0 h-full border bg-white shadow-none md:order-2'
         : 'bg-[hsl(0_0%_97%)] border shadow-none mb-4'
     }
   >
@@ -609,9 +611,7 @@ export function BrandScoreView({
     {/* 左: インナースコア */}
     <Card
       className={
-        sideBySide
-          ? 'rounded-none border-0 bg-transparent shadow-none'
-          : 'bg-[hsl(0_0%_97%)] border shadow-none'
+        sideBySide ? 'h-full border bg-white shadow-none' : 'bg-[hsl(0_0%_97%)] border shadow-none'
       }
     >
       <CardContent className="p-5">
