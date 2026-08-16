@@ -483,10 +483,20 @@ export function BrandScoreView({
       // ポータルの basic は「カードの中にカード」。器はグレー地＋枠＋余白、
       // 中の2枚は白カードのまま。私たちの「らしさ」と同じ入れ子に揃える
       sideBySide
-        ? 'mb-4 grid gap-4 rounded-xl border border-gray-200 bg-[hsl(0_0%_97%)] p-5 md:grid-cols-2 md:items-stretch'
+        // 行間だけ 12px（見出し→カード）。列間は 16px のまま。
+        // モバイルの縦積みでは行間＝カード間になるので md: 起点にする
+        ? 'mb-4 grid gap-4 rounded-xl border border-gray-200 bg-[hsl(0_0%_97%)] p-5 md:grid-cols-2 md:items-stretch md:gap-x-4 md:gap-y-3'
         : ''
     }
   >
+
+  {/* 器のタイトル。2カラムをまたいで先頭の行に置く（order は既定の 0 なので
+      インナー md:order-1 ／推移 md:order-2 より前に来る） */}
+  {sideBySide && (
+    <h2 className="m-0 text-sm font-bold tracking-wide text-foreground md:col-span-2">
+      ブランドスコア
+    </h2>
+  )}
 
   {/* ── 2.5. スコア推移グラフ ──
       v4 でインナーの推移は Premium の範囲になったので basic でも出す。
@@ -501,7 +511,7 @@ export function BrandScoreView({
         : 'bg-[hsl(0_0%_97%)] border shadow-none mb-4'
     }
   >
-    <CardContent className="p-5">
+    <CardContent className={sideBySide ? 'flex h-full flex-col p-5' : 'p-5'}>
       <h2 className="text-xs font-bold text-foreground mb-4 flex items-center gap-1.5">
         <TrendingUp size={14} />
         スコア推移
@@ -515,6 +525,9 @@ export function BrandScoreView({
         </p>
       )}
 
+      {/* 隣のインナースコアカードのほうが背が高いぶん下に余白が余る。
+          残りの高さいっぱいの箱を作り、その中央にグラフを置く */}
+      <div className={sideBySide ? 'flex flex-1 items-center' : ''}>
       {trendRows.length === 0 && trendLoading ? (
         // 推移だけ取得が遅れているとき。「記録がありません」と出すと
         // 一瞬だけ誤った案内が見えてしまう
@@ -527,7 +540,7 @@ export function BrandScoreView({
           </p>
         </div>
       ) : (
-        <div className="h-64">
+        <div className={sideBySide ? 'h-64 w-full' : 'h-64'}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={trendRows} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
@@ -602,6 +615,7 @@ export function BrandScoreView({
           </ResponsiveContainer>
         </div>
       )}
+      </div>
     </CardContent>
   </Card>
 
