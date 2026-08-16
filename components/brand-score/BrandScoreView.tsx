@@ -478,7 +478,13 @@ export function BrandScoreView({
 
   {/* ポータルの basic だけ「インナー（左）／推移（右）」の2カラムにする。
       JSX の順序は変えず、親をグリッドにして order で入れ替える */}
-  <div className={sideBySide ? 'grid gap-4 md:grid-cols-2 md:items-start' : ''}>
+  <div
+    className={
+      sideBySide
+        ? 'mb-4 grid overflow-hidden rounded-xl border bg-[hsl(0_0%_97%)] md:grid-cols-2 md:items-stretch'
+        : ''
+    }
+  >
 
   {/* ── 2.5. スコア推移グラフ ──
       v4 でインナーの推移は Premium の範囲になったので basic でも出す。
@@ -486,7 +492,13 @@ export function BrandScoreView({
       （総合とアウターは null）。⚠️ 枠だけ出して系列を null にする作りは、
       「使えないはずの機能の枠が見える」事故のもとなので、
       出す/出さないを分けるときは必ずカードごと出し分けること */}
-  <Card className={`bg-[hsl(0_0%_97%)] border shadow-none ${sideBySide ? 'mb-0 md:order-2' : 'mb-4'}`}>
+  <Card
+    className={
+      sideBySide
+        ? 'mb-0 rounded-none border-0 border-t bg-transparent shadow-none md:order-2 md:border-l md:border-t-0'
+        : 'bg-[hsl(0_0%_97%)] border shadow-none mb-4'
+    }
+  >
     <CardContent className="p-5">
       <h2 className="text-xs font-bold text-foreground mb-4 flex items-center gap-1.5">
         <TrendingUp size={14} />
@@ -593,9 +605,15 @@ export function BrandScoreView({
 
   {/* ── 3. インナー × アウター 2カラム ──
       アウターは Enterprise 側なので basic ではインナーだけを全幅で出す */}
-  <div className={`grid gap-4 ${isFull ? 'mb-6 md:grid-cols-2' : sideBySide ? 'mb-0 md:order-1' : 'mb-6'}`}>
+  <div className={`grid ${isFull ? 'gap-4 mb-6 md:grid-cols-2' : sideBySide ? 'mb-0 md:order-1' : 'gap-4 mb-6'}`}>
     {/* 左: インナースコア */}
-    <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
+    <Card
+      className={
+        sideBySide
+          ? 'rounded-none border-0 bg-transparent shadow-none'
+          : 'bg-[hsl(0_0%_97%)] border shadow-none'
+      }
+    >
       <CardContent className="p-5">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xs font-bold text-foreground flex items-center gap-1.5">
