@@ -85,6 +85,11 @@ export default function CompanyDetailPage() {
   const [message, setMessage] = useState('')
   const [messageType, setMessageType] = useState<'success' | 'error'>('success')
   const [viewStats, setViewStats] = useState({ total: 0, month: 0, week: 0 })
+  // 縦に長く、性格の違う2種類が混ざっていたので分ける。
+  // 「基本情報」＝会社そのものの設定（プラン・企業情報・人）
+  // 「ブランドオントロジー」＝ブランドの中身づくり（構築度・コピーAI）
+  // URL は変えず画面内の状態だけで切り替える（1ページのまま保つ）
+  const [tab, setTab] = useState<'basic' | 'ontology'>('basic')
 
   // 編集用フォーム
   // ※ brand_color_primary/secondary は 2026-04-06 に「AI・表示側の参照を brand_visuals へ移行」
@@ -317,6 +322,30 @@ export default function CompanyDetailPage() {
         </Link>
       </div>
 
+      {/* タブ。管理画面ダッシュボードと同じ体裁に揃える */}
+      <div className="mb-6 flex gap-6 border-b">
+        {([
+          { key: 'basic', label: '基本情報' },
+          { key: 'ontology', label: 'ブランドオントロジー' },
+        ] as const).map((t) => (
+          <button
+            key={t.key}
+            type="button"
+            onClick={() => setTab(t.key)}
+            className={`-mb-px cursor-pointer border-0 border-b-2 bg-transparent pb-2 text-sm font-semibold transition-colors ${
+              tab === t.key
+                ? 'border-foreground text-foreground'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'basic' && (
+      <>
+
       {/* === アクセス解析サマリー === */}
       <div className="grid grid-cols-3 gap-4 mb-6">
         {[
@@ -337,27 +366,8 @@ export default function CompanyDetailPage() {
         ))}
       </div>
 
-      {/* === ブランドオントロジー（全機能の実体を内包する常設カード。重複セクションは置かない） === */}
-      <Card className="bg-muted/50 border shadow-none mb-6">
-        <CardContent className="p-6">
-          <OntologySummaryHub companyId={companyId} valuePropositions={valueProps} />
-        </CardContent>
-      </Card>
 
-      {/* === コピーAI ワークベンチへの導線 === */}
-      <Link href={`/superadmin/companies/${companyId}/copy`} className="block mb-6">
-        <Card className="bg-muted/50 border shadow-none transition-colors hover:border-ds-app-accent">
-          <CardContent className="p-6 flex items-center justify-between gap-4">
-            <div className="min-w-0">
-              <h3 className="text-base font-bold text-foreground mb-1">コピーAI</h3>
-              <p className="text-[13px] text-muted-foreground">
-                本音→切り口→生成→批評。オントロジーに接地した、退屈でないコピーを作る。
-              </p>
-            </div>
-            <ArrowRight className="h-5 w-5 shrink-0 text-muted-foreground" />
-          </CardContent>
-        </Card>
-      </Link>
+
 
       {/* === プラン（課金に直結するため service_role の API 経由で保存する） === */}
       <Card className="bg-muted/50 border shadow-none mb-6">
@@ -585,6 +595,37 @@ export default function CompanyDetailPage() {
           )}
         </CardContent>
       </Card>
+
+      </>
+      )}
+
+      {tab === 'ontology' && (
+      <>
+
+      {/* === ブランドオントロジー（全機能の実体を内包する常設カード。重複セクションは置かない） === */}
+      <Card className="bg-muted/50 border shadow-none mb-6">
+        <CardContent className="p-6">
+          <OntologySummaryHub companyId={companyId} valuePropositions={valueProps} />
+        </CardContent>
+      </Card>
+
+      {/* === コピーAI ワークベンチへの導線 === */}
+      <Link href={`/superadmin/companies/${companyId}/copy`} className="block mb-6">
+        <Card className="bg-muted/50 border shadow-none transition-colors hover:border-ds-app-accent">
+          <CardContent className="p-6 flex items-center justify-between gap-4">
+            <div className="min-w-0">
+              <h3 className="text-base font-bold text-foreground mb-1">コピーAI</h3>
+              <p className="text-[13px] text-muted-foreground">
+                本音→切り口→生成→批評。オントロジーに接地した、退屈でないコピーを作る。
+              </p>
+            </div>
+            <ArrowRight className="h-5 w-5 shrink-0 text-muted-foreground" />
+          </CardContent>
+        </Card>
+      </Link>
+
+      </>
+      )}
 
     </div>
   )
