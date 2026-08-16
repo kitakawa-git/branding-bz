@@ -178,7 +178,6 @@
   --ds-bg-badge: rgba(0, 97, 255, 0.1);
   --ds-border-glass: rgba(255, 255, 255, 0.25);
   --ds-border-glass-strong: rgba(255, 255, 255, 0.4);
-  --ds-accent-primary: #1d4ed8;
   --ds-shadow-glass: 0px 8px 24px 0 rgba(12, 74, 110, 0.12);
   /* アプリ青アクセント（リンク・選択状態・チャート青・ステップバー）。
      DB design_tokens(app) が正本、ここは未到達時フォールバック。 */

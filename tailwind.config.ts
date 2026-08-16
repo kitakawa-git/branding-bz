@@ -44,7 +44,6 @@ const config: Config = {
   				muted: 'var(--ds-text-muted)',
   				meta: 'var(--ds-text-meta)',
   				inverse: 'var(--ds-text-inverse)',
-  				accent: 'var(--ds-accent-primary)',
   				base: 'var(--ds-bg-base)',
   				section: 'var(--ds-bg-section)',
   				media: 'var(--ds-bg-media)',

@@ -25,7 +25,6 @@ const COLOR_TOKEN_NAMES = [
   '--ds-bg-badge',
   '--ds-border-glass',
   '--ds-border-glass-strong',
-  '--ds-accent-primary',
 ] as const
 
 type UsedColor = { hex: string; token: string | null }

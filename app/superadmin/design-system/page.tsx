@@ -89,7 +89,6 @@ const DS_TOKEN_NAMES = [
   '--ds-bg-base',
   '--ds-bg-section',
   '--ds-bg-media',
-  '--ds-accent-primary',
   '--ds-app-accent',
   '--ds-app-accent-hover',
   '--ds-app-accent-soft',
@@ -594,12 +593,12 @@ const COMPONENT_SAMPLES: ComponentSample[] = [
     key: 'lp-badge',
     name: 'LP 青グラスバッジ',
     description: 'Hero / CTA の告知バッジ。背景・文字色は --ds-* トークン。',
-    classNames: ['text-ds-accent', 'var(--ds-bg-badge)', 'rounded-full px-6 py-1.5'],
+    classNames: ['text-ds-app-accent-hover', 'var(--ds-bg-badge)', 'rounded-full px-6 py-1.5'],
     minHeight: 80,
     frameStyle: GLASS_FRAME_STYLE,
     render: () => (
       <div
-        className="inline-flex items-center gap-2 rounded-full px-6 py-1.5 text-sm text-ds-accent"
+        className="inline-flex items-center gap-2 rounded-full px-6 py-1.5 text-sm text-ds-app-accent-hover"
         style={{
           background: 'var(--ds-bg-badge)',
           backdropFilter: 'blur(12px) saturate(120%)',
