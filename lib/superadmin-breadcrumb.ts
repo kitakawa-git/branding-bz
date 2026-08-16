@@ -3,7 +3,8 @@
 // 各ページ本体の見出しはこの定義に移管したため削除済み。
 
 export type SuperAdminCrumb = {
-  section?: string // 親セクション（リンクなしの薄字）
+  /** 親セクション。href を持たせて一覧へ戻れるようにする（薄字＋リンク） */
+  section?: { label: string; href: string }
   title: string // 現在ページ名
 }
 
@@ -21,14 +22,16 @@ export function resolveSuperAdminCrumb(pathname: string): SuperAdminCrumb | null
   // サブページ（動的ルート）向けの個別判定
   // /superadmin/companies/[id] → 企業一覧 › 企業詳細
   if (/^\/superadmin\/companies\/[^/]+$/.test(pathname)) {
-    return { section: '企業一覧', title: '企業詳細' }
+    return { section: { label: '企業一覧', href: '/superadmin/companies' }, title: '企業詳細' }
   }
   // /superadmin/news/[id]/edit → ニュース管理 › ニュース編集
   if (/^\/superadmin\/news\/[^/]+\/edit$/.test(pathname)) {
-    return { section: 'ニュース管理', title: 'ニュース編集' }
+    return { section: { label: 'ニュース管理', href: '/superadmin/news' }, title: 'ニュース編集' }
   }
 
-  // 最長プレフィックス一致（その他サブページ）
+  // 最長プレフィックス一致（その他サブページ）。
+  // 一致した親をそのまま出すと「今いる場所」と同じ名前になるので、
+  // 親をセクション（リンク）に回して戻れるようにする
   let best: { key: string; crumb: SuperAdminCrumb } | null = null
   for (const key of Object.keys(breadcrumbMap)) {
     if (pathname.startsWith(key + '/')) {
@@ -37,5 +40,6 @@ export function resolveSuperAdminCrumb(pathname: string): SuperAdminCrumb | null
       }
     }
   }
-  return best?.crumb ?? null
+  if (!best) return null
+  return { section: { label: best.crumb.title, href: best.key }, title: best.crumb.title }
 }

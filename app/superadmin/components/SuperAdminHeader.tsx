@@ -1,12 +1,14 @@
 'use client'
 
 // スーパー管理画面ヘッダー（SidebarTrigger + パンくず + スーパー管理バッジ）
+import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Separator } from '@/components/ui/separator'
 import {
   Breadcrumb,
   BreadcrumbItem,
+  BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
@@ -31,7 +33,15 @@ export function SuperAdminHeader() {
             {crumb.section && (
               <>
                 <BreadcrumbItem>
-                  <span className="text-muted-foreground">{crumb.section}</span>
+                  {/* 親セクションは一覧へ戻る導線。薄字のまま押せるようにする */}
+                  <BreadcrumbLink asChild>
+                    <Link
+                      href={crumb.section.href}
+                      className="text-muted-foreground no-underline hover:text-foreground"
+                    >
+                      {crumb.section.label}
+                    </Link>
+                  </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
               </>
