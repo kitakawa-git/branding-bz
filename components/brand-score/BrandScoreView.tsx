@@ -487,10 +487,13 @@ export function BrandScoreView({
         スコア推移
       </h2>
       {/* 点の意味は凡例では表せないので一文で添える。
-          系列は3本のままにして、凡例が増えないようにしている */}
-      <p className="m-0 -mt-2 mb-4 text-xs text-muted-foreground">
-        塗りつぶした点は調査を実施した日、白い点はスコアを記録した日です。
-      </p>
+          basic は系列がインナー1本だけで、線の読み分けが要らない。
+          説明文も凡例も情報を足さないので出さない */}
+      {isFull && (
+        <p className="m-0 -mt-2 mb-4 text-xs text-muted-foreground">
+          塗りつぶした点は調査を実施した日、白い点はスコアを記録した日です。
+        </p>
+      )}
 
       {trendRows.length === 0 && trendLoading ? (
         // 推移だけ取得が遅れているとき。「記録がありません」と出すと
@@ -530,18 +533,21 @@ export function BrandScoreView({
                 }}
               />
               {/* 凡例の文字は黒。線の色は左の印が担うので、
-                  文字まで色を付けると系列名が読みにくくなる */}
-              <Legend
-                formatter={(value: string) => (
-                  <span className="text-foreground">
-                    {value === 'total_score'
-                      ? '総合'
-                      : value === 'inner_score'
-                        ? 'インナー'
-                        : 'アウター'}
-                  </span>
-                )}
-              />
+                  文字まで色を付けると系列名が読みにくくなる。
+                  basic は1本だけなので凡例そのものを出さない */}
+              {isFull && (
+                <Legend
+                  formatter={(value: string) => (
+                    <span className="text-foreground">
+                      {value === 'total_score'
+                        ? '総合'
+                        : value === 'inner_score'
+                          ? 'インナー'
+                          : 'アウター'}
+                    </span>
+                  )}
+                />
+              )}
               {/* ⚠️ basic では総合とアウターの <Line> ごと外す。データを null にするだけだと
                   Recharts が凡例（総合・アウター）を出してしまい、使えないはずの系列が見える */}
               {isFull && (
