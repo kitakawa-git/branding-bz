@@ -533,14 +533,18 @@ export function BrandScoreView({
                   </span>
                 )}
               />
-              <Line
-                type="monotone"
-                dataKey="total_score"
-                stroke="#1f2937"
-                strokeWidth={2.5}
-                dot={measuredDot('total', '#1f2937')}
-                connectNulls
-              />
+              {/* ⚠️ basic では総合とアウターの <Line> ごと外す。データを null にするだけだと
+                  Recharts が凡例（総合・アウター）を出してしまい、使えないはずの系列が見える */}
+              {isFull && (
+                <Line
+                  type="monotone"
+                  dataKey="total_score"
+                  stroke="#1f2937"
+                  strokeWidth={2.5}
+                  dot={measuredDot('total', '#1f2937')}
+                  connectNulls
+                />
+              )}
               <Line
                 type="monotone"
                 dataKey="inner_score"
@@ -549,14 +553,16 @@ export function BrandScoreView({
                 dot={measuredDot('inner', 'var(--ds-app-accent-soft)')}
                 connectNulls
               />
-              <Line
-                type="monotone"
-                dataKey="outer_score"
-                stroke="#22c55e"
-                strokeWidth={1.5}
-                dot={measuredDot('outer', '#22c55e')}
-                connectNulls
-              />
+              {isFull && (
+                <Line
+                  type="monotone"
+                  dataKey="outer_score"
+                  stroke="#22c55e"
+                  strokeWidth={1.5}
+                  dot={measuredDot('outer', '#22c55e')}
+                  connectNulls
+                />
+              )}
             </LineChart>
           </ResponsiveContainer>
         </div>
