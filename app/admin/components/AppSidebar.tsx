@@ -334,7 +334,7 @@ export function AppSidebar() {
                 <DropdownMenuItem asChild className="h-11 px-3 gap-2 text-base font-medium rounded-md">
                   <Link href="/admin/members" className="no-underline">
                     <Users className="size-4" />
-                    アカウント
+                    メンバー
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild className="h-11 px-3 gap-2 text-base font-medium rounded-md">

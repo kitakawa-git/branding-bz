@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase'
 
 const titleMap: Record<string, string> = {
   '/admin/dashboard': 'Good Action分析',
-  '/admin/members': 'アカウント一覧',
+  '/admin/members': 'メンバー',
   '/admin/company': '基本情報',
   '/admin/brand/guidelines': 'ブランド方針',
   '/admin/brand/visuals': 'ビジュアル',

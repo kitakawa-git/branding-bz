@@ -55,7 +55,7 @@ const breadcrumbMap: Record<string, AdminCrumb> = {
   '/admin/learning': { section: '浸透', title: 'ラーニング' },
   // サイドバーでグループに属さない項目はセクションなし
   '/admin/company': { title: '基本情報' },
-  '/admin/members': { title: 'アカウント管理' },
+  '/admin/members': { title: 'メンバー' },
   '/admin/members-portal': { title: 'アカウント作成' },
   '/admin/card-template': { title: 'スマート名刺' },
   '/admin/kpi': { title: '目標・KPI管理' },
