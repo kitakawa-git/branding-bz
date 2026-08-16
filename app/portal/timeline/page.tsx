@@ -997,10 +997,13 @@ export default function PortalTimelinePage() {
       {/* ============================================ */}
       <div className="flex flex-col sm:flex-row sm:items-start gap-3">
         {categories.length > 1 && (
-          <div className="flex flex-wrap gap-2">
+          // 折り返さず横1列。入りきらないぶんは横スクロールで辿る。
+          // スクロールバーは隠す（チップ列の下に細い帯が出ると窮屈に見えるため）。
+          // タッチとトラックパッドは素で流れ、マウスは Shift+ホイールで動く
+          <div className="flex min-w-0 gap-2 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <button
               onClick={() => setFilterCategory('all')}
-              className={`px-3.5 py-2 rounded-full text-sm font-medium transition-colors ${
+              className={`shrink-0 whitespace-nowrap px-3.5 py-2 rounded-full text-sm font-medium transition-colors ${
                 filterCategory === 'all'
                   ? 'bg-foreground text-background'
                   : 'bg-muted text-muted-foreground hover:bg-muted/80'
@@ -1012,7 +1015,7 @@ export default function PortalTimelinePage() {
               <button
                 key={cat}
                 onClick={() => setFilterCategory(cat)}
-                className={`px-3.5 py-2 rounded-full text-sm font-medium transition-colors ${
+                className={`shrink-0 whitespace-nowrap px-3.5 py-2 rounded-full text-sm font-medium transition-colors ${
                   filterCategory === cat
                     ? 'bg-foreground text-background'
                     : 'bg-muted text-muted-foreground hover:bg-muted/80'
