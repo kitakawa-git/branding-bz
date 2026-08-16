@@ -12,6 +12,7 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuBadge,
@@ -42,10 +43,15 @@ import {
 
 type NavItem = { href: string; label: string; icon: LucideIcon }
 
+// 契約中の企業に対して動くもの。待たせている件数のバッジが付くのもこちら
 const navItems: NavItem[] = [
   { href: '/superadmin/companies', label: '企業一覧', icon: Building2 },
   { href: '/superadmin/plan-requests', label: 'プラン変更の依頼', icon: CreditCard },
   { href: '/superadmin/support-requests', label: '入力サポートの相談', icon: Headset },
+]
+
+// 特定の企業に紐づかない、サイト全体の運営まわり
+const siteItems: NavItem[] = [
   { href: '/superadmin/news', label: 'ニュース', icon: Newspaper },
   { href: '/superadmin/inquiries', label: 'お問い合わせ', icon: MessageSquare },
   { href: '/superadmin/design-system', label: 'デザインシステム', icon: Palette },
@@ -182,6 +188,28 @@ export function SuperAdminSidebar() {
                         {badge > 99 ? '99+' : badge}
                       </SidebarMenuBadge>
                     )}
+                  </SidebarMenuItem>
+                )
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* サイト管理: 特定の企業に紐づかないもの。バッジは付かない */}
+        <SidebarGroup>
+          <SidebarGroupLabel>サイト管理</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {siteItems.map((item) => {
+                const Icon = item.icon
+                return (
+                  <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton asChild isActive={pathname.startsWith(item.href)}>
+                      <Link href={item.href}>
+                        <Icon size={18} />
+                        <span>{item.label}</span>
+                      </Link>
+                    </SidebarMenuButton>
                   </SidebarMenuItem>
                 )
               })}
