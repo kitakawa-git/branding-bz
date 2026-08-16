@@ -3,7 +3,9 @@
 // 各ページ本体の h1 はこの定義に移管したため削除済み。
 
 export type PortalCrumb = {
-  section?: string // サイドバーのグループ名（リンクなしの薄字）
+  section?: string // サイドバーのグループ名（リンクなしの薄字。対応するページが無いのでリンクにしない）
+  /** 一覧へ戻る親ページ。詳細ページで使う（薄字＋リンク） */
+  parent?: { label: string; href: string }
   perspective?: string // 視点ワード（主見出し）。指定時は「視点ワード ｜ title」の二段表記で表示
   title: string // 現在ページ名（名詞）
 }
@@ -31,6 +33,13 @@ const breadcrumbMap: Record<string, PortalCrumb> = {
 export function resolvePortalCrumb(pathname: string): PortalCrumb | null {
   // 完全一致
   if (breadcrumbMap[pathname]) return breadcrumbMap[pathname]
+
+  // 詳細ページ（動的ルート）は、一覧へ戻れる親を付ける。
+  // ⚠️ 下の最長プレフィックス一致だけだと親の名前がそのまま現在地として出て、
+  //    「お知らせ」の詳細を開いても見出しが「お知らせ」のままになり戻り先も無い
+  if (/^\/portal\/announcements\/[^/]+$/.test(pathname)) {
+    return { parent: { label: 'お知らせ', href: '/portal/announcements' }, title: '詳細' }
+  }
 
   // 最長プレフィックス一致（サブページ向け）
   let best: { key: string; crumb: PortalCrumb } | null = null

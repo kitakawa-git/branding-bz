@@ -14,6 +14,7 @@ import { Separator } from '@/components/ui/separator'
 import {
   Breadcrumb,
   BreadcrumbItem,
+  BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
@@ -74,6 +75,22 @@ function PortalLayoutInner({ children }: { children: React.ReactNode }) {
                     <>
                       <BreadcrumbItem>
                         <span className="text-muted-foreground">{crumb.section}</span>
+                      </BreadcrumbItem>
+                      <BreadcrumbSeparator />
+                    </>
+                  )}
+                  {/* 詳細ページの親。一覧へ戻る導線なので押せるようにする */}
+                  {crumb.parent && (
+                    <>
+                      <BreadcrumbItem>
+                        <BreadcrumbLink asChild>
+                          <Link
+                            href={crumb.parent.href}
+                            className="text-muted-foreground no-underline hover:text-foreground"
+                          >
+                            {crumb.parent.label}
+                          </Link>
+                        </BreadcrumbLink>
                       </BreadcrumbItem>
                       <BreadcrumbSeparator />
                     </>
