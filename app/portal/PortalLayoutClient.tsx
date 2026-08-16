@@ -24,6 +24,7 @@ import {
   PortalHeaderSearch,
   PortalSearchProvider,
 } from '@/components/portal/portal-search'
+import { RashisaCardVisibilityProvider } from '@/components/portal/rashisa-card-visibility'
 import { Bell } from 'lucide-react'
 
 // 認証不要のパス
@@ -151,9 +152,13 @@ export default function PortalLayoutClient({ children }: { children: React.React
     <AppAuthProvider redirectOnSignOutTo="/portal/auth">
       <PortalDataProvider>
         <PortalSearchProvider>
-          <PortalLayoutInner>
-            {children}
-          </PortalLayoutInner>
+          {/* サイドバーのスイッチとダッシュボードのカードを繋ぐ。
+              両方を含むこの層に置く */}
+          <RashisaCardVisibilityProvider>
+            <PortalLayoutInner>
+              {children}
+            </PortalLayoutInner>
+          </RashisaCardVisibilityProvider>
         </PortalSearchProvider>
       </PortalDataProvider>
     </AppAuthProvider>

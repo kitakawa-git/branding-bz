@@ -31,6 +31,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
+import { RashisaCardSwitch } from '@/components/portal/rashisa-card-visibility'
 import { useOnboarding } from '@/components/onboarding/use-onboarding'
 import { SetupSupportBanner } from '@/components/onboarding/SetupSupportBanner'
 import {
@@ -80,7 +81,12 @@ const engagementItems: NavItem[] = [
 function RashisaGroup({ pathname, onNavClick }: { pathname: string; onNavClick: () => void }) {
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>私たちの「らしさ」</SidebarGroupLabel>
+      {/* 見出しの右にダッシュボードのショートカットカードの表示スイッチを置く。
+          切り替える対象がこの5項目と同じものなので、設定画面ではなくここに出す */}
+      <SidebarGroupLabel>
+        私たちの「らしさ」
+        <RashisaCardSwitch />
+      </SidebarGroupLabel>
       <SidebarGroupContent>
         <SidebarMenu>
           {/* 1. 考え方（バリューを内包） */}

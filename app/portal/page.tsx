@@ -29,6 +29,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
 import { toast } from 'sonner'
 import { useOnboarding } from '@/components/onboarding/use-onboarding'
+import { useRashisaCardVisible } from '@/components/portal/rashisa-card-visibility'
 import { OnboardingChecklist } from '@/components/onboarding/OnboardingChecklist'
 import { PortalIntroCard } from '@/components/onboarding/PortalIntroCard'
 import {
@@ -265,6 +266,9 @@ export default function PortalTopPage() {
   // ダッシュボードの中身をこれに差し替える（着地先は変えない）
   const onboarding = useOnboarding(company, { notifyOnComplete: true, userId: user?.id })
   const showOnboarding = !onboarding.loading && !onboarding.hidden && !onboarding.dismissed
+
+  // 「私たちの『らしさ』」カードの表示。切り替えはサイドバー見出しのスイッチ
+  const rashisaCardVisible = useRashisaCardVisible()
 
   // 機能トグル: タイムラインが無効なら投稿関連ウィジェットを非表示にする
   const timelineEnabled = isFeatureEnabled(company, 'timeline_enabled')
@@ -983,43 +987,55 @@ export default function PortalTopPage() {
         </Card>
       )}
 
-      {/* ===== 2.7. 私たちの「らしさ」4象限概観カード ===== */}
-      <div className="mb-4 rounded-xl border border-gray-200 bg-[hsl(0_0%_97%)] p-5">
-        <div className="flex items-center gap-2 mb-3">
-          <h2 className="text-sm font-bold text-foreground tracking-wide m-0">
-            私たちの「らしさ」
-          </h2>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 auto-rows-fr">
-          {BRAND_QUADRANTS.map((q) => {
-            const Icon = q.icon
-            const tone = QUADRANT_TONES[q.tone]
-            return (
-              <Link key={q.href} href={q.href} className="no-underline block h-full">
-                <Card className="relative h-full bg-white border shadow-none hover:shadow-sm transition-shadow overflow-hidden">
-                  <CardContent className="p-4 flex items-start gap-3">
-                    <div className={`shrink-0 size-11 rounded-xl flex items-center justify-center ${tone.tile}`}>
-                      <Icon size={24} />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-baseline gap-1.5 flex-wrap">
-                        <span className="text-lg font-bold text-foreground leading-tight">
-                          {q.perspective}
-                        </span>
-                        <span className="text-sm font-normal text-muted-foreground">
-                          ｜{q.noun}
-                        </span>
-                      </div>
-                      <p className="text-base sm:text-sm text-muted-foreground leading-relaxed mt-1 m-0">
-                        {q.items}
-                      </p>
-                    </div>
-                    <ArrowRight size={18} className="text-muted-foreground shrink-0 mt-1" />
-                  </CardContent>
-                </Card>
-              </Link>
-            )
-          })}
+      {/* ===== 2.7. 私たちの「らしさ」4象限概観カード =====
+          サイドバー見出しのスイッチで隠せる（端末ごとの好み）。
+          同じ5項目がサイドバーに常時あるので、慣れた人には要らない */}
+      <div
+        className={`grid transition-all duration-300 ease-out ${
+          rashisaCardVisible ? 'mb-4 grid-rows-[1fr] opacity-100' : 'mb-0 grid-rows-[0fr] opacity-0'
+        }`}
+      >
+        {/* 高さを 0fr↔1fr で動かすので、中身は overflow-hidden の箱に入れる。
+            max-height だと閉じ切るまでの速さが中身の量で変わる */}
+        <div className="min-h-0 overflow-hidden">
+          <div className="rounded-xl border border-gray-200 bg-[hsl(0_0%_97%)] p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <h2 className="text-sm font-bold text-foreground tracking-wide m-0">
+                私たちの「らしさ」
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 auto-rows-fr">
+              {BRAND_QUADRANTS.map((q) => {
+                const Icon = q.icon
+                const tone = QUADRANT_TONES[q.tone]
+                return (
+                  <Link key={q.href} href={q.href} className="no-underline block h-full">
+                    <Card className="relative h-full bg-white border shadow-none hover:shadow-sm transition-shadow overflow-hidden">
+                      <CardContent className="p-4 flex items-start gap-3">
+                        <div className={`shrink-0 size-11 rounded-xl flex items-center justify-center ${tone.tile}`}>
+                          <Icon size={24} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-baseline gap-1.5 flex-wrap">
+                            <span className="text-lg font-bold text-foreground leading-tight">
+                              {q.perspective}
+                            </span>
+                            <span className="text-sm font-normal text-muted-foreground">
+                              ｜{q.noun}
+                            </span>
+                          </div>
+                          <p className="text-base sm:text-sm text-muted-foreground leading-relaxed mt-1 m-0">
+                            {q.items}
+                          </p>
+                        </div>
+                        <ArrowRight size={18} className="text-muted-foreground shrink-0 mt-1" />
+                      </CardContent>
+                    </Card>
+                  </Link>
+                )
+              })}
+            </div>
+          </div>
         </div>
       </div>
 
