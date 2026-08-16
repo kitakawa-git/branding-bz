@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({
     requests: (rows ?? []).map((r) => ({
       ...r,
-      company_name: nameOf.get(r.company_id as string) ?? '(削除された企業)',
+      company_name: nameOf.get(r.company_id as string) ?? '(削除されたブランド)',
     })),
   })
 }

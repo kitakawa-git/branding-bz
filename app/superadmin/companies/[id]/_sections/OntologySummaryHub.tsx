@@ -441,7 +441,7 @@ export default function OntologySummaryHub({
                 ミッション・ビジョン・バリューが未登録です。理念はこの体系すべての土台になるため、先に登録してください。
               </p>
               <p className="text-[12px] text-muted-foreground m-0 mt-2">
-                登録先は<strong className="text-foreground">この企業の</strong>管理画面「ブランドの考え方」です（AIサジェストが使えます）。
+                登録先は<strong className="text-foreground">このブランドの</strong>管理画面「ブランドの考え方」です（AIサジェストが使えます）。
                 管理画面は各社のログインで開くため、ここからは直接遷移しません。
               </p>
             </PopoverContent>
@@ -466,7 +466,7 @@ export default function OntologySummaryHub({
                 提供価値が未登録です。任意ですが、登録すると実績の裏づけ・点検・AI草案の精度が上がります。
               </p>
               <p className="text-[12px] text-muted-foreground m-0 mt-2">
-                登録先は<strong className="text-foreground">この企業の</strong>管理画面「ブランド戦略」です。
+                登録先は<strong className="text-foreground">このブランドの</strong>管理画面「ブランド戦略」です。
                 管理画面は各社のログインで開くため、ここからは直接遷移しません。
               </p>
             </PopoverContent>

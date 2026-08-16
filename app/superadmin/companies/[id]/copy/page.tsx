@@ -141,7 +141,7 @@ export default function CopyWorkbenchPage() {
     return (
       <div className="mx-auto max-w-4xl px-5 py-8">
         <Link href={`/superadmin/companies/${companyId}`} className="mb-4 inline-flex items-center text-[13px] text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="mr-1 h-4 w-4" /> 企業詳細へ戻る
+          <ArrowLeft className="mr-1 h-4 w-4" /> ブランド詳細へ戻る
         </Link>
         <div className="mb-5 flex items-center justify-between">
           <div>

@@ -86,7 +86,7 @@ export default function CompanyCreateForm({ onSuccess, onCancel }: CompanyCreate
         return
       }
 
-      setSuccessMessage(`企業「${result.company?.name}」を作成しました。`)
+      setSuccessMessage(`ブランド「${result.company?.name}」を作成しました。`)
 
       // モーダル時は親側で閉じる、通常時は一覧へ遷移
       if (onSuccess) {
@@ -120,11 +120,11 @@ export default function CompanyCreateForm({ onSuccess, onCancel }: CompanyCreate
 
       {/* === 企業情報セクション === */}
       <h3 className="text-base font-bold text-foreground mb-4 pb-2 border-b border-border">
-        企業情報
+        ブランド情報
       </h3>
 
       <div className="mb-5">
-        <Label className="mb-1.5 font-bold">企業名 *</Label>
+        <Label className="mb-1.5 font-bold">ブランド名 *</Label>
         <Input type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="株式会社○○" required className="h-10" />
       </div>
 

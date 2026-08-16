@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
     .eq('id', companyId)
     .maybeSingle()
   if (!company || company.approval_status !== 'pending') {
-    return NextResponse.json({ error: '対象の承認待ち企業が見つかりません' }, { status: 404 })
+    return NextResponse.json({ error: '対象の承認待ちブランドが見つかりません' }, { status: 404 })
   }
 
   // 登録者（通知用）と auth_id を取得

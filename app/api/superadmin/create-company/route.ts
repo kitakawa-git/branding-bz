@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
     if (!companyName || !adminEmail || !adminPassword) {
       console.error('[CreateCompany] ステップ3失敗: 必須項目不足', { companyName: !!companyName, adminEmail: !!adminEmail, adminPassword: !!adminPassword })
       return NextResponse.json(
-        { error: '企業名、管理者メールアドレス、パスワードは必須です' },
+        { error: 'ブランド名、管理者メールアドレス、パスワードは必須です' },
         { status: 400 }
       )
     }
@@ -132,7 +132,7 @@ export async function POST(request: NextRequest) {
       // Auth userを削除（ロールバック）
       await supabaseAdmin.auth.admin.deleteUser(authData.user.id)
       return NextResponse.json(
-        { error: `企業作成エラー: ${companyError.message}` },
+        { error: `ブランド作成エラー: ${companyError.message}` },
         { status: 400 }
       )
     }

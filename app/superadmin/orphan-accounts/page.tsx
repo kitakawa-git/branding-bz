@@ -99,7 +99,7 @@ export default function OrphanAccountsPage() {
       <div className="mb-5">
         <h1 className="text-xl font-bold text-foreground">孤立アカウントの整理</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          ログイン用のアカウントだけが残り、どの企業にも属していないものの一覧です。
+          ログイン用のアカウントだけが残り、どのブランドにも属していないものの一覧です。
           この状態だと本人が再登録しようとしても「既に登録されています」で弾かれます。
         </p>
       </div>

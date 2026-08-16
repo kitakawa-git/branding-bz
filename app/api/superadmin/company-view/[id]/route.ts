@@ -76,7 +76,7 @@ export async function GET(
       .eq('id', companyId)
       .maybeSingle()
     if (!company) {
-      return NextResponse.json({ error: '企業が見つかりません' }, { status: 404 })
+      return NextResponse.json({ error: 'ブランドが見つかりません' }, { status: 404 })
     }
 
     // 社員（profile_id 群を card_views 集計に使う）

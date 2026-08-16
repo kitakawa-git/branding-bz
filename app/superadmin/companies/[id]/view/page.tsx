@@ -175,7 +175,7 @@ export default function CompanyViewPage() {
     return (
       <div className="space-y-4">
         <Link href={`/superadmin/companies/${companyId}`} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft size={14} /> 企業詳細に戻る
+          <ArrowLeft size={14} /> ブランド詳細に戻る
         </Link>
         <div className="rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700">
           {error || 'データがありません'}
@@ -199,7 +199,7 @@ export default function CompanyViewPage() {
       {/* ヘッダ */}
       <div className="space-y-3">
         <Link href={`/superadmin/companies/${companyId}`} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft size={14} /> 企業詳細に戻る
+          <ArrowLeft size={14} /> ブランド詳細に戻る
         </Link>
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-2xl font-bold">{s(c.name)}</h1>
@@ -208,12 +208,12 @@ export default function CompanyViewPage() {
           </span>
         </div>
         <p className="text-sm text-muted-foreground">
-          この画面は表示専用です。ここから当該企業のデータを編集・保存・削除することはできません。
+          この画面は表示専用です。ここからこのブランドのデータを編集・保存・削除することはできません。
         </p>
       </div>
 
       {/* ① 企業・メンバー基本情報 */}
-      <Section title="① 企業・メンバー基本情報">
+      <Section title="① ブランド・メンバー基本情報">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Stat label="社員" value={data.basics.profiles.length} />
           <Stat label="管理者" value={data.basics.admins.length} />
@@ -223,7 +223,7 @@ export default function CompanyViewPage() {
 
         <Card className="py-0">
           <CardContent className="grid grid-cols-1 gap-x-6 gap-y-1 p-4 sm:grid-cols-2 md:grid-cols-3">
-            <KeyVal label="企業名" value={s(c.name)} />
+            <KeyVal label="ブランド名" value={s(c.name)} />
             <KeyVal label="Webサイト" value={s(c.website_url)} />
             <KeyVal
               label="ブランドカラー"

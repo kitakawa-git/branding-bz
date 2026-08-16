@@ -205,7 +205,7 @@ export default function SignupApprovalSections() {
             <AlertDialogDescription asChild>
               <div className="space-y-2">
                 <p className="m-0">
-                  アカウントと企業データは完全に削除されます。取り消せません。
+                  アカウントとブランドのデータは完全に削除されます。取り消せません。
                 </p>
                 <p className="m-0">
                   {rejectTarget?.owner.name}（{rejectTarget?.owner.email}）宛に却下メールが送られます。
@@ -378,7 +378,7 @@ function BlockedDomainsManager() {
             </AlertDialogTitle>
             <AlertDialogDescription>
               このドメインで新規登録があっても、承認キューに警告が出なくなります。
-              登録済みの企業には影響しません。
+              登録済みのブランドには影響しません。
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

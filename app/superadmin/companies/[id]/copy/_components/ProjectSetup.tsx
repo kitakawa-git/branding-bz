@@ -79,7 +79,7 @@ export default function ProjectSetup({
           <p className="text-sm font-bold mb-1">先にペルソナを登録してください</p>
           <p className="text-[13px] text-muted-foreground">
             コピーAIは登録ペルソナの pain_points を起点にインサイトを抽出します。ペルソナが無いと生成できません。
-            企業詳細のブランドオントロジー（ペルソナ）から登録してください。
+            ブランド詳細のブランドオントロジー（ペルソナ）から登録してください。
           </p>
         </CardContent>
       </Card>

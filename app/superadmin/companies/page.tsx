@@ -203,7 +203,7 @@ export default function CompaniesPage() {
       {/* 新規企業登録 FAB（右下固定・include-bz node の FabButton と同装飾） */}
       <Fab>
         <FabButton onClick={() => setCreateOpen(true)} icon={<Plus size={16} />}>
-          新規企業を登録
+          新規ブランドを登録
         </FabButton>
       </Fab>
 
@@ -221,7 +221,7 @@ export default function CompaniesPage() {
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
         <CardContent className="p-0">
           {companies.length === 0 ? (
-            <p className="text-muted-foreground text-center p-10">企業データがありません</p>
+            <p className="text-muted-foreground text-center p-10">ブランドがありません</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[640px]">
@@ -229,7 +229,7 @@ export default function CompaniesPage() {
                   {/* 列名は折り返さない（「従業員数」が2行になると行が高くなり読みにくい）。
                       個別に付けると足し忘れるので行にまとめて当てる */}
                   <tr className="border-b text-left text-xs text-muted-foreground [&>th]:whitespace-nowrap">
-                    <th className="px-4 py-3 font-medium">企業名</th>
+                    <th className="px-4 py-3 font-medium">ブランド名</th>
                     <th className="px-4 py-3 font-medium text-center">従業員数</th>
                     <th className="px-4 py-3 font-medium text-center">管理者</th>
                     <th className="px-4 py-3 font-medium text-center">構築度</th>

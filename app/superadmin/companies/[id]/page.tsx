@@ -295,7 +295,7 @@ export default function CompanyDetailPage() {
   if (!company) {
     return (
       <p className="text-muted-foreground text-center p-10">
-        企業が見つかりません
+        ブランドが見つかりません
       </p>
     )
   }
@@ -318,7 +318,7 @@ export default function CompanyDetailPage() {
           href={`/superadmin/companies/${companyId}/view`}
           className="inline-flex items-center gap-1.5 rounded-md border border-border bg-muted/50 px-3 py-1.5 text-sm font-medium text-foreground no-underline transition-colors hover:bg-muted"
         >
-          <Eye size={14} /> この企業の状態を見る（閲覧）
+          <Eye size={14} /> このブランドの状態を見る（閲覧）
         </Link>
       </div>
 
@@ -427,7 +427,7 @@ export default function CompanyDetailPage() {
               onChange={(e) => setEditIsDemo(e.target.checked)}
               className="size-4"
             />
-            <span className="text-sm text-foreground">デモ企業（実顧客カウントから除外する）</span>
+            <span className="text-sm text-foreground">デモ（実顧客カウントから除外する）</span>
           </label>
 
           <Button type="button" onClick={handleSavePlan} disabled={savingPlan} size="sm">
@@ -440,7 +440,7 @@ export default function CompanyDetailPage() {
       <Card className="bg-muted/50 border shadow-none mb-6">
         <CardContent className="p-6">
           <h3 className="text-base font-bold text-foreground mb-4">
-            企業情報
+            ブランド情報
           </h3>
 
           {message && (
@@ -451,7 +451,7 @@ export default function CompanyDetailPage() {
 
           <form onSubmit={handleSave}>
             <div className="mb-5">
-              <Label className="mb-1.5 font-bold">企業名</Label>
+              <Label className="mb-1.5 font-bold">ブランド名</Label>
               <Input
                 type="text"
                 value={editName}

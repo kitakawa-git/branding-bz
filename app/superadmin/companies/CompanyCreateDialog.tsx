@@ -29,7 +29,7 @@ export function CompanyCreateDialog({ open, onOpenChange, onCreated }: Props) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[640px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>新規企業を登録</DialogTitle>
+          <DialogTitle>新規ブランドを登録</DialogTitle>
         </DialogHeader>
 
         {/* CompanyCreateForm を再利用。onSuccess / onCancel を渡すとモーダルモードで動作 */}
