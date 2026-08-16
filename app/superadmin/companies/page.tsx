@@ -241,7 +241,10 @@ export default function CompaniesPage() {
                       className="border-b last:border-b-0 hover:bg-muted/30 transition-colors"
                     >
                       <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
+                        {/* 社名は折り返さず…で省略する。長い社名で行が2段になると
+                            他の列と目線が合わなくなるため。
+                            ⚠️ 親に min-w-0 が無いと truncate は効かない（子が縮まない） */}
+                        <div className="flex min-w-0 items-center gap-2">
                           {company.logo_url ? (
                             <img
                               src={company.logo_url}
@@ -253,7 +256,12 @@ export default function CompaniesPage() {
                               <Building2 size={16} className="text-muted-foreground" />
                             </div>
                           )}
-                          <span className="text-sm font-bold text-foreground">{company.name}</span>
+                          <span
+                            className="min-w-0 truncate text-sm font-bold text-foreground"
+                            title={company.name}
+                          >
+                            {company.name}
+                          </span>
                           {/* 実顧客が入ってきたときに一覧で見分けられるようにする。
                               プランバッジより目立たせない */}
                           {company.is_demo && (
