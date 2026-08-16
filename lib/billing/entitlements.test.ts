@@ -87,19 +87,20 @@ const future = '2026-09-13T12:00:00+09:00'
   assert.equal(can(at('premium'), 'kpi', NOW), true)
   assert.equal(can(at('premium'), 'brandQuiz', NOW), true)
 
-  // 計測は v3 で分割。basic は premium、full と innerSurvey は enterprise のみ
-  assert.equal(can(at('premium'), 'brandScoreBasic', NOW), true)
-  assert.equal(can(at('premium'), 'brandScoreFull', NOW), false)
-  assert.equal(can(at('premium'), 'innerSurvey', NOW), false)
-  assert.equal(can(at('enterprise'), 'brandScoreFull', NOW), true)
-  assert.equal(can(at('enterprise'), 'innerSurvey', NOW), true)
+  // 計測は v4 で split を入れ替え。インナー（自己計測）は premium、
+  // 統合＋市場調査（外の目線）だけが enterprise
+  assert.equal(can(at('standard'), 'innerSurvey', NOW), false)
+  assert.equal(can(at('premium'), 'innerSurvey', NOW), true)
+  assert.equal(can(at('premium'), 'brandScoreInner', NOW), true)
+  assert.equal(can(at('premium'), 'brandScoreIntegrated', NOW), false)
+  assert.equal(can(at('enterprise'), 'brandScoreIntegrated', NOW), true)
 }
 
 // ── can(): 期限切れは実効プランで判定される ─────────────────
 {
   const expiredEnterprise = { plan: 'enterprise', plan_expires_at: past }
   assert.equal(
-    can(expiredEnterprise, 'innerSurvey', NOW), false,
+    can(expiredEnterprise, 'brandScoreIntegrated', NOW), false,
     '期限切れの enterprise は enterprise 機能を使えない',
   )
   assert.equal(
@@ -110,13 +111,13 @@ const future = '2026-09-13T12:00:00+09:00'
 
 // ── requirePlan / PlanRequiredError ────────────────────────
 {
-  assert.doesNotThrow(() => requirePlan({ plan: 'enterprise' }, 'innerSurvey', NOW))
+  assert.doesNotThrow(() => requirePlan({ plan: 'enterprise' }, 'brandScoreIntegrated', NOW))
 
   assert.throws(
-    () => requirePlan({ plan: 'premium' }, 'innerSurvey', NOW),
+    () => requirePlan({ plan: 'premium' }, 'brandScoreIntegrated', NOW),
     (err: unknown) => {
       assert.ok(err instanceof PlanRequiredError)
-      assert.equal(err.feature, 'innerSurvey')
+      assert.equal(err.feature, 'brandScoreIntegrated')
       assert.equal(err.requiredPlan, 'enterprise')
       return true
     },
@@ -140,7 +141,9 @@ const future = '2026-09-13T12:00:00+09:00'
   assert.equal(minimumPlanFor('smartCard'), 'standard', 'card は候補から外す')
   assert.equal(minimumPlanFor('microFeedback'), 'standard', 'card は候補から外す')
   assert.equal(minimumPlanFor('kpi'), 'premium')
-  assert.equal(minimumPlanFor('brandScoreFull'), 'enterprise')
+  assert.equal(minimumPlanFor('brandScoreIntegrated'), 'enterprise')
+  assert.equal(minimumPlanFor('innerSurvey'), 'premium', 'v4 でインナーは premium へ')
+  assert.equal(minimumPlanFor('brandScoreInner'), 'premium')
 }
 
 // ── getBuildToolMonthlyLimit ───────────────────────────────

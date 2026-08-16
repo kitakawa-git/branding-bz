@@ -42,9 +42,9 @@ export type FeatureKey =
   | 'videoLearning'
   | 'brandQuiz'            // ブランド理解度テスト
   | 'kpi'
-  | 'brandScoreBasic'      // アウター由来スコアの統合表示のみ
+  | 'brandScoreInner'      // インナースコア＋推移＋ギャップ（自己計測で完結する範囲）
   | 'innerSurvey'
-  | 'brandScoreFull'       // インナー連動＋推移＋ギャップ（伴走とセット）
+  | 'brandScoreIntegrated' // 統合スコア（インナー×アウター）＋市場調査（伴走とセット）
 
 /**
  * プラン → 機能。指示書 v1.3 の最終版をそのまま表にしている。
@@ -77,10 +77,13 @@ const FEATURE_MATRIX: Record<FeatureKey, Record<Plan, boolean>> = {
   brandQuiz:           { free: false, card: false, standard: false, premium: true,  enterprise: true  },
   // ⚠️ RLS 側にも同条件あり（20260814140000_rls_plan_conditions・goal_kpis / goal_periods）
   kpi:                 { free: false, card: false, standard: false, premium: true,  enterprise: true  },
-  // v3 で計測を分割。basic はアウター由来のみ、full は伴走とセットで enterprise
-  brandScoreBasic:     { free: false, card: false, standard: false, premium: true,  enterprise: true  },
-  innerSurvey:         { free: false, card: false, standard: false, premium: false, enterprise: true  },
-  brandScoreFull:      { free: false, card: false, standard: false, premium: false, enterprise: true  },
+  // v4 で計測の split を入れ替えた。以前は「basic＝アウター（premium）／full＝インナー（enterprise）」
+  // だったが、インナーは自社だけで完結する自己計測なので premium 側が正しい。
+  // 外の目線（市場調査を含むアウター）と、その総合値だけが伴走とセットの enterprise。
+  // ⚠️ RLS 側にも同条件あり（20260816120000_rls_inner_survey_premium）。片方だけ直さないこと。
+  brandScoreInner:     { free: false, card: false, standard: false, premium: true,  enterprise: true  },
+  innerSurvey:         { free: false, card: false, standard: false, premium: true,  enterprise: true  },
+  brandScoreIntegrated:{ free: false, card: false, standard: false, premium: false, enterprise: true  },
 }
 
 /** メンバー上限。null は無制限 */
