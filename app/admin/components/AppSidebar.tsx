@@ -103,7 +103,7 @@ const buildItems: NavItem[] = [
 const penetrationItems: NavItem[] = [
   { href: '/admin/brand-score/surveys', label: 'サーベイ', icon: BarChart3, feature: 'innerSurvey', toggleKey: 'survey_enabled' },
   // 社外の浸透（外部調査）。サーベイ管理が社内なのと対になる
-  { href: '/admin/brand-score/market-surveys', label: '市場調査', icon: Globe, feature: 'brandScoreFull', toggleKey: 'market_survey_enabled' },
+  { href: '/admin/brand-score/market-surveys', label: '市場調査', icon: Globe, feature: 'brandScoreIntegrated', toggleKey: 'market_survey_enabled' },
   { href: '/admin/brand-score/quizzes', label: '理解度テスト', icon: ClipboardCheck, feature: 'brandQuiz', toggleKey: 'quiz_enabled' },
   { href: '/admin/learning', label: 'ラーニング', icon: GraduationCap, feature: 'videoLearning', toggleKey: 'learning_enabled' },
 ]

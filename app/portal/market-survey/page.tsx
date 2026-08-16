@@ -103,13 +103,13 @@ export default function PortalMarketSurveyPage() {
   // 会社が機能トグルでオフにしている場合は、プラン案内より先に閉じる
   if (!isFeatureEnabled(company, 'market_survey_enabled')) return <FeatureDisabledNotice />
 
-  if (!can(company, 'brandScoreFull')) {
+  if (!can(company, 'brandScoreIntegrated')) {
     return (
       <div className="max-w-4xl mx-auto px-5 pt-4 pb-10">
         <PlanUpsell
           readOnly={!isAdmin}
           company={company}
-          feature="brandScoreFull"
+          feature="brandScoreIntegrated"
           title="市場調査を見るには"
           benefits={[
             '外部調査から市場での浸透度を可視化',

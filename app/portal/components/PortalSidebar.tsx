@@ -72,7 +72,7 @@ const engagementItems: NavItem[] = [
   { href: '/portal/kpi', label: '目標・KPI', icon: Milestone, feature: 'kpi', toggleKey: 'kpi_enabled', roleKey: 'kpi' },
   { href: '/portal/learning', label: 'ラーニング', icon: GraduationCap, feature: 'videoLearning', toggleKey: 'learning_enabled', roleKey: 'learning' },
   { href: '/portal/survey', label: 'サーベイ結果', icon: ClipboardList, feature: 'innerSurvey', toggleKey: 'survey_enabled', roleKey: 'survey' },
-  { href: '/portal/market-survey', label: '市場調査', icon: Globe, feature: 'brandScoreFull', toggleKey: 'market_survey_enabled', roleKey: 'market_survey' },
+  { href: '/portal/market-survey', label: '市場調査', icon: Globe, feature: 'brandScoreIntegrated', toggleKey: 'market_survey_enabled', roleKey: 'market_survey' },
 ]
 
 // 「私たちの『らしさ』」グループ（内部→外部の視点ワード構成）

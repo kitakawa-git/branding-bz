@@ -192,12 +192,12 @@ export default function MarketSurveysPage() {
   // 会社が機能トグルでオフにしている場合は、プラン案内より先に閉じる
   if (!isFeatureEnabled(company, 'market_survey_enabled')) return <FeatureDisabledNotice />
 
-  if (!can(company, 'brandScoreFull')) {
+  if (!can(company, 'brandScoreIntegrated')) {
     return (
       <div>
         <PlanUpsell
           company={company}
-          feature="brandScoreFull"
+          feature="brandScoreIntegrated"
           title="市場調査の取り込みを使うには"
           benefits={[
             '調査会社の集計表を取り込んで市場浸透を可視化',
