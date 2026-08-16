@@ -70,7 +70,13 @@ export function useRegisterPortalSearch(placeholder: string): string {
   return ctx?.query ?? ''
 }
 
-/** ヘッダーに置く検索。既定は虫眼鏡だけで、押すと横に伸びて入力欄になる */
+/**
+ * ヘッダーに置く検索。既定は虫眼鏡だけで、押すと横に伸びて入力欄になる。
+ * 伸びたあとの虫眼鏡はフィールドの中（左端）に収まる。
+ *
+ * ⚠️ ボタンと入力欄を別要素にすると、開閉で要素が入れ替わってアニメーションが切れる。
+ *    1つの器の幅を動かし、中の虫眼鏡はそのまま置いておく作りにしている。
+ */
 export function PortalHeaderSearch() {
   const ctx = usePortalSearchContext()
   const [open, setOpen] = useState(false)
@@ -89,48 +95,59 @@ export function PortalHeaderSearch() {
   if (!ctx?.searchable) return null
 
   return (
-    <div className="flex items-center">
-      {/* 幅だけを動かす。表示/非表示の入れ替えだとアニメーションが効かない */}
-      <div
-        className={`relative overflow-hidden transition-[width] duration-200 ease-out ${
-          open ? 'w-[200px] sm:w-[240px]' : 'w-0'
-        }`}
-      >
-        <input
-          ref={inputRef}
-          type="text"
-          value={ctx.query}
-          onChange={(e) => ctx.setQuery(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Escape') close()
-          }}
-          // 空のまま離れたら畳む。入力が残っているときは開いたままにする
-          onBlur={() => {
-            if (!ctx.query) setOpen(false)
-          }}
-          placeholder={ctx.placeholder}
-          className="h-9 w-full rounded-md border border-input bg-background pl-3 pr-8 text-sm outline-none focus:border-ds-app-accent"
-        />
-        {ctx.query && (
-          <button
-            type="button"
-            onClick={close}
-            aria-label="検索を消す"
-            className="absolute right-1 top-1/2 flex size-6 -translate-y-1/2 cursor-pointer items-center justify-center rounded border-0 bg-transparent p-0 text-muted-foreground hover:text-foreground"
-          >
-            <X size={14} />
-          </button>
-        )}
-      </div>
+    <div
+      className={`relative flex items-center overflow-hidden transition-all duration-200 ease-out ${
+        open
+          ? 'h-9 w-[200px] rounded-md border border-input bg-background pl-2 pr-1 sm:w-[240px]'
+          : 'h-11 w-11 rounded-md border border-transparent'
+      }`}
+    >
+      {/* 閉じているときは44px のタップ領域（CLAUDE.md の基準）。
+          開いたらフィールド内の飾りになるので、押せる見た目をやめる */}
       <button
         type="button"
-        onClick={() => (open ? close() : setOpen(true))}
-        aria-label={open ? '検索を閉じる' : '検索'}
+        onClick={() => !open && setOpen(true)}
+        aria-label="検索"
         aria-expanded={open}
-        className="inline-flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent transition-colors hover:bg-muted"
+        tabIndex={open ? -1 : 0}
+        className={`flex shrink-0 items-center justify-center border-0 bg-transparent p-0 transition-colors ${
+          open
+            ? 'size-5 cursor-default text-muted-foreground'
+            : 'size-11 cursor-pointer rounded-md text-muted-foreground hover:bg-muted'
+        }`}
       >
-        <Search size={24} className={open ? 'text-foreground' : 'text-muted-foreground'} />
+        <Search size={open ? 18 : 24} />
       </button>
+
+      <input
+        ref={inputRef}
+        type="text"
+        value={ctx.query}
+        onChange={(e) => ctx.setQuery(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') close()
+        }}
+        // 空のまま離れたら畳む。入力が残っているときは開いたままにする
+        onBlur={() => {
+          if (!ctx.query) setOpen(false)
+        }}
+        placeholder={ctx.placeholder}
+        tabIndex={open ? 0 : -1}
+        className={`min-w-0 bg-transparent text-sm outline-none transition-opacity duration-200 ${
+          open ? 'ml-2 flex-1 opacity-100' : 'w-0 opacity-0'
+        }`}
+      />
+
+      {open && ctx.query && (
+        <button
+          type="button"
+          onClick={close}
+          aria-label="検索を消す"
+          className="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded border-0 bg-transparent p-0 text-muted-foreground hover:text-foreground"
+        >
+          <X size={14} />
+        </button>
+      )}
     </div>
   )
 }
