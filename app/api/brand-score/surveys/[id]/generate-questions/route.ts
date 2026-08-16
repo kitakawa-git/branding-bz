@@ -3,6 +3,11 @@
 // Claude APIを呼び出し、企業のブランドデータに基づいたカスタム設問を生成
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import {
+  guardCompanyFeature,
+  requireCompanyMember,
+  recordAiFeatureUsage,
+} from '@/lib/billing/guard'
 import { callClaude } from '@/lib/claude-api'
 import { fetchPhilosophy } from '@/lib/brand/philosophy'
 
@@ -109,6 +114,14 @@ export async function POST(_request: NextRequest, context: RouteContext) {
     }
 
     const companyId = survey.company_id
+
+    // 1.5. 呼び出し元がこの会社の人か＆プランで使えるかを確かめる。
+    // ⚠️ ここが無いと、サーベイ ID さえ知っていれば未ログインでも
+    //    他社のブランドデータで Claude を走らせられる（課金対象の外部API）
+    const forbidden = await requireCompanyMember(companyId)
+    if (forbidden) return forbidden
+    const denied = await guardCompanyFeature(companyId, 'innerSurvey')
+    if (denied) return denied
 
     // 2. ブランドデータを並列取得
     const brandData: BrandData = {}
@@ -263,6 +276,12 @@ export async function POST(_request: NextRequest, context: RouteContext) {
       console.error('[GenerateQuestions] INSERT エラー:', insertError.message)
       return NextResponse.json({ error: insertError.message }, { status: 500 })
     }
+
+    // 外部APIを使った機能なので、実行を記録する（集計・上限判定の材料）
+    await recordAiFeatureUsage(companyId, 'survey_question_generation', {
+      survey_id: id,
+      generated: inserted?.length ?? 0,
+    })
 
     return NextResponse.json(
       { questions: inserted, count: inserted?.length ?? 0 },

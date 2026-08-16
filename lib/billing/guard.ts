@@ -170,3 +170,43 @@ const PLAN_LABELS_FOR_ERROR: Record<string, string> = {
   premium: 'Premium',
   enterprise: 'Enterprise',
 }
+
+/**
+ * 呼び出し元がその会社に属していることを確かめる。
+ *
+ * ⚠️ guardCompanyFeature は「その会社のプランで使えるか」しか見ない。
+ *    company_id をクライアントから受け取るルートでは、それだけでは
+ *    他社の ID を渡された時に素通りしてしまう（他社データの読み書き）。
+ *    service_role で company スコープのデータを触るルートは、必ずこれを先に通すこと。
+ *
+ * 返り値が NextResponse ならそのまま return する。null なら通過。
+ */
+export async function requireCompanyMember(companyId: string): Promise<NextResponse | null> {
+  // 動的 import は循環参照を避けるため（supabase/server は next/headers に依存する）
+  const { createClient } = await import('@/lib/supabase/server')
+  const supabaseUser = await createClient()
+  const {
+    data: { user },
+  } = await supabaseUser.auth.getUser()
+  if (!user) {
+    return NextResponse.json({ error: '認証が必要です' }, { status: 401 })
+  }
+  const callerCompanyId = await fetchCompanyIdForAuth(user.id)
+  if (!callerCompanyId || callerCompanyId !== companyId) {
+    // 存在の有無を教えないため、権限不足と資源なしを区別せず 403 で返す
+    return NextResponse.json({ error: 'この会社のデータにはアクセスできません' }, { status: 403 })
+  }
+  return null
+}
+
+/** AI 機能の実行を記録する。集計・上限判定の材料。失敗しても本体は止めない */
+export async function recordAiFeatureUsage(
+  companyId: string,
+  featureKey: string,
+  metadata: Record<string, unknown> = {},
+): Promise<void> {
+  const { error } = await getSupabaseAdmin()
+    .from('ai_feature_usage')
+    .insert({ company_id: companyId, feature_key: featureKey, metadata })
+  if (error) console.error('[ai_feature_usage] 記録に失敗:', error.message)
+}

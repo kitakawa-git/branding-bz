@@ -13,6 +13,11 @@
 // ============================================================
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import {
+  guardCompanyFeature,
+  requireCompanyMember,
+  recordAiFeatureUsage,
+} from '@/lib/billing/guard'
 import { callClaude } from '@/lib/claude-api'
 import { fetchBrandData, hasSufficientData } from '@/lib/brand-score/brand-data'
 import { validateQuizQuestion } from '@/lib/brand-score/quiz-validation'
@@ -141,6 +146,13 @@ export async function POST(request: NextRequest, context: RouteContext) {
     }
 
     const companyId = quiz.company_id
+
+    // 1.5. 呼び出し元がこの会社の人か＆プランで使えるかを確かめる。
+    // ⚠️ サーベイ側と同じ穴が空いていた（クイズ ID だけで外部APIを叩けた）
+    const forbidden = await requireCompanyMember(companyId)
+    if (forbidden) return forbidden
+    const denied = await guardCompanyFeature(companyId, 'brandQuiz')
+    if (denied) return denied
 
     // 2. ブランドデータ取得（既存サーベイと同一の共通関数）
     const brandData = await fetchBrandData(supabase, companyId)
@@ -281,6 +293,13 @@ export async function POST(request: NextRequest, context: RouteContext) {
       }
       created = inserted ?? []
     }
+
+    // 外部APIを使った機能なので、実行を記録する（集計・上限判定の材料）
+    await recordAiFeatureUsage(companyId, 'quiz_question_generation', {
+      quiz_id: id,
+      created,
+      skipped,
+    })
 
     return NextResponse.json({ created, skipped }, { status: 201 })
   } catch (err) {
