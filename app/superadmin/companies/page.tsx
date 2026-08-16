@@ -280,7 +280,8 @@ export default function CompaniesPage() {
                           }
                           return (
                             <span
-                              className={`inline-flex items-center gap-1 py-0.5 px-2 rounded-md text-[11px] font-semibold ${SCORE_TONES[s.band.tone] ?? 'bg-gray-100 text-gray-700'}`}
+                              // バッジは折り返さない（「48 基盤あり」が2行になると行が高くなる）
+                              className={`inline-flex items-center gap-1 whitespace-nowrap py-0.5 px-2 rounded-md text-[11px] font-semibold ${SCORE_TONES[s.band.tone] ?? 'bg-gray-100 text-gray-700'}`}
                               title={`${s.band.label}：${s.axes.map((a) => `${a.label} ${a.score}/${a.max}`).join('・')}${s.bonus > 0 ? `・ボーナス+${s.bonus}` : ''}`}
                             >
                               {s.total}
