@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { SIGNUP_REQUESTS_CHANGED } from '@/app/superadmin/components/SuperAdminSidebar'
 import { toast } from 'sonner'
-import { AlertTriangle, Building2, Mail, Clock, Ban, Plus, Trash2, ChevronDown, ChevronUp, UserCheck } from 'lucide-react'
+import { AlertTriangle, Sparkles, Mail, Clock, Ban, Plus, Trash2, ChevronDown, ChevronUp, UserCheck } from 'lucide-react'
 
 type SignupRequest = {
   companyId: string
@@ -142,7 +142,7 @@ export default function SignupApprovalSections() {
                 <div className="flex flex-wrap items-start gap-3">
                   <div className="min-w-0 grow">
                     <div className="flex flex-wrap items-center gap-2">
-                      <Building2 className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      <Sparkles className="h-4 w-4 shrink-0 text-muted-foreground" />
                       <span className="font-bold text-foreground">{req.companyName}</span>
                       {req.competitorFlag && (
                         <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-xs font-bold text-red-700 ring-1 ring-red-200">

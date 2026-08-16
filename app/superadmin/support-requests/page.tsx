@@ -10,7 +10,7 @@ import { supabase } from '@/lib/supabase'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
-import { Building2, CalendarClock, Clock, Mail, MessageSquare } from 'lucide-react'
+import { Sparkles, CalendarClock, Clock, Mail, MessageSquare } from 'lucide-react'
 import { SUPPORT_REQUESTS_CHANGED } from '@/app/superadmin/components/SuperAdminSidebar'
 
 type SupportRequest = {
@@ -109,7 +109,7 @@ export default function SupportRequestsPage() {
             <Card key={req.id} className="bg-muted/50 border shadow-none">
               <CardContent className="p-6">
                 <div className="mb-3 flex flex-wrap items-center gap-2">
-                  <Building2 size={16} className="text-muted-foreground" aria-hidden="true" />
+                  <Sparkles size={16} className="text-muted-foreground" aria-hidden="true" />
                   <Link
                     href={`/superadmin/companies/${req.company_id}`}
                     className="text-base font-bold text-foreground no-underline hover:underline"

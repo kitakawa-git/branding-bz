@@ -10,7 +10,7 @@ import { supabase } from '@/lib/supabase'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
-import { Building2, Plus, ArrowRight } from 'lucide-react'
+import { Sparkles, Plus, ArrowRight } from 'lucide-react'
 import { Fab, FabButton } from '@/components/ui/fab'
 import { CompanyCreateDialog } from './CompanyCreateDialog'
 import { computeBuildScore, deriveBuildScoreInput, type BuildScore } from '@/lib/brand/build-score'
@@ -257,7 +257,7 @@ export default function CompaniesPage() {
                             />
                           ) : (
                             <div className="size-9 rounded-md bg-muted flex items-center justify-center shrink-0">
-                              <Building2 size={16} className="text-muted-foreground" />
+                              <Sparkles size={16} className="text-muted-foreground" />
                             </div>
                           )}
                           <span

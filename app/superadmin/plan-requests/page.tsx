@@ -9,7 +9,7 @@ import { supabase } from '@/lib/supabase'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
-import { ArrowRight, Building2, Clock, Mail, MessageSquare } from 'lucide-react'
+import { ArrowRight, Sparkles, Clock, Mail, MessageSquare } from 'lucide-react'
 import { PLAN_LABELS, PLAN_TONES } from '@/lib/billing/plan-display'
 import { PLAN_REQUESTS_CHANGED } from '@/app/superadmin/components/SuperAdminSidebar'
 
@@ -120,7 +120,7 @@ export default function PlanRequestsPage() {
             <Card key={req.id} className="bg-muted/50 border shadow-none">
               <CardContent className="p-6">
                 <div className="mb-3 flex flex-wrap items-center gap-2">
-                  <Building2 size={16} className="text-muted-foreground" aria-hidden="true" />
+                  <Sparkles size={16} className="text-muted-foreground" aria-hidden="true" />
                   <Link
                     href={`/superadmin/companies/${req.company_id}`}
                     className="text-base font-bold text-foreground no-underline hover:underline"
