@@ -393,7 +393,7 @@ export default function PortalTopPage() {
     const fetchAll = async () => {
       try {
         // === Group 1: base queries (parallel) ===
-        const [missionRes, allUserPostsRes, userRecent3Res, companyRecent3Res, announcementsRes, kpiGoalsRes, goalPeriodRes, goalPeriodsRes, conceptVisualRes] =
+        const [missionRes, allUserPostsRes, userRecent3Res, companyRecent3Res, announcementsRes, announcementReadsRes, kpiGoalsRes, goalPeriodRes, goalPeriodsRes, conceptVisualRes] =
           await Promise.allSettled([
             fetchPhilosophy(supabase, companyId),
             supabase
@@ -415,13 +415,21 @@ export default function PortalTopPage() {
               .eq('company_id', companyId)
               .order('created_at', { ascending: false })
               .limit(3),
+            // 未読を3件出したいので多めに取ってから絞る。
+            // limit(3) のまま既読を落とすと、新しい3件が既読なだけで
+            // 未読が残っていても何も出なくなる
             supabase
               .from('announcements')
               .select('id, title, category, created_at, content')
               .eq('company_id', companyId)
               .eq('is_published', true)
               .order('created_at', { ascending: false })
-              .limit(3),
+              .limit(20),
+            supabase
+              .from('announcement_reads')
+              .select('announcement_id')
+              .eq('user_id', user.id)
+              .eq('company_id', companyId),
             supabase
               .from('goal_kpis')
               .select('id, goal_id, title, progress, weight, status, deadline')
@@ -479,16 +487,25 @@ export default function PortalTopPage() {
             ? companyRecent3Res.value.data || []
             : []
 
-        // --- Announcements ---
+        // --- Announcements（未読のみ・最新3件） ---
+        // 読んだものはダッシュボードから消える。全件は /portal/announcements で見る
+        const readAnnouncementIds = new Set(
+          announcementReadsRes.status === 'fulfilled'
+            ? (announcementReadsRes.value.data || []).map((r: { announcement_id: string }) => r.announcement_id)
+            : []
+        )
         const latestAnnouncementsData: AnnouncementSummary[] =
           announcementsRes.status === 'fulfilled'
-            ? (announcementsRes.value.data || []).map((a: { id: string; title: string; category: string; created_at: string; content: string }) => ({
-                id: a.id,
-                title: a.title,
-                category: a.category,
-                created_at: a.created_at,
-                content: a.content,
-              }))
+            ? (announcementsRes.value.data || [])
+                .filter((a: { id: string }) => !readAnnouncementIds.has(a.id))
+                .slice(0, 3)
+                .map((a: { id: string; title: string; category: string; created_at: string; content: string }) => ({
+                  id: a.id,
+                  title: a.title,
+                  category: a.category,
+                  created_at: a.created_at,
+                  content: a.content,
+                }))
             : []
         setLatestAnnouncements(latestAnnouncementsData)
 
