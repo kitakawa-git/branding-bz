@@ -1008,9 +1008,10 @@ export default function PortalTopPage() {
 
       {/* ===== 2.4. ブランドスコア（区分ごとの表示設定で出し分け） =====
           表示は管理画面と同じ BrandScoreView。読み取り専用で、
-          記録設定やAI再生成などの操作系は出さない */}
+          記録設定やAI再生成などの操作系は出さない。
+          下の余白は他のカードと同じ 16px（mb-4）。ここだけ mb-8 だった */}
       {brandScoreVisible && companyId && (
-        <div className="mb-8 empty:hidden">
+        <div className="mb-4 empty:hidden">
           <BrandScorePortalSection
             companyId={companyId}
             surveyHref={surveyVisible ? '/portal/survey' : null}
