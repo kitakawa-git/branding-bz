@@ -131,7 +131,6 @@ export default function SignupRequestsPage() {
                         <Mail className="h-3.5 w-3.5" />
                         {req.owner.name ? `${req.owner.name}（${req.owner.email}）` : req.owner.email}
                       </span>
-                      {req.emailDomain && <span>ドメイン: {req.emailDomain}</span>}
                       <span className="inline-flex items-center gap-1">
                         <Clock className="h-3.5 w-3.5" />
                         {new Date(req.createdAt).toLocaleString('ja-JP')}
