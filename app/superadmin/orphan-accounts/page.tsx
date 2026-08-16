@@ -8,6 +8,13 @@
 //
 // 契約者の画面（/admin/members）に置いていたものを移した。
 // 内部状態の復旧作業であり、他社のアカウントも見える以上 superadmin に閉じる。
+//
+// ⚠️ サイドバーには出していない。溜まっていた7件を 2026-08-16 に片付けた時点で
+//    発生源は塞がっており（Googleログインの孤児は oauth-gate が自動削除、
+//    サインアップとメンバー作成は失敗時に auth ユーザーごとロールバック）、
+//    常設メニューに置くほどの頻度が無いため。
+//    「既に登録されています」の問い合わせが来たら /superadmin/orphan-accounts を
+//    直接開く。再発が続くようならサイドバーに戻す。
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Card, CardContent } from '@/components/ui/card'
