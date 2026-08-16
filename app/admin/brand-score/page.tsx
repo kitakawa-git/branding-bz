@@ -252,8 +252,10 @@ type BrandScoreCache = {
 
 export default function BrandScoreDashboard() {
   const { companyId, company } = useAuth()
-  // 計測の見せ方。Premium は簡易版（アウターのみ）、Enterprise は完全版
-  const brandScoreFull = can(company, 'brandScoreFull')
+  // 計測の見せ方。Premium はインナーのみ、Enterprise は市場調査を含む総合
+  const brandScoreIntegrated = can(company, 'brandScoreIntegrated')
+  // インナー由来（サーベイ・理解度テスト・そのギャップ）は Premium から
+  const brandScoreInner = can(company, 'brandScoreInner')
 
   // 機能トグルを踏まえたタブ（定義は lib/constants/dashboard-tabs.ts に集約）
 
@@ -641,12 +643,13 @@ export default function BrandScoreDashboard() {
         prevDiff={prevDiff}
         impressionScore={impressionScore}
         periodLabel={PERIOD_LABELS[period] ?? period}
-        variant={brandScoreFull ? 'full' : 'basic'}
+        variant={brandScoreIntegrated ? 'full' : 'basic'}
       />
 
       {/* ── 3.5. 理解度（知識）× 共感ギャップ ──
-          インナー（サーベイ・理解度テスト）由来なので Enterprise 側 */}
-      {brandScoreFull && (
+          サーベイ（共感）と理解度テスト（知識）の対比。どちらも Premium の機能なので
+          ギャップも Premium 側に置く（v4 で Enterprise から移動） */}
+      {brandScoreInner && (
       <div className="grid md:grid-cols-2 gap-4 mb-6">
         {/* 左: 理解度（知識） */}
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
@@ -875,8 +878,9 @@ export default function BrandScoreDashboard() {
       )}
 
       {/* ── 5. ギャップ分析 ──
-          共感（サーベイ）× 知識（理解度テスト）の対比なので Enterprise 側 */}
-      {brandScoreFull && hasMicroFb && hasTagMappings && (
+          共感（サーベイ）× 知識（理解度テスト）の対比。どちらも Premium の機能なので
+          Premium 側（v4 で Enterprise から移動） */}
+      {brandScoreInner && hasMicroFb && hasTagMappings && (
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-4">
           <CardContent className="p-5">
             <h2 className="text-xs font-bold text-foreground mb-4 flex items-center gap-1.5">

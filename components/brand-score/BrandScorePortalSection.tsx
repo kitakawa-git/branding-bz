@@ -42,7 +42,7 @@ export function BrandScorePortalSection({
   surveyHref?: string | null
   /** 市場調査ページへのリンク。区分で見られない場合は null */
   marketSurveyHref?: string | null
-  /** 計測の見せ方。呼び出し側で can(company, 'brandScoreFull') を通して決める */
+  /** 計測の見せ方。呼び出し側で can(company, 'brandScoreIntegrated') を通して決める */
   variant?: 'basic' | 'full'
 }) {
   // 同一セッションの再訪では前回取得値でそのまま描画（stale-while-revalidate）

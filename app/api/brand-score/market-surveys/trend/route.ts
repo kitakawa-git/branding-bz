@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'company_id は必須です' }, { status: 400 })
     }
 
-    const denied = await guardCompanyFeature(companyId, 'brandScoreFull')
+    const denied = await guardCompanyFeature(companyId, 'brandScoreIntegrated')
     if (denied) return denied
 
     const supabase = getSupabaseAdmin()

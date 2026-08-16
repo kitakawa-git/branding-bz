@@ -112,12 +112,14 @@ export interface BrandScoreViewProps {
   /** ポータルでは管理画面へのリンクとボタンを出さない */
   readOnly?: boolean
   /**
-   * 計測の見せ方（v3 で Premium=簡易版 / Enterprise=完全版 に分割）。
-   * - 'full'  … インナー由来（サーベイ・統合スコア・推移のインナー系列）＋市場調査まで全部
-   * - 'basic' … アウター由来のみ（名刺・ブランドページの行動データ）。
+   * 計測の見せ方（v4 で split を入れ替え。以前は basic=アウター / full=インナー だった）。
+   * - 'basic' … インナー由来のみ（サーベイのスコア・段階・推移のインナー系列）。
+   *             自社だけで完結する自己計測なので Premium から使える。
    *             総合スコアは inner×50%+outer×50% の合成なので basic では出さず、
-   *             アウタースコアだけを見せる
-   * 判定は呼び出し側で can(company, 'brandScoreFull') を通すこと。
+   *             インナースコアだけを見せる
+   * - 'full'  … 統合スコア（インナー×アウター）＋市場調査を含むアウターまで全部。
+   *             外の目線は伴走とセットなので Enterprise。
+   * 判定は呼び出し側で can(company, 'brandScoreIntegrated') を通すこと。
    */
   variant?: 'basic' | 'full'
   /** 推移のデータだけ遅れて届く場合。空状態ではなくスケルトンを出す */
@@ -216,14 +218,15 @@ export function BrandScoreView({
   innerLink,
   outerLink,
 }: BrandScoreViewProps) {
-  // basic ではインナー由来と市場調査を見せない。呼び出し側がデータを渡していても
+  // basic ではアウター由来と市場調査を見せない。呼び出し側がデータを渡していても
   // ここで落とすので、片方だけ直して漏れる事故が起きない
   const isFull = variant === 'full'
 
   // scores ごと欠けた応答（サーベイ未実施の会社）でも落ちないよう ?. で見る。
   // 以降の innerScore!.scores.total! はすべてこの hasInner が守る
-  const hasInner = isFull && innerScore != null && innerScore.scores?.total != null
-  const hasOuter = outerScore !== null && outerScore.outer_score > 0
+  const hasInner = innerScore != null && innerScore.scores?.total != null
+  // アウター（市場調査を含む外の目線）は Enterprise 側
+  const hasOuter = isFull && outerScore !== null && outerScore.outer_score > 0
 
   // 未指定なら従来どおり管理画面へのリンク（readOnly では出さない）。
   // null を明示的に渡した場合はリンクなし。
@@ -316,18 +319,19 @@ export function BrandScoreView({
     }
     for (const s of snapshots) {
       const r = row(s.snapshot_date)
-      // basic はアウターだけの推移。総合はインナーとの合成なので出さない。
+      // basic はインナーだけの推移。総合はアウターとの合成なので出さない。
       // スナップショット自体は全社ぶん記録し続けている（表示だけを絞る）
       r.total_score = isFull ? s.total_score : null
-      r.inner_score = isFull ? s.inner_score : null
-      r.outer_score = s.outer_score
+      r.inner_score = s.inner_score
+      r.outer_score = isFull ? s.outer_score : null
     }
 
     // 調査で測った値は、記録日のスコアと同じ系列に入れる。
     // 「7/28に測ったインナー62.0」と「8/5に記録したインナー62.0」は
     // 同じ指標の別の日の値なので、線がつながるのが自然。
     // 記録日に既に値があればそちらを優先する（記録が正本）
-    if (isFull) {
+    // サーベイの実施日はインナー系列なので basic でも入れる
+    {
       for (const t of surveyTrend) {
         if (t.score === null) continue
         const r = row(t.date)
@@ -397,9 +401,9 @@ export function BrandScoreView({
   <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-4">
     <CardContent className="p-6">
       <div className="flex items-center justify-between mb-3">
-        {/* basic はインナーを含まないので「総合」と名乗れない（合成の半分が無い） */}
+        {/* basic はアウターを含まないので「総合」と名乗れない（合成の半分が無い） */}
         <span className="text-sm text-muted-foreground">
-          {isFull ? '総合ブランドスコア' : 'アウタースコア'}
+          {isFull ? '総合ブランドスコア' : 'インナースコア'}
         </span>
         {prevDiff !== null ? (
           <span className={`text-xs font-medium ${prevDiff >= 0 ? 'text-green-600' : 'text-red-600'}`}>
@@ -428,20 +432,20 @@ export function BrandScoreView({
             <span>アウター {outerScore!.outer_score.toFixed(1)} × 50%</span>
           </>
         ) : !isFull ? (
-          // basic は名刺・ブランドページの行動データだけで出している旨を明示し、
-          // その場で完全版（Enterprise）への導線を出す。EA 参加者への
+          // basic は社員サーベイだけで出している旨を明示し、
+          // その場で総合（Enterprise）への導線を出す。
           // アップセル面も兼ねるので、ここが唯一の入口になる
           <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
             <span className="flex items-center gap-1">
-              <Eye size={12} />
-              名刺・ブランドページの行動データから算出
+              <Users size={12} />
+              社員へのインナーサーベイから算出
             </span>
             {!readOnly && (
               <Link
                 href="/contact"
                 className="flex items-center gap-1 text-foreground hover:underline"
               >
-                社員サーベイを含む完全版で見る <ArrowRight size={12} />
+                市場調査を含む総合スコアで見る（Enterprise） <ArrowRight size={12} />
               </Link>
             )}
           </span>
@@ -462,11 +466,11 @@ export function BrandScoreView({
   </Card>
 
   {/* ── 2.5. スコア推移グラフ ──
-      推移は Enterprise（brandScoreFull）の機能。料金ページでも
-      「スコア推移の自動記録」は Enterprise の欄にしかない。
-      basic では系列データを null にしていた（total/inner）だけで枠は出ていたため、
-      Premium にアウター1本のグラフが見えてしまっていた。カードごと出さない */}
-  {isFull && (
+      v4 でインナーの推移は Premium の範囲になったので basic でも出す。
+      ただし系列は上の trendRows で絞ってあり、basic ではインナー1本だけが引かれる
+      （総合とアウターは null）。⚠️ 枠だけ出して系列を null にする作りは、
+      「使えないはずの機能の枠が見える」事故のもとなので、
+      出す/出さないを分けるときは必ずカードごと出し分けること */}
   <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-4">
     <CardContent className="p-5">
       <h2 className="text-xs font-bold text-foreground mb-4 flex items-center gap-1.5">
@@ -559,10 +563,10 @@ export function BrandScoreView({
       )}
     </CardContent>
   </Card>
-  )}
 
-  {/* ── 3. インナー × アウター 2カラム ── */}
-  <div className="grid md:grid-cols-2 gap-4 mb-6">
+  {/* ── 3. インナー × アウター 2カラム ──
+      アウターは Enterprise 側なので basic ではインナーだけを全幅で出す */}
+  <div className={`grid gap-4 mb-6 ${isFull ? 'md:grid-cols-2' : ''}`}>
     {/* 左: インナースコア */}
     <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
       <CardContent className="p-5">
@@ -635,7 +639,8 @@ export function BrandScoreView({
       </CardContent>
     </Card>
 
-    {/* 右: アウタースコア */}
+    {/* 右: アウタースコア（市場調査を含む外の目線＝Enterprise 側） */}
+    {isFull && (
     <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
       <CardContent className="p-5">
         <div className="flex items-center justify-between mb-4">
@@ -795,6 +800,7 @@ export function BrandScoreView({
         )}
       </CardContent>
     </Card>
+    )}
   </div>
 
     </>

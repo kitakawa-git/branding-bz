@@ -108,7 +108,7 @@ export async function GET() {
     }
     const companyId = admin.companyId
 
-    const denied = await guardCompanyFeature(companyId, 'brandScoreFull')
+    const denied = await guardCompanyFeature(companyId, 'brandScoreInner')
     if (denied) return denied
 
     const supabase = getSupabaseAdmin()
