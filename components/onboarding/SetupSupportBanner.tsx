@@ -68,7 +68,13 @@ function SidebarCard({ onOpen }: { onOpen: () => void }) {
 /** 管理画面「セットアップの進捗」の下：グラデーション帯 */
 function GradientBanner({ onOpen }: { onOpen: () => void }) {
   return (
-    <div className="relative mt-4 overflow-hidden rounded-xl bg-gradient-to-br from-violet-600 to-blue-600 px-5 py-6 text-center text-white">
+    // カード全体を押せるようにする。中の「相談を予約する」はボタンの入れ子に
+    // できないので span にし、見た目とホバーだけ group から効かせる
+    <button
+      type="button"
+      onClick={onOpen}
+      className="group relative mt-4 block w-full cursor-pointer overflow-hidden rounded-xl border-0 bg-gradient-to-br from-violet-600 to-blue-600 px-5 py-6 text-center text-white"
+    >
       {/* うっすら光を通す装飾。装飾なので読み上げ対象にしない */}
       <span
         aria-hidden="true"
@@ -84,14 +90,10 @@ function GradientBanner({ onOpen }: { onOpen: () => void }) {
         <br className="hidden sm:block" />
         「何から書けばいいか分からない」の段階からご相談ください。
       </p>
-      <button
-        type="button"
-        onClick={onOpen}
-        className="relative inline-flex cursor-pointer items-center gap-1.5 rounded-full border-0 bg-white px-6 py-2.5 text-sm font-extrabold text-violet-600 no-underline transition-all hover:-translate-y-px hover:shadow-[0_6px_20px_rgba(0,0,0,0.15)]"
-      >
+      <span className="relative inline-flex items-center gap-1.5 rounded-full bg-white px-6 py-2.5 text-sm font-extrabold text-violet-600 transition-all group-hover:-translate-y-px group-hover:shadow-[0_6px_20px_rgba(0,0,0,0.15)]">
         <Calendar size={14} aria-hidden="true" />
         相談を予約する
-      </button>
-    </div>
+      </span>
+    </button>
   )
 }
