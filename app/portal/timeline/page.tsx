@@ -1192,7 +1192,9 @@ function PostCard({
 
   return (
     <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-      <CardContent className="px-3 py-2.5">
+      {/* ⚠️ p-3 と書くと globals.css のカード統一ルールで 16px に上書きされる。
+          12px にしたいので方向指定（px-3 py-3）で書く＝ルールの除外条件に当たる */}
+      <CardContent className="px-3 py-3">
         {/* Header */}
         <div className="flex items-start gap-3 mb-2">
           <Avatar className="size-9 shrink-0">
