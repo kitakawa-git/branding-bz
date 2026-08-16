@@ -1046,7 +1046,8 @@ export default function PortalTimelinePage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-2">
+        // 投稿カード間は12px（space-y-3）
+        <div className="space-y-3">
           {filteredPosts.map((post) => (
             <PostCard
               key={post.id}
@@ -1306,7 +1307,7 @@ function PostCard({
         <div className="flex items-center gap-4">
           <button
             onClick={onLike}
-            className={`flex items-center gap-1.5 min-h-11 text-sm transition-colors ${
+            className={`flex items-center gap-1.5 min-h-11 md:min-h-9 text-sm transition-colors ${
               post.is_liked
                 ? 'text-red-500'
                 : 'text-muted-foreground hover:text-red-500'
@@ -1317,7 +1318,7 @@ function PostCard({
           </button>
           <button
             onClick={onToggleComments}
-            className="flex items-center gap-1.5 min-h-11 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            className="flex items-center gap-1.5 min-h-11 md:min-h-9 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             <MessageCircle className="size-5" />
             <span>{post.comment_count > 0 ? post.comment_count : ''}</span>
