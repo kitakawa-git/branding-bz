@@ -52,7 +52,7 @@ import {
   ClipboardCheck,
   GraduationCap,
   Globe,
-  Settings,
+  SlidersHorizontal,
   Crosshair,
   UserRound,
   Palette,
@@ -338,9 +338,11 @@ export function AppSidebar() {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild className="h-11 px-3 gap-2 text-base font-medium rounded-md">
+                  {/* 中身は機能のオン/オフなので歯車（一般的な設定）ではなくスライダー。
+                      目のアイコンは「見え方・聞こえ方」で使っているので避ける */}
                   <Link href="/admin/settings" className="no-underline">
-                    <Settings className="size-4" />
-                    設定
+                    <SlidersHorizontal className="size-4" />
+                    表示設定
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild className="h-11 px-3 gap-2 text-base font-medium rounded-md">

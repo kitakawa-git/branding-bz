@@ -60,7 +60,7 @@ const breadcrumbMap: Record<string, AdminCrumb> = {
   '/admin/card-template': { title: 'スマート名刺' },
   '/admin/kpi': { title: '目標・KPI管理' },
   '/admin/announcements': { title: 'お知らせ管理' },
-  '/admin/settings': { title: '設定' },
+  '/admin/settings': { title: '表示設定' },
   // ブランド基盤セクション
   '/admin/brand/guidelines': { section: 'ブランド基盤', title: 'ブランド方針' },
   '/admin/brand/strategy': { section: 'ブランド基盤', title: 'ブランド戦略' },

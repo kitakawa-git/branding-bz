@@ -1,6 +1,6 @@
 'use client'
 
-// 管理画面「設定」: 機能の表示設定（オン/オフトグル）
+// 管理画面「表示設定」: 機能の表示設定（オン/オフトグル）
 // FEATURE_TOGGLES を唯一の定義源として map でトグル行を生成する（個別ハードコード禁止）。
 // 機能を増やすときは lib/constants/feature-toggles.ts に1行追加するだけでここに反映される。
 import { useEffect, useState } from 'react'
