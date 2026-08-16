@@ -20,6 +20,10 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
 import { resolvePortalCrumb } from '@/lib/portal-breadcrumb'
+import {
+  PortalHeaderSearch,
+  PortalSearchProvider,
+} from '@/components/portal/portal-search'
 import { Bell } from 'lucide-react'
 
 // 認証不要のパス
@@ -110,8 +114,10 @@ function PortalLayoutInner({ children }: { children: React.ReactNode }) {
                 </BreadcrumbList>
               </Breadcrumb>
             )}
-            {/* 右端にお知らせベルアイコン */}
-            <div className="ml-auto">
+            {/* 右端に検索（虫眼鏡）とお知らせベル。
+                検索はページが登録したときだけ出る（portal-search 参照） */}
+            <div className="ml-auto flex items-center gap-1">
+              <PortalHeaderSearch />
               <Link
                 href="/portal/announcements"
                 className="relative inline-flex items-center justify-center size-11 rounded-md hover:bg-muted transition-colors no-underline"
@@ -144,9 +150,11 @@ export default function PortalLayoutClient({ children }: { children: React.React
   return (
     <AppAuthProvider redirectOnSignOutTo="/portal/auth">
       <PortalDataProvider>
-        <PortalLayoutInner>
-          {children}
-        </PortalLayoutInner>
+        <PortalSearchProvider>
+          <PortalLayoutInner>
+            {children}
+          </PortalLayoutInner>
+        </PortalSearchProvider>
       </PortalDataProvider>
     </AppAuthProvider>
   )

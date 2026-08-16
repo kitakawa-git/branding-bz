@@ -48,13 +48,13 @@ import {
   Trash2,
   Send,
   UserRound,
-  Search,
 } from 'lucide-react'
 import { Fab, FabButton } from '@/components/ui/fab'
 import { toast } from 'sonner'
 import { PlanUpsell } from '@/components/billing/plan-gate'
 import { can } from '@/lib/billing/entitlements'
 import { useSearchParams } from 'next/navigation'
+import { useRegisterPortalSearch } from '@/components/portal/portal-search'
 
 // ============================================
 // Types
@@ -120,7 +120,8 @@ export default function PortalTimelinePage() {
 
   // Filter
   const [filterCategory, setFilterCategory] = useState<string>('all')
-  const [searchQuery, setSearchQuery] = useState('')
+  // 検索フィールドはヘッダーの虫眼鏡。ここでは入力された文字列だけを受け取る
+  const searchQuery = useRegisterPortalSearch('投稿を検索...')
 
   // Post form
   const [formContent, setFormContent] = useState('')
@@ -1022,16 +1023,6 @@ export default function PortalTimelinePage() {
             ))}
           </div>
         )}
-        <div className="relative sm:ml-auto sm:w-[240px]">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="投稿を検索..."
-            className="h-11 pl-9"
-          />
-        </div>
       </div>
 
       {/* ============================================ */}
