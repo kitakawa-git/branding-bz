@@ -9,7 +9,7 @@
 | 構築 | 理念・コピー・カラー・ペルソナをAIで策定するAI構築ツール群 | 無料〜フリーミアム |
 | 浸透 | branding.bz本体。ブランド掲示・Good Action投稿・KPI・学習 | 月額サブスク |
 | 発信 | スマート名刺。QRから個人＋企業ブランドの簡易ページ表示 |  |
-| ブランドスコア | ブランド理解度・浸透度の指標。簡易版=Premium／統合=Enterprise | 表記は「ブランドスコア」。Brand Score とは書かない |
+| ブランドスコア | ブランド理解度・浸透度の指標。インナー=Premium／統合（インナー×アウター）=Enterprise | 表記は「ブランドスコア」。Brand Score とは書かない |
 | Good Action | 社内のブランド体現を称賛し合う投稿機能 | 旧称 Good Job（2026-08-15 に改称）。新しい表記に出さない |
 | RLS | Row Level Security（Supabaseの行単位アクセス制御） | 本番前にポリシー精緻化が課題 |
 | デモ企業 | 検証用固定企業（株式会社テックブリッジ / `128a1513`） | プレビュー検証はこの範囲で行う |
@@ -59,11 +59,11 @@
 | ビデオラーニング | `videoLearning` | Premium 以上 | 動画学習 / ラーニング動画 |
 | ブランド理解度テスト | `brandQuiz` | Premium 以上 | クイズ / 理解度チェック |
 | 目標・KPI管理 | `kpi` | Premium 以上 | 個人目標と KPI / KPI・目標管理（旧称） / KPI管理 |
-| ブランドスコア（簡易版） | `brandScoreBasic` | Premium 以上 | アウタースコアのみ / 簡易スコア |
-| インナーサーベイ＋AI設問生成 | `innerSurvey` | Enterprise | 社員サーベイ / インナー調査 |
-| 統合ブランドスコア | `brandScoreFull` | Enterprise | ブランドスコア完全版 / 統合スコア |
-| スコア推移の自動記録 | `brandScoreFull` に含む | Enterprise | スコア履歴 |
-| ギャップ分析 | `brandScoreFull` に含む | Enterprise | 差分分析 |
+| インナースコア＋推移 | `brandScoreInner` | Premium 以上 | ブランドスコア（簡易版）（旧称・v4 で廃止） / インナー計測 |
+| インナーサーベイ＋AI設問生成 | `innerSurvey` | **Premium 以上**（v4 で Enterprise から移動） | 社員サーベイ / インナー調査 |
+| 統合ブランドスコア（インナー×アウター） | `brandScoreIntegrated` | Enterprise | ブランドスコア完全版 / 統合スコア / `brandScoreFull`（旧識別子） |
+| 市場調査を含むアウタースコア | `brandScoreIntegrated` に含む | Enterprise | アウター表示 / 外の目線 |
+| 理解度×共感ギャップ分析 | `brandScoreInner` に含む | **Premium 以上**（v4 で Enterprise から移動） | ギャップ分析 / 差分分析 |
 | 市場調査手配 | `brandScoreFull` で表示 | Enterprise | 市場調査（アプリ内画面名としてはこの短縮形を使う） |
 | クリエイティブサポート | – | Enterprise | 制作支援 |
 | ID INC. による四半期レビュー | – | Enterprise | 定例レビュー |
@@ -73,6 +73,8 @@
 
 - **部署別ヒートマップ** … 機能ごと削除済み（commit `48283cd`）。公開ページに書かない。
 - **ミニアプリ** … 「構築ツール」に統一。
+- **ブランドスコア（簡易版）** … v4（2026-08-16）で計測の split を入れ替えたため廃止。Premium で見えるのは「インナースコア＋推移」。
+- **スコア推移の自動記録** … Enterprise 限定の項目としては廃止。インナーの推移は Premium に含まれ、総合の推移が Enterprise。
 
 ### アプリ内サイドメニューの短縮形
 
