@@ -210,3 +210,36 @@ export async function recordAiFeatureUsage(
     .insert({ company_id: companyId, feature_key: featureKey, metadata })
   if (error) console.error('[ai_feature_usage] 記録に失敗:', error.message)
 }
+
+/**
+ * URL のリソース ID から会社を引き、呼び出し元の所属を照合する。
+ *
+ * generate-questions で確立した「リソースを引く → requireCompanyMember」を
+ * そのまま関数にしただけで、新しい判定は足していない。
+ * リソース ID を受けるルートが多く、手書きで散らすと必ず抜けが出るためまとめた。
+ *
+ * 返り値が NextResponse ならそのまま return する。
+ * 通過したときは、以降の処理で使えるように companyId を返す。
+ */
+export async function requireResourceCompany(
+  table: string,
+  id: string,
+): Promise<{ error: NextResponse; companyId?: undefined } | { error?: undefined; companyId: string }> {
+  const { data, error } = await getSupabaseAdmin()
+    .from(table)
+    .select('company_id')
+    .eq('id', id)
+    .maybeSingle()
+
+  if (error) {
+    return { error: NextResponse.json({ error: error.message }, { status: 500 }) }
+  }
+  if (!data?.company_id) {
+    return { error: NextResponse.json({ error: '見つかりません' }, { status: 404 }) }
+  }
+
+  const forbidden = await requireCompanyMember(data.company_id as string)
+  if (forbidden) return { error: forbidden }
+
+  return { companyId: data.company_id as string }
+}

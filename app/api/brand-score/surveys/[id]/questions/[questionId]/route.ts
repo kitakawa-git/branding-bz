@@ -3,6 +3,7 @@
 // DELETE /api/brand-score/surveys/[id]/questions/[questionId]
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { requireResourceCompany } from '@/lib/billing/guard'
 
 type RouteContext = { params: Promise<{ id: string; questionId: string }> }
 
@@ -10,6 +11,10 @@ type RouteContext = { params: Promise<{ id: string; questionId: string }> }
 export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
     const { id, questionId } = await context.params
+    // URL のリソース ID から会社を引き、呼び出し元の所属を照合する
+    // （generate-questions で確立した形。これが無いと他社の ID で中身が返る）
+    const scope = await requireResourceCompany('brand_surveys', id)
+    if (scope.error) return scope.error
     const body = await request.json()
 
     if (!questionId) {
@@ -64,6 +69,10 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 export async function DELETE(_request: NextRequest, context: RouteContext) {
   try {
     const { id, questionId } = await context.params
+    // URL のリソース ID から会社を引き、呼び出し元の所属を照合する
+    // （generate-questions で確立した形。これが無いと他社の ID で中身が返る）
+    const scope = await requireResourceCompany('brand_surveys', id)
+    if (scope.error) return scope.error
 
     if (!questionId) {
       return NextResponse.json({ error: 'questionId is required' }, { status: 400 })

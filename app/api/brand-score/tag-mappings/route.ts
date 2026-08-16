@@ -4,6 +4,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { requireCompanyMember } from '@/lib/billing/guard'
 
 // 全8タグ
 const ALL_TAGS = [
@@ -29,6 +30,11 @@ export async function GET(request: NextRequest) {
         { status: 400 },
       )
     }
+
+    // 呼び出し元がこの会社の人かを確かめる。company_id をクライアントから受けるので、
+    // これが無いと他社の ID を渡すだけで中身が返る
+    const forbidden = await requireCompanyMember(companyId)
+    if (forbidden) return forbidden
 
     const supabase = getSupabaseAdmin()
 
@@ -88,6 +94,11 @@ export async function PUT(request: NextRequest) {
         { status: 400 },
       )
     }
+
+    // 呼び出し元がこの会社の人かを確かめる。company_id をクライアントから受けるので、
+    // これが無いと他社の ID を渡すだけで中身が返る
+    const forbidden = await requireCompanyMember(companyId)
+    if (forbidden) return forbidden
 
     if (!mappings || !Array.isArray(mappings) || mappings.length === 0) {
       return NextResponse.json(

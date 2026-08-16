@@ -7,6 +7,7 @@
 // absent=true なら割り当てを消して「この調査では未計測」として記録する。
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { requireResourceCompany } from '@/lib/billing/guard'
 import { MARKET_STAGES, type MarketStage } from '@/lib/brand-score/market-stages'
 import {
   computeStageScore,
@@ -26,6 +27,10 @@ interface CellAssignment {
 export async function PUT(request: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params
+    // URL のリソース ID から会社を引き、呼び出し元の所属を照合する
+    // （generate-questions で確立した形。これが無いと他社の ID で中身が返る）
+    const scope = await requireResourceCompany('market_surveys', id)
+    if (scope.error) return scope.error
     const body = await request.json()
 
     const stage = body.stage as MarketStage

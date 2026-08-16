@@ -4,6 +4,7 @@
 // DELETE /api/brand-score/surveys/[id]
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { requireResourceCompany } from '@/lib/billing/guard'
 
 type RouteContext = { params: Promise<{ id: string }> }
 
@@ -11,6 +12,10 @@ type RouteContext = { params: Promise<{ id: string }> }
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params
+    // URL のリソース ID から会社を引き、呼び出し元の所属を照合する
+    // （generate-questions で確立した形。これが無いと他社の ID で中身が返る）
+    const scope = await requireResourceCompany('brand_surveys', id)
+    if (scope.error) return scope.error
 
     if (!id) {
       return NextResponse.json({ error: 'Survey ID is required' }, { status: 400 })
@@ -82,6 +87,10 @@ export async function GET(request: NextRequest, context: RouteContext) {
 export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params
+    // URL のリソース ID から会社を引き、呼び出し元の所属を照合する
+    // （generate-questions で確立した形。これが無いと他社の ID で中身が返る）
+    const scope = await requireResourceCompany('brand_surveys', id)
+    if (scope.error) return scope.error
     const body = await request.json()
 
     if (!id) {
@@ -199,6 +208,10 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 export async function DELETE(_request: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params
+    // URL のリソース ID から会社を引き、呼び出し元の所属を照合する
+    // （generate-questions で確立した形。これが無いと他社の ID で中身が返る）
+    const scope = await requireResourceCompany('brand_surveys', id)
+    if (scope.error) return scope.error
 
     if (!id) {
       return NextResponse.json({ error: 'Survey ID is required' }, { status: 400 })

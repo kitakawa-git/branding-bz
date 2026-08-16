@@ -4,6 +4,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { requireCompanyMember } from '@/lib/billing/guard'
 import { callClaude } from '@/lib/claude-api'
 import { fetchPhilosophy } from '@/lib/brand/philosophy'
 
@@ -40,6 +41,11 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       )
     }
+
+    // 呼び出し元がこの会社の人かを確かめる。company_id をクライアントから受けるので、
+    // これが無いと他社の ID を渡すだけで中身が返る
+    const forbidden = await requireCompanyMember(companyId)
+    if (forbidden) return forbidden
 
     const supabase = getSupabaseAdmin()
 

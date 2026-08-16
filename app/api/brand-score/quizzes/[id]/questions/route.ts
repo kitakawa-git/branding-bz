@@ -5,6 +5,7 @@
 //   設問は AI生成（generate-questions）と手動custom の2系統のみ。
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { requireResourceCompany } from '@/lib/billing/guard'
 import { validateQuizQuestion } from '@/lib/brand-score/quiz-validation'
 
 type RouteContext = { params: Promise<{ id: string }> }
@@ -13,6 +14,10 @@ type RouteContext = { params: Promise<{ id: string }> }
 export async function GET(_request: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params
+    // URL のリソース ID から会社を引き、呼び出し元の所属を照合する
+    // （generate-questions で確立した形。これが無いと他社の ID で中身が返る）
+    const scope = await requireResourceCompany('brand_quizzes', id)
+    if (scope.error) return scope.error
 
     const supabase = getSupabaseAdmin()
 
@@ -41,6 +46,10 @@ export async function GET(_request: NextRequest, context: RouteContext) {
 export async function POST(request: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params
+    // URL のリソース ID から会社を引き、呼び出し元の所属を照合する
+    // （generate-questions で確立した形。これが無いと他社の ID で中身が返る）
+    const scope = await requireResourceCompany('brand_quizzes', id)
+    if (scope.error) return scope.error
     const body = await request.json()
 
     const supabase = getSupabaseAdmin()
