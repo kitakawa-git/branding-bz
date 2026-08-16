@@ -307,7 +307,7 @@ export default function CompanyDetailPage() {
         href="/superadmin/companies"
         className="text-muted-foreground no-underline text-sm inline-block mb-4"
       >
-        <ArrowLeft size={14} className="inline" /> 企業一覧に戻る
+        <ArrowLeft size={14} className="inline" /> ブランドに戻る
       </Link>
 
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">

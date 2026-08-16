@@ -45,7 +45,7 @@ type NavItem = { href: string; label: string; icon: LucideIcon }
 
 // 契約中の企業に対して動くもの。待たせている件数のバッジが付くのもこちら
 const navItems: NavItem[] = [
-  { href: '/superadmin/companies', label: '企業一覧', icon: Building2 },
+  { href: '/superadmin/companies', label: 'ブランド', icon: Building2 },
   { href: '/superadmin/plan-requests', label: 'プラン変更の依頼', icon: CreditCard },
   { href: '/superadmin/support-requests', label: '入力サポートの相談', icon: Headset },
 ]
