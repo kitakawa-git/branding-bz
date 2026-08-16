@@ -222,7 +222,9 @@ export default function CompaniesPage() {
             <div className="overflow-x-auto">
               <table className="w-full min-w-[640px]">
                 <thead>
-                  <tr className="border-b text-left text-xs text-muted-foreground">
+                  {/* 列名は折り返さない（「従業員数」が2行になると行が高くなり読みにくい）。
+                      個別に付けると足し忘れるので行にまとめて当てる */}
+                  <tr className="border-b text-left text-xs text-muted-foreground [&>th]:whitespace-nowrap">
                     <th className="px-4 py-3 font-medium">企業名</th>
                     <th className="px-4 py-3 font-medium text-center">従業員数</th>
                     <th className="px-4 py-3 font-medium text-center">管理者</th>
