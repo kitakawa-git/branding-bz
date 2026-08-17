@@ -21,9 +21,10 @@ export function resolveSuperAdminCrumb(pathname: string): SuperAdminCrumb | null
   if (breadcrumbMap[pathname]) return breadcrumbMap[pathname]
 
   // サブページ（動的ルート）向けの個別判定
-  // /superadmin/companies/[id] → ブランド › ブランド詳細
+  // /superadmin/companies/[id] → ブランド › 詳細：◯◯
+  // 名前はヘッダー側で足す（pathname だけでは分からないため、ここでは「詳細」まで）
   if (/^\/superadmin\/companies\/[^/]+$/.test(pathname)) {
-    return { section: { label: 'ブランド', href: '/superadmin/companies' }, title: 'ブランド詳細' }
+    return { section: { label: 'ブランド', href: '/superadmin/companies' }, title: '詳細' }
   }
   // /superadmin/news/[id]/edit → ニュース管理 › ニュース編集
   if (/^\/superadmin\/news\/[^/]+\/edit$/.test(pathname)) {

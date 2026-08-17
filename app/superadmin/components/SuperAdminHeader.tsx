@@ -2,7 +2,9 @@
 
 // スーパー管理画面ヘッダー（SidebarTrigger + パンくず + スーパー管理バッジ）
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Separator } from '@/components/ui/separator'
 import {
@@ -15,9 +17,49 @@ import {
 } from '@/components/ui/breadcrumb'
 import { resolveSuperAdminCrumb } from '@/lib/superadmin-breadcrumb'
 
+/** 一度引いたブランド名は覚えておく。行き来のたびに問い合わせない */
+const nameCache = new Map<string, string>()
+
 export function SuperAdminHeader() {
   const pathname = usePathname()
   const crumb = resolveSuperAdminCrumb(pathname)
+
+  // ブランド詳細だけは「詳細：◯◯」と名前まで出す。
+  // どのブランドを開いているかはページ内の見出しでしか分からず、
+  // タブを何枚も開くと見分けが付かないため
+  const brandId = pathname.match(/^\/superadmin\/companies\/([^/]+)$/)?.[1] ?? null
+  const [brandName, setBrandName] = useState<string | null>(
+    brandId ? nameCache.get(brandId) ?? null : null,
+  )
+
+  useEffect(() => {
+    if (!brandId) {
+      setBrandName(null)
+      return
+    }
+    const cached = nameCache.get(brandId)
+    if (cached) {
+      setBrandName(cached)
+      return
+    }
+    let cancelled = false
+    supabase
+      .from('companies')
+      .select('name')
+      .eq('id', brandId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (cancelled || !data?.name) return
+        nameCache.set(brandId, data.name)
+        setBrandName(data.name)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [brandId])
+
+  // 名前が届くまでは「詳細」だけ出す（あとから「詳細：◯◯」に伸びる）
+  const title = brandId && brandName ? `詳細：${brandName}` : crumb?.title
 
   return (
     <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 px-4 bg-background/80 backdrop-blur-sm">
@@ -48,7 +90,7 @@ export function SuperAdminHeader() {
             )}
             <BreadcrumbItem>
               <BreadcrumbPage className="text-base font-bold">
-                {crumb.title}
+                {title}
               </BreadcrumbPage>
             </BreadcrumbItem>
           </BreadcrumbList>
