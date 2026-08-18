@@ -33,21 +33,27 @@ export default function LongDefinition({ longDef }: { longDef: string }) {
         </p>
       ))}
 
-      {sections.map((s) => (
-        <section key={s.id}>
-          <h3
-            id={s.id}
-            className="mb-2.5 mt-7 border-l-[3px] border-blue-400/70 pl-2.5 text-[15px] font-bold text-blue-400 first:mt-0"
-          >
-            {s.heading}
-          </h3>
-          {s.paragraphs.map((p, i) => (
-            <p key={i} className="mt-4 text-base leading-[1.9] text-white/70 first:mt-0">
-              {p}
-            </p>
-          ))}
-        </section>
-      ))}
+      {/* 余白はセクションとセクションの間にだけ要る。
+          h3 に mt-7 + first:mt-0 を付けていたが、h3 は常に section の先頭の子なので
+          first が毎回当たって mt-7 が一度も効いていなかった（見出しが前の段落に貼り付く）。
+          間隔は space-y で親に持たせる＝最初のセクションだけ除かれるので条件が要らない */}
+      <div className="space-y-7">
+        {sections.map((s) => (
+          <section key={s.id}>
+            <h3
+              id={s.id}
+              className="mb-2.5 border-l-[3px] border-blue-400/70 pl-2.5 text-[15px] font-bold text-blue-400"
+            >
+              {s.heading}
+            </h3>
+            {s.paragraphs.map((p, i) => (
+              <p key={i} className="mt-4 text-base leading-[1.9] text-white/70 first:mt-0">
+                {p}
+              </p>
+            ))}
+          </section>
+        ))}
+      </div>
     </>
   )
 }
