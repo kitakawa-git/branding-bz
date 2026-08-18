@@ -20,17 +20,6 @@ export const WIKI_SOURCE_TYPE_LABELS: Record<WikiSourceType, string> = {
   ai_supplement: 'AI補完（監修中）',
 }
 
-/** index ページのソース絞り込みで使う軸。 */
-export type WikiSourceFilter = 'all' | 'has_quote' | 'bc_support' | 'id_tips' | 'ai_supplement'
-
-export const WIKI_SOURCE_FILTER_LABELS: Record<WikiSourceFilter, string> = {
-  all: 'すべての出典',
-  has_quote: 'ポッドキャストの引用あり',
-  bc_support: 'brandcommit サポート由来',
-  id_tips: 'ID INC. Tips 由来',
-  ai_supplement: 'AI補完（監修中）',
-}
-
 /**
  * カテゴリ定義（7カテゴリ）。
  * value は wiki_terms.categories に入る文字列そのもの（= URL セグメントにも使う）。
@@ -82,10 +71,8 @@ export type WikiTermSummary = {
   en: string
   categories: string[]
   short_def: string
-  /** 北川の発言引用があるか（バッジ表示用・集計して付与） */
+  /** ポッドキャストの引用があるか（カードのバッジ用・集計して付与） */
   has_quote: boolean
-  /** この用語が持つソース種別の集合（絞り込み用・集計して付与） */
-  source_types: WikiSourceType[]
 }
 
 export type WikiTermSource = {

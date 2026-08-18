@@ -4,14 +4,9 @@ import Link from 'next/link'
 import { useMemo, useState } from 'react'
 import { Search, X } from 'lucide-react'
 import TermCard from '@/components/wiki/TermCard'
-import {
-  WIKI_CATEGORIES,
-  WIKI_SOURCE_FILTER_LABELS,
-  type WikiSourceFilter,
-  type WikiTermSummary,
-} from '@/lib/types/wiki'
+import { WIKI_CATEGORIES, type WikiTermSummary } from '@/lib/types/wiki'
 
-/* 用語wiki index のインタラクション部分（検索・カテゴリ絞り込み・出典絞り込み）。
+/* 用語wiki index のインタラクション部分（検索・カテゴリ絞り込み）。
    件数が230件規模なので全件をクライアントに渡してメモリ上で絞る（追加フェッチなし）。 */
 
 const SELECT_CLASS =
@@ -20,7 +15,6 @@ const SELECT_CLASS =
 export default function WikiIndexClient({ terms }: { terms: WikiTermSummary[] }) {
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState<string>('all')
-  const [source, setSource] = useState<WikiSourceFilter>('all')
 
   // カテゴリごとの件数（カード表示用）
   const counts = useMemo(() => {
@@ -36,11 +30,6 @@ export default function WikiIndexClient({ terms }: { terms: WikiTermSummary[] })
     return terms.filter((t) => {
       if (category !== 'all' && !t.categories.includes(category)) return false
 
-      if (source === 'has_quote' && !t.has_quote) return false
-      if (source !== 'all' && source !== 'has_quote' && !t.source_types.includes(source)) {
-        return false
-      }
-
       if (!q) return true
       return (
         t.term.toLowerCase().includes(q) ||
@@ -48,9 +37,9 @@ export default function WikiIndexClient({ terms }: { terms: WikiTermSummary[] })
         t.short_def.toLowerCase().includes(q)
       )
     })
-  }, [terms, query, category, source])
+  }, [terms, query, category])
 
-  const hasFilter = query.trim() !== '' || category !== 'all' || source !== 'all'
+  const hasFilter = query.trim() !== '' || category !== 'all'
 
   return (
     <>
@@ -111,19 +100,6 @@ export default function WikiIndexClient({ terms }: { terms: WikiTermSummary[] })
             </option>
           ))}
         </select>
-
-        <select
-          value={source}
-          onChange={(e) => setSource(e.target.value as WikiSourceFilter)}
-          aria-label="出典で絞り込む"
-          className={SELECT_CLASS}
-        >
-          {(Object.keys(WIKI_SOURCE_FILTER_LABELS) as WikiSourceFilter[]).map((k) => (
-            <option key={k} value={k}>
-              {WIKI_SOURCE_FILTER_LABELS[k]}
-            </option>
-          ))}
-        </select>
       </div>
 
       {/* 件数＋クリア */}
@@ -137,7 +113,6 @@ export default function WikiIndexClient({ terms }: { terms: WikiTermSummary[] })
             onClick={() => {
               setQuery('')
               setCategory('all')
-              setSource('all')
             }}
             className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-white/15 px-4 py-2 text-sm text-white/60 transition-colors hover:bg-white/10 hover:text-white"
           >

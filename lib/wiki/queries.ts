@@ -6,7 +6,6 @@
 //      generateStaticParams / ISR のビルドが落ちない（2026-07-16 の Preview ビルド事故と同じ轍を踏まない）
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import type {
-  WikiSourceType,
   WikiTermDetail,
   WikiTermQuote,
   WikiTermSource,
@@ -35,19 +34,18 @@ type SummaryRow = {
   en: string | null
   categories: string[] | null
   short_def: string
-  wiki_term_sources: { source_type: WikiSourceType }[] | null
   wiki_term_quotes: { id: string }[] | null
 }
 
 /**
  * 公開済み用語の一覧（index / カテゴリページ用）。
- * ソース種別と引用有無はカード上のバッジ・絞り込みに使うので同時に取る。
+ * 引用の有無だけカードのバッジに使うので同時に取る。
  */
 export async function fetchPublishedTermSummaries(): Promise<WikiTermSummary[]> {
   const supabase = getWikiClient()
   const { data, error } = await supabase
     .from('wiki_terms')
-    .select('slug, term, en, categories, short_def, wiki_term_sources(source_type), wiki_term_quotes(id)')
+    .select('slug, term, en, categories, short_def, wiki_term_quotes(id)')
     .eq('status', 'published')
     .order('term')
 
@@ -60,7 +58,6 @@ export async function fetchPublishedTermSummaries(): Promise<WikiTermSummary[]> 
     categories: row.categories ?? [],
     short_def: row.short_def,
     has_quote: (row.wiki_term_quotes ?? []).length > 0,
-    source_types: Array.from(new Set((row.wiki_term_sources ?? []).map((s) => s.source_type))),
   }))
 }
 
