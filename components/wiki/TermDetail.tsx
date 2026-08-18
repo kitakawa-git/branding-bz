@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import QuoteBlock from '@/components/wiki/QuoteBlock'
 import RelatedChips from '@/components/wiki/RelatedChips'
+import LongDefinition from '@/components/wiki/LongDefinition'
 import SourceList from '@/components/wiki/SourceList'
 import type { WikiTermDetail } from '@/lib/types/wiki'
 
@@ -58,7 +59,7 @@ export default function TermDetail({ term }: { term: WikiTermDetail }) {
 
       {/* 詳細定義 */}
       <Section title="詳しく">
-        <p className="whitespace-pre-wrap text-base leading-[1.9] text-white/70">{term.long_def}</p>
+        <LongDefinition longDef={term.long_def} />
       </Section>
 
       {/* 関連用語 */}
