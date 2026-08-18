@@ -136,7 +136,14 @@ export async function fetchTermDetail(slug: string): Promise<WikiTermDetail | nu
     short_def: row.short_def,
     long_def: row.long_def,
     updated_at: row.updated_at,
-    sources: (row.wiki_term_sources ?? []).slice().sort((a, b) => a.ordering - b.ordering),
+    // 参考ソースは「実際に参照できるもの」だけ出す。
+    // ai_supplement は ID INC. の既存コンテンツに元ネタが無く AI が書いた印で、
+    // URL も参照先も存在しない（176件すべて url 空）。見出しだけあって辿れない行は
+    // 読者にとって情報価値がないので詳細ページには出さない。
+    sources: (row.wiki_term_sources ?? [])
+      .filter((s) => s.source_type !== 'ai_supplement')
+      .slice()
+      .sort((a, b) => a.ordering - b.ordering),
     quotes: (row.wiki_term_quotes ?? []).slice().sort((a, b) => a.ordering - b.ordering),
     related,
   }
