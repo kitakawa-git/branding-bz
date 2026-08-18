@@ -1,31 +1,17 @@
-import { parseLongDef, TOC_MIN_SECTIONS } from '@/lib/wiki/long-def'
+import { parseLongDef } from '@/lib/wiki/long-def'
 
 /* 詳細定義（long_def）の描画。
-   「### 見出し」＋段落の構造を目次つきで出す。
-   見出しが無い旧データが来ても段落として素直に描画されるので、DB更新前後どちらでも壊れない。 */
+   「### 見出し」＋段落の構造をそのまま出す。
+   見出しが無い旧データが来ても段落として素直に描画されるので、DB更新前後どちらでも壊れない。
+
+   ページ内目次は置かない＝リンク文言が直下の h3 と完全に重複しており、
+   SEO 上の足しにならないため（見出し構造は h3 が伝える）。
+   節を直接指すための id は h3 に残してある。 */
 export default function LongDefinition({ longDef }: { longDef: string }) {
   const { intro, sections } = parseLongDef(longDef)
-  const showToc = sections.length >= TOC_MIN_SECTIONS
 
   return (
     <>
-      {showToc && (
-        <nav
-          aria-label="この用語の目次"
-          className="mb-6 flex flex-wrap items-center gap-x-5 gap-y-0 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-1.5"
-        >
-          {sections.map((s) => (
-            <a
-              key={s.id}
-              href={`#${s.id}`}
-              className="inline-flex min-h-11 items-center text-sm text-white/70 underline-offset-4 transition-colors hover:text-blue-300 hover:underline"
-            >
-              {s.heading}
-            </a>
-          ))}
-        </nav>
-      )}
-
       {/* 見出しが付く前の旧データ（プレーンテキスト）はそのまま段落として出す */}
       {intro.map((p, i) => (
         <p key={`intro-${i}`} className="mt-4 text-base leading-[1.9] text-white/70 first:mt-0">

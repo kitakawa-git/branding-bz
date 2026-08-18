@@ -6,14 +6,12 @@
 // 文字列を dangerouslySetInnerHTML に渡さない＝XSS の余地が構造的に無い。
 
 export type LongDefSection = {
-  /** 目次アンカー用の id。見出しが日本語なので連番で安定させる */
+  /** 見出しのアンカー id。見出しが日本語なので連番で安定させる。
+      ページ内目次は廃止したが、外から特定の節を直接指せるよう id は残す */
   id: string
   heading: string
   paragraphs: string[]
 }
-
-/** 目次を出す最小の見出し数（これ未満なら目次は邪魔なだけ） */
-export const TOC_MIN_SECTIONS = 3
 
 /**
  * long_def を「見出し + 段落群」に分解する。
