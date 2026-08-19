@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { generateRandomSlug } from '@/lib/generate-slug'
 import { checkMemberCapacity, memberLimitResponse } from '@/lib/billing/guard'
+import { addToActiveSurveys } from '@/lib/brand-score/survey-participants'
 
 export async function POST(req: NextRequest) {
   try {
@@ -64,6 +65,9 @@ export async function POST(req: NextRequest) {
       await supabaseAdmin.auth.admin.deleteUser(authData.user.id)
       return NextResponse.json({ error: 'メンバー作成失敗: ' + memberError.message }, { status: 400 })
     }
+
+    // 配信中のサーベイがあれば参加者に足す（後から入った人にバナーが出ない問題の対処）
+    await addToActiveSurveys(company_id, [profileData.id])
 
     return NextResponse.json({ success: true, member_id: authData.user.id, profile_id: profileData.id })
   } catch (err) {

@@ -15,6 +15,7 @@ import { supabase } from '@/lib/supabase'
 import { generateRandomSlug } from '@/lib/generate-slug'
 import { MEMBER_ROLE_OPTIONS } from '@/lib/constants/member-roles'
 import { checkMemberCapacity, memberLimitResponse } from '@/lib/billing/guard'
+import { addToActiveSurveys } from '@/lib/brand-score/survey-participants'
 
 export const maxDuration = 60
 
@@ -71,6 +72,7 @@ export async function POST(request: NextRequest) {
 
     // 人数上限。半分だけ作られて途中で止まると後始末が面倒なので、
     // ファイル全体が収まるかを先に見て、収まらなければ1件も作らない
+    const createdProfileIds: string[] = []
     const capacity = await checkMemberCapacity(companyId, rows.length)
     if (!capacity.ok) return memberLimitResponse(capacity)
 
@@ -135,8 +137,12 @@ export async function POST(request: NextRequest) {
         continue
       }
 
+      createdProfileIds.push(profileData.id as string)
       results.push({ email, ok: true })
     }
+
+    // 配信中のサーベイがあれば参加者に足す。1件ずつではなくまとめて1回
+    await addToActiveSurveys(companyId, createdProfileIds)
 
     return NextResponse.json({
       created: results.filter((r) => r.ok).length,

@@ -6,6 +6,7 @@ import { Resend } from 'resend'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { supabase } from '@/lib/supabase'
 import { checkMemberCapacity, memberLimitResponse } from '@/lib/billing/guard'
+import { addToActiveSurveys } from '@/lib/brand-score/survey-participants'
 
 // HTMLエスケープ（XSS対策）
 function escapeHtml(str: string): string {
@@ -111,6 +112,12 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: `承認に失敗しました: ${updateError.message}` }, { status: 500 })
       }
 
+
+      // 承認でここから席を使い始めるので、配信中のサーベイの参加者にも足す。
+      // 申請中（pending）のうちは対象にしない＝まだ社員として数えていないため
+      if (member.profile_id) {
+        await addToActiveSurveys(companyId, [member.profile_id as string])
+      }
 
       // 申請者本人へ承認完了メール通知（失敗しても承認自体は成功扱い）
       const resendApiKey = process.env.RESEND_API_KEY

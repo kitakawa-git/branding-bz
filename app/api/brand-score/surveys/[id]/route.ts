@@ -5,6 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { requireResourceCompany } from '@/lib/billing/guard'
+import { fetchSurveyTargetProfileIds } from '@/lib/brand-score/survey-participants'
 
 type RouteContext = { params: Promise<{ id: string }> }
 
@@ -128,33 +129,19 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         updateData.starts_at = new Date().toISOString()
       }
 
-      // total_members 再計算
-      const { count: memberCount, error: memberError } = await supabase
-        .from('profiles')
-        .select('id', { count: 'exact', head: true })
-        .eq('company_id', currentSurvey.company_id)
+      // survey_participants に対象メンバーを登録（ON CONFLICT DO NOTHING）。
+      // 管理者は対象外＝集計する側が母集団に混ざると自己評価が混ざるため、
+      // 判定は fetchSurveyTargetProfileIds に集約する（配信後に入った人を
+      // 足す addToActiveSurveys と同じ条件で揃える）
+      const targetProfileIds = await fetchSurveyTargetProfileIds(currentSurvey.company_id)
 
-      if (memberError) {
-        console.error('[Survey PATCH] profiles count エラー:', memberError.message)
-        return NextResponse.json({ error: memberError.message }, { status: 500 })
-      }
-      updateData.total_members = memberCount ?? 0
+      // 回答率の分母は参加者数と一致させる
+      updateData.total_members = targetProfileIds.length
 
-      // survey_participants に対象メンバー全員を登録（ON CONFLICT DO NOTHING）
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('company_id', currentSurvey.company_id)
-
-      if (profilesError) {
-        console.error('[Survey PATCH] profiles取得エラー:', profilesError.message)
-        return NextResponse.json({ error: profilesError.message }, { status: 500 })
-      }
-
-      if (profiles && profiles.length > 0) {
-        const participantRows = profiles.map(p => ({
+      if (targetProfileIds.length > 0) {
+        const participantRows = targetProfileIds.map(profileId => ({
           survey_id: id,
-          profile_id: p.id,
+          profile_id: profileId,
           responded_at: null,
           reminded_at: null,
         }))
