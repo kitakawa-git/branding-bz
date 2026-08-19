@@ -84,13 +84,32 @@ export async function DELETE(
     }
 
     // profiles 削除
+    //
+    // ⚠️ card_views の FK は ON DELETE 指定が無い（＝削除を拒否する）ため、
+    //    名刺が一度でも閲覧されたプロフィールはそのままでは消せない。
+    //    以前はこの失敗を warn で握りつぶしており、メンバーだけ消えて
+    //    プロフィールが孤立し、/card/<slug> が公開されたまま残っていた
+    //    （管理画面の一覧から消えるので、UI では止めようがない状態になる）。
+    //    閲覧ログを先に消してから本体を消す。
     if (member.profile_id) {
+      await supabaseAdmin.from('card_views').delete().eq('profile_id', member.profile_id)
+
       const { error: profileError } = await supabaseAdmin
         .from('profiles')
         .delete()
         .eq('id', member.profile_id)
+
       if (profileError) {
-        console.warn('[MemberDelete] profiles削除エラー（無視）:', profileError.message)
+        // それでも消せないときは、少なくとも公開だけは止める。
+        // 「消えなかった」で終わらせると公開ページが残るため
+        console.error('[MemberDelete] profiles削除エラー:', profileError.message)
+        const { error: disableError } = await supabaseAdmin
+          .from('profiles')
+          .update({ card_enabled: false })
+          .eq('id', member.profile_id)
+        if (disableError) {
+          console.error('[MemberDelete] 名刺の公開停止も失敗:', disableError.message)
+        }
       }
     }
 
