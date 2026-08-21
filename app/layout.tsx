@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { Toaster } from "@/components/ui/sonner";
-import { PWAUpdatePrompt } from "@/components/pwa/PWAUpdatePrompt";
+import { PWARegister } from "@/components/pwa/PWARegister";
 import { getDesignTokensCss } from "@/lib/design-tokens";
 import "./globals.css";
 
@@ -134,7 +134,7 @@ export default async function RootLayout({
       >
         {children}
         <Toaster />
-        <PWAUpdatePrompt />
+        <PWARegister />
         <GoogleAnalytics gaId="G-CQBED1RNV2" />
       </body>
     </html>
