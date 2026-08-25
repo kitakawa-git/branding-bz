@@ -12,6 +12,8 @@
 //    手動割り当ての邪魔はしない（誤った候補を出すより出さないほうがよい）。
 // ============================================================
 import { MARKET_STAGES, type MarketStage } from './market-stages'
+// 「その他」「あてはまるものはない」等の受け皿行。market-extras と共有する
+import { isNoiseLabel } from './market-labels'
 
 export interface AutoMapBlock {
   id: string
@@ -137,14 +139,17 @@ export function autoMapStages(
       )
       if (!selfCell) continue
 
-      // 同じ列の他社＝競合。順位やトップとの差の算出に使う
+      // 同じ列の他社＝競合。順位やトップとの差の算出に使う。
+      // 「その他」「あてはまるものはない」はコード付きの行として実在するが
+      // 会社ではない。混ぜるとベンチマークの最大値と順位の母数が狂う
       const competitors = blockCells
         .filter(
           (c) =>
             c.colLabel === col.label &&
             c.kind === 'option' &&
             c.value !== null &&
-            c.id !== selfCell.id
+            c.id !== selfCell.id &&
+            !isNoiseLabel(c.rowLabel)
         )
         .map((c) => ({ cellId: c.id, name: c.rowLabel }))
 
@@ -186,8 +191,15 @@ export function autoMapStages(
         (c) => c.kind === 'option' && c.value !== null && isSelfRow(c.rowLabel, names)
       )
       if (selfCell) {
+        // 想起は選択肢がそのまま社名の並びになる。ここにも受け皿行が混ざる
         const competitors = (byBlock.get(first.id) ?? [])
-          .filter((c) => c.kind === 'option' && c.value !== null && c.id !== selfCell.id)
+          .filter(
+            (c) =>
+              c.kind === 'option' &&
+              c.value !== null &&
+              c.id !== selfCell.id &&
+              !isNoiseLabel(c.rowLabel)
+          )
           .map((c) => ({ cellId: c.id, name: c.rowLabel }))
 
         matchedSelfLabels.add(selfCell.rowLabel)

@@ -17,6 +17,8 @@
 // ============================================================
 
 import { normalizeCompanyName } from './market-auto-map'
+// 「その他」等の受け皿ラベルの判定。競合の自動抽出（market-auto-map）と共有する
+import { isNoiseLabel } from './market-labels'
 
 /** GT表のブロック（設問1つぶん）。API が返す形をそのまま受ける */
 export interface ExtraBlock {
@@ -94,20 +96,9 @@ export interface MarketExtras {
   serviceEvaluation: { items: RankedItem[]; baseN: number | null } | null
 }
 
-/**
- * 集計表の「中身ではない列」。
- * 回答個数の集計行や「あてはまるものはない」は項目として並べると邪魔になる。
- */
-const NOISE_LABEL = /^(回答個数|あてはまるものはない|あてはまるものはひとつもない|その他$|不明|無回答)/
-
-function isNoise(label: string | null | undefined): boolean {
-  if (!label) return true
-  return NOISE_LABEL.test(label.trim())
-}
-
 function toRanked(cells: ExtraCell[], key: 'col_label' | 'row_label'): RankedItem[] {
   return cells
-    .filter((c) => c.value !== null && !isNoise(c[key]))
+    .filter((c) => c.value !== null && !isNoiseLabel(c[key]))
     .map((c) => ({ label: (c[key] as string).trim(), value: c.value as number }))
     .sort((a, b) => b.value - a.value)
 }

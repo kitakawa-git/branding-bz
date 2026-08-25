@@ -214,4 +214,65 @@ function build(): { blocks: AutoMapBlock[]; cells: AutoMapCell[] } {
   assert.equal(r.proposals.length, 0, '自社が特定できなければ何も提案しない')
 }
 
+// ────────────────────────────────────────────
+// 8. 集計上の受け皿行は競合に入れない
+//    2026年GT表の q1_AC には「その他 13.6%」「あてはまるものはない 11.8%」が
+//    コード付きの行として実在する。会社ではないので、混ぜると
+//    benchmark.competitorMax と順位の母数が狂う
+// ────────────────────────────────────────────
+{
+  const { blocks, cells } = build()
+  const noisyCells: AutoMapCell[] = [
+    ...cells,
+    // 想起（非マトリクス）側
+    { id: 'c-q1-other', blockId: 'b-q1', rowLabel: 'その他', colLabel: null, value: 13.6, baseN: 220, kind: 'option' },
+    { id: 'c-q1-none', blockId: 'b-q1', rowLabel: 'あてはまるものはない', colLabel: null, value: 11.8, baseN: 220, kind: 'option' },
+    { id: 'c-q1-count', blockId: 'b-q1', rowLabel: '回答個数', colLabel: null, value: 220, baseN: 220, kind: 'option' },
+    // 列ラベル規約（マトリクス）側
+    { id: 'c-q3-other', blockId: 'b-q3', rowLabel: 'その他', colLabel: '認知・計', value: 99.9, baseN: 220, kind: 'option' },
+    { id: 'c-q3-none', blockId: 'b-q3', rowLabel: 'あてはまるものはひとつもない', colLabel: '認知・計', value: 98.8, baseN: 220, kind: 'option' },
+    { id: 'c-q3-na', blockId: 'b-q3', rowLabel: '無回答', colLabel: '認知・計', value: 97.7, baseN: 220, kind: 'option' },
+    { id: 'c-q3-unknown', blockId: 'b-q3', rowLabel: '不明', colLabel: '認知・計', value: 96.6, baseN: 220, kind: 'option' },
+  ]
+  const r = autoMapStages(blocks, noisyCells, ['リィツメディカル'])
+
+  const recall = r.proposals.find((p) => p.stage === 'recall')!
+  const recallNames = recall.competitorCellIds.map((c) => c.name)
+  assert.deepEqual(recallNames, ['はんだや'], '想起: 受け皿行を競合に入れない')
+
+  const awareness = r.proposals.find((p) => p.stage === 'awareness')!
+  const awarenessNames = awareness.competitorCellIds.map((c) => c.name)
+  assert.ok(!awarenessNames.includes('その他'), '認知: 「その他」を競合に入れない')
+  assert.ok(
+    !awarenessNames.includes('あてはまるものはひとつもない'),
+    '認知: 「あてはまるものはひとつもない」を競合に入れない'
+  )
+  assert.ok(!awarenessNames.includes('無回答'), '認知: 「無回答」を競合に入れない')
+  assert.ok(!awarenessNames.includes('不明'), '認知: 「不明」を競合に入れない')
+  // 受け皿行の値（99.9 等）が最大にならない＝ベンチマークが汚れていない
+  assert.ok(awarenessNames.includes('はんだや'), '実在の競合は残す')
+
+  // 自社の提案そのものは受け皿行の有無に影響されない
+  assert.equal(awareness.value, 82.7)
+  assert.equal(recall.value, 16.8)
+}
+
+// ────────────────────────────────────────────
+// 9. 「その他」は完全一致のときだけ落とす
+//    「その他の医療機器」のような実在の選択肢まで落とさない
+// ────────────────────────────────────────────
+{
+  const { blocks, cells } = build()
+  const r = autoMapStages(
+    blocks,
+    [
+      ...cells,
+      { id: 'c-q3-etc', blockId: 'b-q3', rowLabel: 'その他の医療機器メーカー', colLabel: '認知・計', value: 42.0, baseN: 220, kind: 'option' },
+    ],
+    ['リィツメディカル']
+  )
+  const names = r.proposals.find((p) => p.stage === 'awareness')!.competitorCellIds.map((c) => c.name)
+  assert.ok(names.includes('その他の医療機器メーカー'), '「その他」で始まる実在の選択肢は残す')
+}
+
 console.log('✓ market-auto-map: 全テスト通過')
