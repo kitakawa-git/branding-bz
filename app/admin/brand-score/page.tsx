@@ -13,6 +13,7 @@ import {
 import {
   MARKET_STAGES,
   MARKET_STAGE_LABELS,
+  type MarketStage,
 } from '@/lib/brand-score/market-stages'
 import { MIN_CARD_VIEWS_FOR_DIGITAL } from '@/lib/brand-score/outer-metrics'
 import { supabase } from '@/lib/supabase'
@@ -160,6 +161,8 @@ interface Snapshot {
 interface MarketTrendPoint {
   date: string
   market_score: number | null
+  /** スコアが出ている段階。前回と構成が違えば推移グラフに注記を出す */
+  scored_stages: MarketStage[]
 }
 
 /** サーベイ1件＝推移の1点。実施日（終了日）とインナースコアだけ使う */
@@ -638,7 +641,7 @@ export default function BrandScoreDashboard() {
         innerScore={innerScore}
         outerScore={outerScore}
         snapshots={snapshots}
-        marketTrend={marketTrend.map(m => ({ date: m.date, score: m.market_score }))}
+        marketTrend={marketTrend.map(m => ({ date: m.date, score: m.market_score, scoredStages: m.scored_stages }))}
         surveyTrend={surveyTrend.map(t => ({ date: t.date, score: t.inner_score }))}
         prevDiff={prevDiff}
         impressionScore={impressionScore}

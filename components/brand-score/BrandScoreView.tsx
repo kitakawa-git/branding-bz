@@ -35,7 +35,7 @@ import {
   STAGE_LABELS,
   type FunnelStage,
 } from '@/lib/brand-score/funnel-stages'
-import { MARKET_STAGES, MARKET_STAGE_LABELS } from '@/lib/brand-score/market-stages'
+import { MARKET_STAGES, MARKET_STAGE_LABELS, type MarketStage } from '@/lib/brand-score/market-stages'
 import { MIN_CARD_VIEWS_FOR_DIGITAL } from '@/lib/brand-score/outer-metrics'
 
 // ── 型（各APIのレスポンス） ──
@@ -83,6 +83,12 @@ export interface BrandScoreSnapshot {
 export interface TrendPoint {
   date: string
   score: number | null
+  /**
+   * その時点でスコアが出ている段階（市場調査のみ）。
+   * 市場浸透スコアは「出ている段階の平均」なので、調査ごとに構成が変わると
+   * 分母が変わる。線が動いた理由が実態か分母かを区別できるよう注記に使う。
+   */
+  scoredStages?: MarketStage[]
 }
 
 /** スコア推移グラフの1行。記録した日と調査を実施した日を束ねたもの */
@@ -294,6 +300,22 @@ export function BrandScoreView({
     )
     return rows.map(r => ({ ...r, isWeakest: r.value !== null && r.value === lowest }))
   })()
+
+  // 市場調査の段階構成が前回と変わった箇所。線が動いた理由が実態か分母かを
+  // 区別できるようにグラフの下に注記を出す（増減そのものは市場調査の一覧で出す）
+  const marketCompositionChanges = marketTrend
+    .map((m, i) => {
+      if (i === 0 || !m.scoredStages) return null
+      const prev = marketTrend[i - 1]
+      if (!prev.scoredStages) return null
+      const prevSet = new Set(prev.scoredStages)
+      const currSet = new Set(m.scoredStages)
+      const dropped = prev.scoredStages.filter((sg) => !currSet.has(sg))
+      const added = m.scoredStages.filter((sg) => !prevSet.has(sg))
+      if (dropped.length === 0 && added.length === 0) return null
+      return { date: m.date, dropped, added }
+    })
+    .filter((v): v is { date: string; dropped: MarketStage[]; added: MarketStage[] } => v !== null)
 
   // スコア推移。記録した日（スナップショット）と調査を実施した日は別ソースなので、
   // 日付で束ねて1本の時系列にする。市場調査をスナップショットに転記しないのは、
@@ -613,6 +635,28 @@ export function BrandScoreView({
               )}
             </LineChart>
           </ResponsiveContainer>
+        </div>
+      )}
+
+      {/* 段階構成が変わった調査があると、線の上下が実態の変化とは限らない */}
+      {isFull && marketCompositionChanges.length > 0 && (
+        <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 p-3 text-[11px] leading-relaxed text-amber-800">
+          {marketCompositionChanges.map((c) => (
+            <p key={c.date} className="m-0">
+              {new Date(c.date).toLocaleDateString('ja-JP')} の市場調査は前回と段階の構成が違います
+              {c.dropped.length > 0 && (
+                <>（{c.dropped.map((sg) => MARKET_STAGE_LABELS[sg]).join('・')}が無い）</>
+              )}
+              {c.added.length > 0 && (
+                <>（{c.added.map((sg) => MARKET_STAGE_LABELS[sg]).join('・')}が増えた）</>
+              )}
+              。
+            </p>
+          ))}
+          <p className="m-0 mt-1.5 text-amber-700">
+            市場浸透はスコアが出ている段階の平均なので、段階が増減すると分母が変わります。
+            線の上下がそのまま実態の変化とは限りません。
+          </p>
         </div>
       )}
       </div>

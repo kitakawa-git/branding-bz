@@ -4,6 +4,7 @@
 // 表示は管理画面と同じ BrandScoreView を使い、ここは取得だけを担う。
 // 出す/出さないの判定は呼び出し側（区分ごとの表示設定）が持つ。
 import { useCallback, useEffect, useState } from 'react'
+import type { MarketStage } from '@/lib/brand-score/market-stages'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
@@ -106,7 +107,12 @@ export function BrandScorePortalSection({
     }
 
     const marketPoints: TrendPoint[] = (market?.points ?? []).map(
-      (p: { date: string; market_score: number | null }) => ({ date: p.date, score: p.market_score })
+      (p: { date: string; market_score: number | null; scored_stages?: MarketStage[] }) => ({
+        date: p.date,
+        score: p.market_score,
+        // 段階構成が前回と変わっていれば推移グラフに注記を出す（BrandScoreView 側）
+        scoredStages: p.scored_stages,
+      })
     )
     const surveyPoints: TrendPoint[] = (survey?.points ?? []).map(
       (p: { date: string; inner_score: number | null }) => ({ date: p.date, score: p.inner_score })

@@ -51,6 +51,7 @@ import {
   MARKET_STAGE_LABELS,
   type MarketStage,
 } from '@/lib/brand-score/market-stages'
+import { compareTrendPoints } from '@/lib/brand-score/market-trend'
 import { MarketSurveyImportDialog } from './MarketSurveyImportDialog'
 import { PlanUpsell } from '@/components/billing/plan-gate'
 import { can } from '@/lib/billing/entitlements'
@@ -82,6 +83,8 @@ type TrendPoint = {
   sample_size: number | null
   market_score: number | null
   stages: Record<MarketStage, number | null>
+  /** スコアが出ている段階。隣の調査と構成が違えば素の比較ができない */
+  scored_stages: MarketStage[]
 }
 
 type ListCache = { surveys: MarketSurvey[]; trend: TrendPoint[] }
@@ -330,6 +333,51 @@ export default function MarketSurveysPage() {
                       </td>
                     ))}
                   </tr>
+                  {/* 前回比。段階構成が変わると平均の分母が変わるので、
+                      素の差ではなく「両方にある段階だけ」で出し直した値を出す */}
+                  <tr className="border-b border-border/50">
+                    <td className="py-1.5 pr-2 text-muted-foreground">前回比</td>
+                    {trend.map((t, i) => {
+                      if (i === 0) {
+                        return (
+                          <td key={t.survey_id} className="py-1.5 text-right text-muted-foreground/60">
+                            —
+                          </td>
+                        )
+                      }
+                      const cmp = compareTrendPoints(trend[i - 1], t)
+                      return (
+                        <td key={t.survey_id} className="py-1.5 text-right tabular-nums">
+                          {cmp.delta === null ? (
+                            <span
+                              className="text-muted-foreground/60"
+                              title="共通する段階が3つ未満で、増減として読めません"
+                            >
+                              比較不可
+                            </span>
+                          ) : (
+                            <span
+                              className={
+                                cmp.delta > 0
+                                  ? 'text-green-600'
+                                  : cmp.delta < 0
+                                    ? 'text-red-600'
+                                    : 'text-muted-foreground'
+                              }
+                            >
+                              {cmp.delta > 0 ? '+' : ''}
+                              {cmp.delta.toFixed(1)}
+                            </span>
+                          )}
+                          {!cmp.sameComposition && (
+                            <span className="ml-1 text-amber-600" title="段階構成が前回と違います">
+                              *
+                            </span>
+                          )}
+                        </td>
+                      )
+                    })}
+                  </tr>
                   {MARKET_STAGES.map((stage, i) => (
                     <tr key={stage} className="border-b border-border/50">
                       <td className="py-1.5 pr-2 text-muted-foreground">
@@ -348,6 +396,38 @@ export default function MarketSurveysPage() {
                 </tbody>
               </table>
             </div>
+
+            {/* 段階構成が変わった箇所の説明。* を付けただけでは何のことか分からない */}
+            {trend.slice(1).some((t, i) => !compareTrendPoints(trend[i], t).sameComposition) && (
+              <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 p-3 text-[11px] leading-relaxed text-amber-800">
+                <p className="m-0 font-bold">* 段階構成が前回と違う調査があります</p>
+                {trend.slice(1).map((t, i) => {
+                  const cmp = compareTrendPoints(trend[i], t)
+                  if (cmp.sameComposition) return null
+                  return (
+                    <p key={t.survey_id} className="m-0 mt-1">
+                      {formatDate(t.date)}:
+                      {cmp.dropped.length > 0 && (
+                        <> 前回にあった「{cmp.dropped.map((sg: MarketStage) => MARKET_STAGE_LABELS[sg]).join('・')}」が無い</>
+                      )}
+                      {cmp.dropped.length > 0 && cmp.added.length > 0 && <>／</>}
+                      {cmp.added.length > 0 && (
+                        <> 「{cmp.added.map((sg: MarketStage) => MARKET_STAGE_LABELS[sg]).join('・')}」が増えた</>
+                      )}
+                      。
+                      {cmp.delta === null
+                        ? '共通する段階が3つ未満のため増減は出していません。'
+                        : `前回比は両方にある${cmp.commonStages.length}段階（${cmp.commonStages.map((sg: MarketStage) => MARKET_STAGE_LABELS[sg]).join('・')}）だけで出し直した値です。`}
+                    </p>
+                  )
+                })}
+                <p className="m-0 mt-1.5 text-amber-700">
+                  市場浸透スコアはスコアが出ている段階の平均なので、段階が増減すると
+                  分母が変わります。行ごとの数値は各調査の全段階平均、前回比だけが
+                  共通段階での比較です。
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}

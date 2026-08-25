@@ -14,6 +14,7 @@ import {
   type MarketStageStatus,
 } from '@/lib/brand-score/market-stages'
 import { computeMarketScore } from '@/lib/brand-score/market-stage-score'
+import { scoredStagesOf } from '@/lib/brand-score/market-trend'
 import {guardCompanyFeature, requireCompanyMember } from '@/lib/billing/guard'
 
 export async function GET(request: NextRequest) {
@@ -79,6 +80,13 @@ export async function GET(request: NextRequest) {
             }))
           ),
           stages,
+          /**
+           * この調査でスコアが出ている段階。
+           * 市場浸透スコアは「出ている段階の平均」なので、隣り合う調査で
+           * ここが違うと素の引き算が実態とずれる。画面側で注記と
+           * 共通段階での再計算に使う（lib/brand-score/market-trend.ts）
+           */
+          scored_stages: scoredStagesOf({ stages }),
         }
       })
       .sort((a, b) => a.date.localeCompare(b.date))
