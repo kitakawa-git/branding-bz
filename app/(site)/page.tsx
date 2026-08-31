@@ -57,9 +57,9 @@ function Hero() {
         </h1>
 
         <p className="mx-auto mt-8 max-w-2xl text-lg text-white/60 md:text-xl">
-          つくる・ひろげる・はかる・とどける。
+          つくる・ひろげる・とどける。
           <br />
-          ブランドの構築から浸透、計測、発信までを、
+          ブランドの構築から浸透、発信までを、その全部を貫く計測とともに。
           <br />
           AIが伴走するひとつのプラットフォームで。
         </p>
@@ -281,10 +281,11 @@ function Showcase() {
   )
 }
 
-/* ===== 4つの柱（つくる・ひろげる・はかる・とどける） =====
-   営業資料の構造に合わせた4区分。構築 → 浸透 → 計測 と進み、
-   発信（とどける）はその全部を貫く横串という置き方。
-   「浸透度をスコア化」は計測の話なので、ひろげる から はかる に移してある */
+/* ===== 3つの柱（つくる・ひろげる・とどける） =====
+   ブランドは 構築 → 浸透 → 発信 の順に進む。計測（はかる）はこの3つと並ぶ
+   ステップではなく、3つを横串で評価する軸なので柱には入れず、
+   カードの下に幅いっぱいの帯（MeasurementBand）として置く。
+   ⚠️ 「浸透度をスコア化」は計測の話なので、ひろげる の body には入れない */
 const pillars = [
   {
     tag: 'つくる',
@@ -301,13 +302,6 @@ const pillars = [
     accent: 'from-emerald-500/30',
   },
   {
-    tag: 'はかる',
-    icon: BarChart3,
-    title: 'ブランドの浸透度を、\nスコアで可視化',
-    body: '社内の理解・共感と、社外からの見え方を数字にします。次の打ち手を決める土台になります。',
-    accent: 'from-cyan-500/30',
-  },
-  {
     tag: 'とどける',
     icon: MessageSquareHeart,
     title: 'ブランドの発信を、\nスマート名刺がサポート',
@@ -322,15 +316,14 @@ function Features() {
       <div className="mx-auto max-w-6xl">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="text-4xl font-bold tracking-tight md:text-5xl">
-            つくる、ひろげる、はかる、とどける。
+            つくる、ひろげる、とどける。
           </h2>
           <p className="mt-5 text-lg text-white/60">
             ブランドの旅路をまるごと支える、はじめてのプラットフォーム。
           </p>
         </div>
 
-        {/* 4枚。中間幅で2列に畳んでから4列にする（md で4列にすると1枚が狭すぎる） */}
-        <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-14 grid gap-5 md:grid-cols-3">
           {pillars.map((p) => (
             <GlowCard key={p.tag} className="p-7">
               <div className={`pointer-events-none absolute -top-20 left-1/2 h-40 w-40 -translate-x-1/2 rounded-full bg-gradient-to-b ${p.accent} to-transparent blur-2xl`} />
@@ -347,6 +340,33 @@ function Features() {
               </div>
             </GlowCard>
           ))}
+        </div>
+
+        {/* 計測（はかる）は3つと並ぶ4番目のステップではなく、3つを横串で評価する軸。
+            カードを4枚目にすると順番のあるステップに見えてしまうので、
+            3枚の下に幅いっぱいの帯として置く（営業資料 p3 と同じ構図）。
+            上端の横線が3枚を貫いている見た目そのものが「横串」の説明になる */}
+        <div className="relative mt-5">
+          {/* 3枚の幅いっぱいに伸びる線。中央を明るくして貫いている感じを出す */}
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent" />
+          <GlowCard className="p-7">
+            <div className="pointer-events-none absolute inset-x-0 -top-16 h-32 bg-gradient-to-b from-cyan-500/15 to-transparent blur-2xl" />
+            <div className="relative flex flex-col gap-5 sm:flex-row sm:items-start sm:gap-7">
+              <div className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5">
+                <BarChart3 size={20} className="text-white" />
+              </div>
+              <div className="min-w-0">
+                <div className="mb-2 text-sm font-semibold text-cyan-400">はかる — 3つを貫く横串</div>
+                <h3 className="text-xl font-bold leading-snug">
+                  つくる・ひろげる・とどけるを、ひとつの数字で評価する
+                </h3>
+                <p className="mt-3 text-sm leading-relaxed text-white/55">
+                  社内の理解・共感（インナー）と、社外からの見え方（アウター）を数字にする。
+                  3つのレイヤーを横串で評価し、次の打ち手を決める土台にします。
+                </p>
+              </div>
+            </div>
+          </GlowCard>
         </div>
       </div>
     </section>

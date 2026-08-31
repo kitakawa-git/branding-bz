@@ -21,22 +21,23 @@ import FinalCta from '@/components/lp/FinalCta'
 export const metadata: Metadata = {
   title: '機能紹介 | branding.bz',
   description:
-    'branding.bz の機能紹介。ブランド掲示・Good Action投稿・目標・KPI管理・スマート名刺・ブランドスコアなど、ブランドの構築・浸透・計測・発信を支える機能をまとめて紹介します。',
+    'branding.bz の機能紹介。ブランド掲示・Good Action投稿・目標・KPI管理・スマート名刺・ブランドスコアなど、ブランドの構築・浸透・発信と、その全部を横串で評価する計測を支える機能をまとめて紹介します。',
   alternates: {
     canonical: '/features',
   },
   openGraph: {
     title: '機能紹介 | branding.bz',
     description:
-      'branding.bz の機能紹介。ブランド掲示・Good Action投稿・目標・KPI管理・スマート名刺・ブランドスコアなど、ブランドの構築・浸透・計測・発信を支える機能をまとめて紹介します。',
+      'branding.bz の機能紹介。ブランド掲示・Good Action投稿・目標・KPI管理・スマート名刺・ブランドスコアなど、ブランドの構築・浸透・発信と、その全部を横串で評価する計測を支える機能をまとめて紹介します。',
     url: 'https://branding.bz/features',
   },
 }
 
 type Feature = { id?: string; title: string; description: string; icon: LucideIcon; tag: string }
 
-// 営業資料の構造に合わせた4区分＋サポート。構築 → 浸透 → 計測 → 発信 の順で、
-// 発信（とどける）は他の全部を貫く横串という位置づけ
+// 構築 → 浸透 → 発信 の3ステップ＋サポート。
+// 計測（はかる）はステップではなく3つを横串で評価する軸なので、
+// 順番の流れから外して発信のあと・サポートの直前に置く
 const groups: { layer: string; lead: string; features: Feature[] }[] = [
   {
     layer: '構築',
@@ -102,27 +103,6 @@ const groups: { layer: string; lead: string; features: Feature[] }[] = [
     ],
   },
   {
-    layer: '計測',
-    lead: '浸透の効果を、数字で確かめる。',
-    features: [
-      {
-        id: 'feature-score',
-        tag: '計測（インナー）',
-        title: 'インナースコア＋推移',
-        description:
-          'インナーサーベイの回答から社内の浸透度をスコア化。推移と、理解度テストとの「知識×共感」ギャップ分析まで、自社だけで完結して追えます。',
-        icon: Activity,
-      },
-      {
-        tag: '計測（総合・伴走つき）',
-        title: '統合ブランドスコア',
-        description:
-          'インナーの数字に、市場調査を含むアウター（社外からの見え方）を掛け合わせて総合スコアに。外の目線は解釈と打ち手をセットでご提供するため Enterprise プランでのご提供です。',
-        icon: Activity,
-      },
-    ],
-  },
-  {
     layer: '発信',
     lead: '社内で根づいた"らしさ"を、社外へ届ける。',
     features: [
@@ -140,6 +120,27 @@ const groups: { layer: string; lead: string; features: Feature[] }[] = [
         description:
           '名刺の閲覧数・閲覧トレンド・メンバー別ランキングを自動集計。誰の名刺が、いつ、どれだけ見られたかを把握できます。',
         icon: BarChart3,
+      },
+    ],
+  },
+  {
+    layer: '計測',
+    lead: '構築・浸透・発信の3つを、横串で数字にする。',
+    features: [
+      {
+        id: 'feature-score',
+        tag: '計測（インナー）',
+        title: 'インナースコア＋推移',
+        description:
+          'インナーサーベイの回答から社内の浸透度をスコア化。推移と、理解度テストとの「知識×共感」ギャップ分析まで、自社だけで完結して追えます。',
+        icon: Activity,
+      },
+      {
+        tag: '計測（総合・伴走つき）',
+        title: '統合ブランドスコア',
+        description:
+          'インナーの数字に、市場調査を含むアウター（社外からの見え方）を掛け合わせて総合スコアに。外の目線は解釈と打ち手をセットでご提供するため Enterprise プランでのご提供です。',
+        icon: Activity,
       },
     ],
   },
@@ -196,7 +197,7 @@ export default function LpFeaturesPage() {
   return (
     <main>
       <PageHero eyebrow="Features" title="ブランドを加速させる機能">
-        構築・浸透・計測・発信。ブランドの旅路を、必要な機能でまるごと支えます。
+        構築・浸透・発信。ブランドの旅路を、必要な機能でまるごと支えます。その全部を、計測が横串で貫きます。
       </PageHero>
 
       <div className="space-y-16 px-6 pb-24">
