@@ -24,7 +24,7 @@ export default function TermsPage() {
         <div className="prose prose-invert prose-gray mx-auto max-w-4xl space-y-10 text-sm leading-relaxed text-white/70">
 
           <p>
-            ID INC.（アイディー株式会社、以下「当社」といいます。）は、当社が運営するブランディング支援プラットフォーム
+            ID INC.（アイディ株式会社、以下「当社」といいます。）は、当社が運営するブランディング支援プラットフォーム
             <strong>「branding.bz」</strong>（以下「本サービス」といいます。）の利用条件を以下のとおり定め、本規約（以下「本規約」といいます。）として規定します。
             本規約は、ユーザーと当社との間の本サービスの利用に関わる一切の関係に適用されるものとします。
           </p>
@@ -179,7 +179,7 @@ export default function TermsPage() {
           <Section title="第17条（お問い合わせ先）">
             <p>本サービスに関するお問い合わせは、以下までご連絡ください。</p>
             <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] p-6 space-y-1">
-              <p className="font-semibold text-white">ID INC.（アイディー株式会社）</p>
+              <p className="font-semibold text-white">ID INC.（アイディ株式会社）</p>
               <p>メール：<a href="mailto:bz@include.bz" className="text-blue-400 hover:text-blue-300 hover:underline">bz@include.bz</a></p>
               <p>電話：<a href="tel:0442813088" className="text-blue-400 hover:text-blue-300 hover:underline">044-281-3088</a></p>
             </div>
