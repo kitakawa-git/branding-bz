@@ -44,7 +44,9 @@ const PLANS = [
       'ブランド掲示 編集＋閲覧',
     ],
     ctaLabel: '無料で始める',
-    ctaHref: '/tools/colors',
+    // /tools/colors から入ると /tools/colors/auth → /portal/auth に飛ばされ、
+    // 未登録の人はログイン画面で行き止まりになる。登録から始められる /signup に送る
+    ctaHref: '/signup',
     ctaStyle: 'outline' as const,
     reference: null,
     isHighlight: false,
@@ -160,7 +162,7 @@ const COMMON_ITEMS = [
   'プランの変更・解約はいつでも可能',
   '名刺カードは追加発注可（実費）',
   'PWA対応・スマホのホーム画面に追加可能',
-  'ブランド用語wiki（238語）は誰でも無料閲覧',
+  'ブランド用語wiki（280語）は誰でも無料閲覧',
 ]
 
 export default function LpPlanPage() {
@@ -334,7 +336,7 @@ export default function LpPlanPage() {
         <p className="mt-6 text-lg text-white/60">クレジットカード不要。今すぐ始められます。</p>
         <div className="mt-10">
           <Link
-            href="/tools/colors"
+            href="/signup"
             className="inline-flex h-12 items-center gap-2 rounded-full bg-white px-10 text-base font-semibold text-black transition-transform hover:scale-105"
           >
             無料で始める <ArrowRight size={18} />

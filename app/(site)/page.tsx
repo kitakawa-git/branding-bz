@@ -57,9 +57,9 @@ function Hero() {
         </h1>
 
         <p className="mx-auto mt-8 max-w-2xl text-lg text-white/60 md:text-xl">
-          つくる・ひろげる・とどける。
+          つくる・ひろげる・はかる・とどける。
           <br />
-          ブランドの構築から浸透、発信までを、
+          ブランドの構築から浸透、計測、発信までを、
           <br />
           AIが伴走するひとつのプラットフォームで。
         </p>
@@ -281,7 +281,10 @@ function Showcase() {
   )
 }
 
-/* ===== 3つの柱（つくる・ひろげる・とどける） ===== */
+/* ===== 4つの柱（つくる・ひろげる・はかる・とどける） =====
+   営業資料の構造に合わせた4区分。構築 → 浸透 → 計測 と進み、
+   発信（とどける）はその全部を貫く横串という置き方。
+   「浸透度をスコア化」は計測の話なので、ひろげる から はかる に移してある */
 const pillars = [
   {
     tag: 'つくる',
@@ -293,9 +296,16 @@ const pillars = [
   {
     tag: 'ひろげる',
     icon: Activity,
-    title: 'ブランドの定着と可視化を、\nAIがサポート',
-    body: '掲示・タイムライン・KPIに加え、社員サーベイで浸透度をスコア化。打ち手が数字で見えます。',
+    title: 'ブランドの定着を、\nAIがサポート',
+    body: '掲示・称賛・目標・学習・テスト。日々の業務のなかでブランドに触れ続ける状態をつくります。',
     accent: 'from-emerald-500/30',
+  },
+  {
+    tag: 'はかる',
+    icon: BarChart3,
+    title: 'ブランドの浸透度を、\nスコアで可視化',
+    body: '社内の理解・共感と、社外からの見え方を数字にします。次の打ち手を決める土台になります。',
+    accent: 'from-cyan-500/30',
   },
   {
     tag: 'とどける',
@@ -312,14 +322,15 @@ function Features() {
       <div className="mx-auto max-w-6xl">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="text-4xl font-bold tracking-tight md:text-5xl">
-            つくる、ひろげる、とどける。
+            つくる、ひろげる、はかる、とどける。
           </h2>
           <p className="mt-5 text-lg text-white/60">
             ブランドの旅路をまるごと支える、はじめてのプラットフォーム。
           </p>
         </div>
 
-        <div className="mt-14 grid gap-5 md:grid-cols-3">
+        {/* 4枚。中間幅で2列に畳んでから4列にする（md で4列にすると1枚が狭すぎる） */}
+        <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {pillars.map((p) => (
             <GlowCard key={p.tag} className="p-7">
               <div className={`pointer-events-none absolute -top-20 left-1/2 h-40 w-40 -translate-x-1/2 rounded-full bg-gradient-to-b ${p.accent} to-transparent blur-2xl`} />

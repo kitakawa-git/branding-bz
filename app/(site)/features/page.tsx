@@ -21,20 +21,22 @@ import FinalCta from '@/components/lp/FinalCta'
 export const metadata: Metadata = {
   title: '機能紹介 | branding.bz',
   description:
-    'branding.bz の機能紹介。ブランド掲示・Good Action投稿・目標・KPI管理・スマート名刺・ブランドスコアなど、ブランドの構築・浸透・発信を支える機能をまとめて紹介します。',
+    'branding.bz の機能紹介。ブランド掲示・Good Action投稿・目標・KPI管理・スマート名刺・ブランドスコアなど、ブランドの構築・浸透・計測・発信を支える機能をまとめて紹介します。',
   alternates: {
     canonical: '/features',
   },
   openGraph: {
     title: '機能紹介 | branding.bz',
     description:
-      'branding.bz の機能紹介。ブランド掲示・Good Action投稿・目標・KPI管理・スマート名刺・ブランドスコアなど、ブランドの構築・浸透・発信を支える機能をまとめて紹介します。',
+      'branding.bz の機能紹介。ブランド掲示・Good Action投稿・目標・KPI管理・スマート名刺・ブランドスコアなど、ブランドの構築・浸透・計測・発信を支える機能をまとめて紹介します。',
     url: 'https://branding.bz/features',
   },
 }
 
 type Feature = { id?: string; title: string; description: string; icon: LucideIcon; tag: string }
 
+// 営業資料の構造に合わせた4区分＋サポート。構築 → 浸透 → 計測 → 発信 の順で、
+// 発信（とどける）は他の全部を貫く横串という位置づけ
 const groups: { layer: string; lead: string; features: Feature[] }[] = [
   {
     layer: '構築',
@@ -97,6 +99,12 @@ const groups: { layer: string; lead: string; features: Feature[] }[] = [
           '理念や行動指針の理解度を設問で測定。AIが設問案を生成し、部署別・役職別に正答率を集計します。',
         icon: ClipboardCheck,
       },
+    ],
+  },
+  {
+    layer: '計測',
+    lead: '浸透の効果を、数字で確かめる。',
+    features: [
       {
         id: 'feature-score',
         tag: '計測（インナー）',
@@ -188,7 +196,7 @@ export default function LpFeaturesPage() {
   return (
     <main>
       <PageHero eyebrow="Features" title="ブランドを加速させる機能">
-        構築・浸透・発信。ブランドの旅路を、必要な機能でまるごと支えます。
+        構築・浸透・計測・発信。ブランドの旅路を、必要な機能でまるごと支えます。
       </PageHero>
 
       <div className="space-y-16 px-6 pb-24">
