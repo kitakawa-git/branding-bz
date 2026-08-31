@@ -121,6 +121,13 @@ const groups: { layer: string; lead: string; features: Feature[] }[] = [
           '名刺の閲覧数・閲覧トレンド・メンバー別ランキングを自動集計。誰の名刺が、いつ、どれだけ見られたかを把握できます。',
         icon: BarChart3,
       },
+      {
+        tag: '発信',
+        title: 'マイクロフィードバック',
+        description:
+          '名刺ページを見た人に、受けた印象をタグで答えてもらいます。狙った人格どおりに伝わっているかを、社外の反応から確かめられます。',
+        icon: MessageSquareHeart,
+      },
     ],
   },
   {

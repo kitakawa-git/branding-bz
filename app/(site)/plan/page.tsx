@@ -48,7 +48,11 @@ const PLANS = [
     // 未登録の人はログイン画面で行き止まりになる。登録から始められる /signup に送る
     ctaHref: '/signup',
     ctaStyle: 'outline' as const,
-    reference: null,
+    // Free は「使える回数」だけでなく「出口」も制限がある。
+    // pdfExport / portalSync はどちらも free:false（entitlements.ts）で、
+    // 生成結果は画面で見られるが PDF にも掲示にも出せない。
+    // 書いておかないと「月3回まで全部できる」と読まれる
+    reference: '生成結果は画面で確認できます。PDF出力・本体への反映は Standard 以上',
     isHighlight: false,
   },
   {
@@ -147,11 +151,14 @@ const PLANS = [
 
 // カード名＝現在地、trigger＝そのプランを選びたくなる瞬間。
 // 最終段（Enterprise）だけはその先が無いので、到達点として書く
+// ⚠️ subtitle は上の PLANS[].subtitle と必ず同じ意味にする。
+//    以前 Premium が「浸透する」、Enterprise が「計測＋伴走」のまま取り残されており、
+//    同じページの上下でプランの説明が食い違っていた
 const UPSELL_STEPS = [
   { name: 'Free', subtitle: '体験する', trigger: 'AIを無制限に使い\n名刺で発信したい' },
   { name: 'Standard', subtitle: '構築＋発信', trigger: '社員に\n浸透させたい' },
-  { name: 'Premium', subtitle: '浸透する', trigger: '市場や顧客の目線も\n含めて総合で測りたい' },
-  { name: 'Enterprise', subtitle: '計測＋伴走', trigger: '数字を打ち手に\nつなげたい' },
+  { name: 'Premium', subtitle: '構築＋浸透＋発信', trigger: '市場や顧客の目線も\n含めて総合で測りたい' },
+  { name: 'Enterprise', subtitle: 'すべてを、伴走つきで', trigger: '数字を打ち手に\nつなげたい' },
 ]
 
 const COMMON_ITEMS = [
