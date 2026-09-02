@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 const rows = [
   {
     label: '販売業者',
-    value: 'ID INC.（アイディ株式会社）',
+    value: 'ID株式会社',
   },
   {
     label: '代表者名',

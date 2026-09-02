@@ -24,7 +24,7 @@ export default function PrivacyPolicyPage() {
         <div className="mx-auto max-w-4xl space-y-10 text-sm leading-relaxed text-white/70">
 
           <p>
-            ID INC.（アイディ株式会社、以下「当社」といいます。）は、当社が運営するブランディング支援プラットフォーム
+            ID株式会社（以下「当社」といいます。）は、当社が運営するブランディング支援プラットフォーム
             <strong>「branding.bz」</strong>（以下「本サービス」といいます。）におけるユーザーの個人情報の取扱いについて、
             以下のとおりプライバシーポリシー（以下「本ポリシー」といいます。）を定めます。
           </p>
@@ -131,7 +131,7 @@ export default function PrivacyPolicyPage() {
           <Section title="第12条（お問い合わせ窓口）">
             <p>本ポリシーに関するお問い合わせは、以下の窓口までお願いいたします。</p>
             <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] p-6 space-y-1">
-              <p className="font-semibold text-white">ID INC.（アイディ株式会社）</p>
+              <p className="font-semibold text-white">ID株式会社（ID INC.）</p>
               <p>メール：<a href="mailto:bz@include.bz" className="text-blue-400 hover:text-blue-300 hover:underline">bz@include.bz</a></p>
               <p>電話：<a href="tel:0442813088" className="text-blue-400 hover:text-blue-300 hover:underline">044-281-3088</a></p>
             </div>
