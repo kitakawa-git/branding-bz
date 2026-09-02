@@ -111,7 +111,7 @@ const groups: { layer: string; lead: string; features: Feature[] }[] = [
         tag: '発信',
         title: 'スマート名刺',
         description:
-          'QRコードからプロフィール＋企業ブランドページを表示。ブランドカラーが自動適用され、名刺交換がブランド体験に変わります。',
+          'QRコードからプロフィール＋企業ブランドページを表示。ブランドカラーが自動適用され、連絡先はvCardでそのまま保存できます。名刺交換がブランド体験に変わります。',
         icon: CreditCard,
       },
       {
