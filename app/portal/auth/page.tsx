@@ -7,6 +7,7 @@
 import { Suspense, useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { sendGAEvent } from '@next/third-parties/google'
 import { supabase } from '@/lib/supabase'
 import { Input } from '@/components/ui/input'
 
@@ -235,7 +236,11 @@ function PortalAuthContent() {
             <span className="text-white/55">
               アカウントをお持ちでない方は{' '}
               <button
-                onClick={() => router.push('/signup')}
+                onClick={() => {
+                  // GA4: 登録開始（どのツールLP経由かを from で残す）
+                  sendGAEvent('event', 'signup_start', { from: from || 'direct' })
+                  router.push('/signup')
+                }}
                 className="font-semibold text-white underline-offset-2 hover:underline bg-transparent border-0 cursor-pointer"
               >
                 新規登録

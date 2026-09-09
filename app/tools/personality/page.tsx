@@ -2,6 +2,7 @@
 
 // ブランドパーソナリティ診断 ランディングページ（LPダークデザインに準拠）
 import Link from 'next/link'
+import { sendGAEvent } from '@next/third-parties/google'
 import { Fingerprint, Radar, Drama, CheckCircle2, Sparkles, SlidersHorizontal, Download, Unplug, ArrowRight, Plus, type LucideIcon } from 'lucide-react'
 import Nav from '@/components/lp/Nav'
 import Footer from '@/components/Footer'
@@ -140,6 +141,7 @@ export default function PersonalityLandingPage() {
             <div className="mt-10">
               <Link
                 href="/portal/auth?from=personality"
+                onClick={() => sendGAEvent('event', 'tool_cta_click', { tool: 'personality', position: 'hero' })}
                 className="inline-flex h-12 items-center gap-2 rounded-full bg-white px-8 text-base font-semibold text-black transition-transform hover:scale-105"
               >
                 無料で始める <ArrowRight size={18} />
@@ -238,6 +240,7 @@ export default function PersonalityLandingPage() {
             <div className="mt-10">
               <Link
                 href="/portal/auth?from=personality"
+                onClick={() => sendGAEvent('event', 'tool_cta_click', { tool: 'personality', position: 'footer' })}
                 className="inline-flex h-12 items-center gap-2 rounded-full bg-white px-10 text-base font-semibold text-black transition-transform hover:scale-105"
               >
                 無料で始める <ArrowRight size={18} />

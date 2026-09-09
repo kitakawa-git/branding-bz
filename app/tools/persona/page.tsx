@@ -2,6 +2,7 @@
 
 // ペルソナビルダー ランディングページ（LPダークデザインに準拠）
 import Link from 'next/link'
+import { sendGAEvent } from '@next/third-parties/google'
 import { UserCircle, Route, CheckCircle2, Lightbulb, Download, Unplug, Target, ArrowRight, Plus, type LucideIcon } from 'lucide-react'
 import Nav from '@/components/lp/Nav'
 import Footer from '@/components/Footer'
@@ -174,6 +175,7 @@ export default function PersonaLandingPage() {
           <div className="mt-10">
             <Link
               href="/portal/auth?from=persona"
+              onClick={() => sendGAEvent('event', 'tool_cta_click', { tool: 'persona', position: 'hero' })}
               className="inline-flex h-12 items-center gap-2 rounded-full bg-white px-8 text-base font-semibold text-black transition-transform hover:scale-105"
             >
               無料で始める <ArrowRight size={18} />
@@ -281,6 +283,7 @@ export default function PersonaLandingPage() {
             <div className="mt-10">
               <Link
                 href="/portal/auth?from=persona"
+                onClick={() => sendGAEvent('event', 'tool_cta_click', { tool: 'persona', position: 'footer' })}
                 className="inline-flex h-12 items-center gap-2 rounded-full bg-white px-10 text-base font-semibold text-black transition-transform hover:scale-105"
               >
                 無料で始める <ArrowRight size={18} />
