@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
+import { sendGAEvent } from '@next/third-parties/google'
 import { Menu, X, ChevronDown, Target, UserCircle, Palette, Fingerprint, type LucideIcon } from 'lucide-react'
 
 /* 新デザイン（/lp 系）の共通ヘッダー。
@@ -94,6 +95,7 @@ export default function Nav() {
           </Link>
           <Link
             href="/signup"
+            onClick={() => sendGAEvent('event', 'nav_signup_click', { device: 'desktop' })}
             className="rounded-full bg-white px-4 py-1.5 text-sm font-semibold text-black transition-transform hover:scale-105"
           >
             無料で始める
@@ -150,7 +152,11 @@ export default function Nav() {
           <Link href="/portal/auth" className="block rounded-xl px-3 py-2.5 text-base font-medium text-white/80 hover:bg-white/10">
             ログイン
           </Link>
-          <Link href="/signup" className="mt-1 block rounded-xl bg-white px-3 py-2.5 text-center text-base font-semibold text-black">
+          <Link
+            href="/signup"
+            onClick={() => sendGAEvent('event', 'nav_signup_click', { device: 'mobile' })}
+            className="mt-1 block rounded-xl bg-white px-3 py-2.5 text-center text-base font-semibold text-black"
+          >
             無料で始める
           </Link>
         </div>
