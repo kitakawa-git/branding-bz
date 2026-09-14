@@ -54,7 +54,7 @@ const groups: { layer: string; lead: string; features: Feature[] }[] = [
         tag: '浸透',
         title: 'ブランド掲示',
         description:
-          '方針・戦略・ビジュアルID・バーバルID・提供価値を全社に掲示。いつでも"らしさ"を参照できる、ブランドの拠りどころです。',
+          '理念や戦略、|顧客に届ける価値、|デザインと言葉の|ルールを一か所に。|社員が迷ったときに|立ち返れる、|共通の基準をつくります。',
         icon: Compass,
       },
       {
@@ -84,14 +84,14 @@ const groups: { layer: string; lead: string; features: Feature[] }[] = [
         tag: '浸透',
         title: 'お知らせ配信＋Web Push',
         description:
-          '社内イベントやブランド戦略の進捗を全員に配信。Web Push でスマホの通知にも届くので、見逃されません。',
+          '社内イベントや|ブランド戦略の進捗を|全員に配信。|スマートフォンへの|プッシュ通知で、|大切なお知らせの|見逃しを減らします。',
         icon: Bell,
       },
       {
         tag: '浸透',
         title: 'ビデオラーニング',
         description:
-          'ブランドを学ぶ動画をカテゴリ・テーマで配信。誰がどこまで見たかを把握でき、視聴率と完了率で定着の進み具合が分かります。',
+          'ブランドを学ぶ動画を|カテゴリ・テーマ別に配信。|誰がどこまで|視聴したかを把握し、|学習の進み具合を|確認できます。',
         icon: GraduationCap,
       },
       {
@@ -126,7 +126,7 @@ const groups: { layer: string; lead: string; features: Feature[] }[] = [
         tag: '発信',
         title: 'マイクロフィードバック',
         description:
-          '名刺ページを見た人に、受けた印象をタグで答えてもらいます。狙った人格どおりに伝わっているかを、社外の反応から確かめられます。',
+          '名刺ページを見た人に、|受けた印象を|タグで答えてもらいます。|伝えたいブランドの個性が、|相手にどう|受け取られているかを|確かめられます。',
         icon: MessageSquareHeart,
       },
     ],
@@ -147,20 +147,20 @@ const groups: { layer: string; lead: string; features: Feature[] }[] = [
         tag: '計測（総合・伴走つき）',
         title: '統合ブランドスコア',
         description:
-          'インナーの数字に、市場調査を含むアウター（社外からの見え方）を掛け合わせて総合スコアに。外の目線は解釈と打ち手をセットでご提供するため Enterprise プランでのご提供です。',
+          'インナーの数字に、|市場調査を含む|アウター（社外からの見え方）を|掛け合わせて|総合スコアに。|結果の解釈と|次の取り組みの検討を含め、|Enterprise プランで|提供します。',
         icon: Activity,
       },
     ],
   },
   {
     layer: 'サポート',
-    lead: 'ツールだけで終わらせない、プロの伴走。Enterprise プランのサポート内容です。',
+    lead: 'ツールの活用から実践まで、|プロが伴走します。|Enterprise プランで|利用できるサポートを|ご紹介します。',
     features: [
       {
         tag: 'サポート',
         title: 'クリエイティブサポート',
         description:
-          'ブランドに沿った制作物をID INC.が支援。ツールで決めた"らしさ"を、実際のアウトプットに落とし込みます。',
+          'ブランドの方針に沿った|デザインやコンテンツの制作を、|ID INC.が支援します。|ツールで言語化した|"らしさ"を、|制作物として形にします。',
         icon: Headset,
       },
       {
@@ -188,6 +188,21 @@ const groups: { layer: string; lead: string; features: Feature[] }[] = [
   },
 ]
 
+/* 説明文に「|」で文節の区切りを入れておくと、その単位で折り返す（語の途中で「配／信」などと折れるのを防ぐ）。
+   区切りの無い文はそのまま表示する。1つの区切りはスマホ幅の1行（約20字）より短くすること */
+function Phrases({ text }: { text: string }) {
+  if (!text.includes('|')) return <>{text}</>
+  return (
+    <>
+      {text.split('|').map((p, i) => (
+        <span key={i} className="inline-block">
+          {p}
+        </span>
+      ))}
+    </>
+  )
+}
+
 function FeatureCard({ f }: { f: Feature }) {
   return (
     <GlowCard id={f.id} className="p-7">
@@ -196,7 +211,9 @@ function FeatureCard({ f }: { f: Feature }) {
       </div>
       <div className="mb-2 text-xs font-semibold text-blue-400">{f.tag}</div>
       <h3 className="text-lg font-bold">{f.title}</h3>
-      <p className="mt-3 text-sm leading-relaxed text-white/55">{f.description}</p>
+      <p className="mt-3 text-sm leading-relaxed text-white/55">
+        <Phrases text={f.description} />
+      </p>
     </GlowCard>
   )
 }
@@ -216,7 +233,9 @@ export default function LpFeaturesPage() {
           <section key={g.layer} className="mx-auto max-w-6xl">
             <div className="mb-6 flex flex-col gap-1 border-b border-white/10 pb-4 sm:flex-row sm:items-baseline sm:justify-between">
               <h2 className="text-2xl font-bold tracking-tight">{g.layer}</h2>
-              <p className="text-sm text-white/50">{g.lead}</p>
+              <p className="text-sm text-white/50">
+                <Phrases text={g.lead} />
+              </p>
             </div>
             {/* 浸透だけ、進め方を解説したLPへの導線を置く */}
             {g.layer === '浸透' && (
