@@ -30,9 +30,9 @@ const PAGE_URL = 'https://branding.bz/inner-branding'
 const WIKI_TERM = 'インナーブランディング'
 
 const STUMBLES: { icon: LucideIcon; title: string; description: string }[] = [
-  { icon: MessageSquareOff, title: '言えない', description: '理念やスローガンはあるが、社員が自分の言葉で説明できない。掲示物とファイルサーバーの奥で眠っている。' },
-  { icon: Unlink, title: '行動につながらない', description: 'ブランドが日々の判断・行動につながらない。「らしい仕事」を称え合う場も、学ぶ場もない。' },
-  { icon: CircleHelp, title: '測れない', description: '浸透したのか誰も分からない。社外からどう見えているかは、なおさら分からない。' },
+  { icon: MessageSquareOff, title: '言えない', description: '理念やスローガンは|あるが、|社員が自分の言葉で|説明できない。|掲示物と|ファイルサーバーの|奥で眠っている。' },
+  { icon: Unlink, title: '行動につながらない', description: 'ブランドが|日々の判断・行動に|つながらない。|「らしい仕事」を|称え合う場も、|学ぶ場もない。' },
+  { icon: CircleHelp, title: '測れない', description: '浸透したのか|誰も分からない。|社外から|どう見えているかは、|なおさら分からない。' },
 ]
 
 // plan は entitlements.ts と一致させる:
@@ -191,7 +191,9 @@ export default function InnerBrandingLandingPage() {
                   <Icon size={20} className="text-ds-app-accent-soft" />
                 </div>
                 <h3 className="text-xl font-bold text-white">{title}</h3>
-                <p className="mt-3 text-sm leading-relaxed text-white/60">{description}</p>
+                <p className="mt-3 text-sm leading-relaxed text-white/60">
+                  <Phrases text={description} />
+                </p>
               </GlowCard>
             ))}
           </div>
