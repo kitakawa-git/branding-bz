@@ -408,7 +408,7 @@ export default function BrandPersonalityPage() {
             <CardContent className="p-5 space-y-3">
               <div className="flex items-center gap-2">
                 <h2 className="text-xs font-bold">アーキタイプ（主・副人格）</h2>
-                <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">診断連携・読み取り専用</span>
+                <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">診断から反映・読み取り専用</span>
               </div>
               <div className="rounded-xl border-2 border-ds-app-accent bg-blue-50/40 p-4">
                 <p className="text-[10px] font-semibold tracking-wide text-ds-app-accent-hover mb-1">主人格</p>

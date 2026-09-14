@@ -816,7 +816,7 @@ const COMPONENT_SAMPLES: ComponentSample[] = [
   {
     key: 'tool-connect-actions',
     name: 'ToolConnectActions（ツール末尾共通アクション）',
-    description: 'STP・パーソナリティ等の Step5 末尾で使う「branding.bz への連携」Card＋任意の「最初からやり直す」ボタン。',
+    description: 'STP・パーソナリティ等の Step5 末尾で使う「ブランド情報に反映」Card＋任意の「最初からやり直す」ボタン。',
     classNames: ['<ToolConnectActions isAdminUser adminDescription onConnectClick onRestart>'],
     minHeight: 220,
     fullWidth: true,
@@ -824,7 +824,7 @@ const COMPONENT_SAMPLES: ComponentSample[] = [
       <div className="max-w-2xl">
         <ToolConnectActions
           isAdminUser
-          adminDescription="STP分析の結果をブランド管理プラットフォームに登録できます。連携する項目は次の画面で選択します。"
+          adminDescription="STP分析の結果を branding.bz のブランド情報に反映できます。反映する項目は次の画面で選択します。"
           onConnectClick={() => {}}
           onRestart={() => {}}
         />

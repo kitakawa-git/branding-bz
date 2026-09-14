@@ -179,7 +179,7 @@ export async function POST(request: NextRequest) {
 
     if (!selections.targeting && !selections.positioning
         && !selections.target_fit_map && !selections.brand_stance_statements) {
-      return NextResponse.json({ error: '連携する項目が選択されていません' }, { status: 400 })
+      return NextResponse.json({ error: '反映する項目が選択されていません' }, { status: 400 })
     }
 
     // 1. セッションデータ取得

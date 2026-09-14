@@ -159,7 +159,7 @@ export async function POST(request: NextRequest) {
     const ctx = await loadContext(sessionId, userId)
     if ('error' in ctx) return NextResponse.json({ error: ctx.error }, { status: ctx.status })
     if (!ctx.adminCompanyId) {
-      return NextResponse.json({ error: '本体連携には企業アカウント（管理者）が必要です' }, { status: 403 })
+      return NextResponse.json({ error: 'ブランド情報への反映には企業アカウント（管理者）が必要です' }, { status: 403 })
     }
     if (!ctx.diagnosis) {
       return NextResponse.json({ error: '診断結果がありません。AI診断を実行してください。' }, { status: 400 })
@@ -178,7 +178,7 @@ export async function POST(request: NextRequest) {
     const archetypeSelected = !!selections.archetype && ctx.framework === 'archetype'
     if (selections.archetype && ctx.framework !== 'archetype') {
       return NextResponse.json(
-        { error: 'アーキタイプの連携は「タイプで診断」を選んだ場合のみ可能です。' },
+        { error: 'アーキタイプの反映は「タイプで診断」を選んだ場合のみ可能です。' },
         { status: 400 },
       )
     }
@@ -379,7 +379,7 @@ export async function POST(request: NextRequest) {
   } catch (err) {
     console.error('[PersonalityConnect POST] エラー:', err)
     return NextResponse.json(
-      { error: `連携エラー: ${err instanceof Error ? err.message : String(err)}` },
+      { error: `反映エラー: ${err instanceof Error ? err.message : String(err)}` },
       { status: 500 },
     )
   }

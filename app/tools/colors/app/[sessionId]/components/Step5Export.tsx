@@ -116,17 +116,17 @@ export function Step5Export({
 
       if (!res.ok) {
         if (data.needsAccount) {
-          toast.error('branding.bzアカウントとの連携が必要です')
+          toast.error('branding.bz のアカウントが必要です')
         } else {
-          toast.error(data.error || '連携に失敗しました')
+          toast.error(data.error || '反映に失敗しました')
         }
         return
       }
 
       setLinked(true)
-      toast.success('branding.bz本体に連携しました')
+      toast.success('ブランド情報に反映しました')
     } catch {
-      toast.error('連携中にエラーが発生しました')
+      toast.error('反映中にエラーが発生しました')
     } finally {
       setExporting(null)
     }
@@ -144,7 +144,7 @@ export function Step5Export({
     <div>
       <h1 className="text-2xl font-bold text-foreground mb-2">Step 5: 確定・出力</h1>
       <p className="mb-5 text-[13px] text-muted-foreground">
-        パレットを確認して確定し、出力や連携を行いましょう
+        パレットを確認して確定し、出力やブランド情報への反映を行いましょう
       </p>
 
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
@@ -207,11 +207,11 @@ export function Step5Export({
               isAdminUser
               adminDescription="確定したカラーパレットを管理画面のブランドカラーに反映できます。"
               onConnectClick={handleLink}
-              connectLabel={exporting === 'link' ? '連携中...' : 'branding.bz に連携'}
+              connectLabel={exporting === 'link' ? '反映中...' : 'ブランド情報に反映する'}
             />
           ) : (
             <div className="mt-4 rounded-lg bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-700">
-              カラーパレットをbranding.bzに連携しました。管理画面のブランドカラーから確認できます。
+              カラーパレットをブランド情報に反映しました。管理画面のブランドカラーから確認できます。
             </div>
           )}
 

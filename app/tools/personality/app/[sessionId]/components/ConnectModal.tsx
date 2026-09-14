@@ -144,14 +144,14 @@ export function ConnectModal({ sessionId, userId, diagnosis: d, framework, open,
         return
       }
       if (!res.ok) {
-        toast.error(data.error || '連携に失敗しました')
+        toast.error(data.error || '反映に失敗しました')
         return
       }
 
-      toast.success('branding.bz に連携しました')
+      toast.success('ブランド情報に反映しました')
       onOpenChange(false)
     } catch {
-      toast.error('連携中にエラーが発生しました')
+      toast.error('反映中にエラーが発生しました')
     } finally {
       setConnecting(false)
     }
@@ -186,10 +186,10 @@ export function ConnectModal({ sessionId, userId, diagnosis: d, framework, open,
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Unplug className="h-5 w-5" />
-              branding.bz に連携
+              ブランド情報に反映する
             </DialogTitle>
             <DialogDescription>
-              連携する項目を選択してください。チェックした内容だけが本体に書き込まれます。
+              反映する項目を選択してください。チェックした内容だけがブランド情報に書き込まれます。
             </DialogDescription>
           </DialogHeader>
 
@@ -312,7 +312,7 @@ export function ConnectModal({ sessionId, userId, diagnosis: d, framework, open,
             </Button>
             <Button onClick={handleConnectClick} disabled={connecting || loadingPreflight || !hasSelection} className="gap-1.5">
               <Unplug className="h-4 w-4" />
-              {connecting ? '連携中...' : '選択した項目を連携する'}
+              {connecting ? '反映中...' : '選択した項目を反映する'}
             </Button>
           </div>
         </DialogContent>
@@ -324,7 +324,7 @@ export function ConnectModal({ sessionId, userId, diagnosis: d, framework, open,
           <AlertDialogHeader>
             <AlertDialogTitle>既存データを上書きします</AlertDialogTitle>
             <AlertDialogDescription>
-              {confirmTarget?.traits && '本体に登録済みの特性（traits）が診断結果で上書きされます。'}
+              {confirmTarget?.traits && '登録済みの特性（traits）が診断結果で上書きされます。'}
               {confirmTarget?.tags && `${confirmTarget?.traits ? ' また、' : ''}既存の期待タグが診断結果のタグに置換されます。`}
               {confirmTarget?.archetype && `${(confirmTarget?.traits || confirmTarget?.tags) ? ' また、' : ''}既存のアーキタイプが診断結果で上書きされます。`}
               {' '}この操作は元に戻せません。続行しますか？
@@ -332,7 +332,7 @@ export function ConnectModal({ sessionId, userId, diagnosis: d, framework, open,
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>キャンセル</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmedConnect}>上書きして連携する</AlertDialogAction>
+            <AlertDialogAction onClick={handleConfirmedConnect}>上書きして反映する</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

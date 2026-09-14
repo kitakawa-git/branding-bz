@@ -83,7 +83,7 @@ export function ToneRulesSection({
       <p className="text-[13px] text-muted-foreground mb-3 m-0">
         {registered
           ? 'すでに登録され、AIの生成に反映されているルールです。この診断の新しい提案は末尾に並びます'
-          : 'この診断から提案されたルールです。連携するとブランドに登録され、AIの生成に反映されます'}
+          : 'この診断から提案されたルールです。反映するとブランドに登録され、AIの生成に使われます'}
       </p>
 
       <div className="space-y-2">

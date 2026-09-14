@@ -58,7 +58,7 @@ export function Step5Result({ sessionId, personas, basicInfo, companyId, onBack,
         const { data: adminUser } = await supabase
           .from('admin_users').select('company_id').eq('auth_id', user.id).maybeSingle()
         if (!adminUser?.company_id) {
-          toast.error('branding.bz本体のアカウントが必要です。管理画面から企業登録してください。')
+          toast.error('branding.bz のアカウントが必要です。管理画面から企業登録してください。')
           setConnecting(false)
           return
         }
@@ -72,13 +72,13 @@ export function Step5Result({ sessionId, personas, basicInfo, companyId, onBack,
       })
       if (!res.ok) {
         const data = await res.json()
-        toast.error(data.error || '連携に失敗しました')
+        toast.error(data.error || '反映に失敗しました')
         return
       }
       setConnected(true)
-      toast.success(`${personas.length}件のペルソナをbranding.bzに連携しました`)
+      toast.success(`${personas.length}件のペルソナをブランド情報に反映しました`)
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : '連携中にエラーが発生しました')
+      toast.error(err instanceof Error ? err.message : '反映中にエラーが発生しました')
     } finally {
       setConnecting(false)
     }
@@ -129,7 +129,7 @@ export function Step5Result({ sessionId, personas, basicInfo, companyId, onBack,
     <div>
       <h1 className="text-2xl font-bold text-foreground mb-2">Step 5: 確認・出力</h1>
       <p className="mb-4 text-[13px] text-muted-foreground">
-        {personas.length}件のペルソナが完成しました。内容を確認し、branding.bz への連携やPDF出力ができます。
+        {personas.length}件のペルソナが完成しました。内容を確認し、ブランド情報への反映やPDF出力ができます。
       </p>
 
       <div className="rounded-2xl border border-gray-200 bg-[hsl(0_0%_97%)] p-4">
@@ -222,7 +222,7 @@ export function Step5Result({ sessionId, personas, basicInfo, companyId, onBack,
         <div className="mt-6">
           <Step4Journey personas={data} basicInfo={basicInfo} readOnly />
           <p className="mt-2 text-[12px] text-muted-foreground">
-            ※ ジャーニー設計は連携の対象に含まれません（branding.bz には反映されません）。「PDFをダウンロード」のみに反映されます。
+            ※ ジャーニー設計は反映の対象に含まれません（branding.bz には反映されません）。「PDFをダウンロード」のみに反映されます。
           </p>
         </div>
       )}
@@ -232,13 +232,13 @@ export function Step5Result({ sessionId, personas, basicInfo, companyId, onBack,
           isAdminUser
           adminDescription="作成したペルソナをブランド管理プラットフォームに登録できます（既存ペルソナは置き換えられます）。"
           onConnectClick={() => setConfirmOpen(true)}
-          connectLabel="branding.bz に連携"
+          connectLabel="ブランド情報に反映する"
           onRestart={handleNewSession}
         />
       ) : (
         <>
           <div className="mt-4 rounded-lg bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-700">
-            ペルソナをbranding.bzに連携しました。管理画面の「ブランド戦略」からペルソナを確認できます。
+            ペルソナをブランド情報に反映しました。管理画面の「ブランド戦略」からペルソナを確認できます。
           </div>
           <div className="mt-4 text-center">
             <Button variant="ghost" size="sm" onClick={handleNewSession} className="text-xs text-gray-500">
@@ -261,19 +261,19 @@ export function Step5Result({ sessionId, personas, basicInfo, companyId, onBack,
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>branding.bz に連携</AlertDialogTitle>
+            <AlertDialogTitle>ブランド情報に反映する</AlertDialogTitle>
             <AlertDialogDescription>
-              {personas.length}件のペルソナをbranding.bzに連携します（既存ペルソナは置き換えられます）。
+              {personas.length}件のペルソナをブランド情報に反映します（既存ペルソナは置き換えられます）。
               {!hasCompanyId && '（企業アカウントが必要です）'}
             </AlertDialogDescription>
             <div className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-              ※ <span className="font-bold">ジャーニー設計は現在、連携の対象に含まれません</span>（branding.bz には反映されません）。ジャーニー設計は「PDFをダウンロード」のみに反映されます。
+              ※ <span className="font-bold">ジャーニー設計は現在、反映の対象に含まれません</span>（branding.bz には反映されません）。ジャーニー設計は「PDFをダウンロード」のみに反映されます。
             </div>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>キャンセル</AlertDialogCancel>
             <AlertDialogAction onClick={connectToBrandingBz} disabled={connecting} className="gap-1.5">
-              {connecting ? <><Loader2 className="h-4 w-4 animate-spin" /> 連携中...</> : '連携する'}
+              {connecting ? <><Loader2 className="h-4 w-4 animate-spin" /> 反映中...</> : '反映する'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

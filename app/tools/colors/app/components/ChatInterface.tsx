@@ -235,7 +235,7 @@ export function ChatInterface({
             onKeyDown={handleKeyDown}
             placeholder={
               remainingTurns <= 0
-                ? 'チャット回数の上限に達しました'
+                ? `調整チャットの上限（1セッション${FREE_LIMITS.chatTurnsPerSession}ターン）に達しました`
                 : 'AIに相談...'
             }
             disabled={streaming || remainingTurns <= 0}

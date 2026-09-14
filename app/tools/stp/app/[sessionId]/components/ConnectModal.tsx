@@ -172,16 +172,16 @@ export function ConnectModal({
         return
       }
       if (!res.ok) {
-        toast.error(data.error || '連携に失敗しました')
+        toast.error(data.error || '反映に失敗しました')
         return
       }
 
-      toast.success('branding.bz に連携しました')
+      toast.success('ブランド情報に反映しました')
       setAccumulatedConfirm({})
       onOpenChange(false)
       onConnected?.()
     } catch {
-      toast.error('連携中にエラーが発生しました')
+      toast.error('反映中にエラーが発生しました')
     } finally {
       setConnecting(false)
     }
@@ -234,10 +234,10 @@ export function ConnectModal({
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Unplug className="h-5 w-5" />
-              branding.bz に連携
+              ブランド情報に反映する
             </DialogTitle>
             <DialogDescription>
-              連携する項目を選択してください。チェックした内容だけが本体に書き込まれます。
+              反映する項目を選択してください。チェックした内容だけがブランド情報に書き込まれます。
             </DialogDescription>
           </DialogHeader>
 
@@ -331,7 +331,7 @@ export function ConnectModal({
             </Button>
             <Button onClick={handleConnectClick} disabled={connecting || loadingPreflight || !hasSelection} className="gap-1.5">
               <Unplug className="h-4 w-4" />
-              {connecting ? '連携中...' : '選択した項目を連携する'}
+              {connecting ? '反映中...' : '選択した項目を反映する'}
             </Button>
           </div>
         </DialogContent>
@@ -348,7 +348,7 @@ export function ConnectModal({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setAccumulatedConfirm({})}>キャンセル</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmedConnect}>上書きして連携する</AlertDialogAction>
+            <AlertDialogAction onClick={handleConfirmedConnect}>上書きして反映する</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

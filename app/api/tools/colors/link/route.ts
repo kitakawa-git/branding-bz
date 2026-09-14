@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
 
     if (!session.company_id) {
       return NextResponse.json(
-        { error: 'branding.bzアカウントとの連携が必要です。管理画面からアカウントを作成してください。', needsAccount: true },
+        { error: 'branding.bz のアカウントが必要です。管理画面からアカウントを作成してください。', needsAccount: true },
         { status: 400 }
       )
     }
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
         .eq('company_id', session.company_id)
 
       if (updateError) {
-        return NextResponse.json({ error: `連携エラー: ${updateError.message}` }, { status: 500 })
+        return NextResponse.json({ error: `反映エラー: ${updateError.message}` }, { status: 500 })
       }
     } else {
       // 新規作成
@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
         })
 
       if (insertError) {
-        return NextResponse.json({ error: `連携エラー: ${insertError.message}` }, { status: 500 })
+        return NextResponse.json({ error: `反映エラー: ${insertError.message}` }, { status: 500 })
       }
     }
 

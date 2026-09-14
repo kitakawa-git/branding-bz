@@ -508,7 +508,7 @@ export function Step5Result({
     <div>
       <h1 className="text-2xl font-bold text-foreground mb-2">Step 5: 確認・出力</h1>
       <p className="mb-4 text-[13px] text-muted-foreground">
-        セグメント・ターゲット・ポジショニングの結果を一覧で確認します。PDF保存やbranding.bzへの連携で活用しましょう。
+        セグメント・ターゲット・ポジショニングの結果を一覧で確認します。PDF保存やブランド情報への反映で活用しましょう。
       </p>
 
       <TargetingSection
@@ -527,8 +527,8 @@ export function Step5Result({
       <ToolConnectActions
         checkingAdmin={checkingAdmin}
         isAdminUser={isAdminUser}
-        adminDescription="STP分析の結果をブランド管理プラットフォームに登録できます。連携する項目は次の画面で選択します。"
-        nonAdminDescription="本体への連携には branding.bz の企業アカウント（管理者）が必要です。分析結果はPDFでダウンロードしてご活用ください。"
+        adminDescription="STP分析の結果を branding.bz のブランド情報に反映できます。反映する項目は次の画面で選択します。"
+        nonAdminDescription="ブランド情報への反映には branding.bz の企業アカウント（管理者）が必要です。分析結果はPDFでダウンロードしてご活用ください。"
         onConnectClick={handleConnectClick}
         onRestart={() => setRestartConfirmOpen(true)}
       />

@@ -20,14 +20,14 @@ export interface ToolConnectActionsProps {
   nonAdminDescription?: string
   /** 連携ボタンクリック */
   onConnectClick: () => void
-  /** 連携ボタンのラベル（省略時は「連携する項目を選ぶ」） */
+  /** 連携ボタンのラベル（省略時は「反映する項目を選ぶ」） */
   connectLabel?: string
   /** 「最初からやり直す」ハンドラ。省略時は非表示 */
   onRestart?: () => void
 }
 
 const DEFAULT_NON_ADMIN_DESCRIPTION =
-  '本体への連携には branding.bz の企業アカウント（管理者）が必要です。結果はPDFでダウンロードしてご活用ください。'
+  'ブランド情報への反映には branding.bz の企業アカウント（管理者）が必要です。結果はPDFでダウンロードしてご活用ください。'
 
 export function ToolConnectActions({
   checkingAdmin = false,
@@ -35,7 +35,7 @@ export function ToolConnectActions({
   adminDescription,
   nonAdminDescription = DEFAULT_NON_ADMIN_DESCRIPTION,
   onConnectClick,
-  connectLabel = '連携する項目を選ぶ',
+  connectLabel = '反映する項目を選ぶ',
   onRestart,
 }: ToolConnectActionsProps) {
   return (
@@ -43,7 +43,7 @@ export function ToolConnectActions({
       {!checkingAdmin && (
         <Card className="mt-4 bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-5">
-            <h3 className="text-sm font-bold text-foreground mb-2">branding.bz への連携</h3>
+            <h3 className="text-sm font-bold text-foreground mb-2">ブランド情報に反映</h3>
             {isAdminUser ? (
               <>
                 <p className="text-xs text-muted-foreground mb-3">{adminDescription}</p>

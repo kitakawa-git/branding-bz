@@ -203,7 +203,7 @@ export function Step5Result({ sessionId, framework, diagnosis, companyName, onSa
     <div>
       <h1 className="text-2xl font-bold text-foreground mb-2">Step 5: 診断結果</h1>
       <p className="mb-5 text-[13px] text-muted-foreground">
-        診断結果を確認し、スコアの微調整・PDF出力・branding.bz への連携を行いましょう
+        診断結果を確認し、スコアの微調整・PDF出力・ブランド情報への反映を行いましょう
       </p>
 
       {/* 選択フレームワークの結果のみ表示（タブ切替は廃止・仕様改定） */}
@@ -380,20 +380,20 @@ export function Step5Result({ sessionId, framework, diagnosis, companyName, onSa
       {!checkingAdmin && (
         <Card className="mt-4 bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-5">
-            <h3 className="text-sm font-bold text-foreground mb-2">branding.bz への連携</h3>
+            <h3 className="text-sm font-bold text-foreground mb-2">ブランド情報に反映</h3>
             {isAdminUser ? (
               <>
                 <p className="text-xs text-muted-foreground mb-3">
-                  診断結果をブランド管理プラットフォームに登録できます。連携する項目は次の画面で選択します。
+                  診断結果を branding.bz のブランド情報に反映できます。反映する項目は次の画面で選択します。
                 </p>
                 <Button variant="outline" onClick={() => setConnectOpen(true)} className="gap-1.5">
                   <Unplug className="h-4 w-4" />
-                  連携する項目を選ぶ
+                  反映する項目を選ぶ
                 </Button>
               </>
             ) : (
               <p className="text-xs text-muted-foreground">
-                本体への連携には branding.bz の企業アカウント（管理者）が必要です。診断結果はPDFでダウンロードしてご活用ください。
+                ブランド情報への反映には branding.bz の企業アカウント（管理者）が必要です。診断結果はPDFでダウンロードしてご活用ください。
               </p>
             )}
           </CardContent>
