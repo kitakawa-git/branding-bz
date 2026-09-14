@@ -14,8 +14,10 @@ export function AccessibilityBadge({ score }: AccessibilityBadgeProps) {
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
+          {/* 合否は lib/color-utils.ts の passes（メイン色／明背景 と アクセント色／明背景 の2組が 4.5:1 以上）。
+              暗背景の比率はツールチップに出すだけで合否には含めないので、ラベルも「明背景」と明記する */}
           <span
-            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${
+            className={`inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium ${
               passes
                 ? 'bg-green-50 text-green-700'
                 : 'bg-amber-50 text-amber-700'
@@ -26,7 +28,7 @@ export function AccessibilityBadge({ score }: AccessibilityBadgeProps) {
                 <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none">
                   <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-                AA準拠
+                AA基準（明背景）
               </>
             ) : (
               <>
@@ -48,7 +50,7 @@ export function AccessibilityBadge({ score }: AccessibilityBadgeProps) {
               <p>メイン色 / 暗背景: {score.primaryOnDark.toFixed(1)}:1 {score.primaryOnDark >= 4.5 ? '✓' : '✗'}</p>
               <p>アクセント / 明背景: {score.accentOnLight.toFixed(1)}:1 {score.accentOnLight >= 4.5 ? '✓' : '✗'}</p>
             </div>
-            <p className="text-gray-400">基準: 4.5:1 以上</p>
+            <p className="text-gray-400">基準: 4.5:1 以上（合否は明背景の2組で判定）</p>
           </div>
         </TooltipContent>
       </Tooltip>

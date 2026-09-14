@@ -25,7 +25,7 @@ const STEPS = [
 const HIGHLIGHTS = [
   { label: 'AI提案', icon: Lightbulb, title: ['AI自動', 'セグメント提案'], description: '業種や商品の特徴に合わせて、市場を分ける切り口をAIが提案します。提案をもとに、自社に合う切り口を選べます。' },
   { label: 'マップ', icon: SlidersHorizontal, title: ['インタラクティブ', 'ポジショニングマップ'], description: 'スライダーで直感的に自社・競合を配置。ポジショニングの空白地帯が一目でわかります。' },
-  { label: '出力', icon: Download, title: ['PDF・画像を', 'ワンクリック出力'], description: '分析結果をPDFでワンクリックダウンロード。ポジショニングマップも画像で保存できます（PDF出力とブランド情報への反映は Standard 以上）。' },
+  { label: '出力', icon: Download, title: ['PDFで', 'ワンクリック出力'], description: '分析結果をPDFでワンクリックダウンロードできます（PDF出力とブランド情報への反映は Standard 以上）。' },
   { label: '反映', icon: Unplug, title: ['ワンクリックで', 'ブランド情報に反映'], description: '確定したSTP分析を、branding.bz のブランド情報（ブランド戦略）に反映できます（Standard 以上）。' },
 ]
 
@@ -37,11 +37,11 @@ const FAQ_ITEMS = [
   },
   {
     q: 'STP分析ツールで何ができますか？',
-    a: 'AIがセグメンテーション・ターゲティング・ポジショニングを提案し、ポジショニングマップの自動作成とPDF出力に対応しています。マップは画像でも保存できます（PDF出力とブランド情報への反映は Standard 以上）。',
+    a: 'AIがセグメンテーション・ターゲティング・ポジショニングを提案し、ポジショニングマップの自動作成とPDF出力に対応しています（PDF出力とブランド情報への反映は Standard 以上）。',
   },
   {
     q: '作成した分析結果は保存・活用できますか？',
-    a: '分析結果はPDF・画像でダウンロードできるほか、ワンクリックで branding.bz のブランド情報（ブランド戦略）に反映できます（PDF出力とブランド情報への反映は Standard 以上）。',
+    a: '分析結果はPDFでダウンロードできるほか、ワンクリックで branding.bz のブランド情報（ブランド戦略）に反映できます（いずれも Standard 以上）。',
   },
   {
     q: 'STP分析の知識がなくても使えますか？',

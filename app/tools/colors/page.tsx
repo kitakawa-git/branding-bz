@@ -88,7 +88,7 @@ const STEPS = [
 const HIGHLIGHTS = [
   { label: 'アクセシビリティ', icon: Palette, title: ['コントラスト比を', '自動チェック'], description: '主要な3組の配色について、文字の読みやすさの目安となるコントラスト比を確認できます。' },
   { label: '対話型調整', icon: WandSparkles, title: ['AIチャットで', '自由に調整'], description: '「もう少し温かみがほしい」など、自然な言葉で、1セッションあたり5ターンまで調整できます。' },
-  { label: '出力', icon: Download, title: ['PDF・CSSを', 'ワンクリック出力'], description: 'パレットカードPDFやCSSカスタムプロパティをワンクリックでダウンロードできます（PDF出力とブランド情報への反映は Standard 以上）。' },
+  { label: '出力', icon: Download, title: ['PDF・CSSを', 'ワンクリック出力'], description: 'パレットカードはPDFでダウンロード、CSSカスタムプロパティはワンクリックでコピーできます（PDF出力は Standard 以上）。' },
   { label: '反映', icon: Plug, title: ['ワンクリックで', 'ブランド情報に反映'], description: '確定したカラーを、branding.bz のブランド情報に反映。社内ガイドラインや名刺にも反映されます（Standard 以上）。' },
 ]
 
@@ -109,7 +109,7 @@ const FAQ_ITEMS = [
   },
   {
     q: '作ったカラーはどう使えますか？',
-    a: 'パレットカードのPDFとCSSカスタムプロパティをワンクリックでダウンロードでき、branding.bz のブランド情報にも反映できます（CSSカスタムプロパティ以外は Standard 以上）。',
+    a: 'CSSカスタムプロパティはワンクリックでコピーできます。パレットカードのPDF出力と、branding.bz のブランド情報への反映は Standard 以上のプランで利用できます。',
   },
   {
     q: 'デザインの専門知識がなくても使えますか？',
@@ -155,7 +155,7 @@ export default function ColorsLandingPage() {
             applicationCategory: 'DesignApplication',
             operatingSystem: 'Web',
             offers: { '@type': 'Offer', price: '0', priceCurrency: 'JPY' },
-            description: 'AIが業種やブランドの個性に合わせたカラーパレットを提案。主要な3組の配色のコントラスト比を確認でき、PDF・CSS出力に対応（PDF出力とブランド情報への反映は Standard 以上）。',
+            description: 'AIが業種やブランドの個性に合わせたカラーパレットを提案。主要な3組の配色のコントラスト比を確認でき、PDF出力とCSSカスタムプロパティのコピーに対応（PDF出力とブランド情報への反映は Standard 以上）。',
             provider: { '@type': 'Organization', name: 'branding.bz', url: 'https://branding.bz' },
           }),
         }}
