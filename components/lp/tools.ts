@@ -38,7 +38,7 @@ export const tools: Tool[] = [
     href: '/tools/personality',
     label: 'パーソナリティ診断ツール',
     icon: Fingerprint,
-    d: 'ブランドの人格を10問で診断。BAVと脳タイプの両軸で、ブランドの個性を立体的に。',
+    d: 'ブランドの人格を10問で診断。Aaker 5次元と12アーキタイプの2軸で、ブランドの個性を立体的に。',
     color: 'radial-gradient(120% 120% at 25% 20%,#10b981 0%,#0f172a 65%)',
   },
 ]
