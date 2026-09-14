@@ -18,6 +18,8 @@ import { PageHero, GlowCard } from '@/components/lp/ui'
 import { tools } from '@/components/lp/tools'
 import ToolCard from '@/components/lp/ToolCard'
 import FinalCta from '@/components/lp/FinalCta'
+// 説明文・lead の「|」は文節区切りの独自記法。Phrases を通して表示する（詳細は components/lp/Phrases.tsx）
+import Phrases from '@/components/lp/Phrases'
 
 export const metadata: Metadata = {
   title: '機能紹介 | branding.bz',
@@ -61,7 +63,7 @@ const groups: { layer: string; lead: string; features: Feature[] }[] = [
         tag: '浸透',
         title: 'ダッシュボード',
         description:
-          '投稿数・行動指針別の割合・KPI進捗を期間フィルター付きで表示。チームのブランド浸透度が、数字で見えるようになります。',
+          '投稿数・|行動指針別の割合・|KPI進捗を|期間フィルター付きで表示。|チームのブランド浸透度が、|数字で見えるようになります。',
         icon: LayoutDashboard,
       },
       {
@@ -69,7 +71,7 @@ const groups: { layer: string; lead: string; features: Feature[] }[] = [
         tag: '浸透',
         title: 'Good Action投稿',
         description:
-          '行動指針に基づいた取り組みを、写真付きで手軽にシェア。いいね・コメントで称え合い、ブランドを体現する文化を育てます。',
+          '行動指針に基づいた|取り組みを、|写真付きで|手軽にシェア。|いいね・コメントで|称え合い、|ブランドを体現する|文化を育てます。',
         icon: MessageSquareHeart,
       },
       {
@@ -77,7 +79,7 @@ const groups: { layer: string; lead: string; features: Feature[] }[] = [
         tag: '浸透',
         title: '目標・KPI管理',
         description:
-          'ブランド行動指針に紐づく目標を設定し、達成状況を管理。重み付け・達成時期で、優先順位を見える化します。',
+          'ブランド行動指針に|紐づく目標を設定し、|達成状況を管理。|重み付け・達成時期で、|優先順位を|見える化します。',
         icon: Milestone,
       },
       {
@@ -98,7 +100,7 @@ const groups: { layer: string; lead: string; features: Feature[] }[] = [
         tag: '浸透',
         title: 'ブランド理解度テスト',
         description:
-          '理念や行動指針の理解度を設問で測定。AIが設問案を生成し、部署別・役職別に正答率を集計します。',
+          '理念や行動指針の|理解度を設問で測定。|AIが設問案を生成し、|部署別・役職別に|正答率を集計します。',
         icon: ClipboardCheck,
       },
     ],
@@ -112,14 +114,14 @@ const groups: { layer: string; lead: string; features: Feature[] }[] = [
         tag: '発信',
         title: 'スマート名刺',
         description:
-          'QRコードからプロフィール＋企業ブランドページを表示。ブランドカラーが自動適用され、連絡先はvCardでそのまま保存できます。名刺交換がブランド体験に変わります。',
+          'QRコードから|プロフィール＋|企業ブランドページを表示。|ブランドカラーが|自動適用され、|連絡先はvCardで|そのまま保存できます。|名刺交換が|ブランド体験に変わります。',
         icon: CreditCard,
       },
       {
         tag: '発信',
         title: '効果計測',
         description:
-          '名刺の閲覧数・閲覧トレンド・メンバー別ランキングを自動集計。誰の名刺が、いつ、どれだけ見られたかを把握できます。',
+          '名刺の閲覧数・|閲覧トレンド・|メンバー別ランキングを|自動集計。|誰の名刺が、|いつ、|どれだけ見られたかを|把握できます。',
         icon: BarChart3,
       },
       {
@@ -140,7 +142,7 @@ const groups: { layer: string; lead: string; features: Feature[] }[] = [
         tag: '計測（インナー）',
         title: 'インナースコア＋推移',
         description:
-          'インナーサーベイの回答から社内の浸透度をスコア化。推移と、理解度テストとの「知識×共感」ギャップ分析まで、自社だけで完結して追えます。',
+          'インナーサーベイの回答から|社内の浸透度をスコア化。|推移と、|理解度テストとの|「知識×共感」|ギャップ分析まで、|自社だけで完結して|追えます。',
         icon: Activity,
       },
       {
@@ -167,41 +169,26 @@ const groups: { layer: string; lead: string; features: Feature[] }[] = [
         tag: 'サポート',
         title: 'ID INC. による四半期レビュー',
         description:
-          'スコアと現場の動きを四半期ごとに読み解き、次の打ち手まで一緒に決めます。数字を出して終わりにしません。',
+          'スコアと現場の動きを|四半期ごとに読み解き、|次の打ち手まで|一緒に決めます。|数字を出して|終わりにしません。',
         icon: Headset,
       },
       {
         tag: 'サポート',
         title: '市場調査手配',
         description:
-          '調査会社の手配から設問設計、集計表の取り込みまで代行。市場での立ち位置を定点で追えるようにします。',
+          '調査会社の手配から|設問設計、|集計表の取り込みまで代行。|市場での立ち位置を|定点で追えるようにします。',
         icon: Headset,
       },
       {
         tag: 'サポート',
         title: 'ブランド研修・ワークショップ',
         description:
-          '社員がブランドを自分の言葉で語れるようになるまで、研修とワークショップで伴走します。費用は要件に合わせた個別見積です。',
+          '社員がブランドを|自分の言葉で|語れるようになるまで、|研修とワークショップで|伴走します。|費用は要件に合わせた|個別見積です。',
         icon: Headset,
       },
     ],
   },
 ]
-
-/* 説明文に「|」で文節の区切りを入れておくと、その単位で折り返す（語の途中で「配／信」などと折れるのを防ぐ）。
-   区切りの無い文はそのまま表示する。1つの区切りはスマホ幅の1行（約20字）より短くすること */
-function Phrases({ text }: { text: string }) {
-  if (!text.includes('|')) return <>{text}</>
-  return (
-    <>
-      {text.split('|').map((p, i) => (
-        <span key={i} className="inline-block">
-          {p}
-        </span>
-      ))}
-    </>
-  )
-}
 
 function FeatureCard({ f }: { f: Feature }) {
   return (
