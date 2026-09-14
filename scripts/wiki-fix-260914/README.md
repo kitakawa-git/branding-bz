@@ -1,6 +1,9 @@
 # §8 用語集 8語の文言修正（2026-09）
 
-対象: Supabase `public.wiki_terms` の8語。**本番データは未変更です。**
+対象: Supabase `public.wiki_terms` の8語。
+
+**実行済み。** 2026-09-14 に Cowork 側から本番へ適用しました（wiki_terms 8件）。
+このファイル一式は実行記録として残しています。再実行は不要です。
 
 対象外: `ブランドパーソナリティの5次元`（Ruggedness の訳語を意味から照合する必要があるため、監修担当へ引き継ぎ済み）
 
@@ -30,6 +33,10 @@
 `slug` / `term` / `status` / `categories` / `aliases` / `id` は変更しません。
 
 ## 後片付け
+
+**実行しないこと。** 退避表4つ（`news_backup_260914` / `news_after_260914` / `wiki_backup_260914` / `wiki_after_260914`）は維持すると決定済みです。削除しないでください。
+
+以下は SQL を書いた時点の記載で、参考として残しています。
 
 ```sql
 drop table if exists public.wiki_after_260914;
