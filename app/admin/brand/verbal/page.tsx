@@ -517,7 +517,7 @@ export default function VerbalIdentityPage() {
             <div>
             <h2 className="text-xs font-bold mb-2">表現ルール</h2>
             <p className="text-xs text-muted-foreground mb-4">
-              ブランドの語り口の制約ルール（NG例・OK例つき）を設定します。AIのコピー生成やパーソナリティ診断の連携で参照されます
+              ブランドの語り口の制約ルール（NG例・OK例つき）を設定します。AIのコピー生成やパーソナリティ診断からの反映で参照されます
             </p>
 
             <div className="space-y-3">

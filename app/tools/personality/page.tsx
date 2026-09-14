@@ -26,7 +26,7 @@ const HIGHLIGHTS = [
   { label: 'AI診断', icon: Sparkles, title: ['10問の回答から', 'AIが人格を生成'], description: '選択式中心の10問に答えるだけ。スコアもタイプも1回で同時に算出し、タブで切り替えられます。' },
   { label: '微調整', icon: SlidersHorizontal, title: ['スコアを', '自分の感覚で調整'], description: '診断結果はスライダーで微調整可能。「ここは少し誠実寄り」という肌感覚を反映できます。' },
   { label: '出力', icon: Download, title: ['診断結果を', 'PDFでダウンロード'], description: '人格スコア・タイプカード・トーンオブボイスをまとめたレポートをワンクリックでPDF出力（PDF出力とブランド情報への反映は Standard 以上）。' },
-  { label: '連携', icon: Unplug, title: ['ワンクリックで', 'ブランド情報に反映'], description: '確定した人格を、branding.bz のブランド情報に反映。トーン・期待タグも運用に反映されます（PDF出力とブランド情報への反映は Standard 以上）。' },
+  { label: '反映', icon: Unplug, title: ['ワンクリックで', 'ブランド情報に反映'], description: '確定した人格を、branding.bz のブランド情報に反映。トーン・期待タグも運用に反映されます（PDF出力とブランド情報への反映は Standard 以上）。' },
 ]
 
 // 表示と FAQPage schema は同じ配列を参照して完全一致を担保する

@@ -499,7 +499,7 @@ function Experts() {
               必要なときに。
             </h2>
             <p className="mt-5 max-w-md text-lg text-white/60">
-              ツールだけで終わらせない。15年以上ブランディングを手がけてきた ID INC. のプロが、
+              ツールだけで終わらせない。数多くの企業のブランディングを手がけてきた ID INC. のプロが、
               戦略策定からデザイン制作まで伴走します。
             </p>
             <ul className="mt-8 space-y-3">

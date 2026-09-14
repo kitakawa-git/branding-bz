@@ -26,7 +26,7 @@ const HIGHLIGHTS = [
   { label: 'AI提案', icon: Lightbulb, title: ['AI自動', 'セグメント提案'], description: '業種や商品特性をもとに、最適なセグメント変数をAIが自動提案。市場分析を大幅に短縮します。' },
   { label: 'マップ', icon: SlidersHorizontal, title: ['インタラクティブ', 'ポジショニングマップ'], description: 'スライダーで直感的に自社・競合を配置。ポジショニングの空白地帯が一目でわかります。' },
   { label: '出力', icon: Download, title: ['PDF・画像を', 'ワンクリック出力'], description: '分析結果をPDFでワンクリックダウンロード。ポジショニングマップも画像で保存できます（PDF出力とブランド情報への反映は Standard 以上）。' },
-  { label: '連携', icon: Unplug, title: ['ワンクリックで', 'ブランド情報に反映'], description: '確定したSTP分析を、branding.bz のブランド情報（ブランド戦略）に反映できます（PDF出力とブランド情報への反映は Standard 以上）。' },
+  { label: '反映', icon: Unplug, title: ['ワンクリックで', 'ブランド情報に反映'], description: '確定したSTP分析を、branding.bz のブランド情報（ブランド戦略）に反映できます（PDF出力とブランド情報への反映は Standard 以上）。' },
 ]
 
 // 表示と FAQPage schema は同じ配列を参照して完全一致を担保する

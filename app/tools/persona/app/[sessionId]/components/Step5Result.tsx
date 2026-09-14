@@ -222,7 +222,7 @@ export function Step5Result({ sessionId, personas, basicInfo, companyId, onBack,
         <div className="mt-6">
           <Step4Journey personas={data} basicInfo={basicInfo} readOnly />
           <p className="mt-2 text-[12px] text-muted-foreground">
-            ※ ジャーニー設計は反映の対象に含まれません（branding.bz には反映されません）。「PDFをダウンロード」のみに反映されます。
+            ※ ジャーニー設計はブランド情報には反映されず、PDFにのみ含まれます。
           </p>
         </div>
       )}
@@ -267,7 +267,7 @@ export function Step5Result({ sessionId, personas, basicInfo, companyId, onBack,
               {!hasCompanyId && '（企業アカウントが必要です）'}
             </AlertDialogDescription>
             <div className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-              ※ <span className="font-bold">ジャーニー設計は現在、反映の対象に含まれません</span>（branding.bz には反映されません）。ジャーニー設計は「PDFをダウンロード」のみに反映されます。
+              ※ <span className="font-bold">ジャーニー設計はブランド情報には反映されず、PDFにのみ含まれます。</span>
             </div>
           </AlertDialogHeader>
           <AlertDialogFooter>

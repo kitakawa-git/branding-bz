@@ -276,7 +276,7 @@ export function ConnectModal({
                 title="ターゲット適合マップ → 顧客側軸＋カバー範囲"
               >
                 <p className="text-xs text-muted-foreground">
-                  狙ったターゲットが自社のカバー範囲に入るかの分析結果を本体に保存します。
+                  狙ったターゲットが自社のカバー範囲に入るかの分析結果をブランド情報に保存します。
                 </p>
               </ToggleRow>
             )}
@@ -319,7 +319,7 @@ export function ConnectModal({
                 title="自社の立ち位置 → ターゲット別ポジショニング文"
               >
                 <p className="text-xs text-muted-foreground">
-                  ターゲット別の立ち位置（ポジショニング・ステートメント）を本体に保存します。
+                  ターゲット別の立ち位置（ポジショニング・ステートメント）をブランド情報に保存します。
                 </p>
               </ToggleRow>
             )}
@@ -343,7 +343,7 @@ export function ConnectModal({
           <AlertDialogHeader>
             <AlertDialogTitle>既存データを上書きします</AlertDialogTitle>
             <AlertDialogDescription>
-              本体に登録済みの{overwriteParts.join('・')}が、STP分析結果で上書きされます。この操作は元に戻せません。続行しますか？
+              登録済みの{overwriteParts.join('・')}が、STP分析結果で上書きされます。この操作は元に戻せません。続行しますか？
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -57,7 +57,7 @@ const HIGHLIGHTS = [
     description: 'ペルソナシートとジャーニーマップをPDFでワンクリック出力。社内共有にすぐに使えます（PDF出力とブランド情報への反映は Standard 以上）。',
   },
   {
-    label: '連携',
+    label: '反映',
     icon: Unplug,
     title: ['ワンクリックで', 'ブランド情報に反映'],
     description: '確定したペルソナを、branding.bz のブランド情報（ブランド戦略）に反映できます（PDF出力とブランド情報への反映は Standard 以上）。',

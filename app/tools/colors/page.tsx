@@ -89,7 +89,7 @@ const HIGHLIGHTS = [
   { label: 'アクセシビリティ', icon: Palette, title: ['WCAG準拠の', '配色チェック'], description: 'アクセシビリティ基準を自動で検証し、誰にでも見やすい配色を提案します。' },
   { label: '対話型調整', icon: WandSparkles, title: ['AIチャットで', '自由に調整'], description: '「もう少し温かみがほしい」など、自然な言葉で、1セッションあたり5ターンまで調整できます。' },
   { label: '出力', icon: Download, title: ['PDF・CSSを', 'ワンクリック出力'], description: 'パレットカードPDFやCSSカスタムプロパティをワンクリックでダウンロードできます（PDF出力とブランド情報への反映は Standard 以上）。' },
-  { label: '連携', icon: Plug, title: ['ワンクリックで', 'ブランド情報に反映'], description: '確定したカラーを、branding.bz のブランド情報に反映。社内ガイドラインや名刺にも反映されます（PDF出力とブランド情報への反映は Standard 以上）。' },
+  { label: '反映', icon: Plug, title: ['ワンクリックで', 'ブランド情報に反映'], description: '確定したカラーを、branding.bz のブランド情報に反映。社内ガイドラインや名刺にも反映されます（PDF出力とブランド情報への反映は Standard 以上）。' },
 ]
 
 // 表示と FAQPage schema は同じ配列を参照して完全一致を担保する
