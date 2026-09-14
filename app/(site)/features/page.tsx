@@ -22,14 +22,14 @@ import FinalCta from '@/components/lp/FinalCta'
 export const metadata: Metadata = {
   title: '機能紹介 | branding.bz',
   description:
-    'branding.bz の機能紹介。ブランド掲示・Good Action投稿・目標・KPI管理・スマート名刺・ブランドスコアなど、ブランドの構築・浸透・発信と、その全部を横串で評価する計測を支える機能をまとめて紹介します。',
+    'branding.bz の機能紹介。ブランド掲示・Good Action投稿・目標・KPI管理・スマート名刺・ブランドスコアなど、ブランドの構築・浸透・発信と、そのすべてを支える計測の機能をまとめて紹介します。',
   alternates: {
     canonical: '/features',
   },
   openGraph: {
     title: '機能紹介 | branding.bz',
     description:
-      'branding.bz の機能紹介。ブランド掲示・Good Action投稿・目標・KPI管理・スマート名刺・ブランドスコアなど、ブランドの構築・浸透・発信と、その全部を横串で評価する計測を支える機能をまとめて紹介します。',
+      'branding.bz の機能紹介。ブランド掲示・Good Action投稿・目標・KPI管理・スマート名刺・ブランドスコアなど、ブランドの構築・浸透・発信と、そのすべてを支える計測の機能をまとめて紹介します。',
     url: 'https://branding.bz/features',
   },
 }
@@ -133,7 +133,7 @@ const groups: { layer: string; lead: string; features: Feature[] }[] = [
   },
   {
     layer: '計測',
-    lead: '構築・浸透・発信の3つを、横串で数字にする。',
+    lead: '構築・浸透・発信の3つを、数字で確かめる。',
     features: [
       {
         id: 'feature-score',
@@ -205,7 +205,10 @@ export default function LpFeaturesPage() {
   return (
     <main>
       <PageHero eyebrow="Features" title="ブランドを加速させる機能">
-        構築・浸透・発信。ブランドの旅路を、必要な機能でまるごと支えます。その全部を、計測が横串で貫きます。
+        {/* スマホ幅で「必／要」「支／えます」と語の途中で折れるので、句読点ごとに折り返し単位をまとめる */}
+        <span className="inline-block">構築・浸透・発信。</span>
+        <span className="inline-block">それぞれの段階に必要な機能を揃え、</span>
+        <span className="inline-block">そのすべてを計測が支えます。</span>
       </PageHero>
 
       <div className="space-y-16 px-6 pb-24">

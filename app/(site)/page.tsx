@@ -11,7 +11,6 @@ import {
   LayoutDashboard,
   BarChart3,
   Check,
-  Quote,
 } from 'lucide-react'
 import { GlowCard } from '@/components/lp/ui'
 import { tools } from '@/components/lp/tools'
@@ -60,9 +59,10 @@ function Hero() {
         <p className="mx-auto mt-8 max-w-2xl text-lg text-white/60 md:text-xl">
           つくる・ひろげる・とどける。
           <br />
-          ブランドの構築から浸透、発信までを、その全部を貫く計測とともに。
+          {/* スマホ幅で「そ／のすべて」「プラットフォー／ム」と語の途中で折れるので、句読点の後で折る */}
+          ブランドの構築から浸透、発信まで。<br className="sm:hidden" />そのすべてを、計測が支えます。
           <br />
-          AIが伴走するひとつのプラットフォームで。
+          AIが伴走する、<br className="sm:hidden" />ひとつのプラットフォームで。
         </p>
 
         <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -84,7 +84,7 @@ function Hero() {
             }}
             className="inline-flex h-12 items-center justify-center rounded-full border border-white/15 bg-white/5 px-7 text-base font-semibold text-white backdrop-blur transition-colors hover:bg-white/10"
           >
-            AIではじめる
+            機能を見る
           </a>
         </div>
       </div>
@@ -326,7 +326,8 @@ function Features() {
             つくる、ひろげる、とどける。
           </h2>
           <p className="mt-5 text-lg text-white/60">
-            ブランドの旅路をまるごと支える、はじめてのプラットフォーム。
+            {/* スマホ幅で「ひと／つ」と折れるので、句点の後で折る */}
+            ブランドをつくり、育て、届ける。<br className="sm:hidden" />ひとつのプラットフォームで。
           </p>
         </div>
 
@@ -357,7 +358,8 @@ function Features() {
         {/* 計測（はかる）は3つと並ぶ4番目のステップではなく、3つを横串で評価する軸。
             カードを4枚目にすると順番のあるステップに見えてしまうので、
             3枚の下に幅いっぱいの帯として置く（営業資料 p3 と同じ構図）。
-            上端の横線が3枚を貫いている見た目そのものが「横串」の説明になる */}
+            上端の横線が3枚を貫いている見た目そのものが「横串」の説明になる
+            ※公開文言では『そのすべてを、計測が支えます』という言い方に統一している（2026-09） */}
         <div className="relative mt-5">
           {/* 3枚の幅いっぱいに伸びる線。中央を明るくして貫いている感じを出す */}
           <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent" />
@@ -368,7 +370,7 @@ function Features() {
                 <BarChart3 size={20} className="text-white" />
               </div>
               <div className="min-w-0">
-                <div className="mb-2 text-sm font-semibold text-cyan-400">はかる — 3つを貫く横串</div>
+                <div className="mb-2 text-sm font-semibold text-cyan-400">はかる — 構築・浸透・発信を支える計測</div>
                 <h3 className="text-xl font-bold leading-snug">
                   {/* スマホ幅で「確／かめる」と語の途中で折れるので、読点の後で折る */}
                   取り組みの結果を、<br className="sm:hidden" />数字で確かめる
@@ -465,21 +467,28 @@ function Product() {
   )
 }
 
-/* ===== 導入の声（役職ベースの匿名引用） ===== */
-function Testimonial() {
+/* ===== 活用イメージ（行動と数字から次の取り組みを決める使い方の説明） =====
+   以前は導入企業の声として引用を置いていたが、出典を確認できないため説明文に変えた */
+function UsageHighlight() {
   return (
     <section className="px-6 py-24">
       <div className="mx-auto max-w-4xl">
         <GlowCard className="px-8 py-14 text-center md:px-16">
           <div className="pointer-events-none absolute inset-x-0 -top-10 mx-auto h-32 w-32 rounded-full bg-blue-500/20 blur-3xl" />
-          <Quote size={32} className="mx-auto mb-6 text-blue-400" />
-          <p className="relative text-balance text-2xl font-semibold leading-relaxed tracking-tight md:text-3xl">
-            “作って終わり”だったブランドが、毎日の行動として動き出した。
-            浸透度が数字で見えるから、次の一手に迷わなくなりました。
+          <h2 className="relative text-balance text-2xl font-semibold leading-relaxed tracking-tight md:text-3xl">
+            {/* スマホ幅で「数字か／ら」と折れるので、読点の後で折り返す */}
+            <span className="inline-block">日々の行動と数字から、</span>
+            <span className="inline-block">次の取り組みへ。</span>
+          </h2>
+          <p className="relative mx-auto mt-6 max-w-2xl text-balance text-base leading-relaxed text-white/60">
+            {/* 幅によって「共／有し」「数字／で確認」と語の途中で折れるので、文節ごとに折り返し単位をまとめる */}
+            <span className="inline-block">ブランドに沿った取り組みを</span>
+            <span className="inline-block">共有し、</span>
+            <span className="inline-block">浸透の進み具合を</span>
+            <span className="inline-block">数字で確認。</span>
+            <span className="inline-block">次に取り組む課題を</span>
+            <span className="inline-block">見つける手がかりにできます。</span>
           </p>
-          <div className="mt-8 text-sm text-white/50">
-            製造業・人事責任者 / 従業員120名 ※導入企業の声をもとにしたイメージです
-          </div>
         </GlowCard>
       </div>
     </section>
@@ -525,7 +534,7 @@ function Experts() {
               {[
                 { t: 'キックオフ', d: '現状とゴールをヒアリング。AIが論点を整理します。' },
                 { t: 'ブランド設計', d: '理念・カラー・ペルソナを共創ワークで言語化。' },
-                { t: '浸透支援', d: '掲示・タイムライン・サーベイで定着を伴走。' },
+                { t: '浸透支援', d: '掲示・タイムライン・サーベイで、定着を後押しします。' },
               ].map((s, i) => (
                 <div key={s.t} className="flex gap-4 rounded-2xl border border-white/10 bg-white/[0.02] p-4">
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-sm font-bold">
@@ -574,7 +583,7 @@ export default function LpPage() {
       <Showcase />
       <Features />
       <Product />
-      <Testimonial />
+      <UsageHighlight />
       <Experts />
       <Tools />
       <FinalCta />
