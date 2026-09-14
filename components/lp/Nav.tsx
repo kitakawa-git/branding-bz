@@ -85,11 +85,15 @@ export default function Nav() {
           ))}
         </nav>
 
-        {/* 右クラスタ：資料請求は1100px以上のみ。ログイン／無料で始める は常時表示。ハンバーガーは1100px未満のみ */}
+        {/* 右クラスタ：資料請求は1320px以上のみ。ログイン／無料で始める は常時表示。ハンバーガーは1100px未満のみ。
+            ⚠️ 中央ナビは absolute で右クラスタと押し合わないため、幅が足りないと「お問い合わせ」と重なる。
+            中央ナビは中央寄せなので、画面幅が Δ 広がると間隔は Δ/2 しか広がらない。
+            実測（Playwright）: 1280px でリンク同士が 18.7px 重なり文字間 9.3px、1318px 付近で重なり0・文字間28px
+            （中央ナビの他の項目と同じ間隔）になる。余裕を持たせて 1320px から出す */}
         <div className="flex items-center gap-2 sm:gap-3">
           <Link
             href="/document"
-            className="hidden rounded-full px-4 py-1.5 text-sm font-medium text-white/70 transition-colors hover:text-white min-[1100px]:inline-flex"
+            className="hidden rounded-full px-4 py-1.5 text-sm font-medium text-white/70 transition-colors hover:text-white min-[1320px]:inline-flex"
           >
             資料請求
           </Link>
