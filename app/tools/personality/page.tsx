@@ -19,14 +19,14 @@ const STEPS = [
   { icon: '2', title: '診断質問（前半）', description: 'ブランドの言われたい姿・距離感など5問' },
   { icon: '3', title: '診断質問（後半）', description: '自社が大切にする価値観・語り口など5問' },
   { icon: '4', title: 'AI診断', description: 'AIが回答をもとにブランドの人格を生成' },
-  { icon: '5', title: '結果・出力', description: '結果を微調整してPDF出力・本体に連携' },
+  { icon: '5', title: '結果・出力', description: '結果の微調整と、PDF出力・ブランド情報への反映' },
 ]
 
 const HIGHLIGHTS = [
   { label: 'AI診断', icon: Sparkles, title: ['10問の回答から', 'AIが人格を生成'], description: '選択式中心の10問に答えるだけ。スコアもタイプも1回で同時に算出し、タブで切り替えられます。' },
   { label: '微調整', icon: SlidersHorizontal, title: ['スコアを', '自分の感覚で調整'], description: '診断結果はスライダーで微調整可能。「ここは少し誠実寄り」という肌感覚を反映できます。' },
-  { label: '出力', icon: Download, title: ['診断結果を', 'PDFでダウンロード'], description: '人格スコア・タイプカード・トーンオブボイスをまとめたレポートをワンクリックでPDF出力。' },
-  { label: '連携', icon: Unplug, title: ['ワンクリックで', 'branding.bz に連携'], description: '確定した人格をブランディングプラットフォームに登録。トーン・期待タグも運用に即反映。' },
+  { label: '出力', icon: Download, title: ['診断結果を', 'PDFでダウンロード'], description: '人格スコア・タイプカード・トーンオブボイスをまとめたレポートをワンクリックでPDF出力（PDF出力とブランド情報への反映は Standard 以上）。' },
+  { label: '連携', icon: Unplug, title: ['ワンクリックで', 'ブランド情報に反映'], description: '確定した人格を、branding.bz のブランド情報に反映。トーン・期待タグも運用に反映されます（PDF出力とブランド情報への反映は Standard 以上）。' },
 ]
 
 // 表示と FAQPage schema は同じ配列を参照して完全一致を担保する
@@ -41,7 +41,7 @@ const FAQ_ITEMS = [
   },
   {
     q: '診断結果は調整できますか？',
-    a: 'スコアはスライダーで微調整でき、結果はPDF出力・branding.bz 連携に対応しています。',
+    a: 'スコアはスライダーで微調整でき、結果はPDF出力と branding.bz のブランド情報への反映に対応しています（PDF出力とブランド情報への反映は Standard 以上）。',
   },
   {
     q: 'どのくらいの時間でできますか？',

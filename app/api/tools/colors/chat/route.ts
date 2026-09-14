@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
 
     if (project.adjustment_count >= FREE_LIMITS.chatTurnsPerSession) {
       return new Response(
-        JSON.stringify({ error: `チャット回数の上限（${FREE_LIMITS.chatTurnsPerSession}回）に達しました。` }),
+        JSON.stringify({ error: `調整チャットの上限（1セッション${FREE_LIMITS.chatTurnsPerSession}ターン）に達しました。` }),
         { status: 429, headers: { 'Content-Type': 'application/json' } }
       )
     }

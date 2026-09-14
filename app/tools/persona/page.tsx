@@ -34,7 +34,7 @@ const STEPS = [
   { icon: '2', title: 'ペルソナ生成', description: 'AIがペルソナの属性や行動・人物像を提案' },
   { icon: '3', title: '課題・購買行動', description: '顧客の目標や悩み、購買行動の傾向を深掘り' },
   { icon: '4', title: 'ジャーニー設計', description: 'AIが5段階のカスタマージャーニーを生成' },
-  { icon: '5', title: '確認・出力', description: 'ペルソナシートとジャーニーマップをPDF出力' },
+  { icon: '5', title: '確認・出力', description: 'ペルソナの確定と、PDF出力・ブランド情報への反映' },
 ]
 
 const HIGHLIGHTS = [
@@ -54,13 +54,13 @@ const HIGHLIGHTS = [
     label: '出力',
     icon: Download,
     title: ['PDF・画像を', 'ワンクリック出力'],
-    description: 'ペルソナシートとジャーニーマップをPDFでワンクリック出力。社内共有にすぐに使えます。',
+    description: 'ペルソナシートとジャーニーマップをPDFでワンクリック出力。社内共有にすぐに使えます（PDF出力とブランド情報への反映は Standard 以上）。',
   },
   {
     label: '連携',
     icon: Unplug,
-    title: ['ワンクリックで', 'branding.bz に連携'],
-    description: '確定したペルソナをブランディングプラットフォームに登録。ブランド戦略に即反映。',
+    title: ['ワンクリックで', 'ブランド情報に反映'],
+    description: '確定したペルソナを、branding.bz のブランド情報（ブランド戦略）に反映できます（PDF出力とブランド情報への反映は Standard 以上）。',
   },
 ]
 
@@ -80,7 +80,7 @@ const FAQ_ITEMS = [
   },
   {
     q: '作ったペルソナは出力できますか？',
-    a: 'ペルソナシートとカスタマージャーニーマップの両方をPDF出力できます。確定したペルソナは branding.bz 本体にも連携できます。',
+    a: 'ペルソナシートとカスタマージャーニーマップの両方をPDF出力できます。確定したペルソナは branding.bz のブランド情報にも反映できます（PDF出力とブランド情報への反映は Standard 以上）。',
   },
 ]
 

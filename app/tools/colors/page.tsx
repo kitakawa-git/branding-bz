@@ -82,14 +82,14 @@ const STEPS = [
   { icon: '2', title: 'イメージ選択', description: 'キーワードやムードボードで方向性を設定' },
   { icon: '3', title: 'AI提案', description: 'AIが3パターンのカラーパレットを提案' },
   { icon: '4', title: '調整・磨き込み', description: 'AIチャットで色味やトーンを細かく調整' },
-  { icon: '5', title: '確定・出力', description: 'カードのPDF出力やbranding.bzへの連携' },
+  { icon: '5', title: '確定・出力', description: '結果の確定と、PDF出力・ブランド情報への反映' },
 ]
 
 const HIGHLIGHTS = [
   { label: 'アクセシビリティ', icon: Palette, title: ['WCAG準拠の', '配色チェック'], description: 'アクセシビリティ基準を自動で検証し、誰にでも見やすい配色を提案します。' },
   { label: '対話型調整', icon: WandSparkles, title: ['AIチャットで', '自由に調整'], description: '「もう少し温かみがほしい」など、自然な言葉で、1セッションあたり5ターンまで調整できます。' },
-  { label: '出力', icon: Download, title: ['PDF・CSSを', 'ワンクリック出力'], description: 'パレットカードPDFやCSSカスタムプロパティをワンクリックでダウンロードできます。' },
-  { label: '連携', icon: Plug, title: ['ワンクリックで', 'branding.bz に連携'], description: '確定したカラーをブランディングプラットフォームに登録。社内ガイドラインや名刺に即反映。' },
+  { label: '出力', icon: Download, title: ['PDF・CSSを', 'ワンクリック出力'], description: 'パレットカードPDFやCSSカスタムプロパティをワンクリックでダウンロードできます（PDF出力とブランド情報への反映は Standard 以上）。' },
+  { label: '連携', icon: Plug, title: ['ワンクリックで', 'ブランド情報に反映'], description: '確定したカラーを、branding.bz のブランド情報に反映。社内ガイドラインや名刺にも反映されます（PDF出力とブランド情報への反映は Standard 以上）。' },
 ]
 
 // 表示と FAQPage schema は同じ配列を参照して完全一致を担保する
@@ -104,7 +104,7 @@ const FAQ_ITEMS = [
   },
   {
     q: '作ったカラーはどう使えますか？',
-    a: 'パレットカードのPDFとCSSカスタムプロパティをワンクリックでダウンロードでき、branding.bz 本体にも連携できます。',
+    a: 'パレットカードのPDFとCSSカスタムプロパティをワンクリックでダウンロードでき、branding.bz のブランド情報にも反映できます（PDF出力とブランド情報への反映は Standard 以上）。',
   },
   {
     q: 'デザインの専門知識がなくても使えますか？',
@@ -150,7 +150,7 @@ export default function ColorsLandingPage() {
             applicationCategory: 'DesignApplication',
             operatingSystem: 'Web',
             offers: { '@type': 'Offer', price: '0', priceCurrency: 'JPY' },
-            description: 'AIがブランドのパーソナリティや業種に合わせてプロ品質のカラーパレットを提案。WCAG準拠チェック、PDF・CSS出力に対応。',
+            description: 'AIがブランドのパーソナリティや業種に合わせてプロ品質のカラーパレットを提案。WCAG準拠チェック、PDF・CSS出力に対応（PDF出力とブランド情報への反映は Standard 以上）。',
             provider: { '@type': 'Organization', name: 'branding.bz', url: 'https://branding.bz' },
           }),
         }}

@@ -52,7 +52,7 @@ const PLANS = [
     // pdfExport / portalSync はどちらも free:false（entitlements.ts）で、
     // 生成結果は画面で見られるが PDF にも掲示にも出せない。
     // 書いておかないと「月3回まで全部できる」と読まれる
-    reference: '生成結果は画面で確認できます。PDF出力・本体への反映は Standard 以上',
+    reference: '生成結果は画面で確認できます。PDF出力・branding.bz のブランド情報への反映は Standard 以上',
     isHighlight: false,
   },
   {
