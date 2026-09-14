@@ -16,17 +16,17 @@ const STP_CARDS = [
 
 const STEPS = [
   { icon: '1', title: '基本情報', description: '業種や商品、競合など基本的な情報を入力' },
-  { icon: '2', title: 'セグメンテーション', description: 'AIが業種に最適な市場の分け方を提案' },
+  { icon: '2', title: 'セグメンテーション', description: 'AIが業種に合った市場の分け方を提案' },
   { icon: '3', title: 'ターゲティング', description: '各セグメントを評価して狙う市場を決定' },
   { icon: '4', title: 'ポジショニング', description: 'スライダーで自社と競合をマップ上に配置' },
   { icon: '5', title: '確認・出力', description: '分析シートとマップの確定と、PDF出力・ブランド情報への反映' },
 ]
 
 const HIGHLIGHTS = [
-  { label: 'AI提案', icon: Lightbulb, title: ['AI自動', 'セグメント提案'], description: '業種や商品特性をもとに、最適なセグメント変数をAIが自動提案。市場分析を大幅に短縮します。' },
+  { label: 'AI提案', icon: Lightbulb, title: ['AI自動', 'セグメント提案'], description: '業種や商品の特徴に合わせて、市場を分ける切り口をAIが提案します。提案をもとに、自社に合う切り口を選べます。' },
   { label: 'マップ', icon: SlidersHorizontal, title: ['インタラクティブ', 'ポジショニングマップ'], description: 'スライダーで直感的に自社・競合を配置。ポジショニングの空白地帯が一目でわかります。' },
   { label: '出力', icon: Download, title: ['PDF・画像を', 'ワンクリック出力'], description: '分析結果をPDFでワンクリックダウンロード。ポジショニングマップも画像で保存できます（PDF出力とブランド情報への反映は Standard 以上）。' },
-  { label: '反映', icon: Unplug, title: ['ワンクリックで', 'ブランド情報に反映'], description: '確定したSTP分析を、branding.bz のブランド情報（ブランド戦略）に反映できます（PDF出力とブランド情報への反映は Standard 以上）。' },
+  { label: '反映', icon: Unplug, title: ['ワンクリックで', 'ブランド情報に反映'], description: '確定したSTP分析を、branding.bz のブランド情報（ブランド戦略）に反映できます（Standard 以上）。' },
 ]
 
 // 表示と FAQPage schema は同じ配列を参照して完全一致を担保する
@@ -87,7 +87,7 @@ export default function STPLandingPage() {
             applicationCategory: 'BusinessApplication',
             operatingSystem: 'Web',
             offers: { '@type': 'Offer', price: '0', priceCurrency: 'JPY' },
-            description: 'AIが最適なセグメンテーション・ターゲティング・ポジショニングを提案。ポジショニングマップの自動作成・PDF出力に対応（PDF出力とブランド情報への反映は Standard 以上）。',
+            description: 'AIが業種に合ったセグメンテーション・ターゲティング・ポジショニングを提案。ポジショニングマップの自動作成・PDF出力に対応（PDF出力とブランド情報への反映は Standard 以上）。',
             provider: { '@type': 'Organization', name: 'branding.bz', url: 'https://branding.bz' },
           }),
         }}

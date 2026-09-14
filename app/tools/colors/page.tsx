@@ -86,10 +86,10 @@ const STEPS = [
 ]
 
 const HIGHLIGHTS = [
-  { label: 'アクセシビリティ', icon: Palette, title: ['WCAG準拠の', '配色チェック'], description: 'アクセシビリティ基準を自動で検証し、誰にでも見やすい配色を提案します。' },
+  { label: 'アクセシビリティ', icon: Palette, title: ['コントラスト比を', '自動チェック'], description: '主要な3組の配色について、文字の読みやすさの目安となるコントラスト比を確認できます。' },
   { label: '対話型調整', icon: WandSparkles, title: ['AIチャットで', '自由に調整'], description: '「もう少し温かみがほしい」など、自然な言葉で、1セッションあたり5ターンまで調整できます。' },
   { label: '出力', icon: Download, title: ['PDF・CSSを', 'ワンクリック出力'], description: 'パレットカードPDFやCSSカスタムプロパティをワンクリックでダウンロードできます（PDF出力とブランド情報への反映は Standard 以上）。' },
-  { label: '反映', icon: Plug, title: ['ワンクリックで', 'ブランド情報に反映'], description: '確定したカラーを、branding.bz のブランド情報に反映。社内ガイドラインや名刺にも反映されます（PDF出力とブランド情報への反映は Standard 以上）。' },
+  { label: '反映', icon: Plug, title: ['ワンクリックで', 'ブランド情報に反映'], description: '確定したカラーを、branding.bz のブランド情報に反映。社内ガイドラインや名刺にも反映されます（Standard 以上）。' },
 ]
 
 // 表示と FAQPage schema は同じ配列を参照して完全一致を担保する
@@ -100,11 +100,16 @@ const FAQ_ITEMS = [
   },
   {
     q: 'どんなカラーパレットが作れますか？',
-    a: 'ブランドのパーソナリティや業種に合わせて、AIがプロ品質のカラーパレットを提案します。WCAG準拠のアクセシビリティ基準を自動で検証し、誰にでも見やすい配色に整えます。',
+    a: 'AIが業種やブランドの個性に合わせたカラーパレットを提案します。主要な3組の配色について、文字の読みやすさの目安となるコントラスト比も確認できます。',
+  },
+  {
+    // チェック対象と基準は lib/color-utils.ts（calculateAccessibilityScore）と AccessibilityBadge.tsx に合わせる
+    q: 'コントラスト比のチェックはどこまで行いますか？',
+    a: 'メイン色と明るい背景、メイン色と暗い背景、アクセント色と明るい背景の3組をチェックします。判定には、WCAG 2.1の達成基準1.4.3（レベルAA）で通常サイズの文字に求められる4.5:1を用いています。',
   },
   {
     q: '作ったカラーはどう使えますか？',
-    a: 'パレットカードのPDFとCSSカスタムプロパティをワンクリックでダウンロードでき、branding.bz のブランド情報にも反映できます（PDF出力とブランド情報への反映は Standard 以上）。',
+    a: 'パレットカードのPDFとCSSカスタムプロパティをワンクリックでダウンロードでき、branding.bz のブランド情報にも反映できます（CSSカスタムプロパティ以外は Standard 以上）。',
   },
   {
     q: 'デザインの専門知識がなくても使えますか？',
@@ -150,7 +155,7 @@ export default function ColorsLandingPage() {
             applicationCategory: 'DesignApplication',
             operatingSystem: 'Web',
             offers: { '@type': 'Offer', price: '0', priceCurrency: 'JPY' },
-            description: 'AIがブランドのパーソナリティや業種に合わせてプロ品質のカラーパレットを提案。WCAG準拠チェック、PDF・CSS出力に対応（PDF出力とブランド情報への反映は Standard 以上）。',
+            description: 'AIが業種やブランドの個性に合わせたカラーパレットを提案。主要な3組の配色のコントラスト比を確認でき、PDF・CSS出力に対応（PDF出力とブランド情報への反映は Standard 以上）。',
             provider: { '@type': 'Organization', name: 'branding.bz', url: 'https://branding.bz' },
           }),
         }}
@@ -200,7 +205,7 @@ export default function ColorsLandingPage() {
           <p className="mx-auto mt-7 max-w-2xl text-lg text-white/80 md:text-xl">
             ブランドのパーソナリティや業種に合わせて、
             <br className="hidden sm:block" />
-            AIがプロ品質のカラーパレットを提案。
+            AIがカラーパレットを提案。
           </p>
           <div className="mt-10">
             <Link

@@ -25,7 +25,7 @@ const PERSONA_CARDS = [
     label: 'ジャーニーマップ',
     icon: Route,
     title: '顧客体験を可視化',
-    description: '認知から購入、リピートまでの5段階を可視化。各タッチポイントでの感情や課題がひと目ではっきりわかります。',
+    description: '認知から購入、継続までの5段階を可視化。各タッチポイントでの感情や課題がひと目ではっきりわかります。',
   },
 ]
 
@@ -42,7 +42,7 @@ const HIGHLIGHTS = [
     label: 'AI提案',
     icon: Lightbulb,
     title: ['AIが属性を', '自動提案'],
-    description: 'ターゲット情報をもとに、年齢・職業・趣味・行動パターンまでAIがペルソナを提案します。',
+    description: 'ターゲット情報をもとに、年齢・職業・趣味・行動パターンまでAIがペルソナを提案します。提案される人物像は、検討の出発点となる仮説です。',
   },
   {
     label: 'ジャーニー',
@@ -53,14 +53,14 @@ const HIGHLIGHTS = [
   {
     label: '出力',
     icon: Download,
-    title: ['PDF・画像を', 'ワンクリック出力'],
+    title: ['PDFで', 'ワンクリック出力'],
     description: 'ペルソナシートとジャーニーマップをPDFでワンクリック出力。社内共有にすぐに使えます（PDF出力とブランド情報への反映は Standard 以上）。',
   },
   {
     label: '反映',
     icon: Unplug,
     title: ['ワンクリックで', 'ブランド情報に反映'],
-    description: '確定したペルソナを、branding.bz のブランド情報（ブランド戦略）に反映できます（PDF出力とブランド情報への反映は Standard 以上）。',
+    description: '確定したペルソナを、branding.bz のブランド情報（ブランド戦略）に反映できます（Standard 以上）。',
   },
 ]
 
@@ -80,7 +80,7 @@ const FAQ_ITEMS = [
   },
   {
     q: '作ったペルソナは出力できますか？',
-    a: 'ペルソナシートとカスタマージャーニーマップの両方をPDF出力できます。確定したペルソナは branding.bz のブランド情報にも反映できます（PDF出力とブランド情報への反映は Standard 以上）。',
+    a: 'ペルソナシートとカスタマージャーニーマップの両方をPDF出力できます。確定したペルソナは branding.bz のブランド情報にも反映できます（いずれも Standard 以上）。',
   },
 ]
 
@@ -168,7 +168,7 @@ export default function PersonaLandingPage() {
             ペルソナビルダーツール
           </h1>
           <p className="mx-auto mt-7 max-w-2xl text-lg text-white/60 md:text-xl">
-            STP分析で決めた「誰に届けるか」を、リアルな顧客像に。
+            届けたい相手を、チームで共有できる具体的な人物像に。
             <br className="hidden sm:block" />
             名前・年齢・職業・行動パターンまで、AIと一緒に深掘りします。
           </p>
