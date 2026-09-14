@@ -90,23 +90,26 @@ export default function Nav() {
             中央ナビは中央寄せなので、画面幅が Δ 広がると間隔は Δ/2 しか広がらない。
             実測（Playwright）: 1280px でリンク同士が 18.7px 重なり文字間 9.3px、1318px 付近で重なり0・文字間28px
             （中央ナビの他の項目と同じ間隔）になる。余裕を持たせて 1320px から出す */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-1 sm:gap-3">
           <Link
             href="/document"
-            className="hidden rounded-full px-4 py-1.5 text-sm font-medium text-white/70 transition-colors hover:text-white min-[1320px]:inline-flex"
+            className="hidden whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium text-white/70 transition-colors hover:text-white min-[1320px]:inline-flex"
           >
             資料請求
           </Link>
           <Link
             href="/portal/auth"
-            className="rounded-full px-4 py-1.5 text-sm font-medium text-white/70 transition-colors hover:text-white"
+            className="hidden whitespace-nowrap rounded-full px-2.5 py-1.5 text-sm font-medium text-white/70 transition-colors hover:text-white min-[360px]:inline sm:px-4"
           >
+            {/* 360px 未満はロゴ＋2ボタン＋ハンバーガーが物理的に入らない（実測で約26px不足）。
+                全部 nowrap だとハンバーガーが画面外に出てメニューに入れず、折り返しを許すと「ログイン」が1文字ずつ縦に並ぶ。
+                ハンバーガーメニュー内にもログインがあるので、360px 未満だけここを隠す */}
             ログイン
           </Link>
           <Link
             href="/signup"
             onClick={() => sendGAEvent('event', 'nav_signup_click', { device: 'desktop' })}
-            className="rounded-full bg-white px-4 py-1.5 text-sm font-semibold text-black transition-transform hover:scale-105"
+            className="whitespace-nowrap rounded-full bg-white px-2.5 py-1.5 text-sm font-semibold text-black transition-transform hover:scale-105 sm:px-4"
           >
             無料で始める
           </Link>
