@@ -87,7 +87,7 @@ const STEPS = [
 
 const HIGHLIGHTS = [
   { label: 'アクセシビリティ', icon: Palette, title: ['WCAG準拠の', '配色チェック'], description: 'アクセシビリティ基準を自動で検証し、誰にでも見やすい配色を提案します。' },
-  { label: '対話型調整', icon: WandSparkles, title: ['AIチャットで', '自由に調整'], description: '「もう少し温かみがほしい」など、自然な言葉でカラーを何度でも調整できます。' },
+  { label: '対話型調整', icon: WandSparkles, title: ['AIチャットで', '自由に調整'], description: '「もう少し温かみがほしい」など、自然な言葉で、1セッションあたり5ターンまで調整できます。' },
   { label: '出力', icon: Download, title: ['PDF・CSSを', 'ワンクリック出力'], description: 'パレットカードPDFやCSSカスタムプロパティをワンクリックでダウンロードできます。' },
   { label: '連携', icon: Plug, title: ['ワンクリックで', 'branding.bz に連携'], description: '確定したカラーをブランディングプラットフォームに登録。社内ガイドラインや名刺に即反映。' },
 ]
@@ -96,7 +96,7 @@ const HIGHLIGHTS = [
 const FAQ_ITEMS = [
   {
     q: '無料で使えますか？',
-    a: 'はい。無料で月に3回までご利用いただけます。クレジットカード登録は不要です。毎月リセットされます。',
+    a: 'はい。無料登録で、各ツールを月3回までご利用いただけます（毎月リセット）。クレジットカード登録は不要です。PDF出力と branding.bz のブランド情報への反映は Standard 以上のプランで利用できます。',
   },
   {
     q: 'どんなカラーパレットが作れますか？',
@@ -108,7 +108,7 @@ const FAQ_ITEMS = [
   },
   {
     q: 'デザインの専門知識がなくても使えますか？',
-    a: 'AIチャットで対話しながら「もう少し温かみがほしい」など、自然な言葉で何度でも配色を調整できます。',
+    a: 'AIチャットで対話しながら「もう少し温かみがほしい」など、自然な言葉で配色を調整できます（1セッション5ターンまで）。',
   },
 ]
 
@@ -327,6 +327,7 @@ export default function ColorsLandingPage() {
             <div className="mb-7 inline-flex flex-wrap items-center justify-center gap-4 text-sm text-white/70">
               <span className="inline-flex items-center gap-1.5"><CheckCircle2 size={14} className="text-blue-400" /> {FREE_TIER_BADGE_LABEL}</span>
               <span className="inline-flex items-center gap-1.5"><CheckCircle2 size={14} className="text-blue-400" /> クレジットカード不要</span>
+              <span className="basis-full text-xs text-white/50">PDF出力と branding.bz のブランド情報への反映は Standard 以上のプランで利用できます。</span>
             </div>
             <h2 className="text-balance text-3xl font-bold tracking-tight md:text-5xl">今すぐカラーパレットを作成</h2>
             <p className="mx-auto mt-6 max-w-xl text-lg text-white/60">

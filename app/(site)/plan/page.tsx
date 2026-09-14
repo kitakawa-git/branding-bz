@@ -66,7 +66,7 @@ const PLANS = [
     scale: '5〜50名',
     members: '50名',
     support: 'メール',
-    perPerson: '¥396〜1,980',
+    perPerson: '50名で ¥396／5名で ¥3,960',
     features: [
       'Free全機能に加えて：',
       '― 構築 ―',
@@ -82,7 +82,7 @@ const PLANS = [
     ctaLabel: 'ブランド構築を始める',
     ctaHref: '/signup',
     ctaStyle: 'primary' as const,
-    reference: 'ブランディングコンサル 月30〜100万円 → 年間約24万円で1/10以下',
+    reference: '年間 約24万円（税別）で、AI構築ツールが使い放題。CIマニュアル出力とスマート名刺まで',
     isHighlight: true,
   },
   {
@@ -96,7 +96,7 @@ const PLANS = [
     scale: '50〜300名',
     members: '300名',
     support: 'チャット＋電話',
-    perPerson: '¥199〜1,196',
+    perPerson: '300名で ¥199／50名で ¥1,196',
     // v4 で計測の split を入れ替え。自社だけで完結する自己計測（インナー）は Premium、
     // 外の目線（市場調査を含むアウター）とその総合値だけが Enterprise。
     // ⚠️ 「部署別ヒートマップ」は機能ごと削除済み（48283cd）なのでここに書かない
@@ -111,10 +111,10 @@ const PLANS = [
       'インナースコア＋推移',
       '理解度×共感ギャップ分析',
     ],
-    ctaLabel: 'フル機能で導入する',
+    ctaLabel: '社内への浸透と効果測定を始める',
     ctaHref: '/contact',
     ctaStyle: 'primary' as const,
-    reference: 'コンサル浸透込み 年間500〜1,000万円 → 年間約72万円で1/10以下',
+    reference: '年間 約72万円（税別）で、社内の学習・理解度テストとインナースコアまで',
     isHighlight: false,
   },
   {
@@ -164,7 +164,7 @@ const UPSELL_STEPS = [
 const COMMON_ITEMS = [
   '表示価格はすべて税別',
   '初期費用 ¥0',
-  '月払い（年払い割引は今後検討）',
+  '月払い',
   'データエクスポート対応',
   'SSL暗号化通信',
   'プランの変更・解約はいつでも可能',
@@ -236,7 +236,15 @@ export default function LpPlanPage() {
                   ].map(([k, v]) => (
                     <div key={k}>
                       <p className="mb-0.5 text-xs text-white/40">{k}</p>
-                      <p className="text-xs font-semibold text-white/80">{v}</p>
+                      {/* 「50名で ¥396／5名で ¥3,960」が「5／名」と語の途中で折れないよう、「／」の位置でだけ折る */}
+                      <p className="text-xs font-semibold text-white/80">
+                        {v.split('／').map((seg, i, arr) => (
+                          <span key={i} className="whitespace-nowrap">
+                            {seg}
+                            {i < arr.length - 1 ? '／' : ''}
+                          </span>
+                        ))}
+                      </p>
                     </div>
                   ))}
                 </div>

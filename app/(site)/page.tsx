@@ -370,11 +370,11 @@ function Features() {
               <div className="min-w-0">
                 <div className="mb-2 text-sm font-semibold text-cyan-400">はかる — 3つを貫く横串</div>
                 <h3 className="text-xl font-bold leading-snug">
-                  つくる・ひろげる・とどけるを、ひとつの数字で評価する
+                  {/* スマホ幅で「確／かめる」と語の途中で折れるので、読点の後で折る */}
+                  取り組みの結果を、<br className="sm:hidden" />数字で確かめる
                 </h3>
                 <p className="mt-3 text-sm leading-relaxed text-white/55">
-                  社内の理解・共感（インナー）と、社外からの見え方（アウター）を数字にする。
-                  3つのレイヤーを横串で評価し、次の打ち手を決める土台にします。
+                  社員の理解と共感がどれだけ広がったかを、アンケートと理解度テストの結果から数字にします。次の打ち手を決める土台になります。
                 </p>
               </div>
             </div>
@@ -397,7 +397,7 @@ function Product() {
             ひとつの画面で完結。
           </h2>
           <p className="mt-5 text-lg text-white/60">
-            社外、社内のブランド浸透度が、数字で見えるようになります。
+            社内の浸透度も、名刺の届き方も、<br className="sm:hidden" />数字で見えるようになります。
           </p>
         </div>
 
@@ -553,7 +553,7 @@ function Tools() {
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="text-4xl font-bold tracking-tight md:text-5xl">無料ツールで、すぐに始める。</h2>
           <p className="mt-5 text-lg text-white/60">
-            登録前でも試せる。ブランディングの第一歩を、その場で。
+            無料登録で、各ツールを月3回まで。<br className="sm:hidden" />ブランディングの第一歩を、ここから。
           </p>
         </div>
         <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">

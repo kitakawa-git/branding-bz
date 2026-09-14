@@ -68,7 +68,7 @@ const HIGHLIGHTS = [
 const FAQ_ITEMS = [
   {
     q: '無料で使えますか？',
-    a: 'はい。無料で月に3回までご利用いただけます。クレジットカード登録は不要です。毎月リセットされます。',
+    a: 'はい。無料登録で、各ツールを月3回までご利用いただけます（毎月リセット）。クレジットカード登録は不要です。PDF出力と branding.bz のブランド情報への反映は Standard 以上のプランで利用できます。',
   },
   {
     q: 'どんなペルソナが作れますか？',
@@ -273,6 +273,7 @@ export default function PersonaLandingPage() {
             <div className="mb-7 inline-flex flex-wrap items-center justify-center gap-4 text-sm text-white/70">
               <span className="inline-flex items-center gap-1.5"><CheckCircle2 size={14} className="text-blue-400" /> {FREE_TIER_BADGE_LABEL}</span>
               <span className="inline-flex items-center gap-1.5"><CheckCircle2 size={14} className="text-blue-400" /> クレジットカード不要</span>
+              <span className="basis-full text-xs text-white/50">PDF出力と branding.bz のブランド情報への反映は Standard 以上のプランで利用できます。</span>
             </div>
             <h2 className="text-balance text-3xl font-bold tracking-tight md:text-5xl">
               今すぐペルソナを作成する
