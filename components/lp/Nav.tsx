@@ -85,8 +85,14 @@ export default function Nav() {
           ))}
         </nav>
 
-        {/* 右クラスタ：ログイン／無料で始める は常時表示。ハンバーガーは1100px未満のみ */}
+        {/* 右クラスタ：資料請求は1100px以上のみ。ログイン／無料で始める は常時表示。ハンバーガーは1100px未満のみ */}
         <div className="flex items-center gap-2 sm:gap-3">
+          <Link
+            href="/document"
+            className="hidden rounded-full px-4 py-1.5 text-sm font-medium text-white/70 transition-colors hover:text-white min-[1100px]:inline-flex"
+          >
+            資料請求
+          </Link>
           <Link
             href="/portal/auth"
             className="rounded-full px-4 py-1.5 text-sm font-medium text-white/70 transition-colors hover:text-white"
@@ -149,6 +155,13 @@ export default function Nav() {
           ))}
 
           <div className="my-2 h-px bg-white/10" />
+          <Link
+            href="/document"
+            onClick={() => setOpen(false)}
+            className="block rounded-xl px-3 py-2.5 text-base font-medium text-white/80 hover:bg-white/10"
+          >
+            資料請求
+          </Link>
           <Link href="/portal/auth" className="block rounded-xl px-3 py-2.5 text-base font-medium text-white/80 hover:bg-white/10">
             ログイン
           </Link>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { sendGAEvent } from '@next/third-parties/google'
 import {
   ArrowRight,
   Sparkles,
@@ -293,6 +294,8 @@ const pillars = [
     title: 'ブランドの言語化を、\n対話型AIがサポート',
     body: '「らしさは分かっているけど、言葉にできない」。理念・カラー・ターゲット戦略・ペルソナを、AIと壁打ちしながら形にします。',
     accent: 'from-blue-500/30',
+    href: '/features#feature-brand',
+    gaPillar: 'create',
   },
   {
     tag: 'ひろげる',
@@ -300,6 +303,8 @@ const pillars = [
     title: 'ブランドの定着を、\nAIがサポート',
     body: '掲示・称賛・目標・学習・テスト。日々の業務のなかでブランドに触れ続ける状態をつくります。',
     accent: 'from-emerald-500/30',
+    href: '/inner-branding',
+    gaPillar: 'spread',
   },
   {
     tag: 'とどける',
@@ -307,8 +312,10 @@ const pillars = [
     title: 'ブランドの発信を、\nスマート名刺がサポート',
     body: 'QRコードから社員プロフィール＋企業ブランドページへ。連絡先はvCardでそのまま保存。社内で根づいた"らしさ"が、一人ひとりの名刺を通じて社外に届きます。',
     accent: 'from-purple-500/30',
+    href: '/features#feature-card',
+    gaPillar: 'deliver',
   },
-]
+] as const
 
 function Features() {
   return (
@@ -334,9 +341,14 @@ function Features() {
                 <div className="mb-2 text-sm font-semibold text-blue-400">{p.tag}</div>
                 <h3 className="whitespace-pre-line text-xl font-bold leading-snug">{p.title}</h3>
                 <p className="mt-3 text-sm leading-relaxed text-white/55">{p.body}</p>
-                <div className="mt-5 inline-flex items-center gap-1 text-sm font-medium text-white/70 transition-colors hover:text-white">
+                {/* 以前は div で押しても何も起きなかった。見た目はそのままリンクにする */}
+                <Link
+                  href={p.href}
+                  onClick={() => sendGAEvent('event', 'pillar_click', { pillar: p.gaPillar })}
+                  className="mt-5 inline-flex items-center gap-1 text-sm font-medium text-white/70 transition-colors hover:text-white"
+                >
                   詳しく見る <ArrowRight size={15} />
-                </div>
+                </Link>
               </div>
             </GlowCard>
           ))}
