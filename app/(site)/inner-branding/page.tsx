@@ -16,6 +16,8 @@ import { ArrowRight, MessageSquareOff, Unlink, CircleHelp, Compass, HandHeart, G
 import { PageHero, GlowCard } from '@/components/lp/ui'
 import FaqItem from '@/components/lp/FaqItem'
 import FinalCta from '@/components/lp/FinalCta'
+// 「|」は文節区切りの独自記法。Phrases を通して表示する（詳細は components/lp/Phrases.tsx）
+import Phrases from '@/components/lp/Phrases'
 
 type CtaTarget = 'document' | 'signup' | 'plan'
 type CtaPosition = 'hero' | 'pricing' | 'footer'
@@ -29,7 +31,7 @@ const WIKI_TERM = 'インナーブランディング'
 
 const STUMBLES: { icon: LucideIcon; title: string; description: string }[] = [
   { icon: MessageSquareOff, title: '言えない', description: '理念やスローガンはあるが、社員が自分の言葉で説明できない。掲示物とファイルサーバーの奥で眠っている。' },
-  { icon: Unlink, title: '落ちない', description: 'ブランドが日々の判断・行動につながらない。「らしい仕事」を称え合う場も、学ぶ場もない。' },
+  { icon: Unlink, title: '行動につながらない', description: 'ブランドが日々の判断・行動につながらない。「らしい仕事」を称え合う場も、学ぶ場もない。' },
   { icon: CircleHelp, title: '測れない', description: '浸透したのか誰も分からない。社外からどう見えているかは、なおさら分からない。' },
 ]
 
@@ -42,7 +44,7 @@ const MEASURES: { no: string; icon: LucideIcon; title: string; plan: string; des
     icon: Compass,
     title: '拠りどころをつくる',
     plan: 'Free 〜',
-    description: '方針・戦略・ビジュアルID・バーバルID・提供価値を全社に掲示。いつでも参照できる場所を1つに決めます。',
+    description: '理念や戦略、顧客に届ける価値、デザインと言葉のルールを全社に掲示。いつでも参照できる場所を1つに決めます。',
     features: ['ブランド掲示'],
   },
   {
@@ -66,7 +68,8 @@ const MEASURES: { no: string; icon: LucideIcon; title: string; plan: string; des
     icon: BarChart3,
     title: '浸透を数字で見る',
     plan: 'Premium 〜',
-    description: '社内サーベイと理解度テストの結果をスコア化し、推移で追跡。「理解はしているが共感が薄い」といったギャップも見えます。',
+    // スコアはサーベイ回答だけから算出（app/api/brand-score/inner-score）。理解度テストはギャップ分析（knowledge-gap）で組み合わせる
+    description: '社内サーベイの回答をスコア化し、変化を継続的に確認。理解度テストの結果と組み合わせて、「理解はしているが共感が薄い」といったギャップも把握できます。',
     features: ['インナーサーベイ＋AI設問生成', 'インナースコア＋推移', '理解度×共感ギャップ分析'],
   },
 ]
@@ -82,19 +85,19 @@ const PRICING: { name: string; price: string; suffix: string | null; scale: stri
 const FAQ_ITEMS = [
   {
     q: 'インナーブランディングは、何から始めればいいですか？',
-    a: 'まず「拠りどころ」を1か所にまとめるところからです。方針・戦略・ビジュアルID・バーバルID・提供価値をブランド掲示として全社で共有できる状態をつくります。ここは無料プランでも編集・閲覧いただけます。',
+    a: 'まず「拠りどころ」を1か所にまとめるところからです。理念や戦略、顧客に届ける価値、デザインと言葉のルールをブランド掲示として全社で共有できる状態をつくります。ここは無料プランでも編集・閲覧いただけます。',
   },
   {
     q: 'すでに理念やスローガンがある場合も使えますか？',
     a: '使えます。すでにある言葉をブランド掲示に登録すれば、そこから浸透の施策を始められます。ゼロからつくり直す必要はありません。',
   },
   {
-    q: '何名から使えますか？',
+    q: '何名まで利用できますか？',
     a: '無料プランは5名まで、Standard は50名まで、Premium は300名までです。300名を超える場合は Enterprise で個別にご相談ください。',
   },
   {
     q: '浸透しているかどうかは、どうやって測るのですか？',
-    a: '社内向けサーベイと理解度テストの結果をスコア化し、推移で追えます（Premium以上）。理解度と共感のギャップ分析もご利用いただけます。',
+    a: '社内向けサーベイの回答をスコア化し、推移で追えます（Premium以上）。理解度テストの結果と組み合わせたギャップ分析もご利用いただけます。',
   },
 ]
 
@@ -149,10 +152,13 @@ export default function InnerBrandingLandingPage() {
           </>
         }
       >
+        {/* 3文。PC は文ごとに改行し、スマホは Phrases で文節の途中では折り返さない */}
         <p>
-          掲示して終わり、研修して終わりにしない。ブランドを日々の業務のなかに置き、
+          <Phrases text="掲示して終わり、|研修して終わりにしない。" />
           <br className="hidden md:block" />
-          浸透の進み具合を数字で追えるところまでを1つの場所で。
+          <Phrases text="理念を共有し、|日々の行動につなげ、|浸透の進み具合を確かめる。" />
+          <br className="hidden md:block" />
+          <Phrases text="その一連の取り組みを、|ひとつのプラットフォームで。" />
         </p>
         <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Link
