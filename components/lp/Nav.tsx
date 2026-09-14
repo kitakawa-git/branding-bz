@@ -26,7 +26,7 @@ const toolItems: { href: string; label: string; icon: LucideIcon }[] = [
 ]
 
 const linkClass =
-  'rounded-full px-3 py-1.5 text-sm font-medium text-white/70 transition-colors hover:bg-white/10 hover:text-white'
+  'whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium text-white/70 transition-colors hover:bg-white/10 hover:text-white'
 
 export default function Nav() {
   const [open, setOpen] = useState(false)
@@ -43,7 +43,13 @@ export default function Nav() {
           />
         </Link>
 
-        <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 min-[1100px]:flex">
+        {/* 中央ナビ・ハンバーガー・ハンバーガーメニュー本体の3箇所は必ず同じ幅（1160px）で切り替える。
+            ずれると「どちらも出ない幅」か「両方出る幅」ができる。
+            以前は 1100px から出していたが、幅が足りず各リンクが「ニュー／ス」と折れていた。
+            whitespace-nowrap にすると中央ナビの幅は 608px で一定になり、右クラスタ（ログイン／無料で始める）との間隔は
+            実測（Playwright）: 1100px で -8.7px（重なり）、1118px で 0、1140px で 11px、1160px で 21px。
+            Windows 等の常時表示スクロールバー（約17px）ぶん実幅が狭まっても重ならないよう、1160px から出す */}
+        <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 min-[1160px]:flex">
           {linksBefore.map((l) => (
             <a key={l.href} href={l.href} className={linkClass}>
               {l.label}
@@ -85,7 +91,7 @@ export default function Nav() {
           ))}
         </nav>
 
-        {/* 右クラスタ：資料請求は1320px以上のみ。ログイン／無料で始める は常時表示。ハンバーガーは1100px未満のみ。
+        {/* 右クラスタ：資料請求は1320px以上のみ。ログイン／無料で始める は常時表示。ハンバーガーは1160px未満のみ。
             ⚠️ 中央ナビは absolute で右クラスタと押し合わないため、幅が足りないと「お問い合わせ」と重なる。
             中央ナビは中央寄せなので、画面幅が Δ 広がると間隔は Δ/2 しか広がらない。
             実測（Playwright）: 1280px でリンク同士が 18.7px 重なり文字間 9.3px、1318px 付近で重なり0・文字間28px
@@ -114,7 +120,7 @@ export default function Nav() {
             無料で始める
           </Link>
           <button
-            className="p-1.5 text-white min-[1100px]:hidden"
+            className="p-1.5 text-white min-[1160px]:hidden"
             onClick={() => setOpen((v) => !v)}
             aria-label="メニュー"
           >
@@ -124,7 +130,7 @@ export default function Nav() {
       </div>
 
       {open && (
-        <div className="mx-3 mt-2 rounded-2xl border border-white/10 bg-black/80 p-3 backdrop-blur-xl min-[1100px]:hidden">
+        <div className="mx-3 mt-2 rounded-2xl border border-white/10 bg-black/80 p-3 backdrop-blur-xl min-[1160px]:hidden">
           {linksBefore.map((l) => (
             <a
               key={l.href}
