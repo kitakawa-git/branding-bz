@@ -1,0 +1,182 @@
+'use client'
+
+import { useState } from 'react'
+import Link from 'next/link'
+import { toast } from 'sonner'
+import { sendGAEvent } from '@next/third-parties/google'
+import { CheckCircle2, Download } from 'lucide-react'
+import { PageHero } from '@/components/lp/ui'
+
+// 資料請求ページ。contact と同じフォームの作り・スタイルに揃える。
+// 送信が通ったら同じ画面を差し替えてダウンロードボタンを出す（メールでも同じ URL を送る）
+export default function LpDocumentPage() {
+  const [loading, setLoading] = useState(false)
+  const [downloadUrl, setDownloadUrl] = useState<string | null>(null)
+  const [form, setForm] = useState({
+    company_name: '',
+    contact_name: '',
+    email: '',
+    phone: '',
+  })
+  const [errors, setErrors] = useState<Record<string, string>>({})
+
+  function validate() {
+    const e: Record<string, string> = {}
+    if (!form.company_name.trim()) e.company_name = '会社名は必須です'
+    if (!form.contact_name.trim()) e.contact_name = 'お名前は必須です'
+    if (!form.email.trim()) e.email = 'メールアドレスは必須です'
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
+      e.email = '有効なメールアドレスを入力してください'
+    setErrors(e)
+    return Object.keys(e).length === 0
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!validate()) return
+    setLoading(true)
+    try {
+      const res = await fetch('/api/document-request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data.downloadUrl) throw new Error('送信に失敗しました')
+      sendGAEvent('event', 'document_request', { source: 'document_page' })
+      setDownloadUrl(data.downloadUrl)
+    } catch {
+      toast.error('送信に失敗しました。しばらく経ってから再度お試しください。')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  function handleChange(field: string, value: string) {
+    setForm((prev) => ({ ...prev, [field]: value }))
+    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: '' }))
+  }
+
+  if (downloadUrl) {
+    return (
+      <main className="px-6 pt-44 pb-32 text-center">
+        <div className="mx-auto max-w-md">
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-400">
+            <CheckCircle2 className="h-8 w-8" />
+          </div>
+          <h1 className="mb-4 text-2xl font-bold">資料のご請求ありがとうございます</h1>
+          <p className="mb-8 text-sm leading-relaxed text-white/55">
+            下のボタンから資料をダウンロードいただけます。
+            <br />
+            ご入力のメールアドレスにも送付しました。
+          </p>
+          <a
+            href={downloadUrl}
+            download="branding.bz_サービス資料.pdf"
+            className="inline-flex h-12 items-center gap-2 rounded-full bg-white px-8 text-base font-semibold text-black transition-transform hover:scale-105"
+          >
+            <Download size={18} /> 資料をダウンロード
+          </a>
+          <p className="mt-8 text-xs text-white/40">
+            導入のご相談は{' '}
+            <Link href="/contact" className="underline hover:text-white/70">
+              お問い合わせ
+            </Link>{' '}
+            からどうぞ。
+          </p>
+        </div>
+      </main>
+    )
+  }
+
+  const inputBase =
+    'w-full rounded-xl border bg-white/[0.03] px-4 py-3 text-sm text-white placeholder:text-white/30 transition-colors focus:border-blue-400/60 focus:outline-none focus:ring-2 focus:ring-blue-500/30'
+
+  return (
+    <main>
+      <PageHero eyebrow="Document" title="サービス資料ダウンロード">
+        branding.bz の機能・料金・導入の流れをまとめた資料（全16ページ）を、無料でダウンロードいただけます。
+      </PageHero>
+
+      <section className="px-6 pb-24">
+        <form onSubmit={handleSubmit} className="mx-auto max-w-2xl space-y-6">
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-white/80">
+              会社名 <span className="text-xs text-rose-400">*必須</span>
+            </label>
+            <input
+              type="text"
+              value={form.company_name}
+              onChange={(e) => handleChange('company_name', e.target.value)}
+              placeholder="株式会社○○○"
+              className={`${inputBase} ${errors.company_name ? 'border-rose-500' : 'border-white/10'}`}
+            />
+            {errors.company_name && <p className="mt-1 text-xs text-rose-400">{errors.company_name}</p>}
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-white/80">
+              お名前 <span className="text-xs text-rose-400">*必須</span>
+            </label>
+            <input
+              type="text"
+              value={form.contact_name}
+              onChange={(e) => handleChange('contact_name', e.target.value)}
+              placeholder="山田 太郎"
+              className={`${inputBase} ${errors.contact_name ? 'border-rose-500' : 'border-white/10'}`}
+            />
+            {errors.contact_name && <p className="mt-1 text-xs text-rose-400">{errors.contact_name}</p>}
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-white/80">
+              メールアドレス <span className="text-xs text-rose-400">*必須</span>
+            </label>
+            <input
+              type="email"
+              value={form.email}
+              onChange={(e) => handleChange('email', e.target.value)}
+              placeholder="info@example.com"
+              className={`${inputBase} ${errors.email ? 'border-rose-500' : 'border-white/10'}`}
+            />
+            {errors.email && <p className="mt-1 text-xs text-rose-400">{errors.email}</p>}
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-white/80">
+              電話番号 <span className="text-xs text-white/40">（任意）</span>
+            </label>
+            <input
+              type="tel"
+              value={form.phone}
+              onChange={(e) => handleChange('phone', e.target.value)}
+              placeholder="03-1234-5678"
+              className={`${inputBase} border-white/10`}
+            />
+          </div>
+
+          <div className="pt-2 text-center">
+            <button
+              type="submit"
+              disabled={loading}
+              className="inline-flex h-12 items-center gap-2 rounded-full bg-white px-12 text-base font-semibold text-black transition-transform hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
+            >
+              {loading ? '送信中...' : '資料をダウンロードする'}
+            </button>
+          </div>
+
+          <p className="text-center text-xs text-white/40">
+            <Link href="/portal/terms" className="underline hover:text-white/70">
+              利用規約
+            </Link>
+            {' & '}
+            <Link href="/privacy-policy" className="underline hover:text-white/70">
+              プライバシーポリシー
+            </Link>{' '}
+            に同意のうえ、送信してください。
+          </p>
+        </form>
+      </section>
+    </main>
+  )
+}

@@ -11,6 +11,8 @@ export default function robots(): MetadataRoute.Robots {
           '/portal/',
           '/superadmin/',
           '/signup',
+          // PDF 直リンクが検索結果に出てフォームを迂回されないよう塞ぐ（ページ /document は許可）
+          '/documents/',
           '/tools/colors/app/',
           '/tools/stp/app/',
           '/tools/persona/app/',

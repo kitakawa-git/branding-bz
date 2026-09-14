@@ -281,6 +281,14 @@ export default function LpPlanPage() {
             </div>
           ))}
         </div>
+
+        {/* 登録以外の行動を用意する。料金表を見て「まだ決められない」人の受け皿 */}
+        <p className="mx-auto mt-10 max-w-7xl text-center text-sm text-white/50">
+          まずは資料で検討したい方はこちら →{' '}
+          <Link href="/document" className="font-medium text-white/80 underline underline-offset-4 hover:text-white">
+            サービス資料をダウンロード
+          </Link>
+        </p>
       </section>
 
       {/* アップセルパス */}

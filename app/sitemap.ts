@@ -27,6 +27,7 @@ const STATIC_PAGES: Array<{
   { path: '/faq', lastModified: '2026-07-14', changeFrequency: 'monthly', priority: 0.7 },
   { path: '/news', lastModified: '2026-07-14', changeFrequency: 'weekly', priority: 0.8 },
   { path: '/contact', lastModified: '2026-07-14', changeFrequency: 'yearly', priority: 0.6 },
+  { path: '/document', lastModified: '2026-09-14', changeFrequency: 'monthly', priority: 0.7 },
   { path: '/wiki', lastModified: '2026-07-27', changeFrequency: 'weekly', priority: 0.9 },
   { path: '/tools/colors', lastModified: '2026-07-14', changeFrequency: 'monthly', priority: 0.9 },
   { path: '/tools/stp', lastModified: '2026-07-14', changeFrequency: 'monthly', priority: 0.9 },

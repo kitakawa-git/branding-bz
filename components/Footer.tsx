@@ -23,6 +23,7 @@ const footerLinks = {
     { href: '/wiki', label: 'ブランディング用語wiki' },
     { href: '/news', label: 'ニュース' },
     { href: '/contact', label: 'お問い合わせ' },
+    { href: '/document', label: '資料請求' },
     { href: 'https://include.bz/recruit', label: '採用', external: true },
   ],
   legal: [
