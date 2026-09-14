@@ -140,7 +140,15 @@ export default function InnerBrandingLandingPage() {
       />
 
       {/* 1. ヒーロー */}
-      <PageHero eyebrow="インナーブランディング" title="理念は、掲げるだけでは根づかない。">
+      <PageHero
+        eyebrow="インナーブランディング"
+        title={
+          <>
+            理念は、掲げるだけでは<br className="hidden md:block" />
+            根づかない。
+          </>
+        }
+      >
         <p>
           掲示して終わり、研修して終わりにしない。ブランドを日々の業務のなかに置き、
           <br className="hidden md:block" />
