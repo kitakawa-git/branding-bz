@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Mail, Calendar } from 'lucide-react'
+import { Mail, MessageSquare } from 'lucide-react'
 
 // フッターリンクデータ
 // 注意: URL は一部仮設定（北川さん確認後に差し替え予定）
@@ -7,7 +7,7 @@ const footerLinks = {
   features: [
     { href: '/inner-branding', label: 'インナーブランディング' },
     { href: '/features#feature-brand', label: 'ブランド掲示' },
-    { href: '/features#feature-timeline', label: 'タイムライン' },
+    { href: '/features#feature-timeline', label: 'Good Action投稿' },
     { href: '/features#feature-kpi', label: '目標・KPI' },
     { href: '/features#feature-score', label: 'ブランドスコア' },
     { href: '/features#feature-card', label: 'スマート名刺' },
@@ -36,7 +36,8 @@ const footerLinks = {
 
 const contactItems = [
   { href: 'mailto:info@include.bz', label: 'メールでお問い合わせ', Icon: Mail },
-  { href: '/contact', label: '導入相談を予約', Icon: Calendar },
+  // 予約システムは無いので「予約」やカレンダーのアイコンは使わない（遷移先は問い合わせフォーム）
+  { href: '/contact', label: '導入について相談する', Icon: MessageSquare },
 ]
 
 const snsItems = [

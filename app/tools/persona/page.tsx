@@ -279,7 +279,7 @@ export default function PersonaLandingPage() {
               今すぐペルソナを作成する
             </h2>
             <p className="mx-auto mt-6 max-w-xl text-lg text-white/60">
-              ブランドは、作った瞬間から走り出す。<br />branding.bz で、その加速を始めませんか。
+              ブランドは、つくった瞬間から走り出す。<br />branding.bz で、その加速を始めませんか。
             </p>
             <div className="mt-10">
               <Link

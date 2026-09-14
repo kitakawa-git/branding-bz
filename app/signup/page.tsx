@@ -267,7 +267,9 @@ export default function SignupPage() {
                 </div>
                 <div className="mb-5">
                   <h2 className="mb-1.5 text-sm font-semibold text-white/70">パスワード <span className="text-red-400">*</span></h2>
-                  <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="6文字以上" required minLength={6} className="h-12 text-base md:text-base bg-white/[0.04] border-white/15 text-white placeholder:text-white/30 focus-visible:ring-white/30" />
+                  <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="6文字以上" required minLength={6} aria-describedby="signup-password-hint" className="h-12 text-base md:text-base bg-white/[0.04] border-white/15 text-white placeholder:text-white/30 focus-visible:ring-white/30" />
+                  {/* 条件は入力前から見えるように常時表示（placeholder は入力すると消えるため） */}
+                  <p id="signup-password-hint" className="mt-1.5 text-xs text-white/50">6文字以上で入力してください。</p>
                 </div>
                 <div className="mb-5">
                   <h2 className="mb-1.5 text-sm font-semibold text-white/70">パスワード（確認） <span className="text-red-400">*</span></h2>

@@ -83,7 +83,7 @@ export default function LpContactPage() {
   return (
     <main>
       <PageHero eyebrow="Contact" title="お問い合わせ">
-        ご質問・ご相談・お申し込みなど、お気軽にお問い合わせください。
+        導入の進め方、プラン選び、活用方法など、お気軽にご相談ください。
       </PageHero>
 
       <section className="px-6 pb-24">

@@ -66,7 +66,7 @@ const SERVICES: ServiceCard[] = [
     id: 'colors',
     Icon: Palette,
     title: 'ブランドカラー定義ツール',
-    description: 'AIがブランドに最適なカラーパレットを3案まとめてご提案します',
+    description: 'AIがブランドの個性に合ったカラーパレットを3案まとめてご提案します',
     href: '/tools/colors/app',
     buttonLabel: '始める',
     highlightButtonLabel: '続ける',
@@ -83,7 +83,9 @@ const SERVICES: ServiceCard[] = [
   {
     id: 'platform',
     Icon: Building2,
-    title: 'ブランド管理プラットフォーム',
+    // 遷移先はアクセス権で分かれる（あり: /portal のダッシュボード、なし: トップ）。
+    // どちらにも合うよう、特定の画面名ではなくサービス名＋種類で表示する
+    title: 'branding.bz プラットフォーム',
     description: 'ブランドの掲示・スマート名刺・浸透KPIまでを一つの画面で一元管理',
     href: '/portal',
     buttonLabel: '詳しく見る',
