@@ -24,6 +24,7 @@ const STATIC_PAGES: Array<{
   { path: '', lastModified: '2026-07-14', changeFrequency: 'weekly', priority: 1.0 },
   { path: '/plan', lastModified: '2026-07-14', changeFrequency: 'monthly', priority: 0.9 },
   { path: '/features', lastModified: '2026-07-14', changeFrequency: 'monthly', priority: 0.8 },
+  { path: '/inner-branding', lastModified: '2026-09-14', changeFrequency: 'monthly', priority: 0.8 },
   { path: '/faq', lastModified: '2026-07-14', changeFrequency: 'monthly', priority: 0.7 },
   { path: '/news', lastModified: '2026-07-14', changeFrequency: 'weekly', priority: 0.8 },
   { path: '/contact', lastModified: '2026-07-14', changeFrequency: 'yearly', priority: 0.6 },

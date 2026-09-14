@@ -5,6 +5,7 @@ import { Mail, Calendar } from 'lucide-react'
 // 注意: URL は一部仮設定（北川さん確認後に差し替え予定）
 const footerLinks = {
   features: [
+    { href: '/inner-branding', label: 'インナーブランディング' },
     { href: '/features#feature-brand', label: 'ブランド掲示' },
     { href: '/features#feature-timeline', label: 'タイムライン' },
     { href: '/features#feature-kpi', label: '目標・KPI' },

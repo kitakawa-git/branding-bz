@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import {
   LayoutDashboard,
   MessageSquareHeart,
@@ -214,6 +215,17 @@ export default function LpFeaturesPage() {
               <h2 className="text-2xl font-bold tracking-tight">{g.layer}</h2>
               <p className="text-sm text-white/50">{g.lead}</p>
             </div>
+            {/* 浸透だけ、進め方を解説したLPへの導線を置く */}
+            {g.layer === '浸透' && (
+              <p className="-mt-3 mb-6 text-right text-sm text-white/50">
+                <Link
+                  href="/inner-branding"
+                  className="inline-flex min-h-11 items-center gap-1 font-medium text-white/70 underline underline-offset-4 hover:text-white"
+                >
+                  インナーブランディングの進め方を見る →
+                </Link>
+              </p>
+            )}
             {g.features.length > 0 && (
               <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
                 {g.features.map((f) => (
