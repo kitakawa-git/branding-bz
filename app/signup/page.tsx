@@ -222,15 +222,20 @@ export default function SignupPage() {
 
           {/* ステップインジケーター（承認待ち画面以外で表示） */}
           {step !== 4 && (
-            <div className="flex justify-center gap-2 mb-7">
+            // data-stepper: globals.css の「本文 最低14px」の底上げから外す（ステップ進捗バーは除外対象）。
+            // これが無いと text-[11px] 等が 14px に戻され、スマホ幅で横にはみ出す
+            <div data-stepper className="flex justify-center gap-2 mb-7">
               {stepLabels.map((label, i) => {
                 const stepNum = i + 1
                 const isActive = stepNum === displayStep
                 const isDone = stepNum < displayStep
                 return (
-                  <div key={stepNum} className="flex items-center gap-1.5">
+                  // スマホ幅では横一列に収まらない（実測: 375px で 71px、320px で 98px はみ出し、中央寄せで左右とも欠ける）。
+                  // sm 未満はラベルを番号の下に置き、つなぎ線を消し、文字を 11px（360px 以上は 12px）にする。
+                  // この形で 320px 時の必要幅 約192px ／ 使える幅 198px
+                  <div key={stepNum} className="flex flex-col items-center gap-1 sm:flex-row sm:gap-1.5">
                     <div
-                      className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
+                      className="w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold"
                       style={{
                         backgroundColor: isDone || isActive ? 'var(--ds-app-accent)' : 'rgba(255,255,255,0.1)',
                         color: isDone || isActive ? '#fff' : 'rgba(255,255,255,0.5)',
@@ -238,11 +243,11 @@ export default function SignupPage() {
                     >
                       {isDone ? '✓' : stepNum}
                     </div>
-                    <span className={`whitespace-nowrap text-xs ${isActive ? 'text-white font-bold' : 'text-white/40'}`}>
+                    <span className={`whitespace-nowrap text-[11px] min-[360px]:text-[12px] sm:text-sm ${isActive ? 'text-white font-bold' : 'text-white/40'}`}>
                       {label}
                     </span>
                     {i < stepLabels.length - 1 && (
-                      <div className="w-4 h-px shrink-0 bg-white/15 ml-1" />
+                      <div className="hidden sm:block w-4 h-px shrink-0 bg-white/15 ml-1" />
                     )}
                   </div>
                 )
