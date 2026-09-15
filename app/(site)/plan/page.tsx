@@ -6,14 +6,14 @@ import { PageHero, GlowCard } from '@/components/lp/ui'
 export const metadata: Metadata = {
   title: '料金プラン | branding.bz',
   description:
-    'AIブランディングSaaS branding.bz の料金プラン。Free / Standard / Premium / Enterprise から、あなたのブランドフェーズに最適なプランを選べます。',
+    'AIブランディングSaaS branding.bz の料金プラン。Free / Standard / Premium / Enterprise から、あなたのブランディングフェーズに最適なプランを選べます。',
   alternates: {
     canonical: '/plan',
   },
   openGraph: {
     title: '料金プラン | branding.bz',
     description:
-      'AIブランディングSaaS branding.bz の料金プラン。Free / Standard / Premium / Enterprise から、あなたのブランドフェーズに最適なプランを選べます。',
+      'AIブランディングSaaS branding.bz の料金プラン。Free / Standard / Premium / Enterprise から、あなたのブランディングフェーズに最適なプランを選べます。',
     url: 'https://branding.bz/plan',
   },
 }
@@ -176,7 +176,14 @@ const COMMON_ITEMS = [
 export default function LpPlanPage() {
   return (
     <main>
-      <PageHero eyebrow="Pricing" title={<>あなたのブランドフェーズに<br className="hidden sm:block" />最適なプランを</>}>
+      <PageHero eyebrow="Pricing" title={
+          // 「ブランディングフェーズに」は1行に13字までしか入らない幅で「…フェ／ーズに」と割れるため、語の切れ目で明示的に改行する
+          <>
+            あなたの<br />
+            ブランディング<br className="sm:hidden" />フェーズに<br />
+            最適なプランを
+          </>
+        }>
         体験から始めて、ブランドの成長に合わせてステップアップ。すべてのプランに初期費用はかかりません。
       </PageHero>
 

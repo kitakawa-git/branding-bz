@@ -44,7 +44,7 @@ type Feature = { id?: string; title: string; description: string; icon: LucideIc
 const groups: { layer: string; lead: string; features: Feature[] }[] = [
   {
     layer: '構築',
-    lead: 'ブランドの"らしさ"を、全社の拠りどころに。',
+    lead: 'AIとの対話で、自社らしさを言葉と形に。',
     features: [],
   },
   {
@@ -208,7 +208,13 @@ function FeatureCard({ f }: { f: Feature }) {
 export default function LpFeaturesPage() {
   return (
     <main>
-      <PageHero eyebrow="Features" title="ブランドを加速させる機能">
+      <PageHero eyebrow="Features" title={
+          // 1行に収まらず「加速させる／機能」と割れるため、語の切れ目で改行する
+          <>
+            ブランディングを<br />
+            加速させる機能
+          </>
+        }>
         {/* スマホ幅で「必／要」「支／えます」と語の途中で折れるので、句読点ごとに折り返し単位をまとめる */}
         <span className="inline-block">構築・浸透・発信。</span>
         <span className="inline-block">それぞれの段階に必要な機能を揃え、</span>
