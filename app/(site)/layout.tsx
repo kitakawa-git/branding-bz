@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Nav from '@/components/lp/Nav'
 import Footer from '@/components/Footer'
 import PageTransition from '@/components/lp/PageTransition'
+import DocumentFloatingCta from '@/components/lp/DocumentFloatingCta'
 
 export const metadata: Metadata = {
   title: {
@@ -29,6 +30,8 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
     <div className="min-h-screen bg-[#08080a] text-white antialiased">
       <Nav />
       <PageTransition>{children}</PageTransition>
+      {/* 資料請求の常駐バナー（/document・/contact では出さない。ツール本体には置かない） */}
+      <DocumentFloatingCta />
       <Footer />
     </div>
   )

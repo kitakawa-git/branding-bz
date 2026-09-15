@@ -27,3 +27,9 @@ export const MONTHLY_LIMIT_REACHED_MESSAGE =
 
 /** LP の CTA バッジ文言（4ツール共通） */
 export const FREE_TIER_BADGE_LABEL = `無料で月に${MONTHLY_FREE_LIMIT}回まで利用可能`
+
+/** LP ヒーローの CTA 直下の説明（新規企業は superadmin 承認制のため「審査完了後」と明記する。営業資料 v12 p12 と同じ説明） */
+export const FREE_TIER_REVIEW_NOTE = 'クレジットカードの登録は不要です。ご登録内容の審査完了後、無料で利用を開始できます。'
+
+/** LP 下部 CTA のバッジ文言（承認制の明記） */
+export const FREE_TIER_REVIEW_BADGE = '審査完了後に利用開始'
