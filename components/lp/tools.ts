@@ -19,7 +19,7 @@ export const tools: Tool[] = [
     href: '/tools/stp',
     label: 'STP分析ツール',
     icon: Target,
-    d: 'セグメント・|ターゲット・|ポジションを整理。|AIと対話して|「誰に何を届けるか」が|定まります。',
+    d: '市場の分け方と|狙う相手、|立ち位置を|AIと整理し、|「誰に何を届けるか」を|定めます。',
     color: 'linear-gradient(135deg,#1d4ed8 0%,#7c3aed 55%,#0ea5e9 100%)',
   },
   {
@@ -33,14 +33,14 @@ export const tools: Tool[] = [
     href: '/tools/colors',
     label: 'ブランドカラー定義ツール',
     icon: Palette,
-    d: '"らしさ"を|色で言語化。|AIが配色を提案し、|その色を選んだ理由まで|定義します。',
+    d: 'ブランドの|"らしさ"を|色で言語化。|AIが配色を提案し、|選んだ理由まで|定義します。',
     color: 'conic-gradient(from 200deg at 60% 40%,#f43f5e,#8b5cf6,#22d3ee,#f43f5e)',
   },
   {
     href: '/tools/personality',
     label: 'パーソナリティ診断ツール',
     icon: Fingerprint,
-    d: 'ブランドの人格を|10問で診断。|Aaker 5次元と|12アーキタイプの|2軸で、|ブランドの個性を|立体的に。',
+    d: 'ブランドの人格を|10問で診断。|Aaker 5次元と|12アーキタイプで|個性を捉えます。',
     color: 'radial-gradient(120% 120% at 25% 20%,#10b981 0%,#0f172a 65%)',
   },
 ]
