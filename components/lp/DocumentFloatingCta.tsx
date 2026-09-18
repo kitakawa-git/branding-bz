@@ -4,7 +4,7 @@
    - 置き場所は app/(site)/layout.tsx と、4つのツールLP（app/tools/[tool]/page.tsx）の <Footer /> 直前。
      ⚠️ app/tools/layout.tsx には置かない（ツール本体 /tools/[tool]/app/... まで包むので作業画面に出てしまう）。
    - 1160〜1319px はヘッダーに資料請求ボタンが出ない幅なので、この導線がその幅の受け皿になる。
-   - 縦に 400px スクロールしたら表示。×で閉じたら 7日間は出さない（localStorage）。
+   - ページ読み込み直後（ファーストビュー）から表示する。×で閉じたら 7日間は出さない（localStorage）。
    - localStorage は useEffect 内で読む。初期状態は非表示にして SSR と食い違わないようにする。
    - トップページは window ではなく別の要素がスクロールすることがあるため、scroll を capture で拾う。
    - 次のときは隠す（ページ本体の CTA やリンクを覆わないため）:
@@ -20,7 +20,6 @@ import { X } from 'lucide-react'
 
 const STORAGE_KEY = 'bz_doc_cta_dismissed_at'
 const SUPPRESS_DAYS = 7
-const SHOW_AFTER_PX = 400
 const HREF = '/document?from=floating'
 const COVER_SRC = '/marketing/images/document-cover.jpg'
 const COVER_ALT = 'branding.bz サービス資料の表紙'
@@ -41,9 +40,9 @@ function isDismissedRecently(): boolean {
 export default function DocumentFloatingCta() {
   const pathname = usePathname()
   const wrapRef = useRef<HTMLDivElement>(null)
-  // 初期は「閉じた扱い＋未スクロール」＝非表示。effect で実際の状態に更新する
+  // 初期は「閉じた扱い＋未判定」＝非表示（SSR と食い違わないように）。effect で実際の状態に更新する
   const [dismissed, setDismissed] = useState(true)
-  const [scrolled, setScrolled] = useState(false)
+  const [ready, setReady] = useState(false)
   const [footerInView, setFooterInView] = useState(false)
   const [coversInteractive, setCoversInteractive] = useState(false)
 
@@ -77,20 +76,19 @@ export default function DocumentFloatingCta() {
     }
 
     let raf = 0
-    const onScroll = (e: Event) => {
-      const target = e.target
-      const elementTop = target instanceof Element ? target.scrollTop : 0
-      const y = Math.max(window.scrollY, document.documentElement.scrollTop, elementTop)
-      setScrolled(y > SHOW_AFTER_PX)
+    const recheck = () => {
       cancelAnimationFrame(raf)
       raf = requestAnimationFrame(checkCovers)
     }
-    const onResize = () => {
-      cancelAnimationFrame(raf)
-      raf = requestAnimationFrame(checkCovers)
-    }
-    window.addEventListener('scroll', onScroll, { capture: true, passive: true })
-    window.addEventListener('resize', onResize)
+    // 読み込み直後にも1回判定してから表示する（ファーストビューのCTAを覆わないように）
+    raf = requestAnimationFrame(() => {
+      checkCovers()
+      setReady(true)
+    })
+    window.addEventListener('scroll', recheck, { capture: true, passive: true })
+    window.addEventListener('resize', recheck)
+    // 画像やフォントの読み込みでレイアウトが動くので、load 後にも判定し直す
+    window.addEventListener('load', recheck)
 
     let observer: IntersectionObserver | null = null
     const footer = document.querySelector('footer')
@@ -99,8 +97,9 @@ export default function DocumentFloatingCta() {
       observer.observe(footer)
     }
     return () => {
-      window.removeEventListener('scroll', onScroll, { capture: true })
-      window.removeEventListener('resize', onResize)
+      window.removeEventListener('scroll', recheck, { capture: true })
+      window.removeEventListener('resize', recheck)
+      window.removeEventListener('load', recheck)
       cancelAnimationFrame(raf)
       observer?.disconnect()
     }
@@ -108,7 +107,7 @@ export default function DocumentFloatingCta() {
 
   if (hiddenPath) return null
 
-  const visible = scrolled && !dismissed && !footerInView && !coversInteractive
+  const visible = ready && !dismissed && !footerInView && !coversInteractive
 
   const dismiss = () => {
     setDismissed(true)
@@ -164,7 +163,7 @@ export default function DocumentFloatingCta() {
 
       {/* md 以上: 左下のカード（白地・表紙サムネイル付き） */}
       <div
-        className="relative hidden w-[336px] items-center gap-4 rounded-xl bg-white p-4 md:flex"
+        className="relative hidden w-[336px] items-center gap-4 rounded-xl bg-white p-5 md:flex"
         style={{ boxShadow: '0 12px 32px rgba(0,0,0,.45)' }}
         data-panel="desktop"
       >
