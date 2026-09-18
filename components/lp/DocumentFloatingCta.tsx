@@ -182,7 +182,7 @@ export default function DocumentFloatingCta() {
           <Link
             href={HREF}
             tabIndex={visible ? 0 : -1}
-            className="mt-2.5 inline-flex h-9 items-center whitespace-nowrap rounded-full bg-[#12141a] px-[18px] text-sm font-bold text-white transition-opacity hover:opacity-85"
+            className="mt-3.5 inline-flex h-9 items-center whitespace-nowrap rounded-full bg-[#12141a] px-[18px] text-sm font-bold text-white transition-opacity hover:opacity-85"
           >
             無料でダウンロード
           </Link>
