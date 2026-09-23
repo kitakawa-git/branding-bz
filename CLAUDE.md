@@ -157,6 +157,7 @@ id (uuid), company_id (FK→companies), name, position, department, bio, photo_u
   - 可能なら Supabase CLI（`supabase migration new` → SQL記述 → `supabase db push`）でローカル先行・適用。
   - CLI不可で `apply_migration`（MCP）を使う場合も、同一SQLを `supabase/migrations/<version>_<name>.sql` として保存し、**同じコミットに含める**（version はリモート `supabase_migrations.schema_migrations` の記録値に合わせる）。
   - 破壊的変更（DROP等）は事前バックアップ（退避テーブル等）を必ず先に取る。
+  - 退避テーブル（`create table ... as select` 等）は**作成と同じSQLで** `enable row level security` と `revoke all ... from anon, authenticated` まで実行する。public に作ると既定権限で anon に全権限が付き、RLS 無効で生まれる（2026-09-14 の退避表4つが advisor の rls_disabled_in_public に出た）。
 
 ### 実機検証ルール（データ汚染防止・最重要）
 - **プレビュー（localhost:3004）は demo-admin1@branding.bz（企業＝株式会社テックブリッジ / `128a1513`）でログイン固定。** 検証はこのデモ企業の範囲だけで行う。
