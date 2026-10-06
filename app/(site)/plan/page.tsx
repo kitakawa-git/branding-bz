@@ -26,14 +26,18 @@ const PLANS = [
   {
     id: 'free',
     name: 'Free',
-    subtitle: '体験する',
+    subtitle: '5名で始める',
     price: '¥0',
     priceSuffix: null,
-    description: 'AI構築ツールでブランドを言語化し、掲示として形にする。',
+    description: '5名のチームで、ブランドを整えて社内で共有する。',
     scale: '〜5名',
     members: '5名',
     support: 'メール',
     perPerson: '¥0',
+    // 261006_料金プラン改訂案_v1（案B）で Free に下ろした：
+    //   portalSync（ブランド情報への反映） / timeline（Good Action投稿）
+    //   / announcements（お知らせ配信＋Web Push）
+    // pdfExport / ciManualPdf / smartCard は Standard 以上のまま。
     features: [
       '― 構築 ―',
       'AI構築ツール（各 月3回まで）',
@@ -41,32 +45,28 @@ const PLANS = [
       'ブランドカラー定義ツール',
       'ペルソナビルダーツール',
       'パーソナリティ診断ツール',
-      // Free で自社ブランドを作り始められるようにする（v3の目玉）。
-      // メンバー上限5名。小さなチームで見せ合うところまでは無料で届き、
-      // 全社に配ろうとすると足りない＝「社員に浸透させたい→Standard」の動線になる
+      'ブランド情報への反映',
       '― 浸透 ―',
       'ブランド掲示 編集＋閲覧',
+      'Good Action 投稿',
+      'お知らせ配信＋Web Push',
     ],
     ctaLabel: '無料で始める',
     // /tools/colors から入ると /tools/colors/auth → /portal/auth に飛ばされ、
     // 未登録の人はログイン画面で行き止まりになる。登録から始められる /signup に送る
     ctaHref: '/signup',
     ctaStyle: 'outline' as const,
-    // Free は「使える回数」だけでなく「出口」も制限がある。
-    // pdfExport / portalSync はどちらも free:false（entitlements.ts）で、
-    // 生成結果は画面で見られるが PDF にも掲示にも出せない。
-    // 書いておかないと「月3回まで全部できる」と読まれる
-    reference: '生成結果は画面で確認できます。PDF出力・branding.bz のブランド情報への反映は Standard 以上',
+    reference: 'PDF出力・CIマニュアル出力は Standard 以上。メンバーは5名まで。',
     isHighlight: false,
   },
   {
     id: 'standard',
     name: 'Standard',
-    subtitle: '構築＋発信する',
+    subtitle: '社内外で運用する',
     price: '¥19,800',
     priceSuffix: '/月（税別）',
     description:
-      'AI構築ツールが無制限に。「らしさ」をCIマニュアルにまとめ、名刺と日々の共有で社内外へ届ける。',
+      '50名で、ブランドの共有と発信を続けて運用する。CIマニュアルとスマート名刺で、社外にもそろえて届ける。',
     scale: '5〜50名',
     members: '50名',
     support: 'メール',
@@ -75,18 +75,16 @@ const PLANS = [
       'Free全機能に加えて：',
       '― 構築 ―',
       'AI構築ツール（使用無制限）',
-      'CIマニュアル出力',
-      '― 浸透 ―',
-      'ブランド掲示 編集＋閲覧',
-      'Good Action投稿',
-      'お知らせ配信＋Web Push',
+      'PDF出力・CIマニュアル出力',
       '― 発信 ―',
       'スマート名刺 全機能',
+      '― 規模 ―',
+      'メンバー 50名まで',
     ],
     ctaLabel: 'ブランド構築を始める',
     ctaHref: '/signup',
     ctaStyle: 'primary' as const,
-    reference: '年間 約24万円（税別）で、AI構築ツールが使い放題。CIマニュアル出力とスマート名刺まで',
+    reference: '年間 約24万円（税別）で、AI構築ツールが使い放題。PDF出力・CIマニュアル・スマート名刺まで',
     isHighlight: true,
   },
   {
@@ -159,8 +157,8 @@ const PLANS = [
 //    以前 Premium が「浸透する」、Enterprise が「計測＋伴走」のまま取り残されており、
 //    同じページの上下でプランの説明が食い違っていた
 const UPSELL_STEPS = [
-  { name: 'Free', subtitle: '体験する', trigger: 'AIを無制限に使い\n名刺で発信したい' },
-  { name: 'Standard', subtitle: '構築＋発信', trigger: '社員に\n浸透させたい' },
+  { name: 'Free', subtitle: '5名で始める', trigger: 'AIを無制限に使い\n名刺で発信したい' },
+  { name: 'Standard', subtitle: '社内外で運用', trigger: '社員に\n浸透させたい' },
   { name: 'Premium', subtitle: '構築＋浸透＋発信', trigger: '市場や顧客の目線も\n含めて総合で測りたい' },
   { name: 'Enterprise', subtitle: 'すべてを、伴走つきで', trigger: '数字を打ち手に\nつなげたい' },
 ]

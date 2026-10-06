@@ -13,6 +13,9 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion'
 import { ToolConnectActions } from '@/components/shared/ToolConnectActions'
+import { UpgradeBadge } from '@/components/billing/UpgradeBadge'
+import { useCurrentPlan } from '@/lib/billing/use-current-plan'
+import { handlePlanRequired } from '@/lib/billing/plan-required-toast'
 import { Step4Journey } from './Step4Journey'
 import { ArrowLeft, RotateCcw, Loader2, UserCircle, Download } from 'lucide-react'
 import { type Persona, type BasicInfo, AVATAR_EMOJIS } from './persona-types'
@@ -37,6 +40,7 @@ export function Step5Result({ sessionId, personas, basicInfo, companyId, onBack,
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [hasCompanyId, setHasCompanyId] = useState(!!companyId)
   const [pdfLoading, setPdfLoading] = useState(false)
+  const currentPlan = useCurrentPlan()
 
   // 確認画面で顔アイコン（絵文字）を変更→セッション保存（連携時はサーバー側の保存データを参照）
   const setAvatar = useCallback((idx: number, emoji: string) => {
@@ -72,7 +76,7 @@ export function Step5Result({ sessionId, personas, basicInfo, companyId, onBack,
       })
       if (!res.ok) {
         const data = await res.json()
-        toast.error(data.error || '反映に失敗しました')
+        if (!handlePlanRequired(res, data)) toast.error(data.error || '反映に失敗しました')
         return
       }
       setConnected(true)
@@ -97,6 +101,7 @@ export function Step5Result({ sessionId, personas, basicInfo, companyId, onBack,
       })
       if (!res.ok) {
         const d = await res.json().catch(() => ({}))
+        if (handlePlanRequired(res, d)) return
         toast.error(d.error || 'PDF生成に失敗しました')
         return
       }
@@ -252,10 +257,13 @@ export function Step5Result({ sessionId, personas, basicInfo, companyId, onBack,
         <Button variant="outline" onClick={onBack} className="h-14 gap-2 px-6 text-base font-bold">
           <ArrowLeft className="h-4 w-4" /> 戻る
         </Button>
-        <Button onClick={handlePdfExport} disabled={pdfLoading || personas.length === 0} className="h-14 gap-2 px-6 text-base font-bold">
-          {pdfLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-          {pdfLoading ? 'PDF生成中...' : 'PDFをダウンロード'}
-        </Button>
+        <div className="flex items-center gap-2">
+          {currentPlan === 'free' && <UpgradeBadge feature="pdfExport" />}
+          <Button onClick={handlePdfExport} disabled={pdfLoading || personas.length === 0} className="h-14 gap-2 px-6 text-base font-bold">
+            {pdfLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            {pdfLoading ? 'PDF生成中...' : 'PDFをダウンロード'}
+          </Button>
+        </div>
       </div>
 
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>

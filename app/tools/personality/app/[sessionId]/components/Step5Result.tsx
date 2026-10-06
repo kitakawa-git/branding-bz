@@ -25,6 +25,9 @@ import { BrandPersonaCard } from '@/components/shared/BrandPersonaCard'
 import { type PersonalityTraitItem } from '@/components/shared/PersonalityTraitList'
 import { BrandPersonalityCard } from '@/components/shared/BrandPersonalityCard'
 import { ToneRulesSection } from './ToneRulesSection'
+import { UpgradeBadge } from '@/components/billing/UpgradeBadge'
+import { useCurrentPlan } from '@/lib/billing/use-current-plan'
+import { handlePlanRequired } from '@/lib/billing/plan-required-toast'
 import { toast } from 'sonner'
 import { ArrowLeft, Download, SlidersHorizontal, Check, X, Unplug, RotateCcw } from 'lucide-react'
 import { ARCHETYPE_BY_KEY, AAKER_CITATION, type ArchetypeKey } from '../../../lib/archetypes'
@@ -84,6 +87,7 @@ export function Step5Result({ sessionId, framework, diagnosis, companyName, onSa
   const [editScores, setEditScores] = useState<AakerScoreItem[]>([])
   const [savingScores, setSavingScores] = useState(false)
   const [exporting, setExporting] = useState(false)
+  const currentPlan = useCurrentPlan()
   const [localDiagnosis, setLocalDiagnosis] = useState<StoredDiagnosis | null>(diagnosis)
 
   // 本体連携: 管理者判定（admin_users に存在するユーザーのみ連携ボタンを表示）
@@ -156,6 +160,7 @@ export function Step5Result({ sessionId, framework, diagnosis, companyName, onSa
       })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
+        if (handlePlanRequired(res, data)) return
         toast.error(data.error || 'PDF生成に失敗しました')
         return
       }
@@ -431,10 +436,13 @@ export function Step5Result({ sessionId, framework, diagnosis, companyName, onSa
           <ArrowLeft className="h-4 w-4" />
           戻る
         </Button>
-        <Button onClick={handleExportPdf} disabled={exporting} className="h-14 gap-2 px-6 text-base font-bold">
-          <Download className="h-4 w-4" />
-          {exporting ? 'PDF生成中...' : 'PDFをダウンロード'}
-        </Button>
+        <div className="flex items-center gap-2">
+          {currentPlan === 'free' && <UpgradeBadge feature="pdfExport" />}
+          <Button onClick={handleExportPdf} disabled={exporting} className="h-14 gap-2 px-6 text-base font-bold">
+            <Download className="h-4 w-4" />
+            {exporting ? 'PDF生成中...' : 'PDFをダウンロード'}
+          </Button>
+        </div>
       </div>
 
       {/* やり直しの確認ダイアログ */}

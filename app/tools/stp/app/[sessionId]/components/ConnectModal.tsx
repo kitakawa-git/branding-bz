@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
+import { handlePlanRequired } from '@/lib/billing/plan-required-toast'
 import { Check, Unplug } from 'lucide-react'
 
 interface TargetingData {
@@ -172,7 +173,7 @@ export function ConnectModal({
         return
       }
       if (!res.ok) {
-        toast.error(data.error || '反映に失敗しました')
+        if (!handlePlanRequired(res, data)) toast.error(data.error || '反映に失敗しました')
         return
       }
 

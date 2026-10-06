@@ -14,6 +14,9 @@ import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import { ConnectModal } from './ConnectModal'
 import { ToolConnectActions } from '@/components/shared/ToolConnectActions'
+import { UpgradeBadge } from '@/components/billing/UpgradeBadge'
+import { useCurrentPlan } from '@/lib/billing/use-current-plan'
+import { handlePlanRequired } from '@/lib/billing/plan-required-toast'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -275,6 +278,7 @@ export function Step5Result({
 }: Step5Props) {
   const router = useRouter()
   const [pdfLoading, setPdfLoading] = useState(false)
+  const currentPlan = useCurrentPlan()
   const [adminCompanyId, setAdminCompanyId] = useState<string | null>(companyId)
   const [isAdminUser, setIsAdminUser] = useState(false)
   const [checkingAdmin, setCheckingAdmin] = useState(true)
@@ -401,6 +405,7 @@ export function Step5Result({
 
       if (!res.ok) {
         const data = await res.json()
+        if (handlePlanRequired(res, data)) return
         toast.error(data.error || 'PDF生成に失敗しました')
         return
       }
@@ -539,10 +544,13 @@ export function Step5Result({
           <ArrowLeft className="h-4 w-4" />
           戻る
         </Button>
-        <Button onClick={handlePdfExport} disabled={pdfLoading} className="h-14 gap-2 px-6 text-base font-bold">
-          {pdfLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-          {pdfLoading ? 'PDF生成中...' : 'PDFをダウンロード'}
-        </Button>
+        <div className="flex items-center gap-2">
+          {currentPlan === 'free' && <UpgradeBadge feature="pdfExport" />}
+          <Button onClick={handlePdfExport} disabled={pdfLoading} className="h-14 gap-2 px-6 text-base font-bold">
+            {pdfLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            {pdfLoading ? 'PDF生成中...' : 'PDFをダウンロード'}
+          </Button>
+        </div>
       </div>
 
       {/* branding.bz連携モーダル */}

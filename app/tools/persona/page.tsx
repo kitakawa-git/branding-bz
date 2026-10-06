@@ -55,13 +55,13 @@ const HIGHLIGHTS = [
     label: '出力',
     icon: Download,
     title: ['PDFで', 'ワンクリック出力'],
-    description: 'ペルソナシートとジャーニーマップをPDFでワンクリック出力。社内共有にすぐに使えます（PDF出力とブランド情報への反映は Standard 以上）。',
+    description: 'ペルソナシートとジャーニーマップをPDFでワンクリック出力。社内共有にすぐに使えます（PDF出力は Standard 以上）。',
   },
   {
     label: '反映',
     icon: Unplug,
     title: ['ワンクリックで', 'ブランド情報に反映'],
-    description: '確定したペルソナを、branding.bz のブランド情報（ブランド戦略）に反映できます（Standard 以上）。',
+    description: '確定したペルソナを、branding.bz のブランド情報（ブランド戦略）に反映できます。',
   },
 ]
 
@@ -69,7 +69,7 @@ const HIGHLIGHTS = [
 const FAQ_ITEMS = [
   {
     q: '無料で使えますか？',
-    a: 'はい。無料登録で、各ツールを月3回までご利用いただけます（毎月リセット）。クレジットカード登録は不要です。PDF出力と branding.bz のブランド情報への反映は Standard 以上のプランで利用できます。',
+    a: 'はい。無料登録で、各ツールを月3回までご利用いただけます（毎月リセット）。クレジットカード登録は不要です。PDF出力は Standard 以上のプランで利用できます。',
   },
   {
     q: 'どんなペルソナが作れますか？',
@@ -81,7 +81,7 @@ const FAQ_ITEMS = [
   },
   {
     q: '作ったペルソナは出力できますか？',
-    a: 'ペルソナシートとカスタマージャーニーマップの両方をPDF出力できます。確定したペルソナは branding.bz のブランド情報にも反映できます（いずれも Standard 以上）。',
+    a: '確定したペルソナは branding.bz のブランド情報に反映できます（Free でも可）。ペルソナシートとカスタマージャーニーマップのPDF出力は Standard 以上のプランでご利用いただけます。',
   },
 ]
 
@@ -293,7 +293,7 @@ export default function PersonaLandingPage() {
               <span className="inline-flex items-center gap-1.5"><CheckCircle2 size={14} className="text-blue-400" /> {FREE_TIER_BADGE_LABEL}</span>
               <span className="inline-flex items-center gap-1.5"><CheckCircle2 size={14} className="text-blue-400" /> クレジットカード不要</span>
               <span className="inline-flex items-center gap-1.5"><CheckCircle2 size={14} className="text-blue-400" /> {FREE_TIER_REVIEW_BADGE}</span>
-              <span className="basis-full text-xs text-white/50">PDF出力と branding.bz のブランド情報への反映は Standard 以上のプランで利用できます。</span>
+              <span className="basis-full text-xs text-white/50">PDF出力は Standard 以上のプランで利用できます。</span>
             </div>
             <h2 className="text-balance text-3xl font-bold tracking-tight md:text-5xl">
               今すぐペルソナを作成する

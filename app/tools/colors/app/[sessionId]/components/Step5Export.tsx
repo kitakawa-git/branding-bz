@@ -5,6 +5,9 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { ToolConnectActions } from '@/components/shared/ToolConnectActions'
+import { UpgradeBadge } from '@/components/billing/UpgradeBadge'
+import { useCurrentPlan } from '@/lib/billing/use-current-plan'
+import { handlePlanRequired } from '@/lib/billing/plan-required-toast'
 import { ArrowLeft, Download, Loader2, Code2 } from 'lucide-react'
 import { PalettePreview } from '../../components/PalettePreview'
 import { AccessibilityBadge } from '../../components/AccessibilityBadge'
@@ -28,6 +31,7 @@ export function Step5Export({
   const [exporting, setExporting] = useState<string | null>(null)
   const [linked, setLinked] = useState(project.linked_to_brandconnect) // DB列名はそのまま
   const [confirmed, setConfirmed] = useState(!!project.final_palette)
+  const currentPlan = useCurrentPlan()
 
   const handleConfirm = async () => {
     await onSaveField({ final_palette: palette })
@@ -78,6 +82,7 @@ export function Step5Export({
 
       if (!res.ok) {
         const data = await res.json()
+        if (handlePlanRequired(res, data)) return
         toast.error(data.error || 'PDF出力に失敗しました')
         return
       }
@@ -117,7 +122,7 @@ export function Step5Export({
       if (!res.ok) {
         if (data.needsAccount) {
           toast.error('branding.bz のアカウントが必要です')
-        } else {
+        } else if (!handlePlanRequired(res, data)) {
           toast.error(data.error || '反映に失敗しました')
         }
         return
@@ -237,14 +242,17 @@ export function Step5Export({
           調整に戻る
         </Button>
         {confirmed && (
-          <Button
-            onClick={handleExportPdf}
-            disabled={exporting === 'pdf'}
-            className="h-14 gap-2 px-6 text-base font-bold"
-          >
-            {exporting === 'pdf' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-            {exporting === 'pdf' ? 'PDF生成中...' : 'PDFをダウンロード'}
-          </Button>
+          <div className="flex items-center gap-2">
+            {currentPlan === 'free' && <UpgradeBadge feature="pdfExport" />}
+            <Button
+              onClick={handleExportPdf}
+              disabled={exporting === 'pdf'}
+              className="h-14 gap-2 px-6 text-base font-bold"
+            >
+              {exporting === 'pdf' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+              {exporting === 'pdf' ? 'PDF生成中...' : 'PDFをダウンロード'}
+            </Button>
+          </div>
         )}
       </div>
     </div>

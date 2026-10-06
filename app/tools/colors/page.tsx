@@ -90,14 +90,14 @@ const HIGHLIGHTS = [
   { label: 'アクセシビリティ', icon: Palette, title: ['コントラスト比を', '自動チェック'], description: '主要な3組の配色について、文字の読みやすさの目安となるコントラスト比を確認できます。' },
   { label: '対話型調整', icon: WandSparkles, title: ['AIチャットで', '自由に調整'], description: '「もう少し温かみがほしい」など、自然な言葉で、1セッションあたり5ターンまで調整できます。' },
   { label: '出力', icon: Download, title: ['PDF・CSSを', 'ワンクリック出力'], description: 'パレットカードはPDFでダウンロード、CSSカスタムプロパティはワンクリックでコピーできます（PDF出力は Standard 以上）。' },
-  { label: '反映', icon: Plug, title: ['ワンクリックで', 'ブランド情報に反映'], description: '確定したカラーを、branding.bz のブランド情報に反映。社内ガイドラインや名刺にも反映されます（Standard 以上）。' },
+  { label: '反映', icon: Plug, title: ['ワンクリックで', 'ブランド情報に反映'], description: '確定したカラーを、branding.bz のブランド情報に反映。社内ガイドラインや名刺にも反映されます。' },
 ]
 
 // 表示と FAQPage schema は同じ配列を参照して完全一致を担保する
 const FAQ_ITEMS = [
   {
     q: '無料で使えますか？',
-    a: 'はい。無料登録で、各ツールを月3回までご利用いただけます（毎月リセット）。クレジットカード登録は不要です。PDF出力と branding.bz のブランド情報への反映は Standard 以上のプランで利用できます。',
+    a: 'はい。無料登録で、各ツールを月3回までご利用いただけます（毎月リセット）。クレジットカード登録は不要です。PDF出力は Standard 以上のプランで利用できます。',
   },
   {
     q: 'どんなカラーパレットが作れますか？',
@@ -110,7 +110,7 @@ const FAQ_ITEMS = [
   },
   {
     q: '作ったカラーはどう使えますか？',
-    a: 'CSSカスタムプロパティはワンクリックでコピーできます。パレットカードのPDF出力と、branding.bz のブランド情報への反映は Standard 以上のプランで利用できます。',
+    a: 'CSSカスタムプロパティはワンクリックでコピーできます。branding.bz のブランド情報への反映は Free でも可能で、パレットカードのPDF出力は Standard 以上のプランで利用できます。',
   },
   {
     q: 'デザインの専門知識がなくても使えますか？',
@@ -156,7 +156,7 @@ export default function ColorsLandingPage() {
             applicationCategory: 'DesignApplication',
             operatingSystem: 'Web',
             offers: { '@type': 'Offer', price: '0', priceCurrency: 'JPY' },
-            description: 'AIが業種やブランドの個性に合わせたカラーパレットを提案。主要な3組の配色のコントラスト比を確認でき、PDF出力とCSSカスタムプロパティのコピーに対応（PDF出力とブランド情報への反映は Standard 以上）。',
+            description: 'AIが業種やブランドの個性に合わせたカラーパレットを提案。主要な3組の配色のコントラスト比を確認でき、PDF出力とCSSカスタムプロパティのコピーに対応（PDF出力は Standard 以上）。',
             provider: { '@type': 'Organization', name: 'branding.bz', url: 'https://branding.bz' },
           }),
         }}
@@ -352,7 +352,7 @@ export default function ColorsLandingPage() {
               <span className="inline-flex items-center gap-1.5"><CheckCircle2 size={14} className="text-blue-400" /> {FREE_TIER_BADGE_LABEL}</span>
               <span className="inline-flex items-center gap-1.5"><CheckCircle2 size={14} className="text-blue-400" /> クレジットカード不要</span>
               <span className="inline-flex items-center gap-1.5"><CheckCircle2 size={14} className="text-blue-400" /> {FREE_TIER_REVIEW_BADGE}</span>
-              <span className="basis-full text-xs text-white/50">PDF出力と branding.bz のブランド情報への反映は Standard 以上のプランで利用できます。</span>
+              <span className="basis-full text-xs text-white/50">PDF出力は Standard 以上のプランで利用できます。</span>
             </div>
             <h2 className="text-balance text-3xl font-bold tracking-tight md:text-5xl">今すぐカラーパレットを作成</h2>
             <p className="mx-auto mt-6 max-w-xl text-lg text-white/60">

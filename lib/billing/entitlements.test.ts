@@ -75,10 +75,20 @@ const future = '2026-09-13T12:00:00+09:00'
   assert.equal(can(at('standard'), 'smartCard', NOW), true)
   assert.equal(can(at('standard'), 'cardAnalytics', NOW), true)
 
-  // timeline / announcements は v1.3 で premium → standard に降格
-  assert.equal(can(at('free'), 'timeline', NOW), false)
+  // timeline / announcements / portalSync は 261006_料金プラン改訂案_v1（案B）で Free まで降りた
+  assert.equal(can(at('free'), 'timeline', NOW), true)
+  assert.equal(can(at('free'), 'announcements', NOW), true)
+  assert.equal(can(at('free'), 'portalSync', NOW), true)
+  assert.equal(can(at('card'), 'timeline', NOW), true)
+  assert.equal(can(at('card'), 'announcements', NOW), true)
+  assert.equal(can(at('card'), 'portalSync', NOW), true)
   assert.equal(can(at('standard'), 'timeline', NOW), true)
   assert.equal(can(at('standard'), 'announcements', NOW), true)
+
+  // PDF出力・CIマニュアル・スマート名刺は Standard 以上のまま（Free には下ろしていない）
+  assert.equal(can(at('free'), 'pdfExport', NOW), false)
+  assert.equal(can(at('free'), 'ciManualPdf', NOW), false)
+  assert.equal(can(at('free'), 'smartCard', NOW), false)
 
   // 浸透系は premium から。KPI は premium 据え置き
   assert.equal(can(at('standard'), 'videoLearning', NOW), false)
@@ -137,7 +147,11 @@ const future = '2026-09-13T12:00:00+09:00'
 // ── minimumPlanFor: 販売終了の card を案内しない ─────────────
 {
   assert.equal(minimumPlanFor('brandGuidelinesEdit'), 'free')
+  assert.equal(minimumPlanFor('portalSync'), 'free', '261006_v1 で Free まで降りた')
+  assert.equal(minimumPlanFor('timeline'), 'free', '261006_v1 で Free まで降りた')
+  assert.equal(minimumPlanFor('announcements'), 'free', '261006_v1 で Free まで降りた')
   assert.equal(minimumPlanFor('pdfExport'), 'standard')
+  assert.equal(minimumPlanFor('ciManualPdf'), 'standard')
   assert.equal(minimumPlanFor('smartCard'), 'standard', 'card は候補から外す')
   assert.equal(minimumPlanFor('microFeedback'), 'standard', 'card は候補から外す')
   assert.equal(minimumPlanFor('kpi'), 'premium')

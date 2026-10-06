@@ -26,15 +26,15 @@ const STEPS = [
 const HIGHLIGHTS = [
   { label: 'AI診断', icon: Sparkles, title: ['10問の回答から', 'ブランドの個性を整理'], description: '選択式中心の10問に答えるだけ。スコアもタイプも1回で同時に算出し、タブで切り替えられます。' },
   { label: '微調整', icon: SlidersHorizontal, title: ['スコアを', '自分の感覚で調整'], description: '診断結果はスライダーで微調整可能。「ここは少し誠実寄り」という肌感覚を反映できます。' },
-  { label: '出力', icon: Download, title: ['診断結果を', 'PDFでダウンロード'], description: '人格スコア・タイプカード・トーンオブボイスをまとめたレポートをワンクリックでPDF出力（PDF出力とブランド情報への反映は Standard 以上）。' },
-  { label: '反映', icon: Unplug, title: ['ワンクリックで', 'ブランド情報に反映'], description: '確定した人格を、branding.bz のブランド情報に反映。トーン・期待タグも運用に反映されます（Standard 以上）。' },
+  { label: '出力', icon: Download, title: ['診断結果を', 'PDFでダウンロード'], description: '人格スコア・タイプカード・トーンオブボイスをまとめたレポートをワンクリックでPDF出力（PDF出力は Standard 以上）。' },
+  { label: '反映', icon: Unplug, title: ['ワンクリックで', 'ブランド情報に反映'], description: '確定した人格を、branding.bz のブランド情報に反映。トーン・期待タグも運用に反映されます。' },
 ]
 
 // 表示と FAQPage schema は同じ配列を参照して完全一致を担保する
 const FAQ_ITEMS = [
   {
     q: '無料で使えますか？',
-    a: 'はい。無料登録で、各ツールを月3回までご利用いただけます（毎月リセット）。クレジットカード登録は不要です。PDF出力と branding.bz のブランド情報への反映は Standard 以上のプランで利用できます。',
+    a: 'はい。無料登録で、各ツールを月3回までご利用いただけます（毎月リセット）。クレジットカード登録は不要です。PDF出力は Standard 以上のプランで利用できます。',
   },
   {
     q: '何を診断できますか？',
@@ -42,7 +42,7 @@ const FAQ_ITEMS = [
   },
   {
     q: '診断結果は調整できますか？',
-    a: 'スコアはスライダーで微調整でき、結果はPDF出力と branding.bz のブランド情報への反映に対応しています（この2つは Standard 以上）。',
+    a: 'スコアはスライダーで微調整でき、結果は branding.bz のブランド情報への反映（Free でも可）とPDF出力（Standard 以上）に対応しています。',
   },
   {
     q: 'どのように診断しますか？',
@@ -252,7 +252,7 @@ export default function PersonalityLandingPage() {
               <span className="inline-flex items-center gap-1.5"><CheckCircle2 size={14} className="text-emerald-400" /> {FREE_TIER_BADGE_LABEL}</span>
               <span className="inline-flex items-center gap-1.5"><CheckCircle2 size={14} className="text-emerald-400" /> クレジットカード不要</span>
               <span className="inline-flex items-center gap-1.5"><CheckCircle2 size={14} className="text-emerald-400" /> {FREE_TIER_REVIEW_BADGE}</span>
-              <span className="basis-full text-xs text-white/50">PDF出力と branding.bz のブランド情報への反映は Standard 以上のプランで利用できます。</span>
+              <span className="basis-full text-xs text-white/50">PDF出力は Standard 以上のプランで利用できます。</span>
             </div>
             <h2 className="text-balance text-3xl font-bold tracking-tight md:text-5xl">今すぐブランドの人格を診断する</h2>
             <p className="mx-auto mt-6 max-w-xl text-lg text-white/60">

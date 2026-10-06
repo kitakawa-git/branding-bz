@@ -58,7 +58,10 @@ const FEATURE_MATRIX: Record<FeatureKey, Record<Plan, boolean>> = {
   buildTools:          { free: true,  card: true,  standard: true,  premium: true,  enterprise: true  },
   buildToolsUnlimited: { free: false, card: false, standard: true,  premium: true,  enterprise: true  },
   pdfExport:           { free: false, card: false, standard: true,  premium: true,  enterprise: true  },
-  portalSync:          { free: false, card: false, standard: true,  premium: true,  enterprise: true  },
+  // 261006_料金プラン改訂案_v1（案B・2026-10-06）で Free に下ろした。
+  // 「5名のチームで、ブランドを整えて社内で共有してみる」を Free でひととおり試せるようにする。
+  // 回数制限（buildToolsUnlimited=false の月3回）と人数上限（5名）はそのまま。
+  portalSync:          { free: true,  card: true,  standard: true,  premium: true,  enterprise: true  },
   // v3 で Free に掲示編集が降りた（Free に「自分のブランドを作って保存する場所」を与える）
   brandGuidelinesView: { free: true,  card: true,  standard: true,  premium: true,  enterprise: true  },
   brandGuidelinesEdit: { free: true,  card: true,  standard: true,  premium: true,  enterprise: true  },
@@ -68,11 +71,12 @@ const FEATURE_MATRIX: Record<FeatureKey, Record<Plan, boolean>> = {
   cardAnalytics:       { free: false, card: true,  standard: true,  premium: true,  enterprise: true  },
   microFeedback:       { free: false, card: true,  standard: true,  premium: true,  enterprise: true  },
   // v1.3 で premium → standard に降格。
+  // 261006_料金プラン改訂案_v1（案B・2026-10-06）で timeline / announcements を Free に下ろした。
   // ⚠️ timeline / announcements / kpi はブラウザから supabase-js で直接テーブルを書くため、
-  //    RLS 側にも同じプラン条件がある（migration 20260814140000_rls_plan_conditions）。
+  //    RLS 側にも同じプラン条件がある（migration 20260814140000_rls_plan_conditions / 20261006xxxxxx_rls_free_timeline_announcements）。
   //    プラン構成を変えるときは、この表と RLS の company_plan_allows(...) の両方を直すこと。
-  timeline:            { free: false, card: false, standard: true,  premium: true,  enterprise: true  },
-  announcements:       { free: false, card: false, standard: true,  premium: true,  enterprise: true  },
+  timeline:            { free: true,  card: true,  standard: true,  premium: true,  enterprise: true  },
+  announcements:       { free: true,  card: true,  standard: true,  premium: true,  enterprise: true  },
   videoLearning:       { free: false, card: false, standard: false, premium: true,  enterprise: true  },
   brandQuiz:           { free: false, card: false, standard: false, premium: true,  enterprise: true  },
   // ⚠️ RLS 側にも同条件あり（20260814140000_rls_plan_conditions・goal_kpis / goal_periods）

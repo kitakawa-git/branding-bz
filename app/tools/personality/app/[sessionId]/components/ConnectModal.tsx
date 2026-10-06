@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
+import { handlePlanRequired } from '@/lib/billing/plan-required-toast'
 import { Check, Unplug } from 'lucide-react'
 import type { DiagnosisResult } from '../../../lib/diagnosis'
 import type { FrameworkKey } from '../../../lib/questions'
@@ -144,7 +145,7 @@ export function ConnectModal({ sessionId, userId, diagnosis: d, framework, open,
         return
       }
       if (!res.ok) {
-        toast.error(data.error || '反映に失敗しました')
+        if (!handlePlanRequired(res, data)) toast.error(data.error || '反映に失敗しました')
         return
       }
 

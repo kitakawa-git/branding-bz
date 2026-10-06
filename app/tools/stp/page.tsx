@@ -26,23 +26,23 @@ const STEPS = [
 const HIGHLIGHTS = [
   { label: 'AI提案', icon: Lightbulb, title: ['AI自動', 'セグメント提案'], description: '業種や商品の特徴に合わせて、市場を分ける切り口をAIが提案します。提案をもとに、自社に合う切り口を選べます。' },
   { label: 'マップ', icon: SlidersHorizontal, title: ['インタラクティブ', 'ポジショニングマップ'], description: 'スライダーで直感的に自社・競合を配置。ポジショニングの空白地帯が一目でわかります。' },
-  { label: '出力', icon: Download, title: ['PDFで', 'ワンクリック出力'], description: '分析結果をPDFでワンクリックダウンロードできます（PDF出力とブランド情報への反映は Standard 以上）。' },
-  { label: '反映', icon: Unplug, title: ['ワンクリックで', 'ブランド情報に反映'], description: '確定したSTP分析を、branding.bz のブランド情報（ブランド戦略）に反映できます（Standard 以上）。' },
+  { label: '出力', icon: Download, title: ['PDFで', 'ワンクリック出力'], description: '分析結果をPDFでワンクリックダウンロードできます（PDF出力は Standard 以上）。' },
+  { label: '反映', icon: Unplug, title: ['ワンクリックで', 'ブランド情報に反映'], description: '確定したSTP分析を、branding.bz のブランド情報（ブランド戦略）に反映できます。' },
 ]
 
 // 表示と FAQPage schema は同じ配列を参照して完全一致を担保する
 const FAQ_ITEMS = [
   {
     q: '無料で使えますか？',
-    a: 'はい。無料登録で、各ツールを月3回までご利用いただけます（毎月リセット）。クレジットカード登録は不要です。PDF出力と branding.bz のブランド情報への反映は Standard 以上のプランで利用できます。',
+    a: 'はい。無料登録で、各ツールを月3回までご利用いただけます（毎月リセット）。クレジットカード登録は不要です。PDF出力は Standard 以上のプランで利用できます。',
   },
   {
     q: 'STP分析ツールで何ができますか？',
-    a: 'AIがセグメンテーション・ターゲティング・ポジショニングを提案し、ポジショニングマップの自動作成とPDF出力に対応しています（PDF出力とブランド情報への反映は Standard 以上）。',
+    a: 'AIがセグメンテーション・ターゲティング・ポジショニングを提案し、ポジショニングマップの自動作成とPDF出力に対応しています（PDF出力は Standard 以上）。',
   },
   {
     q: '作成した分析結果は保存・活用できますか？',
-    a: '分析結果はPDFでダウンロードできるほか、ワンクリックで branding.bz のブランド情報（ブランド戦略）に反映できます（いずれも Standard 以上）。',
+    a: '分析結果はワンクリックで branding.bz のブランド情報（ブランド戦略）に反映できます（Free でも可）。PDFダウンロードは Standard 以上のプランでご利用いただけます。',
   },
   {
     q: 'STP分析の知識がなくても使えますか？',
@@ -88,7 +88,7 @@ export default function STPLandingPage() {
             applicationCategory: 'BusinessApplication',
             operatingSystem: 'Web',
             offers: { '@type': 'Offer', price: '0', priceCurrency: 'JPY' },
-            description: 'AIが業種に合ったセグメンテーション・ターゲティング・ポジショニングを提案。ポジショニングマップの自動作成・PDF出力に対応（PDF出力とブランド情報への反映は Standard 以上）。',
+            description: 'AIが業種に合ったセグメンテーション・ターゲティング・ポジショニングを提案。ポジショニングマップの自動作成・PDF出力に対応（PDF出力は Standard 以上）。',
             provider: { '@type': 'Organization', name: 'branding.bz', url: 'https://branding.bz' },
           }),
         }}
@@ -252,7 +252,7 @@ export default function STPLandingPage() {
               <span className="inline-flex items-center gap-1.5"><CheckCircle2 size={14} className="text-blue-400" /> {FREE_TIER_BADGE_LABEL}</span>
               <span className="inline-flex items-center gap-1.5"><CheckCircle2 size={14} className="text-blue-400" /> クレジットカード不要</span>
               <span className="inline-flex items-center gap-1.5"><CheckCircle2 size={14} className="text-blue-400" /> {FREE_TIER_REVIEW_BADGE}</span>
-              <span className="basis-full text-xs text-white/50">PDF出力と branding.bz のブランド情報への反映は Standard 以上のプランで利用できます。</span>
+              <span className="basis-full text-xs text-white/50">PDF出力は Standard 以上のプランで利用できます。</span>
             </div>
             <h2 className="text-balance text-3xl font-bold tracking-tight md:text-5xl">今すぐSTP分析を始める</h2>
             <p className="mx-auto mt-6 max-w-xl text-lg text-white/60">
