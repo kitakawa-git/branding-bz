@@ -7,12 +7,12 @@
 import { NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { createClient } from '@/lib/supabase/server'
-import { MONTHLY_FREE_LIMIT, getCurrentMonthStartUtcIso } from '@/lib/tools/free-limits'
+import { MONTHLY_FREE_LIMIT, countCompletedThisMonth, type BuildToolAppType } from '@/lib/tools/free-limits'
 import { getEffectivePlan, getBuildToolMonthlyLimit } from '@/lib/billing/entitlements'
 import { fetchCompanyPlan, fetchCompanyIdForAuth } from '@/lib/billing/guard'
 
 /** mini_app_sessions.app_type と画面上のツールの対応 */
-const APP_TYPES = ['brand_colors', 'stp', 'persona', 'personality'] as const
+const APP_TYPES: readonly BuildToolAppType[] = ['brand_colors', 'stp', 'persona', 'personality'] as const
 
 export async function GET() {
   try {
@@ -29,18 +29,12 @@ export async function GET() {
       return NextResponse.json({ limit: null, remaining: null })
     }
 
+    // 261006_v1: カウントは会社単位。会社が無ければ従来どおり user_id で数える。
     const admin = getSupabaseAdmin()
-    const monthStart = getCurrentMonthStartUtcIso()
     const counts = await Promise.all(
       APP_TYPES.map(async (appType) => {
-        const { count } = await admin
-          .from('mini_app_sessions')
-          .select('id', { count: 'exact', head: true })
-          .eq('user_id', user.id)
-          .eq('app_type', appType)
-          .eq('status', 'completed')
-          .gte('updated_at', monthStart)
-        return [appType, Math.max(0, MONTHLY_FREE_LIMIT - (count ?? 0))] as const
+        const used = await countCompletedThisMonth(admin, appType, { companyId, authId: user.id })
+        return [appType, Math.max(0, MONTHLY_FREE_LIMIT - used)] as const
       }),
     )
 

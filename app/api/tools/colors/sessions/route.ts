@@ -3,7 +3,7 @@
 // 新規ユーザー作成 or 既存ユーザーのセッション作成
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
-import { MONTHLY_FREE_LIMIT, MONTHLY_LIMIT_REACHED_MESSAGE, getCurrentMonthStartUtcIso } from '@/lib/tools/free-limits'
+import { MONTHLY_FREE_LIMIT, MONTHLY_LIMIT_REACHED_MESSAGE, countCompletedThisMonth } from '@/lib/tools/free-limits'
 import { can } from '@/lib/billing/entitlements'
 import { fetchCompanyPlan, usageLimitResponse } from '@/lib/billing/guard'
 
@@ -74,19 +74,13 @@ export async function POST(request: NextRequest) {
 
     // フリーミアム制限チェック: 当月(JST)の完了セッション数。
     // standard 以上（buildToolsUnlimited）は上限なしなので数えない。
-    // 未ログイン・会社なしは free 相当として従来どおり上限をかける。
+    // 261006_v1 以降、カウント単位は会社。会社なし（未ログイン等）は user_id で従来どおり。
     const unlimited = can(await fetchCompanyPlan(companyId), 'buildToolsUnlimited')
     if (!unlimited) {
-      const monthStart = getCurrentMonthStartUtcIso()
-      const { count: completedCount } = await supabaseAdmin
-        .from('mini_app_sessions')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', authId)
-        .eq('app_type', 'brand_colors')
-        .eq('status', 'completed')
-        .gte('updated_at', monthStart)
-
-      if (completedCount !== null && completedCount >= MONTHLY_FREE_LIMIT) {
+      const completedCount = await countCompletedThisMonth(
+        supabaseAdmin, 'brand_colors', { companyId, authId },
+      )
+      if (completedCount >= MONTHLY_FREE_LIMIT) {
         return usageLimitResponse(MONTHLY_LIMIT_REACHED_MESSAGE)
       }
     }

@@ -29,9 +29,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: `Invalid pageType: ${pageType}` }, { status: 400 })
     }
 
-    // プラン判定: free では記録を残さない（名刺・ブランドページ自体は見えたまま）。
-    // 閲覧者にエラーは返さず、記録しなかったことだけ伝える
-    if (!(await canRecordAnalytics(companyId))) {
+    // プラン判定:
+    // - ブランド掲示（guidelines）だけは Free でも記録する。
+    //   261006_料金プラン改訂案_v1（案B）のパイロット要件「担当者以外2名が閲覧」を数える
+    //   ために必要。Freeの画面には分析表示は出さない（記録だけ残す）。
+    // - 名刺・その他ページタイプは従来どおり cardAnalytics 判定（Standard 以上で記録）。
+    // - 閲覧者にエラーは返さず、記録しなかったことだけ伝える。
+    if (pageType !== 'guidelines' && !(await canRecordAnalytics(companyId))) {
       return NextResponse.json({ recorded: false, reason: 'plan_required' })
     }
 

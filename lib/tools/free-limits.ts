@@ -1,6 +1,12 @@
 // 4ツール（STP・ペルソナ・パーソナリティ・カラー）共通の月次フリー枠設定。
 // 「無料で月に3回まで利用可能」＝ status='completed' 行を当月分（JST）で数える。
 // 毎月1日 0:00（日本時間）にリセット。
+//
+// 【カウント単位】261006_料金プラン改訂案_v1（案B）以降、**会社単位**で数える。
+// Free の会社全体で各ツール月3回（5名のうち誰がやっても3回で止まる）。
+// 会社に紐づかない利用（未ログイン / 会社なしの飛び込み利用）だけは
+// 従来どおり user_id ベースで数える（他人の枠を使わせない安全側）。
+// 失敗した生成は status='completed' にならないため、そもそもカウント対象外。
 
 /** 月間の完了セッション上限（4ツール共通） */
 export const MONTHLY_FREE_LIMIT = 3
@@ -19,6 +25,46 @@ export function getCurrentMonthStartUtcIso(now: Date = new Date()): string {
   // JST 月初 00:00 = UTC で前月末日の 15:00
   const utcMs = Date.UTC(y, m, 1) - 9 * 60 * 60 * 1000
   return new Date(utcMs).toISOString()
+}
+
+/** カウントで filter する列と値を決める。会社があれば会社単位、無ければユーザー単位。 */
+export type CountScope =
+  | { column: 'company_id'; value: string }
+  | { column: 'user_id'; value: string }
+
+export function pickCountScope(args: { companyId: string | null | undefined; authId: string | null | undefined }): CountScope | null {
+  if (args.companyId) return { column: 'company_id', value: args.companyId }
+  if (args.authId)    return { column: 'user_id',    value: args.authId }
+  return null
+}
+
+/** 構築ツールの app_type。mini_app_sessions.app_type の値と同じ。 */
+export type BuildToolAppType = 'stp' | 'brand_colors' | 'persona' | 'personality'
+
+/**
+ * 当月(JST)に完了した構築ツールセッション数を数える。
+ * companyId が与えられていれば会社全体を1枠として数える。無ければユーザー単位。
+ *
+ * admin は getSupabaseAdmin() の戻り値（supabase-js）を期待するが、
+ * 呼び出し側で型は保証されるため、ここでは最小のチェイン型だけ要求する。
+ */
+export async function countCompletedThisMonth(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  admin: { from: (t: string) => any },
+  appType: BuildToolAppType,
+  scope: { companyId: string | null | undefined; authId: string },
+): Promise<number> {
+  const picked = pickCountScope(scope)
+  if (!picked) return 0 // scope が全く無い（通常は呼ばれない）
+  const monthStart = getCurrentMonthStartUtcIso()
+  const { count } = await admin
+    .from('mini_app_sessions')
+    .select('id', { count: 'exact', head: true })
+    .eq('app_type', appType)
+    .eq('status', 'completed')
+    .gte('updated_at', monthStart)
+    .eq(picked.column, picked.value)
+  return typeof count === 'number' ? count : 0
 }
 
 /** 上限到達時のエラーメッセージ（4ツール共通） */
