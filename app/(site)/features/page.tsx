@@ -33,6 +33,10 @@ export const metadata: Metadata = {
     description:
       'branding.bz の機能紹介。ブランド掲示・Good Action投稿・目標・KPI管理・スマート名刺・ブランドスコアなど、ブランドの構築・浸透・発信と、そのすべてを支える計測の機能をまとめて紹介します。',
     url: 'https://branding.bz/features',
+    images: [{ url: '/og/og_page_features.png', width: 1200, height: 630 }],
+  },
+  twitter: {
+    images: ['/og/og_page_features.png'],
   },
 }
 

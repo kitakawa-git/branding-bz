@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'ブランドカラー決め方｜AIで無料生成のカラーパレットツール | branding.bz',
     description: 'AIがカラーパレットを提案。主要な3組の配色のコントラスト比チェックとCSSのコピーに対応した無料ツール（PDF出力は Standard 以上）。',
+    url: 'https://branding.bz/tools/colors',
+    images: [{ url: '/og/og_tools_colors.png', width: 1200, height: 630 }],
+  },
+  twitter: {
+    images: ['/og/og_tools_colors.png'],
   },
   alternates: {
     canonical: '/tools/colors',

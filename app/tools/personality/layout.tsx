@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'ブランドパーソナリティ診断 | 無料AI診断ツール | branding.bz',
     description: '10問の質問に答えるだけで、AIがブランドの人格を診断。経営者・マーケター向け無料ツール。',
+    url: 'https://branding.bz/tools/personality',
+    images: [{ url: '/og/og_tools_personality.png', width: 1200, height: 630 }],
+  },
+  twitter: {
+    images: ['/og/og_tools_personality.png'],
   },
   alternates: {
     canonical: '/tools/personality',

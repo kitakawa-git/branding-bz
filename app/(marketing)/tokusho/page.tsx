@@ -11,6 +11,10 @@ export const metadata: Metadata = {
     title: '特定商取引法に基づく表記 | branding.bz',
     description: 'branding.bz の特定商取引法に基づく表記です。',
     url: 'https://branding.bz/tokusho',
+    images: [{ url: '/og/og_page_tokusho.png', width: 1200, height: 630 }],
+  },
+  twitter: {
+    images: ['/og/og_page_tokusho.png'],
   },
 }
 

@@ -18,6 +18,10 @@ export const metadata: Metadata = {
     title: TITLE,
     description: DESCRIPTION,
     url: 'https://branding.bz/wiki',
+    images: [{ url: '/og/og_default.png', width: 1200, height: 630 }],
+  },
+  twitter: {
+    images: ['/og/og_default.png'],
   },
 }
 

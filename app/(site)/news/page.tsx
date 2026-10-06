@@ -15,6 +15,10 @@ export const metadata = {
     title: 'ニュース | branding.bz',
     description: 'branding.bz の最新ニュース・プレスリリース・サービスアップデート情報',
     url: 'https://branding.bz/news',
+    images: [{ url: '/og/og_page_news.png', width: 1200, height: 630 }],
+  },
+  twitter: {
+    images: ['/og/og_page_news.png'],
   },
 }
 

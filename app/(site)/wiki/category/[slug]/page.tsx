@@ -33,6 +33,10 @@ export async function generateMetadata({
       title,
       description: category.description,
       url: `https://branding.bz${path}`,
+      images: [{ url: '/og/og_default.png', width: 1200, height: 630 }],
+    },
+    twitter: {
+      images: ['/og/og_default.png'],
     },
   }
 }

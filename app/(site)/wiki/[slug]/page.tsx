@@ -32,6 +32,10 @@ export async function generateMetadata({
       title: `${term.term}とは？ | ブランディング用語wiki`,
       description: term.short_def,
       url,
+      images: [{ url: '/og/og_default.png', width: 1200, height: 630 }],
+    },
+    twitter: {
+      images: ['/og/og_default.png'],
     },
   }
 }

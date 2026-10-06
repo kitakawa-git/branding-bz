@@ -37,9 +37,11 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'ja_JP',
     siteName: 'branding.bz',
+    images: [{ url: '/og/og_default.png', width: 1200, height: 630 }],
   },
   twitter: {
     card: 'summary_large_image',
+    images: ['/og/og_default.png'],
   },
   alternates: {
     canonical: '/',

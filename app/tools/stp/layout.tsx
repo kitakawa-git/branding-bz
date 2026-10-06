@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'STP分析ツール｜AIで無料・ポジショニングマップ自動作成 | branding.bz',
     description: 'AIが業種に合ったSTP戦略を提案。ポジショニングマップを自動作成できる無料ツール（PDF出力は Standard 以上）。',
+    url: 'https://branding.bz/tools/stp',
+    images: [{ url: '/og/og_tools_stp.png', width: 1200, height: 630 }],
+  },
+  twitter: {
+    images: ['/og/og_tools_stp.png'],
   },
   alternates: {
     canonical: '/tools/stp',

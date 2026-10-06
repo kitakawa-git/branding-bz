@@ -11,6 +11,10 @@ export const metadata: Metadata = {
     title: 'プライバシーポリシー | branding.bz',
     description: 'branding.bz のプライバシーポリシーです。',
     url: 'https://branding.bz/privacy-policy',
+    images: [{ url: '/og/og_page_privacy-policy.png', width: 1200, height: 630 }],
+  },
+  twitter: {
+    images: ['/og/og_page_privacy-policy.png'],
   },
 }
 

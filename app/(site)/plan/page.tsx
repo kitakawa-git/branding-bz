@@ -15,6 +15,10 @@ export const metadata: Metadata = {
     description:
       'AIブランディングSaaS branding.bz の料金プラン。Free / Standard / Premium / Enterprise から、あなたのブランディングフェーズに最適なプランを選べます。',
     url: 'https://branding.bz/plan',
+    images: [{ url: '/og/og_page_plan.png', width: 1200, height: 630 }],
+  },
+  twitter: {
+    images: ['/og/og_page_plan.png'],
   },
 }
 

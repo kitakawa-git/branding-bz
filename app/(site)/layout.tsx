@@ -16,6 +16,10 @@ export const metadata: Metadata = {
       'AIがブランディングを加速。ブランドの構築・浸透・発信を一気通貫で支援するSaaS。STP分析・ペルソナ作成・カラー定義など無料ツールも公開中。',
     siteName: 'branding.bz',
     url: 'https://branding.bz',
+    images: [{ url: '/og/og_default.png', width: 1200, height: 630 }],
+  },
+  twitter: {
+    images: ['/og/og_default.png'],
   },
   alternates: {
     canonical: '/',

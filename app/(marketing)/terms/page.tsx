@@ -11,6 +11,10 @@ export const metadata: Metadata = {
     title: '利用規約 | branding.bz',
     description: 'branding.bz の利用規約です。',
     url: 'https://branding.bz/terms',
+    images: [{ url: '/og/og_page_terms.png', width: 1200, height: 630 }],
+  },
+  twitter: {
+    images: ['/og/og_page_terms.png'],
   },
 }
 

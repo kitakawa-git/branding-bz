@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'ペルソナ作成ツール｜AIで無料生成・カスタマージャーニー対応 | branding.bz',
     description: 'AIがBtoB/BtoCのペルソナを自動生成。カスタマージャーニーマップも作成できる無料ツール。',
+    url: 'https://branding.bz/tools/persona',
+    images: [{ url: '/og/og_tools_persona.png', width: 1200, height: 630 }],
+  },
+  twitter: {
+    images: ['/og/og_tools_persona.png'],
   },
   alternates: {
     canonical: '/tools/persona',
