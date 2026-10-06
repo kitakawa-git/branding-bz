@@ -11,7 +11,7 @@
        ・フッターが見えている
        ・バナーが占める領域の下に、ページのリンク／ボタンがある（elementsFromPoint で判定）
    - ページの地（#08080a）から浮かせるため白地。文字はすべて 14px 以上（globals.css が 13px 以下を 14px に底上げする）。
-   - 表紙は営業資料 v12 の表紙（public/marketing/images/document-cover.jpg・240×170）。CLS を出さないよう width/height を入れる。
+   - 表紙は営業資料 v12・v13 共通の表紙（public/marketing/images/document-cover.jpg・240×170）。資料を差し替えて表紙が変わったら、この画像も差し替える。CLS を出さないよう width/height を入れる。
    - z-index は Nav（z-50）より下。 */
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
