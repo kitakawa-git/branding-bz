@@ -33,7 +33,6 @@ const PLANS = [
     scale: '〜5名',
     members: '5名',
     support: 'メール',
-    perPerson: '¥0',
     // 261006_料金プラン改訂案_v1（案B）で Free に下ろした：
     //   portalSync（ブランド情報への反映） / timeline（Good Action投稿）
     //   / announcements（お知らせ配信＋Web Push）
@@ -70,7 +69,6 @@ const PLANS = [
     scale: '5〜50名',
     members: '50名',
     support: 'メール',
-    perPerson: '50名で ¥396／5名で ¥3,960',
     features: [
       'Free全機能に加えて：',
       '― 構築 ―',
@@ -98,7 +96,6 @@ const PLANS = [
     scale: '50〜300名',
     members: '300名',
     support: 'チャット＋電話',
-    perPerson: '300名で ¥199／50名で ¥1,196',
     // v4 で計測の split を入れ替え。自社だけで完結する自己計測（インナー）は Premium、
     // 外の目線（市場調査を含むアウター）とその総合値だけが Enterprise。
     // ⚠️ 「部署別ヒートマップ」は機能ごと削除済み（48283cd）なのでここに書かない
@@ -130,7 +127,6 @@ const PLANS = [
     scale: '300名超',
     members: '無制限',
     support: '専任担当',
-    perPerson: '—',
     features: [
       'Premium全機能に加えて：',
       'メンバー数 無制限',
@@ -241,19 +237,10 @@ export default function LpPlanPage() {
                     ['想定規模', plan.scale],
                     ['メンバー上限', plan.members],
                     ['サポート', plan.support],
-                    ['1人あたり目安', plan.perPerson],
                   ].map(([k, v]) => (
                     <div key={k}>
                       <p className="mb-0.5 text-xs text-white/40">{k}</p>
-                      {/* 「50名で ¥396／5名で ¥3,960」が「5／名」と語の途中で折れないよう、「／」の位置でだけ折る */}
-                      <p className="text-xs font-semibold text-white/80">
-                        {v.split('／').map((seg, i, arr) => (
-                          <span key={i} className="whitespace-nowrap">
-                            {seg}
-                            {i < arr.length - 1 ? '／' : ''}
-                          </span>
-                        ))}
-                      </p>
+                      <p className="text-xs font-semibold text-white/80">{v}</p>
                     </div>
                   ))}
                 </div>
