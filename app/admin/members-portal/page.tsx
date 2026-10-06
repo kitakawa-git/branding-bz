@@ -122,7 +122,7 @@ export default function MembersPortalPage() {
         body: JSON.stringify({ email: newEmail, password: newPassword, display_name: newDisplayName, company_id: companyId }),
       })
       const result = await res.json()
-      if (!res.ok) throw new Error(result.error || '作成に失敗')
+      if (!res.ok) throw new Error(result.message || result.error || '作成に失敗')
       showMessage('アカウントを作成しました', 'success')
       setNewEmail(''); setNewPassword(''); setNewDisplayName('')
       await fetchData()

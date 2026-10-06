@@ -90,7 +90,7 @@ export function MemberCsvImportDialog({
         }),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`)
+      if (!res.ok) throw new Error(data?.message || data?.error || `HTTP ${res.status}`)
 
       setResults(data.results ?? [])
       if (data.created > 0) {

@@ -256,7 +256,7 @@ export default function MembersPage() {
       })
       const data = await res.json()
       if (!res.ok) {
-        toast.error(data.error || '処理に失敗しました')
+        toast.error(data.message || data.error || '処理に失敗しました')
         return
       }
 
@@ -512,7 +512,7 @@ export default function MembersPage() {
         body: JSON.stringify({ email: newEmail, password: newPassword, display_name: newDisplayName, company_id: companyId }),
       })
       const result = await res.json()
-      if (!res.ok) throw new Error(result.error || '作成に失敗')
+      if (!res.ok) throw new Error(result.message || result.error || '作成に失敗')
       toast.success('アカウントを作成しました')
       setNewEmail(''); setNewPassword(''); setNewDisplayName('')
       setCreateDialogOpen(false)
