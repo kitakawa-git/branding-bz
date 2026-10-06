@@ -703,7 +703,7 @@ export default function BrandStrategyPage() {
       } else {
         delete updatedSubtitles.strategy
       }
-      await fetch(`${supabaseUrl}/rest/v1/companies?id=eq.${companyId}`, {
+      const companyRes = await fetch(`${supabaseUrl}/rest/v1/companies?id=eq.${companyId}`, {
         method: 'PATCH',
         headers: { ...headers, 'Prefer': 'return=minimal' },
         body: JSON.stringify({
@@ -711,11 +711,13 @@ export default function BrandStrategyPage() {
           target_segments: validSegments.length > 0 ? validSegments : null,
           // プロット項目カードで編集した自社の強み・競合の特徴
           strengths: strengths.trim() || null,
-          competitors_analysis: competitorsAnalysis.filter(c => c.name.trim()).length > 0
-            ? competitorsAnalysis.filter(c => c.name.trim()).map(c => ({ name: c.name.trim(), traits: c.traits.trim() }))
-            : null,
+          // competitors_analysis は NOT NULL（既定 '[]'）。null を送ると PATCH 全体が 400 になり、同時に送る他の列も保存されない
+          competitors_analysis: competitorsAnalysis
+            .filter(c => c.name.trim())
+            .map(c => ({ name: c.name.trim(), traits: c.traits.trim() })),
         }),
       })
+      if (!companyRes.ok) throw new Error(`会社情報の更新エラー: HTTP ${companyRes.status}: ${await companyRes.text()}`)
       setPortalSubtitlesData(updatedSubtitles)
 
       // 保存で確定した id を状態へ反映（reload無しの再保存で新規行が重複INSERTされないように）
