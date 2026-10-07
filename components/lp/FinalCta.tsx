@@ -37,17 +37,19 @@ export default function FinalCta({
         >
           <h2 className="text-balance text-3xl font-bold tracking-tight md:text-4xl">{title}</h2>
           <p className="mx-auto mt-6 max-w-xl text-lg text-white/60">{lead}</p>
+          {/* 2つのボタンは同じ幅に揃える。ヒーロー（180px）より広いのは、矢印付き（186px）や
+              「料金プランを見る」（194px）が 180px に収まらないため。長いラベルは min-w なので自然に広がる */}
           <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
               href={primary.href}
-              className={ctaClass({ size: 'l', variant: 'primary', className: 'gap-2' })}
+              className={ctaClass({ size: 'l', variant: 'primary', className: 'min-w-[200px] gap-2' })}
             >
               {primary.label} <ArrowRight size={18} />
             </Link>
             {secondary && (
               <Link
                 href={secondary.href}
-                className={ctaClass({ size: 'l', variant: 'outline' })}
+                className={ctaClass({ size: 'l', variant: 'outline', className: 'min-w-[200px]' })}
               >
                 {secondary.label}
               </Link>
