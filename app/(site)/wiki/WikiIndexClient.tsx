@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react'
 import { Search, X } from 'lucide-react'
 import TermCard from '@/components/wiki/TermCard'
 import { WIKI_CATEGORIES, type WikiTermSummary } from '@/lib/types/wiki'
+import { ctaClass } from '@/components/lp/cta'
 
 /* 用語wiki index のインタラクション部分（検索・カテゴリ絞り込み）。
    件数が230件規模なので全件をクライアントに渡してメモリ上で絞る（追加フェッチなし）。 */
@@ -114,7 +115,7 @@ export default function WikiIndexClient({ terms }: { terms: WikiTermSummary[] })
               setQuery('')
               setCategory('all')
             }}
-            className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-white/15 px-4 py-2 text-sm text-white/60 transition-colors hover:bg-white/10 hover:text-white"
+            className={ctaClass({ size: 'm', variant: 'outline', className: 'gap-1.5' })}
           >
             <X size={14} />
             絞り込みを解除

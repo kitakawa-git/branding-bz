@@ -18,6 +18,7 @@ import FaqItem from '@/components/lp/FaqItem'
 import FinalCta from '@/components/lp/FinalCta'
 // 「|」は文節区切りの独自記法。Phrases を通して表示する（詳細は components/lp/Phrases.tsx）
 import Phrases from '@/components/lp/Phrases'
+import { ctaClass } from '@/components/lp/cta'
 
 type CtaTarget = 'document' | 'signup' | 'plan'
 type CtaPosition = 'hero' | 'pricing' | 'footer'
@@ -164,14 +165,14 @@ export default function InnerBrandingLandingPage() {
           <Link
             href="/document"
             onClick={() => trackCta('document', 'hero')}
-            className="inline-flex h-12 items-center gap-2 rounded-full bg-white px-8 text-base font-semibold text-black transition-transform hover:scale-105"
+            className={ctaClass({ size: 'l', variant: 'primary', className: 'gap-2' })}
           >
             資料をダウンロード <ArrowRight size={18} />
           </Link>
           <Link
             href="/signup"
             onClick={() => trackCta('signup', 'hero')}
-            className="inline-flex h-12 items-center rounded-full border border-white/15 bg-white/5 px-8 text-base font-semibold text-white backdrop-blur transition-colors hover:bg-white/10"
+            className={ctaClass({ size: 'l', variant: 'outline' })}
           >
             無料で始める
           </Link>

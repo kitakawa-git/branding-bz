@@ -8,6 +8,7 @@ import Nav from '@/components/lp/Nav'
 import Footer from '@/components/Footer'
 import { FREE_TIER_BADGE_LABEL, FREE_TIER_REVIEW_NOTE, FREE_TIER_REVIEW_BADGE } from '@/lib/tools/free-limits'
 import DocumentFloatingCta from '@/components/lp/DocumentFloatingCta'
+import { ctaClass } from '@/components/lp/cta'
 
 const STP_CARDS = [
   { label: 'S（Segmentation）', icon: LayoutGrid, title: '市場を細分化する', description: '顧客の年齢・価値観・購買行動などの特性をもとに、市場を意味のある複数のグループへ細かく分類していきます。' },
@@ -143,14 +144,14 @@ export default function STPLandingPage() {
               <Link
                 href="/signup?from=stp"
                 onClick={() => sendGAEvent('event', 'tool_cta_click', { tool: 'stp', position: 'hero', destination: 'signup' })}
-                className="inline-flex h-12 items-center gap-2 rounded-full bg-white px-8 text-base font-semibold text-black transition-transform hover:scale-105"
+                className={ctaClass({ size: 'l', variant: 'primary', className: 'gap-2' })}
               >
                 無料で始める <ArrowRight size={18} />
               </Link>
               <Link
                 href="/document?from=tool_stp"
                 onClick={() => sendGAEvent('event', 'tool_doc_click', { tool: 'stp', position: 'hero' })}
-                className="inline-flex h-12 items-center rounded-full border border-white/25 px-8 text-base font-semibold text-white transition-colors hover:bg-white/10"
+                className={ctaClass({ size: 'l', variant: 'outline' })}
               >
                 サービス資料を見る
               </Link>
@@ -262,14 +263,14 @@ export default function STPLandingPage() {
               <Link
                 href="/signup?from=stp"
                 onClick={() => sendGAEvent('event', 'tool_cta_click', { tool: 'stp', position: 'footer', destination: 'signup' })}
-                className="inline-flex h-12 items-center gap-2 rounded-full bg-white px-10 text-base font-semibold text-black transition-transform hover:scale-105"
+                className={ctaClass({ size: 'l', variant: 'primary', className: 'gap-2' })}
               >
                 無料で始める <ArrowRight size={18} />
               </Link>
               <Link
                 href="/document?from=tool_stp"
                 onClick={() => sendGAEvent('event', 'tool_doc_click', { tool: 'stp', position: 'footer' })}
-                className="inline-flex h-12 items-center rounded-full border border-white/25 px-10 text-base font-semibold text-white transition-colors hover:bg-white/10"
+                className={ctaClass({ size: 'l', variant: 'outline' })}
               >
                 サービス資料を見る
               </Link>

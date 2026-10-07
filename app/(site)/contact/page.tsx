@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { toast } from 'sonner'
 import { CheckCircle2, ArrowRight } from 'lucide-react'
 import { PageHero } from '@/components/lp/ui'
+import { ctaClass } from '@/components/lp/cta'
 
 export default function LpContactPage() {
   const [loading, setLoading] = useState(false)
@@ -68,7 +69,7 @@ export default function LpContactPage() {
           </p>
           <Link
             href="/"
-            className="inline-flex h-12 items-center gap-2 rounded-full bg-white px-8 text-base font-semibold text-black transition-transform hover:scale-105"
+            className={ctaClass({ size: 'l', variant: 'primary', className: 'gap-2' })}
           >
             トップに戻る <ArrowRight size={18} />
           </Link>
@@ -158,7 +159,7 @@ export default function LpContactPage() {
             <button
               type="submit"
               disabled={loading}
-              className="inline-flex h-12 items-center gap-2 rounded-full bg-white px-12 text-base font-semibold text-black transition-transform hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
+              className={ctaClass({ size: 'l', variant: 'primary', className: 'gap-2 disabled:opacity-50 disabled:hover:scale-100' })}
             >
               {loading ? '送信中...' : '送信する'}
             </button>

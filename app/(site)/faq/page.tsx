@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { PageHero } from '@/components/lp/ui'
 import FaqItem from '@/components/lp/FaqItem'
+import { ctaClass } from '@/components/lp/cta'
 
 export const metadata: Metadata = {
   title: 'よくある質問 | branding.bz',
@@ -141,7 +142,7 @@ export default function LpFaqPage() {
         </p>
         <Link
           href="/contact"
-          className="inline-flex h-12 items-center gap-2 rounded-full bg-white px-8 text-base font-semibold text-black transition-transform hover:scale-105"
+          className={ctaClass({ size: 'l', variant: 'primary', className: 'gap-2' })}
         >
           お問い合わせ <ArrowRight size={18} />
         </Link>

@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Check, ArrowRight } from 'lucide-react'
 import { PageHero, GlowCard } from '@/components/lp/ui'
+import { ctaClass } from '@/components/lp/cta'
 
 export const metadata: Metadata = {
   title: '料金プラン | branding.bz',
@@ -357,7 +358,7 @@ export default function LpPlanPage() {
         <div className="mt-10">
           <Link
             href="/signup"
-            className="inline-flex h-12 items-center gap-2 rounded-full bg-white px-10 text-base font-semibold text-black transition-transform hover:scale-105"
+            className={ctaClass({ size: 'l', variant: 'primary', className: 'gap-2' })}
           >
             無料で始める <ArrowRight size={18} />
           </Link>

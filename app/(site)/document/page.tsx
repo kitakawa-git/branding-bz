@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { sendGAEvent } from '@next/third-parties/google'
 import { CheckCircle2, Download } from 'lucide-react'
 import { PageHero } from '@/components/lp/ui'
+import { ctaClass } from '@/components/lp/cta'
 
 // 資料請求ページ。contact と同じフォームの作り・スタイルに揃える。
 // 送信が通ったら同じ画面を差し替えてダウンロードボタンを出す（メールでも同じ URL を送る）
@@ -73,7 +74,7 @@ export default function LpDocumentPage() {
           <a
             href={downloadUrl}
             download="branding.bz_サービス資料.pdf"
-            className="inline-flex h-12 items-center gap-2 rounded-full bg-white px-8 text-base font-semibold text-black transition-transform hover:scale-105"
+            className={ctaClass({ size: 'l', variant: 'primary', className: 'gap-2' })}
           >
             <Download size={18} /> 資料をダウンロード
           </a>
@@ -159,7 +160,7 @@ export default function LpDocumentPage() {
             <button
               type="submit"
               disabled={loading}
-              className="inline-flex h-12 items-center gap-2 rounded-full bg-white px-12 text-base font-semibold text-black transition-transform hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
+              className={ctaClass({ size: 'l', variant: 'primary', className: 'gap-2 disabled:opacity-50 disabled:hover:scale-100' })}
             >
               {loading ? '送信中...' : '資料をダウンロードする'}
             </button>

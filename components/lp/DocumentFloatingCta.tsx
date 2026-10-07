@@ -17,6 +17,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { X } from 'lucide-react'
+import { ctaClass } from '@/components/lp/cta'
 
 const STORAGE_KEY = 'bz_doc_cta_dismissed_at'
 const SUPPRESS_DAYS = 7
@@ -146,7 +147,7 @@ export default function DocumentFloatingCta() {
         <Link
           href={HREF}
           tabIndex={visible ? 0 : -1}
-          className="inline-flex h-8 flex-none items-center whitespace-nowrap rounded-full bg-[#12141a] px-3 text-sm font-bold text-white transition-opacity hover:opacity-85"
+          className={ctaClass({ size: 's', variant: 'dark', className: 'flex-none' })}
         >
           ダウンロード
         </Link>
@@ -155,7 +156,7 @@ export default function DocumentFloatingCta() {
           onClick={dismiss}
           tabIndex={visible ? 0 : -1}
           aria-label="資料請求のお知らせを閉じる"
-          className="-my-2 -mr-3 inline-flex h-11 w-11 flex-none items-center justify-center text-black/40 transition-colors hover:text-black/70"
+          className={ctaClass({ size: 'icon', variant: 'ghost', className: '-my-2 -mr-3 h-11 w-11 flex-none' })}
         >
           <X size={18} />
         </button>
@@ -181,7 +182,7 @@ export default function DocumentFloatingCta() {
           <Link
             href={HREF}
             tabIndex={visible ? 0 : -1}
-            className="mt-3.5 inline-flex h-9 items-center whitespace-nowrap rounded-full bg-[#12141a] px-[18px] text-sm font-bold text-white transition-opacity hover:opacity-85"
+            className={ctaClass({ size: 's', variant: 'dark', className: 'mt-3.5' })}
           >
             無料でダウンロード
           </Link>
@@ -191,7 +192,7 @@ export default function DocumentFloatingCta() {
           onClick={dismiss}
           tabIndex={visible ? 0 : -1}
           aria-label="資料請求のお知らせを閉じる"
-          className="absolute right-2 top-2 inline-flex h-8 w-8 items-center justify-center rounded-full text-black/40 transition-colors hover:bg-black/5 hover:text-black/70"
+          className={ctaClass({ size: 'icon', variant: 'ghost', className: 'absolute right-2 top-2' })}
         >
           <X size={16} />
         </button>

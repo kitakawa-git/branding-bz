@@ -6,6 +6,7 @@ import { PageHero } from '@/components/lp/ui'
 import TermCard from '@/components/wiki/TermCard'
 import { WIKI_CATEGORIES, getWikiCategory } from '@/lib/types/wiki'
 import { fetchPublishedTermSummaries } from '@/lib/wiki/queries'
+import { ctaClass } from '@/components/lp/cta'
 
 export const revalidate = 3600
 
@@ -119,7 +120,7 @@ export default async function WikiCategoryPage({
                 <Link
                   key={c.value}
                   href={`/wiki/category/${encodeURIComponent(c.value)}`}
-                  className="inline-flex min-h-11 items-center rounded-full border border-white/15 bg-white/[0.04] px-4 py-2.5 text-sm font-medium text-white/75 transition-colors hover:border-white/30 hover:bg-white/10 hover:text-white"
+                  className={ctaClass({ size: 'm', variant: 'subtle' })}
                 >
                   {c.value}
                 </Link>

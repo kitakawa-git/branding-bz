@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import type { ReactNode } from 'react'
+import { ctaClass } from '@/components/lp/cta'
 
 type CtaLink = { href: string; label: string }
 
@@ -39,14 +40,14 @@ export default function FinalCta({
           <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
               href={primary.href}
-              className="inline-flex h-12 items-center gap-2 rounded-full bg-white px-8 text-base font-semibold text-black transition-transform hover:scale-105"
+              className={ctaClass({ size: 'l', variant: 'primary', className: 'gap-2' })}
             >
               {primary.label} <ArrowRight size={18} />
             </Link>
             {secondary && (
               <Link
                 href={secondary.href}
-                className="inline-flex h-12 items-center rounded-full border border-white/15 bg-white/5 px-8 text-base font-semibold text-white backdrop-blur transition-colors hover:bg-white/10"
+                className={ctaClass({ size: 'l', variant: 'outline' })}
               >
                 {secondary.label}
               </Link>
