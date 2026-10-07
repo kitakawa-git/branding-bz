@@ -70,10 +70,10 @@ function Hero() {
         </p>
 
         {/* スマホは縦積みなので、文字数の差（6文字/5文字）がボタン幅の差に出る。sm 未満は同じ幅に揃える */}
-        <div className="mx-auto mt-10 flex w-full max-w-[220px] flex-col items-stretch justify-center gap-3 sm:mx-0 sm:w-auto sm:max-w-none sm:flex-row sm:items-center">
+        <div className="mx-auto mt-10 flex w-full max-w-[160px] flex-col items-stretch justify-center gap-3 sm:mx-0 sm:w-auto sm:max-w-none sm:flex-row sm:items-center">
           <Link
             href="/signup"
-            className={ctaClass({ size: 'l', variant: 'primary' })}
+            className={ctaClass({ size: 'l', variant: 'primary', className: 'w-40' })}
           >
             無料で始める
           </Link>
@@ -87,7 +87,7 @@ function Hero() {
                 history.replaceState(null, '', '#features')
               }
             }}
-            className={ctaClass({ size: 'l', variant: 'outline' })}
+            className={ctaClass({ size: 'l', variant: 'outline', className: 'w-40' })}
           >
             機能を見る
           </a>
