@@ -68,7 +68,8 @@ function Hero() {
           AIが伴走する、<br className="sm:hidden" />ひとつのプラットフォームで。
         </p>
 
-        <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+        {/* スマホは縦積みなので、文字数の差（6文字/5文字）がボタン幅の差に出る。sm 未満は同じ幅に揃える */}
+        <div className="mx-auto mt-10 flex w-full max-w-[220px] flex-col items-stretch justify-center gap-3 sm:mx-0 sm:w-auto sm:max-w-none sm:flex-row sm:items-center">
           <Link
             href="/signup"
             className="inline-flex h-12 items-center justify-center rounded-full bg-white px-7 text-base font-semibold text-black transition-transform hover:scale-105"
