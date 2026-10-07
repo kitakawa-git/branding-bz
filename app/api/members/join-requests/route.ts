@@ -132,7 +132,7 @@ export async function POST(request: NextRequest) {
           const companyName = company?.name || ''
           const loginUrl = 'https://branding.bz/portal/auth'
           const resend = new Resend(resendApiKey)
-          await resend.emails.send({
+          const { error: sendError } = await resend.emails.send({
             from: 'branding.bz <noreply@branding.bz>',
             to: member.email,
             subject: `【branding.bz】${companyName} への参加が承認されました`,
@@ -148,6 +148,8 @@ export async function POST(request: NextRequest) {
               <p style="color:#999;font-size:12px;">このメールは branding.bz の参加リクエスト承認時に自動送信されています。</p>
             `,
           })
+          // Resend は送信失敗でも例外を投げず error を返すので、catch で記録されるよう投げ直す
+          if (sendError) throw sendError
         } catch (emailError) {
           console.error('[JoinRequests] 承認通知メール送信エラー:', emailError)
         }

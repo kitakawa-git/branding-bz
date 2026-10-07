@@ -56,7 +56,7 @@ export async function POST(request: Request) {
     if (resendApiKey && notificationEmail) {
       const resend = new Resend(resendApiKey)
       try {
-        await resend.emails.send({
+        const { error: sendError } = await resend.emails.send({
           from: 'branding.bz <noreply@branding.bz>',
           to: notificationEmail,
           subject: `【branding.bz】新しいお問い合わせ: ${escapeHtml(contact_name.trim())}`,
@@ -74,6 +74,8 @@ export async function POST(request: Request) {
             <p><a href="https://branding.bz/superadmin/inquiries">管理画面で確認する</a></p>
           `,
         })
+        // Resend は送信失敗でも例外を投げず error を返すので、catch で記録されるよう投げ直す
+        if (sendError) throw sendError
       } catch (emailError) {
         console.error('notification email error:', emailError)
       }

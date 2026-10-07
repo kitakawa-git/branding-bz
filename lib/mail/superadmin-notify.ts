@@ -46,12 +46,14 @@ export async function notifySuperadmin({
   if (!apiKey || !to) return
 
   try {
-    await new Resend(apiKey).emails.send({
+    const { error: sendError } = await new Resend(apiKey).emails.send({
       from: 'branding.bz <noreply@branding.bz>',
       to,
       subject,
       html,
     })
+    // Resend は送信失敗でも例外を投げず error を返すので、catch で記録されるよう投げ直す
+    if (sendError) throw sendError
   } catch (e) {
     console.error('superadmin notification email error:', e)
   }

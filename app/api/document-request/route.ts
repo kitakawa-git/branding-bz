@@ -64,7 +64,7 @@ export async function POST(request: Request) {
 
       // (1) 申込者へ資料のご案内
       try {
-        await resend.emails.send({
+        const { error: sendError } = await resend.emails.send({
           from: 'branding.bz <noreply@branding.bz>',
           to: email.trim(),
           subject: 'branding.bz サービス資料のご案内',
@@ -81,6 +81,8 @@ export async function POST(request: Request) {
             <p style="color:#999;font-size:12px;">このメールは branding.bz の資料請求フォームから自動送信されています。</p>
           `,
         })
+        // Resend は送信失敗でも例外を投げず error を返すので、catch で記録されるよう投げ直す
+        if (sendError) throw sendError
       } catch (emailError) {
         console.error('document request applicant email error:', emailError)
       }
@@ -88,7 +90,7 @@ export async function POST(request: Request) {
       // (2) 社内通知
       if (notificationEmail) {
         try {
-          await resend.emails.send({
+          const { error: sendError } = await resend.emails.send({
             from: 'branding.bz <noreply@branding.bz>',
             to: notificationEmail,
             subject: `【branding.bz】資料請求: ${companyName}`,
@@ -104,6 +106,8 @@ export async function POST(request: Request) {
               <p><a href="https://branding.bz/superadmin/inquiries">管理画面で確認する</a></p>
             `,
           })
+          // Resend は送信失敗でも例外を投げず error を返すので、catch で記録されるよう投げ直す
+          if (sendError) throw sendError
         } catch (emailError) {
           console.error('document request notification email error:', emailError)
         }

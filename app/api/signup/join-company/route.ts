@@ -156,7 +156,7 @@ export async function POST(request: NextRequest) {
         if (adminEmails.length > 0) {
           const resend = new Resend(resendApiKey)
           const approvalUrl = 'https://branding.bz/admin/members'
-          await resend.emails.send({
+          const { error: sendError } = await resend.emails.send({
             from: 'branding.bz <noreply@branding.bz>',
             to: adminEmails,
             subject: `【branding.bz】${company.name} への参加リクエストが届きました`,
@@ -175,6 +175,8 @@ export async function POST(request: NextRequest) {
               <p style="color:#666;font-size:12px;margin-top:16px;">${approvalUrl}</p>
             `,
           })
+          // Resend は送信失敗でも例外を投げず error を返すので、catch で記録されるよう投げ直す
+          if (sendError) throw sendError
         } else {
           console.warn('[SignupJoin] 通知先の管理者メールが見つかりませんでした')
         }

@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
 
     if (resend && owner?.email) {
       try {
-        await resend.emails.send({
+        const { error: sendError } = await resend.emails.send({
           from: 'branding.bz <noreply@branding.bz>',
           to: owner.email,
           subject: `【branding.bz】アカウントが承認されました`,
@@ -149,6 +149,8 @@ export async function POST(request: NextRequest) {
             </p>
           `,
         })
+        // Resend は送信失敗でも例外を投げず error を返すので、catch で記録されるよう投げ直す
+        if (sendError) throw sendError
       } catch (e) {
         console.error('[SignupRequests] 承認通知メールエラー:', e)
       }
@@ -159,7 +161,7 @@ export async function POST(request: NextRequest) {
   // reject: 先に却下通知 → その後 関連レコード＋auth user を削除
   if (resend && owner?.email) {
     try {
-      await resend.emails.send({
+      const { error: sendError } = await resend.emails.send({
         from: 'branding.bz <noreply@branding.bz>',
         to: owner.email,
         subject: `【branding.bz】ご登録について`,
@@ -171,6 +173,8 @@ export async function POST(request: NextRequest) {
           ご不明な点がございましたらお問い合わせください。</p>
         `,
       })
+      // Resend は送信失敗でも例外を投げず error を返すので、catch で記録されるよう投げ直す
+      if (sendError) throw sendError
     } catch (e) {
       console.error('[SignupRequests] 却下通知メールエラー:', e)
     }

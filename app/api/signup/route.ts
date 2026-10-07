@@ -233,7 +233,7 @@ export async function POST(request: NextRequest) {
         const warn = competitorFlag
           ? `<p style="margin:0 0 12px;padding:10px 14px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;color:#b91c1c;font-weight:bold;">⚠ 競合ドメイン一致（${escapeHtml(domain || '')}）。登録目的を確認のうえ承認してください。</p>`
           : ''
-        await resend.emails.send({
+        const { error: sendError } = await resend.emails.send({
           from: 'branding.bz <noreply@branding.bz>',
           to: devEmail,
           subject: `【branding.bz】${competitorFlag ? '⚠競合の疑い ' : ''}新規企業の承認待ち: ${escapeHtml(companyName)}`,
@@ -254,6 +254,8 @@ export async function POST(request: NextRequest) {
             <p style="color:#666;font-size:12px;margin-top:16px;">https://branding.bz/superadmin/signup-requests</p>
           `,
         })
+        // Resend は送信失敗でも例外を投げず error を返すので、catch で記録されるよう投げ直す
+        if (sendError) throw sendError
       } catch (emailError) {
         console.error('[Signup] 承認依頼メール送信エラー:', emailError)
       }
