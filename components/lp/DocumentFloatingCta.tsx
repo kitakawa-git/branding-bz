@@ -124,7 +124,7 @@ export default function DocumentFloatingCta() {
       aria-hidden={!visible}
       className={`fixed z-40 transition-all duration-300 ${
         visible ? 'pointer-events-auto translate-y-0 opacity-100' : 'pointer-events-none translate-y-2 opacity-0'
-      } inset-x-0 bottom-0 md:inset-x-auto md:bottom-6 md:left-6`}
+      } inset-x-0 bottom-0 md:inset-x-auto md:bottom-8 md:left-6`}
     >
       {/* md 未満: 画面下端のフル幅バー（白地） */}
       <div
