@@ -7,6 +7,7 @@ import { sendGAEvent } from '@next/third-parties/google'
 import { CheckCircle2, Download } from 'lucide-react'
 import { PageHero } from '@/components/lp/ui'
 import { ctaClass } from '@/components/lp/cta'
+import { headingClass } from '@/components/lp/heading'
 
 // 資料請求ページ。contact と同じフォームの作り・スタイルに揃える。
 // 送信が通ったら同じ画面を差し替えてダウンロードボタンを出す（メールでも同じ URL を送る）
@@ -65,7 +66,7 @@ export default function LpDocumentPage() {
           <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-400">
             <CheckCircle2 className="h-8 w-8" />
           </div>
-          <h1 className="mb-4 text-2xl font-bold">資料のご請求ありがとうございます</h1>
+          <h1 className={headingClass('sub', 'mb-4')}>資料のご請求ありがとうございます</h1>
           <p className="mb-8 text-sm leading-relaxed text-white/55">
             下のボタンから資料をダウンロードいただけます。
             <br />

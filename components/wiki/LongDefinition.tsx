@@ -28,7 +28,7 @@ export default function LongDefinition({ longDef }: { longDef: string }) {
           <section key={s.id}>
             <h3
               id={s.id}
-              className="mb-2.5 border-l-[3px] border-blue-400/70 pl-2.5 text-[15px] font-bold text-blue-400"
+              className="mb-2.5 border-l-[3px] border-blue-400/70 pl-2.5 text-base font-bold text-blue-400"
             >
               {s.heading}
             </h3>

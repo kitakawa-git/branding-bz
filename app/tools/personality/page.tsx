@@ -9,6 +9,7 @@ import Footer from '@/components/Footer'
 import { FREE_TIER_BADGE_LABEL, FREE_TIER_REVIEW_NOTE, FREE_TIER_REVIEW_BADGE } from '@/lib/tools/free-limits'
 import DocumentFloatingCta from '@/components/lp/DocumentFloatingCta'
 import { ctaClass } from '@/components/lp/cta'
+import { headingClass } from '@/components/lp/heading'
 
 const CONCEPT_CARDS = [
   { label: 'パーソナリティとは？', icon: Fingerprint, title: 'ブランドを「人格」に翻訳', description: '「もしブランドが人だったら、どんな性格か」。頭の中にある感覚を10問の質問で引き出し、AIが人格として言語化します。' },
@@ -70,7 +71,7 @@ function FeatureCard({ icon: Icon, label, title, description }: { icon: LucideIc
         <Icon size={20} className="text-emerald-400" />
       </div>
       <div className="mb-2 text-sm font-semibold text-emerald-400">{label}</div>
-      <h3 className="text-lg font-bold leading-snug text-white">{title}</h3>
+      <h3 className={headingClass('card', 'text-white')}>{title}</h3>
       <p className="mt-3 text-sm leading-relaxed text-white/55">{description}</p>
     </GlowCard>
   )
@@ -134,7 +135,7 @@ export default function PersonalityLandingPage() {
         <section className="relative overflow-hidden px-6 pt-32 pb-16 text-center md:pt-40">
           <div className="relative mx-auto max-w-5xl">
             <p className="mb-7 text-sm text-white">AIでブランディングを加速させる。</p>
-            <h1 className="text-5xl font-bold leading-[1.05] tracking-[-0.03em] md:whitespace-nowrap md:text-7xl">ブランドパーソナリティ診断</h1>
+            <h1 className={headingClass('display', 'md:whitespace-nowrap')}>ブランドパーソナリティ診断</h1>
             <p className="mx-auto mt-7 max-w-2xl text-lg text-white/80 md:text-xl">
               あなたのブランドが「人」だったら、どんな性格？
               <br className="hidden sm:block" />
@@ -173,7 +174,7 @@ export default function PersonalityLandingPage() {
         {/* パーソナリティ診断とは？ */}
         <section className="relative px-6 pt-16 pb-20">
           <div className="mx-auto max-w-6xl">
-            <h2 className="mb-8 text-center text-3xl font-bold tracking-tight md:text-4xl">パーソナリティ診断ツールとは？</h2>
+            <h2 className={headingClass('section', 'mb-8 text-center')}>パーソナリティ診断ツールとは？</h2>
             <div className="grid gap-5 md:grid-cols-3">
               {CONCEPT_CARDS.map((card) => (
                 <FeatureCard key={card.label} icon={card.icon} label={card.label} title={card.title} description={card.description} />
@@ -186,7 +187,7 @@ export default function PersonalityLandingPage() {
       {/* ステップ説明 */}
       <section className="px-6 py-16">
         <div className="mx-auto max-w-6xl">
-          <h2 className="mb-12 text-center text-3xl font-bold tracking-tight md:text-4xl">5ステップで人格を診断</h2>
+          <h2 className={headingClass('section', 'mb-12 text-center')}>5ステップで人格を診断</h2>
           <div className="relative flex flex-col gap-4 md:flex-row md:items-start md:gap-16">
             <div className="absolute top-5 hidden h-px bg-white/15 md:block" style={{ left: 'calc((100% - 24rem) / 10)', right: 'calc((100% - 24rem) / 10)' }} />
             {STEPS.map((step) => (
@@ -195,7 +196,7 @@ export default function PersonalityLandingPage() {
                   {step.icon}
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-white">{step.title}</h3>
+                  <h3 className={headingClass('cardSm', 'text-white')}>{step.title}</h3>
                   <p className="text-sm text-white/50">{step.description}</p>
                 </div>
               </div>
@@ -224,7 +225,7 @@ export default function PersonalityLandingPage() {
       {/* よくある質問 */}
       <section className="px-6 py-16">
         <div className="mx-auto max-w-3xl">
-          <h2 className="mb-8 text-center text-3xl font-bold tracking-tight md:text-4xl">よくある質問</h2>
+          <h2 className={headingClass('section', 'mb-8 text-center')}>よくある質問</h2>
           <div className="space-y-3">
             {FAQ_ITEMS.map((item) => (
               <details
@@ -255,7 +256,7 @@ export default function PersonalityLandingPage() {
               <span className="inline-flex items-center gap-1.5"><CheckCircle2 size={14} className="text-emerald-400" /> {FREE_TIER_REVIEW_BADGE}</span>
               <span className="basis-full text-xs text-white/50">PDF出力は Standard 以上のプランで利用できます。</span>
             </div>
-            <h2 className="text-balance text-3xl font-bold tracking-tight md:text-5xl">今すぐブランドの人格を診断する</h2>
+            <h2 className={headingClass('section', 'text-balance')}>今すぐブランドの人格を診断する</h2>
             <p className="mx-auto mt-6 max-w-xl text-lg text-white/60">
               ブランドは、つくった瞬間から走り出す。<br />branding.bz で、その加速を始めませんか。
             </p>

@@ -20,6 +20,7 @@ import ToolCard from '@/components/lp/ToolCard'
 import FinalCta from '@/components/lp/FinalCta'
 // 説明文・lead の「|」は文節区切りの独自記法。Phrases を通して表示する（詳細は components/lp/Phrases.tsx）
 import Phrases from '@/components/lp/Phrases'
+import { headingClass } from '@/components/lp/heading'
 
 export const metadata: Metadata = {
   title: '機能紹介 | branding.bz',
@@ -201,7 +202,7 @@ function FeatureCard({ f }: { f: Feature }) {
         <f.icon size={20} className="text-blue-400" />
       </div>
       <div className="mb-2 text-xs font-semibold text-blue-400">{f.tag}</div>
-      <h3 className="text-lg font-bold">{f.title}</h3>
+      <h3 className={headingClass('card')}>{f.title}</h3>
       <p className="mt-3 text-sm leading-relaxed text-white/55">
         <Phrases text={f.description} />
       </p>
@@ -229,7 +230,7 @@ export default function LpFeaturesPage() {
         {groups.map((g) => (
           <section key={g.layer} className="mx-auto max-w-6xl">
             <div className="mb-6 flex flex-col gap-1 border-b border-white/10 pb-4 sm:flex-row sm:items-baseline sm:justify-between">
-              <h2 className="text-2xl font-bold tracking-tight">{g.layer}</h2>
+              <h2 className={headingClass('sub')}>{g.layer}</h2>
               <p className="text-sm text-white/50">
                 <Phrases text={g.lead} />
               </p>

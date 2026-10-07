@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { CheckCircle2, ArrowRight } from 'lucide-react'
 import { PageHero } from '@/components/lp/ui'
 import { ctaClass } from '@/components/lp/cta'
+import { headingClass } from '@/components/lp/heading'
 
 export default function LpContactPage() {
   const [loading, setLoading] = useState(false)
@@ -61,7 +62,7 @@ export default function LpContactPage() {
           <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-400">
             <CheckCircle2 className="h-8 w-8" />
           </div>
-          <h1 className="mb-4 text-2xl font-bold">お問い合わせありがとうございます</h1>
+          <h1 className={headingClass('sub', 'mb-4')}>お問い合わせありがとうございます</h1>
           <p className="mb-8 text-sm leading-relaxed text-white/55">
             内容を確認のうえ、担当者より折り返しご連絡いたします。
             <br />

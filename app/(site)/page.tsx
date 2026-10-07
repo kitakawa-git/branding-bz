@@ -17,6 +17,7 @@ import { tools } from '@/components/lp/tools'
 import ToolCard from '@/components/lp/ToolCard'
 import FinalCta from '@/components/lp/FinalCta'
 import { ctaClass } from '@/components/lp/cta'
+import { headingClass } from '@/components/lp/heading'
 
 /* ───────────────────────────────────────────────
    branding.bz トップページ（Framer風 / ダークテーマ）
@@ -55,7 +56,7 @@ function Hero() {
         {/* スマホ幅では 44px だと「AIでブランディングを」(幅424px) が1行に入らず「ブランディン／グを」と語中で折れる。
             文言と2行構成は変えず、画面幅に追従させて1行に収める（320px で 28px・375px で約32px・430px 以上は 44px）。
             sm(640px) 以上は従来どおり sm:text-6xl / md:text-7xl が効く */}
-        <h1 className="text-[clamp(28px,8.6vw,44px)] font-bold leading-[1.05] tracking-[-0.03em] sm:text-6xl md:text-7xl">
+        <h1 className={headingClass('display')}>
           <span className="block whitespace-nowrap">AIでブランディングを</span>
           <span className="block">加速させる。</span>
         </h1>
@@ -327,7 +328,7 @@ function Features() {
     <section id="features" className="px-6 py-24">
       <div className="mx-auto max-w-6xl">
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-4xl font-bold tracking-tight md:text-5xl">
+          <h2 className={headingClass('section')}>
             つくる、ひろげる、とどける。
           </h2>
           <p className="mt-5 text-lg text-white/60">
@@ -345,7 +346,7 @@ function Features() {
                   <p.icon size={20} className="text-white" />
                 </div>
                 <div className="mb-2 text-sm font-semibold text-blue-400">{p.tag}</div>
-                <h3 className="whitespace-pre-line text-xl font-bold leading-snug">{p.title}</h3>
+                <h3 className={headingClass('sub', 'whitespace-pre-line')}>{p.title}</h3>
                 <p className="mt-3 text-sm leading-relaxed text-white/55">{p.body}</p>
                 {/* 以前は div で押しても何も起きなかった。見た目はそのままリンクにする */}
                 <Link
@@ -376,7 +377,7 @@ function Features() {
               </div>
               <div className="min-w-0">
                 <div className="mb-2 text-sm font-semibold text-cyan-400">はかる — 構築・浸透・発信を支える計測</div>
-                <h3 className="text-xl font-bold leading-snug">
+                <h3 className={headingClass('sub')}>
                   {/* スマホ幅で「確／かめる」と語の途中で折れるので、読点の後で折る */}
                   取り組みの結果を、<br className="sm:hidden" />数字で確かめる
                 </h3>
@@ -398,7 +399,7 @@ function Product() {
     <section id="product" className="px-6 py-24">
       <div className="mx-auto max-w-6xl">
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-4xl font-bold tracking-tight md:text-5xl">
+          <h2 className={headingClass('section')}>
             掲示・運用・計測まで、
             <br />
             ひとつの画面で完結。
@@ -413,7 +414,7 @@ function Product() {
           <GlowCard className="p-7 lg:col-span-3">
             <div className="mb-5 flex items-center gap-3">
               <LayoutDashboard size={18} className="text-blue-400" />
-              <h3 className="text-lg font-bold">ダッシュボード</h3>
+              <h3 className={headingClass('card')}>ダッシュボード</h3>
             </div>
             <p className="mb-6 max-w-md text-sm leading-relaxed text-white/55">
               投稿数・行動指針別の割合・KPI進捗を、期間フィルター付きで表示。チームの状態がひと目で分かります。
@@ -443,7 +444,7 @@ function Product() {
           <GlowCard className="p-7 lg:col-span-2">
             <div className="mb-5 flex items-center gap-3">
               <BarChart3 size={18} className="text-emerald-400" />
-              <h3 className="text-lg font-bold">効果計測</h3>
+              <h3 className={headingClass('card')}>効果計測</h3>
             </div>
             <p className="mb-6 text-sm leading-relaxed text-white/55">
               名刺の閲覧数・トレンド・ランキングを自動集計。誰の発信が、いつ、どれだけ届いたかを把握できます。
@@ -480,7 +481,7 @@ function UsageHighlight() {
       <div className="mx-auto max-w-4xl">
         <GlowCard className="px-8 py-14 text-center md:px-16">
           <div className="pointer-events-none absolute inset-x-0 -top-10 mx-auto h-32 w-32 rounded-full bg-blue-500/20 blur-3xl" />
-          <h2 className="relative text-balance text-2xl font-semibold leading-relaxed tracking-tight md:text-3xl">
+          <h2 className={headingClass('section', 'relative text-balance')}>
             {/* スマホ幅で「数字か／ら」と折れるので、読点の後で折り返す */}
             <span className="inline-block">日々の行動と数字から、</span>
             <span className="inline-block">次の取り組みへ。</span>
@@ -507,7 +508,7 @@ function Experts() {
       <div className="mx-auto max-w-6xl">
         <div className="grid items-center gap-10 lg:grid-cols-2">
           <div>
-            <h2 className="text-4xl font-bold tracking-tight md:text-5xl">
+            <h2 className={headingClass('section')}>
               プロの伴走を、
               <br />
               必要なときに。
@@ -565,7 +566,7 @@ function Tools() {
     <section id="tools" className="px-6 py-24">
       <div className="mx-auto max-w-6xl">
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-4xl font-bold tracking-tight md:text-5xl">無料ツールで、すぐに始める。</h2>
+          <h2 className={headingClass('section')}>無料ツールで、すぐに始める。</h2>
           <p className="mt-5 text-lg text-white/60">
             無料登録で、各ツールを月3回まで。<br className="sm:hidden" />ブランディングの第一歩を、ここから。
           </p>

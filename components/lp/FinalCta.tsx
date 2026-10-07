@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { ctaClass } from '@/components/lp/cta'
+import { headingClass } from '@/components/lp/heading'
 
 type CtaLink = { href: string; label: string }
 
@@ -35,7 +36,7 @@ export default function FinalCta({
               'radial-gradient(80% 120% at 50% 0%, rgba(37,99,235,0.4) 0%, rgba(8,8,10,0) 60%), #0d0d11',
           }}
         >
-          <h2 className="text-balance text-3xl font-bold tracking-tight md:text-4xl">{title}</h2>
+          <h2 className={headingClass('section', 'text-balance')}>{title}</h2>
           <p className="mx-auto mt-6 max-w-xl text-lg text-white/60">{lead}</p>
           {/* 2つのボタンは同じ幅に揃える。ヒーロー（180px）より広いのは、矢印付き（186px）や
               「料金プランを見る」（194px）が 180px に収まらないため。長いラベルは min-w なので自然に広がる */}

@@ -4,6 +4,7 @@ import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import type { NewsItem, NewsCategory } from '@/lib/types/news'
 import { NEWS_CATEGORY_LABELS } from '@/lib/types/news'
 import { PageHero } from '@/components/lp/ui'
+import { headingClass } from '@/components/lp/heading'
 
 export const metadata = {
   title: 'ニュース | branding.bz',
@@ -74,7 +75,7 @@ export default async function LpNewsListPage() {
                       {NEWS_CATEGORY_LABELS[item.category]}
                     </span>
                   </div>
-                  <h2 className="text-base font-bold text-white transition-colors group-hover:text-blue-300 md:text-lg">
+                  <h2 className={headingClass('card', 'text-white transition-colors group-hover:text-blue-300')}>
                     {item.title}
                   </h2>
                   {item.summary && (

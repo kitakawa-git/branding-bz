@@ -9,6 +9,7 @@ import Footer from '@/components/Footer'
 import { FREE_TIER_BADGE_LABEL, FREE_TIER_REVIEW_NOTE, FREE_TIER_REVIEW_BADGE } from '@/lib/tools/free-limits'
 import DocumentFloatingCta from '@/components/lp/DocumentFloatingCta'
 import { ctaClass } from '@/components/lp/cta'
+import { headingClass } from '@/components/lp/heading'
 
 const PERSONA_CARDS = [
   {
@@ -105,7 +106,7 @@ function FeatureCard({ icon: Icon, label, title, description }: { icon: LucideIc
         <Icon size={20} className="text-blue-400" />
       </div>
       <div className="mb-2 text-sm font-semibold text-blue-400">{label}</div>
-      <h3 className="text-lg font-bold leading-snug text-white">{title}</h3>
+      <h3 className={headingClass('card', 'text-white')}>{title}</h3>
       <p className="mt-3 text-sm leading-relaxed text-white/55">{description}</p>
     </GlowCard>
   )
@@ -166,7 +167,7 @@ export default function PersonaLandingPage() {
       <section className="relative overflow-hidden px-6 pt-32 pb-16 text-center md:pt-40">
         <div className="mx-auto max-w-4xl">
           <p className="mb-7 text-sm text-white">AIでブランディングを加速させる。</p>
-          <h1 className="text-5xl font-bold leading-[1.05] tracking-[-0.03em] md:text-7xl">
+          <h1 className={headingClass('display')}>
             ペルソナビルダーツール
           </h1>
           <p className="mx-auto mt-7 max-w-2xl text-lg text-white/60 md:text-xl">
@@ -207,7 +208,7 @@ export default function PersonaLandingPage() {
       {/* ペルソナとは？（上のラッパーの背景を共有） */}
       <section className="px-6 pt-16 pb-20">
         <div className="mx-auto max-w-6xl">
-          <h2 className="mb-8 text-center text-3xl font-bold tracking-tight md:text-4xl">
+          <h2 className={headingClass('section', 'mb-8 text-center')}>
             ペルソナ＆ジャーニーマップとは？
           </h2>
           <div className="grid gap-5 md:grid-cols-3">
@@ -222,7 +223,7 @@ export default function PersonaLandingPage() {
       {/* ステップ説明 */}
       <section className="px-6 py-16">
         <div className="mx-auto max-w-6xl">
-          <h2 className="mb-12 text-center text-3xl font-bold tracking-tight md:text-4xl">
+          <h2 className={headingClass('section', 'mb-12 text-center')}>
             5ステップでペルソナを完成
           </h2>
           <div className="relative flex flex-col gap-4 md:flex-row md:items-start md:gap-16">
@@ -233,7 +234,7 @@ export default function PersonaLandingPage() {
                   {step.icon}
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-white">{step.title}</h3>
+                  <h3 className={headingClass('cardSm', 'text-white')}>{step.title}</h3>
                   <p className="text-sm text-white/50">{step.description}</p>
                 </div>
               </div>
@@ -262,7 +263,7 @@ export default function PersonaLandingPage() {
       {/* よくある質問 */}
       <section className="px-6 py-16">
         <div className="mx-auto max-w-3xl">
-          <h2 className="mb-8 text-center text-3xl font-bold tracking-tight md:text-4xl">よくある質問</h2>
+          <h2 className={headingClass('section', 'mb-8 text-center')}>よくある質問</h2>
           <div className="space-y-3">
             {FAQ_ITEMS.map((item) => (
               <details
@@ -296,7 +297,7 @@ export default function PersonaLandingPage() {
               <span className="inline-flex items-center gap-1.5"><CheckCircle2 size={14} className="text-blue-400" /> {FREE_TIER_REVIEW_BADGE}</span>
               <span className="basis-full text-xs text-white/50">PDF出力は Standard 以上のプランで利用できます。</span>
             </div>
-            <h2 className="text-balance text-3xl font-bold tracking-tight md:text-5xl">
+            <h2 className={headingClass('section', 'text-balance')}>
               今すぐペルソナを作成する
             </h2>
             <p className="mx-auto mt-6 max-w-xl text-lg text-white/60">

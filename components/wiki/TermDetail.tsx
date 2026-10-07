@@ -4,6 +4,7 @@ import RelatedChips from '@/components/wiki/RelatedChips'
 import LongDefinition from '@/components/wiki/LongDefinition'
 import SourceList from '@/components/wiki/SourceList'
 import type { WikiTermDetail } from '@/lib/types/wiki'
+import { headingClass } from '@/components/lp/heading'
 
 /* 用語詳細の本体。
    読み順: 用語名＋英訳＋カテゴリ → 一文でいうと → 詳細定義 → 関連用語 → ポッドキャスト引用 → 参考ソース */
@@ -48,7 +49,7 @@ export default function TermDetail({ term }: { term: WikiTermDetail }) {
         ))}
       </div>
 
-      <h1 className="text-3xl font-bold tracking-tight md:text-4xl">{term.term}</h1>
+      <h1 className={headingClass('article')}>{term.term}</h1>
       {term.en && <p className="mt-2 text-base text-white/40">{term.en}</p>}
 
       {/* 一文でいうと */}
