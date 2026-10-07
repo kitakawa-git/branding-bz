@@ -51,8 +51,11 @@ function Hero() {
           “つくっただけ”では、終わらせない。
         </p>
 
-        <h1 className="text-[44px] font-bold leading-[1.05] tracking-[-0.03em] sm:text-6xl md:text-7xl">
-          <span className="block md:whitespace-nowrap">AIでブランディングを</span>
+        {/* スマホ幅では 44px だと「AIでブランディングを」(幅424px) が1行に入らず「ブランディン／グを」と語中で折れる。
+            文言と2行構成は変えず、画面幅に追従させて1行に収める（320px で 28px・375px で約32px・430px 以上は 44px）。
+            sm(640px) 以上は従来どおり sm:text-6xl / md:text-7xl が効く */}
+        <h1 className="text-[clamp(28px,8.6vw,44px)] font-bold leading-[1.05] tracking-[-0.03em] sm:text-6xl md:text-7xl">
+          <span className="block whitespace-nowrap">AIでブランディングを</span>
           <span className="block">加速させる。</span>
         </h1>
 
