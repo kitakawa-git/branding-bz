@@ -131,64 +131,71 @@ export default function Nav() {
         </div>
       </div>
 
-      {open && (
-        <div className="mx-3 mt-2 rounded-2xl border border-white/10 bg-black/80 p-3 backdrop-blur-xl min-[1160px]:hidden">
-          {linksBefore.map((l) => (
-            <a
-              key={l.href}
-              href={l.href}
-              onClick={() => setOpen(false)}
-              className="block rounded-xl px-3 py-2.5 text-base font-medium text-white/80 hover:bg-white/10"
-            >
-              {l.label}
-            </a>
-          ))}
-
-          {/* 無料ツール（モバイルは展開リスト） */}
-          <div className="px-3 pb-1 pt-2 text-xs font-semibold text-white/40">無料ツール</div>
-          {toolItems.map((t) => (
-            <a
-              key={t.href}
-              href={t.href}
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 pl-5 text-base font-medium text-white/80 hover:bg-white/10"
-            >
-              <t.icon size={16} className="text-blue-400" />
-              {t.label}
-            </a>
-          ))}
-
-          {linksAfter.map((l) => (
-            <a
-              key={l.href}
-              href={l.href}
-              onClick={() => setOpen(false)}
-              className="block rounded-xl px-3 py-2.5 text-base font-medium text-white/80 hover:bg-white/10"
-            >
-              {l.label}
-            </a>
-          ))}
-
-          <div className="my-2 h-px bg-white/10" />
-          <Link
-            href="/document"
+      {/* 開閉アニメーション（フェード＋上から 8px スライド）のため、閉じていても描画したまま隠す。
+          ・absolute にしてヘッダーの高さを増やさない（増えると透明な領域がページのタップを奪う）
+          ・閉じているときは invisible（visibility: hidden）でフォーカス・読み上げの対象から外す。
+            visibility もトランジションに入れているので、閉じるときはフェードが終わってから消える */}
+      <div
+        aria-hidden={!open}
+        className={`absolute inset-x-3 top-full mt-2 origin-top rounded-2xl border border-white/10 bg-black/80 p-3 backdrop-blur-xl transition-[opacity,transform,visibility] duration-200 ease-out motion-reduce:transition-none min-[1160px]:hidden ${
+          open ? 'visible translate-y-0 opacity-100' : 'pointer-events-none invisible -translate-y-2 opacity-0'
+        }`}
+      >
+        {linksBefore.map((l) => (
+          <a
+            key={l.href}
+            href={l.href}
             onClick={() => setOpen(false)}
             className="block rounded-xl px-3 py-2.5 text-base font-medium text-white/80 hover:bg-white/10"
           >
-            資料請求
-          </Link>
-          <Link href="/portal/auth" className="block rounded-xl px-3 py-2.5 text-base font-medium text-white/80 hover:bg-white/10">
-            ログイン
-          </Link>
-          <Link
-            href="/signup"
-            onClick={() => sendGAEvent('event', 'nav_signup_click', { device: 'mobile' })}
-            className="mt-1 block rounded-xl bg-white px-3 py-2.5 text-center text-base font-semibold text-black"
+            {l.label}
+          </a>
+        ))}
+
+        {/* 無料ツール（モバイルは展開リスト） */}
+        <div className="px-3 pb-1 pt-2 text-xs font-semibold text-white/40">無料ツール</div>
+        {toolItems.map((t) => (
+          <a
+            key={t.href}
+            href={t.href}
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 pl-5 text-base font-medium text-white/80 hover:bg-white/10"
           >
-            無料で始める
-          </Link>
-        </div>
-      )}
+            <t.icon size={16} className="text-blue-400" />
+            {t.label}
+          </a>
+        ))}
+
+        {linksAfter.map((l) => (
+          <a
+            key={l.href}
+            href={l.href}
+            onClick={() => setOpen(false)}
+            className="block rounded-xl px-3 py-2.5 text-base font-medium text-white/80 hover:bg-white/10"
+          >
+            {l.label}
+          </a>
+        ))}
+
+        <div className="my-2 h-px bg-white/10" />
+        <Link
+          href="/document"
+          onClick={() => setOpen(false)}
+          className="block rounded-xl px-3 py-2.5 text-base font-medium text-white/80 hover:bg-white/10"
+        >
+          資料請求
+        </Link>
+        <Link href="/portal/auth" className="block rounded-xl px-3 py-2.5 text-base font-medium text-white/80 hover:bg-white/10">
+          ログイン
+        </Link>
+        <Link
+          href="/signup"
+          onClick={() => sendGAEvent('event', 'nav_signup_click', { device: 'mobile' })}
+          className="mt-1 block rounded-xl bg-white px-3 py-2.5 text-center text-base font-semibold text-black"
+        >
+          無料で始める
+        </Link>
+      </div>
     </header>
   )
 }
