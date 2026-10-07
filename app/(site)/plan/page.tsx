@@ -267,11 +267,12 @@ export default function LpPlanPage() {
                 {/* 2行目: ボタン。4枚で同じ行を共有するので位置が揃う */}
                 <Link
                   href={plan.ctaHref}
-                  className={`flex h-11 w-full items-center justify-center rounded-xl text-sm font-bold transition-transform hover:scale-[1.03] ${
-                    plan.ctaStyle === 'primary'
-                      ? 'bg-white text-black'
-                      : 'border border-white/15 text-white/80'
-                  }`}
+                  className={ctaClass({
+                    size: 'm',
+                    variant: plan.ctaStyle === 'primary' ? 'primary' : 'outline',
+                    // カード幅いっぱいなので、拡大は控えめに（primary 既定の 1.05 だと隣のカードに迫る）
+                    className: 'w-full transition-transform hover:scale-[1.03]',
+                  })}
                 >
                   {plan.ctaLabel}
                 </Link>

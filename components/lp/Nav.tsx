@@ -191,7 +191,7 @@ export default function Nav() {
         <Link
           href="/signup"
           onClick={() => sendGAEvent('event', 'nav_signup_click', { device: 'mobile' })}
-          className="mt-1 block rounded-xl bg-white px-3 py-2.5 text-center text-base font-semibold text-black"
+          className={ctaClass({ size: 'l', variant: 'primary', className: 'mt-1 w-full hover:scale-100 hover:opacity-90' })}
         >
           無料で始める
         </Link>
