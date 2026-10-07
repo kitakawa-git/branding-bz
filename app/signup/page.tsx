@@ -12,7 +12,6 @@ import Link from 'next/link'
 import { sendGAEvent } from '@next/third-parties/google'
 import { Input } from '@/components/ui/input'
 import { Building2, Plus, Clock } from 'lucide-react'
-import { isFreeEmailDomain, FREE_EMAIL_REJECTION_MESSAGE } from '@/lib/constants/free-email-domains'
 
 interface MatchedCompany {
   id: string
@@ -45,7 +44,6 @@ export default function SignupPage() {
 
   const validateStep1 = (): boolean => {
     if (!email) { setError('メールアドレスを入力してください'); return false }
-    if (isFreeEmailDomain(email)) { setError(FREE_EMAIL_REJECTION_MESSAGE); return false }
     if (password.length < 6) { setError('パスワードは6文字以上で入力してください'); return false }
     if (password !== passwordConfirm) { setError('パスワードが一致しません'); return false }
     return true
@@ -74,6 +72,12 @@ export default function SignupPage() {
         body: JSON.stringify({ email }),
       })
       const data = await res.json()
+
+      // フリーメールの可否はサーバー側で判定する（例外許可リストはサーバーだけが持つため）
+      if (data.reason === 'free_email_blocked') {
+        setError(data.error || 'このメールアドレスではご登録いただけません')
+        return
+      }
 
       if (data.match && data.companies?.length > 0) {
         setMatchedCompanies(data.companies)

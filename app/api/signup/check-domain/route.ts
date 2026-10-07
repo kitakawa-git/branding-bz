@@ -2,7 +2,8 @@
 // POST /api/signup/check-domain
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
-import { FREE_EMAIL_DOMAINS } from '@/lib/constants/free-email-domains'
+import { FREE_EMAIL_DOMAINS, FREE_EMAIL_REJECTION_MESSAGE } from '@/lib/constants/free-email-domains'
+import { isSignupEmailBlocked } from '@/lib/signup/email-allowlist'
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,7 +15,14 @@ export async function POST(request: NextRequest) {
 
     const domain = email.split('@')[1].toLowerCase()
 
-    // フリーメールならスキップ
+    // フリーメールは登録不可（登録画面のステップ1はこの応答で止める）。
+    // 例外許可リスト（環境変数 FREE_EMAIL_ALLOWLIST）のアドレスは通すが、企業マッチングはしない。
+    if (isSignupEmailBlocked(email)) {
+      return NextResponse.json(
+        { match: false, reason: 'free_email_blocked', error: FREE_EMAIL_REJECTION_MESSAGE },
+        { status: 400 },
+      )
+    }
     if (FREE_EMAIL_DOMAINS.has(domain)) {
       return NextResponse.json({ match: false, reason: 'free_email' })
     }

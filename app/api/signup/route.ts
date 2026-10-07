@@ -6,6 +6,7 @@ import { Resend } from 'resend'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { generateRandomSlug } from '@/lib/generate-slug'
 import { getEmailDomain, isFreeEmailDomain, FREE_EMAIL_REJECTION_MESSAGE } from '@/lib/constants/free-email-domains'
+import { isSignupEmailBlocked } from '@/lib/signup/email-allowlist'
 
 // HTMLエスケープ（XSS対策）
 function escapeHtml(str: string): string {
@@ -70,7 +71,8 @@ export async function POST(request: NextRequest) {
     }
 
     // フリーメール（Gmail等の非企業ドメイン）は登録拒否。会社のメールアドレスのみ受け入れる。
-    if (isFreeEmailDomain(email)) {
+    // 例外許可リスト（環境変数 FREE_EMAIL_ALLOWLIST）に載っているアドレスだけは通す。
+    if (isSignupEmailBlocked(email)) {
       return NextResponse.json(
         { error: FREE_EMAIL_REJECTION_MESSAGE },
         { status: 400 }

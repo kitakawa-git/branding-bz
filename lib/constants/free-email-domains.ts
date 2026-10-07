@@ -37,6 +37,24 @@ export function isFreeEmailDomain(email: string): boolean {
   return domain ? FREE_EMAIL_DOMAINS.has(domain) : false
 }
 
+// 例外的に登録を許可するアドレスの一覧を、カンマ区切りの文字列から作る（大文字小文字は無視）。
+// 値は環境変数 FREE_EMAIL_ALLOWLIST に置く（読むのはサーバー側のみ。lib/signup/email-allowlist.ts）。
+export function parseEmailAllowlist(raw: string | null | undefined): Set<string> {
+  return new Set(
+    (raw ?? '')
+      .split(',')
+      .map(s => s.trim().toLowerCase())
+      .filter(Boolean),
+  )
+}
+
+// 登録を拒否すべきか。フリーメールで、かつ例外リストに無いときだけ true。
+// 例外はアドレス単位の完全一致（ドメインごと許可はしない）。
+export function isBlockedFreeEmail(email: string, allowlist: Set<string>): boolean {
+  if (!isFreeEmailDomain(email)) return false
+  return !allowlist.has(email.trim().toLowerCase())
+}
+
 // 新規登録拒否時にユーザーへ返す共通メッセージ。
 export const FREE_EMAIL_REJECTION_MESSAGE =
   'フリーメール（Gmail・Yahoo!メールなど）ではご登録いただけません。会社のメールアドレスでご登録ください。'
