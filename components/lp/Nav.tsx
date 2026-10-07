@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useState } from 'react'
 import { sendGAEvent } from '@next/third-parties/google'
 import { Menu, X, ChevronDown, Target, UserCircle, Palette, Fingerprint, type LucideIcon } from 'lucide-react'
+import { ctaClass } from '@/components/lp/cta'
 
 /* 新デザイン（/lp 系）の共通ヘッダー。
    layout.tsx から全ページ共通で描画される。 */
@@ -107,7 +108,8 @@ export default function Nav() {
             href="/portal/auth"
             className="hidden whitespace-nowrap rounded-full px-2.5 py-1.5 text-sm font-medium text-white/70 transition-colors hover:text-white min-[360px]:inline sm:px-4"
           >
-            {/* 360px 未満はロゴ＋2ボタン＋ハンバーガーが物理的に入らない（実測で約26px不足）。
+            {/* 360px 未満はロゴ＋2ボタン＋ハンバーガーが物理的に入らない
+                （ボタンを S に揃えた状態の実測: 320px で30px不足・344px で6px不足・350px でちょうど）。
                 全部 nowrap だとハンバーガーが画面外に出てメニューに入れず、折り返しを許すと「ログイン」が1文字ずつ縦に並ぶ。
                 ハンバーガーメニュー内にもログインがあるので、360px 未満だけここを隠す */}
             ログイン
@@ -115,7 +117,7 @@ export default function Nav() {
           <Link
             href="/signup"
             onClick={() => sendGAEvent('event', 'nav_signup_click', { device: 'desktop' })}
-            className="whitespace-nowrap rounded-full bg-white px-2.5 py-1.5 text-sm font-semibold text-black transition-transform hover:scale-105 sm:px-4"
+            className={ctaClass({ size: 's', variant: 'primary' })}
           >
             無料で始める
           </Link>
