@@ -4,10 +4,11 @@ import { cn } from '@/lib/utils'
 /* 公開サイト（LP・ツールLP・資料請求バナー）のボタン体系。
    管理画面・ポータルは components/ui/button.tsx（shadcn）を使う。こちらはダーク地のLP向けで別物。
 
-   サイズは L / M / S / icon の4つだけ。増やさない。
+   サイズは L / M / S / XS / icon の5つだけ。増やさない。
      L    = 高さ48px / 左右32px / 16px — ページの主要CTA
      M    = 高さ44px / 左右16px / 14px — 本文中の導線（44px はスマホのタップ基準）
      S    = 高さ36px / 左右12px / 14px — バーやカードの中の補助ボタン
+     XS   = 高さ32px / 左右12px / 14px — ヘッダー（Nav）専用。ナビのリンク（32px）と高さを揃える
      icon = 36×36px のアイコンのみ（タップ基準を満たしたい場所は className で h-11 w-11 にする）
 
    文字の太さは semibold に統一する（以前は箇所ごとに bold / medium が混在していた）。 */
@@ -19,6 +20,7 @@ export const ctaVariants = cva(
         l: 'h-12 px-8 text-base',
         m: 'h-11 px-4 text-sm',
         s: 'h-9 px-3 text-sm',
+        xs: 'h-8 px-3 text-sm',
         icon: 'h-9 w-9 px-0',
       },
       variant: {

@@ -109,7 +109,7 @@ export default function Nav() {
             className="hidden whitespace-nowrap rounded-full px-2.5 py-1.5 text-sm font-medium text-white/70 transition-colors hover:text-white min-[360px]:inline sm:px-4"
           >
             {/* 360px 未満はロゴ＋2ボタン＋ハンバーガーが物理的に入らない
-                （ボタンを S に揃えた状態の実測: 320px で30px不足・344px で6px不足・350px でちょうど）。
+                （ボタンを XS（左右12px）にした状態の実測: 320px で30px不足・344px で6px不足・350px でちょうど）。
                 全部 nowrap だとハンバーガーが画面外に出てメニューに入れず、折り返しを許すと「ログイン」が1文字ずつ縦に並ぶ。
                 ハンバーガーメニュー内にもログインがあるので、360px 未満だけここを隠す */}
             ログイン
@@ -117,7 +117,7 @@ export default function Nav() {
           <Link
             href="/signup"
             onClick={() => sendGAEvent('event', 'nav_signup_click', { device: 'desktop' })}
-            className={ctaClass({ size: 's', variant: 'primary' })}
+            className={ctaClass({ size: 'xs', variant: 'primary' })}
           >
             無料で始める
           </Link>
