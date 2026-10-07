@@ -10,6 +10,7 @@ import { FREE_TIER_BADGE_LABEL, FREE_TIER_REVIEW_NOTE, FREE_TIER_REVIEW_BADGE } 
 import DocumentFloatingCta from '@/components/lp/DocumentFloatingCta'
 import { ctaClass } from '@/components/lp/cta'
 import { headingClass } from '@/components/lp/heading'
+import JaWrap from '@/components/lp/JaWrap'
 
 const PERSONA_CARDS = [
   {
@@ -106,7 +107,7 @@ function FeatureCard({ icon: Icon, label, title, description }: { icon: LucideIc
         <Icon size={20} className="text-blue-400" />
       </div>
       <div className="mb-2 text-sm font-semibold text-blue-400">{label}</div>
-      <h3 className={headingClass('card', 'text-white')}>{title}</h3>
+      <h3 className={headingClass('card', 'text-white')}><JaWrap>{title}</JaWrap></h3>
       <p className="mt-3 text-sm leading-relaxed text-white/55">{description}</p>
     </GlowCard>
   )
@@ -167,9 +168,9 @@ export default function PersonaLandingPage() {
       <section className="relative overflow-hidden px-6 pt-32 pb-16 text-center md:pt-40">
         <div className="mx-auto max-w-4xl">
           <p className="mb-7 text-sm text-white">AIでブランディングを加速させる。</p>
-          <h1 className={headingClass('display')}>
+          <h1 className={headingClass('display')}><JaWrap>
             ペルソナビルダーツール
-          </h1>
+          </JaWrap></h1>
           <p className="mx-auto mt-7 max-w-2xl text-lg text-white/60 md:text-xl">
             届けたい相手を、チームで共有できる具体的な人物像に。
             <br className="hidden sm:block" />
@@ -208,9 +209,9 @@ export default function PersonaLandingPage() {
       {/* ペルソナとは？（上のラッパーの背景を共有） */}
       <section className="px-6 pt-16 pb-20">
         <div className="mx-auto max-w-6xl">
-          <h2 className={headingClass('section', 'mb-8 text-center')}>
+          <h2 className={headingClass('section', 'mb-8 text-center')}><JaWrap>
             ペルソナ＆ジャーニーマップとは？
-          </h2>
+          </JaWrap></h2>
           <div className="grid gap-5 md:grid-cols-3">
             {PERSONA_CARDS.map((card) => (
               <FeatureCard key={card.label} icon={card.icon} label={card.label} title={card.title} description={card.description} />
@@ -223,9 +224,9 @@ export default function PersonaLandingPage() {
       {/* ステップ説明 */}
       <section className="px-6 py-16">
         <div className="mx-auto max-w-6xl">
-          <h2 className={headingClass('section', 'mb-12 text-center')}>
+          <h2 className={headingClass('section', 'mb-12 text-center')}><JaWrap>
             5ステップでペルソナを完成
-          </h2>
+          </JaWrap></h2>
           <div className="relative flex flex-col gap-4 md:flex-row md:items-start md:gap-16">
             <div className="absolute top-5 hidden h-px bg-white/15 md:block" style={{ left: 'calc((100% - 24rem) / 10)', right: 'calc((100% - 24rem) / 10)' }} />
             {STEPS.map((step) => (
@@ -234,7 +235,7 @@ export default function PersonaLandingPage() {
                   {step.icon}
                 </div>
                 <div>
-                  <h3 className={headingClass('cardSm', 'text-white')}>{step.title}</h3>
+                  <h3 className={headingClass('cardSm', 'text-white')}><JaWrap>{step.title}</JaWrap></h3>
                   <p className="text-sm text-white/50">{step.description}</p>
                 </div>
               </div>
@@ -263,7 +264,7 @@ export default function PersonaLandingPage() {
       {/* よくある質問 */}
       <section className="px-6 py-16">
         <div className="mx-auto max-w-3xl">
-          <h2 className={headingClass('section', 'mb-8 text-center')}>よくある質問</h2>
+          <h2 className={headingClass('section', 'mb-8 text-center')}><JaWrap>よくある質問</JaWrap></h2>
           <div className="space-y-3">
             {FAQ_ITEMS.map((item) => (
               <details
@@ -297,9 +298,9 @@ export default function PersonaLandingPage() {
               <span className="inline-flex items-center gap-1.5"><CheckCircle2 size={14} className="text-blue-400" /> {FREE_TIER_REVIEW_BADGE}</span>
               <span className="basis-full text-xs text-white/50">PDF出力は Standard 以上のプランで利用できます。</span>
             </div>
-            <h2 className={headingClass('section', 'text-balance')}>
+            <h2 className={headingClass('section', 'text-balance')}><JaWrap>
               今すぐペルソナを作成する
-            </h2>
+            </JaWrap></h2>
             <p className="mx-auto mt-6 max-w-xl text-lg text-white/60">
               ブランドは、つくった瞬間から走り出す。<br />branding.bz で、その加速を始めませんか。
             </p>

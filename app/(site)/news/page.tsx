@@ -5,6 +5,7 @@ import type { NewsItem, NewsCategory } from '@/lib/types/news'
 import { NEWS_CATEGORY_LABELS } from '@/lib/types/news'
 import { PageHero } from '@/components/lp/ui'
 import { headingClass } from '@/components/lp/heading'
+import JaWrap from '@/components/lp/JaWrap'
 
 export const metadata = {
   title: 'ニュース | branding.bz',
@@ -75,9 +76,9 @@ export default async function LpNewsListPage() {
                       {NEWS_CATEGORY_LABELS[item.category]}
                     </span>
                   </div>
-                  <h2 className={headingClass('card', 'text-white transition-colors group-hover:text-blue-300')}>
+                  <h2 className={headingClass('card', 'text-white transition-colors group-hover:text-blue-300')}><JaWrap>
                     {item.title}
-                  </h2>
+                  </JaWrap></h2>
                   {item.summary && (
                     <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-white/55">
                       {item.summary}

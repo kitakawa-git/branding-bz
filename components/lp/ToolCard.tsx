@@ -4,6 +4,7 @@ import type { Tool } from './tools'
 // tool.d の「|」は文節区切りの独自記法。Phrases を通して表示する（詳細は components/lp/Phrases.tsx）
 import Phrases from './Phrases'
 import { headingClass } from '@/components/lp/heading'
+import JaWrap from '@/components/lp/JaWrap'
 
 /* 構築ツール（無料）共通カード。
    背景はツール固有のグラデーション。dark=true のときだけ文字色を黒系へ反転。
@@ -23,7 +24,7 @@ export default function ToolCard({ tool }: { tool: Tool }) {
         >
           <tool.icon size={20} className={isDark ? 'text-black' : 'text-white'} />
         </div>
-        <h3 className={headingClass('cardSm', isDark ? 'text-black' : 'text-white')}>{tool.label}</h3>
+        <h3 className={headingClass('cardSm', isDark ? 'text-black' : 'text-white')}><JaWrap>{tool.label}</JaWrap></h3>
         <p className={`mt-2 text-sm leading-relaxed ${isDark ? 'text-black/70' : 'text-white/80'}`}>
           <Phrases text={tool.d} />
         </p>

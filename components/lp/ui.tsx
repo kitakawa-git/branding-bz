@@ -1,4 +1,5 @@
 import { headingClass } from '@/components/lp/heading'
+import JaWrap from '@/components/lp/JaWrap'
 
 /* 新デザイン（/lp 系）の共通UIプリミティブ。
    各ページ・各セクションから再利用する。 */
@@ -28,7 +29,7 @@ export function PageHero({
             {eyebrow}
           </p>
         )}
-        <h1 className={headingClass('title')}>{title}</h1>
+        <h1 className={headingClass('title')}><JaWrap>{title}</JaWrap></h1>
         {children && (
           <div className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-white/60">
             {children}

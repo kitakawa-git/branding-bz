@@ -17,7 +17,11 @@ import { cn } from '@/lib/utils'
 
    スマホの display / title を 33.5px（390px）までにしているのは、トップの「AIでブランディングを」を
    語の途中で改行させない上限だから。下層ページだけ大きいと、トップのヒーローより大きく見えて逆転する。 */
-export const headingVariants = cva('font-bold', {
+/* 折り返し: 日本語の見出しは文字の途中（「とどけ／る。」）で折れないよう、句読点の後でだけ折り返す（keep-all）。
+   文節の切れ目は JaWrap が自動で <wbr /> を入れて作る（見出しの中身は <JaWrap> で包む）。
+   1文節が1行に収まらないときだけ、はみ出さないよう端で折る（overflow-wrap: break-word）。
+   anywhere は使わない: 最小幅が1文字まで縮むので、横並び（flex/grid）の見出しが「サポー／ト」と細く折れる。 */
+export const headingVariants = cva('font-bold break-keep [overflow-wrap:break-word]', {
   variants: {
     level: {
       display: 'text-[clamp(28px,8.6vw,44px)] leading-[1.05] tracking-[-0.03em] sm:text-6xl md:text-7xl',

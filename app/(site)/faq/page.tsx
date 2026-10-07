@@ -5,6 +5,7 @@ import { PageHero } from '@/components/lp/ui'
 import FaqItem from '@/components/lp/FaqItem'
 import { ctaClass } from '@/components/lp/cta'
 import { headingClass } from '@/components/lp/heading'
+import JaWrap from '@/components/lp/JaWrap'
 
 export const metadata: Metadata = {
   title: 'よくある質問 | branding.bz',
@@ -123,9 +124,9 @@ export default function LpFaqPage() {
         <div className="mx-auto max-w-3xl space-y-12">
           {faqCategories.map((category) => (
             <div key={category.title}>
-              <h2 className={headingClass('card', 'mb-4 border-b border-white/10 pb-3')}>
+              <h2 className={headingClass('card', 'mb-4 border-b border-white/10 pb-3')}><JaWrap>
                 {category.title}
-              </h2>
+              </JaWrap></h2>
               <div className="space-y-3">
                 {category.items.map((item, i) => (
                   <FaqItem key={i} q={item.q} a={item.a} />

@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { Mic } from 'lucide-react'
 import type { WikiTermSummary } from '@/lib/types/wiki'
 import { headingClass } from '@/components/lp/heading'
+import JaWrap from '@/components/lp/JaWrap'
 
 /* 用語wiki の一覧カード（index / カテゴリページ共通）。
    ダーク基調のマーケLP系トーンに合わせる。カード全体がリンク＝タップ領域は十分に確保。 */
@@ -28,9 +29,9 @@ export default function TermCard({ term }: { term: WikiTermSummary }) {
         )}
       </div>
 
-      <h3 className={headingClass('cardSm', 'text-white transition-colors group-hover:text-blue-300')}>
+      <h3 className={headingClass('cardSm', 'text-white transition-colors group-hover:text-blue-300')}><JaWrap>
         {term.term}
-      </h3>
+      </JaWrap></h3>
       {term.en && <p className="mt-0.5 text-sm text-white/35">{term.en}</p>}
 
       <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-white/55">{term.short_def}</p>

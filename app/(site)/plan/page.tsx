@@ -4,6 +4,7 @@ import { Check, ArrowRight } from 'lucide-react'
 import { PageHero, GlowCard } from '@/components/lp/ui'
 import { ctaClass } from '@/components/lp/cta'
 import { headingClass } from '@/components/lp/heading'
+import JaWrap from '@/components/lp/JaWrap'
 
 export const metadata: Metadata = {
   title: '料金プラン | branding.bz',
@@ -213,7 +214,7 @@ export default function LpPlanPage() {
                 <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-blue-400">
                   {plan.subtitle}
                 </p>
-                <h3 className={headingClass('sub', 'mb-4')}>{plan.name}</h3>
+                <h3 className={headingClass('sub', 'mb-4')}><JaWrap>{plan.name}</JaWrap></h3>
                 <div className="mb-3">
                   {/* 「個別見積」のような文言の価格は、金額と同じサイズだと
                       字面が重く見えるので一段下げる */}
@@ -301,9 +302,9 @@ export default function LpPlanPage() {
       {/* アップセルパス */}
       <section className="px-6 py-16">
         <div className="mx-auto max-w-7xl">
-          <h2 className={headingClass('section', 'mb-12 text-center')}>
+          <h2 className={headingClass('section', 'mb-12 text-center')}><JaWrap>
             ブランドの成長に合わせてステップアップ
-          </h2>
+          </JaWrap></h2>
           <div className="grid grid-cols-2 items-start gap-4 md:grid-cols-4 md:gap-6">
             {UPSELL_STEPS.map((step, idx) => (
               <div key={step.name} className="relative flex flex-col items-center text-center">
@@ -316,7 +317,7 @@ export default function LpPlanPage() {
                   <div className="mb-3 inline-flex rounded-full bg-white px-3 py-1 text-xs font-bold text-black">
                     {step.subtitle}
                   </div>
-                  <h3 className={headingClass('cardSm', 'mb-2')}>{step.name}</h3>
+                  <h3 className={headingClass('cardSm', 'mb-2')}><JaWrap>{step.name}</JaWrap></h3>
                   {/* trigger 未設定のときに空の枠を残さない */}
                   {step.trigger && (
                     <div className="inline-block rounded-lg bg-blue-500/10 px-3 py-1.5">
@@ -336,7 +337,7 @@ export default function LpPlanPage() {
       <section className="px-6 py-16">
         <div className="mx-auto max-w-4xl">
           <GlowCard className="px-6 py-8 text-center">
-            <h2 className={headingClass('section', 'mb-6')}>すべてのプランに共通</h2>
+            <h2 className={headingClass('section', 'mb-6')}><JaWrap>すべてのプランに共通</JaWrap></h2>
             <div className="mx-auto grid max-w-xl grid-cols-1 gap-3 sm:grid-cols-2">
               {COMMON_ITEMS.map((item) => (
                 <div key={item} className="flex items-center gap-2">
@@ -353,9 +354,9 @@ export default function LpPlanPage() {
 
       {/* CTA */}
       <section className="px-6 py-24 text-center">
-        <h2 className={headingClass('section')}>
+        <h2 className={headingClass('section')}><JaWrap>
           まずは無料でAIブランディングを体験
-        </h2>
+        </JaWrap></h2>
         <p className="mt-6 text-lg text-white/60">クレジットカード不要。今すぐ始められます。</p>
         <div className="mt-10">
           <Link

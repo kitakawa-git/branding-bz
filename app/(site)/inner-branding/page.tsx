@@ -20,6 +20,7 @@ import FinalCta from '@/components/lp/FinalCta'
 import Phrases from '@/components/lp/Phrases'
 import { ctaClass } from '@/components/lp/cta'
 import { headingClass } from '@/components/lp/heading'
+import JaWrap from '@/components/lp/JaWrap'
 
 type CtaTarget = 'document' | 'signup' | 'plan'
 type CtaPosition = 'hero' | 'pricing' | 'footer'
@@ -183,16 +184,16 @@ export default function InnerBrandingLandingPage() {
       {/* 2. 3つのつまずき */}
       <section className="px-6 py-16">
         <div className="mx-auto max-w-6xl">
-          <h2 className={headingClass('section', 'mb-10 text-center')}>
+          <h2 className={headingClass('section', 'mb-10 text-center')}><JaWrap>
             理念が根づかない、3つのつまずき
-          </h2>
+          </JaWrap></h2>
           <div className="grid gap-5 md:grid-cols-3">
             {STUMBLES.map(({ icon: Icon, title, description }) => (
               <GlowCard key={title} className="p-7">
                 <div className="mb-5 inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/5">
                   <Icon size={20} className="text-ds-app-accent-soft" />
                 </div>
-                <h3 className={headingClass('sub', 'text-white')}>{title}</h3>
+                <h3 className={headingClass('sub', 'text-white')}><JaWrap>{title}</JaWrap></h3>
                 <p className="mt-3 text-sm leading-relaxed text-white/60">
                   <Phrases text={description} />
                 </p>
@@ -206,7 +207,7 @@ export default function InnerBrandingLandingPage() {
       <section className="px-6 py-16">
         <div className="mx-auto max-w-3xl">
           <GlowCard className="px-7 py-10 md:px-12">
-            <h2 className={headingClass('section')}>インナーブランディングとは</h2>
+            <h2 className={headingClass('section')}><JaWrap>インナーブランディングとは</JaWrap></h2>
             <p className="mt-5 text-base leading-[1.9] text-white/70">
               社員が自社のブランド（理念・価値観・らしさ）を理解し、共感し、日々の行動として体現できる状態をつくる活動のこと。社外に向けた発信（アウターブランディング）と対になる考え方です。掲げた言葉が現場の判断基準になって初めて、ブランドは事業の成果につながります。
             </p>
@@ -226,9 +227,9 @@ export default function InnerBrandingLandingPage() {
       {/* 4. 4つの打ち手 */}
       <section className="px-6 py-16">
         <div className="mx-auto max-w-6xl">
-          <h2 className={headingClass('section', 'mb-10 text-center')}>
+          <h2 className={headingClass('section', 'mb-10 text-center')}><JaWrap>
             浸透を、4つの打ち手に分解する
-          </h2>
+          </JaWrap></h2>
           <div className="grid gap-5 md:grid-cols-2">
             {MEASURES.map(({ no, icon: Icon, title, plan, description, features }) => (
               <GlowCard key={title} className="flex flex-col p-7">
@@ -241,10 +242,10 @@ export default function InnerBrandingLandingPage() {
                     {plan}
                   </span>
                 </div>
-                <h3 className={headingClass('sub', 'text-white')}>
+                <h3 className={headingClass('sub', 'text-white')}><JaWrap>
                   <span className="mr-1 text-ds-app-accent-soft">{no}</span>
                   {title}
-                </h3>
+                </JaWrap></h3>
                 <p className="mt-3 flex-1 text-sm leading-relaxed text-white/60">{description}</p>
                 <div className="mt-5 border-t border-white/10 pt-4">
                   <p className="mb-2 text-sm font-semibold text-white/40">使う機能</p>
@@ -265,9 +266,9 @@ export default function InnerBrandingLandingPage() {
       {/* 5. 料金への導線 */}
       <section className="px-6 py-16">
         <div className="mx-auto max-w-5xl">
-          <h2 className={headingClass('section', 'mb-10 text-center')}>
+          <h2 className={headingClass('section', 'mb-10 text-center')}><JaWrap>
             小さく始めて、必要な分だけ広げる
-          </h2>
+          </JaWrap></h2>
           <div className="grid gap-5 sm:grid-cols-3">
             {PRICING.map((p) => (
               <GlowCard key={p.name} className="px-6 py-8 text-center">
@@ -296,7 +297,7 @@ export default function InnerBrandingLandingPage() {
       {/* 6. FAQ */}
       <section className="px-6 py-16">
         <div className="mx-auto max-w-3xl">
-          <h2 className={headingClass('section', 'mb-8 text-center')}>よくある質問</h2>
+          <h2 className={headingClass('section', 'mb-8 text-center')}><JaWrap>よくある質問</JaWrap></h2>
           <div className="space-y-3">
             {FAQ_ITEMS.map((item) => (
               <FaqItem key={item.q} q={item.q} a={item.a} />
