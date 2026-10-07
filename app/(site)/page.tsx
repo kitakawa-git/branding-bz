@@ -566,7 +566,10 @@ function Tools() {
     <section id="tools" className="px-6 py-24">
       <div className="mx-auto max-w-6xl">
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className={headingClass('section')}>無料ツールで、すぐに始める。</h2>
+          <h2 className={headingClass('section')}>
+            無料ツールで、<br className="sm:hidden" />
+            すぐに始める。
+          </h2>
           <p className="mt-5 text-lg text-white/60">
             無料登録で、各ツールを月3回まで。<br className="sm:hidden" />ブランディングの第一歩を、ここから。
           </p>
