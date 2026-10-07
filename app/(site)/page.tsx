@@ -565,7 +565,7 @@ function Tools() {
   return (
     <section id="tools" className="px-6 py-24">
       <div className="mx-auto max-w-6xl">
-        <div className="mx-auto max-w-2xl text-center">
+        <div className="mx-auto max-w-2xl text-left sm:text-center">
           <h2 className={headingClass('section')}>
             無料ツールで、<br className="sm:hidden" />
             すぐに始める。
