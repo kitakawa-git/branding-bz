@@ -164,7 +164,7 @@ export default function DocumentFloatingCta() {
 
       {/* md 以上: 左下のカード（白地・表紙サムネイル付き） */}
       <div
-        className="relative hidden w-[336px] items-center gap-4 rounded-xl bg-white p-5 md:flex"
+        className="relative hidden w-[336px] items-center gap-4 rounded-2xl bg-white p-5 md:flex"
         style={{ boxShadow: '0 12px 32px rgba(0,0,0,.45)' }}
         data-panel="desktop"
       >

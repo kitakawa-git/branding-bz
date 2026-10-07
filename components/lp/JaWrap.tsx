@@ -135,25 +135,27 @@ function hiraAhead(chars: string[], i: number): number {
   return n
 }
 
-function wrapNode(node: ReactNode): ReactNode {
+// key は見出しの中で一意にする（子ごとの番号 ci を前に付ける）。
+// 付けないと、文字列が2つ以上ある見出しで <wbr key="w1"> が重複し、React が警告を出す
+function wrapNode(node: ReactNode, ci: number): ReactNode {
   if (typeof node === 'string') {
     const parts = segmentJa(node)
     if (parts.length < 2) return node
-    return parts.flatMap((p, i) => (i === 0 ? [p] : [<wbr key={`w${i}`} />, p]))
+    return parts.flatMap((p, i) => (i === 0 ? [p] : [<wbr key={`${ci}-w${i}`} />, p]))
   }
-  if (isValidElement(node) && node.type === 'br') return [<wbr key="wbr-before-br" />, node]
+  if (isValidElement(node) && node.type === 'br') return [<wbr key={`${ci}-wbr`} />, node]
   // <>…</>（Fragment）や <span> などの中の文字列も区切る。自作コンポーネントの中には入らない
   if (isValidElement(node) && (typeof node.type === 'string' || node.type === Fragment)) {
     const el = node as ReactElement<{ children?: ReactNode }>
     if (el.props.children == null) return el
-    return cloneElement(el, undefined, ...Children.toArray(wrapAll(el.props.children)))
+    return cloneElement(el, undefined, ...wrapAll(el.props.children))
   }
   return node
 }
 
 function wrapAll(children: ReactNode): ReactNode[] {
-  return Children.toArray(children).flatMap((c) => {
-    const w = wrapNode(c)
+  return Children.toArray(children).flatMap((c, ci) => {
+    const w = wrapNode(c, ci)
     return Array.isArray(w) ? w : [w]
   })
 }
