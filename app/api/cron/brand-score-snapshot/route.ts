@@ -3,20 +3,33 @@
 // brand_score_schedules.next_snapshot_date <= today かつ enabled=true の企業を対象に
 // スナップショットを集計・保存し、next_snapshot_date を次回日付に更新する
 import { NextRequest, NextResponse } from 'next/server'
+import { timingSafeEqual } from 'crypto'
 import { createClient } from '@supabase/supabase-js'
 import { calculateSnapshot, snapshotToRow } from '@/lib/brand-score/calculate-snapshot'
 import { calcNextSnapshotDate, type Frequency } from '@/lib/brand-score/schedule-utils'
 
 export const runtime = 'nodejs'
+
+function timingSafeEqualString(a: string, b: string): boolean {
+  const ab = Buffer.from(a)
+  const bb = Buffer.from(b)
+  return ab.length === bb.length && timingSafeEqual(ab, bb)
+}
 export const maxDuration = 300 // 5分（Proプラン対応）
 
 export async function GET(request: NextRequest) {
   try {
-    // CRON_SECRET による認証チェック
+    // CRON_SECRET による認証チェック。
+    // 未設定のときに素通りさせると、誰でも全社の集計ジョブ（service_role）を起動できてしまうので閉じる側に倒す。
+    // Vercel Cron は環境変数 CRON_SECRET があると Authorization: Bearer <CRON_SECRET> を付けて呼ぶ
     const authHeader = request.headers.get('authorization')
     const cronSecret = process.env.CRON_SECRET
 
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+    if (!cronSecret) {
+      console.error('[Cron brand-score-snapshot] CRON_SECRET が未設定のため実行しない')
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 503 })
+    }
+    if (!timingSafeEqualString(authHeader ?? '', `Bearer ${cronSecret}`)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
