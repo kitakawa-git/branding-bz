@@ -1,5 +1,5 @@
 // 用語wiki の子テーブル（引用 / 参考ソース / 関連リンク）を terms.json の内容に揃える。
-// 実行: npx tsx scripts/sync-wiki-children.ts [--dry-run]
+// 実行: npx tsx --conditions=react-server scripts/sync-wiki-children.ts [--dry-run]
 //
 // wiki_terms 本体は触らない（別途 Cowork 側で投入済み）。
 // 子テーブルは全削除 → 再投入で terms.json を正とする。

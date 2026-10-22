@@ -182,17 +182,11 @@ const PLAN_LABELS_FOR_ERROR: Record<string, string> = {
  * 返り値が NextResponse ならそのまま return する。null なら通過。
  */
 export async function requireCompanyMember(companyId: string): Promise<NextResponse | null> {
-  // 動的 import は循環参照を避けるため（supabase/server は next/headers に依存する）
-  const { createClient } = await import('@/lib/supabase/server')
-  const supabaseUser = await createClient()
-  const {
-    data: { user },
-  } = await supabaseUser.auth.getUser()
-  if (!user) {
-    return NextResponse.json({ error: '認証が必要です' }, { status: 401 })
-  }
-  const callerCompanyId = await fetchCompanyIdForAuth(user.id)
-  if (!callerCompanyId || callerCompanyId !== companyId) {
+  // 認証と所属の解決は lib/auth/caller に一本化。ここは「渡された会社と一致するか」だけを見る
+  const { requireCaller } = await import('@/lib/auth/caller')
+  const caller = await requireCaller()
+  if (caller.error) return caller.error
+  if (!caller.companyId || caller.companyId !== companyId) {
     // 存在の有無を教えないため、権限不足と資源なしを区別せず 403 で返す
     return NextResponse.json({ error: 'この会社のデータにはアクセスできません' }, { status: 403 })
   }
@@ -258,17 +252,8 @@ export async function requireCallerCompany(): Promise<
   { error: NextResponse; companyId?: undefined; authId?: undefined }
   | { error?: undefined; companyId: string; authId: string }
 > {
-  const { createClient } = await import('@/lib/supabase/server')
-  const supabaseUser = await createClient()
-  const {
-    data: { user },
-  } = await supabaseUser.auth.getUser()
-  if (!user) {
-    return { error: NextResponse.json({ error: '認証が必要です' }, { status: 401 }) }
-  }
-  const companyId = await fetchCompanyIdForAuth(user.id)
-  if (!companyId) {
-    return { error: NextResponse.json({ error: '所属会社が見つかりません' }, { status: 403 }) }
-  }
-  return { companyId, authId: user.id }
+  const { requireCompanyMember: requireMember } = await import('@/lib/auth/caller')
+  const caller = await requireMember()
+  if (caller.error) return { error: caller.error }
+  return { companyId: caller.companyId, authId: caller.authId }
 }

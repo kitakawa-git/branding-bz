@@ -1,7 +1,7 @@
 // ビデオラーニング API 用の認証・所属解決ヘルパー（サーバー専用）
 // 認証は @supabase/ssr の cookie ベース getUser() に準拠。
 // company_id は admin_users（管理側）/ members→profiles（ポータル側）から解決する。
-import { createClient } from '@/lib/supabase/server'
+import { getCallerAuthId } from '@/lib/auth/caller'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
 // 管理者コンテキスト（admin_users 登録者）
@@ -17,13 +17,9 @@ export type MemberContext = {
   profileId: string
 }
 
-// cookie セッションから認証ユーザー ID を取得（未認証なら null）
+// セッションから認証ユーザー ID を取得（未認証なら null）。判定は lib/auth/caller に一本化
 async function getAuthUserId(): Promise<string | null> {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  return user?.id ?? null
+  return getCallerAuthId()
 }
 
 // 管理者の company_id を解決（admin_users 未登録なら null）

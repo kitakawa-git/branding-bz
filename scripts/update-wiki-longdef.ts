@@ -1,4 +1,4 @@
-// wiki_terms.long_def だけを terms.json の内容で更新する。実行: npx tsx scripts/update-wiki-longdef.ts
+// wiki_terms.long_def だけを terms.json の内容で更新する。実行: npx tsx --conditions=react-server scripts/update-wiki-longdef.ts
 //
 // なぜ seed-wiki.ts を使わないか:
 //   seed-wiki.ts は子テーブル（sources/quotes/relations）を毎回作り直す。

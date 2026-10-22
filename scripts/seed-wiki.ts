@@ -1,4 +1,4 @@
-// ブランディング用語wiki のシード。実行: npx tsx scripts/seed-wiki.ts
+// ブランディング用語wiki のシード。実行: npx tsx --conditions=react-server scripts/seed-wiki.ts
 //
 // scripts/wiki-seed/terms.json（230語）を wiki_terms / wiki_term_sources /
 // wiki_term_quotes / wiki_term_relations の4テーブルへ投入する。

@@ -1,4 +1,4 @@
-// Stage4a 検証（デモ企業＝テックブリッジのみ）。実行: npx tsx scripts/verify-copy-stage4a.ts
+// Stage4a 検証（デモ企業＝テックブリッジのみ）。実行: npx tsx --conditions=react-server scripts/verify-copy-stage4a.ts
 import { readFileSync } from 'fs'; import { join } from 'path'
 for (const l of readFileSync(join(process.cwd(), '.env.local'), 'utf-8').split(/\r?\n/)) {
   const m = l.match(/^([A-Z_][A-Z0-9_]*)=(.*)$/); if (m && !process.env[m[1]]) process.env[m[1]] = m[2].trim()
