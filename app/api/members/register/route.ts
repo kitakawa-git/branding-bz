@@ -4,6 +4,28 @@ import { generateRandomSlug } from '@/lib/generate-slug'
 import { checkMemberCapacity, memberLimitResponse } from '@/lib/billing/guard'
 import { addToActiveSurveys } from '@/lib/brand-score/survey-participants'
 
+/**
+ * 招待トークンの確認（登録画面の表示用）。
+ * invite_links は anon に読ませない（トークンを一覧できるとどの会社にも登録できてしまう）ので、
+ * トークンを知っている人にだけ、ここで会社名を返す。
+ */
+export async function GET(req: NextRequest) {
+  const token = req.nextUrl.searchParams.get('token')
+  if (!token) return NextResponse.json({ valid: false })
+
+  const supabaseAdmin = getSupabaseAdmin()
+  const { data: invite } = await supabaseAdmin
+    .from('invite_links')
+    .select('company_id, companies(name)')
+    .eq('token', token)
+    .eq('is_active', true)
+    .maybeSingle()
+
+  if (!invite) return NextResponse.json({ valid: false })
+  const company = Array.isArray(invite.companies) ? invite.companies[0] : invite.companies
+  return NextResponse.json({ valid: true, companyName: company?.name ?? '' })
+}
+
 export async function POST(req: NextRequest) {
   try {
     // ビルド時（env が揃わない環境）にモジュール評価で落ちないよう、handler 内で lazy 生成

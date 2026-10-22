@@ -43,26 +43,17 @@ function PortalRegisterContent() {
       return
     }
 
+    // invite_links は anon から読めないので、確認は API（service_role）に任せる
     const verifyToken = async () => {
-      const { data, error } = await supabase
-        .from('invite_links')
-        .select('company_id')
-        .eq('token', token)
-        .eq('is_active', true)
-        .single()
+      const res = await fetch(`/api/members/register?token=${encodeURIComponent(token)}`)
+      const result = await res.json().catch(() => ({ valid: false }))
 
-      if (error || !data) {
+      if (!res.ok || !result.valid) {
         setTokenValid(false)
         return
       }
 
-      const { data: company } = await supabase
-        .from('companies')
-        .select('name')
-        .eq('id', data.company_id)
-        .single()
-
-      if (company) setCompanyName(company.name)
+      if (result.companyName) setCompanyName(result.companyName)
       setTokenValid(true)
     }
 
