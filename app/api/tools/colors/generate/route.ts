@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { callClaude } from '@/lib/claude-api'
 import type { PaletteProposal } from '@/lib/types/color-tool'
+import { requireOwnToolSession } from '@/lib/auth/caller'
 
 const SYSTEM_PROMPT = `あなたはID INC.のシニアブランドコンサルタントです。
 CI（コーポレートアイデンティティ）策定の実務経験が豊富で、
@@ -64,6 +65,10 @@ export async function POST(request: NextRequest) {
     if (!sessionId) {
       return NextResponse.json({ error: 'sessionId が必要です' }, { status: 400 })
     }
+
+    // 本人のセッションだけ（sessionId を知っているだけで他人・他社のデータを使わせない）
+    const own = await requireOwnToolSession(request, sessionId)
+    if (own.error) return own.error
 
     // 月次生成回数チェック
     const { data: session } = await supabaseAdmin

@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { calculateSnapshot, snapshotToRow } from '@/lib/brand-score/calculate-snapshot'
 import {guardCompanyFeature, requireCompanyMember } from '@/lib/billing/guard'
+import { requireCompanyAdmin, assertSameCompany } from '@/lib/auth/caller'
 
 // GET: スナップショット一覧を返す（snapshot_date昇順）
 export async function GET(request: NextRequest) {
@@ -59,6 +60,12 @@ export async function POST(request: NextRequest) {
     if (!company_id) {
       return NextResponse.json({ error: 'company_id は必須です' }, { status: 400 })
     }
+
+    // 記録は自社の管理者だけ（他社の company_id を渡されても書き込まない）
+    const caller = await requireCompanyAdmin(request)
+    if (caller.error) return caller.error
+    const denied = assertSameCompany(caller, company_id)
+    if (denied) return denied.error
 
     const period = period_days && period_days > 0 && period_days <= 365 ? period_days : 30
 
@@ -135,6 +142,11 @@ export async function DELETE(request: NextRequest) {
         { status: 400 }
       )
     }
+
+    const caller = await requireCompanyAdmin(request)
+    if (caller.error) return caller.error
+    const denied = assertSameCompany(caller, companyId)
+    if (denied) return denied.error
 
     const supabase = getSupabaseAdmin()
     const { data, error } = await supabase

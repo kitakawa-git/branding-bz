@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { fetchPhilosophy } from '@/lib/brand/philosophy'
 import { guardCompanyFeature } from '@/lib/billing/guard'
+import { requireSelf } from '@/lib/auth/caller'
 
 // brand_stage の値を正規化（廃止された値を有効な値に変換）
 function normalizeBrandStage(stage: string | null | undefined): string {
@@ -16,11 +17,10 @@ function normalizeBrandStage(stage: string | null | undefined): string {
 export async function GET(request: NextRequest) {
   try {
     const supabaseAdmin = getSupabaseAdmin()
-    const userId = request.nextUrl.searchParams.get('userId')
-
-    if (!userId) {
-      return NextResponse.json({ error: 'userId が必要です' }, { status: 400 })
-    }
+    // userId はセッションの持ち主と一致するときだけ通す（他人の auth_id で他社の情報を引かせない）
+    const self = await requireSelf(request, request.nextUrl.searchParams.get('userId'))
+    if (self.error) return self.error
+    const userId = self.authId
 
     // 1. admin_users から company_id を検索
     const { data: adminUser } = await supabaseAdmin
@@ -132,11 +132,12 @@ export async function PATCH(request: NextRequest) {
   try {
     const supabaseAdmin = getSupabaseAdmin()
     const body = await request.json()
-    const { userId, company_name, industry_category, industry_subcategory, brand_stage, competitor_colors, competitors, business_descriptions, target_segments } = body
+    const { company_name, industry_category, industry_subcategory, brand_stage, competitor_colors, competitors, business_descriptions, target_segments } = body
 
-    if (!userId) {
-      return NextResponse.json({ error: 'userId が必要です' }, { status: 400 })
-    }
+    // 書き戻し先の会社はセッションの持ち主から決める（body の userId は一致確認にだけ使う）
+    const self = await requireSelf(request, body.userId)
+    if (self.error) return self.error
+    const userId = self.authId
 
     // admin_users から company_id を検索
     const { data: adminUser } = await supabaseAdmin

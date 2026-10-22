@@ -11,6 +11,7 @@ import {
   weightedAverage,
 } from '@/lib/brand-score/outer-metrics'
 import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
+import { requireCompanyMember, assertSameCompany } from '@/lib/auth/caller'
 
 // スコアの算出式は lib/brand-score/outer-metrics.ts に集約している。
 // 以前はこのファイルと calculate-snapshot.ts に同じ式が複製されており、
@@ -37,6 +38,12 @@ export async function GET(request: NextRequest) {
         { status: 400 }
       )
     }
+
+    // 自社のメンバー・管理者だけ（company_id は公開の名刺ページにも出ているので、それだけで通さない）
+    const caller = await requireCompanyMember(request)
+    if (caller.error) return caller.error
+    const denied = assertSameCompany(caller, companyId)
+    if (denied) return denied.error
 
     const supabase = getSupabaseAdmin()
 

@@ -17,6 +17,7 @@ import {
   validateAndNormalize,
 } from '@/app/tools/personality/lib/diagnosis'
 import { DIAGNOSIS_QUESTIONS, type DiagnosisAnswers, type FrameworkKey } from '@/app/tools/personality/lib/questions'
+import { requireOwnToolSession } from '@/lib/auth/caller'
 
 const FEATURE_KEY = 'personality_diagnosis'
 
@@ -93,6 +94,10 @@ export async function POST(request: NextRequest) {
     if (!sessionId || !userId) {
       return NextResponse.json({ error: 'sessionId と userId が必要です' }, { status: 400 })
     }
+
+    // 本人のセッションだけ（sessionId を知っているだけで他人・他社のデータを使わせない）
+    const own = await requireOwnToolSession(request, sessionId)
+    if (own.error) return own.error
 
     // セッション取得＋所有者チェック
     const { data: session, error: sessionError } = await supabaseAdmin

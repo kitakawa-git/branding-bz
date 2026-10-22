@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import type { PaletteProposal } from '@/lib/types/color-tool'
 import { guardCompanyFeature } from '@/lib/billing/guard'
+import { requireOwnToolSession } from '@/lib/auth/caller'
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,6 +14,10 @@ export async function POST(request: NextRequest) {
     if (!sessionId) {
       return NextResponse.json({ error: 'sessionId が必要です' }, { status: 400 })
     }
+
+    // 本人のセッションだけ（sessionId を知っているだけで他人・他社のデータを使わせない）
+    const own = await requireOwnToolSession(request, sessionId)
+    if (own.error) return own.error
 
     // セッション＋プロジェクト取得
     const { data: session } = await supabaseAdmin

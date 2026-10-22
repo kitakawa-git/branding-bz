@@ -3,13 +3,16 @@
 // 各ツールは mini_app_sessions に行を持つ（colors はラベルを brand_color_projects.brand_name から補完）
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { requireSelf } from '@/lib/auth/caller'
 
 const ALLOWED_APP_TYPES = ['stp', 'persona', 'personality', 'brand_colors'] as const
 
 export async function GET(request: NextRequest) {
   try {
     const supabaseAdmin = getSupabaseAdmin()
-    const userId = request.nextUrl.searchParams.get('userId') || ''
+    const self = await requireSelf(request, request.nextUrl.searchParams.get('userId'))
+    if (self.error) return self.error
+    const userId = self.authId
     const appType = request.nextUrl.searchParams.get('appType') || ''
     if (!userId) {
       return NextResponse.json({ error: 'userId が必要です' }, { status: 400 })

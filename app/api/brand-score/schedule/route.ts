@@ -2,18 +2,18 @@
 // GET  /api/brand-score/schedule?company_id=xxx → 現在の設定を返す（なければデフォルト）
 // PUT  /api/brand-score/schedule → 設定を更新（upsert）
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { requireCompanyMember, requireCompanyAdmin, assertSameCompany } from '@/lib/auth/caller'
 import {
   type Frequency,
   VALID_FREQUENCIES,
   calcNextSnapshotDate,
 } from '@/lib/brand-score/schedule-utils'
 
+// brand_score_schedules は RLS でクライアントから読めないので service_role で扱う。
+// 会社はセッションの所属と照合してから使う（company_id をそのまま信用しない）
 function getSupabase() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  if (!url || !key) throw new Error('Supabase設定が不足しています')
-  return createClient(url, key)
+  return getSupabaseAdmin()
 }
 
 // GET: 現在のスケジュール設定を取得
@@ -25,6 +25,11 @@ export async function GET(request: NextRequest) {
     if (!companyId) {
       return NextResponse.json({ error: 'company_id は必須です' }, { status: 400 })
     }
+
+    const caller = await requireCompanyMember(request)
+    if (caller.error) return caller.error
+    const denied = assertSameCompany(caller, companyId)
+    if (denied) return denied.error
 
     const supabase = getSupabase()
 
@@ -79,6 +84,12 @@ export async function PUT(request: NextRequest) {
     if (!company_id) {
       return NextResponse.json({ error: 'company_id は必須です' }, { status: 400 })
     }
+
+    // 設定の変更は自社の管理者だけ
+    const caller = await requireCompanyAdmin(request)
+    if (caller.error) return caller.error
+    const denied = assertSameCompany(caller, company_id)
+    if (denied) return denied.error
 
     // バリデーション
     const freq = (frequency || 'monthly') as Frequency

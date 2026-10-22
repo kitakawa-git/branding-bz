@@ -2,12 +2,16 @@
 // DELETE /api/tools/mini-app-sessions/[sessionId]?userId= — 所有者のみ。一覧から非表示（status='archived'）
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { requireOwnToolSession } from '@/lib/auth/caller'
 
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ sessionId: string }> }
 ) {
   const { sessionId } = await params
+  // 本人のセッションだけ（sessionId を知っているだけでは読ませない・書かせない）
+  const own = await requireOwnToolSession(request, sessionId)
+  if (own.error) return own.error
   try {
     const supabaseAdmin = getSupabaseAdmin()
     const userId = request.nextUrl.searchParams.get('userId') || ''

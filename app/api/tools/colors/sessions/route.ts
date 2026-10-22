@@ -3,6 +3,7 @@
 // 新規ユーザー作成 or 既存ユーザーのセッション作成
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { requireSelf } from '@/lib/auth/caller'
 import { MONTHLY_FREE_LIMIT, MONTHLY_LIMIT_REACHED_MESSAGE, countCompletedThisMonth } from '@/lib/tools/free-limits'
 import { can } from '@/lib/billing/entitlements'
 import { fetchCompanyPlan, usageLimitResponse } from '@/lib/billing/guard'
@@ -12,29 +13,14 @@ export async function POST(request: NextRequest) {
   try {
     const supabaseAdmin = getSupabaseAdmin()
     const body = await request.json()
-    const { userId, email, password, isNewUser, forceNew } = body
+    const { userId, forceNew } = body
 
-    let authId = userId
-
-    // 新規ユーザー作成フロー
-    if (isNewUser && email && password) {
-
-      const { data: authData, error: createError } = await supabaseAdmin.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: true,
-      })
-
-      if (createError) {
-        console.error('[ColorSessions] ステップ1失敗:', createError.message)
-        const msg = createError.message.includes('already')
-          ? 'このメールアドレスは既に登録されています。ログインをお試しください。'
-          : `アカウント作成エラー: ${createError.message}`
-        return NextResponse.json({ error: msg }, { status: 400 })
-      }
-
-      authId = authData.user.id
-    }
+    // 本人のセッションだけ作る。body の userId はセッションの持ち主と一致するときだけ通す。
+    // 以前あった isNewUser＋email/password による未ログインのユーザー作成は、画面から使われておらず、
+    // 他人のメールアドレスで確認済みユーザーを作れたため削除した（2026-10-22）
+    const self = await requireSelf(request, userId)
+    if (self.error) return self.error
+    const authId = self.authId
 
     if (!authId) {
       return NextResponse.json({ error: 'userId が必要です' }, { status: 400 })

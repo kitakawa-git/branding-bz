@@ -5,6 +5,7 @@ import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { streamClaude } from '@/lib/claude-api'
 import { FREE_LIMITS } from '@/lib/types/color-tool'
 import type { PaletteProposal } from '@/lib/types/color-tool'
+import { requireOwnToolSession } from '@/lib/auth/caller'
 
 const SYSTEM_PROMPT = `あなたはID INC.のシニアブランドコンサルタントです。
 ユーザーが選択したカラーパレットの調整をサポートしています。
@@ -53,6 +54,10 @@ export async function POST(request: NextRequest) {
         headers: { 'Content-Type': 'application/json' },
       })
     }
+
+    // 本人のセッションだけ（sessionId を知っているだけで他人・他社のデータを使わせない）
+    const own = await requireOwnToolSession(request, sessionId)
+    if (own.error) return own.error
 
     // プロジェクト取得＋ターン数チェック
     const { data: project } = await supabaseAdmin

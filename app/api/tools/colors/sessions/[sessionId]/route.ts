@@ -3,12 +3,16 @@
 // PATCH /api/tools/colors/sessions/[sessionId] — ステップ進行・データ保存
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { requireOwnToolSession } from '@/lib/auth/caller'
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ sessionId: string }> }
 ) {
   const { sessionId } = await params
+  // 本人のセッションだけ（sessionId を知っているだけでは読ませない・書かせない）
+  const own = await requireOwnToolSession(request, sessionId)
+  if (own.error) return own.error
 
   try {
     const supabaseAdmin = getSupabaseAdmin()
@@ -55,6 +59,9 @@ export async function PATCH(
   { params }: { params: Promise<{ sessionId: string }> }
 ) {
   const { sessionId } = await params
+  // 本人のセッションだけ（sessionId を知っているだけでは読ませない・書かせない）
+  const own = await requireOwnToolSession(request, sessionId)
+  if (own.error) return own.error
 
   try {
     const supabaseAdmin = getSupabaseAdmin()

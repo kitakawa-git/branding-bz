@@ -2,6 +2,7 @@
 // POST /api/brand-score/surveys/[id]/respond
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { requireCaller } from '@/lib/auth/caller'
 
 type RouteContext = { params: Promise<{ id: string }> }
 
@@ -36,6 +37,15 @@ export async function POST(request: NextRequest, context: RouteContext) {
     }
     if (!profileId || typeof profileId !== 'string') {
       return NextResponse.json({ error: 'profileId is required' }, { status: 400 })
+    }
+
+    // 回答できるのは本人だけ。profileId はセッションのメンバーの profile_id と一致するときだけ通す
+    // （profileId は公開の名刺ページにも出ているので、それだけでは本人と言えない）。
+    // 回答そのものには誰が答えたかを残さない（匿名のまま）
+    const caller = await requireCaller(request)
+    if (caller.error) return caller.error
+    if (!caller.profileId || caller.profileId !== profileId) {
+      return NextResponse.json({ error: '本人以外は回答できません' }, { status: 403 })
     }
 
     // バリデーション: score が 1-5 の範囲

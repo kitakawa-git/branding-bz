@@ -7,6 +7,7 @@ import { StpPdfDocument } from '@/app/tools/stp/app/components/StpPdfDocument'
 import { checkConsistency } from '@/lib/stp/consistency-check'
 import type { STPSessionData } from '@/app/tools/stp/app/[sessionId]/page'
 import { guardCompanyFeature, fetchCompanyIdForSession } from '@/lib/billing/guard'
+import { requireOwnToolSession } from '@/lib/auth/caller'
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,6 +17,10 @@ export async function POST(request: NextRequest) {
     if (!sessionId) {
       return NextResponse.json({ error: 'sessionId が必要です' }, { status: 400 })
     }
+
+    // 本人のセッションだけ（sessionId を知っているだけで他人・他社のデータを使わせない）
+    const own = await requireOwnToolSession(request, sessionId)
+    if (own.error) return own.error
 
     // PDF 出力は standard 以上。未ログイン・会社なしのセッションは free 相当で弾かれる
     const denied = await guardCompanyFeature(await fetchCompanyIdForSession(sessionId), 'pdfExport')
