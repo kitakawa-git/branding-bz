@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { createClient } from '@/lib/supabase/server'
 import { generateRandomSlug } from '@/lib/generate-slug'
 import { checkMemberCapacity, memberLimitResponse } from '@/lib/billing/guard'
 import { addToActiveSurveys } from '@/lib/brand-score/survey-participants'
@@ -8,7 +9,32 @@ export async function POST(req: NextRequest) {
   try {
     // ビルド時（env が揃わない環境）にモジュール評価で落ちないよう、handler 内で lazy 生成
     const supabaseAdmin = getSupabaseAdmin()
-    const { email, password, display_name, company_id } = await req.json()
+
+    // 呼び出し元が管理者かをセッションで確かめる。ログイン済みのメンバーを作る API なので、
+    // ここを素通りさせると誰でもどの会社にもアカウントを作れてしまう
+    const supabaseUser = await createClient()
+    const {
+      data: { user },
+    } = await supabaseUser.auth.getUser()
+    if (!user) {
+      return NextResponse.json({ error: '認証が必要です' }, { status: 401 })
+    }
+    const { data: caller } = await supabaseAdmin
+      .from('admin_users')
+      .select('company_id, is_superadmin')
+      .eq('auth_id', user.id)
+      .maybeSingle()
+    if (!caller) {
+      return NextResponse.json({ error: '管理者権限が必要です' }, { status: 403 })
+    }
+
+    const { email, password, display_name, company_id: requestedCompanyId } = await req.json()
+
+    // 会社はセッションから決める。body の company_id は superadmin が他社に作る場合だけ使う
+    const company_id: string | null = requestedCompanyId ?? caller.company_id
+    if (company_id !== caller.company_id && !caller.is_superadmin) {
+      return NextResponse.json({ error: 'この会社のデータにはアクセスできません' }, { status: 403 })
+    }
 
     if (!email || !password || !display_name || !company_id) {
       return NextResponse.json({ error: '必須項目が不足しています' }, { status: 400 })
