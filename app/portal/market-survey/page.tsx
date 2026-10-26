@@ -26,8 +26,21 @@ import {
   type MarketStageScore,
   type MarketExtrasData,
 } from '@/components/brand-score/MarketSurveyResults'
+import { getPageCache, setPageCache } from '@/lib/page-cache'
 
 type RankRow = { name: string; value: number; isSelf: boolean }
+
+// 一覧と調査ごとの結果を保存し、再読込（引っ張り更新を含む）後もすぐ表示する。
+// 表示した後に裏で取り直して差し替える（lib/page-cache.ts の persist）
+type ResultCache = {
+  survey: MarketSurveyMeta | null
+  stageScores: MarketStageScore[]
+  ranking: Record<string, RankRow[]>
+  blockCount: number
+  extras: MarketExtrasData | null
+}
+const listCacheKey = (companyId: string) => `portal-market-survey-list-${companyId}`
+const resultCacheKey = (surveyId: string) => `portal-market-survey-result-${surveyId}`
 
 type SurveyListItem = {
   id: string
@@ -40,19 +53,27 @@ export default function PortalMarketSurveyPage() {
   const { companyId, company, roleCategory, isAdmin } = usePortalAuth()
   const visible = isPortalPageVisibleForRole(company, 'market_survey', roleCategory, isAdmin)
 
-  const [surveys, setSurveys] = useState<SurveyListItem[]>([])
-  const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [listLoading, setListLoading] = useState(true)
+  // 保存分（初回の描画でだけ読む）。一覧の先頭＝既定で選ぶ調査の結果もあれば一緒に出す
+  const [initial] = useState(() => {
+    const list = companyId ? getPageCache<SurveyListItem[]>(listCacheKey(companyId), { persist: true }) : null
+    const firstId = list?.[0]?.id ?? null
+    const result = firstId ? getPageCache<ResultCache>(resultCacheKey(firstId), { persist: true }) : null
+    return { list, firstId, result }
+  })
 
-  const [survey, setSurvey] = useState<MarketSurveyMeta | null>(null)
-  const [stageScores, setStageScores] = useState<MarketStageScore[]>([])
-  const [ranking, setRanking] = useState<Record<string, RankRow[]>>({})
-  const [blockCount, setBlockCount] = useState(0)
-  const [extras, setExtras] = useState<MarketExtrasData | null>(null)
+  const [surveys, setSurveys] = useState<SurveyListItem[]>(initial.list ?? [])
+  const [selectedId, setSelectedId] = useState<string | null>(initial.firstId)
+  const [listLoading, setListLoading] = useState(!initial.list)
+
+  const [survey, setSurvey] = useState<MarketSurveyMeta | null>(initial.result?.survey ?? null)
+  const [stageScores, setStageScores] = useState<MarketStageScore[]>(initial.result?.stageScores ?? [])
+  const [ranking, setRanking] = useState<Record<string, RankRow[]>>(initial.result?.ranking ?? {})
+  const [blockCount, setBlockCount] = useState(initial.result?.blockCount ?? 0)
+  const [extras, setExtras] = useState<MarketExtrasData | null>(initial.result?.extras ?? null)
   const [resultLoading, setResultLoading] = useState(false)
   // 結果を取り終えた調査の ID。一覧の取得中や、選択直後で結果の取得がまだ始まっていない間に
   // 「まだ結果がありません」を出さないため（取り終えるまではスケルトンを出す）
-  const [resultFor, setResultFor] = useState<string | null>(null)
+  const [resultFor, setResultFor] = useState<string | null>(initial.result ? initial.firstId : null)
   // 最後に取得を始めた調査。素早く切り替えたとき、前の調査の応答が後から届いても反映しない
   const latestRequest = useRef<string | null>(null)
 
@@ -61,7 +82,7 @@ export default function PortalMarketSurveyPage() {
     if (!companyId || !visible) return
     let cancelled = false
     ;(async () => {
-      setListLoading(true)
+      // 保存分を出しているときはスケルトンに戻さず、裏で取り直す
       try {
         const res = await fetch(`/api/brand-score/market-surveys?company_id=${companyId}`)
         const data = await res.json()
@@ -70,7 +91,9 @@ export default function PortalMarketSurveyPage() {
         )
         if (cancelled) return
         setSurveys(list)
-        if (list.length > 0) setSelectedId(list[0].id)
+        setPageCache(listCacheKey(companyId), list, { persist: true })
+        // 選んでいる調査がまだ一覧にあれば選択を保つ。無ければ先頭（一覧が空なら未選択）
+        setSelectedId((prev) => (prev && list.some((s) => s.id === prev) ? prev : list[0]?.id ?? null))
       } catch (err) {
         console.error('[PortalMarketSurvey] 一覧の取得エラー:', err)
       } finally {
@@ -84,22 +107,42 @@ export default function PortalMarketSurveyPage() {
 
   const loadResult = useCallback(async (surveyId: string) => {
     latestRequest.current = surveyId
-    setResultLoading(true)
+    // 保存分があればすぐ出し、スケルトンにせず裏で取り直す
+    const saved = getPageCache<ResultCache>(resultCacheKey(surveyId), { persist: true })
+    if (saved) {
+      setSurvey(saved.survey)
+      setStageScores(saved.stageScores)
+      setRanking(saved.ranking)
+      setBlockCount(saved.blockCount)
+      setExtras(saved.extras)
+      setResultFor(surveyId)
+      setResultLoading(false)
+    } else {
+      setResultLoading(true)
+    }
     try {
       const res = await fetch(`/api/brand-score/market-surveys/${surveyId}`)
       if (latestRequest.current !== surveyId) return
       if (!res.ok) {
-        // 前に選んでいた調査の結果を出したままにしない
-        setSurvey(null)
+        // 前に選んでいた調査の結果を出したままにしない（この調査の保存分を出しているならそのまま）
+        if (!saved) setSurvey(null)
         return
       }
       const data = await res.json()
       if (latestRequest.current !== surveyId) return
-      setSurvey(data.survey ?? null)
-      setStageScores(data.stageScores ?? [])
-      setRanking(data.ranking ?? {})
-      setBlockCount((data.blocks ?? []).length)
-      setExtras(data.extras ?? null)
+      const next: ResultCache = {
+        survey: data.survey ?? null,
+        stageScores: data.stageScores ?? [],
+        ranking: data.ranking ?? {},
+        blockCount: (data.blocks ?? []).length,
+        extras: data.extras ?? null,
+      }
+      setSurvey(next.survey)
+      setStageScores(next.stageScores)
+      setRanking(next.ranking)
+      setBlockCount(next.blockCount)
+      setExtras(next.extras)
+      setPageCache<ResultCache>(resultCacheKey(surveyId), next, { persist: true })
     } catch (err) {
       console.error('[PortalMarketSurvey] 結果の取得エラー:', err)
     } finally {

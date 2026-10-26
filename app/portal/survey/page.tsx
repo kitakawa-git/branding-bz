@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { ClipboardList } from 'lucide-react'
+import { getPageCache, setPageCache } from '@/lib/page-cache'
 import { isPortalPageVisibleForRole } from '@/lib/constants/member-roles'
 import { PlanUpsell } from '@/components/billing/plan-gate'
 import { can } from '@/lib/billing/entitlements'
@@ -36,20 +37,34 @@ type SurveyListItem = {
   insights: Partial<Record<InsightKey, string>> | null
 }
 
+// 一覧とサーベイごとの結果を保存し、再読込（引っ張り更新を含む）後もすぐ表示する。
+// 表示した後に裏で取り直して差し替える（lib/page-cache.ts の persist）
+type ResultCache = { score: InnerScoreData | null; questions: SurveyResultsQuestion[] }
+const listCacheKey = (companyId: string) => `portal-survey-list-${companyId}`
+const resultCacheKey = (surveyId: string) => `portal-survey-result-${surveyId}`
+
 export default function PortalSurveyPage() {
   const { companyId, company, roleCategory, isAdmin } = usePortalAuth()
   const visible = isPortalPageVisibleForRole(company, 'survey', roleCategory, isAdmin)
 
-  const [surveys, setSurveys] = useState<SurveyListItem[]>([])
-  const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [listLoading, setListLoading] = useState(true)
+  // 保存分（初回の描画でだけ読む）。一覧の先頭＝既定で選ぶサーベイの結果もあれば一緒に出す
+  const [initial] = useState(() => {
+    const list = companyId ? getPageCache<SurveyListItem[]>(listCacheKey(companyId), { persist: true }) : null
+    const firstId = list?.[0]?.id ?? null
+    const result = firstId ? getPageCache<ResultCache>(resultCacheKey(firstId), { persist: true }) : null
+    return { list, firstId, result }
+  })
 
-  const [score, setScore] = useState<InnerScoreData | null>(null)
-  const [questions, setQuestions] = useState<SurveyResultsQuestion[]>([])
+  const [surveys, setSurveys] = useState<SurveyListItem[]>(initial.list ?? [])
+  const [selectedId, setSelectedId] = useState<string | null>(initial.firstId)
+  const [listLoading, setListLoading] = useState(!initial.list)
+
+  const [score, setScore] = useState<InnerScoreData | null>(initial.result?.score ?? null)
+  const [questions, setQuestions] = useState<SurveyResultsQuestion[]>(initial.result?.questions ?? [])
   const [resultLoading, setResultLoading] = useState(false)
   // 結果を取り終えたサーベイの ID。一覧の取得中や、選択直後で結果の取得がまだ始まっていない間に
   // 「まだ回答結果がありません」を出さないため（取り終えるまではスケルトンを出す）
-  const [resultFor, setResultFor] = useState<string | null>(null)
+  const [resultFor, setResultFor] = useState<string | null>(initial.result ? initial.firstId : null)
   // 最後に取得を始めたサーベイ。素早く切り替えたとき、前のサーベイの応答が後から届いても反映しない
   const latestRequest = useRef<string | null>(null)
 
@@ -58,7 +73,7 @@ export default function PortalSurveyPage() {
     if (!companyId || !visible) return
     let cancelled = false
     ;(async () => {
-      setListLoading(true)
+      // 保存分を出しているときはスケルトンに戻さず、裏で取り直す
       try {
         const res = await fetch(`/api/brand-score/surveys?company_id=${companyId}`)
         const data = await res.json()
@@ -67,7 +82,9 @@ export default function PortalSurveyPage() {
           (s: SurveyListItem) => s.status === 'active' || s.status === 'closed',
         )
         setSurveys(list)
-        setSelectedId(list[0]?.id ?? null) // 既定は最新（API は作成日降順）
+        setPageCache(listCacheKey(companyId), list, { persist: true })
+        // 既定は最新（API は作成日降順）。選んでいるサーベイがまだ一覧にあれば選択を保つ
+        setSelectedId((prev) => (prev && list.some((s) => s.id === prev) ? prev : list[0]?.id ?? null))
       } catch {
         if (!cancelled) setSurveys([])
       } finally {
@@ -80,8 +97,17 @@ export default function PortalSurveyPage() {
   // 選択サーベイの結果（inner-score + questions）を取得
   const loadResult = useCallback(async (surveyId: string, cid: string) => {
     latestRequest.current = surveyId
-    setResultLoading(true)
-    setScore(null)
+    // 保存分があればすぐ出し、スケルトンにせず裏で取り直す
+    const saved = getPageCache<ResultCache>(resultCacheKey(surveyId), { persist: true })
+    if (saved) {
+      setScore(saved.score)
+      setQuestions(saved.questions)
+      setResultFor(surveyId)
+      setResultLoading(false)
+    } else {
+      setResultLoading(true)
+      setScore(null)
+    }
     try {
       const [scoreRes, qRes] = await Promise.all([
         fetch(`/api/brand-score/inner-score?company_id=${cid}&survey_id=${surveyId}`),
@@ -90,14 +116,14 @@ export default function PortalSurveyPage() {
       const scoreData = await scoreRes.json()
       const qData = await qRes.json()
       if (latestRequest.current !== surveyId) return
-      if (scoreData.score === null && scoreData.message) {
-        setScore(null)
-      } else {
-        setScore(scoreData as InnerScoreData)
-      }
-      setQuestions((qData.questions ?? []) as SurveyResultsQuestion[])
+      const nextScore = scoreData.score === null && scoreData.message ? null : (scoreData as InnerScoreData)
+      const nextQuestions = (qData.questions ?? []) as SurveyResultsQuestion[]
+      setScore(nextScore)
+      setQuestions(nextQuestions)
+      setPageCache<ResultCache>(resultCacheKey(surveyId), { score: nextScore, questions: nextQuestions }, { persist: true })
     } catch {
-      if (latestRequest.current === surveyId) setScore(null)
+      // 取り直しに失敗しても、保存分を出しているならそのまま残す
+      if (latestRequest.current === surveyId && !saved) setScore(null)
     } finally {
       if (latestRequest.current === surveyId) {
         setResultLoading(false)
