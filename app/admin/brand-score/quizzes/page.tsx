@@ -66,7 +66,7 @@ export default function QuizzesListPage() {
   const { companyId, company } = useAuth()
   const router = useRouter()
   const cacheKey = `admin-quizzes-${companyId}`
-  const cached = companyId ? getPageCache<ListCache>(cacheKey) : null
+  const cached = companyId ? getPageCache<ListCache>(cacheKey, { persist: true }) : null
   const [quizzes, setQuizzes] = useState<Quiz[]>(cached?.quizzes ?? [])
   const [loading, setLoading] = useState(!cached)
   const [createOpen, setCreateOpen] = useState(false)
@@ -84,7 +84,7 @@ export default function QuizzesListPage() {
       const data = await res.json()
       const list: Quiz[] = data.quizzes || []
       setQuizzes(list)
-      setPageCache(cacheKey, { quizzes: list })
+      setPageCache(cacheKey, { quizzes: list }, { persist: true })
     } catch (err) {
       console.error('[Quizzes] データ取得エラー:', err)
       toast.error('理解度テスト一覧の取得に失敗しました')
@@ -130,7 +130,7 @@ export default function QuizzesListPage() {
       }
       const data = await res.json()
       toast.success('理解度テストを作成しました')
-      setPageCache(cacheKey, null as unknown as ListCache)
+      setPageCache(cacheKey, null as unknown as ListCache, { persist: true })
       router.push(`/admin/brand-score/quizzes/${data.quiz.id}`)
     } catch (err) {
       console.error('[Quizzes] 作成エラー:', err)
@@ -152,7 +152,7 @@ export default function QuizzesListPage() {
       }
       toast.success('理解度テストを削除しました')
       setDeleteDialogId(null)
-      setPageCache(cacheKey, null as unknown as ListCache)
+      setPageCache(cacheKey, null as unknown as ListCache, { persist: true })
       await fetchQuizzes()
     } catch (err) {
       console.error('[Quizzes] 削除エラー:', err)

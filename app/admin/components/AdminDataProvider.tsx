@@ -16,9 +16,27 @@ import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import { ShieldAlert, Hourglass } from 'lucide-react'
 import { GateShell } from '@/components/admin/GateShell'
 import { AuthSplash } from '@/components/admin/AuthSplash'
+import { clearPageCache, getPageCache, setPageCache } from '@/lib/page-cache'
 
 // companies レコード（少なくとも機能トグルのカラムを含む）
 type CompanyRecord = Record<string, unknown>
+
+// 再読込のたびに「読み込み中」で待たせないよう、取得結果をユーザーごとに sessionStorage へ保存する
+// （lib/page-cache.ts の persist）。次に開いたときは保存分ですぐ画面を出し、裏で取り直して差し替える。
+// 権限の取り消し・承認待ちへの変更は、取り直した時点でエラー画面／承認待ち画面に切り替わる。
+// ログアウト時は AppAuthProvider が全消去する。PortalDataProvider と同じ方式
+type AdminSnapshot = {
+  companyId: string
+  companyName: string | null
+  companyLogoUrl: string | null
+  company: CompanyRecord | null
+  role: string | null
+  isSuperAdmin: boolean
+  profileName: string | null
+  profilePhotoUrl: string | null
+  companyPending: boolean
+}
+const snapshotKey = (userId: string) => `admin-provider-${userId}`
 
 type AdminDataContextValue = {
   user: User | null
@@ -94,20 +112,37 @@ export function AdminDataProvider({
     }
 
     let cancelled = false
+    const key = snapshotKey(user.id)
 
     ;(async () => {
-      setLoading(true)
-      // 別ユーザーへ切り替わった際に前ユーザーの企業/プロフィール/権限が残らないようリセット
-      setCompanyId(null)
-      setCompanyName(null)
-      setCompanyLogoUrl(null)
-      setCompany(null)
-      setRole(null)
-      setIsSuperAdmin(false)
-      setProfileName(null)
-      setProfilePhotoUrl(null)
-      setAdminError(false)
-      setCompanyPending(false)
+      const saved = getPageCache<AdminSnapshot>(key, { persist: true })
+      if (saved) {
+        // 前回の取得結果ですぐ表示し、以下で取り直す（「読み込み中」を出さない）
+        setCompanyId(saved.companyId)
+        setCompanyName(saved.companyName)
+        setCompanyLogoUrl(saved.companyLogoUrl)
+        setCompany(saved.company)
+        setRole(saved.role)
+        setIsSuperAdmin(saved.isSuperAdmin)
+        setProfileName(saved.profileName)
+        setProfilePhotoUrl(saved.profilePhotoUrl)
+        setAdminError(false)
+        setCompanyPending(saved.companyPending)
+        setLoading(false)
+      } else {
+        setLoading(true)
+        // 別ユーザーへ切り替わった際に前ユーザーの企業/プロフィール/権限が残らないようリセット
+        setCompanyId(null)
+        setCompanyName(null)
+        setCompanyLogoUrl(null)
+        setCompany(null)
+        setRole(null)
+        setIsSuperAdmin(false)
+        setProfileName(null)
+        setProfilePhotoUrl(null)
+        setAdminError(false)
+        setCompanyPending(false)
+      }
       try {
         // admin_users と members(+profile) を並列取得
         const [adminRes, memberRes] = await Promise.all([
@@ -128,6 +163,8 @@ export function AdminDataProvider({
         const adminData = adminRes.data
 
         if (!adminData) {
+          // 管理者でなくなった場合は、保存分も消す
+          clearPageCache(key)
           setAdminError(true)
           setCompanyId(null)
           setRole(null)
@@ -142,6 +179,7 @@ export function AdminDataProvider({
 
         // 企業の承認状態を確認（pending=superadmin承認待ちはアクセス不可）。
         // superadmin は対象外（自社が承認待ちになることは想定しない）。
+        let pending = false
         if (adminData.is_superadmin !== true) {
           const { data: gate } = await supabase
             .from('companies')
@@ -149,18 +187,23 @@ export function AdminDataProvider({
             .eq('id', adminData.company_id)
             .maybeSingle()
           if (cancelled) return
-          setCompanyPending((gate as { approval_status?: string } | null)?.approval_status === 'pending')
+          pending = (gate as { approval_status?: string } | null)?.approval_status === 'pending'
+          setCompanyPending(pending)
         }
 
         // メンバー情報の反映
+        let profileName: string | null = null
+        let profilePhotoUrl: string | null = null
         if (!memberRes.error && memberRes.data) {
           const profileRaw = memberRes.data.profile as
             | { name: string; photo_url: string }
             | { name: string; photo_url: string }[]
             | null
           const profile = Array.isArray(profileRaw) ? profileRaw[0] ?? null : profileRaw
-          setProfileName(profile?.name || memberRes.data.display_name || null)
-          setProfilePhotoUrl(profile?.photo_url || null)
+          profileName = profile?.name || memberRes.data.display_name || null
+          profilePhotoUrl = profile?.photo_url || null
+          setProfileName(profileName)
+          setProfilePhotoUrl(profilePhotoUrl)
         }
 
         // 企業情報はバックグラウンドで取得（UIブロックしない）
@@ -176,6 +219,22 @@ export function AdminDataProvider({
             setCompany({ ...rec, id: adminData.company_id })
             setCompanyName((rec.name as string) || null)
             setCompanyLogoUrl((rec.logo_url as string) || null)
+            // 次回の再読込ですぐ表示できるよう保存（会社情報まで揃ったときだけ）
+            setPageCache<AdminSnapshot>(
+              key,
+              {
+                companyId: adminData.company_id,
+                companyName: (rec.name as string) || null,
+                companyLogoUrl: (rec.logo_url as string) || null,
+                company: { ...rec, id: adminData.company_id },
+                role: adminData.role,
+                isSuperAdmin: adminData.is_superadmin === true,
+                profileName,
+                profilePhotoUrl,
+                companyPending: pending,
+              },
+              { persist: true }
+            )
           })
       } catch (err) {
         if (!cancelled) {
@@ -195,9 +254,22 @@ export function AdminDataProvider({
   }, [user?.id, authLoading, router, isLoginPage])
 
   // 機能トグル更新後に画面へ即時反映するための setter（参照を安定させる）
+  const userId = user?.id
   const updateCompany = useCallback((partial: CompanyRecord) => {
     setCompany((prev) => ({ ...(prev ?? {}), ...partial }))
-  }, [])
+    // 保存分（再読込直後の表示に使う）も同じ内容に揃える
+    if (userId) {
+      const key = snapshotKey(userId)
+      const saved = getPageCache<AdminSnapshot>(key, { persist: true })
+      if (saved) {
+        setPageCache<AdminSnapshot>(
+          key,
+          { ...saved, company: { ...(saved.company ?? {}), ...partial } },
+          { persist: true }
+        )
+      }
+    }
+  }, [userId])
 
   // context value をメモ化（毎レンダーで新オブジェクトを作らない）
   const contextValue: AdminDataContextValue = useMemo(

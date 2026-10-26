@@ -179,7 +179,7 @@ export default function DashboardPage() {
   // 機能トグルを踏まえたタブ（定義は lib/constants/dashboard-tabs.ts に集約）
 
   const cacheKey = `dashboard-v2-${companyId}`
-  const cached = companyId ? getPageCache<DashboardCache>(cacheKey) : null
+  const cached = companyId ? getPageCache<DashboardCache>(cacheKey, { persist: true }) : null
   const [loading, setLoading] = useState(!cached)
 
   // Period filter
@@ -259,7 +259,7 @@ export default function DashboardPage() {
           comments,
           members,
           actionGuidelineCategories: categories,
-        })
+        }, { persist: true })
       } catch (err) {
         console.error('[Dashboard] データ取得エラー:', err)
       } finally {

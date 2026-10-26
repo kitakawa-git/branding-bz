@@ -40,7 +40,7 @@ type ListCache = {
 export default function PortalAnnouncementsPage() {
   const { companyId, user, company } = usePortalAuth()
   const cacheKey = `portal-announcements-${companyId}-${user?.id}`
-  const cached = companyId && user?.id ? getPageCache<ListCache>(cacheKey) : null
+  const cached = companyId && user?.id ? getPageCache<ListCache>(cacheKey, { persist: true }) : null
   const [announcements, setAnnouncements] = useState<AnnouncementItem[]>(cached?.announcements ?? [])
   const [loading, setLoading] = useState(!cached)
   const [selectedCategory, setSelectedCategory] = useState('すべて')
@@ -89,7 +89,7 @@ export default function PortalAnnouncementsPage() {
         }))
 
         setAnnouncements(announcementItems)
-        setPageCache(cacheKey, { announcements: announcementItems })
+        setPageCache(cacheKey, { announcements: announcementItems }, { persist: true })
       } catch (err) {
         console.error('[PortalAnnouncements] データ取得エラー:', err)
       } finally {

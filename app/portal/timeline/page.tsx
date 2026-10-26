@@ -111,7 +111,7 @@ export default function PortalTimelinePage() {
 
   // Data states
   const cacheKey = `portal-timeline-${companyId}`
-  const cached = companyId ? getPageCache<TimelineCache>(cacheKey) : null
+  const cached = companyId ? getPageCache<TimelineCache>(cacheKey, { persist: true }) : null
   const [categories, setCategories] = useState<string[]>(cached?.categories ?? [])
   const categoriesRef = useRef<string[]>(cached?.categories ?? [])
   const [posts, setPosts] = useState<TimelinePost[]>(cached?.posts ?? [])
@@ -166,7 +166,8 @@ export default function PortalTimelinePage() {
   // ============================================
   useEffect(() => {
     if (!companyId) return
-    if (cached) return // キャッシュ済みならスキップ
+    // 再読込前の保存分（表示用）ではなく、この読み込み以降に取得済みのときだけスキップ（lib/page-cache.ts）
+    if (getPageCache<TimelineCache>(cacheKey)) return
     fetchPhilosophy(supabase, companyId).then((phil) => {
       let cats = ['未分類']
       const titles = phil.action_guidelines.map(g => g.title).filter(Boolean)
@@ -180,7 +181,7 @@ export default function PortalTimelinePage() {
       // キャッシュが既に存在する場合、カテゴリを更新
       const existingCache = getPageCache<TimelineCache>(cacheKey)
       if (existingCache) {
-        setPageCache(cacheKey, { ...existingCache, categories: cats })
+        setPageCache(cacheKey, { ...existingCache, categories: cats }, { persist: true })
       }
     })
   }, [companyId, cacheKey])
@@ -300,12 +301,12 @@ export default function PortalTimelinePage() {
       if (append) {
         setPosts(prev => {
           const merged = [...prev, ...newPosts]
-          setPageCache(cacheKey, { categories: categoriesRef.current, posts: merged })
+          setPageCache(cacheKey, { categories: categoriesRef.current, posts: merged }, { persist: true })
           return merged
         })
       } else {
         setPosts(newPosts)
-        setPageCache(cacheKey, { categories: categoriesRef.current, posts: newPosts })
+        setPageCache(cacheKey, { categories: categoriesRef.current, posts: newPosts }, { persist: true })
       }
       setHasMore(newPosts.length === PAGE_SIZE)
     } catch (err) {

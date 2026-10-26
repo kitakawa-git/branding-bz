@@ -67,7 +67,7 @@ export function useOnboarding(
   } = {},
 ): OnboardingState {
   const cacheKey = userId ? `onboarding-${userId}` : null
-  const cached = cacheKey ? getPageCache<OnboardingResponse>(cacheKey) : null
+  const cached = cacheKey ? getPageCache<OnboardingResponse>(cacheKey, { persist: true }) : null
 
   // キャッシュがあれば loading を挟まずそのまま描き、裏で取り直す
   const [loading, setLoading] = useState(!cached)
@@ -86,7 +86,7 @@ export function useOnboarding(
         setCompanyId(d.companyId ?? null)
         setDismissed(!!d.dismissedAt)
         setStatus(d.status ?? null)
-        if (cacheKey) setPageCache(cacheKey, d)
+        if (cacheKey) setPageCache(cacheKey, d, { persist: true })
       })
       .catch(() => {})
       .finally(() => {
@@ -104,7 +104,7 @@ export function useOnboarding(
     // 「閉じる前」の結果が復元され、閉じたはずの案内が一瞬戻る
     if (cacheKey) {
       const prev = getPageCache<OnboardingResponse>(cacheKey)
-      if (prev) setPageCache(cacheKey, { ...prev, dismissedAt: new Date().toISOString() })
+      if (prev) setPageCache(cacheKey, { ...prev, dismissedAt: new Date().toISOString() }, { persist: true })
     }
     await fetch('/api/onboarding/dismiss', { method: 'POST' }).catch(() => {})
   }, [cacheKey])

@@ -116,7 +116,7 @@ function RepresentativeCell({ name, profile }: { name: string; profile: string }
 export default function PortalAboutPage() {
   const { companyId, companyName, companyLogoUrl } = usePortalAuth()
   const cacheKey = `portal-about-${companyId}`
-  const cached = companyId ? getPageCache<Overview>(cacheKey) : null
+  const cached = companyId ? getPageCache<Overview>(cacheKey, { persist: true }) : null
   const [data, setData] = useState<Overview | null>(cached)
   const [loading, setLoading] = useState(!cached)
 
@@ -162,7 +162,7 @@ export default function PortalAboutPage() {
           business_content_sort: guidelinesRow?.business_content_sort === 'custom' ? 'custom' : 'registered',
         }
         setData(overview)
-        setPageCache(cacheKey, overview)
+        setPageCache(cacheKey, overview, { persist: true })
       }
       setLoading(false)
     }

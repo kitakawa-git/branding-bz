@@ -114,7 +114,7 @@ export default function MarketSurveysPage() {
   const router = useRouter()
 
   const cacheKey = `market-surveys-${companyId}`
-  const cached = companyId ? getPageCache<ListCache>(cacheKey) : null
+  const cached = companyId ? getPageCache<ListCache>(cacheKey, { persist: true }) : null
 
   const [surveys, setSurveys] = useState<MarketSurvey[]>(cached?.surveys ?? [])
   const [trend, setTrend] = useState<TrendPoint[]>(cached?.trend ?? [])
@@ -138,7 +138,7 @@ export default function MarketSurveysPage() {
       setPageCache(cacheKey, {
         surveys: data.surveys ?? [],
         trend: trendData.points ?? [],
-      })
+      }, { persist: true })
     } catch (err) {
       console.error('[MarketSurveys] 取得エラー:', err)
     } finally {
@@ -164,7 +164,7 @@ export default function MarketSurveysPage() {
       toast.success('調査を削除しました')
       setDeleteTarget(null)
       // キャッシュを捨ててから取り直す
-      setPageCache(cacheKey, null as unknown as ListCache)
+      setPageCache(cacheKey, null as unknown as ListCache, { persist: true })
       await fetchSurveys()
     } catch (err) {
       console.error('[MarketSurveys] 削除エラー:', err)

@@ -17,7 +17,7 @@ type ValueItem = {
 export default function PortalValuesPage() {
   const { companyId } = usePortalAuth()
   const cacheKey = `portal-values-${companyId}`
-  const cached = companyId ? getPageCache<ValueItem[]>(cacheKey) : null
+  const cached = companyId ? getPageCache<ValueItem[]>(cacheKey, { persist: true }) : null
   const [values, setValues] = useState<ValueItem[]>(cached ?? [])
   const [loading, setLoading] = useState(!cached)
 
@@ -37,7 +37,7 @@ export default function PortalValuesPage() {
             description: (d.description as string) || null,
           }))
           setValues(parsed)
-          setPageCache(cacheKey, parsed)
+          setPageCache(cacheKey, parsed, { persist: true })
         }
         setLoading(false)
       })

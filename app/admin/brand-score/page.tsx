@@ -268,7 +268,7 @@ export default function BrandScoreDashboard() {
 
   // キャッシュキーは companyId + period 単位（period切替で別データ）
   const cacheKey = `brand-score-${companyId}-${period}`
-  const cached = companyId ? getPageCache<BrandScoreCache>(cacheKey) : null
+  const cached = companyId ? getPageCache<BrandScoreCache>(cacheKey, { persist: true }) : null
 
   const [loading, setLoading] = useState(!cached)
 
@@ -447,7 +447,7 @@ export default function BrandScoreDashboard() {
     }
 
     setLoading(false)
-    setPageCache<BrandScoreCache>(cacheKey, collected)
+    setPageCache<BrandScoreCache>(cacheKey, collected, { persist: true })
   }, [companyId, period, cacheKey])
 
   useEffect(() => {

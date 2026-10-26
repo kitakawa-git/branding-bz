@@ -49,7 +49,7 @@ export default function AnnouncementDetailPage() {
   const { companyId } = useAuth()
   const id = params.id as string
   const cacheKey = `admin-announcement-detail-${id}`
-  const cached = id ? getPageCache<DetailCache>(cacheKey) : null
+  const cached = id ? getPageCache<DetailCache>(cacheKey, { persist: true }) : null
 
   const [announcement, setAnnouncement] = useState<Announcement | null>(cached?.announcement ?? null)
   const [members, setMembers] = useState<MemberReadStatus[]>(cached?.members ?? [])
@@ -121,7 +121,7 @@ export default function AnnouncementDetailPage() {
           announcement: { ...ann, images: ann.images || [] },
           members: memberList,
           likeCount: likesRes.data?.length || 0,
-        })
+        }, { persist: true })
       } catch (err) {
         console.error('[AnnouncementDetail] データ取得エラー:', err)
       } finally {

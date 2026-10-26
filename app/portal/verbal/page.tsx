@@ -44,7 +44,7 @@ export default function PortalVerbalIdentityPage() {
   const secondaryStyle = brandFonts ? { fontFamily: getCssFontFamily(brandFonts.secondary_font) } : undefined
   // v2: BrandPersonalityCard 統合＋期待タグ追加によりキャッシュ形状が変わったためキー更新
   const cacheKey = `portal-verbal-v2-${companyId}`
-  const cached = companyId ? getPageCache<VerbalCache>(cacheKey) : null
+  const cached = companyId ? getPageCache<VerbalCache>(cacheKey, { persist: true }) : null
 
   const [terms, setTerms] = useState<Term[]>(cached?.terms ?? [])
   const [communicationStyle, setCommunicationStyle] = useState<string | null>(cached?.communicationStyle ?? null)
@@ -106,7 +106,7 @@ export default function PortalVerbalIdentityPage() {
         communicationStyle: comm,
         toneRules: parsedRules,
         expectedTags: parsedTags,
-      })
+      }, { persist: true })
       setLoading(false)
     })
   }, [companyId, cacheKey])

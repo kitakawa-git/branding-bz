@@ -67,7 +67,7 @@ export default function AnalyticsPage() {
   const cardEnabled = isFeatureEnabled(company, 'card_enabled')
   // 機能トグルを踏まえたタブ（定義は lib/constants/dashboard-tabs.ts に集約）
   const cacheKey = `analytics-${companyId}`
-  const cached = companyId ? getPageCache<AnalyticsCache>(cacheKey) : null
+  const cached = companyId ? getPageCache<AnalyticsCache>(cacheKey, { persist: true }) : null
   const [loading, setLoading] = useState(!cached)
   const [totalViews, setTotalViews] = useState(cached?.totalViews ?? 0)
   const [monthViews, setMonthViews] = useState(cached?.monthViews ?? 0)
@@ -175,7 +175,7 @@ export default function AnalyticsPage() {
           ranking: rankingData,
           dailyCounts: dailyData,
           recentViews: recentData,
-        })
+        }, { persist: true })
       } catch (err) {
         console.error('[Analytics] データ取得エラー:', err)
       } finally {

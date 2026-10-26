@@ -34,7 +34,7 @@ export default function PortalPersonalityPage() {
   const { companyId } = usePortalAuth()
   const brandFonts = useBrandFonts(companyId)
   const cacheKey = `portal-personality-${companyId}`
-  const cached = companyId ? getPageCache<Personality>(cacheKey) : null
+  const cached = companyId ? getPageCache<Personality>(cacheKey, { persist: true }) : null
   const [data, setData] = useState<Personality | null>(cached)
   const [loading, setLoading] = useState(!cached)
 
@@ -68,7 +68,7 @@ export default function PortalPersonalityPage() {
         archetype: (p?.archetype as Archetype) || null,
       }
       setData(parsed)
-      setPageCache(cacheKey, parsed)
+      setPageCache(cacheKey, parsed, { persist: true })
       setLoading(false)
     })
   }, [companyId, cacheKey])

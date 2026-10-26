@@ -197,7 +197,7 @@ export default function KpiPage() {
   const router = useRouter()
   const setupTriggered = useRef(false)
   const cacheKey = `portal-kpi-${companyId}-${user?.id}`
-  const cached = companyId && user?.id ? getPageCache<PortalKpiCache>(cacheKey) : null
+  const cached = companyId && user?.id ? getPageCache<PortalKpiCache>(cacheKey, { persist: true }) : null
 
   const [goal, setGoal] = useState<PersonalGoal | null>(cached?.goal ?? null)
   const [kpis, setKpis] = useState<GoalKpi[]>(cached?.kpis ?? [])
@@ -281,7 +281,7 @@ export default function KpiPage() {
       setGoal(goalData)
       setKpis(kpisData)
       setGoalPeriod(periodData)
-      setPageCache(cacheKey, { goal: goalData, kpis: kpisData, goalPeriod: periodData, currentPeriodId: curPeriodId, archivedPeriods: archived })
+      setPageCache(cacheKey, { goal: goalData, kpis: kpisData, goalPeriod: periodData, currentPeriodId: curPeriodId, archivedPeriods: archived }, { persist: true })
     } catch (err) {
       console.error('[KPI] データ取得エラー:', err)
     } finally {
@@ -291,7 +291,8 @@ export default function KpiPage() {
 
   useEffect(() => {
     if (!companyId || !user?.id) return
-    if (cached) return
+    // 再読込前の保存分（表示用）ではなく、この読み込み以降に取得済みのときだけ取り直さない（lib/page-cache.ts）
+    if (getPageCache<PortalKpiCache>(cacheKey)) return
     fetchData()
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [companyId, user?.id])

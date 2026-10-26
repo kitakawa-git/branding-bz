@@ -54,7 +54,7 @@ type ListCache = {
 export default function AnnouncementsListPage() {
   const { companyId, user, company } = useAuth()
   const cacheKey = `admin-announcements-${companyId}`
-  const cached = companyId ? getPageCache<ListCache>(cacheKey) : null
+  const cached = companyId ? getPageCache<ListCache>(cacheKey, { persist: true }) : null
   const [announcements, setAnnouncements] = useState<Announcement[]>(cached?.announcements ?? [])
   const [totalMembers, setTotalMembers] = useState(cached?.totalMembers ?? 0)
   const [loading, setLoading] = useState(!cached)
@@ -97,7 +97,7 @@ export default function AnnouncementsListPage() {
 
       setAnnouncements(announcementsWithReads)
       setTotalMembers(memberCount)
-      setPageCache(cacheKey, { announcements: announcementsWithReads, totalMembers: memberCount })
+      setPageCache(cacheKey, { announcements: announcementsWithReads, totalMembers: memberCount }, { persist: true })
     } catch (err) {
       console.error('[Announcements] データ取得エラー:', err)
     } finally {

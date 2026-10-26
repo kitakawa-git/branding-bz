@@ -55,7 +55,7 @@ export default function PortalStrategyPage() {
     targetFitMap: TargetFitMap | null
   }
   const cacheKey = `portal-strategy-${companyId}`
-  const cached = companyId ? getPageCache<StrategyCache>(cacheKey) : null
+  const cached = companyId ? getPageCache<StrategyCache>(cacheKey, { persist: true }) : null
 
   const [target, setTarget] = useState(cached?.target ?? '')
   const [targetSegments, setTargetSegments] = useState<TargetSegment[]>(cached?.targetSegments ?? [])
@@ -167,7 +167,7 @@ export default function PortalStrategyPage() {
         competitorsAnalysis: parsedCompetitorsAnalysis,
         targetFitMap: parsedFitMap,
         personas: parsedPersonas,
-      })
+      }, { persist: true })
       setLoading(false)
     })
   }, [companyId, cacheKey])

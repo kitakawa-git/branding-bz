@@ -92,7 +92,7 @@ function PortalImageCard({
 export default function PortalVisualsPage() {
   const { companyId } = usePortalAuth()
   const cacheKey = `portal-visuals-${companyId}`
-  const cached = companyId ? getPageCache<Visuals>(cacheKey) : null
+  const cached = companyId ? getPageCache<Visuals>(cacheKey, { persist: true }) : null
   const [data, setData] = useState<Visuals | null>(cached)
   const [loading, setLoading] = useState(!cached)
   const [modalImage, setModalImage] = useState<string | null>(null)
@@ -137,7 +137,7 @@ export default function PortalVisualsPage() {
           color_palette: (rec.color_palette as ColorPalette) || null,
         }
         setData(parsed)
-        setPageCache(cacheKey, parsed)
+        setPageCache(cacheKey, parsed, { persist: true })
       }
       setLoading(false)
     })

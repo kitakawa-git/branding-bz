@@ -78,7 +78,7 @@ export default function SurveysListPage() {
   const { companyId, company } = useAuth()
   const router = useRouter()
   const cacheKey = `admin-surveys-${companyId}`
-  const cached = companyId ? getPageCache<ListCache>(cacheKey) : null
+  const cached = companyId ? getPageCache<ListCache>(cacheKey, { persist: true }) : null
   const [surveys, setSurveys] = useState<SurveyWithQuestionCount[]>(cached?.surveys ?? [])
   const [loading, setLoading] = useState(!cached)
   const [creating, setCreating] = useState(false)
@@ -113,7 +113,7 @@ export default function SurveysListPage() {
       )
 
       setSurveys(surveysWithCounts)
-      setPageCache(cacheKey, { surveys: surveysWithCounts })
+      setPageCache(cacheKey, { surveys: surveysWithCounts }, { persist: true })
     } catch (err) {
       console.error('[Surveys] データ取得エラー:', err)
       toast.error('サーベイ一覧の取得に失敗しました')
@@ -193,7 +193,7 @@ export default function SurveysListPage() {
       toast.success('サーベイを削除しました')
       setDeleteDialogId(null)
       // キャッシュクリアして再取得
-      setPageCache(cacheKey, null as unknown as ListCache)
+      setPageCache(cacheKey, null as unknown as ListCache, { persist: true })
       await fetchSurveys()
     } catch (err) {
       console.error('[Surveys] 削除エラー:', err)

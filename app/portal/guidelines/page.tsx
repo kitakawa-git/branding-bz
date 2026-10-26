@@ -86,7 +86,7 @@ export default function PortalGuidelinesPage() {
   const primaryStyle = brandFonts ? { fontFamily: getCssFontFamily(brandFonts.primary_font) } : undefined
   const secondaryStyle = brandFonts ? { fontFamily: getCssFontFamily(brandFonts.secondary_font) } : undefined
   const cacheKey = `portal-guidelines-${companyId}`
-  const cached = companyId ? getPageCache<Guidelines>(cacheKey) : null
+  const cached = companyId ? getPageCache<Guidelines>(cacheKey, { persist: true }) : null
   const [data, setData] = useState<Guidelines | null>(cached)
   const [loading, setLoading] = useState(!cached)
 
@@ -133,7 +133,7 @@ export default function PortalGuidelinesPage() {
         action_guidelines: actionGuidelines,
       }
       setData(parsed)
-      setPageCache(cacheKey, parsed)
+      setPageCache(cacheKey, parsed, { persist: true })
       setLoading(false)
     })
   }, [companyId, cacheKey])
