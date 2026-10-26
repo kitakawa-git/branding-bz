@@ -3,7 +3,7 @@
 // ポータル: 市場調査の結果（読み取り専用）
 // 一覧から選び、管理画面と同じ結果ビュー（MarketSurveyResults）を表示する。
 // 区分ごとの表示設定（設定画面）で出し分ける。/portal/survey と同じ作り。
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { usePortalAuth } from '../components/PortalDataProvider'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -50,6 +50,11 @@ export default function PortalMarketSurveyPage() {
   const [blockCount, setBlockCount] = useState(0)
   const [extras, setExtras] = useState<MarketExtrasData | null>(null)
   const [resultLoading, setResultLoading] = useState(false)
+  // 結果を取り終えた調査の ID。一覧の取得中や、選択直後で結果の取得がまだ始まっていない間に
+  // 「まだ結果がありません」を出さないため（取り終えるまではスケルトンを出す）
+  const [resultFor, setResultFor] = useState<string | null>(null)
+  // 最後に取得を始めた調査。素早く切り替えたとき、前の調査の応答が後から届いても反映しない
+  const latestRequest = useRef<string | null>(null)
 
   // 一覧を取得。手で「過年度」にしたものは出さない
   useEffect(() => {
@@ -78,11 +83,18 @@ export default function PortalMarketSurveyPage() {
   }, [companyId, visible])
 
   const loadResult = useCallback(async (surveyId: string) => {
+    latestRequest.current = surveyId
     setResultLoading(true)
     try {
       const res = await fetch(`/api/brand-score/market-surveys/${surveyId}`)
-      if (!res.ok) return
+      if (latestRequest.current !== surveyId) return
+      if (!res.ok) {
+        // 前に選んでいた調査の結果を出したままにしない
+        setSurvey(null)
+        return
+      }
       const data = await res.json()
+      if (latestRequest.current !== surveyId) return
       setSurvey(data.survey ?? null)
       setStageScores(data.stageScores ?? [])
       setRanking(data.ranking ?? {})
@@ -91,7 +103,10 @@ export default function PortalMarketSurveyPage() {
     } catch (err) {
       console.error('[PortalMarketSurvey] 結果の取得エラー:', err)
     } finally {
-      setResultLoading(false)
+      if (latestRequest.current === surveyId) {
+        setResultLoading(false)
+        setResultFor(surveyId)
+      }
     }
   }, [])
 
@@ -170,7 +185,7 @@ export default function PortalMarketSurveyPage() {
       </Card>
 
       {/* 結果 */}
-      {resultLoading ? (
+      {listLoading || resultLoading || (selectedId !== null && resultFor !== selectedId) ? (
         <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4">
           {[1, 2, 3].map(i => (
             <Card key={i} className="bg-[hsl(0_0%_97%)] border shadow-none">
@@ -181,7 +196,7 @@ export default function PortalMarketSurveyPage() {
             </Card>
           ))}
         </div>
-      ) : !listLoading && surveys.length === 0 ? null : survey ? (
+      ) : surveys.length === 0 ? null : survey ? (
         <MarketSurveyResults
           survey={survey}
           stageScores={stageScores}

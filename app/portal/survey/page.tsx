@@ -3,7 +3,7 @@
 // ポータル: サーベイ結果（読み取り専用）
 // 一覧から選び、管理画面と同じ結果ビュー（SurveyResults コンポーネント）を表示する。
 // 区分ごとの表示設定（設定画面）で出し分ける。
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { usePortalAuth } from '../components/PortalDataProvider'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -47,6 +47,11 @@ export default function PortalSurveyPage() {
   const [score, setScore] = useState<InnerScoreData | null>(null)
   const [questions, setQuestions] = useState<SurveyResultsQuestion[]>([])
   const [resultLoading, setResultLoading] = useState(false)
+  // 結果を取り終えたサーベイの ID。一覧の取得中や、選択直後で結果の取得がまだ始まっていない間に
+  // 「まだ回答結果がありません」を出さないため（取り終えるまではスケルトンを出す）
+  const [resultFor, setResultFor] = useState<string | null>(null)
+  // 最後に取得を始めたサーベイ。素早く切り替えたとき、前のサーベイの応答が後から届いても反映しない
+  const latestRequest = useRef<string | null>(null)
 
   // サーベイ一覧を取得（結果があるのは active / closed）
   useEffect(() => {
@@ -74,6 +79,7 @@ export default function PortalSurveyPage() {
 
   // 選択サーベイの結果（inner-score + questions）を取得
   const loadResult = useCallback(async (surveyId: string, cid: string) => {
+    latestRequest.current = surveyId
     setResultLoading(true)
     setScore(null)
     try {
@@ -83,6 +89,7 @@ export default function PortalSurveyPage() {
       ])
       const scoreData = await scoreRes.json()
       const qData = await qRes.json()
+      if (latestRequest.current !== surveyId) return
       if (scoreData.score === null && scoreData.message) {
         setScore(null)
       } else {
@@ -90,9 +97,12 @@ export default function PortalSurveyPage() {
       }
       setQuestions((qData.questions ?? []) as SurveyResultsQuestion[])
     } catch {
-      setScore(null)
+      if (latestRequest.current === surveyId) setScore(null)
     } finally {
-      setResultLoading(false)
+      if (latestRequest.current === surveyId) {
+        setResultLoading(false)
+        setResultFor(surveyId)
+      }
     }
   }, [])
 
@@ -166,7 +176,7 @@ export default function PortalSurveyPage() {
       </Card>
 
       {/* 結果 */}
-      {resultLoading ? (
+      {listLoading || resultLoading || (selectedId !== null && resultFor !== selectedId) ? (
         <div className="space-y-4">
           <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
             <CardContent className="p-5">
@@ -184,7 +194,7 @@ export default function PortalSurveyPage() {
             </CardContent>
           </Card>
         </div>
-      ) : !listLoading && surveys.length === 0 ? null : score ? (
+      ) : surveys.length === 0 ? null : score ? (
         <SurveyResults data={score} questions={questions} insights={selectedSurvey?.insights ?? undefined} />
       ) : (
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
