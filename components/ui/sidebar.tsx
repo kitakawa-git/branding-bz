@@ -95,6 +95,26 @@ const SidebarProvider = React.forwardRef<
       [setOpenProp, open]
     )
 
+    // 再読込しても開閉状態を保つ: 保存したクッキーを描画の前に反映する。
+    // サーバーで描く時点ではクッキーを読まない（読むとポータル・管理画面の全ページが動的レンダリングになる）。
+    // そのため初期値は defaultOpen のまま描き、ここで直す。再読込直後に開いた状態が一瞬見えないよう、
+    // app/layout.tsx の head で <html data-sidebar-boot> を付けて globals.css で閉じた見た目にしてあり、
+    // 状態の反映が描画された後にその印を外す（以降の開閉はアニメーションする）。
+    React.useLayoutEffect(() => {
+      if (openProp === undefined) {
+        const saved = document.cookie.match(/(?:^|; )sidebar_state=(true|false)(?:;|$)/)?.[1]
+        if (saved === "false") _setOpen(false)
+      }
+      const html = document.documentElement
+      if (html.hasAttribute("data-sidebar-boot")) {
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() => html.removeAttribute("data-sidebar-boot"))
+        )
+      }
+      // 初回のマウント時だけ読む
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+
     // Helper to toggle the sidebar.
     const toggleSidebar = React.useCallback(() => {
       return isMobile

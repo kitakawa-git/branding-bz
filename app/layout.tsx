@@ -77,6 +77,16 @@ export default async function RootLayout({
           />
         )}
         {/*
+          サイドメニューを閉じたまま再読込したとき、描画の前から閉じた見た目にするための印。
+          クッキー sidebar_state（components/ui/sidebar.tsx の SidebarProvider が書く）が false なら
+          <html data-sidebar-boot="collapsed"> を付ける。見た目は globals.css、印を外すのは SidebarProvider。
+        */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{if(/(?:^|; )sidebar_state=false(?:;|$)/.test(document.cookie))document.documentElement.setAttribute('data-sidebar-boot','collapsed')}catch(e){}`,
+          }}
+        />
+        {/*
           3ドメインシナジー用 JSON-LD (@graph)。全ページ共通。
           - Organization: 運営 ID株式会社 の子ノード。parentOrganization/publisher で include.bz を親参照。
           - SoftwareApplication: サービス本体。有料プラン混在のため offers は省略（有料SaaSを0円と偽らない）。

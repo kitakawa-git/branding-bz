@@ -207,6 +207,23 @@ html {
     overscroll-behavior-y: none;
   }
 }
+
+/* ===== サイドメニュー: 閉じたまま再読込したとき、開いた状態で一瞬描かれないようにする =====
+   app/layout.tsx の head で、クッキー sidebar_state=false なら <html data-sidebar-boot="collapsed"> を付ける。
+   SidebarProvider（components/ui/sidebar.tsx）が開閉状態を反映して印を外すまで、閉じた見た目で描き、
+   その間は開閉のアニメーションも止める（再読込のたびに閉じる動きが見えないように）。
+   .peer[data-side] は shadcn の Sidebar の外枠（1つ目の子が本文側の余白、2つ目の子が fixed の本体）。 */
+@media (min-width: 768px) {
+  html[data-sidebar-boot="collapsed"] .peer[data-side][data-state="expanded"] > div:first-child {
+    width: 0;
+  }
+  html[data-sidebar-boot="collapsed"] .peer[data-side="left"][data-state="expanded"] > div:nth-child(2) {
+    left: calc(var(--sidebar-width) * -1);
+  }
+}
+html[data-sidebar-boot] .peer[data-side][data-state] > div {
+  transition: none !important;
+}
 :target,
 [id] {
   scroll-margin-top: 5rem; /* 80px ≒ 固定ナビ64px + 余白 */
