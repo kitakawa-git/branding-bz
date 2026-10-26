@@ -471,8 +471,10 @@ export default function BrandMap3D({
         </Button>
       </div>
 
+      {/* data-no-ptr: PWA の引っ張り更新（components/pwa/PullToRefresh.tsx）の対象外。ドラッグで回転中に再読込されないように */}
       <div
         ref={wrapRef}
+        data-no-ptr
         className={`relative border border-border rounded-lg overflow-hidden ${fullscreen ? 'grow bg-[#0b1020]' : 'bg-white'}`}
       >
         <canvas

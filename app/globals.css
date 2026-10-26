@@ -197,6 +197,16 @@ body {
 html {
   scroll-behavior: smooth;
 }
+
+/* ===== PWA（standalone）: 引っ張り時の白い空白（ラバーバンド）を止める =====
+   代わりに components/pwa/PullToRefresh.tsx が引っ張り更新を担う。
+   通常ブラウザのタブでは標準の引っ張り更新を残すため、standalone 限定。 */
+@media (display-mode: standalone) {
+  html,
+  body {
+    overscroll-behavior-y: none;
+  }
+}
 :target,
 [id] {
   scroll-margin-top: 5rem; /* 80px ≒ 固定ナビ64px + 余白 */

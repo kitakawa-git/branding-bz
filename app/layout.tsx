@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { Toaster } from "@/components/ui/sonner";
 import { PWARegister } from "@/components/pwa/PWARegister";
+import { PullToRefresh } from "@/components/pwa/PullToRefresh";
 import { getDesignTokensCss } from "@/lib/design-tokens";
 import "./globals.css";
 
@@ -137,6 +138,7 @@ export default async function RootLayout({
         {children}
         <Toaster />
         <PWARegister />
+        <PullToRefresh />
         <GoogleAnalytics gaId="G-CQBED1RNV2" />
       </body>
     </html>

@@ -81,7 +81,8 @@ export function InteractivePositioningMap({
   }, [])
 
   return (
-    <div className={className}>
+    // data-no-ptr: PWA の引っ張り更新（components/pwa/PullToRefresh.tsx）の対象外。点のドラッグ中に再読込されないように
+    <div className={className} data-no-ptr>
       <svg
         ref={svgRef}
         viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
