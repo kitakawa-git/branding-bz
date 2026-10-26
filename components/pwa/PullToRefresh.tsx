@@ -82,6 +82,9 @@ export function PullToRefresh() {
   const startX = useRef(0)
   const locked = useRef<'y' | 'x' | null>(null)
   const pullRef = useRef(0)
+  // 更新中か（タッチ処理から参照する）。state だけで持つと、変わるたびにタッチ処理の effect が
+  // 張り直され、その後始末で body の transform が消えて、更新中にページが上に戻ってしまう
+  const refreshingRef = useRef(false)
 
   // ハイドレーション後に判定（SSRでは常に無効）
   useEffect(() => {
@@ -113,7 +116,7 @@ export function PullToRefresh() {
     }
 
     const onStart = (e: TouchEvent) => {
-      if (refreshing || e.touches.length !== 1) return
+      if (refreshingRef.current || e.touches.length !== 1) return
       if (window.scrollY > 0) return
       // ダイアログ・シート・ポップオーバーが開いている間は無効
       if (document.querySelector('[role="dialog"][data-state="open"], [data-radix-popper-content-wrapper]')) return
@@ -150,6 +153,7 @@ export function PullToRefresh() {
     const onEnd = () => {
       if (startY.current === null) return
       if (pullRef.current >= THRESHOLD) {
+        refreshingRef.current = true
         setRefreshing(true)
         setPull(THRESHOLD)
         setDragging(false)
@@ -176,7 +180,7 @@ export function PullToRefresh() {
       document.body.style.transform = ''
       document.documentElement.style.backgroundColor = ''
     }
-  }, [enabled, refreshing])
+  }, [enabled])
 
   if (!enabled || !host || (pull === 0 && !refreshing)) return null
 
