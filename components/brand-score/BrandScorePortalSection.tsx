@@ -48,7 +48,8 @@ export function BrandScorePortalSection({
 }) {
   // 同一セッションの再訪では前回取得値でそのまま描画（stale-while-revalidate）
   const cacheKey = `portal-brand-score-${companyId}`
-  const cached = getPageCache<CachedData>(cacheKey)
+  // persist: 再読込後も前回のスコアをすぐ出す（lib/page-cache.ts）
+  const cached = getPageCache<CachedData>(cacheKey, { persist: true })
 
   const [loading, setLoading] = useState(!cached)
   const [innerScore, setInnerScore] = useState<BrandScoreInner | null>(cached?.innerScore ?? null)
@@ -131,7 +132,7 @@ export function BrandScorePortalSection({
       marketTrend: marketPoints,
       surveyTrend: surveyPoints,
       prevDiff: prevDiffResult,
-    })
+    }, { persist: true })
   }, [companyId, cacheKey])
 
   useEffect(() => {

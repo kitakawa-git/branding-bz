@@ -8,6 +8,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { useRouter } from 'next/navigation'
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
+import { clearAllPageCache } from '@/lib/page-cache'
 
 type AppAuthContextValue = {
   user: User | null
@@ -74,6 +75,8 @@ export function AppAuthProvider({
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
         if (cancelled) return
+        // ログアウト（別タブでのログアウト・セッション失効を含む）時は、保存したページデータを消す
+        if (event === 'SIGNED_OUT') clearAllPageCache()
         // INITIAL_SESSION は初回 getUser で既に処理しているので無視
         if (event === 'INITIAL_SESSION' && initialFetchedRef.current) return
         setSession(newSession)
@@ -110,6 +113,8 @@ export function AppAuthProvider({
     } catch (err) {
       console.error('[AppAuthProvider] signOut エラー:', err)
     }
+    // 前のユーザーのデータ（sessionStorage に保存したページデータを含む）を残さない
+    clearAllPageCache()
     setUser(null)
     setSession(null)
     if (redirectOnSignOutTo) {

@@ -13,6 +13,7 @@ import { useAppAuth } from '@/components/providers/AppAuthProvider'
 import { ShieldAlert } from 'lucide-react'
 import { GateShell } from '@/components/admin/GateShell'
 import { AuthSplash } from '@/components/admin/AuthSplash'
+import { clearPageCache, getPageCache, setPageCache } from '@/lib/page-cache'
 
 type MemberInfo = {
   id: string
@@ -22,6 +23,25 @@ type MemberInfo = {
 
 // companies レコード（少なくとも機能トグルのカラムを含む）
 type CompanyRecord = Record<string, unknown>
+
+// 再読込（PWA の引っ張り更新を含む）のたびに「読み込み中」で待たせないよう、取得結果をユーザーごとに
+// sessionStorage へ保存する（lib/page-cache.ts の persist）。次に開いたときは保存分ですぐ画面を出し、
+// 裏で取り直して差し替える。ログアウト時は AppAuthProvider が全消去する
+type PortalSnapshot = {
+  companyId: string
+  companyName: string | null
+  companyLogoUrl: string | null
+  company: CompanyRecord | null
+  portalSubtitles: PortalSubtitles | null
+  slogan: string | null
+  member: MemberInfo
+  profileName: string | null
+  profilePhotoUrl: string | null
+  profileSlug: string | null
+  roleCategory: string | null
+  isAdmin: boolean
+}
+const snapshotKey = (userId: string) => `portal-provider-${userId}`
 
 type PortalDataContextValue = {
   user: User | null
@@ -95,10 +115,10 @@ export function PortalDataProvider({ children }: { children: React.ReactNode }) 
     }
 
     let cancelled = false
+    const key = snapshotKey(user.id)
 
-    ;(async () => {
-      setLoading(true)
-      // 別ユーザー・別企業への切替で前の値が残らないよう、企業/プロフィール依存の表示値をリセット
+    // 別ユーザー・別企業への切替で前の値が残らないよう、企業/プロフィール依存の表示値をリセット
+    const resetFields = () => {
       setCompany(null)
       setCompanyName(null)
       setCompanyLogoUrl(null)
@@ -109,6 +129,29 @@ export function PortalDataProvider({ children }: { children: React.ReactNode }) 
       setProfileSlug(null)
       setRoleCategory(null)
       setIsAdmin(false)
+    }
+
+    ;(async () => {
+      const saved = getPageCache<PortalSnapshot>(key, { persist: true })
+      if (saved) {
+        // 前回の取得結果ですぐ表示し、以下で取り直す（「読み込み中」を出さない）
+        setCompanyId(saved.companyId)
+        setCompanyName(saved.companyName)
+        setCompanyLogoUrl(saved.companyLogoUrl)
+        setCompany(saved.company)
+        setPortalSubtitles(saved.portalSubtitles)
+        setSlogan(saved.slogan)
+        setMember(saved.member)
+        setProfileName(saved.profileName)
+        setProfilePhotoUrl(saved.profilePhotoUrl)
+        setProfileSlug(saved.profileSlug)
+        setRoleCategory(saved.roleCategory)
+        setIsAdmin(saved.isAdmin)
+        setLoading(false)
+      } else {
+        setLoading(true)
+        resetFields()
+      }
       try {
         // member 取得と admin_users 取得を並列化
         const [memberRes, adminRes] = await Promise.all([
@@ -129,6 +172,9 @@ export function PortalDataProvider({ children }: { children: React.ReactNode }) 
 
         const memberData = memberRes.data
         if (!memberData) {
+          // 退会・無効化された場合は、保存分も含めて消す
+          clearPageCache(key)
+          resetFields()
           setMember(null)
           setCompanyId(null)
           return
@@ -179,6 +225,29 @@ export function PortalDataProvider({ children }: { children: React.ReactNode }) 
         // brand_guidelines 行が無い企業でも必ず反映する。
         // 条件付きにすると行が無いとき setSlogan が呼ばれず、前企業の slogan が残る（別企業の値が漏れる）
         setSlogan(guidelinesRes.data?.slogan || null)
+
+        // 次回の再読込ですぐ表示できるよう保存（会社情報が取れたときだけ）
+        if (companyRes.data) {
+          const rec = companyRes.data as unknown as CompanyRecord
+          setPageCache<PortalSnapshot>(
+            key,
+            {
+              companyId: memberData.company_id,
+              companyName: (rec.name as string) || null,
+              companyLogoUrl: (rec.logo_url as string) || null,
+              company: { ...rec, id: memberData.company_id },
+              portalSubtitles: (rec.portal_subtitles as PortalSubtitles) || null,
+              slogan: guidelinesRes.data?.slogan || null,
+              member: { id: memberData.id, display_name: memberData.display_name, email: memberData.email },
+              profileName: profile?.name || memberData.display_name || null,
+              profilePhotoUrl: profile?.photo_url || null,
+              profileSlug: profile?.slug || null,
+              roleCategory: profile?.role_category || null,
+              isAdmin: !!adminRes.data,
+            },
+            { persist: true }
+          )
+        }
       } catch (err) {
         if (!cancelled) {
           console.error('[PortalDataProvider] データ取得エラー:', err)

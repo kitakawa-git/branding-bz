@@ -297,7 +297,8 @@ export default function PortalTopPage() {
     isAdmin
   )
   const cacheKey = `portal-dashboard-${companyId}-${user?.id}`
-  const cached = companyId && user?.id ? getPageCache<DashboardCache>(cacheKey) : null
+  // persist: 再読込（引っ張り更新を含む）後も前回の内容をすぐ出し、裏で最新に差し替える（lib/page-cache.ts）
+  const cached = companyId && user?.id ? getPageCache<DashboardCache>(cacheKey, { persist: true }) : null
   const [loading, setLoading] = useState(!cached)
   const [mission, setMission] = useState<string | null>(cached?.mission ?? null)
   const [conceptVisualUrl, setConceptVisualUrl] = useState<string | null>(cached?.conceptVisualUrl ?? null)
@@ -736,7 +737,7 @@ export default function PortalTopPage() {
           goalPeriodType: goalPeriodTypeData,
           showGoalBanner: showGoalBannerData,
           showReviewBanner: showReviewBannerData,
-        })
+        }, { persist: true })
       } catch (err) {
         console.error('[PortalTop] データ取得エラー:', err)
       } finally {
