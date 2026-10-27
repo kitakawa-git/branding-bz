@@ -172,7 +172,8 @@
         "ep_no": "16",
         "ep_title": "5W1Hに当てはめる理念体系",
         "quote": "うん。顧客ターゲット像ね。どんな人に届けたいのか、誰の課題を解決したいのか。",
-        "spotify_url": "https://open.spotify.com/episode/7c7oySDzbl3wV5iDcSm39m"
+        "spotify_url": "https://open.spotify.com/episode/7c7oySDzbl3wV5iDcSm39m",
+        "ordering": 0
       }
     ],
     "short_def": "自社が価値を届ける対象となる顧客像。年齢・職業といった属性だけでなく、価値観・行動を含めて描写する。",
@@ -210,19 +211,22 @@
         "ep_no": "15",
         "ep_title": "ブランド評価と効果測定〜ファネル分析の活用〜",
         "quote": "なかなか出てこないね。笑 いや、以前にね。星野リゾートの代表の星野佳路さんの本を読んだ時、ブランド測定のために必ずアンケート調査を行ってるって書いてあってさ。それを思い出して、国内の調査会社に片っ端からヒアリングして、、、中にね、ブランディングの計測してますってところを見つけて、ファネルの設計の話を聞いた時、これだ！って思ったね。笑 今だと、その設問設計にブランドパーソナリティの評価内容を加えたりして、アレンジもできるようになったけど。",
-        "spotify_url": "https://open.spotify.com/episode/2GZs3jVPMFX1yRXNPqVkZw"
+        "spotify_url": "https://open.spotify.com/episode/2GZs3jVPMFX1yRXNPqVkZw",
+        "ordering": 0
       },
       {
         "ep_no": "22-2",
         "ep_title": "AIでブランドの「らしさ」は作れるのか？　ブランドオントロジーの構築とは",
         "quote": "で、ちょっと他社事例だけど、面白い取り組みがあって、大広って大手広告会社が「Brand Dialogue AI」っていうブランドの人格、ブランドパーソナリティを学習したAIに、顧客一人ひとりへのパーソナライズされた対話をするソリューションを出してたり。",
-        "spotify_url": "https://open.spotify.com/episode/7qzDV94NEUPAjXPvrAnmDE"
+        "spotify_url": "https://open.spotify.com/episode/7qzDV94NEUPAjXPvrAnmDE",
+        "ordering": 1
       },
       {
         "ep_no": "22-2",
         "ep_title": "AIでブランドの「らしさ」は作れるのか？　ブランドオントロジーの構築とは",
         "quote": "今までブランドパーソナリティって、「誠実」「アクティブ」「先進的」みたいな形容詞で定義するのが一般的だったじゃん。第3話でも話したディメンションフレームワークとか、まさにそう。",
-        "spotify_url": "https://open.spotify.com/episode/7qzDV94NEUPAjXPvrAnmDE"
+        "spotify_url": "https://open.spotify.com/episode/7qzDV94NEUPAjXPvrAnmDE",
+        "ordering": 2
       }
     ],
     "short_def": "ブランドを人に例えたときの性格・人格。世界観を構成する主要要素の一つ。",
@@ -266,19 +270,22 @@
         "ep_no": "19-2",
         "ep_title": "brandcommit開発秘話〜なぜブランディングをツール化したのか〜",
         "quote": "うん。ブランドって一回作って終わりじゃないってこの番組でもずっと言ってきたでしょ。「育てる」ブランディングなんだから。笑 例えば、時代が変わったり事業が広がったりしたら、ブランドカラーを見直すこともあるし、ポジショニングを再確認することもある。そういう時に毎回コンサルに頼まなくても、自分たちで手を動かせる環境があったらいいなと。",
-        "spotify_url": "https://open.spotify.com/episode/79MaearO4IDbo7Rj5KABAg"
+        "spotify_url": "https://open.spotify.com/episode/79MaearO4IDbo7Rj5KABAg",
+        "ordering": 0
       },
       {
         "ep_no": "23-2",
         "ep_title": "AIが変えるVI開発〜ロゴ・カラー提案の新しいカタチ〜",
         "quote": "笑 で、次にカラーの話なんだけど。ブランドカラーの選定でも、実はAIはとても使えるよ。",
-        "spotify_url": "https://open.spotify.com/episode/3a9m5TSkKPm8I2CfHMmkh9"
+        "spotify_url": "https://open.spotify.com/episode/3a9m5TSkKPm8I2CfHMmkh9",
+        "ordering": 1
       },
       {
         "ep_no": "23-2",
         "ep_title": "AIが変えるVI開発〜ロゴ・カラー提案の新しいカタチ〜",
         "quote": "うん。AIを使えば、競合のブランドカラーをバーって調べさせて、「この市場でまだ使われていない色域はどこか」も出せるよ。",
-        "spotify_url": "https://open.spotify.com/episode/3a9m5TSkKPm8I2CfHMmkh9"
+        "spotify_url": "https://open.spotify.com/episode/3a9m5TSkKPm8I2CfHMmkh9",
+        "ordering": 2
       }
     ],
     "short_def": "ブランドを象徴する色。メインカラーとサブカラーを組み合わせて指定される。",
@@ -318,19 +325,22 @@
         "ep_no": "13",
         "ep_title": "アウターブランディング〜社外に届けるブランド施策〜その２",
         "quote": "で、これの何がすごいかっていうと、ロゴが見えなくても認識できるってこと。 例えば、ポッドキャストでは映像見せられないけど。ジングルが流れたら「あ、マックだ」ってわかるもんね。",
-        "spotify_url": "https://open.spotify.com/episode/2qFZcQ7W1M7Wb1vtC7msW9"
+        "spotify_url": "https://open.spotify.com/episode/2qFZcQ7W1M7Wb1vtC7msW9",
+        "ordering": 0
       },
       {
         "ep_no": "13",
         "ep_title": "アウターブランディング〜社外に届けるブランド施策〜その２",
         "quote": "街を歩いてて、赤と黄色の看板がチラッと視界に入っただけでも「あ、マックあるな」って認識できる。 ロゴをじっくり見なくても、色だけで伝わるしね。",
-        "spotify_url": "https://open.spotify.com/episode/2qFZcQ7W1M7Wb1vtC7msW9"
+        "spotify_url": "https://open.spotify.com/episode/2qFZcQ7W1M7Wb1vtC7msW9",
+        "ordering": 1
       },
       {
         "ep_no": "13",
         "ep_title": "アウターブランディング〜社外に届けるブランド施策〜その２",
         "quote": "うん。ただ、MVV、スローガン系は数年おきに見直して良いと思うけどね。戦略と紐づくから。 だけど、ロゴやカラーなどは、一回決めたら、あまりコロコロ変えちゃダメだよね。うちでさ、リブランディングとか提案する時も、あえて既存のロゴの印象を引き継いだ案も含めて提案したりもするしさ。それくらい、これまで積み上げてきた資産をリセットしないように配慮するよね。",
-        "spotify_url": "https://open.spotify.com/episode/2qFZcQ7W1M7Wb1vtC7msW9"
+        "spotify_url": "https://open.spotify.com/episode/2qFZcQ7W1M7Wb1vtC7msW9",
+        "ordering": 2
       }
     ],
     "short_def": "企業・ブランド・製品を視覚的に識別させる図形記号。ブランドの最も凝縮された表現。",
@@ -374,19 +384,22 @@
         "ep_no": "16",
         "ep_title": "5W1Hに当てはめる理念体系",
         "quote": "うん。15話まではね、ブランディングの基礎と育成編としてまとめてお話しをさせてもらったので、今回はおさらい&深掘りとして、理念体系の「整理の仕方」について話したいと思います。",
-        "spotify_url": "https://open.spotify.com/episode/7c7oySDzbl3wV5iDcSm39m"
+        "spotify_url": "https://open.spotify.com/episode/7c7oySDzbl3wV5iDcSm39m",
+        "ordering": 0
       },
       {
         "ep_no": "16",
         "ep_title": "5W1Hに当てはめる理念体系",
         "quote": "次に、WHEN。これは理念体系には正直該当用語がないんだけど。。。苦笑 「Roadmap」や「Action Plan」、ブランド戦略には必要な要素なので、付け加えておきます。",
-        "spotify_url": "https://open.spotify.com/episode/7c7oySDzbl3wV5iDcSm39m"
+        "spotify_url": "https://open.spotify.com/episode/7c7oySDzbl3wV5iDcSm39m",
+        "ordering": 1
       },
       {
         "ep_no": "25",
         "ep_title": "中小企業のためのAI×ブランディング実装ガイド〜限られたリソースで、最初の一歩をどう踏み出すか〜",
         "quote": "理念体系のミッション・ビジョン・バリュー、行動指針やパーパス、スローガン。 これらを全て揃えようと思うと、やっぱり半年。。。いや、1年は経っちゃうもんね。僕が提案するのは、スローガンとミッション。これらはあった方が社内の士気が高まるので、最低限整える。それ以上は、走りながら整えていく。これがスタートアップや中小企業に合うスタイル、やり方だと思う。",
-        "spotify_url": "https://open.spotify.com/episode/39i28J3VdM7BKjdwP2aryQ"
+        "spotify_url": "https://open.spotify.com/episode/39i28J3VdM7BKjdwP2aryQ",
+        "ordering": 2
       }
     ],
     "short_def": "ミッション・ビジョン・バリュー・パーパスなど、企業の理念に関わる複数概念を整理し関係づけた構造。",
@@ -462,19 +475,22 @@
         "ep_no": "13",
         "ep_title": "アウターブランディング〜社外に届けるブランド施策〜その２",
         "quote": "うん。ただ、MVV、スローガン系は数年おきに見直して良いと思うけどね。戦略と紐づくから。 だけど、ロゴやカラーなどは、一回決めたら、あまりコロコロ変えちゃダメだよね。うちでさ、リブランディングとか提案する時も、あえて既存のロゴの印象を引き継いだ案も含めて提案したりもするしさ。それくらい、これまで積み上げてきた資産をリセットしないように配慮するよね。",
-        "spotify_url": "https://open.spotify.com/episode/2qFZcQ7W1M7Wb1vtC7msW9"
+        "spotify_url": "https://open.spotify.com/episode/2qFZcQ7W1M7Wb1vtC7msW9",
+        "ordering": 0
       },
       {
         "ep_no": "25",
         "ep_title": "中小企業のためのAI×ブランディング実装ガイド〜限られたリソースで、最初の一歩をどう踏み出すか〜",
         "quote": "理念体系のミッション・ビジョン・バリュー、行動指針やパーパス、スローガン。 これらを全て揃えようと思うと、やっぱり半年。。。いや、1年は経っちゃうもんね。僕が提案するのは、スローガンとミッション。これらはあった方が社内の士気が高まるので、最低限整える。それ以上は、走りながら整えていく。これがスタートアップや中小企業に合うスタイル、やり方だと思う。",
-        "spotify_url": "https://open.spotify.com/episode/39i28J3VdM7BKjdwP2aryQ"
+        "spotify_url": "https://open.spotify.com/episode/39i28J3VdM7BKjdwP2aryQ",
+        "ordering": 1
       },
       {
         "ep_no": "25",
         "ep_title": "中小企業のためのAI×ブランディング実装ガイド〜限られたリソースで、最初の一歩をどう踏み出すか〜",
         "quote": "笑 さっき、スタートアップや中小企業はミッションとスローガンを最低限整えましょう、って言ったじゃない。",
-        "spotify_url": "https://open.spotify.com/episode/39i28J3VdM7BKjdwP2aryQ"
+        "spotify_url": "https://open.spotify.com/episode/39i28J3VdM7BKjdwP2aryQ",
+        "ordering": 2
       }
     ],
     "short_def": "ブランドの核心を短いフレーズで凝縮した一句。タグライン・キャッチコピーとも近いが役割が異なる。",
@@ -533,19 +549,22 @@
         "ep_no": "14",
         "ep_title": "ブランド戦略の実行とPDCA〜R-PDCAの実践〜",
         "quote": "例えば、アウターブランディングだったら、認知度調査のスコアとか、ウェブサイトの指名検索数とか、SNSのエンゲージメント率とか。 インナーブランディングだったら、従業員エンゲージメントのスコアとか、理念の理解度調査とか、離職率の変化とか。",
-        "spotify_url": "https://open.spotify.com/episode/2UEVSSFbaa5RTdCOjcaKxB"
+        "spotify_url": "https://open.spotify.com/episode/2UEVSSFbaa5RTdCOjcaKxB",
+        "ordering": 0
       },
       {
         "ep_no": "15",
         "ep_title": "ブランド評価と効果測定〜ファネル分析の活用〜",
         "quote": "ありがと。笑 でね、さらに面白いのが、このファネル分析、インナーブランディングにも使えるんだよ。",
-        "spotify_url": "https://open.spotify.com/episode/2GZs3jVPMFX1yRXNPqVkZw"
+        "spotify_url": "https://open.spotify.com/episode/2GZs3jVPMFX1yRXNPqVkZw",
+        "ordering": 1
       },
       {
         "ep_no": "15",
         "ep_title": "ブランド評価と効果測定〜ファネル分析の活用〜",
         "quote": "そうそう。インナーブランディングの一環にもなるんだよね。「みんなで認知度を上げていこう」っていう共通目標ができるし。",
-        "spotify_url": "https://open.spotify.com/episode/2GZs3jVPMFX1yRXNPqVkZw"
+        "spotify_url": "https://open.spotify.com/episode/2GZs3jVPMFX1yRXNPqVkZw",
+        "ordering": 2
       }
     ],
     "short_def": "社員・経営層に対してブランドの理念や価値を浸透させ、内側からブランドを体現する取り組み。",
@@ -625,20 +644,23 @@
       {
         "ep_no": "28",
         "ep_title": "採用ブランディング_自社の魅力を候補者に伝える方法",
-        "quote": "そっかそっか、感覚的にはそれくらいだよね。でね、最近の調査でちょっと驚いたんだけど、就活の開始時期が「大学3年の4月まで」って人がもう56.9%らしいんだよ。 第28話：採用ブランディング〜自社の魅力を候補者に伝える方法〜",
-        "spotify_url": "https://open.spotify.com/episode/7AjaHj8qtyUMzmUEWHXSO3"
+        "quote": "そっかそっか、感覚的にはそれくらいだよね。でね、最近の調査でちょっと驚いたんだけど、就活の開始時期が「大学3年の4月まで」って人がもう56.9%らしいんだよ。",
+        "spotify_url": "https://open.spotify.com/episode/7AjaHj8qtyUMzmUEWHXSO3",
+        "ordering": 0
       },
       {
         "ep_no": "28",
         "ep_title": "採用ブランディング_自社の魅力を候補者に伝える方法",
-        "quote": "早いでしょ。半分以上が春には動き出してる。で、いまの就活って「ネタバレ就活」って呼ばれてるらしくて。 第28話：採用ブランディング〜自社の魅力を候補者に伝える方法〜",
-        "spotify_url": "https://open.spotify.com/episode/7AjaHj8qtyUMzmUEWHXSO3"
+        "quote": "早いでしょ。半分以上が春には動き出してる。で、いまの就活って「ネタバレ就活」って呼ばれてるらしくて。",
+        "spotify_url": "https://open.spotify.com/episode/7AjaHj8qtyUMzmUEWHXSO3",
+        "ordering": 1
       },
       {
         "ep_no": "28",
         "ep_title": "採用ブランディング_自社の魅力を候補者に伝える方法",
-        "quote": "そう、就活のネタバレ。マイナビキャリアリサーチLabが2026年卒の就活傾向を分析するなかで使った言葉でね、要するにいまの学生って、入社後のギャップを避けたくて、仕事内容とか配属、勤務地、残業の実態、上司との関係、社内の空気感、こういうのを選考前にネタバレしておきたい、っていう動きが広がってるんだって。 第28話：採用ブランディング〜自社の魅力を候補者に伝える方法〜",
-        "spotify_url": "https://open.spotify.com/episode/7AjaHj8qtyUMzmUEWHXSO3"
+        "quote": "そう、就活のネタバレ。マイナビキャリアリサーチLabが2026年卒の就活傾向を分析するなかで使った言葉でね、要するにいまの学生って、入社後のギャップを避けたくて、仕事内容とか配属、勤務地、残業の実態、上司との関係、社内の空気感、こういうのを選考前にネタバレしておきたい、っていう動きが広がってるんだって。",
+        "spotify_url": "https://open.spotify.com/episode/7AjaHj8qtyUMzmUEWHXSO3",
+        "ordering": 2
       }
     ],
     "short_def": "自社の魅力を候補者に伝え、共感を持って応募・入社してもらうためのブランディング活動。",
@@ -714,14 +736,16 @@
       {
         "ep_no": "38",
         "ep_title": "開業から1年経ったジャングリア沖縄から見えた地域ブランディングの核",
-        "quote": "すごいよね。森岡さんの「沖縄県の地域創生への思い」。森岡さんの北極星って、そこなんだと思う。 これね、ブランディングの観点で考えると地域ブランディングの話になってくるんだよね",
-        "spotify_url": ""
+        "quote": "すごいよね。森岡さんの「沖縄県の地域創生への思い」。森岡さんの北極星って、そこなんだと思う。 これね、ブランディングの観点で考えると地域ブランディングの話になってくるんだよね。",
+        "spotify_url": "",
+        "ordering": 0
       },
       {
         "ep_no": "38",
         "ep_title": "開業から1年経ったジャングリア沖縄から見えた地域ブランディングの核",
         "quote": "そう。森岡さんはね、有名なマーケターだけど、ブランディングもマーケティングも表裏一体だから。 だから、地域ブランディングの事例として捉えると、ジャングリアの件以外でも、似たよう構造で成功してる地域があるんじゃないかと思って調べてみました。それが今日の本題。",
-        "spotify_url": ""
+        "spotify_url": "",
+        "ordering": 1
       }
     ],
     "short_def": "特定の地域（都道府県・市町村・エリア）の魅力を発掘・編集し、内外に発信する活動。",
@@ -757,19 +781,22 @@
         "ep_no": "19-2",
         "ep_title": "brandcommit開発秘話〜なぜブランディングをツール化したのか〜",
         "quote": "なかった。笑 国内外のサービスでもいいから、手軽に使えて、ブランドガイドラインをチームで共有できて、しかも浸透まで支援できるようなもの。調べても見つからなくて。",
-        "spotify_url": "https://open.spotify.com/episode/79MaearO4IDbo7Rj5KABAg"
+        "spotify_url": "https://open.spotify.com/episode/79MaearO4IDbo7Rj5KABAg",
+        "ordering": 0
       },
       {
         "ep_no": "19-2",
         "ep_title": "brandcommit開発秘話〜なぜブランディングをツール化したのか〜",
         "quote": "そそ。笑 で、アプリの話は、、、 最初のコンセプトはすごくシンプルで。「ブランドガイドラインが、スマホでいつでも確認できる場所があればいい」、それだけだった。",
-        "spotify_url": "https://open.spotify.com/episode/79MaearO4IDbo7Rj5KABAg"
+        "spotify_url": "https://open.spotify.com/episode/79MaearO4IDbo7Rj5KABAg",
+        "ordering": 1
       },
       {
         "ep_no": "24",
         "ep_title": "AIで「トンマナ」をどう統一するか〜DESIGN.mdとClaude Designが変える、ブランドの渡し方〜",
         "quote": "お！だんだんわかってきた？ design.md はそのデザインシステムを指示するためのフォーマットなわけだから、もちろんAnthropic、クロード でも活用できるよね。 だから近い将来、ブランドガイドライン自体もAIが整理してくれる時代が必ず来るような気もするよね。",
-        "spotify_url": "https://open.spotify.com/episode/23EOtlv7LQfiEDloyNvgfb"
+        "spotify_url": "https://open.spotify.com/episode/23EOtlv7LQfiEDloyNvgfb",
+        "ordering": 2
       }
     ],
     "short_def": "ロゴ・カラー・書体・トーンなどブランド要素の使い方をまとめたルールブック。",
@@ -982,19 +1009,15 @@
         "ep_no": "11",
         "ep_title": "インナーブランディング〜社内浸透の仕組みづくり〜 その２",
         "quote": "ね。職人の鮨と現代アートの融合っていう。空間体験としてのブランディングの話、いつかこの番組でもしたいなと思ってて。",
-        "spotify_url": "https://open.spotify.com/episode/17XJkW98VWHZgxDH9RzTvZ"
-      },
-      {
-        "ep_no": "11",
-        "ep_title": "インナーブランディング〜社内浸透の仕組みづくり〜 その２",
-        "quote": "へぇー面白いね。僕も沼ってみたい。はい、では本編に入りましょうか。 『育てるブランディング』 ここまでお聞きいただきありがとうございました。 この番組は、毎週火曜日の朝7時に配信していきます。 またみなさんからのご感想はSNSで、#育てるブランディングで投稿してもらえると嬉しいです。 またこの番組ではお便りもお待ちしております。 お便りフォームを用意していますので、番組概要欄のURLからお送りください。 それでは、次回の『育てるブランディング』をお楽しみに",
-        "spotify_url": "https://open.spotify.com/episode/17XJkW98VWHZgxDH9RzTvZ"
+        "spotify_url": "https://open.spotify.com/episode/17XJkW98VWHZgxDH9RzTvZ",
+        "ordering": 0
       },
       {
         "ep_no": "13",
         "ep_title": "アウターブランディング〜社外に届けるブランド施策〜その２",
         "quote": "そう。だから、アウターブランディングを設計する時は、この2つを意識する必要がある。 どんなトリガー、「きっかけ」で思い出してほしいか。そして、その時に何を認識「目印」にしてもらうかね。",
-        "spotify_url": "https://open.spotify.com/episode/2qFZcQ7W1M7Wb1vtC7msW9"
+        "spotify_url": "https://open.spotify.com/episode/2qFZcQ7W1M7Wb1vtC7msW9",
+        "ordering": 1
       }
     ],
     "short_def": "「らしさ」を作り、意図した通りに顧客・社員の心の中に育てていく長期的な活動。",
@@ -1039,19 +1062,22 @@
         "ep_no": "14",
         "ep_title": "ブランド戦略の実行とPDCA〜R-PDCAの実践〜",
         "quote": "例えば、アウターブランディングだったら、認知度調査のスコアとか、ウェブサイトの指名検索数とか、SNSのエンゲージメント率とか。 インナーブランディングだったら、従業員エンゲージメントのスコアとか、理念の理解度調査とか、離職率の変化とか。",
-        "spotify_url": "https://open.spotify.com/episode/2UEVSSFbaa5RTdCOjcaKxB"
+        "spotify_url": "https://open.spotify.com/episode/2UEVSSFbaa5RTdCOjcaKxB",
+        "ordering": 0
       },
       {
         "ep_no": "15",
         "ep_title": "ブランド評価と効果測定〜ファネル分析の活用〜",
         "quote": "うん。ファネルの項目を置き換えるの。 「認知」は「理念を知っているか」。「理解」は「理念の意味を正しく理解しているか」。「共感」は「理念に共感しているか」。「行動」は「理念に沿った行動をしているか」。「推奨」は「理念を周りに広めているか」。",
-        "spotify_url": "https://open.spotify.com/episode/2GZs3jVPMFX1yRXNPqVkZw"
+        "spotify_url": "https://open.spotify.com/episode/2GZs3jVPMFX1yRXNPqVkZw",
+        "ordering": 1
       },
       {
         "ep_no": "15",
         "ep_title": "ブランド評価と効果測定〜ファネル分析の活用〜",
         "quote": "そういうこと。で、どこで詰まってるかも見える。 「知ってるけど理解してない」なら、説明の仕方を変える必要がある。 「理解してるけど共感してない」なら、なぜこの理念なのかっていうストーリーをもっと伝える必要がある。",
-        "spotify_url": "https://open.spotify.com/episode/2GZs3jVPMFX1yRXNPqVkZw"
+        "spotify_url": "https://open.spotify.com/episode/2GZs3jVPMFX1yRXNPqVkZw",
+        "ordering": 2
       }
     ],
     "short_def": "企業が「何のために存在するのか」を言語化した根本思想。",
@@ -1091,19 +1117,22 @@
         "ep_no": "13",
         "ep_title": "アウターブランディング〜社外に届けるブランド施策〜その２",
         "quote": "うん。ただ、MVV、スローガン系は数年おきに見直して良いと思うけどね。戦略と紐づくから。 だけど、ロゴやカラーなどは、一回決めたら、あまりコロコロ変えちゃダメだよね。うちでさ、リブランディングとか提案する時も、あえて既存のロゴの印象を引き継いだ案も含めて提案したりもするしさ。それくらい、これまで積み上げてきた資産をリセットしないように配慮するよね。",
-        "spotify_url": "https://open.spotify.com/episode/2qFZcQ7W1M7Wb1vtC7msW9"
+        "spotify_url": "https://open.spotify.com/episode/2qFZcQ7W1M7Wb1vtC7msW9",
+        "ordering": 0
       },
       {
         "ep_no": "16",
         "ep_title": "5W1Hに当てはめる理念体系",
         "quote": "うん。「MVVを作りましょう」って言われても「何から考えればいいの？」ってなるだろうけど、「なぜ事業を立ち上げるんですか？」って聞かれたら、考えやすいでしょ。",
-        "spotify_url": "https://open.spotify.com/episode/7c7oySDzbl3wV5iDcSm39m"
+        "spotify_url": "https://open.spotify.com/episode/7c7oySDzbl3wV5iDcSm39m",
+        "ordering": 1
       },
       {
         "ep_no": "17",
         "ep_title": "AIはブランディングをどう変えるのか？〜効率化と本質の両立〜",
         "quote": "うん。MVV、ミッション・ビジョン・バリューとか、タグラインとか、言葉を決めるのに何ヶ月もかかることがある。でも、AIと対話しながら進めると、思考の整理が早くなるよね。",
-        "spotify_url": "https://open.spotify.com/episode/4mXP1Dihw13bIRbB3NTq1c"
+        "spotify_url": "https://open.spotify.com/episode/4mXP1Dihw13bIRbB3NTq1c",
+        "ordering": 2
       }
     ],
     "short_def": "Mission（使命）・Vision（将来像）・Value（価値観）の頭文字を取った、企業理念の代表的な整理フレームワーク。",
@@ -1148,19 +1177,22 @@
         "ep_no": "15",
         "ep_title": "ブランド評価と効果測定〜ファネル分析の活用〜",
         "quote": "自動車メーカーって、こういうデザインフィロソフィーとか、ブランディングへの意識がすごく高い業界で。マツダは以前VIの回で話したけど、日本で初めてCI導入した企業って言われてるんだよね。",
-        "spotify_url": "https://open.spotify.com/episode/2GZs3jVPMFX1yRXNPqVkZw"
+        "spotify_url": "https://open.spotify.com/episode/2GZs3jVPMFX1yRXNPqVkZw",
+        "ordering": 0
       },
       {
         "ep_no": "19-2",
         "ep_title": "brandcommit開発秘話〜なぜブランディングをツール化したのか〜",
         "quote": "で。コワーキングスペースをやりながらデザインの提案をしていると、クライアントから経営や事業の立ち上げの相談も受けることが多くなっていって、そうした中でいろいろな広範囲のデザインを行っていくと、それらの一環した制作や管理をするようになっていって、その手段としてCIとV.Iの構築を勉強してきたんだよね。",
-        "spotify_url": "https://open.spotify.com/episode/79MaearO4IDbo7Rj5KABAg"
+        "spotify_url": "https://open.spotify.com/episode/79MaearO4IDbo7Rj5KABAg",
+        "ordering": 1
       },
       {
         "ep_no": "19-2",
         "ep_title": "brandcommit開発秘話〜なぜブランディングをツール化したのか〜",
         "quote": "笑。 うん。あの設計事務所に勤務してた時に、他のチームで車のディーラーの店舗の設計デザインを行ってたんだけど、その時にね、その設計資料の中にCIがあった。ほんとに辞書みたいな厚さの書類でさ、中身を見せてもらってると、本当にと細かく詳細にいろいろなルールが書かれていて、正直衝撃的だったよ。こんなものがあるんだってだから強く鮮明に覚えてる。",
-        "spotify_url": "https://open.spotify.com/episode/79MaearO4IDbo7Rj5KABAg"
+        "spotify_url": "https://open.spotify.com/episode/79MaearO4IDbo7Rj5KABAg",
+        "ordering": 2
       }
     ],
     "short_def": "Corporate Identity。企業の理念・価値観・らしさを、内外に統一的に伝えるための総合的な設計。",
@@ -1201,19 +1233,22 @@
         "ep_no": "13",
         "ep_title": "アウターブランディング〜社外に届けるブランド施策〜その２",
         "quote": "そこ？？w フェーズによって変えていく。で、確信がもてたら、それを一貫して使い続ける。人数も増えれば VIガイドラインを構築して、統制をとってトーンを合わせていく。 だから スタートアップなら、VIガイドラインも何も急いで固める必要もないと思うけどね。正直。",
-        "spotify_url": "https://open.spotify.com/episode/2qFZcQ7W1M7Wb1vtC7msW9"
+        "spotify_url": "https://open.spotify.com/episode/2qFZcQ7W1M7Wb1vtC7msW9",
+        "ordering": 0
       },
       {
         "ep_no": "15",
         "ep_title": "ブランド評価と効果測定〜ファネル分析の活用〜",
         "quote": "自動車メーカーって、こういうデザインフィロソフィーとか、ブランディングへの意識がすごく高い業界で。マツダは以前VIの回で話したけど、日本で初めてCI導入した企業って言われてるんだよね。",
-        "spotify_url": "https://open.spotify.com/episode/2GZs3jVPMFX1yRXNPqVkZw"
+        "spotify_url": "https://open.spotify.com/episode/2GZs3jVPMFX1yRXNPqVkZw",
+        "ordering": 1
       },
       {
         "ep_no": "19-2",
         "ep_title": "brandcommit開発秘話〜なぜブランディングをツール化したのか〜",
         "quote": "で、そのコワーキングの経験をもとに、クライアントのブランディング支援もどんどん深くなっていくわけよ。理念の策定、VI作って、ガイドライン整えて、社内浸透のところまで一緒に関わるようになっていって。",
-        "spotify_url": "https://open.spotify.com/episode/79MaearO4IDbo7Rj5KABAg"
+        "spotify_url": "https://open.spotify.com/episode/79MaearO4IDbo7Rj5KABAg",
+        "ordering": 2
       }
     ],
     "short_def": "Visual Identity。ブランドの視覚要素（ロゴ・カラー・書体・グラフィックスタイル等）を体系化した設計。",
@@ -1248,19 +1283,22 @@
         "ep_no": "13",
         "ep_title": "アウターブランディング〜社外に届けるブランド施策〜その２",
         "quote": "スタートアップの場合は、テストマーケティングとか、そもそもビジネスモデル自体を模索してる段階だったりするから、「最初から完璧に決めて、絶対変えない」っていうのも現実的じゃないよね。 だから、うちの会社だったら、そういう場合には、AIを活用した小リソースでスピード感を持ったブランド運用っていうのを提案してて。 仮で決めて、走りながら調整して、固まってきたら本格的に資産化していく、みたいな。",
-        "spotify_url": "https://open.spotify.com/episode/2qFZcQ7W1M7Wb1vtC7msW9"
+        "spotify_url": "https://open.spotify.com/episode/2qFZcQ7W1M7Wb1vtC7msW9",
+        "ordering": 0
       },
       {
         "ep_no": "15",
         "ep_title": "ブランド評価と効果測定〜ファネル分析の活用〜",
         "quote": "だよね。ファネルは、漏斗のこと。 マーケティングの世界では「購買ファネル」って呼ばれるものがあって。消費者が商品を知ってから買うまでの流れを、逆三角形の形で表現したもの。",
-        "spotify_url": "https://open.spotify.com/episode/2GZs3jVPMFX1yRXNPqVkZw"
+        "spotify_url": "https://open.spotify.com/episode/2GZs3jVPMFX1yRXNPqVkZw",
+        "ordering": 1
       },
       {
         "ep_no": "17",
         "ep_title": "AIはブランディングをどう変えるのか？〜効率化と本質の両立〜",
         "quote": "インサイト抽出？マーケティングで使われるけど、顧客の購買データや行動履歴、アンケート、SNSの生の声を分析して、「本音（インサイト）」、本質を見つけ出すプロセスね。 ブランディングの土台って、市場調査とか競合分析とか顧客理解じゃない。以前も話したSWOT分析とかPEST分析とか。あれをやるのに、昔はものすごい時間がかかってた。",
-        "spotify_url": "https://open.spotify.com/episode/4mXP1Dihw13bIRbB3NTq1c"
+        "spotify_url": "https://open.spotify.com/episode/4mXP1Dihw13bIRbB3NTq1c",
+        "ordering": 2
       }
     ],
     "short_def": "顧客に商品・サービスを「売るための仕組み」を作る活動。市場調査・価格設定・プロモーション・流通など。",
@@ -1311,20 +1349,23 @@
       {
         "ep_no": "16",
         "ep_title": "5W1Hに当てはめる理念体系",
-        "quote": "でしょ。笑 もう一度言うと。。。パーパスがWHY、存在理由。ミッションがWHAT、何をやるか。バリューがHOWで。どうやるか。ペルソナはWHO、誰のためか。WHENをロードマップにまとめて。ビジョンがWHERE、どこへ向かうか。 どう？？スッキリした？笑",
-        "spotify_url": "https://open.spotify.com/episode/7c7oySDzbl3wV5iDcSm39m"
+        "quote": "でしょ。笑 もう一度言うと。。。パーパスがWHY、存在理由。ミッションがWHAT、何をやるか。バリューがHOWで。どうやるか。ペルソナはWHO、誰のためか。WHENをロードマップにまとめて。ビジョンがWHERE、どこへ向かうか。 どう？？スッキリした？笑。",
+        "spotify_url": "https://open.spotify.com/episode/7c7oySDzbl3wV5iDcSm39m",
+        "ordering": 0
       },
       {
         "ep_no": "18",
         "ep_title": "AIに任せていいこと、人間がやるべきこと〜ブランド構築の役割分担〜",
         "quote": "うん。それもあるし、実はもっと手前の設計段階からAIが使える。このフェーズでは「誰に、何を、どうやって伝えるか」を決めるんだけど、その「誰に」の部分、つまりペルソナ設計ね。",
-        "spotify_url": "https://open.spotify.com/episode/1XNn5lCW3PeXFY9oSJte9C"
+        "spotify_url": "https://open.spotify.com/episode/1XNn5lCW3PeXFY9oSJte9C",
+        "ordering": 1
       },
       {
         "ep_no": "18",
         "ep_title": "AIに任せていいこと、人間がやるべきこと〜ブランド構築の役割分担〜",
         "quote": "そうそう。で、これ、AIにリサーチデータを渡して「こういう特徴を持つ顧客像を複数パターン作って」って頼むと、かなり精度の高いペルソナ案が出てくる。年齢、職業、ライフスタイル、価値観まで含めてね。",
-        "spotify_url": "https://open.spotify.com/episode/1XNn5lCW3PeXFY9oSJte9C"
+        "spotify_url": "https://open.spotify.com/episode/1XNn5lCW3PeXFY9oSJte9C",
+        "ordering": 2
       }
     ],
     "short_def": "ターゲット顧客を1人の具体的な人物像として描いた仮想プロフィール。",
@@ -1372,19 +1413,22 @@
         "ep_no": "13",
         "ep_title": "アウターブランディング〜社外に届けるブランド施策〜その２",
         "quote": "だから、第7話で話したポジショニングの話ともつながるんだよね。 競合がどんな資産を持ってるかを把握して、被らない領域を取りに行く。",
-        "spotify_url": "https://open.spotify.com/episode/2qFZcQ7W1M7Wb1vtC7msW9"
+        "spotify_url": "https://open.spotify.com/episode/2qFZcQ7W1M7Wb1vtC7msW9",
+        "ordering": 0
       },
       {
         "ep_no": "17",
         "ep_title": "AIはブランディングをどう変えるのか？〜効率化と本質の両立〜",
         "quote": "ポジショニングの話を思い出してほしいんだけど、他社と違う、自分たちだけの立ち位置を見つけること。それをAIに丸投げしたら、みんな同じような場所に立っちゃう。",
-        "spotify_url": "https://open.spotify.com/episode/4mXP1Dihw13bIRbB3NTq1c"
+        "spotify_url": "https://open.spotify.com/episode/4mXP1Dihw13bIRbB3NTq1c",
+        "ordering": 1
       },
       {
         "ep_no": "19-2",
         "ep_title": "brandcommit開発秘話〜なぜブランディングをツール化したのか〜",
         "quote": "うん。ブランドって一回作って終わりじゃないってこの番組でもずっと言ってきたでしょ。「育てる」ブランディングなんだから。笑 例えば、時代が変わったり事業が広がったりしたら、ブランドカラーを見直すこともあるし、ポジショニングを再確認することもある。そういう時に毎回コンサルに頼まなくても、自分たちで手を動かせる環境があったらいいなと。",
-        "spotify_url": "https://open.spotify.com/episode/79MaearO4IDbo7Rj5KABAg"
+        "spotify_url": "https://open.spotify.com/episode/79MaearO4IDbo7Rj5KABAg",
+        "ordering": 2
       }
     ],
     "short_def": "市場内で自社が占めるべき独自の立ち位置を定めること。",
@@ -1495,7 +1539,8 @@
         "ep_no": "23-2",
         "ep_title": "AIが変えるVI開発〜ロゴ・カラー提案の新しいカタチ〜",
         "quote": "笑 今回はね「見え方」にフォーカスしてみたいと思います。具体的には、AIがビジュアルアイデンティティ、VIの開発をどう変えていくのか。特にロゴとカラーの領域で、今何が起きてるのかを話そうと思います。",
-        "spotify_url": "https://open.spotify.com/episode/3a9m5TSkKPm8I2CfHMmkh9"
+        "spotify_url": "https://open.spotify.com/episode/3a9m5TSkKPm8I2CfHMmkh9",
+        "ordering": 0
       }
     ],
     "short_def": "VIの正式名称。ロゴ・カラー・書体・グラフィックなど視覚要素を体系化した設計。",
@@ -1541,13 +1586,15 @@
         "ep_no": "13",
         "ep_title": "アウターブランディング〜社外に届けるブランド施策〜その２",
         "quote": "そう。だから、アウターブランディングを設計する時は、この2つを意識する必要がある。 どんなトリガー、「きっかけ」で思い出してほしいか。そして、その時に何を認識「目印」にしてもらうかね。",
-        "spotify_url": "https://open.spotify.com/episode/2qFZcQ7W1M7Wb1vtC7msW9"
+        "spotify_url": "https://open.spotify.com/episode/2qFZcQ7W1M7Wb1vtC7msW9",
+        "ordering": 0
       },
       {
         "ep_no": "14",
         "ep_title": "ブランド戦略の実行とPDCA〜R-PDCAの実践〜",
         "quote": "例えば、アウターブランディングだったら、認知度調査のスコアとか、ウェブサイトの指名検索数とか、SNSのエンゲージメント率とか。 インナーブランディングだったら、従業員エンゲージメントのスコアとか、理念の理解度調査とか、離職率の変化とか。",
-        "spotify_url": "https://open.spotify.com/episode/2UEVSSFbaa5RTdCOjcaKxB"
+        "spotify_url": "https://open.spotify.com/episode/2UEVSSFbaa5RTdCOjcaKxB",
+        "ordering": 1
       }
     ],
     "short_def": "顧客・取引先・社会など外部ステークホルダーに向けたブランディング活動の総称。",
@@ -1586,20 +1633,16 @@
       {
         "ep_no": "14",
         "ep_title": "ブランド戦略の実行とPDCA〜R-PDCAの実践〜",
-        "quote": "第2話で「R-PDCA」っていう概念をちょっとだけ紹介したの覚えてる？",
-        "spotify_url": "https://open.spotify.com/episode/2UEVSSFbaa5RTdCOjcaKxB"
-      },
-      {
-        "ep_no": "14",
-        "ep_title": "ブランド戦略の実行とPDCA〜R-PDCAの実践〜",
         "quote": "まずね、なんで普通のPDCAじゃなくてR-PDCAなのかっていう話なんだけど。 PDCAって、Plan、Do、Check、Actionでしょ。計画して、実行して、評価して、改善する。",
-        "spotify_url": "https://open.spotify.com/episode/2UEVSSFbaa5RTdCOjcaKxB"
+        "spotify_url": "https://open.spotify.com/episode/2UEVSSFbaa5RTdCOjcaKxB",
+        "ordering": 0
       },
       {
         "ep_no": "14",
         "ep_title": "ブランド戦略の実行とPDCA〜R-PDCAの実践〜",
         "quote": "いいね！まさにそう。第5話では、自社の資産を棚卸しして、外部環境とか競合を分析するって話をしたよね。 あれがR-PDCAの「R」の部分。で、大事なのは、このRは最初だけじゃなくて、それぞれのフェーズ、サイクルを回すたびに毎回やるってこと。 例えば、1年間のブランド施策を回したとするでしょ。 で、次の年の計画を立てる時に、また「R」から始める。 去年と市場は変わってないか、競合は何か新しいことやってないか、自社の状況はどうか。",
-        "spotify_url": "https://open.spotify.com/episode/2UEVSSFbaa5RTdCOjcaKxB"
+        "spotify_url": "https://open.spotify.com/episode/2UEVSSFbaa5RTdCOjcaKxB",
+        "ordering": 1
       }
     ],
     "short_def": "PDCAの前にResearch（調査）を加えた実行フレームワーク。",
@@ -1636,20 +1679,16 @@
       {
         "ep_no": "14",
         "ep_title": "ブランド戦略の実行とPDCA〜R-PDCAの実践〜",
-        "quote": "第2話で「R-PDCA」っていう概念をちょっとだけ紹介したの覚えてる？",
-        "spotify_url": "https://open.spotify.com/episode/2UEVSSFbaa5RTdCOjcaKxB"
-      },
-      {
-        "ep_no": "14",
-        "ep_title": "ブランド戦略の実行とPDCA〜R-PDCAの実践〜",
         "quote": "まずね、なんで普通のPDCAじゃなくてR-PDCAなのかっていう話なんだけど。 PDCAって、Plan、Do、Check、Actionでしょ。計画して、実行して、評価して、改善する。",
-        "spotify_url": "https://open.spotify.com/episode/2UEVSSFbaa5RTdCOjcaKxB"
+        "spotify_url": "https://open.spotify.com/episode/2UEVSSFbaa5RTdCOjcaKxB",
+        "ordering": 0
       },
       {
         "ep_no": "14",
         "ep_title": "ブランド戦略の実行とPDCA〜R-PDCAの実践〜",
         "quote": "いいね！まさにそう。第5話では、自社の資産を棚卸しして、外部環境とか競合を分析するって話をしたよね。 あれがR-PDCAの「R」の部分。で、大事なのは、このRは最初だけじゃなくて、それぞれのフェーズ、サイクルを回すたびに毎回やるってこと。 例えば、1年間のブランド施策を回したとするでしょ。 で、次の年の計画を立てる時に、また「R」から始める。 去年と市場は変わってないか、競合は何か新しいことやってないか、自社の状況はどうか。",
-        "spotify_url": "https://open.spotify.com/episode/2UEVSSFbaa5RTdCOjcaKxB"
+        "spotify_url": "https://open.spotify.com/episode/2UEVSSFbaa5RTdCOjcaKxB",
+        "ordering": 1
       }
     ],
     "short_def": "Plan（計画）・Do（実行）・Check（評価）・Act（改善）を繰り返す業務改善サイクル。",
@@ -1687,19 +1726,22 @@
         "ep_no": "15",
         "ep_title": "ブランド評価と効果測定〜ファネル分析の活用〜",
         "quote": "だから、ちゃんと測定して、数字で示す必要がある。 で、そのための便利なフレームワークが「ファネル分析」なんだよね。",
-        "spotify_url": "https://open.spotify.com/episode/2GZs3jVPMFX1yRXNPqVkZw"
+        "spotify_url": "https://open.spotify.com/episode/2GZs3jVPMFX1yRXNPqVkZw",
+        "ordering": 0
       },
       {
         "ep_no": "15",
         "ep_title": "ブランド評価と効果測定〜ファネル分析の活用〜",
         "quote": "そういうこと。100人が認知しても、興味を持つのは50人かもしれない。検討するのは20人、実際に買うのは5人、みたいな。 で、このファネルの各段階で「どれくらいの人が次のステップに進んでるか」を測定するのが、ファネル分析の基本。",
-        "spotify_url": "https://open.spotify.com/episode/2GZs3jVPMFX1yRXNPqVkZw"
+        "spotify_url": "https://open.spotify.com/episode/2GZs3jVPMFX1yRXNPqVkZw",
+        "ordering": 1
       },
       {
         "ep_no": "15",
         "ep_title": "ブランド評価と効果測定〜ファネル分析の活用〜",
         "quote": "ありがと。笑 でね、さらに面白いのが、このファネル分析、インナーブランディングにも使えるんだよ。",
-        "spotify_url": "https://open.spotify.com/episode/2GZs3jVPMFX1yRXNPqVkZw"
+        "spotify_url": "https://open.spotify.com/episode/2GZs3jVPMFX1yRXNPqVkZw",
+        "ordering": 2
       }
     ],
     "short_def": "顧客がブランドを認知してから購入・推奨に至るまでの各段階を漏斗（ファネル）に見立て、離脱を分析する手法。",
@@ -1737,7 +1779,8 @@
         "ep_no": "15",
         "ep_title": "ブランド評価と効果測定〜ファネル分析の活用〜",
         "quote": "うん。インフルエンスファネルって言うんだけど、まぁ、ロイヤル化がゴールって認識はあってるね。 ブランド評価用のファネルを整理すると、知っている「認知」、第一想起の「想起」、検討、選びたいって思ってくれてる「選好」、「購入」、リピートしている「継続」、人に勧める「推奨」。これで幾つだ？ この7段階。こんな感じになる。 これで捉えると、どこに課題があるか見えやすくなる。",
-        "spotify_url": "https://open.spotify.com/episode/2GZs3jVPMFX1yRXNPqVkZw"
+        "spotify_url": "https://open.spotify.com/episode/2GZs3jVPMFX1yRXNPqVkZw",
+        "ordering": 0
       }
     ],
     "short_def": "ブランドの状態を数値・定性の両面から測定し、評価する活動。",
@@ -1777,19 +1820,22 @@
         "ep_no": "15",
         "ep_title": "ブランド評価と効果測定〜ファネル分析の活用〜",
         "quote": "で、従業員にアンケートを取る。 「当社のミッションを知っていますか？」「ミッションの意味を自分の言葉で説明できますか？」「ミッションに共感していますか？」「日々の業務でミッションを意識していますか？」って。",
-        "spotify_url": "https://open.spotify.com/episode/2GZs3jVPMFX1yRXNPqVkZw"
+        "spotify_url": "https://open.spotify.com/episode/2GZs3jVPMFX1yRXNPqVkZw",
+        "ordering": 0
       },
       {
         "ep_no": "16",
         "ep_title": "5W1Hに当てはめる理念体系",
         "quote": "でしょ。というのもね、ビジョン、ミッションって理念用語としては知られてきてるけど、すぐにパッと意味を答えれる人は、まぁ、正直少ないよね。。。 クライアントと理念の見直しとかしててもさ「言葉が多すぎて混乱します」って言われることもあるしね。",
-        "spotify_url": "https://open.spotify.com/episode/7c7oySDzbl3wV5iDcSm39m"
+        "spotify_url": "https://open.spotify.com/episode/7c7oySDzbl3wV5iDcSm39m",
+        "ordering": 1
       },
       {
         "ep_no": "16",
         "ep_title": "5W1Hに当てはめる理念体系",
         "quote": "ミッション、ビジョン、バリュー、パーパス、行動指針、クレド、フィロソフィー、全部違う意味っぽいけど、何がどう違うの？って。",
-        "spotify_url": "https://open.spotify.com/episode/7c7oySDzbl3wV5iDcSm39m"
+        "spotify_url": "https://open.spotify.com/episode/7c7oySDzbl3wV5iDcSm39m",
+        "ordering": 2
       }
     ],
     "short_def": "企業が果たすべき使命。「何のために存在するのか」の答え。",
@@ -1834,19 +1880,22 @@
         "ep_no": "16",
         "ep_title": "5W1Hに当てはめる理念体系",
         "quote": "でしょ。というのもね、ビジョン、ミッションって理念用語としては知られてきてるけど、すぐにパッと意味を答えれる人は、まぁ、正直少ないよね。。。 クライアントと理念の見直しとかしててもさ「言葉が多すぎて混乱します」って言われることもあるしね。",
-        "spotify_url": "https://open.spotify.com/episode/7c7oySDzbl3wV5iDcSm39m"
+        "spotify_url": "https://open.spotify.com/episode/7c7oySDzbl3wV5iDcSm39m",
+        "ordering": 0
       },
       {
         "ep_no": "16",
         "ep_title": "5W1Hに当てはめる理念体系",
         "quote": "ミッション、ビジョン、バリュー、パーパス、行動指針、クレド、フィロソフィー、全部違う意味っぽいけど、何がどう違うの？って。",
-        "spotify_url": "https://open.spotify.com/episode/7c7oySDzbl3wV5iDcSm39m"
+        "spotify_url": "https://open.spotify.com/episode/7c7oySDzbl3wV5iDcSm39m",
+        "ordering": 1
       },
       {
         "ep_no": "16",
         "ep_title": "5W1Hに当てはめる理念体系",
         "quote": "うん。でもさ、ビジョンって「目指す姿」とか「理想の未来」って訳されることが多いじゃん。だから、シンプルな話、「どこに向かってるのか」っていう方向性だよね。目的地のイメージ。",
-        "spotify_url": "https://open.spotify.com/episode/7c7oySDzbl3wV5iDcSm39m"
+        "spotify_url": "https://open.spotify.com/episode/7c7oySDzbl3wV5iDcSm39m",
+        "ordering": 2
       }
     ],
     "short_def": "企業が目指す将来のあるべき姿・到達したい状態。",
@@ -1891,19 +1940,22 @@
         "ep_no": "16",
         "ep_title": "5W1Hに当てはめる理念体系",
         "quote": "ミッション、ビジョン、バリュー、パーパス、行動指針、クレド、フィロソフィー、全部違う意味っぽいけど、何がどう違うの？って。",
-        "spotify_url": "https://open.spotify.com/episode/7c7oySDzbl3wV5iDcSm39m"
+        "spotify_url": "https://open.spotify.com/episode/7c7oySDzbl3wV5iDcSm39m",
+        "ordering": 0
       },
       {
         "ep_no": "16",
         "ep_title": "5W1Hに当てはめる理念体系",
-        "quote": "でしょ。笑 もう一度言うと。。。パーパスがWHY、存在理由。ミッションがWHAT、何をやるか。バリューがHOWで。どうやるか。ペルソナはWHO、誰のためか。WHENをロードマップにまとめて。ビジョンがWHERE、どこへ向かうか。 どう？？スッキリした？笑",
-        "spotify_url": "https://open.spotify.com/episode/7c7oySDzbl3wV5iDcSm39m"
+        "quote": "でしょ。笑 もう一度言うと。。。パーパスがWHY、存在理由。ミッションがWHAT、何をやるか。バリューがHOWで。どうやるか。ペルソナはWHO、誰のためか。WHENをロードマップにまとめて。ビジョンがWHERE、どこへ向かうか。 どう？？スッキリした？笑。",
+        "spotify_url": "https://open.spotify.com/episode/7c7oySDzbl3wV5iDcSm39m",
+        "ordering": 1
       },
       {
         "ep_no": "17",
         "ep_title": "AIはブランディングをどう変えるのか？〜効率化と本質の両立〜",
         "quote": "うん。MVV、ミッション・ビジョン・バリューとか、タグラインとか、言葉を決めるのに何ヶ月もかかることがある。でも、AIと対話しながら進めると、思考の整理が早くなるよね。",
-        "spotify_url": "https://open.spotify.com/episode/4mXP1Dihw13bIRbB3NTq1c"
+        "spotify_url": "https://open.spotify.com/episode/4mXP1Dihw13bIRbB3NTq1c",
+        "ordering": 2
       }
     ],
     "short_def": "企業・社員が大切にする価値観・行動基準。",
@@ -1948,19 +2000,22 @@
         "ep_no": "16",
         "ep_title": "5W1Hに当てはめる理念体系",
         "quote": "ミッション、ビジョン、バリュー、パーパス、行動指針、クレド、フィロソフィー、全部違う意味っぽいけど、何がどう違うの？って。",
-        "spotify_url": "https://open.spotify.com/episode/7c7oySDzbl3wV5iDcSm39m"
+        "spotify_url": "https://open.spotify.com/episode/7c7oySDzbl3wV5iDcSm39m",
+        "ordering": 0
       },
       {
         "ep_no": "16",
         "ep_title": "5W1Hに当てはめる理念体系",
-        "quote": "でも仕方ないよね、本とかネットで調べても、書いてあることがバラバラだったりするしね。「ミッションは使命です」「いや、ミッションは任務です」「パーパスとミッションは同じです」「いや、違います」みたいな。笑",
-        "spotify_url": "https://open.spotify.com/episode/7c7oySDzbl3wV5iDcSm39m"
+        "quote": "でも仕方ないよね、本とかネットで調べても、書いてあることがバラバラだったりするしね。「ミッションは使命です」「いや、ミッションは任務です」「パーパスとミッションは同じです」「いや、違います」みたいな。笑。",
+        "spotify_url": "https://open.spotify.com/episode/7c7oySDzbl3wV5iDcSm39m",
+        "ordering": 1
       },
       {
         "ep_no": "16",
         "ep_title": "5W1Hに当てはめる理念体系",
         "quote": "「なぜこの会社は存在するのか」「なぜこの事業をやっているのか」っていう、根源的な問い。これがパーパスの領域ね。",
-        "spotify_url": "https://open.spotify.com/episode/7c7oySDzbl3wV5iDcSm39m"
+        "spotify_url": "https://open.spotify.com/episode/7c7oySDzbl3wV5iDcSm39m",
+        "ordering": 2
       }
     ],
     "short_def": "企業が社会に対して果たす存在意義。近年のブランディングで急速に重視されている概念。",
@@ -2003,19 +2058,22 @@
         "ep_no": "17",
         "ep_title": "AIはブランディングをどう変えるのか？〜効率化と本質の両立〜",
         "quote": "うん。プロンプト、つまり指示文に「こういうトーンで、こういう色味で、こういう雰囲気で」ってルールを書いておくと、毎回一定のトンマナで画像が出てくる。",
-        "spotify_url": "https://open.spotify.com/episode/4mXP1Dihw13bIRbB3NTq1c"
+        "spotify_url": "https://open.spotify.com/episode/4mXP1Dihw13bIRbB3NTq1c",
+        "ordering": 0
       },
       {
         "ep_no": "19-2",
         "ep_title": "brandcommit開発秘話〜なぜブランディングをツール化したのか〜",
         "quote": "笑。 その後、自社のコワーキングスペースを運営してさぁ、店舗の内装の作り込みもそうだけど、ウェブサイトとかパンフレットとか後はチラシとかSNSの発信とかまぁ様々なことをやっていく中で、そこで、トンマナとして、いろいろなことを統一しながら管理しなきゃって意識してくんだよね。",
-        "spotify_url": "https://open.spotify.com/episode/79MaearO4IDbo7Rj5KABAg"
+        "spotify_url": "https://open.spotify.com/episode/79MaearO4IDbo7Rj5KABAg",
+        "ordering": 1
       },
       {
         "ep_no": "23-2",
         "ep_title": "AIが変えるVI開発〜ロゴ・カラー提案の新しいカタチ〜",
         "quote": "うん。むしろ、今まで時間がかかってた「探索」「作業」の部分をAIに任せることで、デザイナーは「意味を込める」っていう一番クリエイティブな部分に集中できるようになるよね。効率の問題はAI、本質の問題は人間。これはVI開発でも同じです 次回はね、これもVIの延長なんだけど、AIで「トンマナ」をどう統一するか。SNSとかWebサイトとか、複数のタッチポイントでビジュアルの一貫性を保つ方法について話そうと思います。",
-        "spotify_url": "https://open.spotify.com/episode/3a9m5TSkKPm8I2CfHMmkh9"
+        "spotify_url": "https://open.spotify.com/episode/3a9m5TSkKPm8I2CfHMmkh9",
+        "ordering": 2
       }
     ],
     "short_def": "「トーン&マナー」の略。ブランドの文章・ビジュアル・声のトーンを一貫させるためのスタイル基準。",
@@ -2076,20 +2134,23 @@
       {
         "ep_no": "27",
         "ep_title": "ブランドストーリーの作り方_共感を生む物語の構造",
-        "quote": "そうそう。で、今回はそこから一歩外に向かって、ブランドが顧客にどう届くか、っていう話。今日のテーマは「ブランドストーリーの作り方〜共感を生む物語の構造〜」です。 さっきのNOPEもそうなんだけど、結局ブランドって「物語」がないと刺さらないんだよね。機能とか性能だけじゃ選ばれない時代になってきてる。",
-        "spotify_url": "https://open.spotify.com/episode/6xyXB03fhSCJknfcnpev22"
+        "quote": "そうそう。で、今回はそこから一歩外に向かって、ブランドが顧客にどう届くか、っていう話。 さっきのNOPEもそうなんだけど、結局ブランドって「物語」がないと刺さらないんだよね。機能とか性能だけじゃ選ばれない時代になってきてる。",
+        "spotify_url": "https://open.spotify.com/episode/6xyXB03fhSCJknfcnpev22",
+        "ordering": 0
       },
       {
         "ep_no": "27",
         "ep_title": "ブランドストーリーの作り方_共感を生む物語の構造",
         "quote": "そうそう。古くはアリストテレスから、最近だとジョセフ・キャンベルの「ヒーローズ・ジャーニー」っていう型もあって、ハリウッド映画もほぼこの構造で作られてる。ブランドストーリーも、実はこの型なんだよ。",
-        "spotify_url": "https://open.spotify.com/episode/6xyXB03fhSCJknfcnpev22"
+        "spotify_url": "https://open.spotify.com/episode/6xyXB03fhSCJknfcnpev22",
+        "ordering": 1
       },
       {
         "ep_no": "27",
         "ep_title": "ブランドストーリーの作り方_共感を生む物語の構造",
         "quote": "そう。これブランドストーリーとして二重、三重に巧いんだよ。一つ目が「30年の歴史を商品で語る」っていう章立て。二つ目が「現場が選んだ」っていう内側の物語。そして三つ目が、ユーザーが冒険する物語。「スター フラペチーノ クエスト」っていうキャンペーンになってて、お客さんが店舗を巡って5種類を集める構造。",
-        "spotify_url": "https://open.spotify.com/episode/6xyXB03fhSCJknfcnpev22"
+        "spotify_url": "https://open.spotify.com/episode/6xyXB03fhSCJknfcnpev22",
+        "ordering": 2
       }
     ],
     "short_def": "ブランドの起源・歩み・信念を物語形式で語るコンテンツ。",
@@ -2128,20 +2189,16 @@
       {
         "ep_no": "29",
         "ep_title": "空間ブランディング〜オフィス・店舗が「らしさ」を伝える方法〜",
-        "quote": "そう。4月8日発売で、メロン、フルーツヨーグルト、コーヒージェリー、加賀 棒ほうじ茶、チャンキークッキーの5種類。しかも面白いのが、1つの店舗で売るのは1種類だけに限定してて。 第29話：空間ブランディング〜オフィス・店舗が「らしさ」を伝える方法〜",
-        "spotify_url": "https://open.spotify.com/episode/7KWARegEbsMjjLd6qLfjtJ"
+        "quote": "そう。4月8日発売で、メロン、フルーツヨーグルト、コーヒージェリー、加賀 棒ほうじ茶、チャンキークッキーの5種類。しかも面白いのが、1つの店舗で売るのは1種類だけに限定してて。",
+        "spotify_url": "https://open.spotify.com/episode/7KWARegEbsMjjLd6qLfjtJ",
+        "ordering": 0
       },
       {
         "ep_no": "29",
         "ep_title": "空間ブランディング〜オフィス・店舗が「らしさ」を伝える方法〜",
-        "quote": "そう。全部飲みたかったら、いくつかの店舗を回らないといけない。 第29話：空間ブランディング〜オフィス・店舗が「らしさ」を伝える方法〜",
-        "spotify_url": "https://open.spotify.com/episode/7KWARegEbsMjjLd6qLfjtJ"
-      },
-      {
-        "ep_no": "29",
-        "ep_title": "空間ブランディング〜オフィス・店舗が「らしさ」を伝える方法〜",
-        "quote": "で、これって30周年記念キャンペーンの第1弾なんだよ。日本上陸30周年。テーマがね、「原点に立ち返り、原点を超えていく」。 第29話：空間ブランディング〜オフィス・店舗が「らしさ」を伝える方法〜",
-        "spotify_url": "https://open.spotify.com/episode/7KWARegEbsMjjLd6qLfjtJ"
+        "quote": "で、これって30周年記念キャンペーンの第1弾なんだよ。日本上陸30周年。テーマがね、「原点に立ち返り、原点を超えていく」。",
+        "spotify_url": "https://open.spotify.com/episode/7KWARegEbsMjjLd6qLfjtJ",
+        "ordering": 1
       }
     ],
     "short_def": "オフィス・店舗・イベント会場などの空間を通じてブランドの世界観を伝える活動。",
@@ -2175,22 +2232,18 @@
     ],
     "kitagawa_quotes": [
       {
-        "ep_no": "15",
-        "ep_title": "ブランド評価と効果測定〜ファネル分析の活用〜",
-        "quote": "ね。その後、レンタカーでマツダ借りました。 関口： え？ロードスターですか？？ 北川： んなわけないじゃん。CX-3。。。って言ってもわからないか。はい、では本編に入りましょうか。",
-        "spotify_url": "https://open.spotify.com/episode/2GZs3jVPMFX1yRXNPqVkZw"
-      },
-      {
         "ep_no": "30",
         "ep_title": "顧客体験CXの設計",
-        "quote": "だよね。この「顧客幸福度」のいいところは、「長く好きでいてもらう」っていう、ふわっとしがちな話が、ちゃんと数字になってること。面白いよね。 さて、前置きが長くなったけど、今日のテーマは「顧客体験CXの設計〜タッチポイントを繋げてブランドを育てる〜」です。",
-        "spotify_url": "https://open.spotify.com/episode/2ulCmrD0uZiyo31OihFPTh"
+        "quote": "だよね。この「顧客幸福度」のいいところは、「長く好きでいてもらう」っていう、ふわっとしがちな話が、ちゃんと数字になってること。面白いよね。",
+        "spotify_url": "https://open.spotify.com/episode/2ulCmrD0uZiyo31OihFPTh",
+        "ordering": 0
       },
       {
         "ep_no": "30",
         "ep_title": "顧客体験CXの設計",
         "quote": "多いよね。名刺一枚、梱包の箱、問い合わせの返信メール、ぜんぶ接点。で、その接点を「点」じゃなくて「線」、一連の流れとして体験したときの、お客さんの感じ方ぜんぶを「カスタマーエクスペリエンス」、CXって呼ぶ。時間軸を意識した体験設計、って思ってもらえると分かりやすいかな。",
-        "spotify_url": "https://open.spotify.com/episode/2ulCmrD0uZiyo31OihFPTh"
+        "spotify_url": "https://open.spotify.com/episode/2ulCmrD0uZiyo31OihFPTh",
+        "ordering": 1
       }
     ],
     "short_def": "Customer Experience。顧客が製品・サービス・ブランドと接触する一連の体験全体。",
@@ -2228,14 +2281,16 @@
       {
         "ep_no": "30",
         "ep_title": "顧客体験CXの設計",
-        "quote": "だよね。この「顧客幸福度」のいいところは、「長く好きでいてもらう」っていう、ふわっとしがちな話が、ちゃんと数字になってること。面白いよね。 さて、前置きが長くなったけど、今日のテーマは「顧客体験CXの設計〜タッチポイントを繋げてブランドを育てる〜」です。",
-        "spotify_url": "https://open.spotify.com/episode/2ulCmrD0uZiyo31OihFPTh"
+        "quote": "だよね。この「顧客幸福度」のいいところは、「長く好きでいてもらう」っていう、ふわっとしがちな話が、ちゃんと数字になってること。面白いよね。",
+        "spotify_url": "https://open.spotify.com/episode/2ulCmrD0uZiyo31OihFPTh",
+        "ordering": 0
       },
       {
         "ep_no": "30",
         "ep_title": "顧客体験CXの設計",
         "quote": "うん。お客さんとの関係を、接点を繋ぎながら、一緒に育てていく。それが、顧客体験の設計だよね。",
-        "spotify_url": "https://open.spotify.com/episode/2ulCmrD0uZiyo31OihFPTh"
+        "spotify_url": "https://open.spotify.com/episode/2ulCmrD0uZiyo31OihFPTh",
+        "ordering": 1
       }
     ],
     "short_def": "CX（Customer Experience）の日本語表記。→ CX の項を参照。",
@@ -2280,7 +2335,8 @@
         "ep_no": "31",
         "ep_title": "オンラインとオフラインの体験をどう統合するか",
         "quote": "うん。で、似た言葉で「オムニチャネル」とか「O2O」っていうのもあるんだけど。あれは基本、オンラインとオフラインを別々の領域として持ってて、それをどううまく繋ぐか、っていう発想なんだよね。",
-        "spotify_url": "https://open.spotify.com/episode/3SQztO8c8UYwQTVAvt83Gq"
+        "spotify_url": "https://open.spotify.com/episode/3SQztO8c8UYwQTVAvt83Gq",
+        "ordering": 0
       }
     ],
     "short_def": "オンライン・オフラインのあらゆる接点を統合し、顧客に一貫した体験を提供する戦略。",
@@ -2316,14 +2372,9 @@
       {
         "ep_no": "33",
         "ep_title": "BtoBブランディング_どこで差がつく",
-        "quote": "はい。そんな今日のテーマは「BtoBブランディング、どこで差がつく？」です。",
-        "spotify_url": "https://open.spotify.com/episode/2fxSKbQGJ8aVIAVqoVISzW"
-      },
-      {
-        "ep_no": "33",
-        "ep_title": "BtoBブランディング_どこで差がつく",
         "quote": "はい。では今日のまとめです。BtoBブランディングの差がつくポイントとは？ 1つ目は、言葉にすること。外側の見た目より先に、「自分たちは何者か」を言葉にできてるか。花岡車輌の例でした。",
-        "spotify_url": "https://open.spotify.com/episode/2fxSKbQGJ8aVIAVqoVISzW"
+        "spotify_url": "https://open.spotify.com/episode/2fxSKbQGJ8aVIAVqoVISzW",
+        "ordering": 0
       }
     ],
     "short_def": "法人（企業）を顧客とするビジネスにおけるブランド構築活動。",
@@ -2359,19 +2410,22 @@
         "ep_no": "13",
         "ep_title": "アウターブランディング〜社外に届けるブランド施策〜その２",
         "quote": "冒頭に噛むなよ笑 そうだね。いろんな場面で思い出してもらえるように第一想起を取るために設計するって話をしました。 で、今回はその続き。じゃあ具体的にどうやって認知を増やして、エボークトセットに入るかっていう、もう少し実践的な話をしようと思う。",
-        "spotify_url": "https://open.spotify.com/episode/2qFZcQ7W1M7Wb1vtC7msW9"
+        "spotify_url": "https://open.spotify.com/episode/2qFZcQ7W1M7Wb1vtC7msW9",
+        "ordering": 0
       },
       {
         "ep_no": "15",
         "ep_title": "ブランド評価と効果測定〜ファネル分析の活用〜",
         "quote": "そう。例えばね、認知度は高いのに、想起されてないっていうケースがあるとする。 これは「知られてるけど、思い出してもらえてない」ってこと。第12話で話したエボークトセットに入れてない状態。",
-        "spotify_url": "https://open.spotify.com/episode/2GZs3jVPMFX1yRXNPqVkZw"
+        "spotify_url": "https://open.spotify.com/episode/2GZs3jVPMFX1yRXNPqVkZw",
+        "ordering": 1
       },
       {
         "ep_no": "34",
         "ep_title": "社内で“ブランドが想起されない”理由 〜エボークトセットで考える接点設計〜",
         "quote": "あー、そうだね。 で、なんでこの紐づけが起きないか。ここでさ、前に話した「エボークトセット」って言葉、覚えてる？",
-        "spotify_url": ""
+        "spotify_url": "",
+        "ordering": 2
       }
     ],
     "short_def": "顧客が購買を検討する際、頭の中で「候補」として想起するブランドの集合。想起集合。",
@@ -2442,19 +2496,22 @@
         "ep_no": "37",
         "ep_title": "何屋か問題_台本スライド",
         "quote": "で、場合によったら、 それが細々増えすぎてたり、新規事業が徐々に順調になっていって、メインの事業と売上が逆転しちゃったりとかwww 気づいたら「結局、自分たちは何の会社なの？」って、社外からも、下手すると社内からも、わかんなくなる。僕、勝手に\"何屋か問題\"って呼んでるんだけど。",
-        "spotify_url": ""
+        "spotify_url": "",
+        "ordering": 0
       },
       {
         "ep_no": "37",
         "ep_title": "何屋か問題_台本スライド",
         "quote": "www 諭されてる？？w ありがとうございます ガチ回答すれば、うちの場合はブランディングは事業で、理念構築、空間デザインとかグラフィックなどのクリエイティブはサービスっていう分類なんだけどね。。。まあいいや。ここを掘り下げすぎると、また一つ新しいテーマができちゃうからww そういった悩みを持った企業の方々に向けて、 今日はその\"何屋か問題\"を、どう整理するか。整理の仕方が3つある、って話をしようと思って。",
-        "spotify_url": ""
+        "spotify_url": "",
+        "ordering": 1
       },
       {
         "ep_no": "37",
         "ep_title": "何屋か問題_台本スライド",
         "quote": "はい、じゃあ今日のまとめ。\"何屋か問題\"の整理の仕方でした。1つ目。何屋かわからなくなるのは、事業が多いからじゃなくて、\"見せ方を整理してない\"から。事業を減らす話じゃなくて、見せ方の片づけ、って話ね。",
-        "spotify_url": ""
+        "spotify_url": "",
+        "ordering": 2
       }
     ],
     "short_def": "「うちは何屋か」がひと言で説明できなくなる状態を指す、ID INC.独自の表現。",
@@ -2563,13 +2620,15 @@
         "ep_no": "14",
         "ep_title": "ブランド戦略の実行とPDCA〜R-PDCAの実践〜",
         "quote": "目標だけ掲げても、誰が何をいつまでにやるかが明確じゃないと、動かないでしょ。 「来期までに関東エリアのブランド認知率を5%高める」っていう目標があったとして、じゃあ具体的に何をするの？っていう。",
-        "spotify_url": "https://open.spotify.com/episode/2UEVSSFbaa5RTdCOjcaKxB"
+        "spotify_url": "https://open.spotify.com/episode/2UEVSSFbaa5RTdCOjcaKxB",
+        "ordering": 0
       },
       {
         "ep_no": "17",
         "ep_title": "AIはブランディングをどう変えるのか？〜効率化と本質の両立〜",
         "quote": "具体的には、市場調査として、顧客満足度調査、ブランド認知度調査とか行うけど、 あれって、依頼してやってもらった調査会社がレポートを作成してきてくれる場合もあるんだけど、こういう部分を集計したいとか、切り取り方を変えて分析してみたいって言うときにはローデータって言う集計された生のデータをもらうことになるんだけど、、それなんかをね、AIに分析させて報告書にまとめちゃう。",
-        "spotify_url": "https://open.spotify.com/episode/4mXP1Dihw13bIRbB3NTq1c"
+        "spotify_url": "https://open.spotify.com/episode/4mXP1Dihw13bIRbB3NTq1c",
+        "ordering": 1
       }
     ],
     "short_def": "顧客がブランドの名前・存在を認識している状態。ブランディングの最初の到達目標。",
@@ -2744,13 +2803,15 @@
         "ep_no": "15",
         "ep_title": "ブランド評価と効果測定〜ファネル分析の活用〜",
         "quote": "そう。認知度調査とかブランドイメージ調査とか、まぁ、その時々の名目で。ファネルの各段階に対応した質問を設計する。",
-        "spotify_url": "https://open.spotify.com/episode/2GZs3jVPMFX1yRXNPqVkZw"
+        "spotify_url": "https://open.spotify.com/episode/2GZs3jVPMFX1yRXNPqVkZw",
+        "ordering": 0
       },
       {
         "ep_no": "23-2",
         "ep_title": "AIが変えるVI開発〜ロゴ・カラー提案の新しいカタチ〜",
         "quote": "でしょ。だから「この色に合うサブカラーを20パターン選んでって」AIに依頼して提案してもらえば、クライアントとの打ち合わせでも選択肢を見せながら議論できる。「なんとなくこの色がいい」じゃなくて、「この配色パターンのどれがうちのブランドイメージに合うか」って話し方ができるようになるんだよね。",
-        "spotify_url": "https://open.spotify.com/episode/3a9m5TSkKPm8I2CfHMmkh9"
+        "spotify_url": "https://open.spotify.com/episode/3a9m5TSkKPm8I2CfHMmkh9",
+        "ordering": 1
       }
     ],
     "short_def": "顧客・社会の頭の中に実際に形成されているブランドの像。ブランドアイデンティティと対比される概念。",
@@ -2794,20 +2855,16 @@
       {
         "ep_no": "35",
         "ep_title": "値上げでブランドを強くする会社_台本スライド",
-        "quote": "「ブランドプロミス」についてです。",
-        "spotify_url": ""
-      },
-      {
-        "ep_no": "35",
-        "ep_title": "値上げでブランドを強くする会社_台本スライド",
         "quote": "確かに結果がわからないものについては怖いと感じるかもしれないけど、ただやることをやっていれば、それが自分たちの自信につながって、結果、お客様の評価にもつながるわけだから そしてそのための目標値としてブランドプロミスを掲げるわけ。 話を今回のテーマに戻すと、「値上げでブランドを強くする会社、弱くする会社」。なので、、、テーマに沿って好ましくないケースを2つほど挙げたいと思います。",
-        "spotify_url": ""
+        "spotify_url": "",
+        "ordering": 0
       },
       {
         "ep_no": "35",
         "ep_title": "値上げでブランドを強くする会社_台本スライド",
         "quote": "うん。だからブランドプロミスとしても、定義がしっかりとしてるんだと思うよ。 大抵はね、全部守ろうとして中途半端に終わっちゃったりするからね。。。 ……で、結果、鎌倉シャツ、今はどうなったと思う？",
-        "spotify_url": ""
+        "spotify_url": "",
+        "ordering": 1
       }
     ],
     "short_def": "ブランドが顧客に対して約束する価値。守り続けることで信頼が積み上がる。",
@@ -2907,7 +2964,8 @@
         "ep_no": "17",
         "ep_title": "AIはブランディングをどう変えるのか？〜効率化と本質の両立〜",
         "quote": "うん。MVV、ミッション・ビジョン・バリューとか、タグラインとか、言葉を決めるのに何ヶ月もかかることがある。でも、AIと対話しながら進めると、思考の整理が早くなるよね。",
-        "spotify_url": "https://open.spotify.com/episode/4mXP1Dihw13bIRbB3NTq1c"
+        "spotify_url": "https://open.spotify.com/episode/4mXP1Dihw13bIRbB3NTq1c",
+        "ordering": 0
       }
     ],
     "short_def": "ブランドを象徴する短いフレーズ。スローガンと近いが、より広告向けで一時的な使用も許容される。",
@@ -2947,19 +3005,15 @@
         "ep_no": "13",
         "ep_title": "アウターブランディング〜社外に届けるブランド施策〜その２",
         "quote": "うん。ただ、MVV、スローガン系は数年おきに見直して良いと思うけどね。戦略と紐づくから。 だけど、ロゴやカラーなどは、一回決めたら、あまりコロコロ変えちゃダメだよね。うちでさ、リブランディングとか提案する時も、あえて既存のロゴの印象を引き継いだ案も含めて提案したりもするしさ。それくらい、これまで積み上げてきた資産をリセットしないように配慮するよね。",
-        "spotify_url": "https://open.spotify.com/episode/2qFZcQ7W1M7Wb1vtC7msW9"
+        "spotify_url": "https://open.spotify.com/episode/2qFZcQ7W1M7Wb1vtC7msW9",
+        "ordering": 0
       },
       {
         "ep_no": "33",
-        "ep_title": "BtoBブランディング_どこで差がつく",
-        "quote": "今日は、インテリアデザインで、弊社も取引させてもらっている、オカムラがリブランディングしたっていうニュースを見たので、そのお話しです。",
-        "spotify_url": "https://open.spotify.com/episode/2fxSKbQGJ8aVIAVqoVISzW"
-      },
-      {
-        "ep_no": "33",
-        "ep_title": "BtoBブランディング_どこで差がつく",
+        "ep_title": "BtoBブランディング_どこで差がつく",
         "quote": "そのオカムラが6月に、中長期の経営戦略としてリブランディングしますって発表して。",
-        "spotify_url": "https://open.spotify.com/episode/2fxSKbQGJ8aVIAVqoVISzW"
+        "spotify_url": "https://open.spotify.com/episode/2fxSKbQGJ8aVIAVqoVISzW",
+        "ordering": 1
       }
     ],
     "short_def": "既存のブランドを再構築・刷新する活動。事業環境の変化・M&A・世代交代などの節目で実施。",
@@ -3181,19 +3235,22 @@
         "ep_no": "13",
         "ep_title": "アウターブランディング〜社外に届けるブランド施策〜その２",
         "quote": "うん。資産を載せて、タッチポイントに届けるためのクリエイティブ。具体的なプロダクトね。 例えば、一番基本的なところで言うと、名刺とかウェブサイトとか。",
-        "spotify_url": "https://open.spotify.com/episode/2qFZcQ7W1M7Wb1vtC7msW9"
+        "spotify_url": "https://open.spotify.com/episode/2qFZcQ7W1M7Wb1vtC7msW9",
+        "ordering": 0
       },
       {
         "ep_no": "13",
         "ep_title": "アウターブランディング〜社外に届けるブランド施策〜その２",
         "quote": "笑。ちゃんとしますよ。笑 で、もっと言うと、、、パンフレットとか会社案内とか、営業資料とか。 BtoBの会社だと、この辺りが最初のタッチポイントに必要なものかな。 店舗や営業所とかには、看板、サイン、インテリア、内装外装も重要な要素になるよね。",
-        "spotify_url": "https://open.spotify.com/episode/2qFZcQ7W1M7Wb1vtC7msW9"
+        "spotify_url": "https://open.spotify.com/episode/2qFZcQ7W1M7Wb1vtC7msW9",
+        "ordering": 1
       },
       {
         "ep_no": "14",
         "ep_title": "ブランド戦略の実行とPDCA〜R-PDCAの実践〜",
         "quote": "はい。タッチポイントを増やして、一貫したブランド資産を作って器に載せてくって話だったね。 で、次は、「実行」の話をしようと思います。",
-        "spotify_url": "https://open.spotify.com/episode/2UEVSSFbaa5RTdCOjcaKxB"
+        "spotify_url": "https://open.spotify.com/episode/2UEVSSFbaa5RTdCOjcaKxB",
+        "ordering": 2
       }
     ],
     "short_def": "顧客がブランドと接触するあらゆる接点。広告から接客まで全ての瞬間を含む。",
@@ -3230,19 +3287,22 @@
         "ep_no": "15",
         "ep_title": "ブランド評価と効果測定〜ファネル分析の活用〜",
         "quote": "そう。マツダに車両開発に「人馬一体」っていうコンセプトがあって。車と人が一体になるような走りを追求してて。世界中にファンがいるんだよね。",
-        "spotify_url": "https://open.spotify.com/episode/2GZs3jVPMFX1yRXNPqVkZw"
+        "spotify_url": "https://open.spotify.com/episode/2GZs3jVPMFX1yRXNPqVkZw",
+        "ordering": 0
       },
       {
         "ep_no": "18",
         "ep_title": "AIに任せていいこと、人間がやるべきこと〜ブランド構築の役割分担〜",
         "quote": "まぁ、確かに、検証コストは激減するし、ニッチなターゲットの理解も深まる。コンセプトの事前検証が高速化するのは間違いないだろうけど、、、 AIが再現したペルソナが、実際の社会とどれほど一致するかっていうと、まだわからない部分もあるから。ただ、どんどんと誤差を修正して精度は良くなるだろうね。",
-        "spotify_url": "https://open.spotify.com/episode/1XNn5lCW3PeXFY9oSJte9C"
+        "spotify_url": "https://open.spotify.com/episode/1XNn5lCW3PeXFY9oSJte9C",
+        "ordering": 1
       },
       {
         "ep_no": "19-2",
         "ep_title": "brandcommit開発秘話〜なぜブランディングをツール化したのか〜",
         "quote": "そそ。笑 で、アプリの話は、、、 最初のコンセプトはすごくシンプルで。「ブランドガイドラインが、スマホでいつでも確認できる場所があればいい」、それだけだった。",
-        "spotify_url": "https://open.spotify.com/episode/79MaearO4IDbo7Rj5KABAg"
+        "spotify_url": "https://open.spotify.com/episode/79MaearO4IDbo7Rj5KABAg",
+        "ordering": 2
       }
     ],
     "short_def": "ブランド・商品・サービスの根幹にある考え方・世界観の凝縮表現。",
@@ -3277,22 +3337,18 @@
     ],
     "kitagawa_quotes": [
       {
-        "ep_no": "11",
-        "ep_title": "インナーブランディング〜社内浸透の仕組みづくり〜 その２",
-        "quote": "来年も引き続き、ブランドの育て方についてお届けしていきますので、どうぞよろしくお願いします。 それでは皆さん、良いお年をお迎えください。",
-        "spotify_url": "https://open.spotify.com/episode/17XJkW98VWHZgxDH9RzTvZ"
-      },
-      {
         "ep_no": "13",
         "ep_title": "アウターブランディング〜社外に届けるブランド施策〜その２",
         "quote": "そう。でもね、「ただ接触すればいい」わけじゃないから。 一時的なABテストなら良いだろうけど、トーンを意識せずに、毎回違うコピーや違う色、で広告を打ったとすれば、 接触回数は増えてるけど、消費者の頭の中では「同じブランド」として認識されないから、あまり効率が良いとは言えないよね。",
-        "spotify_url": "https://open.spotify.com/episode/2qFZcQ7W1M7Wb1vtC7msW9"
+        "spotify_url": "https://open.spotify.com/episode/2qFZcQ7W1M7Wb1vtC7msW9",
+        "ordering": 0
       },
       {
         "ep_no": "13",
         "ep_title": "アウターブランディング〜社外に届けるブランド施策〜その２",
         "quote": "うん。だから、接触のたびに「あ、またあのブランドだ」って認識してもらう必要がある。 そのためのDBAって考え方があって。識別可能なブランド資産って訳されることもある。 要は、そのブランドだと一瞬でわかる「目印」のこと。",
-        "spotify_url": "https://open.spotify.com/episode/2qFZcQ7W1M7Wb1vtC7msW9"
+        "spotify_url": "https://open.spotify.com/episode/2qFZcQ7W1M7Wb1vtC7msW9",
+        "ordering": 1
       }
     ],
     "short_def": "企業・商品・サービスが持つ独自の「らしさ」。顧客の頭の中に形成される意味と価値の総体。",
@@ -3410,19 +3466,22 @@
         "ep_no": "18",
         "ep_title": "AIに任せていいこと、人間がやるべきこと〜ブランド構築の役割分担〜",
         "quote": "なので。Webサイト、SNS、広告、店舗、接客、パッケージ、カスタマーサポート…。お客さんがブランドを感じるすべての瞬間。で、これを洗い出すのにカスタマージャーニーを作るんだけど、これもAIにたたき台をまとめてもらうのが便利かな。複数の行動パターンを生成できるしね。",
-        "spotify_url": "https://open.spotify.com/episode/1XNn5lCW3PeXFY9oSJte9C"
+        "spotify_url": "https://open.spotify.com/episode/1XNn5lCW3PeXFY9oSJte9C",
+        "ordering": 0
       },
       {
         "ep_no": "21",
         "ep_title": "AIでペルソナを作る〜顧客像の精度を上げる方法〜",
         "quote": "うん。作ったw STP分析で決めた「誰に届けるか」を、名前・年齢・職業・行動パターンまで具体的な一人の人物像に落とし込んでいけるツール。AIがガイドしてくれて、5つのステップで進めていくんだけど、最終的にペルソナシートとカスタマージャーニーマップがPDFで出力できるようになってmます。",
-        "spotify_url": "https://open.spotify.com/episode/30QS6s5jredw5GAnJydKrf"
+        "spotify_url": "https://open.spotify.com/episode/30QS6s5jredw5GAnJydKrf",
+        "ordering": 1
       },
       {
         "ep_no": "21",
         "ep_title": "AIでペルソナを作る〜顧客像の精度を上げる方法〜",
         "quote": "笑 カスタマージャーニーマップは認知から興味、検討、購入、継続の5段階で、お客さんの行動と感情とタッチポイントが可視化される。で、そのまま社内で共有できる。 無料でお試しできるから。ぜひ触ってみてほしいですし、フィードバックもお待ちしてます。 概要欄にURLを貼っておきます。",
-        "spotify_url": "https://open.spotify.com/episode/30QS6s5jredw5GAnJydKrf"
+        "spotify_url": "https://open.spotify.com/episode/30QS6s5jredw5GAnJydKrf",
+        "ordering": 2
       }
     ],
     "short_def": "顧客がブランドを認知してから購入・再購入・推奨に至るまでの一連の体験プロセス。",
@@ -3462,13 +3521,15 @@
         "ep_no": "21",
         "ep_title": "AIでペルソナを作る〜顧客像の精度を上げる方法〜",
         "quote": "うん。作ったw STP分析で決めた「誰に届けるか」を、名前・年齢・職業・行動パターンまで具体的な一人の人物像に落とし込んでいけるツール。AIがガイドしてくれて、5つのステップで進めていくんだけど、最終的にペルソナシートとカスタマージャーニーマップがPDFで出力できるようになってmます。",
-        "spotify_url": "https://open.spotify.com/episode/30QS6s5jredw5GAnJydKrf"
+        "spotify_url": "https://open.spotify.com/episode/30QS6s5jredw5GAnJydKrf",
+        "ordering": 0
       },
       {
         "ep_no": "21",
         "ep_title": "AIでペルソナを作る〜顧客像の精度を上げる方法〜",
         "quote": "笑 カスタマージャーニーマップは認知から興味、検討、購入、継続の5段階で、お客さんの行動と感情とタッチポイントが可視化される。で、そのまま社内で共有できる。 無料でお試しできるから。ぜひ触ってみてほしいですし、フィードバックもお待ちしてます。 概要欄にURLを貼っておきます。",
-        "spotify_url": "https://open.spotify.com/episode/30QS6s5jredw5GAnJydKrf"
+        "spotify_url": "https://open.spotify.com/episode/30QS6s5jredw5GAnJydKrf",
+        "ordering": 1
       }
     ],
     "short_def": "カスタマージャーニーを可視化した図。段階ごとの顧客の思考・感情・接点・課題を並べる。",
@@ -3782,13 +3843,15 @@
         "ep_no": "17",
         "ep_title": "AIはブランディングをどう変えるのか？〜効率化と本質の両立〜",
         "quote": "うん、普段3つとか今まとめるのが好きだけど、今日は大サービスで2つ増やして5つです。笑 大丈夫、ちゃんとわかりやすく話すから。笑 まず1つ目は、「大量データからのインサイト抽出」。",
-        "spotify_url": "https://open.spotify.com/episode/4mXP1Dihw13bIRbB3NTq1c"
+        "spotify_url": "https://open.spotify.com/episode/4mXP1Dihw13bIRbB3NTq1c",
+        "ordering": 0
       },
       {
         "ep_no": "17",
         "ep_title": "AIはブランディングをどう変えるのか？〜効率化と本質の両立〜",
         "quote": "インサイト抽出？マーケティングで使われるけど、顧客の購買データや行動履歴、アンケート、SNSの生の声を分析して、「本音（インサイト）」、本質を見つけ出すプロセスね。 ブランディングの土台って、市場調査とか競合分析とか顧客理解じゃない。以前も話したSWOT分析とかPEST分析とか。あれをやるのに、昔はものすごい時間がかかってた。",
-        "spotify_url": "https://open.spotify.com/episode/4mXP1Dihw13bIRbB3NTq1c"
+        "spotify_url": "https://open.spotify.com/episode/4mXP1Dihw13bIRbB3NTq1c",
+        "ordering": 1
       }
     ],
     "short_def": "顧客の言葉にならない本音・欲求・葛藤を捉えた洞察。ブランド戦略の起点となる。",
@@ -3858,7 +3921,8 @@
         "ep_no": "16",
         "ep_title": "5W1Hに当てはめる理念体系",
         "quote": "ミッション、ビジョン、バリュー、パーパス、行動指針、クレド、フィロソフィー、全部違う意味っぽいけど、何がどう違うの？って。",
-        "spotify_url": "https://open.spotify.com/episode/7c7oySDzbl3wV5iDcSm39m"
+        "spotify_url": "https://open.spotify.com/episode/7c7oySDzbl3wV5iDcSm39m",
+        "ordering": 0
       }
     ],
     "short_def": "企業・ブランドが大切にする信条・行動指針を短い言葉で凝縮したもの。",
@@ -3900,19 +3964,22 @@
         "ep_no": "16",
         "ep_title": "5W1Hに当てはめる理念体系",
         "quote": "ミッション、ビジョン、バリュー、パーパス、行動指針、クレド、フィロソフィー、全部違う意味っぽいけど、何がどう違うの？って。",
-        "spotify_url": "https://open.spotify.com/episode/7c7oySDzbl3wV5iDcSm39m"
+        "spotify_url": "https://open.spotify.com/episode/7c7oySDzbl3wV5iDcSm39m",
+        "ordering": 0
       },
       {
         "ep_no": "16",
         "ep_title": "5W1Hに当てはめる理念体系",
         "quote": "翻訳しただけじゃん。笑笑 次は「Values」とか「Principles（プリンシプル）」とか行動指針。これは粒度は違えど、HOWにあたって、どうやるかに対応する。",
-        "spotify_url": "https://open.spotify.com/episode/7c7oySDzbl3wV5iDcSm39m"
+        "spotify_url": "https://open.spotify.com/episode/7c7oySDzbl3wV5iDcSm39m",
+        "ordering": 1
       },
       {
         "ep_no": "16",
         "ep_title": "5W1Hに当てはめる理念体系",
         "quote": "あ。本当？Principles（プリンシプル） はブランド体系でいうと、Valueより下、で、行動指針より上 に置く設計かな。。。あまりそこまで細分化するケースが少ないかもしれないけど。",
-        "spotify_url": "https://open.spotify.com/episode/7c7oySDzbl3wV5iDcSm39m"
+        "spotify_url": "https://open.spotify.com/episode/7c7oySDzbl3wV5iDcSm39m",
+        "ordering": 2
       }
     ],
     "short_def": "企業・ブランドが取るべき行動の具体基準。バリューを日々の業務レベルに翻訳したもの。",
@@ -3957,19 +4024,22 @@
         "ep_no": "14",
         "ep_title": "ブランド戦略の実行とPDCA〜R-PDCAの実践〜",
         "quote": "例えば、アウターブランディングだったら、認知度調査のスコアとか、ウェブサイトの指名検索数とか、SNSのエンゲージメント率とか。 インナーブランディングだったら、従業員エンゲージメントのスコアとか、理念の理解度調査とか、離職率の変化とか。",
-        "spotify_url": "https://open.spotify.com/episode/2UEVSSFbaa5RTdCOjcaKxB"
+        "spotify_url": "https://open.spotify.com/episode/2UEVSSFbaa5RTdCOjcaKxB",
+        "ordering": 0
       },
       {
         "ep_no": "26",
         "ep_title": "ブランドを育て続ける組織づくりとマインドセット",
         "quote": "うん、僕も初めて知ったんだけど、面白いお話だった。 片山社長が繰り返し強調していたのは、従来の「オフィスユニフォーム」や「サービスユニフォーム」とは違って、 企業のカルチャーやオリジナリティを、アパレルや雑貨、「もの」を通じて表現し、従業員エンゲージメントを高めるてくっていうものです。",
-        "spotify_url": "https://open.spotify.com/episode/0KOVEdel5qoGptWsmrcmPp"
+        "spotify_url": "https://open.spotify.com/episode/0KOVEdel5qoGptWsmrcmPp",
+        "ordering": 1
       },
       {
         "ep_no": "26",
         "ep_title": "ブランドを育て続ける組織づくりとマインドセット",
         "quote": "そうだね。ユニフォームっていうのは、会社が作って「これを着てください」という風に提供するものだよね。 それに対してコーポレートアパレルは、もっと主体的に従業員が楽しんで、ファッションや雑貨に企業のロゴをあしらっていって、そうすることで、企業に対するファン活動というか、まさにエンゲージメントを高めていくことになるんだよね。",
-        "spotify_url": "https://open.spotify.com/episode/0KOVEdel5qoGptWsmrcmPp"
+        "spotify_url": "https://open.spotify.com/episode/0KOVEdel5qoGptWsmrcmPp",
+        "ordering": 2
       }
     ],
     "short_def": "顧客・社員がブランドに対して抱く愛着・信頼・関与の度合い。",
@@ -4004,8 +4074,9 @@
       {
         "ep_no": "15",
         "ep_title": "ブランド評価と効果測定〜ファネル分析の活用〜",
-        "quote": "選好は、ロイヤル化の手前だね。 ロイヤル化は、もう繰り返しその商品を購入して、ファン化してる状態だから。例えて言うなら、選好は、、、コンビニ行こうかなーって思った時に、セブンイレブンを検索して探すみたいな？でもなければファミマにいくしローソンにもいく。ロイヤル化は、セブンしか行かないし、周りにも勧めるし、他をディスるし、ファン化した状態。笑",
-        "spotify_url": "https://open.spotify.com/episode/2GZs3jVPMFX1yRXNPqVkZw"
+        "quote": "選好は、ロイヤル化の手前だね。 ロイヤル化は、もう繰り返しその商品を購入して、ファン化してる状態だから。例えて言うなら、選好は、、、コンビニ行こうかなーって思った時に、セブンイレブンを検索して探すみたいな？でもなければファミマにいくしローソンにもいく。ロイヤル化は、セブンしか行かないし、周りにも勧めるし、他をディスるし、ファン化した状態。笑。",
+        "spotify_url": "https://open.spotify.com/episode/2GZs3jVPMFX1yRXNPqVkZw",
+        "ordering": 0
       }
     ],
     "short_def": "顧客が単なる購入者を超えて、能動的にブランドを支持・拡散してくれる状態にすること。",
@@ -4165,7 +4236,8 @@
         "ep_no": "36",
         "ep_title": "ブランドを日常業務に落とし込む_台本スライド",
         "quote": "はい。 先週、また新しい調査レポートが出ていました。大伸社コミュニケーションデザインっていう、ブランディングの会社が、「インターナルブランディングに関する実態調査2026」っていうのを公開してました。",
-        "spotify_url": ""
+        "spotify_url": "",
+        "ordering": 0
       }
     ],
     "short_def": "ブランドと顧客の関わり方全体を設計するデザイン領域。手段選択より関係設計が主眼。",
@@ -4232,13 +4304,15 @@
         "ep_no": "23-2",
         "ep_title": "AIが変えるVI開発〜ロゴ・カラー提案の新しいカタチ〜",
         "quote": "あとね、AIが面白いのは、カラーパレットの提案力。メインカラーを1色決めたら、それに合うサブカラーとアクセントカラーを、配色理論に基づいて何パターンも出してくれる。補色、類似色、アクセシビリティを配慮したコントラストとか…。色彩理論って知ってるとすごく便利なんだけど、全員が詳しいわけじゃないじゃん。",
-        "spotify_url": "https://open.spotify.com/episode/3a9m5TSkKPm8I2CfHMmkh9"
+        "spotify_url": "https://open.spotify.com/episode/3a9m5TSkKPm8I2CfHMmkh9",
+        "ordering": 0
       },
       {
         "ep_no": "23-2",
         "ep_title": "AIが変えるVI開発〜ロゴ・カラー提案の新しいカタチ〜",
         "quote": "笑笑 ブランドカラーの選定をAIがサポートしてくれるツールで、業種とかブランドパーソナリティを入力すると、カラーパレットの候補を提案してくれる。で、メインカラーを決めたら、サブカラーとアクセントカラーの組み合わせも出してくれるので、VIの色設計の叩き台として使ってもらえると思います。",
-        "spotify_url": "https://open.spotify.com/episode/3a9m5TSkKPm8I2CfHMmkh9"
+        "spotify_url": "https://open.spotify.com/episode/3a9m5TSkKPm8I2CfHMmkh9",
+        "ordering": 1
       }
     ],
     "short_def": "ブランドが使う色の組み合わせを規定した色の一覧。メイン・サブ・アクセント等の役割で分類。",
@@ -4600,19 +4674,22 @@
         "ep_no": "37",
         "ep_title": "何屋か問題_台本スライド",
         "quote": "はい。で、最後、3つ目。「サブブランド型」。これはね、いま話したマスターとマルチの、ちょうど中間なんだよ。",
-        "spotify_url": ""
+        "spotify_url": "",
+        "ordering": 0
       },
       {
         "ep_no": "37",
         "ep_title": "何屋か問題_台本スライド",
         "quote": "うん。親のAppleが後ろで品質を保証してるから安心なんだけど、iPhoneはiPhoneで、独立した一個のブランドとして強い。この\"保証は借りるけど、名前は独立させる\"のがサブブランド型。",
-        "spotify_url": ""
+        "spotify_url": "",
+        "ordering": 1
       },
       {
         "ep_no": "37",
         "ep_title": "何屋か問題_台本スライド",
         "quote": "www テスト的に仕込む市場に\"Apple○○\"って冠つけて様子をみてるのかもしれないよね。。。わからないけどw ちなみにさ、さっき星野リゾートを変わった例と言ったんだけど、星野リゾートは以前までサブブランド戦略をうたってて。最近、方針をマルチブランド戦略にシフトにつつ、特に「界」や「リゾナーレ」ブランドを独自ブランドとして立たせていきたいらしいんだよね。 ちょうど仕込みの最中ってことでおもしろい事例だと思います。",
-        "spotify_url": ""
+        "spotify_url": "",
+        "ordering": 2
       }
     ],
     "short_def": "親ブランドの下に位置する、独自の個性を持つ子ブランド。",
@@ -5202,13 +5279,15 @@
         "ep_no": "23-2",
         "ep_title": "AIが変えるVI開発〜ロゴ・カラー提案の新しいカタチ〜",
         "quote": "その「方向性を探る」作業にAIを使う。「シンボルマーク寄りで」「文字ロゴ中心で」「モダンなテイストで」「テック感のあるフラットデザインで」って条件を変えながら、バーって出力させる。もはや50パターンでも100パターンでも、数分で出てくるから。",
-        "spotify_url": "https://open.spotify.com/episode/3a9m5TSkKPm8I2CfHMmkh9"
+        "spotify_url": "https://open.spotify.com/episode/3a9m5TSkKPm8I2CfHMmkh9",
+        "ordering": 0
       },
       {
         "ep_no": "33",
         "ep_title": "BtoBブランディング_どこで差がつく",
         "quote": "うん。まず、目指す姿に「ヒューマン・オリエンテッド・カンパニー」って掲げてて。直訳すると「人を起点に考える会社」。ロゴとなる、新しいシンボルマークも発表されてたんだけど。立方体というか、六角形の真ん中に、白く輝くようなデザインが施されていて、なんかそれが漢字の「人」にも見えるようになってるよね。",
-        "spotify_url": "https://open.spotify.com/episode/2fxSKbQGJ8aVIAVqoVISzW"
+        "spotify_url": "https://open.spotify.com/episode/2fxSKbQGJ8aVIAVqoVISzW",
+        "ordering": 1
       }
     ],
     "short_def": "ブランドを象徴する図形記号。ロゴマークやアイコンを含む。",
@@ -5245,7 +5324,8 @@
         "ep_no": "19-2",
         "ep_title": "brandcommit開発秘話〜なぜブランディングをツール化したのか〜",
         "quote": "今ならね。以前話した、キャズムを乗り越えるための施策として、社内浸透のための推進チームを作ったりとか、人事評価に結びつけるとかも提案できるけど、、、ただもっと、「根本的に何が問題なんだろう」って考えた時に、ブランドアセットが、誰でも、いつでも、どこでも見れる場所にないって思ったんだよ。",
-        "spotify_url": "https://open.spotify.com/episode/79MaearO4IDbo7Rj5KABAg"
+        "spotify_url": "https://open.spotify.com/episode/79MaearO4IDbo7Rj5KABAg",
+        "ordering": 0
       }
     ],
     "short_def": "ブランドが所有する視覚・聴覚・言語の全構成要素。",
@@ -5483,19 +5563,22 @@
         "ep_no": "24",
         "ep_title": "AIで「トンマナ」をどう統一するか〜DESIGN.mdとClaude Designが変える、ブランドの渡し方〜",
         "quote": "で、design.mdの中身はデザインシステムとして、色とかフォント、余白のルールが書いてあって、それぞれに「なぜこの色なのか」「この色は何を象徴してるのか」っていう説明が添えてある。",
-        "spotify_url": "https://open.spotify.com/episode/23EOtlv7LQfiEDloyNvgfb"
+        "spotify_url": "https://open.spotify.com/episode/23EOtlv7LQfiEDloyNvgfb",
+        "ordering": 0
       },
       {
         "ep_no": "24",
         "ep_title": "AIで「トンマナ」をどう統一するか〜DESIGN.mdとClaude Designが変える、ブランドの渡し方〜",
         "quote": "うん。要素と関係性をセットでAIに渡すと、精度が上がるよって話ね。 さっきちらっとデザインシステムの話をしたけど、このポッドキャストではブランディングをテーマにして話をしてるから、先に補足しておくと、design.md はまだ、ブランドそのものを定義するファイルではないんだよね。",
-        "spotify_url": "https://open.spotify.com/episode/23EOtlv7LQfiEDloyNvgfb"
+        "spotify_url": "https://open.spotify.com/episode/23EOtlv7LQfiEDloyNvgfb",
+        "ordering": 1
       },
       {
         "ep_no": "24",
         "ep_title": "AIで「トンマナ」をどう統一するか〜DESIGN.mdとClaude Designが変える、ブランドの渡し方〜",
         "quote": "で、Claude Designは大きな特徴として、最初にブランドのデザインシステムを読み込ませると、それ以降に作るものの、トンマナを保つことができるんだよね。",
-        "spotify_url": "https://open.spotify.com/episode/23EOtlv7LQfiEDloyNvgfb"
+        "spotify_url": "https://open.spotify.com/episode/23EOtlv7LQfiEDloyNvgfb",
+        "ordering": 2
       }
     ],
     "short_def": "再利用可能なUI要素・パターン・ルールを体系化した設計基盤。",
@@ -5943,7 +6026,8 @@
         "ep_no": "26",
         "ep_title": "ブランドを育て続ける組織づくりとマインドセット",
         "quote": "例えばさ、これも片山さんから聞いた話で。ある会社では年に一回、コアバリューを体現した社員を表彰するときに、そのコアバリューのワードを社内のデザイナーがグラフィックにして、普段使いできるアパレル製品にして渡してるらしくて。",
-        "spotify_url": "https://open.spotify.com/episode/0KOVEdel5qoGptWsmrcmPp"
+        "spotify_url": "https://open.spotify.com/episode/0KOVEdel5qoGptWsmrcmPp",
+        "ordering": 0
       }
     ],
     "short_def": "組織・ブランドが最も大切にする価値観の中核。3〜7項目に絞る。",
@@ -6023,7 +6107,8 @@
         "ep_no": "27",
         "ep_title": "ブランドストーリーの作り方_共感を生む物語の構造",
         "quote": "そういうこと。ブランド側の物語、現場側の物語、ユーザー側の物語、この三つが重なってる。商品を飲む体験から、店舗を巡る体験へ、ブランド全体が参加型コンテンツになってる。ストーリーテリングとしては、相当な理想形だね。",
-        "spotify_url": "https://open.spotify.com/episode/6xyXB03fhSCJknfcnpev22"
+        "spotify_url": "https://open.spotify.com/episode/6xyXB03fhSCJknfcnpev22",
+        "ordering": 0
       }
     ],
     "short_def": "ブランドや商品を、物語構造を使って伝える手法。",
@@ -6211,19 +6296,22 @@
         "ep_no": "17",
         "ep_title": "AIはブランディングをどう変えるのか？〜効率化と本質の両立〜",
         "quote": "インサイト抽出？マーケティングで使われるけど、顧客の購買データや行動履歴、アンケート、SNSの生の声を分析して、「本音（インサイト）」、本質を見つけ出すプロセスね。 ブランディングの土台って、市場調査とか競合分析とか顧客理解じゃない。以前も話したSWOT分析とかPEST分析とか。あれをやるのに、昔はものすごい時間がかかってた。",
-        "spotify_url": "https://open.spotify.com/episode/4mXP1Dihw13bIRbB3NTq1c"
+        "spotify_url": "https://open.spotify.com/episode/4mXP1Dihw13bIRbB3NTq1c",
+        "ordering": 0
       },
       {
         "ep_no": "18",
         "ep_title": "AIに任せていいこと、人間がやるべきこと〜ブランド構築の役割分担〜",
         "quote": "うん。PEST分析、SWOT分析、競合調査、顧客の声の収集。普通にやるとすごく時間がかかるけど、AIを使って、だいぶ時間が短縮できるし、様々な角度から分析をして見れるっていうのも、AIを使う利点の1つだよね。",
-        "spotify_url": "https://open.spotify.com/episode/1XNn5lCW3PeXFY9oSJte9C"
+        "spotify_url": "https://open.spotify.com/episode/1XNn5lCW3PeXFY9oSJte9C",
+        "ordering": 1
       },
       {
         "ep_no": "18",
         "ep_title": "AIに任せていいこと、人間がやるべきこと〜ブランド構築の役割分担〜",
-        "quote": "まぁ、当然だよね。苦笑 確かに、先のフェーズでまとめたSWOT分析や経営陣へのヒアリング内容をデータとして持たせれば、会社の強みと、目指す方向性と、価値観はまとめてくれるし、それをもとにミッション案を10個作ってってAIに頼むと、それなりのものが出てくるけどね。。。苦笑",
-        "spotify_url": "https://open.spotify.com/episode/1XNn5lCW3PeXFY9oSJte9C"
+        "quote": "まぁ、当然だよね。苦笑 確かに、先のフェーズでまとめたSWOT分析や経営陣へのヒアリング内容をデータとして持たせれば、会社の強みと、目指す方向性と、価値観はまとめてくれるし、それをもとにミッション案を10個作ってってAIに頼むと、それなりのものが出てくるけどね。。。苦笑。",
+        "spotify_url": "https://open.spotify.com/episode/1XNn5lCW3PeXFY9oSJte9C",
+        "ordering": 2
       }
     ],
     "short_def": "Strength/Weakness/Opportunity/Threatの4象限で戦略環境を整理するフレーム。",
@@ -6290,7 +6378,8 @@
         "ep_no": "15",
         "ep_title": "ブランド評価と効果測定〜ファネル分析の活用〜",
         "quote": "そうそう。R-PDCAで言うと、このファネル分析の結果が次のRにもなるわけ。 「理解度が低いっていう結果が出た。じゃあ次は理解度を上げる施策を考えよう」って。 ただね、一つ注意点があって。定量調査だけじゃなくて、定性調査も大事なんだよ。",
-        "spotify_url": "https://open.spotify.com/episode/2GZs3jVPMFX1yRXNPqVkZw"
+        "spotify_url": "https://open.spotify.com/episode/2GZs3jVPMFX1yRXNPqVkZw",
+        "ordering": 0
       }
     ],
     "short_def": "数値では測れない態度・感情・動機を深掘りする調査手法。",
@@ -6327,7 +6416,8 @@
         "ep_no": "15",
         "ep_title": "ブランド評価と効果測定〜ファネル分析の活用〜",
         "quote": "そうそう。R-PDCAで言うと、このファネル分析の結果が次のRにもなるわけ。 「理解度が低いっていう結果が出た。じゃあ次は理解度を上げる施策を考えよう」って。 ただね、一つ注意点があって。定量調査だけじゃなくて、定性調査も大事なんだよ。",
-        "spotify_url": "https://open.spotify.com/episode/2GZs3jVPMFX1yRXNPqVkZw"
+        "spotify_url": "https://open.spotify.com/episode/2GZs3jVPMFX1yRXNPqVkZw",
+        "ordering": 0
       }
     ],
     "short_def": "数値で傾向を把握するアンケート・データ分析型調査。",
@@ -6658,14 +6748,16 @@
       {
         "ep_no": "28",
         "ep_title": "採用ブランディング_自社の魅力を候補者に伝える方法",
-        "quote": "完全にごまかせない。むしろ、いいことばっかり書いてある採用ページは、逆に疑われる時代になってる。だから採用広報のやり方が、「演出」から「透明性」に変わってきてるんだよね。 第28話：採用ブランディング〜自社の魅力を候補者に伝える方法〜",
-        "spotify_url": "https://open.spotify.com/episode/7AjaHj8qtyUMzmUEWHXSO3"
+        "quote": "完全にごまかせない。むしろ、いいことばっかり書いてある採用ページは、逆に疑われる時代になってる。だから採用広報のやり方が、「演出」から「透明性」に変わってきてるんだよね。",
+        "spotify_url": "https://open.spotify.com/episode/7AjaHj8qtyUMzmUEWHXSO3",
+        "ordering": 0
       },
       {
         "ep_no": "28",
         "ep_title": "採用ブランディング_自社の魅力を候補者に伝える方法",
-        "quote": "じゃあ最後にまとめると、今日伝えたかったのは三つ。ひとつ目、採用ブランディングは「採用広報」とは違って、企業の\"らしさ\"を候補者に届ける取り組みで、いまは「演出から透明性へ」っていう大きな転換期にあること。ふたつ目、AI面接やAI採用ツールが当たり前になる時代だからこそ、合理的な部分は揃ってきて、最終的な決め手は「ブランドの世界観に惹かれるかどうか」になっていく。三つ目、採用ページや動画はもう、ただの情報媒体じゃなくて、ブランドそのものの表現の場になってる、ってこと。 第28話：採用ブランディング〜自社の魅力を候補者に伝える方法〜",
-        "spotify_url": "https://open.spotify.com/episode/7AjaHj8qtyUMzmUEWHXSO3"
+        "quote": "じゃあ最後にまとめると、今日伝えたかったのは三つ。ひとつ目、採用ブランディングは「採用広報」とは違って、企業の\"らしさ\"を候補者に届ける取り組みで、いまは「演出から透明性へ」っていう大きな転換期にあること。ふたつ目、AI面接やAI採用ツールが当たり前になる時代だからこそ、合理的な部分は揃ってきて、最終的な決め手は「ブランドの世界観に惹かれるかどうか」になっていく。三つ目、採用ページや動画はもう、ただの情報媒体じゃなくて、ブランドそのものの表現の場になってる、ってこと。",
+        "spotify_url": "https://open.spotify.com/episode/7AjaHj8qtyUMzmUEWHXSO3",
+        "ordering": 1
       }
     ],
     "short_def": "原材料・製造過程・企業活動を積極的に開示するブランドの姿勢。",
@@ -7433,13 +7525,15 @@
         "ep_no": "13",
         "ep_title": "アウターブランディング〜社外に届けるブランド施策〜その２",
         "quote": "うん。こういった色なんかわさ、社会的に認知が高まったナショナル企業なんかだと、色自体を商標登録してるケースもあってね。 「カラー商標」って言うんだけど、その色を使う権利を持ってたりするしね。",
-        "spotify_url": "https://open.spotify.com/episode/2qFZcQ7W1M7Wb1vtC7msW9"
+        "spotify_url": "https://open.spotify.com/episode/2qFZcQ7W1M7Wb1vtC7msW9",
+        "ordering": 0
       },
       {
         "ep_no": "23-2",
         "ep_title": "AIが変えるVI開発〜ロゴ・カラー提案の新しいカタチ〜",
         "quote": "そうだね。あと、商標チェックとか著作権の確認は必ず忘れずに。AIが出したから安全ってわけじゃないからね。",
-        "spotify_url": "https://open.spotify.com/episode/3a9m5TSkKPm8I2CfHMmkh9"
+        "spotify_url": "https://open.spotify.com/episode/3a9m5TSkKPm8I2CfHMmkh9",
+        "ordering": 1
       }
     ],
     "short_def": "ブランド名・ロゴなどを法的に保護する権利。トレードマーク。",
@@ -7474,7 +7568,8 @@
         "ep_no": "23-2",
         "ep_title": "AIが変えるVI開発〜ロゴ・カラー提案の新しいカタチ〜",
         "quote": "そうだね。あと、商標チェックとか著作権の確認は必ず忘れずに。AIが出したから安全ってわけじゃないからね。",
-        "spotify_url": "https://open.spotify.com/episode/3a9m5TSkKPm8I2CfHMmkh9"
+        "spotify_url": "https://open.spotify.com/episode/3a9m5TSkKPm8I2CfHMmkh9",
+        "ordering": 0
       }
     ],
     "short_def": "創作物（ロゴ・コピー・写真・音楽等）を保護する法的権利。",
@@ -8229,19 +8324,22 @@
         "ep_no": "14",
         "ep_title": "ブランド戦略の実行とPDCA〜R-PDCAの実践〜",
         "quote": "うん。ここまでブランド基盤の作り方とか、インナー・アウターの施策とか、いろいろ話してきたけどね、どれだけ良い戦略を立てても、実行されなかったら意味がないもんね。",
-        "spotify_url": "https://open.spotify.com/episode/2UEVSSFbaa5RTdCOjcaKxB"
+        "spotify_url": "https://open.spotify.com/episode/2UEVSSFbaa5RTdCOjcaKxB",
+        "ordering": 0
       },
       {
         "ep_no": "18",
         "ep_title": "AIに任せていいこと、人間がやるべきこと〜ブランド構築の役割分担〜",
         "quote": "そうそう。だから、ブランド基盤のフェーズでは、AIは「選択肢を広げる」役割。人間は「絞り込む」役割。この分担でお願いします。",
-        "spotify_url": "https://open.spotify.com/episode/1XNn5lCW3PeXFY9oSJte9C"
+        "spotify_url": "https://open.spotify.com/episode/1XNn5lCW3PeXFY9oSJte9C",
+        "ordering": 1
       },
       {
         "ep_no": "23-2",
         "ep_title": "AIが変えるVI開発〜ロゴ・カラー提案の新しいカタチ〜",
         "quote": "まさに。ブランド基盤がしっかり言語化されてるほど、AIへの指示も的確になる。逆に言うと、「なんかかっこいいロゴ作って」だけだと、AIも困るし、出てくるものもぼんやりする。 お母さんに「何食べたい？」って聞かれて「うーん。なんか美味しいものー！」って言ってない？？",
-        "spotify_url": "https://open.spotify.com/episode/3a9m5TSkKPm8I2CfHMmkh9"
+        "spotify_url": "https://open.spotify.com/episode/3a9m5TSkKPm8I2CfHMmkh9",
+        "ordering": 2
       }
     ],
     "short_def": "ID INC.が提唱する、ブランドのあらゆる意思決定と行動の拠り所となる4要素の土台。",
@@ -8289,8 +8387,9 @@
       {
         "ep_no": "28",
         "ep_title": "採用ブランディング_自社の魅力を候補者に伝える方法",
-        "quote": "合理的なんだよ。ローソンとキリン、同じVARIETASの「AI面接官」を使ってるんだけど、ローソンは「学生理解と成長支援」、キリンは「評価のばらつき補完と多様性発掘」。それぞれの企業のブランド方針が、AIの使い方にちゃんと表れてる。 第28話：採用ブランディング〜自社の魅力を候補者に伝える方法〜",
-        "spotify_url": "https://open.spotify.com/episode/7AjaHj8qtyUMzmUEWHXSO3"
+        "quote": "合理的なんだよ。ローソンとキリン、同じVARIETASの「AI面接官」を使ってるんだけど、ローソンは「学生理解と成長支援」、キリンは「評価のばらつき補完と多様性発掘」。それぞれの企業のブランド方針が、AIの使い方にちゃんと表れてる。",
+        "spotify_url": "https://open.spotify.com/episode/7AjaHj8qtyUMzmUEWHXSO3",
+        "ordering": 0
       }
     ],
     "short_def": "設立ストーリーやMVV、スローガン、行動指針など、ブランドの向かう先を定義する要素群の総称。",
@@ -8403,19 +8502,22 @@
         "ep_no": "18",
         "ep_title": "AIに任せていいこと、人間がやるべきこと〜ブランド構築の役割分担〜",
         "quote": "じゃあ今日は、ブランド構築の7ステップに沿って、各フェーズで「AIに任せていい領域」と「人間がやるべき領域」を整理していこうと思います。",
-        "spotify_url": "https://open.spotify.com/episode/1XNn5lCW3PeXFY9oSJte9C"
+        "spotify_url": "https://open.spotify.com/episode/1XNn5lCW3PeXFY9oSJte9C",
+        "ordering": 0
       },
       {
         "ep_no": "20",
         "ep_title": "ブランディングビズの全体像〜構築・浸透・発信の3つのレイヤー〜",
         "quote": "はいはい。笑 今日のテーマは「AIリサーチ活用術」。ブランド構築の7ステップでいうと、ステップ3「リサーチ・分析」にフォーカスします。",
-        "spotify_url": "https://open.spotify.com/episode/0BoqB4cpDDoxHtVI3xlVIz"
+        "spotify_url": "https://open.spotify.com/episode/0BoqB4cpDDoxHtVI3xlVIz",
+        "ordering": 1
       },
       {
         "ep_no": "20",
         "ep_title": "ブランディングビズの全体像〜構築・浸透・発信の3つのレイヤー〜",
         "quote": "冷やかしはやめてね。笑 で、最後にまとめると。リサーチは、ブランド構築の7ステップの中で、AIの恩恵が最も大きいフェーズ。なぜなら、リサーチの本質は「量と速度」だから。大量の情報を集めて、比較して、構造化するのが得意なAIを、ぜひ活用してみてください。",
-        "spotify_url": "https://open.spotify.com/episode/0BoqB4cpDDoxHtVI3xlVIz"
+        "spotify_url": "https://open.spotify.com/episode/0BoqB4cpDDoxHtVI3xlVIz",
+        "ordering": 2
       }
     ],
     "short_def": "ID INC.が定義する、学習からチーム編成、基盤構築、実行、評価までを体系化したブランディングの実践プロセス。",
@@ -8548,20 +8650,23 @@
       {
         "ep_no": "20",
         "ep_title": "ブランディングビズの全体像〜構築・浸透・発信の3つのレイヤー〜",
-        "quote": "あ。ちょっと余談なんだけど。 こうしてPESTで外部環境分析をして、クロスSWOTで打ち手の方向性を出すじゃん。 その後は、「どの市場をの狙うか」「どういうポジションを取るか」のSTP分析に入っていくわけだけど",
-        "spotify_url": "https://open.spotify.com/episode/0BoqB4cpDDoxHtVI3xlVIz"
+        "quote": "あ。ちょっと余談なんだけど。 こうしてPESTで外部環境分析をして、クロスSWOTで打ち手の方向性を出すじゃん。 その後は、「どの市場をの狙うか」「どういうポジションを取るか」のSTP分析に入っていくわけだけど。",
+        "spotify_url": "https://open.spotify.com/episode/0BoqB4cpDDoxHtVI3xlVIz",
+        "ordering": 0
       },
       {
         "ep_no": "21",
         "ep_title": "AIでペルソナを作る〜顧客像の精度を上げる方法〜",
         "quote": "ペルソナの話自体は第6話でがっつりやったんだけど、改めてざっくり言うと、STP分析でターゲットを決めたあと、そのターゲットの中から「具体的な人物像」を描く作業ね。",
-        "spotify_url": "https://open.spotify.com/episode/30QS6s5jredw5GAnJydKrf"
+        "spotify_url": "https://open.spotify.com/episode/30QS6s5jredw5GAnJydKrf",
+        "ordering": 1
       },
       {
         "ep_no": "21",
         "ep_title": "AIでペルソナを作る〜顧客像の精度を上げる方法〜",
         "quote": "で、STP分析の結果と、既存顧客の傾向をAIに渡して、ペルソナを20パターン作ってそれを素案に5パターンまで絞り込んでいったよ。あーでもない、こーでもないってね。",
-        "spotify_url": "https://open.spotify.com/episode/30QS6s5jredw5GAnJydKrf"
+        "spotify_url": "https://open.spotify.com/episode/30QS6s5jredw5GAnJydKrf",
+        "ordering": 2
       }
     ],
     "short_def": "市場を細分化し、狙う顧客層を定め、自社の立ち位置を明確にする、戦略立案の基本となる3段階の分析手法。",
@@ -8607,19 +8712,15 @@
         "ep_no": "17",
         "ep_title": "AIはブランディングをどう変えるのか？〜効率化と本質の両立〜",
         "quote": "インサイト抽出？マーケティングで使われるけど、顧客の購買データや行動履歴、アンケート、SNSの生の声を分析して、「本音（インサイト）」、本質を見つけ出すプロセスね。 ブランディングの土台って、市場調査とか競合分析とか顧客理解じゃない。以前も話したSWOT分析とかPEST分析とか。あれをやるのに、昔はものすごい時間がかかってた。",
-        "spotify_url": "https://open.spotify.com/episode/4mXP1Dihw13bIRbB3NTq1c"
+        "spotify_url": "https://open.spotify.com/episode/4mXP1Dihw13bIRbB3NTq1c",
+        "ordering": 0
       },
       {
         "ep_no": "18",
         "ep_title": "AIに任せていいこと、人間がやるべきこと〜ブランド構築の役割分担〜",
         "quote": "うん。PEST分析、SWOT分析、競合調査、顧客の声の収集。普通にやるとすごく時間がかかるけど、AIを使って、だいぶ時間が短縮できるし、様々な角度から分析をして見れるっていうのも、AIを使う利点の1つだよね。",
-        "spotify_url": "https://open.spotify.com/episode/1XNn5lCW3PeXFY9oSJte9C"
-      },
-      {
-        "ep_no": "20",
-        "ep_title": "ブランディングビズの全体像〜構築・浸透・発信の3つのレイヤー〜",
-        "quote": "まさにそれ。じゃあ具体的にどう使うか、PEST分析の話をしようか。",
-        "spotify_url": "https://open.spotify.com/episode/0BoqB4cpDDoxHtVI3xlVIz"
+        "spotify_url": "https://open.spotify.com/episode/1XNn5lCW3PeXFY9oSJte9C",
+        "ordering": 1
       }
     ],
     "short_def": "政治・経済・社会・技術の4視点から、企業を取り巻くマクロな外部環境を分析する手法。",
@@ -8665,7 +8766,8 @@
         "ep_no": "20",
         "ep_title": "ブランディングビズの全体像〜構築・浸透・発信の3つのレイヤー〜",
         "quote": "これもめちゃくちゃ時短できるんだけど、例えば競合企業のWebサイト、IR情報、SNSの発信。これをAIに読み込ませて、「この会社、それぞれの強み・弱み・業界内でのポジションを考慮した比較表を作って」っとか投げると、一発で表が出てくる。 で、さらに「この表をもとに、クロスSWOT分析をして。自社の強みはこれこれです」って追加で投げると、自社と競合の掛け合わせまで出してくれる。",
-        "spotify_url": "https://open.spotify.com/episode/0BoqB4cpDDoxHtVI3xlVIz"
+        "spotify_url": "https://open.spotify.com/episode/0BoqB4cpDDoxHtVI3xlVIz",
+        "ordering": 0
       }
     ],
     "short_def": "SWOT分析の4項目を掛け合わせ、強み×機会など4パターンから具体的な戦略の方向性を導く分析手法。",
@@ -8889,7 +8991,8 @@
         "ep_no": "15",
         "ep_title": "ブランド評価と効果測定〜ファネル分析の活用〜",
         "quote": "うん。で、もっと言うと、最近は「購入」で終わりじゃないんだよね。 ここで「ダブルファネル」っていって反対側にも出てくる。",
-        "spotify_url": "https://open.spotify.com/episode/2GZs3jVPMFX1yRXNPqVkZw"
+        "spotify_url": "https://open.spotify.com/episode/2GZs3jVPMFX1yRXNPqVkZw",
+        "ordering": 0
       }
     ],
     "short_def": "購入をゴールとせず、購入後の体験・共有・推奨までを砂時計型に可視化するファネルモデル。",
@@ -8933,13 +9036,15 @@
         "ep_no": "15",
         "ep_title": "ブランド評価と効果測定〜ファネル分析の活用〜",
         "quote": "だよね。ファネルは、漏斗のこと。 マーケティングの世界では「購買ファネル」って呼ばれるものがあって。消費者が商品を知ってから買うまでの流れを、逆三角形の形で表現したもの。",
-        "spotify_url": "https://open.spotify.com/episode/2GZs3jVPMFX1yRXNPqVkZw"
+        "spotify_url": "https://open.spotify.com/episode/2GZs3jVPMFX1yRXNPqVkZw",
+        "ordering": 0
       },
       {
         "ep_no": "21",
         "ep_title": "AIでペルソナを作る〜顧客像の精度を上げる方法〜",
         "quote": "あ、いや。ファネルではない。購買ファネルは、顧客が購入に至るまでの段階の話だから、どっちかというと意思決定の評価軸の話ね。比較検討の段階の評価軸。",
-        "spotify_url": "https://open.spotify.com/episode/30QS6s5jredw5GAnJydKrf"
+        "spotify_url": "https://open.spotify.com/episode/30QS6s5jredw5GAnJydKrf",
+        "ordering": 1
       }
     ],
     "short_def": "認知から購入までの顧客行動を段階分けし、各段階の離脱率から課題箇所を特定する分析モデル。",
@@ -9043,13 +9148,15 @@
         "ep_no": "14",
         "ep_title": "ブランド戦略の実行とPDCA〜R-PDCAの実践〜",
         "quote": "だから、計画の段階でKPIを設定しておくことが大事。 何をもって「成功」とするか、定量的な指標を決めておく。",
-        "spotify_url": "https://open.spotify.com/episode/2UEVSSFbaa5RTdCOjcaKxB"
+        "spotify_url": "https://open.spotify.com/episode/2UEVSSFbaa5RTdCOjcaKxB",
+        "ordering": 0
       },
       {
         "ep_no": "15",
         "ep_title": "ブランド評価と効果測定〜ファネル分析の活用〜",
         "quote": "うん。で、最後にKPIの話をちょっとだけしたよね。認知度調査のスコアとか、指名検索数とか。 今回は、その「評価」の部分をもう少し掘り下げようと思う。具体的にどうやってブランドの効果を測るか。",
-        "spotify_url": "https://open.spotify.com/episode/2GZs3jVPMFX1yRXNPqVkZw"
+        "spotify_url": "https://open.spotify.com/episode/2GZs3jVPMFX1yRXNPqVkZw",
+        "ordering": 1
       }
     ],
     "short_def": "KGI（最終目標）に至るまでの中間プロセスの達成度を数値で管理する、重要業績評価指標のこと。",
@@ -9160,7 +9267,8 @@
         "ep_no": "17",
         "ep_title": "AIはブランディングをどう変えるのか？〜効率化と本質の両立〜",
         "quote": "AIにミッションやビジョンを「作らせる」ことは、確かにできるよね。「〇〇業界の企業理念を100個作って」って言えば、バーって出てくるよね。 でも、それをそのまま使ったらどうなるか。AIは大量のデータから学習してるから、「平均的に良いもの」を出すのは得意。でも、「平均的に良い」って、裏を返すと「誰にも刺さらない」んだよね。",
-        "spotify_url": "https://open.spotify.com/episode/4mXP1Dihw13bIRbB3NTq1c"
+        "spotify_url": "https://open.spotify.com/episode/4mXP1Dihw13bIRbB3NTq1c",
+        "ordering": 0
       }
     ],
     "short_def": "企業がなぜ存在し何を大切にするかを示す、時代が変わっても揺るがない普遍的な価値観を表す言葉。",
@@ -9271,7 +9379,8 @@
         "ep_no": "35",
         "ep_title": "値上げでブランドを強くする会社_台本スライド",
         "quote": "そう思うよね。ただね、違うんだよね。「原材料の高騰」とか「諸般の事情により」っていう、説明の粒度の問題なんだよ。カルビーの場合は、とても細かく説明してて。 商品パッケージに書くだけじゃなく、取材でも、中東情勢の影響に加えて、じゃがいもの仕入れだとか、物流費だとか、お客さん以外のステークホルダーにも理解してもらえるように、こと細かく説明してるんだよね。",
-        "spotify_url": ""
+        "spotify_url": "",
+        "ordering": 0
       }
     ],
     "short_def": "消費者・取引先・従業員・株主・地域社会・行政など、企業の活動に利害関係を持つすべての関係者を指す総称。",
@@ -9318,19 +9427,22 @@
         "ep_no": "14",
         "ep_title": "ブランド戦略の実行とPDCA〜R-PDCAの実践〜",
         "quote": "だから、AIをうまく使えば、それすらも強みにできます。 で、Rが終わったら次はP、計画のフェーズね。 正直、ここでもAI使えるから、分析結果をもとに、「競合と被さらないような施策のアイデアを50個出して」とか。「課題を解決するためのアクションプランを提案して」とか。 そうしたAIが出してくれたアイデアも含めて、議論して最終的に「アクションプラン」に落とし込んでいきます。",
-        "spotify_url": "https://open.spotify.com/episode/2UEVSSFbaa5RTdCOjcaKxB"
+        "spotify_url": "https://open.spotify.com/episode/2UEVSSFbaa5RTdCOjcaKxB",
+        "ordering": 0
       },
       {
         "ep_no": "14",
         "ep_title": "ブランド戦略の実行とPDCA〜R-PDCAの実践〜",
         "quote": "笑。 まぁ、SNSを強化するでもいいけど、どのSNSで、誰が担当で、週に何回投稿して、どんな内容を発信するのか。 そこまで具体化して初めて「アクションプラン」になる。",
-        "spotify_url": "https://open.spotify.com/episode/2UEVSSFbaa5RTdCOjcaKxB"
+        "spotify_url": "https://open.spotify.com/episode/2UEVSSFbaa5RTdCOjcaKxB",
+        "ordering": 1
       },
       {
         "ep_no": "18",
         "ep_title": "AIに任せていいこと、人間がやるべきこと〜ブランド構築の役割分担〜",
         "quote": "うん。でもね、やっぱり関わって楽しいフェーズだよね。笑 じゃあ次。6つ目の「ブランド戦略を実行する」フェーズ。ここでようやく、具体的なアクションプランを作る。",
-        "spotify_url": "https://open.spotify.com/episode/1XNn5lCW3PeXFY9oSJte9C"
+        "spotify_url": "https://open.spotify.com/episode/1XNn5lCW3PeXFY9oSJte9C",
+        "ordering": 2
       }
     ],
     "short_def": "戦略を実際の行動に移すための、タスク・優先順位・期日・担当者を明確にした具体的な計画。",
@@ -9372,19 +9484,22 @@
         "ep_no": "13",
         "ep_title": "アウターブランディング〜社外に届けるブランド施策〜その２",
         "quote": "ただ、全部やろうとすると大変だから、ロードマップをひいて、優先順位つけて取り組むのが大事。 まずは「消費者が最初に接触するポイントや多く接触するポイント」から整えていく。",
-        "spotify_url": "https://open.spotify.com/episode/2qFZcQ7W1M7Wb1vtC7msW9"
+        "spotify_url": "https://open.spotify.com/episode/2qFZcQ7W1M7Wb1vtC7msW9",
+        "ordering": 0
       },
       {
         "ep_no": "16",
         "ep_title": "5W1Hに当てはめる理念体系",
         "quote": "そうだね。ロードマップの下に、目標とか、マイルストーン設定とかね。ぶら下がってくるから、計画の大切さは以前も話してるからね。大事。 で。残りはなんでしょ？",
-        "spotify_url": "https://open.spotify.com/episode/7c7oySDzbl3wV5iDcSm39m"
+        "spotify_url": "https://open.spotify.com/episode/7c7oySDzbl3wV5iDcSm39m",
+        "ordering": 1
       },
       {
         "ep_no": "16",
         "ep_title": "5W1Hに当てはめる理念体系",
-        "quote": "でしょ。笑 もう一度言うと。。。パーパスがWHY、存在理由。ミッションがWHAT、何をやるか。バリューがHOWで。どうやるか。ペルソナはWHO、誰のためか。WHENをロードマップにまとめて。ビジョンがWHERE、どこへ向かうか。 どう？？スッキリした？笑",
-        "spotify_url": "https://open.spotify.com/episode/7c7oySDzbl3wV5iDcSm39m"
+        "quote": "でしょ。笑 もう一度言うと。。。パーパスがWHY、存在理由。ミッションがWHAT、何をやるか。バリューがHOWで。どうやるか。ペルソナはWHO、誰のためか。WHENをロードマップにまとめて。ビジョンがWHERE、どこへ向かうか。 どう？？スッキリした？笑。",
+        "spotify_url": "https://open.spotify.com/episode/7c7oySDzbl3wV5iDcSm39m",
+        "ordering": 2
       }
     ],
     "short_def": "中長期の目標達成までの道筋を時系列で可視化した計画図で、マスタープランとも呼ばれる。",
@@ -9430,7 +9545,8 @@
         "ep_no": "14",
         "ep_title": "ブランド戦略の実行とPDCA〜R-PDCAの実践〜",
         "quote": "で、それをガントチャートとかでプロジェクト管理ツールやスプレッドシートなどを用いてスケジュール化する。 何月に何をやるか、全体の流れが見えるようにする。 今ならね。クラウドツールを使って即時共有できて見える化できるとベストだよね。",
-        "spotify_url": "https://open.spotify.com/episode/2UEVSSFbaa5RTdCOjcaKxB"
+        "spotify_url": "https://open.spotify.com/episode/2UEVSSFbaa5RTdCOjcaKxB",
+        "ordering": 0
       }
     ],
     "short_def": "作業項目を縦軸、時間を横軸に取り、各タスクの期間と進捗を一覧できるようにした管理図。",
@@ -9525,19 +9641,22 @@
         "ep_no": "15",
         "ep_title": "ブランド評価と効果測定〜ファネル分析の活用〜",
         "quote": "そう。第11話で話したキャズムの話、覚えてる？ 16%のアーリーアダプターを超えて、マジョリティに届いてるかどうか。 これ、感覚じゃなくて数字で把握できるようになる。",
-        "spotify_url": "https://open.spotify.com/episode/2GZs3jVPMFX1yRXNPqVkZw"
+        "spotify_url": "https://open.spotify.com/episode/2GZs3jVPMFX1yRXNPqVkZw",
+        "ordering": 0
       },
       {
         "ep_no": "19-2",
         "ep_title": "brandcommit開発秘話〜なぜブランディングをツール化したのか〜",
         "quote": "今ならね。以前話した、キャズムを乗り越えるための施策として、社内浸透のための推進チームを作ったりとか、人事評価に結びつけるとかも提案できるけど、、、ただもっと、「根本的に何が問題なんだろう」って考えた時に、ブランドアセットが、誰でも、いつでも、どこでも見れる場所にないって思ったんだよ。",
-        "spotify_url": "https://open.spotify.com/episode/79MaearO4IDbo7Rj5KABAg"
+        "spotify_url": "https://open.spotify.com/episode/79MaearO4IDbo7Rj5KABAg",
+        "ordering": 1
       },
       {
         "ep_no": "34",
         "ep_title": "社内で“ブランドが想起されない”理由 〜エボークトセットで考える接点設計〜",
         "quote": "もったいないんだよ。で、ここから「じゃあどうするか」なんだけど。これも以前、「浸透には溝、キャズムがあって、現場の多数派は“実績”が見えないと動かない」って話したじゃん。",
-        "spotify_url": ""
+        "spotify_url": "",
+        "ordering": 2
       }
     ],
     "short_def": "アーリーアダプターとアーリーマジョリティの間にある溝で、Geoffrey Mooreが提唱した普及理論の概念。",
@@ -9610,19 +9729,15 @@
         "ep_no": "13",
         "ep_title": "アウターブランディング〜社外に届けるブランド施策〜その２",
         "quote": "冒頭に噛むなよ笑 そうだね。いろんな場面で思い出してもらえるように第一想起を取るために設計するって話をしました。 で、今回はその続き。じゃあ具体的にどうやって認知を増やして、エボークトセットに入るかっていう、もう少し実践的な話をしようと思う。",
-        "spotify_url": "https://open.spotify.com/episode/2qFZcQ7W1M7Wb1vtC7msW9"
-      },
-      {
-        "ep_no": "13",
-        "ep_title": "アウターブランディング〜社外に届けるブランド施策〜その２",
-        "quote": "いや、第一想起完璧だなww 他に！",
-        "spotify_url": "https://open.spotify.com/episode/2qFZcQ7W1M7Wb1vtC7msW9"
+        "spotify_url": "https://open.spotify.com/episode/2qFZcQ7W1M7Wb1vtC7msW9",
+        "ordering": 0
       },
       {
         "ep_no": "15",
         "ep_title": "ブランド評価と効果測定〜ファネル分析の活用〜",
         "quote": "うん。インフルエンスファネルって言うんだけど、まぁ、ロイヤル化がゴールって認識はあってるね。 ブランド評価用のファネルを整理すると、知っている「認知」、第一想起の「想起」、検討、選びたいって思ってくれてる「選好」、「購入」、リピートしている「継続」、人に勧める「推奨」。これで幾つだ？ この7段階。こんな感じになる。 これで捉えると、どこに課題があるか見えやすくなる。",
-        "spotify_url": "https://open.spotify.com/episode/2GZs3jVPMFX1yRXNPqVkZw"
+        "spotify_url": "https://open.spotify.com/episode/2GZs3jVPMFX1yRXNPqVkZw",
+        "ordering": 1
       }
     ],
     "short_def": "あるカテゴリについて考えたとき、真っ先に頭に浮かぶブランドの状態。購買検討の土俵に上がる条件になる。",
@@ -9699,13 +9814,15 @@
         "ep_no": "13",
         "ep_title": "アウターブランディング〜社外に届けるブランド施策〜その２",
         "quote": "うん。だから、接触のたびに「あ、またあのブランドだ」って認識してもらう必要がある。 そのためのDBAって考え方があって。識別可能なブランド資産って訳されることもある。 要は、そのブランドだと一瞬でわかる「目印」のこと。",
-        "spotify_url": "https://open.spotify.com/episode/2qFZcQ7W1M7Wb1vtC7msW9"
+        "spotify_url": "https://open.spotify.com/episode/2qFZcQ7W1M7Wb1vtC7msW9",
+        "ordering": 0
       },
       {
         "ep_no": "13",
         "ep_title": "アウターブランディング〜社外に届けるブランド施策〜その２",
         "quote": "うん。とにかく、どのクリエイティブを作る時も、さっき話したDBA、ブランド資産を一貫して反映させる。 名刺にも、ウェブにも、看板にも、SNSにも、キャッチやセールスのコピー、掲載コンテンツは違えど、ロゴや配色、ストーリー性などのトーンは合わせていく。 これが積み重なって、消費者の頭の中に定着していく。",
-        "spotify_url": "https://open.spotify.com/episode/2qFZcQ7W1M7Wb1vtC7msW9"
+        "spotify_url": "https://open.spotify.com/episode/2qFZcQ7W1M7Wb1vtC7msW9",
+        "ordering": 1
       }
     ],
     "short_def": "ロゴや色、音など、一瞬でそのブランドと分かる識別可能な資産で、バイロン・シャープらが体系化した概念。",
@@ -9752,7 +9869,8 @@
         "ep_no": "26",
         "ep_title": "ブランドを育て続ける組織づくりとマインドセット",
         "quote": "これがまさに「育てる」マインドセットなんだよね。第10話、11話でインナーブランディングの話したじゃん。心理的オーナーシップとか。",
-        "spotify_url": "https://open.spotify.com/episode/0KOVEdel5qoGptWsmrcmPp"
+        "spotify_url": "https://open.spotify.com/episode/0KOVEdel5qoGptWsmrcmPp",
+        "ordering": 0
       }
     ],
     "short_def": "所有していなくても「これは自分のものだ」と感じる心理状態。社員のブランド自分ごと化の核となる概念。",
@@ -9795,13 +9913,15 @@
         "ep_no": "18",
         "ep_title": "AIに任せていいこと、人間がやるべきこと〜ブランド構築の役割分担〜",
         "quote": "でも、その中から「これかな」って選んだり、この文とこの文を掛け合わせたらどうかな？とか、その後の議論は必ずするし、してください。笑 なぜかっていうと、理念にIKEA効果とは言いたくないけど、、、悩んだ時間ほど、重みに変わるから。まぁ、それに創業者の原体験とか、社員の想いとか、会社の歴史とか、そういう「物語」が込められると全然違うよね。",
-        "spotify_url": "https://open.spotify.com/episode/1XNn5lCW3PeXFY9oSJte9C"
+        "spotify_url": "https://open.spotify.com/episode/1XNn5lCW3PeXFY9oSJte9C",
+        "ordering": 0
       },
       {
         "ep_no": "36",
         "ep_title": "ブランドを日常業務に落とし込む_台本スライド",
         "quote": "現場しか知らないノウハウが、リアリティを持たせるっていうこともあるし、何より「IKEA効果」ね。自分で組み立てた家具は愛着が湧くってやつ。自分たちで書いたマニュアルって、大切にしてくれる。更新していくモチベーションにもなるしね。",
-        "spotify_url": ""
+        "spotify_url": "",
+        "ordering": 1
       }
     ],
     "short_def": "自分で手間や労力をかけて作ったものほど価値を高く感じてしまう認知バイアス。社員参加型のブランディングの根拠になる。",
@@ -9847,7 +9967,8 @@
         "ep_no": "26",
         "ep_title": "ブランドを育て続ける組織づくりとマインドセット",
         "quote": "これがブランドを育て続ける組織の、設計思想の根っこだと僕は思ってる。 ガイドラインって、つい「やっちゃダメリスト」になりがちなんだよ。VIも今取り組んでるバーバルアイデンティティの施策なんかもね。 あまりこうガチガチのルールにしてしまうと、個性がなくなっちゃうからね。",
-        "spotify_url": "https://open.spotify.com/episode/0KOVEdel5qoGptWsmrcmPp"
+        "spotify_url": "https://open.spotify.com/episode/0KOVEdel5qoGptWsmrcmPp",
+        "ordering": 0
       }
     ],
     "short_def": "トーン&ボイスや語彙、言葉遣いのルールを体系化した、言葉によって表現されるブランドらしさの定義。",
@@ -9889,8 +10010,9 @@
       {
         "ep_no": "26",
         "ep_title": "ブランドを育て続ける組織づくりとマインドセット",
-        "quote": "そうなんだよね。配られたものだと、そもそもそのものに興味が湧かないケースもあるし、一回完成させて配って終わり、ってなる。 で、片山さんと盛り上がった話で「ダイナミックアイデンティティ」の話もしたんだよね",
-        "spotify_url": "https://open.spotify.com/episode/0KOVEdel5qoGptWsmrcmPp"
+        "quote": "そうなんだよね。配られたものだと、そもそもそのものに興味が湧かないケースもあるし、一回完成させて配って終わり、ってなる。 で、片山さんと盛り上がった話で「ダイナミックアイデンティティ」の話もしたんだよね。",
+        "spotify_url": "https://open.spotify.com/episode/0KOVEdel5qoGptWsmrcmPp",
+        "ordering": 0
       }
     ],
     "short_def": "ロゴや視覚アイデンティティ(VI)を固定せず可変にしつつ、輪郭となる骨格は保つブランド設計の思想。",
@@ -9965,19 +10087,22 @@
         "ep_no": "31",
         "ep_title": "オンラインとオフラインの体験をどう統合するか",
         "quote": "うん。お客さんには、認知から購入までの間、ずっとモチベーションを保ってほしいわけだからさ。その間の動線…っていうか、糸が、ブツッと切れちゃうと、もったいないよね。で、この、けっこう難しい「オンラインとオフラインの壁」を取っ払おうっていう考え方が、今日のキーワード、「OMO」ね。",
-        "spotify_url": "https://open.spotify.com/episode/3SQztO8c8UYwQTVAvt83Gq"
+        "spotify_url": "https://open.spotify.com/episode/3SQztO8c8UYwQTVAvt83Gq",
+        "ordering": 0
       },
       {
         "ep_no": "31",
         "ep_title": "オンラインとオフラインの体験をどう統合するか",
         "quote": "www。OMOはもう一歩進んで、最初から領域を分けない。お客さん目線、ゴール視点で見たら、一つの購入体験に変わりないでしょ、っていう思想から設計する。出発点が違うんだよね。",
-        "spotify_url": "https://open.spotify.com/episode/3SQztO8c8UYwQTVAvt83Gq"
+        "spotify_url": "https://open.spotify.com/episode/3SQztO8c8UYwQTVAvt83Gq",
+        "ordering": 1
       },
       {
         "ep_no": "31",
         "ep_title": "オンラインとオフラインの体験をどう統合するか",
         "quote": "確かにね。でもね、OMOって、別にデカいシステムの話じゃないんだよ。やることは一個。「お客さんが引っかかる溝を、一個ずつ埋める」。それだけ。",
-        "spotify_url": "https://open.spotify.com/episode/3SQztO8c8UYwQTVAvt83Gq"
+        "spotify_url": "https://open.spotify.com/episode/3SQztO8c8UYwQTVAvt83Gq",
+        "ordering": 2
       }
     ],
     "short_def": "オンラインとオフラインの境界を最初から分けず、顧客から見て一つの購入体験としてつなげて設計する考え方。",
@@ -10021,19 +10146,22 @@
         "ep_no": "31",
         "ep_title": "オンラインとオフラインの体験をどう統合するか",
         "quote": "そういうこと。で、3つ目が「役割の溝」。店で見てネットで買うのを「ショールーミング」って言うんだけど、これを「やってほしくない」って考えに縛られちゃう問題ね。",
-        "spotify_url": "https://open.spotify.com/episode/3SQztO8c8UYwQTVAvt83Gq"
+        "spotify_url": "https://open.spotify.com/episode/3SQztO8c8UYwQTVAvt83Gq",
+        "ordering": 0
       },
       {
         "ep_no": "31",
         "ep_title": "オンラインとオフラインの体験をどう統合するか",
         "quote": "うん。むしろ「店でじっくり体験して、買うのはあとでネットでもいいよ」っていう作りにしてる。まあ、実際に店で買う人も当然いるけど。さっき言ったショールーミングを、自分たちから設計してるわけ。",
-        "spotify_url": "https://open.spotify.com/episode/3SQztO8c8UYwQTVAvt83Gq"
+        "spotify_url": "https://open.spotify.com/episode/3SQztO8c8UYwQTVAvt83Gq",
+        "ordering": 1
       },
       {
         "ep_no": "31",
         "ep_title": "オンラインとオフラインの体験をどう統合するか",
         "quote": "1つ目、「商品情報」をつなぐ。在庫も値段も、ネットと店でズレさせない。2つ目、「顧客情報」をつなぐ。ネットのあなたと店のあなたを、同じ人として扱う。3つ目、「役割」をつなぐ。ショールーミングを悪者にしないで、店とネットの得意を分担させる。",
-        "spotify_url": "https://open.spotify.com/episode/3SQztO8c8UYwQTVAvt83Gq"
+        "spotify_url": "https://open.spotify.com/episode/3SQztO8c8UYwQTVAvt83Gq",
+        "ordering": 2
       }
     ],
     "short_def": "実店舗で商品を確認したうえで、購入はオンラインで済ませる消費者の行動を指す言葉。",
@@ -10075,7 +10203,8 @@
         "ep_no": "31",
         "ep_title": "オンラインとオフラインの体験をどう統合するか",
         "quote": "店をショールーム代わりにして、買うのはネット、っていう。逆に、ネットで調べてから店で買うのが「ウェブルーミング」。で、お客さんは意識せずに両方やってるから。だったら、それぞれの「いいとこ」を活かして役割分担すればいいじゃん、っていう発想。",
-        "spotify_url": "https://open.spotify.com/episode/3SQztO8c8UYwQTVAvt83Gq"
+        "spotify_url": "https://open.spotify.com/episode/3SQztO8c8UYwQTVAvt83Gq",
+        "ordering": 0
       }
     ],
     "short_def": "オンラインで情報収集し、購入は実店舗で行う消費者行動で、ショールーミングと対をなす。",
@@ -10114,16 +10243,11 @@
     ],
     "kitagawa_quotes": [
       {
-        "ep_no": "32",
-        "ep_title": "AIに選ばれるブランドづくり",
-        "quote": "さて、今日のテーマは「AIに『選ばれる』ブランドづくり〜エージェンティックコマース時代の生存戦略〜」です。",
-        "spotify_url": "https://open.spotify.com/episode/3Al9UZZogMMo4MhkqccFNS"
-      },
-      {
         "ep_no": "33",
         "ep_title": "BtoBブランディング_どこで差がつく",
         "quote": "うん、エージェンティックコマースの話ね。「これからは人だけじゃなく、AIにも選ばれないと」って話をしました。で、今回はいっきにBtoBの世界。ブランディングってどこで効くの？どこで差がつくの？って話をしたいなと。",
-        "spotify_url": "https://open.spotify.com/episode/2fxSKbQGJ8aVIAVqoVISzW"
+        "spotify_url": "https://open.spotify.com/episode/2fxSKbQGJ8aVIAVqoVISzW",
+        "ordering": 0
       }
     ],
     "short_def": "AIが消費者の代理人として商品を探し・比較し・購入まで代行する、新しい商取引の形を指す言葉。",
@@ -10165,19 +10289,22 @@
         "ep_no": "26",
         "ep_title": "ブランドを育て続ける組織づくりとマインドセット",
         "quote": "ね。で、その片山さんから「SWAG（スワッグ）」っていうカルチャーを教えてもらって。",
-        "spotify_url": "https://open.spotify.com/episode/0KOVEdel5qoGptWsmrcmPp"
+        "spotify_url": "https://open.spotify.com/episode/0KOVEdel5qoGptWsmrcmPp",
+        "ordering": 0
       },
       {
         "ep_no": "26",
         "ep_title": "ブランドを育て続ける組織づくりとマインドセット",
         "quote": "そう。SWAGはそうじゃない。社員が自分で「これを着たい」って選ぶ。押し付けられてる感がない。 片山さんがいい表現してくれて、「カルチャーをまとう」って言ってて。",
-        "spotify_url": "https://open.spotify.com/episode/0KOVEdel5qoGptWsmrcmPp"
+        "spotify_url": "https://open.spotify.com/episode/0KOVEdel5qoGptWsmrcmPp",
+        "ordering": 1
       },
       {
         "ep_no": "26",
         "ep_title": "ブランドを育て続ける組織づくりとマインドセット",
         "quote": "うん。ユニフォームは「着せられる」もの。SWAGは「自分の文脈を載せにいく」もの。同じロゴが入ってても、根本的に行為が違うんだよね。",
-        "spotify_url": "https://open.spotify.com/episode/0KOVEdel5qoGptWsmrcmPp"
+        "spotify_url": "https://open.spotify.com/episode/0KOVEdel5qoGptWsmrcmPp",
+        "ordering": 2
       }
     ],
     "short_def": "社員が義務で着せられるのではなく、自ら進んで身につけたくなる企業ロゴ入りグッズやその文化を指す言葉。",
@@ -10221,7 +10348,8 @@
         "ep_no": "27",
         "ep_title": "ブランドストーリーの作り方_共感を生む物語の構造",
         "quote": "そうそう。古くはアリストテレスから、最近だとジョセフ・キャンベルの「ヒーローズ・ジャーニー」っていう型もあって、ハリウッド映画もほぼこの構造で作られてる。ブランドストーリーも、実はこの型なんだよ。",
-        "spotify_url": "https://open.spotify.com/episode/6xyXB03fhSCJknfcnpev22"
+        "spotify_url": "https://open.spotify.com/episode/6xyXB03fhSCJknfcnpev22",
+        "ordering": 0
       }
     ],
     "short_def": "主人公が試練を経て変化していく、ジョセフ・キャンベルが体系化した物語構造をブランドストーリーに応用した型。",
@@ -10262,20 +10390,16 @@
       {
         "ep_no": "16",
         "ep_title": "5W1Hに当てはめる理念体系",
-        "quote": "それは。5W1Hで整理します。",
-        "spotify_url": "https://open.spotify.com/episode/7c7oySDzbl3wV5iDcSm39m"
-      },
-      {
-        "ep_no": "16",
-        "ep_title": "5W1Hに当てはめる理念体系",
         "quote": "そうそう。で、この5W1Hって、情報整理術として知られてるけど、物事を理解する時、特にビジネスのシーンでは、企画書や要件書作成なんかでも意識するととてもわかりやすくなるよ。「いつ、どこで、誰が、何を、なぜ、どうやって」っていう6つの問いで整理するやり方ね。まぁビジネスだと「いくら」のハウマッチも出てきて、2 Hだったりもするか。",
-        "spotify_url": "https://open.spotify.com/episode/7c7oySDzbl3wV5iDcSm39m"
+        "spotify_url": "https://open.spotify.com/episode/7c7oySDzbl3wV5iDcSm39m",
+        "ordering": 0
       },
       {
         "ep_no": "16",
         "ep_title": "5W1Hに当てはめる理念体系",
         "quote": "まぁ、ゴールデンサークルはWHY→HOW→WHATの3つの要素を「共感を生む順番」に並べ替えたものだって言えるんだけど。 これより要素を増やして5W1Hで理解できれば最強だよね。",
-        "spotify_url": "https://open.spotify.com/episode/7c7oySDzbl3wV5iDcSm39m"
+        "spotify_url": "https://open.spotify.com/episode/7c7oySDzbl3wV5iDcSm39m",
+        "ordering": 1
       }
     ],
     "short_def": "When・Where・Who・What・Why・Howの6つの問いで情報を整理する思考の枠組み。",
