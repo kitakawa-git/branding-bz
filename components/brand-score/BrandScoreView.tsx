@@ -574,7 +574,8 @@ export function BrandScoreView({
                   return `${d.getMonth() + 1}/${d.getDate()}`
                 }}
               />
-              <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} />
+              {/* width: 既定の 60px だと目盛り（最大「100」）の左に余白が大きく空く。数字が収まる幅に詰める */}
+              <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} width={32} />
               <Tooltip
                 formatter={(value: number | string, name: string) => {
                   const label = name === 'total_score' ? '総合'
