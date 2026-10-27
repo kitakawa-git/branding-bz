@@ -1,11 +1,10 @@
 // ブランドデータ取得（AI設問生成の参照元）
 // ============================================================
-// 既存 /api/brand-score/surveys/[id]/generate-questions に
-// インライン実装されていたブランドデータ取得ロジックを、そのまま
-// 共通関数として切り出したもの。サーベイ／クイズ双方の
-// generate-questions がこの関数を参照する（参照元の二重管理を防ぐ）。
+// /api/brand-score/surveys/[id]/generate-questions にインライン実装されていた
+// ブランドデータ取得ロジックを、そのまま共通関数として切り出したもの。
+// サーベイ／クイズ双方の generate-questions がこの関数を参照する（参照元の二重管理を防ぐ）。
+// 出力は JSON.stringify されて Claude への入力になるため、brand-data.test.ts で文字列ごと固定している。
 //
-// ※ 既存サーベイ側のロジックは変更しない（このファイルは新規追加）。
 // ※ 2026-04-06 の参照元移行（companies からの分離。brand_visuals /
 //   brand_personas / brand_personalities / brand_terms への移管）を
 //   反映済み。フィールド選択は既存サーベイ generate-questions と一致。
