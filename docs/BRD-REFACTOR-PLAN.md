@@ -64,3 +64,4 @@ warnings は `no-unused-vars` 156、`no-img-element` 96、`no-unused-expressions
 （承認された項目を直したら、ここに「#番号 完了: 一行の結果（commit）」を追記する）
 - #1 完了: superadmin API 16本（インライン12・ローカル関数4）の認証を `lib/auth/caller` の `requireSuperadmin` に置き換え、約330行削減。文言・ステータスは従来の標準文言のまま（`lib/copy/api-auth` も同じ文言に戻った）。文言が違う signup-requests・superadmin の plan-change-requests / setup-support-requests・create-company の4本は、画面にエラー文言が出るため今回は対象外
 - #2 完了: サーベイの generate-questions が複製していたブランドデータ取得（型・取得・十分性判定 約130行）を `lib/brand-score/brand-data` の `fetchBrandData` / `hasSufficientData` に置き換え。差分は `?? undefined` 3か所のみで、エラーでない限り値は同じ。Claude に渡す JSON 文字列を `brand-data.test.ts` で固定（テスト 20→21本）
+- #3 完了: 管理画面のブランド編集4ページ（guidelines / personality / verbal / visuals）に1文字違わず複製されていた `supabasePatch` / `supabaseInsert` を `lib/admin/supabase-rest.ts` にまとめた（約250行削減）。`app/admin/company/page.tsx` の同名関数はトークンの取り方・応答の形（return=minimal）・タイムアウト文言が違うため別のまま

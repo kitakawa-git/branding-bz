@@ -35,6 +35,7 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { parseYearMonth as parseHistoryYM, formatYearMonth as formatHistoryYM, YEAR_OPTIONS as HISTORY_YEAR_OPTIONS } from '@/lib/year-month'
+import { supabasePatch, supabaseInsert } from '@/lib/admin/supabase-rest'
 
 // id は philosophy_elements の行ID（新規追加項目では undefined → 保存時INSERT）
 type ValueItem = { id?: string; name: string; description: string; added_index: number }
@@ -449,71 +450,6 @@ export default function BrandGuidelinesPage() {
     if (!trimmed) return ''
     if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed
     return 'https://' + trimmed
-  }
-
-  // Supabase REST API直接fetch (PATCH)
-  const supabasePatch = async (table: string, id: string, data: Record<string, unknown>, token: string): Promise<{ ok: boolean; error?: string }> => {
-    const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 10000)
-    try {
-      const res = await fetch(url, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
-          'Authorization': `Bearer ${token}`,
-          'Prefer': 'return=minimal',
-        },
-        body: JSON.stringify(data),
-        signal: controller.signal,
-      })
-      clearTimeout(timeoutId)
-      if (!res.ok) {
-        const body = await res.text()
-        return { ok: false, error: `HTTP ${res.status}: ${body}` }
-      }
-      return { ok: true }
-    } catch (err) {
-      clearTimeout(timeoutId)
-      if (err instanceof DOMException && err.name === 'AbortError') {
-        return { ok: false, error: 'タイムアウト（10秒）' }
-      }
-      return { ok: false, error: err instanceof Error ? err.message : '不明なエラー' }
-    }
-  }
-
-  // Supabase REST API直接fetch (INSERT)
-  const supabaseInsert = async (table: string, data: Record<string, unknown>, token: string): Promise<{ ok: boolean; error?: string; data?: Record<string, unknown> }> => {
-    const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/${table}`
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 10000)
-    try {
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
-          'Authorization': `Bearer ${token}`,
-          'Prefer': 'return=representation',
-        },
-        body: JSON.stringify(data),
-        signal: controller.signal,
-      })
-      clearTimeout(timeoutId)
-      if (!res.ok) {
-        const body = await res.text()
-        return { ok: false, error: `HTTP ${res.status}: ${body}` }
-      }
-      const result = await res.json()
-      return { ok: true, data: result[0] }
-    } catch (err) {
-      clearTimeout(timeoutId)
-      if (err instanceof DOMException && err.name === 'AbortError') {
-        return { ok: false, error: 'タイムアウト（10秒）' }
-      }
-      return { ok: false, error: err instanceof Error ? err.message : '不明なエラー' }
-    }
   }
 
   // philosophy_elements 行同期（編集も新テーブルへ）
