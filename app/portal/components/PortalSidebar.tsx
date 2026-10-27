@@ -187,12 +187,14 @@ export function PortalSidebar() {
   return (
     <>
       <Sidebar variant="floating">
-        {/* ブランド情報ヘッダー（サンプル準拠: SidebarMenuButton size="lg"） */}
-        <SidebarHeader>
+        {/* ブランド情報ヘッダー（サンプル準拠: SidebarMenuButton size="lg"）。
+            shrink-0: サイドメニューの縦の詰め合わせで、この欄が縮んで社名が切れないように */}
+        <SidebarHeader className="shrink-0">
           <SidebarMenu>
             <SidebarMenuItem>
-              {/* 高さは中身に合わせる（size="lg" は h-12 固定で、スローガンが2行になると社名が上に押し出されて隠れていた） */}
-              <SidebarMenuButton size="lg" className="h-auto min-h-12 py-1.5" asChild>
+              {/* 高さは中身に合わせる（size="lg" は h-12 固定で、スローガンが2行になると社名が上に押し出されて隠れていた）。
+                  overflow-visible: ページ移動の途中などで高さが足りない瞬間があっても、はみ出した社名を隠さない */}
+              <SidebarMenuButton size="lg" className="h-auto min-h-12 py-1.5 overflow-visible" asChild>
                 <Link href="/portal/about" onClick={handleNavClick}>
                   {/* ロゴ未登録時はアイコン枠を表示しない（フォールバックの頭文字も出さない） */}
                   {companyLogoUrl && (
