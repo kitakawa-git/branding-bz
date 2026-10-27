@@ -21,7 +21,7 @@ export function DashboardMissionCard({
             style={{ backgroundImage: `url(${conceptVisualUrl})` }}
             aria-hidden
           />
-          <div className="absolute inset-0 bg-white/80 backdrop-blur-[2px]" aria-hidden />
+          <div className="absolute inset-0 bg-white/70 backdrop-blur-[2px]" aria-hidden />
         </>
       )}
       <CardContent className="relative p-4 sm:p-5">
