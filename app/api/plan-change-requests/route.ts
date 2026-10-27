@@ -5,31 +5,15 @@
 // 決済を自前で持たないので、ここは「希望を受け取る」までを担う。
 // 実際にプランを変えるのはスーパー管理側（/api/superadmin/plan-change-requests）。
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient as createServerSupabase } from '@/lib/supabase/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
-import { fetchCompanyIdForAuth } from '@/lib/billing/guard'
 import { getEffectivePlan, SELLABLE_PLANS } from '@/lib/billing/entitlements'
 import { PLAN_LABELS } from '@/lib/billing/plan-display'
 import { detailTable, escapeHtml, notifySuperadmin } from '@/lib/mail/superadmin-notify'
-
-/** ログイン中のユーザーと所属会社。どちらか欠けたら 401 */
-async function resolveCaller() {
-  const supabaseUser = await createServerSupabase()
-  const {
-    data: { user },
-  } = await supabaseUser.auth.getUser()
-  if (!user) return { error: NextResponse.json({ error: '認証が必要です' }, { status: 401 }) }
-
-  const companyId = await fetchCompanyIdForAuth(user.id)
-  if (!companyId) {
-    return { error: NextResponse.json({ error: '所属会社が見つかりません' }, { status: 403 }) }
-  }
-  return { user, companyId }
-}
+import { requireCompanyMember } from '@/lib/auth/caller'
 
 export async function GET() {
   try {
-    const caller = await resolveCaller()
+    const caller = await requireCompanyMember()
     if (caller.error) return caller.error
 
     const admin = getSupabaseAdmin()
@@ -49,9 +33,9 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const caller = await resolveCaller()
+    const caller = await requireCompanyMember()
     if (caller.error) return caller.error
-    const { user, companyId } = caller
+    const { authId, email, companyId } = caller
 
     // 契約に関わる依頼なので管理者だけ。
     // UI 側でも一般メンバーには依頼ボタンを出していないが、
@@ -60,7 +44,7 @@ export async function POST(request: NextRequest) {
     const { data: adminUser } = await getSupabaseAdmin()
       .from('admin_users')
       .select('id')
-      .eq('auth_id', user.id)
+      .eq('auth_id', authId)
       .maybeSingle()
     if (!adminUser) {
       return NextResponse.json(
@@ -104,8 +88,8 @@ export async function POST(request: NextRequest) {
       current_plan: currentPlan,
       requested_plan: requestedPlan,
       note,
-      requested_by: user.id,
-      requested_by_email: user.email ?? null,
+      requested_by: authId,
+      requested_by_email: email ?? null,
       status: 'pending',
       updated_at: new Date().toISOString(),
     }
@@ -127,7 +111,7 @@ export async function POST(request: NextRequest) {
         <h2>プラン変更の依頼が届きました</h2>
         ${detailTable([
           ['会社名', escapeHtml(companyName)],
-          ['依頼者', escapeHtml(user.email ?? '(不明)')],
+          ['依頼者', escapeHtml(email ?? '(不明)')],
           ['変更', `${escapeHtml(label(currentPlan))} → ${escapeHtml(label(requestedPlan))}`],
           ['伝達事項', escapeHtml(note ?? '(未入力)')],
         ])}

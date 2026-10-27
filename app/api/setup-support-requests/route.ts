@@ -6,31 +6,15 @@
 // 日程の確定は画面の外（担当者が連絡して調整）で行う。
 // 依頼の受け口はスーパー管理（/api/superadmin/setup-support-requests）。
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient as createServerSupabase } from '@/lib/supabase/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
-import { fetchCompanyIdForAuth } from '@/lib/billing/guard'
 import { computeOnboardingStatus } from '@/lib/onboarding/status'
 import { buildOnboardingView } from '@/lib/onboarding/steps'
 import { detailTable, escapeHtml, notifySuperadmin } from '@/lib/mail/superadmin-notify'
-
-/** ログイン中のユーザーと所属会社。どちらか欠けたら 401 */
-async function resolveCaller() {
-  const supabaseUser = await createServerSupabase()
-  const {
-    data: { user },
-  } = await supabaseUser.auth.getUser()
-  if (!user) return { error: NextResponse.json({ error: '認証が必要です' }, { status: 401 }) }
-
-  const companyId = await fetchCompanyIdForAuth(user.id)
-  if (!companyId) {
-    return { error: NextResponse.json({ error: '所属会社が見つかりません' }, { status: 403 }) }
-  }
-  return { user, companyId }
-}
+import { requireCompanyMember } from '@/lib/auth/caller'
 
 export async function GET() {
   try {
-    const caller = await resolveCaller()
+    const caller = await requireCompanyMember()
     if (caller.error) return caller.error
 
     const admin = getSupabaseAdmin()
@@ -50,9 +34,9 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const caller = await resolveCaller()
+    const caller = await requireCompanyMember()
     if (caller.error) return caller.error
-    const { user, companyId } = caller
+    const { authId, email, companyId } = caller
 
     // 案内を出しているのは管理者だけ。UI 側でも一般メンバーには出していないが、
     // 表示を消すのは「見せない」であって「させない」ではないのでここで塞ぐ
@@ -60,7 +44,7 @@ export async function POST(request: NextRequest) {
     const { data: adminUser } = await admin
       .from('admin_users')
       .select('id')
-      .eq('auth_id', user.id)
+      .eq('auth_id', authId)
       .maybeSingle()
     if (!adminUser) {
       return NextResponse.json(
@@ -105,8 +89,8 @@ export async function POST(request: NextRequest) {
       progress_total: view.total,
       preferred_slots: preferredSlots,
       note,
-      requested_by: user.id,
-      requested_by_email: user.email ?? null,
+      requested_by: authId,
+      requested_by_email: email ?? null,
       status: 'pending',
       updated_at: new Date().toISOString(),
     }
@@ -128,7 +112,7 @@ export async function POST(request: NextRequest) {
         <h2>入力サポートの相談が届きました</h2>
         ${detailTable([
           ['会社名', escapeHtml(companyName)],
-          ['申込者', escapeHtml(user.email ?? '(不明)')],
+          ['申込者', escapeHtml(email ?? '(不明)')],
           ['セットアップ進捗', `${view.doneCount} / ${view.total}`],
           ['ご希望の日時', escapeHtml(preferredSlots)],
           ['相談したいこと', escapeHtml(note ?? '(未入力)')],

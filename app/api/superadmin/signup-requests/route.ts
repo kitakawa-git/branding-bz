@@ -3,39 +3,19 @@
 // POST /api/superadmin/signup-requests         — 承認 or 却下  body: { companyId, action: 'approve'|'reject' }
 // 認証: 本人の Bearer トークンで is_superadmin を確認。実処理は service_role。
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { escapeHtml } from '@/lib/mail/escape-html'
+import { requireSuperadmin as requireSuperadminCaller } from '@/lib/auth/caller'
 
 export const runtime = 'nodejs'
 
 // Bearer トークン → superadmin 検証。OK なら admin クライアントを返す。
 async function requireSuperadmin(request: NextRequest) {
-  const authHeader = request.headers.get('Authorization')
-  if (!authHeader?.startsWith('Bearer ')) {
-    return { error: NextResponse.json({ error: '認証が必要です' }, { status: 401 }) }
-  }
-  const token = authHeader.replace('Bearer ', '')
-  const supabaseUser = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { global: { headers: { Authorization: `Bearer ${token}` } } },
-  )
-  const { data: { user }, error } = await supabaseUser.auth.getUser()
-  if (error || !user) {
-    return { error: NextResponse.json({ error: '認証エラー' }, { status: 401 }) }
-  }
-  const admin = getSupabaseAdmin()
-  const { data: au } = await admin
-    .from('admin_users')
-    .select('is_superadmin')
-    .eq('auth_id', user.id)
-    .maybeSingle()
-  if (!au?.is_superadmin) {
-    return { error: NextResponse.json({ error: 'スーパー管理者権限が必要です' }, { status: 403 }) }
-  }
-  return { admin }
+  // 判定は lib/auth/caller に一本化（Bearer と cookie の両方を受ける）。呼び出し側の互換のため戻り値の形は以前のまま
+  const caller = await requireSuperadminCaller(request)
+  if (caller.error) return { error: caller.error }
+  return { admin: getSupabaseAdmin() }
 }
 
 export async function GET(request: NextRequest) {

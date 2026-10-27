@@ -20,6 +20,8 @@ type Failure = { error: NextResponse }
 
 export type CallerContext = {
   authId: string
+  /** auth.users.email（依頼メールの差出人表示などに使う） */
+  email: string | null
   /** 所属会社（admin_users → members の順）。どちらにも居なければ null */
   companyId: string | null
   isAdmin: boolean
@@ -35,7 +37,7 @@ function fail(status: 401 | 403, message: string): Failure {
 }
 
 /** Bearer があればそれで、なければ cookie セッションで getUser する。未ログインなら null */
-export async function getCallerAuthId(request?: Request): Promise<string | null> {
+export async function getCallerUser(request?: Request): Promise<{ id: string; email: string | null } | null> {
   const authHeader = request?.headers.get('authorization')
   if (authHeader?.startsWith('Bearer ')) {
     const token = authHeader.slice('Bearer '.length)
@@ -48,20 +50,26 @@ export async function getCallerAuthId(request?: Request): Promise<string | null>
       },
     )
     const { data: { user } } = await supabaseUser.auth.getUser(token)
-    return user?.id ?? null
+    return user ? { id: user.id, email: user.email ?? null } : null
   }
 
   // 動的 import は next/headers に依存するモジュールを循環させないため
   const { createClient } = await import('@/lib/supabase/server')
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  return user?.id ?? null
+  return user ? { id: user.id, email: user.email ?? null } : null
+}
+
+/** getCallerUser の id だけ版 */
+export async function getCallerAuthId(request?: Request): Promise<string | null> {
+  return (await getCallerUser(request))?.id ?? null
 }
 
 /** ログインしていれば所属を引いて返す。会社に属していなくても通す（構築ツールの個人利用など） */
 export async function requireCaller(request?: Request): Promise<Failure | (CallerContext & { error?: undefined })> {
-  const authId = await getCallerAuthId(request)
-  if (!authId) return fail(401, '認証が必要です')
+  const user = await getCallerUser(request)
+  if (!user) return fail(401, '認証が必要です')
+  const authId = user.id
 
   const admin = getSupabaseAdmin()
   const [{ data: adminRow }, { data: memberRow }] = await Promise.all([
@@ -71,6 +79,7 @@ export async function requireCaller(request?: Request): Promise<Failure | (Calle
 
   return {
     authId,
+    email: user.email,
     companyId: adminRow?.company_id ?? (memberRow?.is_active === false ? null : memberRow?.company_id) ?? null,
     isAdmin: !!adminRow,
     isSuperadmin: !!adminRow?.is_superadmin,
