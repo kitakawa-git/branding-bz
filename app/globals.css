@@ -254,6 +254,25 @@ html[data-sidebar-boot] .peer[data-side][data-state] > div {
   }
 }
 
+/* ===== ネイティブの <select>: 矢印の右に余白を取る =====
+   ブラウザ標準の矢印は枠の右端にくっついて描かれ、px-2 などの右余白が矢印の外側に効かない
+   （管理画面のメンバー一覧「区分」などで矢印の右に余白が無かった）。
+   標準の矢印を消し、同じ形の矢印を右端から 0.5rem 内側に描く。文字が矢印に重ならないよう右余白は 2rem。
+   複数選択（multiple / size）は一覧表示なので対象外。shadcn の Select（Radix）は見えない <select> を使うだけなので影響しない */
+select:not([multiple]):not([size]) {
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+  background-size: 1rem 1rem;
+  padding-right: 2rem;
+}
+/* 暗い背景の上の <select>（用語wikiの絞り込み）は矢印を明るくする */
+select.select-on-dark:not([multiple]):not([size]) {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.6)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+}
+
 /* ===== 本文の最低フォントサイズ 14px =====
    text-xs / text-[9〜13px] / text-[0.8rem] を全ページで 14px に底上げする。
    ただし UI 部品（ボタン・タブ・shadcn Badge・ステッパー・SVG内テキスト）は

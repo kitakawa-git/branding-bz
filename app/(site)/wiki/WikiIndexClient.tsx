@@ -11,7 +11,7 @@ import { ctaClass } from '@/components/lp/cta'
    件数が230件規模なので全件をクライアントに渡してメモリ上で絞る（追加フェッチなし）。 */
 
 const SELECT_CLASS =
-  'h-11 w-full rounded-xl border border-white/15 bg-white/[0.04] px-3 text-base text-white/85 outline-none transition-colors focus:border-blue-400/50 sm:w-auto [&>option]:bg-[#111114] [&>option]:text-white'
+  'select-on-dark h-11 w-full rounded-xl border border-white/15 bg-white/[0.04] px-3 text-base text-white/85 outline-none transition-colors focus:border-blue-400/50 sm:w-auto [&>option]:bg-[#111114] [&>option]:text-white'
 
 export default function WikiIndexClient({ terms }: { terms: WikiTermSummary[] }) {
   const [query, setQuery] = useState('')
