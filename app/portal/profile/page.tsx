@@ -12,6 +12,7 @@ import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { PushToggle } from '@/components/pwa/PushToggle'
 import { toast } from 'sonner'
+import { useTurnstile, CAPTCHA_WAIT_MESSAGE } from '@/components/auth/Turnstile'
 import {
   Camera,
   ChevronDown,
@@ -76,6 +77,7 @@ export default function ProfilePage() {
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [changingPassword, setChangingPassword] = useState(false)
   const [passwordError, setPasswordError] = useState('')
+  const captcha = useTurnstile('auto')
 
   const photoInputRef = useRef<HTMLInputElement>(null)
   const coverInputRef = useRef<HTMLInputElement>(null)
@@ -245,6 +247,10 @@ export default function ProfilePage() {
       setPasswordError('新しいパスワードが一致しません')
       return
     }
+    if (!captcha.ready) {
+      setPasswordError(CAPTCHA_WAIT_MESSAGE)
+      return
+    }
 
     setChangingPassword(true)
     try {
@@ -259,7 +265,9 @@ export default function ProfilePage() {
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password: currentPassword,
+        options: { captchaToken: captcha.token },
       })
+      captcha.reset()
 
       if (signInError) {
         setPasswordError('現在のパスワードが正しくありません')
@@ -611,6 +619,8 @@ export default function ProfilePage() {
                   <p className="text-xs text-red-500 mt-1 m-0">パスワードが一致しません</p>
                 )}
               </div>
+
+              {captcha.widget}
 
               <Button
                 onClick={handlePasswordChange}

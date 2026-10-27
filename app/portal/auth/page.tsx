@@ -10,6 +10,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { sendGAEvent } from '@next/third-parties/google'
 import { supabase } from '@/lib/supabase'
 import { Input } from '@/components/ui/input'
+import { useTurnstile, CAPTCHA_WAIT_MESSAGE } from '@/components/auth/Turnstile'
 
 // from パラメータに応じたサブタイトル
 const SUBTITLES: Record<string, string> = {
@@ -37,6 +38,7 @@ function PortalAuthContent() {
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [checkingSession, setCheckingSession] = useState(true)
+  const captcha = useTurnstile()
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -79,6 +81,7 @@ function PortalAuthContent() {
   // メール/パスワードログイン
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!captcha.ready) { setError(CAPTCHA_WAIT_MESSAGE); return }
     setLoading(true)
     setError('')
 
@@ -86,7 +89,9 @@ function PortalAuthContent() {
       const { data, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
+        options: { captchaToken: captcha.token },
       })
+      captcha.reset()
 
       if (authError) {
         setError('メールアドレスまたはパスワードが正しくありません')
@@ -216,6 +221,8 @@ function PortalAuthContent() {
                 className="h-12 text-base md:text-base bg-white/[0.04] border-white/15 text-white placeholder:text-white/30 focus-visible:ring-white/30"
               />
             </div>
+
+            {captcha.widget}
 
             <button
               type="submit"

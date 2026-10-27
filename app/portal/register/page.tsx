@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { useTurnstile, CAPTCHA_WAIT_MESSAGE } from '@/components/auth/Turnstile'
 import { Button } from '@/components/ui/button'
 import { ShieldAlert } from 'lucide-react'
 
@@ -36,6 +37,7 @@ function PortalRegisterContent() {
   const [passwordConfirm, setPasswordConfirm] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const captcha = useTurnstile()
 
   useEffect(() => {
     if (!token) {
@@ -74,6 +76,12 @@ function PortalRegisterContent() {
       return
     }
 
+    // 登録後すぐにログインするので、登録 API を呼ぶ前に確認を済ませておく
+    if (!captcha.ready) {
+      setError(CAPTCHA_WAIT_MESSAGE)
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -94,7 +102,9 @@ function PortalRegisterContent() {
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: result.email,
         password: result.password,
+        options: { captchaToken: captcha.token },
       })
+      captcha.reset()
 
       if (signInError) {
         throw new Error('ログインに失敗しました: ' + signInError.message)
@@ -228,6 +238,8 @@ function PortalRegisterContent() {
                 className="h-11 bg-white/[0.04] border-white/15 text-white placeholder:text-white/30 focus-visible:ring-white/30"
               />
             </div>
+
+            {captcha.widget}
 
             <Button
               type="submit"

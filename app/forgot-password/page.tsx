@@ -14,21 +14,26 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { Input } from '@/components/ui/input'
 import { MailCheck } from 'lucide-react'
+import { useTurnstile, CAPTCHA_WAIT_MESSAGE } from '@/components/auth/Turnstile'
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
   const [sending, setSending] = useState(false)
   const [sent, setSent] = useState(false)
   const [error, setError] = useState('')
+  const captcha = useTurnstile()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    if (!captcha.ready) { setError(CAPTCHA_WAIT_MESSAGE); return }
     setSending(true)
 
     const { error: sendError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
       redirectTo: `${window.location.origin}/reset-password`,
+      captchaToken: captcha.token,
     })
+    captcha.reset()
 
     setSending(false)
 
@@ -90,6 +95,8 @@ export default function ForgotPasswordPage() {
                 </div>
 
                 {error && <p className="mb-4 text-sm text-red-400">{error}</p>}
+
+                {captcha.widget}
 
                 <button
                   type="submit"
