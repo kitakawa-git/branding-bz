@@ -64,7 +64,7 @@ export function DashboardKpiSummary({
   const displayKpis = kpiGoals.slice(0, 3)
 
   return (
-    <div className="mb-8">
+    <div className="mb-4">
       <Card className="bg-white border shadow-none">
         <CardContent className="p-4">
           <div className="flex items-center justify-between mb-3">
@@ -111,7 +111,7 @@ export function DashboardReviewBanner({
   onOpen: () => void
 }) {
   return (
-    <button type="button" onClick={onOpen} className="w-full mb-8 cursor-pointer border-0 p-0 bg-transparent">
+    <button type="button" onClick={onOpen} className="w-full mb-4 cursor-pointer border-0 p-0 bg-transparent">
       <div className="rounded-full bg-[#47C95C] px-6 py-4 flex items-center justify-between hover:opacity-90 transition-opacity">
         <p className="text-white text-base font-semibold m-0">
           あなたの{goalPeriodType === 'year' ? '１年間' : goalPeriodType === 'half' ? '半年間' : goalPeriodType === 'quarter' ? '３ヶ月間' : '期間'}を振り返り、自己評価を行いましょう！
