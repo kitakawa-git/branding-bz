@@ -5,6 +5,7 @@ import { callClaude } from '@/lib/claude-api'
 import { getAdminContext } from '@/lib/learning/auth'
 import { getGuardrailsPromptForCompany } from '@/lib/brand/guardrails'
 import { getRelationsPromptForCompany } from '@/lib/brand/relations'
+import { formatBusinessDescriptions, formatTargetSegments } from '@/lib/tools/prompt-context'
 
 const SYSTEM_PROMPT = `あなたはブランドマーケティングの専門家です。以下の企業情報とターゲット概要をもとに、ターゲット顧客の「代表的な役割像（セグメント）」を提案してください。
 重要: 1人の具体的な個人（実名・具体的な住所・家族構成など）を作り込むのではなく、役割名・年齢層・短い特徴で、ターゲットセグメントを簡潔に描いてください。
@@ -22,37 +23,6 @@ const SYSTEM_PROMPT = `あなたはブランドマーケティングの専門家
   "media_channels": ["情報収集の代表傾向1", "情報収集の代表傾向2"],
   "personality_traits": ["代表的な傾向1", "代表的な傾向2", "代表的な傾向3"]
 }`
-
-// 構造化データをプロンプト用テキストに変換
-function formatBusinessDescriptions(basicInfo: Record<string, unknown>): string {
-  const descs = basicInfo.business_descriptions as Array<{ title: string; description: string }> | undefined
-  if (descs?.length) {
-    return descs
-      .filter(b => b.title?.trim())
-      .map(b => b.description ? `${b.title}: ${b.description}` : b.title)
-      .join('\n  ')
-  }
-  // 旧形式フォールバック
-  if (basicInfo.products && typeof basicInfo.products === 'string') {
-    return basicInfo.products as string
-  }
-  return ''
-}
-
-function formatTargetSegments(basicInfo: Record<string, unknown>): string {
-  const segs = basicInfo.target_segments as Array<{ name: string; description: string }> | undefined
-  if (segs?.length) {
-    return segs
-      .filter(ts => ts.name?.trim())
-      .map(ts => ts.description ? `${ts.name}: ${ts.description}` : ts.name)
-      .join('\n  ')
-  }
-  // 旧形式フォールバック
-  if (basicInfo.target_description && typeof basicInfo.target_description === 'string') {
-    return basicInfo.target_description as string
-  }
-  return ''
-}
 
 export async function POST(request: NextRequest) {
 
@@ -72,10 +42,10 @@ export async function POST(request: NextRequest) {
       parts.push(`- 業種: ${basic_info.industry_category}${sub}`)
     }
 
-    const bizText = formatBusinessDescriptions(basic_info)
+    const bizText = formatBusinessDescriptions(basic_info, '\n  ')
     if (bizText) parts.push(`- 事業内容:\n  ${bizText}`)
 
-    const targetText = formatTargetSegments(basic_info)
+    const targetText = formatTargetSegments(basic_info, '\n  ')
     if (targetText) parts.push(`- ターゲット:\n  ${targetText}`)
 
     parts.push('')

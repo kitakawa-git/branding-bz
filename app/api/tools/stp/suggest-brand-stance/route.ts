@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { callClaude } from '@/lib/claude-api'
 import { getAdminContext } from '@/lib/learning/auth'
 import { getGuardrailsPromptForCompany } from '@/lib/brand/guardrails'
+import { pushStpCompanyBasics } from '@/lib/tools/prompt-context'
 
 const SYSTEM_PROMPT = `あなたはブランドマーケティングの専門家です。STP分析の結果から「自社の立ち位置（ポジショニング・ステートメント）」を、ターゲット別に3本生成してください。
 
@@ -42,27 +43,7 @@ export async function POST(request: NextRequest) {
     }
 
     const parts: string[] = []
-    parts.push('## 企業情報')
-    if (basic_info?.company_name) parts.push(`- 企業名・ブランド名: ${basic_info.company_name}`)
-    if (basic_info?.industry_category) {
-      const sub = basic_info.industry_subcategory ? `（${basic_info.industry_subcategory}）` : ''
-      parts.push(`- 業種: ${basic_info.industry_category}${sub}`)
-    } else if (basic_info?.industry) {
-      const industry = basic_info.industry === 'その他' && basic_info.industry_other
-        ? basic_info.industry_other
-        : basic_info.industry
-      parts.push(`- 業種: ${industry}`)
-    }
-    if (Array.isArray(basic_info?.business_descriptions)) {
-      const descriptions = basic_info.business_descriptions
-        .filter((b: { title?: string }) => b.title?.trim())
-        .map((b: { title: string; description?: string }, i: number) => {
-          const desc = b.description?.trim() ? `: ${b.description.trim()}` : ''
-          return `  ${i + 1}. ${b.title.trim()}${desc}`
-        })
-        .join('\n')
-      if (descriptions) parts.push(`- 事業内容:\n${descriptions}`)
-    }
+    pushStpCompanyBasics(parts, basic_info)
 
     parts.push('')
     parts.push('## ターゲティング')

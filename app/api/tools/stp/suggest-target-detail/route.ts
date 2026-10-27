@@ -5,6 +5,7 @@ import { callClaude } from '@/lib/claude-api'
 import { getAdminContext } from '@/lib/learning/auth'
 import { getGuardrailsPromptForCompany } from '@/lib/brand/guardrails'
 import { getRelationsPromptForCompany } from '@/lib/brand/relations'
+import { pushStpCompanyProfile } from '@/lib/tools/prompt-context'
 
 export async function POST(request: NextRequest) {
 
@@ -39,50 +40,7 @@ export async function POST(request: NextRequest) {
 
     // ユーザープロンプト構築
     const parts: string[] = []
-    parts.push('## 企業情報')
-    if (basic_info.company_name) {
-      parts.push(`- 企業名・ブランド名: ${basic_info.company_name}`)
-    }
-    // 業種（新形式 or 旧形式に対応）
-    if (basic_info.industry_category) {
-      const sub = basic_info.industry_subcategory ? `（${basic_info.industry_subcategory}）` : ''
-      parts.push(`- 業種: ${basic_info.industry_category}${sub}`)
-    } else if (basic_info.industry) {
-      const industry = basic_info.industry === 'その他' && basic_info.industry_other
-        ? basic_info.industry_other
-        : basic_info.industry
-      parts.push(`- 業種: ${industry}`)
-    }
-    // 事業内容（構造化データ or 旧テキスト形式に対応）
-    if (basic_info.business_descriptions && Array.isArray(basic_info.business_descriptions)) {
-      const descriptions = basic_info.business_descriptions
-        .filter((b: { title: string; description: string }) => b.title?.trim())
-        .map((b: { title: string; description: string }, i: number) => {
-          const desc = b.description?.trim() ? `: ${b.description.trim()}` : ''
-          return `  ${i + 1}. ${b.title.trim()}${desc}`
-        })
-        .join('\n')
-      if (descriptions) {
-        parts.push(`- 事業内容:\n${descriptions}`)
-      }
-    } else if (basic_info.products) {
-      parts.push(`- 事業内容: ${basic_info.products}`)
-    }
-    // 現状の主要顧客（構造化データ or 旧テキスト形式に対応）
-    if (basic_info.target_segments && Array.isArray(basic_info.target_segments)) {
-      const segments = basic_info.target_segments
-        .filter((ts: { name: string; description: string }) => ts.name?.trim())
-        .map((ts: { name: string; description: string }, i: number) => {
-          const desc = ts.description?.trim() ? `: ${ts.description.trim()}` : ''
-          return `  ${i + 1}. ${ts.name.trim()}${desc}`
-        })
-        .join('\n')
-      if (segments) {
-        parts.push(`- 現状の主要顧客:\n${segments}`)
-      }
-    } else if (basic_info.current_customers) {
-      parts.push(`- 現状の主要顧客: ${basic_info.current_customers}`)
-    }
+    pushStpCompanyProfile(parts, basic_info)
     // 競合情報（名前、URL、メモを詳細に）
     if (competitors.length > 0) {
       const competitorLines = competitors.map((c: { name: string; url?: string; notes?: string }, i: number) => {

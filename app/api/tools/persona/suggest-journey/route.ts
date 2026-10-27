@@ -5,6 +5,7 @@ import { callClaude } from '@/lib/claude-api'
 import { getAdminContext } from '@/lib/learning/auth'
 import { getGuardrailsPromptForCompany } from '@/lib/brand/guardrails'
 import { getRelationsPromptForCompany } from '@/lib/brand/relations'
+import { formatBusinessDescriptions } from '@/lib/tools/prompt-context'
 
 const SYSTEM_PROMPT = `あなたはブランドマーケティングの専門家です。以下のペルソナ情報をもとに、5段階のカスタマージャーニーマップを作成してください。回答はJSON形式のみで、前後に説明文やマークダウンのコードブロックを含めないでください。
 
@@ -37,21 +38,6 @@ Google検索 / Web広告 / SNS（X/LinkedIn） / LP（トップ） / 料金ペ�
 - buying_barriers → 検討段階の pain_points と emotion_score（下げる方向）
 
 これらが全ペルソナで違うなら、ジャーニーの感情カーブも自然に違うものになるはずです。`
-
-// 構造化データをプロンプト用テキストに変換
-function formatBusinessDescriptions(basicInfo: Record<string, unknown>): string {
-  const descs = basicInfo.business_descriptions as Array<{ title: string; description: string }> | undefined
-  if (descs?.length) {
-    return descs
-      .filter(b => b.title?.trim())
-      .map(b => b.description ? `${b.title}: ${b.description}` : b.title)
-      .join('、')
-  }
-  if (basicInfo.products && typeof basicInfo.products === 'string') {
-    return basicInfo.products as string
-  }
-  return ''
-}
 
 // ジャーニーJSONの堅牢パース（途中切れ耐性）:
 // 1) ```json フェンスがあれば中身。2) 最初の { 〜最後の } を抽出。3) 失敗時は stages の完結要素までで復旧。
@@ -117,7 +103,7 @@ export async function POST(request: NextRequest) {
     if (basic_info.company_name) parts.push(`- 企業名: ${basic_info.company_name}`)
     if (basic_info.industry_category) parts.push(`- 業種: ${basic_info.industry_category}`)
 
-    const bizText = formatBusinessDescriptions(basic_info)
+    const bizText = formatBusinessDescriptions(basic_info, '、')
     if (bizText) parts.push(`- 事業内容: ${bizText}`)
 
     parts.push('')
