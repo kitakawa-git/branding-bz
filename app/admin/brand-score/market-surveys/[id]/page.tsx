@@ -3,7 +3,7 @@
 // 市場調査の詳細（市場浸透の5段階）
 // サーベイ詳細の「段階別の詳細」と同じ体裁にして、社内と社外を同じ形で読めるようにする
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -95,7 +95,6 @@ const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
 
 export default function MarketSurveyDetailPage() {
   const params = useParams()
-  const router = useRouter()
   const surveyId = params.id as string
 
   const [survey, setSurvey] = useState<Survey | null>(null)

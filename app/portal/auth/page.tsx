@@ -70,7 +70,7 @@ function PortalAuthContent() {
   }, [from, router])
 
   // ログイン成功後の遷移先
-  const redirectAfterAuth = (userId: string) => {
+  const redirectAfterAuth = () => {
     if (from) {
       router.replace(`/portal/auth/select?from=${from}`)
     } else {
@@ -86,7 +86,7 @@ function PortalAuthContent() {
     setError('')
 
     try {
-      const { data, error: authError } = await supabase.auth.signInWithPassword({
+      const { error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
         options: { captchaToken: captcha.token },
@@ -98,7 +98,7 @@ function PortalAuthContent() {
         return
       }
 
-      redirectAfterAuth(data.user.id)
+      redirectAfterAuth()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'ログイン中にエラーが発生しました')
     } finally {

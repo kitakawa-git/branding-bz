@@ -139,7 +139,6 @@ function toMapData(positioning: PositioningData): PositioningMapData {
 // T — ターゲティング セクション（見出し＋ターゲットカード＋適合マップ＋概要文AI生成）
 function TargetingSection({
   targeting,
-  positioning,
   mainEval,
   subEvals,
   targetSummary,

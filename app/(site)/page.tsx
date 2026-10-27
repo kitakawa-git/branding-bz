@@ -101,10 +101,7 @@ function Hero() {
 
 
 /* ===== 制作事例ショーケース（Framerの「Made with」ギャラリー風） =====
-   複数カラムが上下に自動スクロールするマソンリー。
-   写真は Unsplash（images.unsplash.com）から取得し object-cover で配置。 */
-const ux = (id: string, w = 640) =>
-  `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${w}&q=80`
+   複数カラムが上下に自動スクロールするマソンリー。 */
 
 type ShowCard =
   | { kind: 'photo'; h: number; img: string; label?: string; title: string; mark?: string }

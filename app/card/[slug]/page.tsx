@@ -1,8 +1,6 @@
 import type { Metadata } from 'next'
 import { createClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
-import QRCode from 'qrcode'
-import { generateHighResQRDataURL, getQRFilename } from '@/lib/qr-download'
 import { parseFontsFromDB, getCssFontFamily, getGoogleFontsUrl } from '@/lib/brand-fonts'
 import { splitBrandCopy } from '@/lib/brand-mvv'
 import { CardViewTracker } from './CardViewTracker'
@@ -216,17 +214,6 @@ export default async function CardPage({ params }: Props) {
   // 事業内容（philosophy_elements service 由来 [{title, description, added_index}, ...]）
   type BusinessContent = { title: string; description?: string }
   const businessContents: BusinessContent[] = phil.services.filter((item) => item.title)
-
-  // QRコードをサーバーサイドで生成
-  const cardUrl = `https://branding.bz/card/${slug}`
-  const qrDataUrl = await QRCode.toDataURL(cardUrl, {
-    width: 160,
-    margin: 1,
-  })
-
-  // 高解像度QRコード（ダウンロード用 1000x1000px）
-  const highResQrDataUrl = await generateHighResQRDataURL(slug)
-  const downloadFilename = getQRFilename(profile.name || slug)
 
   // SNSリンクの存在チェック
   const snsLinks = [

@@ -385,7 +385,7 @@ export default function SurveyRespondPage() {
       </Card>
 
       {/* 設問セクション（カテゴリ別） */}
-      {groupedQuestions.map((group, groupIdx) => (
+      {groupedQuestions.map((group) => (
         <div key={group.category} className="mb-6">
           <h2 className="text-base font-bold text-foreground mb-4">
             {group.label}

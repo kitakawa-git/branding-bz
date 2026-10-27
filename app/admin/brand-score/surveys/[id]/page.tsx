@@ -2,7 +2,7 @@
 
 // サーベイ詳細・設問管理ページ
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import { toast } from 'sonner'
 import { useAuth } from '../../../components/AdminDataProvider'
 import { Card, CardContent } from '@/components/ui/card'
@@ -91,7 +91,6 @@ const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
 
 export default function SurveyDetailPage() {
   const params = useParams()
-  const router = useRouter()
   const { companyId } = useAuth()
   const surveyId = params.id as string
 

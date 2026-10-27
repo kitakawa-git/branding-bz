@@ -156,7 +156,6 @@ export async function resolveImages(
     setNested(resolved, t.path, results[i] || '')
   })
 
-  const successCount = results.filter(Boolean).length
   onProgress?.('画像読み込み完了', 35)
   return resolved
 }

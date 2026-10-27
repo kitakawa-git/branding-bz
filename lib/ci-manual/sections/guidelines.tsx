@@ -13,7 +13,7 @@ function SubSection({ title, children, styles }: { title: string; children: Reac
   )
 }
 
-function MVVBlock({ label, value, styles, brandColor }: { label: string; value: string; styles: ThemeStyles; brandColor: string }) {
+function MVVBlock({ label, value, brandColor }: { label: string; value: string; styles: ThemeStyles; brandColor: string }) {
   // コピー（先頭段落）と説明文を分離して表現を分ける
   const { copy, body } = splitBrandCopy(value)
   return (

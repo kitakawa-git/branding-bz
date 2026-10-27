@@ -212,16 +212,6 @@ function getGapBadgeClass(direction: string): string {
   return 'bg-gray-100 text-gray-600 border-gray-200'
 }
 
-function getRank(score: number | null): string {
-  if (score === null) return '-'
-  if (score >= 90) return 'S'
-  if (score >= 80) return 'A+'
-  if (score >= 70) return 'A'
-  if (score >= 60) return 'B+'
-  if (score >= 50) return 'B'
-  if (score >= 40) return 'C'
-  return 'D'
-}
 
 function getBarColor(rate: number): string {
   if (rate >= 40) return 'bg-green-500'
@@ -525,7 +515,6 @@ export default function BrandScoreDashboard() {
   } else if (hasOuter) {
     totalBrandScore = Math.round(outerScore!.outer_score * 10) / 10
   }
-  const totalRank = getRank(totalBrandScore)
 
   // 前回比較
   const prevDiff = prevSnapshot?.total_score != null && totalBrandScore != null

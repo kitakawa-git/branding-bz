@@ -20,7 +20,7 @@ const COLOR_CATEGORY_LABELS: Record<string, string> = {
   utility_colors: 'その他',
 }
 
-export function VisualsSection({ data, styles, brandColor }: { data: CIManualData; styles: ThemeStyles; brandColor: string }) {
+export function VisualsSection({ data, styles }: { data: CIManualData; styles: ThemeStyles; brandColor: string }) {
   const vis = data.visuals
   if (!vis) return null
 

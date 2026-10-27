@@ -29,7 +29,7 @@ const CATEGORIES = ['重要', 'イベント', '更新', 'その他']
 export default function AnnouncementEditPage() {
   const params = useParams()
   const router = useRouter()
-  const { companyId, user } = useAuth()
+  const { companyId } = useAuth()
   const id = params.id as string
 
   const [title, setTitle] = useState('')

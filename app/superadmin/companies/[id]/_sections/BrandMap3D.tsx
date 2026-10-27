@@ -130,8 +130,6 @@ export default function BrandMap3D({
     camTarget.current = null
   }, [initialZoom])
 
-  const nodeByRef = useMemo(() => new Map(graph.nodes.map((n) => [n.ref, n])), [graph.nodes])
-
   // 隣接（ホバー/選択時のハイライト用）
   const neighborsOf = useMemo(() => {
     const m = new Map<string, Set<string>>()

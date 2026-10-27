@@ -2,7 +2,7 @@
 // GET /api/learning/analytics
 //   動画別集計（視聴人数・完了人数・完了率・平均進捗・総再生回数）
 //   メンバー別集計（各動画の最大進捗・完了・最終視聴日時・回数）
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { getAdminContext } from '@/lib/learning/auth'
 import { guardCompanyFeature } from '@/lib/billing/guard'
@@ -13,7 +13,7 @@ import type {
   MemberVideoCell,
 } from '@/lib/types/learning'
 
-export async function GET(_request: NextRequest) {
+export async function GET() {
   try {
     const admin = await getAdminContext()
     if (!admin) {
