@@ -54,9 +54,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (password.length < 6) {
+    if (password.length < 8) {
       return NextResponse.json(
-        { error: 'パスワードは6文字以上で入力してください' },
+        { error: 'パスワードは8文字以上で入力してください' },
         { status: 400 }
       )
     }
