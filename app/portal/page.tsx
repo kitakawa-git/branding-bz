@@ -537,13 +537,6 @@ export default function PortalTopPage() {
         <SurveyBanner />
       </div>
 
-      {/* ===== 1.35. 目標・KPI未設定バナー =====
-          サーベイ・理解度テストと同じ「やってください」の通知なので、
-          並べて同じ様式・同じ位置に置く（以前は下のブランドスコアの後にあり、種類が違うものに見えていた） */}
-      {kpiVisible && !hasGoals && showGoalBanner && (
-        <DashboardGoalBanner goalPeriodType={goalPeriodType} />
-      )}
-
       {/* ===== 1.4. 未受験 理解度テストバナー ===== */}
       {quizEnabled && (
         <div className="mb-4 empty:hidden">
@@ -570,7 +563,14 @@ export default function PortalTopPage() {
           同じ5項目がサイドバーに常時あるので、慣れた人には要らない */}
       <DashboardRashisaCard visible={rashisaCardVisible} />
 
-      {/* ===== 2.5. KPIサマリー（KPI無効時は非表示。未設定時のバナーは 1.35 に置く） ===== */}
+      {/* ===== 2.45. 目標・KPI未設定バナー（ミッションの下。設定すると同じ位置に 2.5 の KPIサマリーが出る） =====
+          サーベイ・理解度テストと同じ「やってください」の通知なので、
+          並べて同じ様式・同じ位置に置く（以前は下のブランドスコアの後にあり、種類が違うものに見えていた） */}
+      {kpiVisible && !hasGoals && showGoalBanner && (
+        <DashboardGoalBanner goalPeriodType={goalPeriodType} />
+      )}
+
+      {/* ===== 2.5. KPIサマリー（KPI無効時は非表示。未設定時のバナーは直前の 2.45） ===== */}
       {kpiVisible && hasGoals && (
         <DashboardKpiSummary kpiGoals={kpiGoals} goalTitle={goalTitle} />
       )}
