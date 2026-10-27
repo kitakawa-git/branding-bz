@@ -26,6 +26,7 @@ import {
 } from '@/components/portal/portal-search'
 import { RashisaCardVisibilityProvider } from '@/components/portal/rashisa-card-visibility'
 import { Bell } from 'lucide-react'
+import { FadeInMain } from '@/components/ui/fade-in-main'
 
 // 認証不要のパス
 const publicPaths = ['/portal/login', '/portal/register', '/portal/auth']
@@ -133,7 +134,7 @@ function PortalLayoutInner({ children }: { children: React.ReactNode }) {
             </div>
           </header>
           <div className="flex flex-1 flex-col">
-            <main className="flex-1">{children}</main>
+            <FadeInMain className="flex-1">{children}</FadeInMain>
             <footer className="px-6 py-4 text-center">
               <Separator className="mb-4" />
               <p className="text-xs text-muted-foreground m-0">

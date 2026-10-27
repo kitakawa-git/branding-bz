@@ -17,6 +17,7 @@ import { ShieldAlert, Hourglass } from 'lucide-react'
 import { GateShell } from '@/components/admin/GateShell'
 import { AuthSplash } from '@/components/admin/AuthSplash'
 import { clearPageCache, getPageCache, setPageCache } from '@/lib/page-cache'
+import { FadeInMain } from '@/components/ui/fade-in-main'
 
 // companies レコード（少なくとも機能トグルのカラムを含む）
 type CompanyRecord = Record<string, unknown>
@@ -379,9 +380,10 @@ export function AdminDataProvider({
         <AppSidebar />
         <SidebarInset>
           <AdminHeader />
-          <main className="max-w-4xl mx-auto px-5 pt-4 pb-6 w-full">
+          {/* FadeInMain: スケルトンから内容に切り替わるとき、内容をふわっと出す */}
+          <FadeInMain className="max-w-4xl mx-auto px-5 pt-4 pb-6 w-full">
             {children}
-          </main>
+          </FadeInMain>
         </SidebarInset>
       </SidebarProvider>
     </AdminDataContext.Provider>

@@ -10,6 +10,7 @@ import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import { ShieldAlert } from 'lucide-react'
 import { GateShell } from '@/components/admin/GateShell'
 import { AuthSplash } from '@/components/admin/AuthSplash'
+import { FadeInMain } from '@/components/ui/fade-in-main'
 
 export function SuperAdminShell({ children }: { children: React.ReactNode }) {
   const { user, isSuperAdmin, loading, signOut } = useAdminData()
@@ -61,9 +62,10 @@ export function SuperAdminShell({ children }: { children: React.ReactNode }) {
       <SuperAdminSidebar />
       <SidebarInset>
         <SuperAdminHeader />
-        <main className="max-w-4xl mx-auto px-5 pt-4 pb-6 w-full">
+        {/* FadeInMain: スケルトンから内容に切り替わるとき、内容をふわっと出す */}
+        <FadeInMain className="max-w-4xl mx-auto px-5 pt-4 pb-6 w-full">
           {children}
-        </main>
+        </FadeInMain>
       </SidebarInset>
     </SidebarProvider>
   )
