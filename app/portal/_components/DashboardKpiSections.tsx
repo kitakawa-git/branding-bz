@@ -7,7 +7,8 @@ import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { Slider } from '@/components/ui/slider'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import { ArrowRight, Target } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
+import JaWrap from '@/components/lp/JaWrap'
 
 export type KpiItemSummary = {
   id: string
@@ -19,32 +20,25 @@ export type KpiItemSummary = {
 }
 
 // 目標・KPI未設定バナー（サーベイ・理解度テストと同じ「やってください」の通知）
+// 自己評価バナー（DashboardReviewBanner）と同じ様式（全体が押せるピル・白文字・右端に矢印）。色だけ赤
 export function DashboardGoalBanner({ goalPeriodType }: { goalPeriodType: string | null }) {
+  const period =
+    goalPeriodType === 'year'
+      ? '１年間'
+      : goalPeriodType === 'half'
+        ? '半年間'
+        : goalPeriodType === 'quarter'
+          ? '３ヶ月間'
+          : null
   return (
-    <div className="mb-4 bg-red-50 border border-red-200 rounded-xl p-4 flex items-center gap-4">
-      <div className="shrink-0 text-red-600">
-        <Target size={24} />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-base font-semibold text-red-600 m-0">
-          目標とKPIを決めましょう
+    <Link href="/portal/kpi?setup=true" className="block w-full mb-4 no-underline">
+      <div className="rounded-full bg-red-500 px-6 py-4 flex items-center justify-between hover:opacity-90 transition-opacity">
+        <p className="text-white text-base font-semibold m-0 text-left break-keep [overflow-wrap:break-word]">
+          <JaWrap>{period ? `あなたの${period}の目標とKPIを決めましょう！` : '今期の目標とKPIを決めましょう！'}</JaWrap>
         </p>
-        <p className="text-sm text-muted-foreground m-0 mt-0.5 truncate">
-          {goalPeriodType === 'year'
-            ? '年間の目標'
-            : goalPeriodType === 'half'
-              ? '半年間の目標'
-              : goalPeriodType === 'quarter'
-                ? '３ヶ月間の目標'
-                : '今期の目標'}
-        </p>
+        <ArrowRight size={18} className="text-white shrink-0 ml-3" />
       </div>
-      <Button asChild className="shrink-0 h-11 px-5 rounded-full">
-        <Link href="/portal/kpi?setup=true" className="no-underline">
-          設定
-        </Link>
-      </Button>
-    </div>
+    </Link>
   )
 }
 
@@ -113,8 +107,10 @@ export function DashboardReviewBanner({
   return (
     <button type="button" onClick={onOpen} className="w-full mb-4 cursor-pointer border-0 p-0 bg-transparent">
       <div className="rounded-full bg-[#47C95C] px-6 py-4 flex items-center justify-between hover:opacity-90 transition-opacity">
-        <p className="text-white text-base font-semibold m-0">
-          あなたの{goalPeriodType === 'year' ? '１年間' : goalPeriodType === 'half' ? '半年間' : goalPeriodType === 'quarter' ? '３ヶ月間' : '期間'}を振り返り、自己評価を行いましょう！
+        {/* text-left: <button> の初期値（中央寄せ）だと2行になったとき目標バナーと揃わない。
+            break-keep + JaWrap: 「自己評価／を」のような語の途中で折り返さない */}
+        <p className="text-white text-base font-semibold m-0 text-left break-keep [overflow-wrap:break-word]">
+          <JaWrap>{`あなたの${goalPeriodType === 'year' ? '１年間' : goalPeriodType === 'half' ? '半年間' : goalPeriodType === 'quarter' ? '３ヶ月間' : '期間'}を振り返り、自己評価を行いましょう！`}</JaWrap>
         </p>
         <ArrowRight size={18} className="text-white shrink-0 ml-3" />
       </div>
