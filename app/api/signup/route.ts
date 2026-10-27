@@ -7,16 +7,7 @@ import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { generateRandomSlug } from '@/lib/generate-slug'
 import { getEmailDomain, isFreeEmailDomain, FREE_EMAIL_REJECTION_MESSAGE } from '@/lib/constants/free-email-domains'
 import { isSignupEmailBlocked } from '@/lib/signup/email-allowlist'
-
-// HTMLエスケープ（XSS対策）
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;')
-}
+import { escapeHtml } from '@/lib/mail/escape-html'
 
 export async function POST(request: NextRequest) {
 

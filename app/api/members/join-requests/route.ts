@@ -7,16 +7,7 @@ import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { supabase } from '@/lib/supabase'
 import { checkMemberCapacity, memberLimitResponse } from '@/lib/billing/guard'
 import { addToActiveSurveys } from '@/lib/brand-score/survey-participants'
-
-// HTMLエスケープ（XSS対策）
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;')
-}
+import { escapeHtml } from '@/lib/mail/escape-html'
 
 // 管理者の company_id を取得
 async function getAdminCompanyId(req: NextRequest): Promise<string | null> {

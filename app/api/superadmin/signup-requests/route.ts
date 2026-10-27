@@ -6,17 +6,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { escapeHtml } from '@/lib/mail/escape-html'
 
 export const runtime = 'nodejs'
-
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;')
-}
 
 // Bearer トークン → superadmin 検証。OK なら admin クライアントを返す。
 async function requireSuperadmin(request: NextRequest) {

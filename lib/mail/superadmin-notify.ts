@@ -11,16 +11,10 @@
 // 宛先は問い合わせフォームと同じ CONTACT_NOTIFICATION_EMAIL。
 // 依頼の種類ごとに宛先を分けたくなったら、ここに env を足して分岐させる。
 import { Resend } from 'resend'
+import { escapeHtml } from './escape-html'
 
-/** メール本文に値を差し込む前に必ず通す */
-export function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;')
-}
+// メール本文に値を差し込む前に必ず通す（実体は lib/mail/escape-html。既存の import 先を変えないため再 export）
+export { escapeHtml }
 
 /** 「ラベル / 値」の2列テーブル。値は呼び出し側でエスケープ済みにしておく */
 export function detailTable(rows: [string, string][]): string {
