@@ -42,10 +42,8 @@ import {
 import {
   SortableContext,
   verticalListSortingStrategy,
-  useSortable,
   arrayMove,
 } from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
 import {
   ClipboardList,
   Users,
@@ -55,21 +53,14 @@ import {
   Loader2,
   Plus,
   LayoutTemplate,
-  Trash2,
-  GripVertical,
   AlertCircle,
   Check,
   RefreshCw,
 } from 'lucide-react'
 import { Fab, FabButton } from '@/components/ui/fab'
 import { SurveyResults } from '@/components/brand-score/SurveyResults'
-import {
-  STAGE_LABELS,
-  type GroupFunnel,
-} from '@/lib/brand-score/funnel-stages'
-import {
-  type Breakdown,
-} from '@/lib/brand-score/question-lens'
+import { Question, SortableQuestionRow } from './_components/SortableQuestionRow'
+import { InnerScoreData, buildInsightSummary } from './_components/insight-summary'
 
 // 型定義
 type Survey = {
@@ -90,222 +81,12 @@ type Survey = {
 // カード別のAI考察。キーは API 側と揃える
 type InsightKey = 'overview' | 'distribution' | 'stages' | 'funnel'
 
-type Question = {
-  id: string
-  survey_id: string
-  category: string
-  question_text: string
-  source: string
-  sort_order: number
-  is_active: boolean
-  reference_data: Record<string, unknown>
-  created_at: string
-}
-
-// インナースコアAPI型定義
-type InnerScoreData = {
-  survey: { id: string; title: string; status: string; total_members: number }
-  response_rate: number
-  response_count: number
-  scores: {
-    total: number | null
-    why: number | null
-    how: number | null
-    what: number | null
-  }
-  rank: string
-  by_department: {
-    department: string; count: number
-    why: number | null; how: number | null; what: number | null; total: number | null
-  }[]
-  by_role: {
-    role_category: string; count: number
-    why: number | null; how: number | null; what: number | null; total: number | null
-  }[]
-  by_question: {
-    question_id: string; question_text: string; category: string
-    avg_score: number | null; count: number
-  }[]
-  /** 設問タイプ・4領域・回答分布の集計 */
-  breakdown: Breakdown | null
-  /** 浸透段階の集計。段階が解決できないサーベイでは null */
-  funnel: {
-    pass_threshold: number
-    overall: GroupFunnel
-    by_department: GroupFunnel[]
-  } | null
-}
-
 // ステータスバッジ定義
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
   draft: { label: '下書き', className: 'bg-gray-100 text-gray-700' },
   active: { label: '実施中', className: 'bg-green-100 text-green-700' },
   closed: { label: '終了', className: 'bg-blue-100 text-ds-app-accent-hover' },
   archived: { label: 'アーカイブ', className: 'bg-gray-100 text-gray-500' },
-}
-
-// sourceバッジ定義
-const SOURCE_CONFIG: Record<string, { label: string; className: string }> = {
-  template: { label: 'テンプレート', className: 'bg-gray-100 text-gray-600' },
-  ai_generated: { label: 'AI生成', className: 'bg-purple-100 text-purple-700' },
-  custom: { label: 'カスタム', className: 'bg-blue-100 text-ds-app-accent-hover' },
-}
-
-// 設問別スコアの表示軸
-
-/**
- * AI考察に渡す集計要約。画面に出ている数字だけを渡し、
- * 生成側が新しい数値を作れないようにする
- */
-function buildInsightSummary(data: InnerScoreData) {
-  // 段階は画面が5点満点で出しているので、AIにも同じ単位で語らせる。
-  // 0〜100 も渡すのは、5点満点だと SP の理解3.54 と行動3.54 のように
-  // 別の値が同じに見え、差を語れなくなる行があるため
-  const stageRow = (g: GroupFunnel) => ({
-    対象: g.department ? departmentLabel(g.department) : '全社',
-    回答者数: g.respondentCount,
-    段階スコア5点満点: Object.fromEntries(
-      g.stageScores.map(s => [STAGE_LABELS[s.stage], s.avg])
-    ),
-    段階スコア0to100: Object.fromEntries(
-      g.stageScores.map(s => [STAGE_LABELS[s.stage], s.score])
-    ),
-    通過率: Object.fromEntries(
-      g.cumulative.map(p => [STAGE_LABELS[p.stage], p.rate])
-    ),
-  })
-
-  const dist = (d: { avg: number; score: number; positiveRate: number; neutralRate: number; negativeRate: number }) => ({
-    平均: d.avg,
-    スコア: d.score,
-    肯定率: d.positiveRate,
-    中立率: d.neutralRate,
-    否定率: d.negativeRate,
-  })
-
-  return {
-    総合スコア: data.scores.total,
-    ランク: data.rank,
-    回答数: data.response_count,
-    回答分布: data.breakdown && {
-      全社: dist(data.breakdown.overall),
-      部署別: data.breakdown.byDepartment.map(d => ({
-        部署: departmentLabel(d.department),
-        ...dist(d),
-      })),
-    },
-    浸透段階: data.funnel && {
-      通過の基準: `各段階の平均${data.funnel.pass_threshold}点以上`,
-      全社: stageRow(data.funnel.overall),
-      部署別: data.funnel.by_department.map(stageRow),
-    },
-    低スコアの設問: [...data.by_question]
-      .filter(q => q.avg_score !== null)
-      .sort((a, b) => (a.avg_score ?? 0) - (b.avg_score ?? 0))
-      .slice(0, 5)
-      .map(q => ({ 設問: q.question_text, 平均: q.avg_score, 回答数: q.count })),
-  }
-}
-
-// カテゴリ表示名
-const CATEGORY_LABELS: Record<string, string> = {
-  why: '理念浸透（WHY）',
-  how: '方針共感（HOW）',
-  what: '行動体現（WHAT）',
-}
-
-// 部署の表示名。DB の値は取り込み時に指定した文字列なので、
-// 画面上の呼び方だけをここで揃える
-const DEPARTMENT_LABELS: Record<string, string> = {
-  BO本社: 'BO（本社含む）',
-}
-
-const departmentLabel = (department: string) =>
-  DEPARTMENT_LABELS[department] ?? department
-
-// ── ソート可能な設問行コンポーネント ──
-function SortableQuestionRow({
-  q,
-  isDraft,
-  onCategoryChange,
-  onDelete,
-}: {
-  q: Question
-  isDraft: boolean
-  onCategoryChange: (id: string, category: string) => void
-  onDelete: (id: string) => void
-}) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: q.id })
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  }
-  const sourceConfig = SOURCE_CONFIG[q.source] || SOURCE_CONFIG.template
-
-  return (
-    <div ref={setNodeRef} style={style} className="flex items-start gap-2 px-4 py-3 border-b last:border-b-0">
-      {/* ドラッグハンドル（draft時のみ） */}
-      {isDraft ? (
-        <button {...attributes} {...listeners} className="shrink-0 mt-1 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground touch-none">
-          <GripVertical size={14} />
-        </button>
-      ) : (
-        <span className="text-xs text-muted-foreground font-mono mt-0.5 w-5 shrink-0 text-right">
-          {q.sort_order}
-        </span>
-      )}
-
-      {/* 設問テキスト + メタ情報 */}
-      <div className="flex-1 min-w-0">
-        <p className="text-sm text-foreground leading-relaxed">
-          {q.question_text}
-        </p>
-        <div className="flex items-center gap-2 mt-1 flex-wrap">
-          <Badge
-            variant="secondary"
-            className={`text-[10px] px-1.5 py-0 ${sourceConfig.className}`}
-          >
-            {sourceConfig.label}
-          </Badge>
-          {/* カテゴリSelect（draft時のみ） */}
-          {isDraft ? (
-            <Select value={q.category} onValueChange={v => onCategoryChange(q.id, v)}>
-              <SelectTrigger className="h-5 w-auto text-[10px] px-1.5 py-0 border-0 bg-transparent hover:bg-muted/50 gap-0.5 [&>svg]:h-3 [&>svg]:w-3">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="why">WHY（理念浸透）</SelectItem>
-                <SelectItem value="how">HOW（方針共感）</SelectItem>
-                <SelectItem value="what">WHAT（行動体現）</SelectItem>
-              </SelectContent>
-            </Select>
-          ) : (
-            <span className="text-[10px] text-muted-foreground">
-              {CATEGORY_LABELS[q.category] || q.category}
-            </span>
-          )}
-          {q.source === 'ai_generated' && q.reference_data?.field != null && (
-            <span className="text-[10px] text-muted-foreground">
-              参照: {String(q.reference_data.field)}
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* 削除ボタン（draft時のみ） */}
-      {isDraft && (
-        <Button
-          variant="outline"
-          size="icon"
-          className="size-9 shrink-0 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
-          onClick={() => onDelete(q.id)}
-        >
-          <Trash2 size={14} />
-        </Button>
-      )}
-    </div>
-  )
 }
 
 export default function SurveyDetailPage() {
