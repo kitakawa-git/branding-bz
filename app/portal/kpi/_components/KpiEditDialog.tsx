@@ -30,6 +30,8 @@ type Props = {
   contributeOptions?: GoalOption[]
   /** 入力例（チーム KPI では文言を変える） */
   titlePlaceholder?: string
+  /** 寄与先の欄の見出し（個人KPI→「寄与するチームKPI」、チームKPI→「寄与する会社KPI」） */
+  contributeLabel?: string
 }
 
 export function KpiEditDialog({
@@ -46,6 +48,7 @@ export function KpiEditDialog({
   handleKpiEditSave,
   contributeOptions = [],
   titlePlaceholder = '例: 新規顧客を10社獲得',
+  contributeLabel = '寄与するチームKPI',
 }: Props) {
   return (
     <Dialog open={kpiEditOpen} onOpenChange={setKpiEditOpen}>
@@ -110,7 +113,7 @@ export function KpiEditDialog({
           )}
           {canEdit && contributeOptions.length > 0 && (
             <div>
-              <Label className="text-xs font-bold mb-1.5 block">寄与するチームKPI（任意）</Label>
+              <Label className="text-xs font-bold mb-1.5 block">{contributeLabel}（任意）</Label>
               <Select value={kpiEditForm.contributesTo} onValueChange={v => updateKpiEditForm('contributesTo', v)}>
                 <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                 <SelectContent>

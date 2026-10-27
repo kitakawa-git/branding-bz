@@ -45,7 +45,7 @@ export default function AdminGoalsPage() {
   const [teams, setTeams] = useState<Team[]>([])
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
   const [members, setMembers] = useState<CompanyMember[]>([])
-  const [teamKpis, setTeamKpis] = useState<GoalKpi[]>([])
+  const [sharedKpis, setSharedKpis] = useState<GoalKpi[]>([])
   const [contributionCounts, setContributionCounts] = useState<Record<string, number>>({})
 
   const [goalForm, setGoalForm] = useState<GoalFormTarget | null>(null)
@@ -58,13 +58,14 @@ export default function AdminGoalsPage() {
   const fetchData = async () => {
     if (!companyId) return
     try {
-      const [periodsRes, goalsRes, teamsRes, teamMembersRes, membersRes, kpisRes] = await Promise.all([
+      const [periodsRes, goalsRes, teamsRes, teamMembersRes, membersRes, kpisRes, countsRes] = await Promise.all([
         supabase.from('goal_periods').select('id, type, is_current, status').eq('company_id', companyId),
         supabase.from('goals').select(GOAL_COLUMNS).eq('company_id', companyId).in('level', ['company', 'team']).order('created_at', { ascending: true }),
         supabase.from('teams').select('id, company_id, name, created_at').eq('company_id', companyId).order('created_at', { ascending: true }),
         supabase.from('team_members').select('team_id, user_id, role'),
         supabase.from('members').select('auth_id, display_name, profile:profiles(name, department)').eq('company_id', companyId).eq('is_active', true),
         supabase.from('goal_kpis').select('*').eq('company_id', companyId).order('created_at', { ascending: true }),
+        supabase.rpc('goal_kpi_contribution_counts', { target_company_id: companyId }),
       ])
 
       // 今の期間の目標（年度と半期の両方が今の期間になりうる。期間が無い会社は期間なし）
@@ -74,12 +75,12 @@ export default function AdminGoalsPage() {
       const teamRows = (teamsRes.data || []) as Team[]
       const teamIds = new Set(teamRows.map(t => t.id))
 
-      const teamGoalIds = new Set(goals.filter(g => g.level === 'team').map(g => g.id))
-      const allKpis = (kpisRes.data || []) as GoalKpi[]
-      const counts: Record<string, number> = {}
-      allKpis.forEach(k => { if (k.contributes_to_kpi_id) counts[k.contributes_to_kpi_id] = (counts[k.contributes_to_kpi_id] ?? 0) + 1 })
-      setTeamKpis(allKpis.filter(k => teamGoalIds.has(k.goal_id)))
-      setContributionCounts(counts)
+      // 会社・チーム目標の KPI と、寄与件数（RPC の実件数）
+      const goalIds = new Set(goals.map(g => g.id))
+      setSharedKpis(((kpisRes.data || []) as GoalKpi[]).filter(k => goalIds.has(k.goal_id)))
+      setContributionCounts(Object.fromEntries(
+        ((countsRes.data || []) as { kpi_id: string; contribution_count: number }[]).map(r => [r.kpi_id, r.contribution_count]),
+      ))
       setCompanyGoals(goals.filter(g => g.level === 'company'))
       setTeamGoals(goals.filter(g => g.level === 'team'))
       setTeams(teamRows)
@@ -201,9 +202,19 @@ export default function AdminGoalsPage() {
             </Button>
           </div>
           {companyGoals.length > 0 ? (
-            <div className="space-y-2">
+            <div className="space-y-4">
               {companyGoals.map(g => (
-                <GoalItem key={g.id} goal={g} editable onEdit={() => setGoalForm({ mode: 'edit', goal: g })} onDelete={() => deleteGoal(g)} />
+                <div key={g.id}>
+                  <GoalItem goal={g} editable onEdit={() => setGoalForm({ mode: 'edit', goal: g })} onDelete={() => deleteGoal(g)} />
+                  <GoalKpiSection
+                    goal={g}
+                    kpis={sharedKpis.filter(k => k.goal_id === g.id)}
+                    editable
+                    userId={user?.id ?? ''}
+                    contributionCounts={contributionCounts}
+                    onChanged={fetchData}
+                  />
+                </div>
               ))}
             </div>
           ) : (
@@ -323,10 +334,11 @@ export default function AdminGoalsPage() {
                             />
                             <GoalKpiSection
                               goal={g}
-                              kpis={teamKpis.filter(k => k.goal_id === g.id)}
+                              kpis={sharedKpis.filter(k => k.goal_id === g.id)}
                               editable
                               userId={user?.id ?? ''}
                               contributionCounts={contributionCounts}
+                              parentKpis={g.parent_goal_id ? sharedKpis.filter(k => k.goal_id === g.parent_goal_id) : []}
                               onChanged={fetchData}
                             />
                           </div>

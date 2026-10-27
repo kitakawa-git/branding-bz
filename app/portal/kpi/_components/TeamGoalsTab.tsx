@@ -107,6 +107,7 @@ export function TeamGoalsTab({ teams, teamMembers, memberNames, teamGoals, compa
                         editable={canEdit}
                         userId={userId}
                         contributionCounts={contributionCounts}
+                        parentKpis={g.parent_goal_id ? sharedKpis.filter(k => k.goal_id === g.parent_goal_id) : []}
                         onChanged={onChanged}
                       />
                     </div>

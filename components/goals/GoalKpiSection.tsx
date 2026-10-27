@@ -1,7 +1,8 @@
 'use client'
 
-// チーム目標の KPI（総合進捗＋一覧＋追加・編集・削除）。ポータルのチームタブと管理画面で共用
-// 書き込みは画面から直接（RLS の goal_kpis_* が親の目標の権限＝そのチームのリーダー＋管理者で判定する）
+// 会社目標・チーム目標の KPI（総合進捗＋一覧＋追加・編集・削除）。ポータルの会社／チームタブと管理画面で共用
+// 書き込みは画面から直接（RLS の goal_kpis_* が親の目標の権限で判定する。会社=管理者、チーム=そのチームのリーダー＋管理者）
+// 寄与先（contributes_to_kpi_id）は親目標の KPI だけ（DB のトリガでも確かめる）
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
@@ -18,7 +19,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
-import { Plus, Pencil, Trash2, AlertCircle, Users } from 'lucide-react'
+import { Plus, Pencil, Trash2, AlertCircle, Users, CornerLeftUp } from 'lucide-react'
 import { toast } from 'sonner'
 import { KpiEditDialog } from '@/app/portal/kpi/_components/KpiEditDialog'
 import {
@@ -35,17 +36,27 @@ import type { Goal } from '@/lib/goals/types'
 
 const MAX_KPIS = 5
 
+const LEVEL_TEXT = {
+  company: { label: '会社KPI', contributors: 'チームKPI', placeholder: '例: 指名での問い合わせを年間120件にする' },
+  team: { label: 'チームKPI', contributors: '個人KPI', placeholder: '例: 導入事例を6本公開' },
+  personal: { label: 'KPI', contributors: 'KPI', placeholder: '例: 新規顧客を10社獲得' },
+} as const
+
 type Props = {
   goal: Goal
   kpis: GoalKpi[]
   editable: boolean
   userId: string
-  /** KPI id → それに寄与している個人 KPI の数（見えている分だけ） */
+  /** KPI id → それに寄与している下位 KPI の数（goal_kpi_contribution_counts。閲覧者によらず実件数） */
   contributionCounts?: Record<string, number>
+  /** 寄与先にできる親目標の KPI（チーム目標が会社目標につながっているときの会社KPI） */
+  parentKpis?: GoalKpi[]
   onChanged: () => void
 }
 
-export function GoalKpiSection({ goal, kpis, editable, userId, contributionCounts = {}, onChanged }: Props) {
+export function GoalKpiSection({ goal, kpis, editable, userId, contributionCounts = {}, parentKpis = [], onChanged }: Props) {
+  const text = LEVEL_TEXT[goal.level]
+  const parentTitles = Object.fromEntries(parentKpis.map(k => [k.id, k.title]))
   const [open, setOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState<KpiEditForm>(emptyKpiEditForm)
@@ -95,6 +106,7 @@ export function GoalKpiSection({ goal, kpis, editable, userId, contributionCount
         progress: form.progress,
         weight: form.weight,
         status: form.status,
+        contributes_to_kpi_id: form.contributesTo === 'none' ? null : form.contributesTo,
         updated_at: new Date().toISOString(),
       }
       if (editingId) {
@@ -141,7 +153,7 @@ export function GoalKpiSection({ goal, kpis, editable, userId, contributionCount
       {kpis.length > 0 ? (
         <>
           <div className="flex items-center gap-3 mb-2">
-            <span className="text-[11px] font-bold text-muted-foreground shrink-0">チームKPI</span>
+            <span className="text-[11px] font-bold text-muted-foreground shrink-0">{text.label}</span>
             <Progress value={progress} className="flex-1 h-1.5" animate />
             <span className="text-xs font-bold text-foreground w-10 text-right shrink-0">{progress}%</span>
           </div>
@@ -172,7 +184,12 @@ export function GoalKpiSection({ goal, kpis, editable, userId, contributionCount
                       )}
                       {contributions > 0 && (
                         <span className="flex items-center gap-1 text-muted-foreground">
-                          <Users size={12} />寄与している個人KPI {contributions}件
+                          <Users size={12} />寄与している{text.contributors} {contributions}件
+                        </span>
+                      )}
+                      {kpi.contributes_to_kpi_id && parentTitles[kpi.contributes_to_kpi_id] && (
+                        <span className="flex items-center gap-1 text-muted-foreground">
+                          <CornerLeftUp size={12} />会社KPI：{parentTitles[kpi.contributes_to_kpi_id]}
                         </span>
                       )}
                     </div>
@@ -190,7 +207,7 @@ export function GoalKpiSection({ goal, kpis, editable, userId, contributionCount
                           <AlertDialogContent>
                             <AlertDialogHeader>
                               <AlertDialogTitle>KPIを削除しますか？</AlertDialogTitle>
-                              <AlertDialogDescription>「{kpi.title}」を削除します。このKPIに寄与している個人KPIは、つながりが外れます（KPI自体は残ります）。この操作は取り消せません。</AlertDialogDescription>
+                              <AlertDialogDescription>「{kpi.title}」を削除します。このKPIに寄与している{text.contributors}は、つながりが外れます（KPI自体は残ります）。この操作は取り消せません。</AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>キャンセル</AlertDialogCancel>
@@ -207,11 +224,11 @@ export function GoalKpiSection({ goal, kpis, editable, userId, contributionCount
           </div>
         </>
       ) : (
-        <p className="text-[11px] text-muted-foreground m-0">チームKPIはまだありません</p>
+        <p className="text-[11px] text-muted-foreground m-0">{text.label}はまだありません</p>
       )}
       {editable && kpis.length < MAX_KPIS && (
         <Button size="sm" variant="ghost" className="h-7 gap-1 text-xs mt-1 -ml-2" onClick={openAdd}>
-          <Plus size={13} />チームKPIを追加
+          <Plus size={13} />{text.label}を追加
         </Button>
       )}
 
@@ -227,7 +244,9 @@ export function GoalKpiSection({ goal, kpis, editable, userId, contributionCount
         kpiEditWeightOver={weightOver}
         saving={saving}
         handleKpiEditSave={handleSave}
-        titlePlaceholder="例: 導入事例を6本公開"
+        titlePlaceholder={text.placeholder}
+        contributeOptions={parentKpis.map(k => ({ id: k.id, title: k.title }))}
+        contributeLabel="寄与する会社KPI"
       />
     </div>
   )

@@ -108,7 +108,7 @@ export default function KpiPage() {
     if (!companyId || !user?.id) return
     try {
       // 期間・自分の目標（全期間分。下で今の期間に絞る）・KPI・会社とチームの目標・チーム・行動指針を1回の往復で取る
-      const [periodsRes, companyRes, myGoalsRes, kpisRes, sharedGoalsRes, teamsRes, teamMembersRes, membersRes, guidelinesRes] = await Promise.all([
+      const [periodsRes, companyRes, myGoalsRes, kpisRes, sharedGoalsRes, teamsRes, teamMembersRes, membersRes, guidelinesRes, countsRes] = await Promise.all([
         supabase.from('goal_periods').select('*').eq('company_id', companyId).order('created_at', { ascending: false }),
         supabase.from('companies').select('goal_period').eq('id', companyId).single(),
         supabase.from('goals').select(GOAL_COLUMNS).eq('company_id', companyId).eq('level', 'personal').eq('owner_user_id', user.id),
@@ -123,6 +123,8 @@ export default function KpiPage() {
         supabase.from('team_members').select('team_id, user_id, role'),
         supabase.from('members').select('auth_id, display_name, profile:profiles(name)').eq('company_id', companyId).eq('is_active', true),
         supabase.from('philosophy_elements').select('id, title, body').eq('company_id', companyId).eq('element_type', 'action_guideline').order('sort_order', { ascending: true }),
+        // 寄与件数は RPC で実件数を取る（個人KPIは見える人が限られるため、画面で数えると閲覧者で変わる）
+        supabase.rpc('goal_kpi_contribution_counts', { target_company_id: companyId }),
       ])
 
       const allPeriods = (periodsRes.data || []) as GoalPeriodRecord[]
@@ -154,10 +156,9 @@ export default function KpiPage() {
       })
       const allKpis = (kpisRes.data || []) as GoalKpi[]
       const sharedGoalIds = new Set(sharedGoals.map(g => g.id))
-      const contributionCounts: Record<string, number> = {}
-      allKpis.forEach(k => {
-        if (k.contributes_to_kpi_id) contributionCounts[k.contributes_to_kpi_id] = (contributionCounts[k.contributes_to_kpi_id] ?? 0) + 1
-      })
+      const contributionCounts: Record<string, number> = Object.fromEntries(
+        ((countsRes.data || []) as { kpi_id: string; contribution_count: number }[]).map(r => [r.kpi_id, r.contribution_count]),
+      )
       const ctx: PortalGoalContext = {
         companyGoals: sharedGoals.filter(g => g.level === 'company'),
         teamGoals: sharedGoals.filter(g => g.level === 'team'),
@@ -648,7 +649,14 @@ export default function KpiPage() {
           <TabsTrigger value="me">わたし</TabsTrigger>
         </TabsList>
         <TabsContent value="company" className="mt-0">
-          <CompanyGoalsTab companyGoals={goalContext.companyGoals} teamGoals={goalContext.teamGoals} isAdmin={isAdmin} />
+          <CompanyGoalsTab
+            companyGoals={goalContext.companyGoals}
+            teamGoals={goalContext.teamGoals}
+            sharedKpis={goalContext.sharedKpis}
+            contributionCounts={goalContext.contributionCounts}
+            userId={user?.id ?? ''}
+            isAdmin={isAdmin}
+          />
         </TabsContent>
         <TabsContent value="team" className="mt-0">
           <TeamGoalsTab
