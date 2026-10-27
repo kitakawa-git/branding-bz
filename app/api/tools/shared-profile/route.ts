@@ -6,6 +6,7 @@ import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { fetchPhilosophy } from '@/lib/brand/philosophy'
 import { guardCompanyFeature } from '@/lib/billing/guard'
 import { requireSelf } from '@/lib/auth/caller'
+import { syncServiceElements, saveTargetToFirstPersona } from '@/lib/tools/shared-profile-writes'
 
 // brand_stage の値を正規化（廃止された値を有効な値に変換）
 function normalizeBrandStage(stage: string | null | undefined): string {
@@ -221,39 +222,9 @@ export async function PATCH(request: NextRequest) {
           status: 'published',
         }))
 
-      // service 行を id保持で同期する。全削除→全INSERT だと行の id が毎回変わり、削除時トリガ
-      // cleanup_element_relations_on_delete が service を端点に持つ element_relations を道連れに
-      // 消してしまう（エッジ消失バグ）。クライアントは id を持たないため、sort_order 順の既存行に
-      // 位置で対応づけて UPDATE し、増えた分は INSERT、減った末尾分のみ DELETE する。
-      // → 通常編集では既存行の id が保たれエッジが残る。実際に減らした分だけ正しくエッジ整理される。
-      const { data: existingSvc, error: exErr } = await supabaseAdmin
-        .from('philosophy_elements')
-        .select('id')
-        .eq('company_id', adminUser.company_id)
-        .eq('element_type', 'service')
-        .order('sort_order', { ascending: true })
-      if (exErr) {
-        console.error('[SharedProfile PATCH] service既存取得エラー:', exErr)
-      } else {
-        const existingIds = (existingSvc as { id: string }[] | null)?.map((r) => r.id) ?? []
-        for (let i = 0; i < serviceRows.length; i++) {
-          if (i < existingIds.length) {
-            const { error } = await supabaseAdmin
-              .from('philosophy_elements')
-              .update({ title: serviceRows[i].title, body: serviceRows[i].body, sort_order: i, status: 'published' })
-              .eq('id', existingIds[i])
-            if (error) console.error('[SharedProfile PATCH] service更新エラー:', error)
-          } else {
-            const { error } = await supabaseAdmin.from('philosophy_elements').insert(serviceRows[i])
-            if (error) console.error('[SharedProfile PATCH] service挿入エラー:', error)
-          }
-        }
-        if (existingIds.length > serviceRows.length) {
-          const toDelete = existingIds.slice(serviceRows.length)
-          const { error } = await supabaseAdmin.from('philosophy_elements').delete().in('id', toDelete)
-          if (error) console.error('[SharedProfile PATCH] service削除エラー:', error)
-        }
-      }
+      // service 行を id 保持で同期する（エッジ消失を防ぐため位置で対応づけて UPDATE / INSERT / 末尾 DELETE。
+      // 理由の詳細は lib/tools/shared-profile-writes の syncServiceElements）
+      await syncServiceElements(supabaseAdmin, adminUser.company_id, serviceRows)
     }
 
     // brand_personas.target にもターゲット情報をテキスト整形して書き込み
@@ -268,29 +239,7 @@ export async function PATCH(request: NextRequest) {
         })
         .join('\n')
 
-      const { data: existingPersona } = await supabaseAdmin
-        .from('brand_personas')
-        .select('id')
-        .eq('company_id', adminUser.company_id)
-        .order('sort_order', { ascending: true })
-        .limit(1)
-        .maybeSingle()
-
-      if (existingPersona) {
-        await supabaseAdmin
-          .from('brand_personas')
-          .update({ target: targetText || null })
-          .eq('id', existingPersona.id)
-      } else if (targetText) {
-        await supabaseAdmin
-          .from('brand_personas')
-          .insert({
-            company_id: adminUser.company_id,
-            name: '',
-            sort_order: 0,
-            target: targetText,
-          })
-      }
+      await saveTargetToFirstPersona(supabaseAdmin, adminUser.company_id, targetText)
     }
 
     return NextResponse.json({ updated: true })
