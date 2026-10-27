@@ -2,7 +2,7 @@
 
 // 診断質問の共通UI（Step 2/3 で使用）
 // 5問×1画面。選択式（single/multi）＋Q9のみ任意自由記述。1秒デバウンスのオートセーブ。
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'

@@ -11,7 +11,7 @@
 //   クイックアクションは各セクションへのアンカー移動のみで、機能の実体は持たない。
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { fetchElementsCatalog, KIND_LABELS, type ElementKind, type ElementRef } from '@/lib/brand/elements-catalog'
+import { fetchElementsCatalog, KIND_LABELS, type ElementRef } from '@/lib/brand/elements-catalog'
 import {
   buildBrandMapGraph,
   findUnreachableFromPhilosophy,

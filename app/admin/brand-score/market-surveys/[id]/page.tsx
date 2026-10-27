@@ -5,7 +5,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -20,35 +19,15 @@ import {
   CalendarDays,
   Users,
   Loader2,
-  ClipboardList,
-  Trophy,
   RefreshCw,
   Sparkles,
 } from 'lucide-react'
 import {
-  ResponsiveContainer,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  Radar,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Cell as RCell,
-  ReferenceLine,
-  Tooltip,
-} from 'recharts'
-import {
   MARKET_STAGES,
   MARKET_STAGE_LABELS,
-  MARKET_STAGE_QUESTIONS,
-  MARKET_PIVOT_STAGE,
   type MarketStage,
 } from '@/lib/brand-score/market-stages'
 import {
-  MIN_BENCHMARK_BASE_N,
   computeMarketScore,
 } from '@/lib/brand-score/market-stage-score'
 import { MarketSurveyResults } from '@/components/brand-score/MarketSurveyResults'

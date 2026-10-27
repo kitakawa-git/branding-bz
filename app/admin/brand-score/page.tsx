@@ -6,16 +6,11 @@ import { useAuth } from '../components/AdminDataProvider'
 import { DashboardTabs } from '../components/DashboardTabs'
 import { ALL_IMPRESSION_TAGS as ALL_TAGS } from '@/lib/brand-score/impression-tags'
 import {
-  FUNNEL_STAGES,
-  STAGE_LABELS,
   type FunnelStage,
 } from '@/lib/brand-score/funnel-stages'
 import {
-  MARKET_STAGES,
-  MARKET_STAGE_LABELS,
   type MarketStage,
 } from '@/lib/brand-score/market-stages'
-import { MIN_CARD_VIEWS_FOR_DIGITAL } from '@/lib/brand-score/outer-metrics'
 import { supabase } from '@/lib/supabase'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
 import Link from 'next/link'

@@ -12,7 +12,7 @@ import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { RotateCcw, Pause, Play } from 'lucide-react'
 import { type BrandMapGraph, type MapNode } from '@/lib/brand/map-data'
-import { edgeStyle, nodeColor, nodeKindLabel, summarizeHover } from '@/lib/brand/map-display'
+import { edgeStyle, nodeColor, summarizeHover } from '@/lib/brand/map-display'
 import type { DesiredEvidenceEvaluationDto } from '@/app/api/superadmin/desired-evidence/evaluations/route'
 
 const VIEW_W = 760

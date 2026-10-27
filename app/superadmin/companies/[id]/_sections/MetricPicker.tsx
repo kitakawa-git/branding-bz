@@ -9,7 +9,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Plus, Check, X } from 'lucide-react'
+import { Check, X } from 'lucide-react'
 import { toast } from 'sonner'
 
 export type MetricDefinition = {

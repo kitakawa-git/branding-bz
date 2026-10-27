@@ -4,14 +4,11 @@ import { fetchPhilosophy } from '@/lib/brand/philosophy'
 import { parseFontsFromDB } from '@/lib/brand-fonts'
 import type {
   CIManualData,
-  ValueItem,
   HistoryItem,
-  BusinessItem,
   TraitItem,
   ColorPalette,
   LogoSection,
   GuidelineImage,
-  TermItem,
   PersonaItem,
   ActionGuideline,
   PositioningMapData,

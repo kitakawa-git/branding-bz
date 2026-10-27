@@ -18,7 +18,6 @@ import {
 } from '@/components/ui/alert-dialog'
 import { WandSparkles, Loader2, Check, Settings } from 'lucide-react'
 import { Fab, FabButton } from '@/components/ui/fab'
-import { ALL_IMPRESSION_TAGS as ALL_TAGS } from '@/lib/brand-score/impression-tags'
 
 interface TagMapping {
   tag: string

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { fetchWithRetry } from '@/lib/supabase-fetch'
-import { parseFontsFromDB, type BrandFonts, DEFAULT_FONT_ID } from '@/lib/brand-fonts'
+import { parseFontsFromDB, type BrandFonts } from '@/lib/brand-fonts'
 
 const cache = new Map<string, BrandFonts>()
 

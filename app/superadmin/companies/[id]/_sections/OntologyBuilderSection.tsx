@@ -17,7 +17,6 @@
 //   点検サマリは同レスポンスの baseline（integrity.ts のカテゴリ文字列がキー。リネーム時は要同時更新）。
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Button } from '@/components/ui/button'
 import ProfilingSection from './ProfilingSection'
 import ProofPointsSection, { type ValuePropositionRef } from './ProofPointsSection'
 import GovernanceRulesSection from './GovernanceRulesSection'

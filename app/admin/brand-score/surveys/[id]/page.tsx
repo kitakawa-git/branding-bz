@@ -32,12 +32,6 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion'
-import {
   DndContext,
   closestCenter,
   PointerSensor,
@@ -63,7 +57,6 @@ import {
   LayoutTemplate,
   Trash2,
   GripVertical,
-  BarChart3,
   AlertCircle,
   Check,
   Sparkles,

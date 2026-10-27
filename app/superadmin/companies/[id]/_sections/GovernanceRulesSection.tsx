@@ -9,7 +9,6 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { supabase } from '@/lib/supabase'
-import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { AutoResizeTextarea } from '@/components/ui/auto-resize-textarea'
 import { Plus, Trash2, Pencil, Check, X, ChevronUp, ChevronDown, Sparkles } from 'lucide-react'

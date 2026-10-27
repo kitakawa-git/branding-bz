@@ -2,7 +2,6 @@
 import { Page, View, Text } from '@react-pdf/renderer'
 import type { ThemeStyles } from '../pdf-styles'
 import type { SelectedSections } from '../types'
-import { MARGIN } from '../pdf-styles'
 
 const SECTION_LABELS: { key: keyof SelectedSections; label: string }[] = [
   { key: 'guidelines', label: 'ブランド方針' },
