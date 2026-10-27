@@ -127,54 +127,7 @@ export async function POST(request: NextRequest) {
 
 
     // 管理者へメール通知（失敗してもリクエスト作成は成功扱い）
-    const resendApiKey = process.env.RESEND_API_KEY
-    if (resendApiKey) {
-      try {
-        const { data: admins } = await supabaseAdmin
-          .from('admin_users')
-          .select('auth_id')
-          .eq('company_id', company.id)
-
-        const adminEmails: string[] = []
-        for (const admin of admins || []) {
-          if (!admin.auth_id) continue
-          const { data: adminUser } = await supabaseAdmin.auth.admin.getUserById(admin.auth_id)
-          if (adminUser?.user?.email) {
-            adminEmails.push(adminUser.user.email)
-          }
-        }
-
-        if (adminEmails.length > 0) {
-          const resend = new Resend(resendApiKey)
-          const approvalUrl = 'https://branding.bz/admin/members'
-          const { error: sendError } = await resend.emails.send({
-            from: 'branding.bz <noreply@branding.bz>',
-            to: adminEmails,
-            subject: `【branding.bz】${company.name} への参加リクエストが届きました`,
-            html: `
-              <h2>新しい参加リクエストが届きました</h2>
-              <p>${escapeHtml(company.name)} への参加リクエストが届きました。</p>
-              <table style="border-collapse:collapse;">
-                <tr><td style="padding:8px;font-weight:bold;">氏名</td><td style="padding:8px;">${escapeHtml(userName)}</td></tr>
-                <tr><td style="padding:8px;font-weight:bold;">メール</td><td style="padding:8px;">${escapeHtml(email)}</td></tr>
-                <tr><td style="padding:8px;font-weight:bold;">部署</td><td style="padding:8px;">${escapeHtml(department || '未入力')}</td></tr>
-                <tr><td style="padding:8px;font-weight:bold;">役職</td><td style="padding:8px;">${escapeHtml(position || '未入力')}</td></tr>
-              </table>
-              <p style="margin-top:24px;">
-                <a href="${approvalUrl}" style="display:inline-block;padding:10px 20px;background:#000;color:#fff;text-decoration:none;border-radius:9999px;font-weight:bold;">管理画面で承認する</a>
-              </p>
-              <p style="color:#666;font-size:12px;margin-top:16px;">${approvalUrl}</p>
-            `,
-          })
-          // Resend は送信失敗でも例外を投げず error を返すので、catch で記録されるよう投げ直す
-          if (sendError) throw sendError
-        } else {
-          console.warn('[SignupJoin] 通知先の管理者メールが見つかりませんでした')
-        }
-      } catch (emailError) {
-        console.error('[SignupJoin] 通知メール送信エラー:', emailError)
-      }
-    }
+    await notifyCompanyAdmins(supabaseAdmin, company, { userName, email, department, position })
 
     return NextResponse.json({
       success: true,
@@ -188,5 +141,62 @@ export async function POST(request: NextRequest) {
       { error: `サーバーエラー: ${err instanceof Error ? err.message : String(err)}` },
       { status: 500 }
     )
+  }
+}
+
+/** 会社の管理者全員へ参加リクエストの通知メールを送る（失敗してもリクエスト作成は成功扱い・ログのみ） */
+async function notifyCompanyAdmins(
+  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>,
+  company: { id: string; name: string },
+  applicant: { userName: string; email: string; department?: string; position?: string },
+): Promise<void> {
+  const { userName, email, department, position } = applicant
+  const resendApiKey = process.env.RESEND_API_KEY
+  if (!resendApiKey) return
+
+  try {
+    const { data: admins } = await supabaseAdmin
+      .from('admin_users')
+      .select('auth_id')
+      .eq('company_id', company.id)
+
+    const adminEmails: string[] = []
+    for (const admin of admins || []) {
+      if (!admin.auth_id) continue
+      const { data: adminUser } = await supabaseAdmin.auth.admin.getUserById(admin.auth_id)
+      if (adminUser?.user?.email) {
+        adminEmails.push(adminUser.user.email)
+      }
+    }
+
+    if (adminEmails.length > 0) {
+      const resend = new Resend(resendApiKey)
+      const approvalUrl = 'https://branding.bz/admin/members'
+      const { error: sendError } = await resend.emails.send({
+        from: 'branding.bz <noreply@branding.bz>',
+        to: adminEmails,
+        subject: `【branding.bz】${company.name} への参加リクエストが届きました`,
+        html: `
+              <h2>新しい参加リクエストが届きました</h2>
+              <p>${escapeHtml(company.name)} への参加リクエストが届きました。</p>
+              <table style="border-collapse:collapse;">
+                <tr><td style="padding:8px;font-weight:bold;">氏名</td><td style="padding:8px;">${escapeHtml(userName)}</td></tr>
+                <tr><td style="padding:8px;font-weight:bold;">メール</td><td style="padding:8px;">${escapeHtml(email)}</td></tr>
+                <tr><td style="padding:8px;font-weight:bold;">部署</td><td style="padding:8px;">${escapeHtml(department || '未入力')}</td></tr>
+                <tr><td style="padding:8px;font-weight:bold;">役職</td><td style="padding:8px;">${escapeHtml(position || '未入力')}</td></tr>
+              </table>
+              <p style="margin-top:24px;">
+                <a href="${approvalUrl}" style="display:inline-block;padding:10px 20px;background:#000;color:#fff;text-decoration:none;border-radius:9999px;font-weight:bold;">管理画面で承認する</a>
+              </p>
+              <p style="color:#666;font-size:12px;margin-top:16px;">${approvalUrl}</p>
+            `,
+      })
+      // Resend は送信失敗でも例外を投げず error を返すので、catch で記録されるよう投げ直す
+      if (sendError) throw sendError
+    } else {
+      console.warn('[SignupJoin] 通知先の管理者メールが見つかりませんでした')
+    }
+  } catch (emailError) {
+    console.error('[SignupJoin] 通知メール送信エラー:', emailError)
   }
 }
