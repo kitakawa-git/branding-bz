@@ -20,7 +20,8 @@ export type KpiItemSummary = {
 }
 
 // 目標・KPI未設定バナー（サーベイ・理解度テストと同じ「やってください」の通知）
-// 自己評価バナー（DashboardReviewBanner）と同じ様式（全体が押せるピル・白文字・右端に矢印）。色だけ赤
+// 自己評価バナー（DashboardReviewBanner）と同じ様式（全体が押せるピル・白文字・右端に矢印）。
+// 色は行動指針別割合の円グラフと同じ配色のピンク（自己評価バナーの緑 #47C95C も同じ配色）
 export function DashboardGoalBanner({ goalPeriodType }: { goalPeriodType: string | null }) {
   const period =
     goalPeriodType === 'year'
@@ -32,7 +33,7 @@ export function DashboardGoalBanner({ goalPeriodType }: { goalPeriodType: string
           : null
   return (
     <Link href="/portal/kpi?setup=true" className="block w-full mb-4 no-underline">
-      <div className="rounded-full bg-red-500 px-6 py-4 flex items-center justify-between hover:opacity-90 transition-opacity">
+      <div className="rounded-full bg-[#F41189] px-6 py-4 flex items-center justify-between hover:opacity-90 transition-opacity">
         <p className="text-white text-base font-semibold m-0 text-left break-keep [overflow-wrap:break-word]">
           <JaWrap>{period ? `あなたの${period}の目標とKPIを決めましょう！` : '今期の目標とKPIを決めましょう！'}</JaWrap>
         </p>
