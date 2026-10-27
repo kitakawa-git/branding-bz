@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { mapSessionToPersonaColumns } from '@/lib/tools/persona-mapping'
 import {guardCompanyFeature, requireCallerCompany } from '@/lib/billing/guard'
+import { syncPersonaRows } from '@/lib/tools/persona-connect'
 
 export async function POST(request: NextRequest) {
 
@@ -94,42 +95,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 既存レコード（sort_order順）を取得して sync（update/insert/delete・冪等）。
-    const { data: existingPersonas } = await supabaseAdmin
-      .from('brand_personas')
-      .select('id, sort_order')
-      .eq('company_id', companyId)
-      .order('sort_order', { ascending: true })
-    const existing = existingPersonas || []
-    const N = personas.length
-
-    // 空セッションで既存を全消ししないようガード（書くものが無ければ触らない）。
-    if (N > 0) {
-      for (let i = 0; i < N; i++) {
-        const values = buildValues(personas[i], i)
-        if (existing[i]) {
-          const { error: upErr } = await supabaseAdmin.from('brand_personas').update(values).eq('id', existing[i].id)
-          if (upErr) {
-            console.error('[Persona Connect] 更新エラー:', upErr)
-            return NextResponse.json({ error: 'ペルソナの更新に失敗しました' }, { status: 500 })
-          }
-        } else {
-          const { error: insErr } = await supabaseAdmin.from('brand_personas').insert({ company_id: companyId, ...values })
-          if (insErr) {
-            console.error('[Persona Connect] 挿入エラー:', insErr)
-            return NextResponse.json({ error: 'ペルソナの作成に失敗しました' }, { status: 500 })
-          }
-        }
-      }
-      // 余剰（sort_order >= N）を削除
-      if (existing.length > N) {
-        const surplusIds = existing.slice(N).map((r) => r.id)
-        const { error: delErr } = await supabaseAdmin.from('brand_personas').delete().in('id', surplusIds)
-        if (delErr) {
-          console.error('[Persona Connect] 余剰削除エラー:', delErr)
-          return NextResponse.json({ error: 'ペルソナの整理に失敗しました' }, { status: 500 })
-        }
-      }
+    // 既存レコード（sort_order順）に位置で対応づけて sync（update/insert/delete・冪等。空なら触らない）
+    const synced = await syncPersonaRows(supabaseAdmin, companyId, personas.map((p, i) => buildValues(p, i)))
+    if (synced.error) {
+      return NextResponse.json({ error: synced.error }, { status: 500 })
     }
 
     // 3. セッションを完了に更新
