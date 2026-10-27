@@ -11,8 +11,10 @@ import { Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import { GoalItem } from '@/components/goals/GoalItem'
 import { GoalFormDialog, type GoalFormTarget } from '@/components/goals/GoalFormDialog'
+import { GoalKpiSection } from '@/components/goals/GoalKpiSection'
 import { goalsApi } from '@/lib/goals/client'
 import type { Goal, Team, TeamMember } from '@/lib/goals/types'
+import type { GoalKpi } from './kpi-utils'
 
 type Props = {
   teams: Team[]
@@ -20,13 +22,16 @@ type Props = {
   memberNames: Record<string, string>
   teamGoals: Goal[]
   companyGoals: Goal[]
+  /** 会社・チーム目標の KPI */
+  sharedKpis: GoalKpi[]
+  contributionCounts: Record<string, number>
   userId: string
   isAdmin: boolean
   /** 目標を作成・編集・削除した後の取り直し */
   onChanged: () => void
 }
 
-export function TeamGoalsTab({ teams, teamMembers, memberNames, teamGoals, companyGoals, userId, isAdmin, onChanged }: Props) {
+export function TeamGoalsTab({ teams, teamMembers, memberNames, teamGoals, companyGoals, sharedKpis, contributionCounts, userId, isAdmin, onChanged }: Props) {
   const [formTarget, setFormTarget] = useState<GoalFormTarget | null>(null)
 
   if (teams.length === 0) {
@@ -86,16 +91,25 @@ export function TeamGoalsTab({ teams, teamMembers, memberNames, teamGoals, compa
                 )}
               </div>
               {goals.length > 0 ? (
-                <div className="space-y-2">
+                <div className="space-y-4">
                   {goals.map(g => (
-                    <GoalItem
-                      key={g.id}
-                      goal={g}
-                      parentTitle={g.parent_goal_id ? companyTitle.get(g.parent_goal_id) ?? null : null}
-                      editable={canEdit}
-                      onEdit={() => setFormTarget({ mode: 'edit', goal: g, teamName: team.name })}
-                      onDelete={() => handleDelete(g)}
-                    />
+                    <div key={g.id}>
+                      <GoalItem
+                        goal={g}
+                        parentTitle={g.parent_goal_id ? companyTitle.get(g.parent_goal_id) ?? null : null}
+                        editable={canEdit}
+                        onEdit={() => setFormTarget({ mode: 'edit', goal: g, teamName: team.name })}
+                        onDelete={() => handleDelete(g)}
+                      />
+                      <GoalKpiSection
+                        goal={g}
+                        kpis={sharedKpis.filter(k => k.goal_id === g.id)}
+                        editable={canEdit}
+                        userId={userId}
+                        contributionCounts={contributionCounts}
+                        onChanged={onChanged}
+                      />
+                    </div>
                   ))}
                 </div>
               ) : (

@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { DatePicker } from '@/components/date-picker'
-import type { KpiEditForm } from './kpi-utils'
+import type { GoalOption, KpiEditForm } from './kpi-utils'
 
 type Props = {
   kpiEditOpen: boolean
@@ -26,6 +26,10 @@ type Props = {
   kpiEditWeightOver: boolean
   saving: boolean
   handleKpiEditSave: () => void
+  /** 寄与先にできる上位 KPI（個人 KPI → つながるチーム目標の KPI）。無ければ欄を出さない */
+  contributeOptions?: GoalOption[]
+  /** 入力例（チーム KPI では文言を変える） */
+  titlePlaceholder?: string
 }
 
 export function KpiEditDialog({
@@ -40,6 +44,8 @@ export function KpiEditDialog({
   kpiEditWeightOver,
   saving,
   handleKpiEditSave,
+  contributeOptions = [],
+  titlePlaceholder = '例: 新規顧客を10社獲得',
 }: Props) {
   return (
     <Dialog open={kpiEditOpen} onOpenChange={setKpiEditOpen}>
@@ -49,7 +55,7 @@ export function KpiEditDialog({
           {canEdit && (
             <div>
               <Label className="text-xs font-bold mb-1.5 block">KPIタイトル *</Label>
-              <Input value={kpiEditForm.title} onChange={e => updateKpiEditForm('title', e.target.value)} placeholder="例: 新規顧客を10社獲得" className="h-9" />
+              <Input value={kpiEditForm.title} onChange={e => updateKpiEditForm('title', e.target.value)} placeholder={titlePlaceholder} className="h-9" />
             </div>
           )}
           {!canEdit && canReview && (
@@ -100,6 +106,18 @@ export function KpiEditDialog({
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+          )}
+          {canEdit && contributeOptions.length > 0 && (
+            <div>
+              <Label className="text-xs font-bold mb-1.5 block">寄与するチームKPI（任意）</Label>
+              <Select value={kpiEditForm.contributesTo} onValueChange={v => updateKpiEditForm('contributesTo', v)}>
+                <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">つなげない</SelectItem>
+                  {contributeOptions.map(o => <SelectItem key={o.id} value={o.id}>{o.title}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
           )}
         </div>

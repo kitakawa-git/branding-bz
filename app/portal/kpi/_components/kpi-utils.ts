@@ -59,6 +59,8 @@ export type KpiEditForm = {
   progress: number
   weight: number
   status: 'not_started' | 'in_progress' | 'completed'
+  /** 寄与する上位（チーム）KPI の id。つなげないときは 'none' */
+  contributesTo: string
 }
 
 export type ArchivedPeriodData = {
@@ -80,9 +82,13 @@ export type PortalGoalContext = {
   memberNames: Record<string, string>
   /** 行動指針（philosophy_elements の action_guideline） */
   guidelines: GoalOption[]
+  /** 会社・チーム目標の KPI（チームタブ・個人 KPI の寄与先に使う） */
+  sharedKpis: GoalKpi[]
+  /** 上位 KPI の id → それに寄与している KPI の数（見えている分だけ。リーダーはメンバーの分も見える） */
+  contributionCounts: Record<string, number>
 }
 
-export const emptyGoalContext: PortalGoalContext = { companyGoals: [], teamGoals: [], teams: [], teamMembers: [], memberNames: {}, guidelines: [] }
+export const emptyGoalContext: PortalGoalContext = { companyGoals: [], teamGoals: [], teams: [], teamMembers: [], memberNames: {}, guidelines: [], sharedKpis: [], contributionCounts: {} }
 
 export type PortalKpiCache = {
   goal: PersonalGoal | null
@@ -106,7 +112,7 @@ export const STATUS_COLORS: Record<string, string> = {
 export const PERIOD_TYPE_LABELS: Record<string, string> = { quarter: '四半期', half: '半期', half_year: '半期', year: '年度', custom: 'カスタム' }
 export const PERIOD_DURATION_LABELS: Record<string, string> = { quarter: '3ヶ月', half: '6ヶ月', half_year: '6ヶ月', year: '1年', custom: '' }
 
-export const emptyKpiEditForm: KpiEditForm = { title: '', deadline: undefined, progress: 0, weight: 30, status: 'not_started' }
+export const emptyKpiEditForm: KpiEditForm = { title: '', deadline: undefined, progress: 0, weight: 30, status: 'not_started', contributesTo: 'none' }
 
 // ============================================
 // Helpers

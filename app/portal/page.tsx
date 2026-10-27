@@ -355,10 +355,11 @@ export default function PortalTopPage() {
         setHasGoals(!!goalData)
         setGoalTitle(goalData?.title || null)
 
-        // KPI は今期の目標に紐づくものだけ
+        // KPI は今期の個人目標に紐づくものだけ（goal_kpis.user_id は作成者なので、
+        // リーダーが作ったチーム KPI も user_id で拾える。目標で絞らないと自己評価に混ざる）
         const allKpis = kpiGoalsRes.status === 'fulfilled' ? (kpiGoalsRes.value.data || []) : []
         const kpiGoalsData: KpiItemSummary[] = allKpis
-          .filter((g: { goal_id: string }) => !currentGoalId || g.goal_id === currentGoalId)
+          .filter((g: { goal_id: string }) => !!currentGoalId && g.goal_id === currentGoalId)
           .map((g: { id: string; title: string; progress: number; weight: number; status: string; deadline: string | null }) => ({
             id: g.id,
             title: g.title,

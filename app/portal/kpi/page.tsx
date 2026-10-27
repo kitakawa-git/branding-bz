@@ -112,11 +112,11 @@ export default function KpiPage() {
         supabase.from('goal_periods').select('*').eq('company_id', companyId).order('created_at', { ascending: false }),
         supabase.from('companies').select('goal_period').eq('id', companyId).single(),
         supabase.from('goals').select(GOAL_COLUMNS).eq('company_id', companyId).eq('level', 'personal').eq('owner_user_id', user.id),
+        // 見えている KPI をまとめて取る（自分の分＋会社・チーム目標の分。リーダーはメンバーの分も見える＝RLS）
         supabase
           .from('goal_kpis')
           .select('*')
           .eq('company_id', companyId)
-          .eq('user_id', user.id)
           .order('created_at', { ascending: true }),
         supabase.from('goals').select(GOAL_COLUMNS).eq('company_id', companyId).in('level', ['company', 'team']).order('created_at', { ascending: true }),
         supabase.from('teams').select('id, company_id, name, created_at').eq('company_id', companyId).order('created_at', { ascending: true }),
@@ -152,6 +152,12 @@ export default function KpiPage() {
         const p = Array.isArray(m.profile) ? m.profile[0] : m.profile
         memberNames[m.auth_id] = p?.name || m.display_name || '不明'
       })
+      const allKpis = (kpisRes.data || []) as GoalKpi[]
+      const sharedGoalIds = new Set(sharedGoals.map(g => g.id))
+      const contributionCounts: Record<string, number> = {}
+      allKpis.forEach(k => {
+        if (k.contributes_to_kpi_id) contributionCounts[k.contributes_to_kpi_id] = (contributionCounts[k.contributes_to_kpi_id] ?? 0) + 1
+      })
       const ctx: PortalGoalContext = {
         companyGoals: sharedGoals.filter(g => g.level === 'company'),
         teamGoals: sharedGoals.filter(g => g.level === 'team'),
@@ -161,6 +167,8 @@ export default function KpiPage() {
         guidelines: ((guidelinesRes.data || []) as { id: string; title: string | null; body: string | null }[])
           .map(g => ({ id: g.id, title: g.title || g.body || '' }))
           .filter(g => g.title),
+        sharedKpis: allKpis.filter(k => sharedGoalIds.has(k.goal_id)),
+        contributionCounts,
       }
 
       setGoal(goalData)
@@ -414,6 +422,7 @@ export default function KpiPage() {
       progress: kpi.progress,
       weight: kpi.weight,
       status: kpi.status,
+      contributesTo: kpi.contributes_to_kpi_id ?? NO_LINK,
     })
     setKpiEditOpen(true)
   }
@@ -443,6 +452,7 @@ export default function KpiPage() {
         progress: kpiEditForm.progress,
         weight: String(kpiEditForm.weight),
         status: kpiEditForm.status,
+        contributes_to_kpi_id: kpiEditForm.contributesTo === NO_LINK ? null : kpiEditForm.contributesTo,
         updated_at: new Date().toISOString(),
       }
       if (editingKpiId) {
@@ -573,6 +583,12 @@ export default function KpiPage() {
     />
   )
 
+  // 個人 KPI の寄与先: つながっているチーム目標の KPI
+  const contributeOptions = goal?.parent_goal_id
+    ? goalContext.sharedKpis.filter(k => k.goal_id === goal.parent_goal_id).map(k => ({ id: k.id, title: k.title }))
+    : []
+  const contributeTitles = Object.fromEntries(goalContext.sharedKpis.map(k => [k.id, k.title]))
+
   const canEdit = goalPeriod?.show_goal_banner !== false
   const canReview = goalPeriod?.show_review_banner === true
 
@@ -615,6 +631,7 @@ export default function KpiPage() {
         openKpiAdd={openKpiAdd}
         openKpiEdit={openKpiEdit}
         handleKpiDelete={handleKpiDelete}
+        contributeTitles={contributeTitles}
       />
 
       {/* 過去の期間 */}
@@ -640,6 +657,8 @@ export default function KpiPage() {
             memberNames={goalContext.memberNames}
             teamGoals={goalContext.teamGoals}
             companyGoals={goalContext.companyGoals}
+            sharedKpis={goalContext.sharedKpis}
+            contributionCounts={goalContext.contributionCounts}
             userId={user?.id ?? ''}
             isAdmin={isAdmin}
             onChanged={fetchData}
@@ -678,6 +697,7 @@ export default function KpiPage() {
         kpiEditWeightOver={kpiEditWeightOver}
         saving={saving}
         handleKpiEditSave={handleKpiEditSave}
+        contributeOptions={contributeOptions}
       />
 
       {/* 右下FAB: 目標とKPIを設定する（わたしタブ・目標未設定・設定期間内のみ表示） */}
