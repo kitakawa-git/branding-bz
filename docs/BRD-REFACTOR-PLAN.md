@@ -66,3 +66,4 @@ warnings は `no-unused-vars` 156、`no-img-element` 96、`no-unused-expressions
 - #2 完了: サーベイの generate-questions が複製していたブランドデータ取得（型・取得・十分性判定 約130行）を `lib/brand-score/brand-data` の `fetchBrandData` / `hasSufficientData` に置き換え。差分は `?? undefined` 3か所のみで、エラーでない限り値は同じ。Claude に渡す JSON 文字列を `brand-data.test.ts` で固定（テスト 20→21本）
 - #3 完了: 管理画面のブランド編集4ページ（guidelines / personality / verbal / visuals）に1文字違わず複製されていた `supabasePatch` / `supabaseInsert` を `lib/admin/supabase-rest.ts` にまとめた（約250行削減）。`app/admin/company/page.tsx` の同名関数はトークンの取り方・応答の形（return=minimal）・タイムアウト文言が違うため別のまま
 - #4 完了: 6か所に同一内容で複製されていた `escapeHtml` を `lib/mail/escape-html.ts` の1つにした（`lib/mail/superadmin-notify` は既存の import 先のため再 export）。挙動を `escape-html.test.ts` で固定（テスト 21→22本）
+- #5 完了: どこからも参照されていない `app/admin/components/AdminStyles.ts`（CLAUDE.md で dead code と明記）と `components/onboarding/OnboardingMiniCard.tsx`（OnboardingChecklist への切替後に未使用）を削除。CLAUDE.md の該当注記を「削除済み」に更新。本番ビルド green
