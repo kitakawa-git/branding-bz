@@ -11,20 +11,20 @@
 // - tone_rules（選択分のみ）→ governance_rules（rule_type='tone_rule', scope='global' 固定。同一rule_text重複防止）
 // - アーキタイプ → brand_personalities.archetype（framework=archetype のときのみ。aaker は拒否）
 // element_relations へのエッジ生成はスコープ外（実装しない）。
-// POSTは全項目を冪等に設計（部分失敗後の再実行で残りが完治する）。
+// POSTは全項目を冪等に設計（部分失敗後の再実行で残りが完治する）。書き込み本体は lib/tools/personality-connect。
 // 既存値の上書き（traits・期待タグ・アーキタイプ）はクライアントの確認後フラグ必須（サーバー側でも強制）。
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import type { DiagnosisResult } from '@/app/tools/personality/lib/diagnosis'
-import { AAKER_BY_DIMENSION, type AakerDimension } from '@/app/tools/personality/lib/archetypes'
 import {guardCompanyFeature, requireCallerCompany } from '@/lib/billing/guard'
-
-// AI出力の severity（low/medium/high）→ governance_rules の既存語彙（info/warn/block）
-const SEVERITY_MAP: Record<string, string> = {
-  low: 'info',
-  medium: 'warn',
-  high: 'block',
-}
+import {
+  buildTraits,
+  saveGuidelines,
+  savePersonalities,
+  syncExpectedTags,
+  pickToneRules,
+  replaceToneRules,
+} from '@/lib/tools/personality-connect'
 
 interface SessionContext {
   session: {
@@ -219,58 +219,22 @@ export async function POST(request: NextRequest) {
     }
 
     // --- brand_guidelines（traits / personality_summary）---
-    const needsGuidelines = selections.traits || selections.summary
-    if (needsGuidelines) {
-      const existing = existingGuidelines
+    if (selections.traits || selections.summary) {
       const updates: Record<string, unknown> = {}
-
       if (selections.traits) {
-        if (ctx.framework === 'archetype') {
-          // アーキタイプ特性: name はAI生成の特性名（dimension key を持たないためそのまま）
-          updates.traits = d.archetype_traits.map((item, i) => ({
-            name: item.name,
-            score: item.score,
-            copy: item.copy || '',
-            description: item.description || '',
-            added_index: i,
-          }))
-        } else {
-          // Aaker 5次元: name はセッションのラベルスナップショットではなく
-          // dimension key から archetypes.ts の現行ラベルに正規化（改名後の旧ラベル復活を防ぐ）
-          updates.traits = d.aaker_scores.map((item, i) => ({
-            name: AAKER_BY_DIMENSION[item.dimension as AakerDimension]?.label ?? item.label,
-            score: item.score,
-            copy: item.copy || '',
-            description: item.description || '',
-            added_index: i,
-          }))
-        }
+        updates.traits = buildTraits(ctx.framework, d)
         updates.traits_sort = 'registered'
         written.traits = (updates.traits as unknown[]).length
       }
-
       if (selections.summary) {
         updates.personality_summary = d.personality_summary
         written.summary = true
       }
-
-      if (existing?.id) {
-        const { error } = await supabaseAdmin.from('brand_guidelines').update(updates).eq('id', existing.id)
-        if (error) throw new Error(`brand_guidelines 更新エラー: ${error.message}`)
-      } else {
-        const { error } = await supabaseAdmin.from('brand_guidelines').insert({ company_id: companyId, ...updates })
-        if (error) throw new Error(`brand_guidelines 作成エラー: ${error.message}`)
-      }
+      await saveGuidelines(supabaseAdmin, companyId, existingGuidelines?.id, updates)
     }
 
     // --- brand_personalities（communication_style / archetype）---
     if (selections.tone || archetypeSelected) {
-      const { data: existing } = await supabaseAdmin
-        .from('brand_personalities')
-        .select('id')
-        .eq('company_id', companyId)
-        .maybeSingle()
-
       const personalityData: Record<string, unknown> = {}
       if (selections.tone) {
         personalityData.communication_style = d.communication_style
@@ -284,95 +248,21 @@ export async function POST(request: NextRequest) {
         }
         written.archetype = true
       }
-
-      if (existing?.id) {
-        const { error } = await supabaseAdmin.from('brand_personalities').update(personalityData).eq('id', existing.id)
-        if (error) throw new Error(`brand_personalities 更新エラー: ${error.message}`)
-      } else {
-        const { error } = await supabaseAdmin.from('brand_personalities').insert({ company_id: companyId, ...personalityData })
-        if (error) throw new Error(`brand_personalities 作成エラー: ${error.message}`)
-      }
+      await savePersonalities(supabaseAdmin, companyId, personalityData)
     }
 
-    // --- brand_personality_tag_mappings（期待タグ。行は削除せず UPSERT で is_expected を切替）---
-    // 計測側（brand_micro_feedbacks）の語彙行と (company_id, tag) を共有するため、行の削除は一切しない。
-    // 新セット → is_expected=true で UPSERT（既存 false 行があっても衝突せず true 化）。
-    // 新セットに含まれない旧期待タグ → is_expected=false に降格（行は残す）。
+    // --- brand_personality_tag_mappings（期待タグ。行は削除せず is_expected を切替）---
     if (selections.tags) {
-      const newTags = d.expected_tags
-
-      // 1. 新セットを is_expected=true で UPSERT（行が無ければ作成、あれば true 化）
-      if (newTags.length > 0) {
-        const { error: upsertError } = await supabaseAdmin
-          .from('brand_personality_tag_mappings')
-          .upsert(
-            newTags.map(tag => ({ company_id: companyId, tag, is_expected: true })),
-            { onConflict: 'company_id,tag' },
-          )
-        if (upsertError) throw new Error(`期待タグ登録エラー: ${upsertError.message}`)
-      }
-
-      // 2. 新セットに含まれない既存の期待タグを is_expected=false に降格（削除はしない）
-      const { data: currentExpected } = await supabaseAdmin
-        .from('brand_personality_tag_mappings')
-        .select('tag')
-        .eq('company_id', companyId)
-        .eq('is_expected', true)
-      const toDemote = (currentExpected || []).map(r => r.tag as string).filter(t => !newTags.includes(t))
-      if (toDemote.length > 0) {
-        const { error: demoteError } = await supabaseAdmin
-          .from('brand_personality_tag_mappings')
-          .update({ is_expected: false })
-          .eq('company_id', companyId)
-          .in('tag', toDemote)
-        if (demoteError) throw new Error(`旧期待タグ降格エラー: ${demoteError.message}`)
-      }
-
-      written.tags = newTags.length
+      await syncExpectedTags(supabaseAdmin, companyId, d.expected_tags)
+      written.tags = d.expected_tags.length
     }
 
-    // --- governance_rules（tone_rules・選択分のみ）---
+    // --- governance_rules（tone_rules・選択分のみ。personality_diagnosis 由来の行を置換）---
     const ruleIndexes = Array.isArray(selections.toneRuleIndexes) ? selections.toneRuleIndexes : []
-    if (ruleIndexes.length > 0) {
-      const selectedRules = ruleIndexes
-        .filter(i => Number.isInteger(i) && i >= 0 && i < d.tone_rules.length)
-        .map(i => d.tone_rules[i])
-
-      if (selectedRules.length > 0) {
-        // 置換方式: 既存の source='personality_diagnosis' な tone_rule を全削除→新規INSERT。
-        // 手動追加分（source='manual'）は保持。AI出力の rule_text が微妙に変わっても正しく置換される。
-        const { error: deleteError } = await supabaseAdmin
-          .from('governance_rules')
-          .delete()
-          .eq('company_id', companyId)
-          .eq('rule_type', 'tone_rule')
-          .eq('source', 'personality_diagnosis')
-        if (deleteError) throw new Error(`旧 personality tone_rule 削除エラー: ${deleteError.message}`)
-
-        // sort_order は残った手動ルールの末尾に連番
-        const { data: remainingRules } = await supabaseAdmin
-          .from('governance_rules')
-          .select('sort_order')
-          .eq('company_id', companyId)
-        const maxOrder = (remainingRules || []).reduce((m, r) => Math.max(m, (r.sort_order as number) ?? 0), 0)
-        const baseOrder = maxOrder + 1
-
-        const { error } = await supabaseAdmin.from('governance_rules').insert(
-          selectedRules.map((r, i) => ({
-            company_id: companyId,
-            rule_type: 'tone_rule',
-            scope: 'global',
-            source: 'personality_diagnosis',
-            rule_text: r.rule_text,
-            ng_example: r.ng_example,
-            ok_example: r.ok_example,
-            severity: SEVERITY_MAP[r.severity] ?? 'warn',
-            sort_order: baseOrder + i,
-          })),
-        )
-        if (error) throw new Error(`governance_rules 登録エラー: ${error.message}`)
-        written.tone_rules = selectedRules.length
-      }
+    const selectedRules = ruleIndexes.length > 0 ? pickToneRules(d, ruleIndexes) : []
+    if (selectedRules.length > 0) {
+      await replaceToneRules(supabaseAdmin, companyId, selectedRules)
+      written.tone_rules = selectedRules.length
     }
 
     return NextResponse.json({ ok: true, written })
