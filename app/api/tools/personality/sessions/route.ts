@@ -1,11 +1,6 @@
 // ブランドパーソナリティ診断 セッション作成API
 // POST /api/tools/personality/sessions
-import { NextRequest, NextResponse } from 'next/server'
-import { getSupabaseAdmin } from '@/lib/supabase-admin'
-import { requireSelf } from '@/lib/auth/caller'
-import { MONTHLY_FREE_LIMIT, MONTHLY_LIMIT_REACHED_MESSAGE, countCompletedThisMonth } from '@/lib/tools/free-limits'
-import { can } from '@/lib/billing/entitlements'
-import { fetchCompanyPlan, usageLimitResponse } from '@/lib/billing/guard'
+import { createToolSessionPost } from '@/lib/tools/session-handlers'
 
 // パーソナリティ診断セッションのデフォルトデータ
 const DEFAULT_SESSION_DATA = {
@@ -17,119 +12,11 @@ const DEFAULT_SESSION_DATA = {
   completed: false,
 }
 
-// フリーミアム制限は lib/tools/free-limits.ts に集約（4ツール共通・月次リセット）
+// 作成処理（進行中の復帰・月次の無料上限・新規作成）は lib/tools/session-handlers に共通化（3ツール共通）
 
-export async function POST(request: NextRequest) {
-  try {
-    const supabaseAdmin = getSupabaseAdmin()
-    const body = await request.json()
-    const { userId, forceNew } = body
-
-    // 本人のセッションだけ作る。body の userId はセッションの持ち主と一致するときだけ通す。
-    // 以前あった isNewUser＋email/password による未ログインのユーザー作成は、画面から使われておらず、
-    // 他人のメールアドレスで確認済みユーザーを作れたため削除した（2026-10-22）
-    const self = await requireSelf(request, userId)
-    if (self.error) return self.error
-    const authId = self.authId
-
-    if (!authId) {
-      return NextResponse.json({ error: 'userId が必要です' }, { status: 400 })
-    }
-
-    // 会社の実効プランで月次上限を飛ばすか決めるので、上限チェックより先に company_id を引く
-    let companyId: string | null = null
-    const { data: adminUserForPlan } = await supabaseAdmin
-      .from('admin_users')
-      .select('company_id')
-      .eq('auth_id', authId)
-      .maybeSingle()
-    if (adminUserForPlan) companyId = adminUserForPlan.company_id
-
-    // フリーミアム制限チェック: 当月(JST)の完了セッション数（1-1=B / 1-2=JST / 1-3=完了月）。
-    // standard 以上（buildToolsUnlimited）は上限なしなので数えない。
-    // 261006_v1 以降、カウント単位は会社。会社なし（未ログイン等）は user_id で従来どおり。
-    const unlimited = can(await fetchCompanyPlan(companyId), 'buildToolsUnlimited')
-    const completedCount = unlimited
-      ? null
-      : await countCompletedThisMonth(supabaseAdmin, 'personality', { companyId, authId })
-
-    if (completedCount !== null && completedCount >= MONTHLY_FREE_LIMIT) {
-      // 進行中のセッションがあればそれを返す（forceNew時は新規作成不可＝403）
-      const { data: inProgressSession } = forceNew ? { data: null } : await supabaseAdmin
-        .from('mini_app_sessions')
-        .select('id, current_step, session_data')
-        .eq('user_id', authId)
-        .eq('app_type', 'personality')
-        .eq('status', 'in_progress')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle()
-
-      if (inProgressSession) {
-        return NextResponse.json({
-          sessionId: inProgressSession.id,
-          currentStep: inProgressSession.current_step,
-          sessionData: inProgressSession.session_data,
-          isExisting: true,
-        })
-      }
-
-      return usageLimitResponse(MONTHLY_LIMIT_REACHED_MESSAGE)
-    }
-
-    // 進行中のセッションがあればそれを返す（forceNew時はスキップして常に新規作成）
-    const { data: existingSession } = forceNew ? { data: null } : await supabaseAdmin
-      .from('mini_app_sessions')
-      .select('id, current_step, session_data')
-      .eq('user_id', authId)
-      .eq('app_type', 'personality')
-      .eq('status', 'in_progress')
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-
-    if (existingSession) {
-      return NextResponse.json({
-        sessionId: existingSession.id,
-        currentStep: existingSession.current_step,
-        sessionData: existingSession.session_data,
-        isExisting: true,
-      })
-    }
-
-    // 新規セッション作成
-    const { data: session, error: sessionError } = await supabaseAdmin
-      .from('mini_app_sessions')
-      .insert({
-        user_id: authId,
-        app_type: 'personality',
-        status: 'in_progress',
-        current_step: 1,
-        company_id: companyId,
-        session_data: DEFAULT_SESSION_DATA,
-      })
-      .select('id')
-      .single()
-
-    if (sessionError) {
-      console.error('[PersonalitySessions] セッション作成失敗:', sessionError.message)
-      return NextResponse.json(
-        { error: `セッション作成エラー: ${sessionError.message}` },
-        { status: 500 }
-      )
-    }
-
-    return NextResponse.json({
-      sessionId: session.id,
-      currentStep: 1,
-      sessionData: DEFAULT_SESSION_DATA,
-      isExisting: false,
-    }, { status: 201 })
-  } catch (err) {
-    console.error('[PersonalitySessions] 予期しないエラー:', err)
-    return NextResponse.json(
-      { error: `サーバーエラー: ${err instanceof Error ? err.message : String(err)}` },
-      { status: 500 }
-    )
-  }
-}
+export const POST = createToolSessionPost({
+  appType: 'personality',
+  logTag: 'PersonalitySessions',
+  defaultSessionData: DEFAULT_SESSION_DATA,
+  createFailedLog: 'セッション作成失敗',
+})
