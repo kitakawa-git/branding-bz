@@ -62,3 +62,4 @@ warnings は `no-unused-vars` 156、`no-img-element` 96、`no-unused-expressions
 
 ## 実施記録
 （承認された項目を直したら、ここに「#番号 完了: 一行の結果（commit）」を追記する）
+- #1 完了: superadmin API 16本（インライン12・ローカル関数4）の認証を `lib/auth/caller` の `requireSuperadmin` に置き換え、約330行削減。文言・ステータスは従来の標準文言のまま（`lib/copy/api-auth` も同じ文言に戻った）。文言が違う signup-requests・superadmin の plan-change-requests / setup-support-requests・create-company の4本は、画面にエラー文言が出るため今回は対象外

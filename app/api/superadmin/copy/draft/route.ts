@@ -3,40 +3,13 @@
 //   → project から company/persona/brief を引き（company_id はサーバ側で再取得＝所有検証）、
 //     generateCopyDraft を実行。bodies を copy_drafts に 1案=1行で INSERT し、INSERT 行を返す。
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { generateCopyDraft } from '@/lib/copy/generate'
 import { COPY_ROLE_MATRIX, type CopyRole, type Register } from '@/lib/copy/role-matrix'
+import { requireSuperadmin } from '@/lib/copy/api-auth'
 
 const GENERATION_MODEL = 'claude-sonnet-4-6'
 const VALID_REGISTERS: Register[] = ['casual', 'neutral', 'formal', 'reverent']
-
-async function requireSuperadmin(request: NextRequest): Promise<{ ok: true } | { ok: false; res: NextResponse }> {
-  const authHeader = request.headers.get('Authorization')
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return { ok: false, res: NextResponse.json({ error: '認証が必要です。再ログインしてください。' }, { status: 401 }) }
-  }
-  const token = authHeader.replace('Bearer ', '')
-  const supabaseUser = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { global: { headers: { Authorization: `Bearer ${token}` } } },
-  )
-  const { data: { user }, error: authError } = await supabaseUser.auth.getUser()
-  if (authError || !user) {
-    return { ok: false, res: NextResponse.json({ error: '認証エラー: セッションが無効です。' }, { status: 401 }) }
-  }
-  const supabaseAdmin = getSupabaseAdmin()
-  const { data: adminUser } = await supabaseAdmin
-    .from('admin_users')
-    .select('is_superadmin')
-    .eq('auth_id', user.id)
-    .maybeSingle()
-  if (!adminUser?.is_superadmin) {
-    return { ok: false, res: NextResponse.json({ error: 'スーパー管理者権限が必要です。' }, { status: 403 }) }
-  }
-  return { ok: true }
-}
 
 export async function POST(request: NextRequest) {
   try {

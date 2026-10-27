@@ -95,9 +95,21 @@ export async function requireCompanyAdmin(request?: Request): Promise<Failure | 
 }
 
 /** スーパー管理者だけ通す */
+/**
+ * スーパー管理者だけ通す。
+ * 文言は superadmin API が以前から返していたものに揃えてある（画面がトーストにそのまま出すため変えない）:
+ *   トークンもセッションも無い → 401「認証が必要です。再ログインしてください。」
+ *   Bearer はあるが無効       → 401「認証エラー: セッションが無効です。」
+ *   superadmin ではない        → 403「スーパー管理者権限が必要です。」
+ */
 export async function requireSuperadmin(request?: Request): Promise<Failure | (CallerContext & { error?: undefined })> {
+  const hasBearer = !!request?.headers.get('authorization')?.startsWith('Bearer ')
   const caller = await requireCaller(request)
-  if (caller.error) return caller
+  if (caller.error) {
+    return hasBearer
+      ? fail(401, '認証エラー: セッションが無効です。')
+      : fail(401, '認証が必要です。再ログインしてください。')
+  }
   if (!caller.isSuperadmin) return fail(403, 'スーパー管理者権限が必要です。')
   return caller
 }

@@ -12,37 +12,13 @@
 //  2. 内部状態の復旧作業を、原因も分からない契約者に削除ボタンとして渡していた
 // superadmin 限定に移し、対象は「孤立している auth ユーザー」に閉じている。
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { requireSuperadmin as requireSuperadminCaller } from '@/lib/auth/caller'
 
-/** Bearer → auth.getUser → admin_users.is_superadmin（company-view と同方針） */
+/** superadmin 認証。判定は lib/auth/caller に一本化（通れば null） */
 async function requireSuperadmin(request: NextRequest): Promise<NextResponse | null> {
-  const authHeader = request.headers.get('Authorization')
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return NextResponse.json({ error: '認証が必要です。再ログインしてください。' }, { status: 401 })
-  }
-  const token = authHeader.replace('Bearer ', '')
-  const supabaseUser = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { global: { headers: { Authorization: `Bearer ${token}` } } },
-  )
-  const {
-    data: { user },
-    error,
-  } = await supabaseUser.auth.getUser()
-  if (error || !user) {
-    return NextResponse.json({ error: '認証エラー: セッションが無効です。' }, { status: 401 })
-  }
-  const { data: adminUser } = await getSupabaseAdmin()
-    .from('admin_users')
-    .select('is_superadmin')
-    .eq('auth_id', user.id)
-    .maybeSingle()
-  if (!adminUser?.is_superadmin) {
-    return NextResponse.json({ error: 'スーパー管理者権限が必要です。' }, { status: 403 })
-  }
-  return null
+  const caller = await requireSuperadminCaller(request)
+  return caller.error ?? null
 }
 
 /**

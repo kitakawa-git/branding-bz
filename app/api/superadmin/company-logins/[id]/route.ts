@@ -7,8 +7,8 @@
 // members.profile_id → members.auth_id → auth.users という順にたどる。
 // 認可は company-view route と同方針（Bearer → auth.getUser → admin_users.is_superadmin）
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { requireSuperadmin } from '@/lib/auth/caller'
 
 export async function GET(
   request: NextRequest,
@@ -20,33 +20,10 @@ export async function GET(
       return NextResponse.json({ error: 'companyId は必須です' }, { status: 400 })
     }
 
-    const authHeader = request.headers.get('Authorization')
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json({ error: '認証が必要です。再ログインしてください。' }, { status: 401 })
-    }
-    const token = authHeader.replace('Bearer ', '')
-    const supabaseUser = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      { global: { headers: { Authorization: `Bearer ${token}` } } },
-    )
-    const {
-      data: { user },
-      error: authError,
-    } = await supabaseUser.auth.getUser()
-    if (authError || !user) {
-      return NextResponse.json({ error: '認証エラー: セッションが無効です。' }, { status: 401 })
-    }
-
+    // superadmin 認証（判定は lib/auth/caller に一本化。Bearer と cookie の両方を受ける）
+    const caller = await requireSuperadmin(request)
+    if (caller.error) return caller.error
     const admin = getSupabaseAdmin()
-    const { data: adminUser } = await admin
-      .from('admin_users')
-      .select('is_superadmin')
-      .eq('auth_id', user.id)
-      .maybeSingle()
-    if (!adminUser?.is_superadmin) {
-      return NextResponse.json({ error: 'スーパー管理者権限が必要です。' }, { status: 403 })
-    }
 
     const { data: memberRows, error: memberError } = await admin
       .from('members')

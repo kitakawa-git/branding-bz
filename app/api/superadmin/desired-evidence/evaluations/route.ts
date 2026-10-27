@@ -3,12 +3,12 @@
 // lib/brand/future-design の fetch＋evaluate＋resolveEvaluation で各獲得目標の判定を返し、
 // vision 単位（requires で辿る）の実証進捗＋判定可能率（§7・§14.6）も返す。DB書き込みなし。
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { fetchEvaluationBundles } from '@/lib/brand/future-design/fetch'
 import { resolveEvaluation, isHumanJudgmentValid } from '@/lib/brand/future-design/human-judgment'
 import { computeProgress, type ProgressItem } from '@/lib/brand/future-design/progress'
 import type { AchievementEvaluation } from '@/lib/brand/future-design/types'
+import { requireSuperadmin } from '@/lib/auth/caller'
 
 export type DesiredEvidenceEvaluationDto = {
   id: string
@@ -40,31 +40,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'companyId は必須です' }, { status: 400 })
     }
 
-    // superadmin 認証（integrity と同方針: Bearer → getUser → is_superadmin）
-    const authHeader = request.headers.get('Authorization')
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json({ error: '認証が必要です。再ログインしてください。' }, { status: 401 })
-    }
-    const token = authHeader.replace('Bearer ', '')
-    const supabaseUser = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      { global: { headers: { Authorization: `Bearer ${token}` } } },
-    )
-    const { data: { user }, error: authError } = await supabaseUser.auth.getUser()
-    if (authError || !user) {
-      return NextResponse.json({ error: '認証エラー: セッションが無効です。' }, { status: 401 })
-    }
-
+    // superadmin 認証（判定は lib/auth/caller に一本化。Bearer と cookie の両方を受ける）
+    const caller = await requireSuperadmin(request)
+    if (caller.error) return caller.error
     const supabaseAdmin = getSupabaseAdmin()
-    const { data: adminUser } = await supabaseAdmin
-      .from('admin_users')
-      .select('is_superadmin')
-      .eq('auth_id', user.id)
-      .maybeSingle()
-    if (!adminUser?.is_superadmin) {
-      return NextResponse.json({ error: 'スーパー管理者権限が必要です。' }, { status: 403 })
-    }
 
     // --- 判定（人間判断が0件でも自動評価で動く） ---
     const bundles = await fetchEvaluationBundles(companyId)
