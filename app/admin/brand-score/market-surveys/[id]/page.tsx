@@ -8,19 +8,12 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import {
-  Tooltip as UITooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   CalendarDays,
   Users,
   Loader2,
   RefreshCw,
-  Sparkles,
 } from 'lucide-react'
 import {
   MARKET_STAGES,
@@ -98,90 +91,6 @@ const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
   draft: { label: '設定中', className: 'bg-amber-100 text-amber-700' },
   active: { label: '反映中', className: 'bg-green-100 text-green-700' },
   archived: { label: '過年度', className: 'bg-gray-100 text-gray-500' },
-}
-
-
-/**
- * 項目を降順に並べた横棒。
- *
- * バーの長さは0〜100%の実寸。最大値を全幅にすると、認知経路のように
- * 全項目が3割未満の表でも1位が満杯に見えて、実際より大きく読める。
- */
-/** カード末尾に添えるAI考察。装飾はサーベイ詳細の InsightNote と同じ */
-function InsightNote({
-  text,
-  loading,
-  /** 2カラムに並ぶカードで、左右の考察の上端を揃えるために下寄せする */
-  pushDown = false,
-}: {
-  text?: string
-  loading: boolean
-  pushDown?: boolean
-}) {
-  if (!text && !loading) return null
-  // 下寄せは外側の余白で作る。枠に mt-auto を付けると、本文が長いカードでは
-  // 余白が 0 になって最後の行に貼りついてしまう
-  return (
-    <div className={pushDown ? 'mt-auto pt-4' : 'mt-4'}>
-      <div className="rounded-xl border border-blue-100 bg-blue-50/30 p-4">
-        <div className="mb-2 flex items-center gap-1.5">
-          <Sparkles className="h-3.5 w-3.5 text-ds-app-accent" />
-          <p className="m-0 text-xs font-bold text-ds-app-accent">考察（AI生成）</p>
-        </div>
-        {text ? (
-          <p className="m-0 text-[13px] leading-relaxed text-foreground/80">{text}</p>
-        ) : (
-          <div className="flex items-center gap-2 text-xs text-gray-500">
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            考察を生成中...
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
-function RankBars({
-  items,
-  max = 8,
-  suffix = '%',
-}: {
-  items: { label: string; value: number }[]
-  max?: number
-  suffix?: string
-}) {
-  return (
-    <TooltipProvider delayDuration={200}>
-      <div className="space-y-1.5">
-        {items.slice(0, max).map((it) => (
-          <div key={it.label} className="flex items-center gap-2">
-            {/* 選択肢名は「同業者の（眼科医の間での）口コミ」のように長く、
-                幅を広げるとバーが潰れる。省略した名前はホバーで全文を出す */}
-            <UITooltip>
-              <TooltipTrigger asChild>
-                <span className="w-[136px] shrink-0 truncate text-left text-[11px] text-muted-foreground">
-                  {it.label}
-                </span>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="max-w-xs text-xs">
-                {it.label}
-              </TooltipContent>
-            </UITooltip>
-            <div className="h-2 min-w-0 flex-1 rounded-full bg-muted">
-              <div
-                className="h-full rounded-full bg-green-500"
-                style={{ width: `${Math.min(100, Math.max(0, it.value))}%` }}
-              />
-            </div>
-            <span className="w-12 shrink-0 text-right text-[11px] tabular-nums text-foreground">
-              {it.value.toFixed(1)}
-              {suffix}
-            </span>
-          </div>
-        ))}
-      </div>
-    </TooltipProvider>
-  )
 }
 
 export default function MarketSurveyDetailPage() {
@@ -371,12 +280,6 @@ export default function MarketSurveyDetailPage() {
   const cfg = STATUS_CONFIG[survey.status] ?? STATUS_CONFIG.draft
   // 初回生成のあいだだけスケルトンを出す。再生成中は前回の考察を出したままにする
   const insightsLoading = generatingInsights && !survey.insights
-  const marketScore = computeMarketScore(
-    stageScores.map((s) => ({ status: s.status, score: s.score }))
-  )
-  const scored = stageScores.filter((s) => s.status === 'scored')
-  const highest = scored.length > 0 ? Math.max(...scored.map((s) => s.score!)) : null
-  const lowest = scored.length > 0 ? Math.min(...scored.map((s) => s.score!)) : null
 
   // 一覧・サーベイ管理と同じ書式。月までだと開始と終了が同じ月のとき
   // 「2026/06 〜 2026/06」になって期間が読めない
