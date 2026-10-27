@@ -570,6 +570,16 @@ export default function PortalTopPage() {
           同じ5項目がサイドバーに常時あるので、慣れた人には要らない */}
       <DashboardRashisaCard visible={rashisaCardVisible} />
 
+      {/* ===== 2.5. KPIサマリー（KPI無効時は非表示。未設定時のバナーは 1.35 に置く） ===== */}
+      {kpiVisible && hasGoals && (
+        <DashboardKpiSummary kpiGoals={kpiGoals} goalTitle={goalTitle} />
+      )}
+
+      {/* ===== 3. 自己評価バナー（KPI無効時は非表示） ===== */}
+      {kpiVisible && showReviewBanner && kpiGoals.length > 0 && (
+        <DashboardReviewBanner goalPeriodType={goalPeriodType} onOpen={openReviewDialog} />
+      )}
+
       {/* ===== 2.4. ブランドスコア（区分ごとの表示設定で出し分け） =====
           表示は管理画面と同じ BrandScoreView。読み取り専用で、
           記録設定やAI再生成などの操作系は出さない。
@@ -583,16 +593,6 @@ export default function PortalTopPage() {
             variant={brandScoreIntegrated ? 'full' : 'basic'}
           />
         </div>
-      )}
-
-      {/* ===== 2.5. KPIサマリー（KPI無効時は非表示。未設定時のバナーは 1.35 に置く） ===== */}
-      {kpiVisible && hasGoals && (
-        <DashboardKpiSummary kpiGoals={kpiGoals} goalTitle={goalTitle} />
-      )}
-
-      {/* ===== 3. 自己評価バナー（KPI無効時は非表示） ===== */}
-      {kpiVisible && showReviewBanner && kpiGoals.length > 0 && (
-        <DashboardReviewBanner goalPeriodType={goalPeriodType} onOpen={openReviewDialog} />
       )}
 
       {/* ===== 4. あなたのブランドコミット（タイムライン由来。無効時は非表示） ===== */}
