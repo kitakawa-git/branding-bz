@@ -36,6 +36,7 @@ import {
   DashboardTimelineSection,
 } from './_components/DashboardTimelineSection'
 import { useDashboardReview } from './_components/useDashboardReview'
+import { pickCurrentPeriod } from '@/lib/goals/types'
 import { pickConceptVisual } from '@/components/brand/ConceptVisualBackdrop'
 
 // ============================================
@@ -197,12 +198,10 @@ export default function PortalTopPage() {
               .single(),
             supabase
               .from('goal_periods')
-              .select('id')
+              .select('id, type, is_current, status')
               .eq('company_id', companyId)
               .eq('is_current', true)
-              .eq('status', 'active')
-              .limit(1)
-              .maybeSingle(),
+              .eq('status', 'active'),
             supabase
               .from('brand_guidelines')
               .select('concept_visuals, concept_visual_url')
@@ -261,20 +260,22 @@ export default function PortalTopPage() {
         setLatestAnnouncements(latestAnnouncementsData)
 
         // --- Current period ID ---
-        const currentPeriodId = goalPeriodsRes.status === 'fulfilled' ? goalPeriodsRes.value.data?.id || null : null
+        const currentPeriodId =
+          goalPeriodsRes.status === 'fulfilled' ? pickCurrentPeriod(goalPeriodsRes.value.data || [], 'personal')?.id || null : null
 
-        // 今期の目標（personal_goals）。ここで await すると Group 1 と Group 2 の
+        // 今期の個人目標（goals・level='personal'）。ここで await すると Group 1 と Group 2 の
         // 間にもう1往復挟まる。依存しているのは Group 1 の currentPeriodId だけなので、
         // 組み立てだけ済ませて Group 2 に相乗りさせる（結果は Group 2 の後で読む）
         let goalQuery = supabase
-          .from('personal_goals')
+          .from('goals')
           .select('id, title')
           .eq('company_id', companyId)
-          .eq('user_id', user.id)
+          .eq('level', 'personal')
+          .eq('owner_user_id', user.id)
         if (currentPeriodId) {
-          goalQuery = goalQuery.eq('goal_period_id', currentPeriodId)
+          goalQuery = goalQuery.eq('period_id', currentPeriodId)
         } else {
-          goalQuery = goalQuery.is('goal_period_id', null)
+          goalQuery = goalQuery.is('period_id', null)
         }
 
         // --- Goal period ---

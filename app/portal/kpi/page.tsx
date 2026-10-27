@@ -1,7 +1,8 @@
 'use client'
 
-// 目標・KPI管理ページ（ポータル）— 1人1目標 + 複数KPI + リソース配分(%) + 期間切り替え
-import { useEffect, useState, useMemo, useCallback, useRef } from 'react'
+// 目標・KPI管理ページ（ポータル）— タブ「会社 / チーム / わたし」
+// わたし: 1人1目標 + 複数KPI + リソース配分(%) + 期間切り替え。目標はチーム目標・行動指針につなげられる（任意）
+import { useEffect, useState, useMemo, useRef } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { usePortalAuth } from '../components/PortalDataProvider'
@@ -10,6 +11,8 @@ import { isPortalPageVisibleForRole } from '@/lib/constants/member-roles'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
 import { fetchPhilosophy } from '@/lib/brand/philosophy'
 import { Plus } from 'lucide-react'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { GOAL_COLUMNS, pickCurrentPeriod, currentPeriodIds, type Goal, type Team, type TeamMember } from '@/lib/goals/types'
 import { Fab, FabButton } from '@/components/ui/fab'
 import { toast } from 'sonner'
 import { PlanUpsell } from '@/components/billing/plan-gate'
@@ -25,6 +28,8 @@ import {
   type KpiFormItem,
   type KpiEditForm,
   type PortalKpiCache,
+  type PortalGoalContext,
+  emptyGoalContext,
 } from './_components/kpi-utils'
 import { useArchivedPeriod } from './_components/useArchivedPeriod'
 import { ArchivedPeriodsSection } from './_components/ArchivedPeriodsSection'
@@ -36,6 +41,10 @@ import { GoalCard } from './_components/GoalCard'
 import { KpiListCard } from './_components/KpiListCard'
 import { KpiUnavailableNotice, KpiPageSkeleton, GoalPeriodNoticeCard, GoalEmptyCard } from './_components/KpiPagePlaceholders'
 import { pickConceptVisual } from '@/components/brand/ConceptVisualBackdrop'
+import { PersonalGoalLinkFields, NO_LINK } from './_components/PersonalGoalLinkFields'
+import { GoalConnectionCard } from './_components/GoalConnectionCard'
+import { CompanyGoalsTab } from './_components/CompanyGoalsTab'
+import { TeamGoalsTab } from './_components/TeamGoalsTab'
 
 // ============================================
 // Component
@@ -59,12 +68,16 @@ export default function KpiPage() {
   const [goalPeriod, setGoalPeriod] = useState<GoalPeriod | null>(cached?.goalPeriod ?? null)
   const [currentPeriodId, setCurrentPeriodId] = useState<string | null>(cached?.currentPeriodId ?? null)
   const [archivedPeriods, setArchivedPeriods] = useState<GoalPeriodRecord[]>(cached?.archivedPeriods ?? [])
+  const [goalContext, setGoalContext] = useState<PortalGoalContext>(cached?.goalContext ?? emptyGoalContext)
+  const [tab, setTab] = useState<'company' | 'team' | 'me'>('me')
   const [loading, setLoading] = useState(!cached)
   const [saving, setSaving] = useState(false)
 
   // Setup dialog (2-step: 1=goal, 2=kpi)
   const [setupStep, setSetupStep] = useState<0 | 1 | 2>(0)
   const [setupGoalText, setSetupGoalText] = useState('')
+  const [setupParentId, setSetupParentId] = useState(NO_LINK)
+  const [setupGuidelineId, setSetupGuidelineId] = useState(NO_LINK)
   const [setupKpis, setSetupKpis] = useState<KpiFormItem[]>([{ id: crypto.randomUUID(), title: '', deadline: undefined, weight: 100 }])
   const [missionText, setMissionText] = useState<string | null>(null)
   const [valuesData, setValuesData] = useState<BrandValue[]>([])
@@ -79,6 +92,8 @@ export default function KpiPage() {
   // Goal edit dialog
   const [goalEditOpen, setGoalEditOpen] = useState(false)
   const [goalEditText, setGoalEditText] = useState('')
+  const [goalEditParentId, setGoalEditParentId] = useState(NO_LINK)
+  const [goalEditGuidelineId, setGoalEditGuidelineId] = useState(NO_LINK)
 
 
   // 過去の期間アコーディオン
@@ -88,17 +103,30 @@ export default function KpiPage() {
   // ============================================
   // Data Fetching
   // ============================================
-  const fetchData = useCallback(async () => {
+  // useCallback にしない（React Compiler がメモ化する。手動のメモ化と推論が食い違うと最適化が止まる）
+  const fetchData = async () => {
     if (!companyId || !user?.id) return
     try {
-      // まず goal_periods と companies.goal_period を取得
-      const [periodsRes, companyRes] = await Promise.all([
+      // 期間・自分の目標（全期間分。下で今の期間に絞る）・KPI・会社とチームの目標・チーム・行動指針を1回の往復で取る
+      const [periodsRes, companyRes, myGoalsRes, kpisRes, sharedGoalsRes, teamsRes, teamMembersRes, membersRes, guidelinesRes] = await Promise.all([
         supabase.from('goal_periods').select('*').eq('company_id', companyId).order('created_at', { ascending: false }),
         supabase.from('companies').select('goal_period').eq('id', companyId).single(),
+        supabase.from('goals').select(GOAL_COLUMNS).eq('company_id', companyId).eq('level', 'personal').eq('owner_user_id', user.id),
+        supabase
+          .from('goal_kpis')
+          .select('*')
+          .eq('company_id', companyId)
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: true }),
+        supabase.from('goals').select(GOAL_COLUMNS).eq('company_id', companyId).in('level', ['company', 'team']).order('created_at', { ascending: true }),
+        supabase.from('teams').select('id, company_id, name, created_at').eq('company_id', companyId).order('created_at', { ascending: true }),
+        supabase.from('team_members').select('team_id, user_id, role'),
+        supabase.from('members').select('auth_id, display_name, profile:profiles(name)').eq('company_id', companyId).eq('is_active', true),
+        supabase.from('philosophy_elements').select('id, title, body').eq('company_id', companyId).eq('element_type', 'action_guideline').order('sort_order', { ascending: true }),
       ])
 
       const allPeriods = (periodsRes.data || []) as GoalPeriodRecord[]
-      const current = allPeriods.find(p => p.is_current && p.status === 'active') || null
+      const current = pickCurrentPeriod(allPeriods, 'personal')
       const archived = allPeriods.filter(p => p.status === 'archived').sort((a, b) => b.start_date.localeCompare(a.start_date))
       const periodData = (companyRes.data?.goal_period as GoalPeriod) || null
 
@@ -106,44 +134,46 @@ export default function KpiPage() {
       setCurrentPeriodId(curPeriodId)
       setArchivedPeriods(archived)
 
-      // 現在の期間の目標・KPIを取得
-      let goalsQuery = supabase
-        .from('personal_goals')
-        .select('id, company_id, user_id, title, goal_period_id, created_at, updated_at')
-        .eq('company_id', companyId)
-        .eq('user_id', user.id)
-      if (curPeriodId) {
-        goalsQuery = goalsQuery.eq('goal_period_id', curPeriodId)
-      } else {
-        goalsQuery = goalsQuery.is('goal_period_id', null)
-      }
-
-      const [goalsRes, kpisRes] = await Promise.all([
-        goalsQuery.limit(1).maybeSingle(),
-        supabase
-          .from('goal_kpis')
-          .select('*')
-          .eq('company_id', companyId)
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: true }),
-      ])
-
-      const goalData = goalsRes.error ? null : (goalsRes.data as PersonalGoal)
+      // 今の期間の自分の目標（期間が無い会社は期間なしの移行前データ）
+      const goalData = ((myGoalsRes.data || []) as PersonalGoal[]).find(g => (g.period_id ?? null) === curPeriodId) ?? null
       // KPIは目標に紐づくものだけフィルタ
       const kpisData = goalData
         ? ((kpisRes.data || []) as GoalKpi[]).filter(k => k.goal_id === goalData.id)
         : []
 
+      // 会社・チーム目標は今の期間のもの（年度と半期の両方が今の期間になりうる）
+      const nowIds = currentPeriodIds(allPeriods)
+      const sharedGoals = ((sharedGoalsRes.data || []) as Goal[])
+        .filter(g => (nowIds.length > 0 ? nowIds.includes(g.period_id ?? '') : g.period_id === null))
+      const teams = (teamsRes.data || []) as Team[]
+      const teamIds = new Set(teams.map(t => t.id))
+      const memberNames: Record<string, string> = {}
+      ;(membersRes.data || []).forEach((m: { auth_id: string; display_name: string; profile: { name: string } | { name: string }[] | null }) => {
+        const p = Array.isArray(m.profile) ? m.profile[0] : m.profile
+        memberNames[m.auth_id] = p?.name || m.display_name || '不明'
+      })
+      const ctx: PortalGoalContext = {
+        companyGoals: sharedGoals.filter(g => g.level === 'company'),
+        teamGoals: sharedGoals.filter(g => g.level === 'team'),
+        teams,
+        teamMembers: ((teamMembersRes.data || []) as TeamMember[]).filter(m => teamIds.has(m.team_id)),
+        memberNames,
+        guidelines: ((guidelinesRes.data || []) as { id: string; title: string | null; body: string | null }[])
+          .map(g => ({ id: g.id, title: g.title || g.body || '' }))
+          .filter(g => g.title),
+      }
+
       setGoal(goalData)
       setKpis(kpisData)
       setGoalPeriod(periodData)
-      setPageCache(cacheKey, { goal: goalData, kpis: kpisData, goalPeriod: periodData, currentPeriodId: curPeriodId, archivedPeriods: archived }, { persist: true })
+      setGoalContext(ctx)
+      setPageCache(cacheKey, { goal: goalData, kpis: kpisData, goalPeriod: periodData, currentPeriodId: curPeriodId, archivedPeriods: archived, goalContext: ctx }, { persist: true })
     } catch (err) {
       console.error('[KPI] データ取得エラー:', err)
     } finally {
       setLoading(false)
     }
-  }, [companyId, user?.id, cacheKey])
+  }
 
   useEffect(() => {
     if (!companyId || !user?.id) return
@@ -152,19 +182,6 @@ export default function KpiPage() {
     fetchData()
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [companyId, user?.id])
-
-  // ?setup=true でダッシュボードから直接ダイアログを開く
-  useEffect(() => {
-    if (setupTriggered.current) return
-    if (loading) return
-    if (searchParams.get('setup') === 'true' && !goal) {
-      setupTriggered.current = true
-      router.replace('/portal/kpi', { scroll: false })
-      openSetupDialog(false)
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading, goal, searchParams])
-
 
   // ============================================
   // Computed
@@ -189,6 +206,8 @@ export default function KpiPage() {
   // Setup Dialog: fetch brand data
   // ============================================
   const openSetupDialog = async (isEdit = false) => {
+    setSetupParentId(isEdit && goal?.parent_goal_id ? goal.parent_goal_id : NO_LINK)
+    setSetupGuidelineId(isEdit && goal?.behavior_guideline_id ? goal.behavior_guideline_id : NO_LINK)
     if (isEdit && goal) {
       setSetupGoalText(goal.title)
       setSetupKpis(
@@ -215,6 +234,18 @@ export default function KpiPage() {
       setBrandDataLoaded(true)
     }
   }
+
+  // ?setup=true でダッシュボードから直接ダイアログを開く
+  useEffect(() => {
+    if (setupTriggered.current) return
+    if (loading) return
+    if (searchParams.get('setup') === 'true' && !goal) {
+      setupTriggered.current = true
+      router.replace('/portal/kpi', { scroll: false })
+      openSetupDialog(false)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, goal, searchParams])
 
   // Step 1 → Step 2
   const handleGoalStepNext = () => {
@@ -267,11 +298,16 @@ export default function KpiPage() {
     setSaving(true)
     try {
       let goalId = goal?.id || null
+      // つながり先（任意）。「つなげない」は null
+      const setupLinks = {
+        parent_goal_id: setupParentId === NO_LINK ? null : setupParentId,
+        behavior_guideline_id: setupGuidelineId === NO_LINK ? null : setupGuidelineId,
+      }
 
       if (goalId) {
         const { error } = await supabase
-          .from('personal_goals')
-          .update({ title: setupGoalText.trim(), updated_at: new Date().toISOString() })
+          .from('goals')
+          .update({ ...setupLinks, title: setupGoalText.trim(), updated_at: new Date().toISOString() })
           .eq('id', goalId)
         if (error) throw error
         // 目標の作り直し。ここは 0 件でも正常（KPI をまだ作っていない場合）なので、
@@ -282,12 +318,15 @@ export default function KpiPage() {
       } else {
         goalId = crypto.randomUUID()
         const { error } = await supabase
-          .from('personal_goals')
+          .from('goals')
           .insert({
+            ...setupLinks,
             id: goalId,
             company_id: companyId,
-            user_id: user.id,
-            goal_period_id: currentPeriodId, // 期間紐付け
+            level: 'personal',
+            owner_user_id: user.id,
+            created_by: user.id,
+            period_id: currentPeriodId, // 期間紐付け
             title: setupGoalText.trim(),
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
@@ -331,6 +370,8 @@ export default function KpiPage() {
   const openGoalEdit = () => {
     if (!goal) return
     setGoalEditText(goal.title)
+    setGoalEditParentId(goal.parent_goal_id ?? NO_LINK)
+    setGoalEditGuidelineId(goal.behavior_guideline_id ?? NO_LINK)
     setGoalEditOpen(true)
   }
   const handleGoalEditSave = async () => {
@@ -338,8 +379,13 @@ export default function KpiPage() {
     setSaving(true)
     try {
       const { error } = await supabase
-        .from('personal_goals')
-        .update({ title: goalEditText.trim(), updated_at: new Date().toISOString() })
+        .from('goals')
+        .update({
+          title: goalEditText.trim(),
+          parent_goal_id: goalEditParentId === NO_LINK ? null : goalEditParentId,
+          behavior_guideline_id: goalEditGuidelineId === NO_LINK ? null : goalEditGuidelineId,
+          updated_at: new Date().toISOString(),
+        })
         .eq('id', goal.id)
       if (error) throw error
       toast.success('目標を更新しました')
@@ -484,6 +530,20 @@ export default function KpiPage() {
       toggleArchive={toggleArchive}
     />
   )
+  const myTeamIds = new Set(goalContext.teamMembers.filter(m => m.user_id === user?.id).map(m => m.team_id))
+  // つながり先の入力欄（設定・編集ダイアログで共用）
+  const linkFields = (parentId: string, setParentId: (v: string) => void, guidelineId: string, setGuidelineId: (v: string) => void) => (
+    <PersonalGoalLinkFields
+      teamGoals={goalContext.teamGoals}
+      teams={goalContext.teams}
+      myTeamIds={myTeamIds}
+      guidelines={goalContext.guidelines}
+      parentGoalId={parentId}
+      setParentGoalId={setParentId}
+      guidelineId={guidelineId}
+      setGuidelineId={setGuidelineId}
+    />
+  )
   const goalSetupDialog = (
     <GoalSetupDialog
       setupStep={setupStep}
@@ -495,6 +555,7 @@ export default function KpiPage() {
       setupGoalText={setupGoalText}
       setSetupGoalText={setSetupGoalText}
       handleGoalStepNext={handleGoalStepNext}
+      linkFields={linkFields(setupParentId, setSetupParentId, setupGuidelineId, setSetupGuidelineId)}
     />
   )
   const kpiSetupDialog = (
@@ -512,43 +573,33 @@ export default function KpiPage() {
     />
   )
 
-  // ============================================
-  // Render: 目標未設定
-  // ============================================
-  if (!goal) {
-    return (
-      <div className="max-w-4xl mx-auto px-5 pt-4 pb-10 space-y-6">
-
-        {goalPeriod && <GoalPeriodNoticeCard goalPeriod={goalPeriod} />}
-
-        <GoalEmptyCard goalPeriod={goalPeriod} />
-
-        {/* 過去の期間 */}
-        {archivedSection}
-
-        {goalSetupDialog}
-        {kpiSetupDialog}
-
-        {/* 右下FAB: 目標とKPIを設定する（設定期間内のみ表示） */}
-        {(goalPeriod?.show_goal_banner !== false) && (
-          <Fab>
-            <FabButton onClick={() => openSetupDialog(false)} icon={<Plus size={18} />}>
-              目標とKPIを設定する
-            </FabButton>
-          </Fab>
-        )}
-      </div>
-    )
-  }
-
-  // ============================================
-  // Render: 目標設定済み
-  // ============================================
   const canEdit = goalPeriod?.show_goal_banner !== false
   const canReview = goalPeriod?.show_review_banner === true
 
-  return (
-    <div className="max-w-4xl mx-auto px-5 pt-4 pb-10 space-y-6">
+  // ============================================
+  // わたしタブ: 目標未設定 / 設定済み
+  // ============================================
+  const myContent = !goal ? (
+    <>
+      {goalPeriod && <GoalPeriodNoticeCard goalPeriod={goalPeriod} />}
+
+      <GoalEmptyCard goalPeriod={goalPeriod} />
+
+      {/* 過去の期間 */}
+      {archivedSection}
+    </>
+  ) : (
+    <>
+      {/* わたしの目標 → チーム目標 → 会社目標 */}
+      <GoalConnectionCard
+        goal={goal}
+        teamGoals={goalContext.teamGoals}
+        companyGoals={goalContext.companyGoals}
+        teams={goalContext.teams}
+        guidelines={goalContext.guidelines}
+        canEdit={canEdit}
+        openGoalEdit={openGoalEdit}
+      />
 
       {/* ゴール期間 + 目標表示 */}
       <GoalCard goal={goal} goalPeriod={goalPeriod} canEdit={canEdit} openGoalEdit={openGoalEdit} />
@@ -568,6 +619,36 @@ export default function KpiPage() {
 
       {/* 過去の期間 */}
       {archivedSection}
+    </>
+  )
+
+  return (
+    <div className="max-w-4xl mx-auto px-5 pt-4 pb-10">
+      <Tabs value={tab} onValueChange={v => setTab(v as 'company' | 'team' | 'me')}>
+        <TabsList className="mb-4">
+          <TabsTrigger value="company">会社</TabsTrigger>
+          <TabsTrigger value="team">チーム</TabsTrigger>
+          <TabsTrigger value="me">わたし</TabsTrigger>
+        </TabsList>
+        <TabsContent value="company" className="mt-0">
+          <CompanyGoalsTab companyGoals={goalContext.companyGoals} teamGoals={goalContext.teamGoals} isAdmin={isAdmin} />
+        </TabsContent>
+        <TabsContent value="team" className="mt-0">
+          <TeamGoalsTab
+            teams={goalContext.teams}
+            teamMembers={goalContext.teamMembers}
+            memberNames={goalContext.memberNames}
+            teamGoals={goalContext.teamGoals}
+            companyGoals={goalContext.companyGoals}
+            userId={user?.id ?? ''}
+            isAdmin={isAdmin}
+            onChanged={fetchData}
+          />
+        </TabsContent>
+        <TabsContent value="me" className="mt-0 space-y-6">
+          {myContent}
+        </TabsContent>
+      </Tabs>
 
       {/* Setup Dialogs (2-step) */}
       {goalSetupDialog}
@@ -581,6 +662,7 @@ export default function KpiPage() {
         setGoalEditText={setGoalEditText}
         saving={saving}
         handleGoalEditSave={handleGoalEditSave}
+        linkFields={linkFields(goalEditParentId, setGoalEditParentId, goalEditGuidelineId, setGoalEditGuidelineId)}
       />
 
       {/* KPI Edit Dialog */}
@@ -597,6 +679,15 @@ export default function KpiPage() {
         saving={saving}
         handleKpiEditSave={handleKpiEditSave}
       />
+
+      {/* 右下FAB: 目標とKPIを設定する（わたしタブ・目標未設定・設定期間内のみ表示） */}
+      {tab === 'me' && !goal && canEdit && (
+        <Fab>
+          <FabButton onClick={() => openSetupDialog(false)} icon={<Plus size={18} />}>
+            目標とKPIを設定する
+          </FabButton>
+        </Fab>
+      )}
     </div>
   )
 }

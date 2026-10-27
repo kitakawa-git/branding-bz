@@ -1,6 +1,7 @@
 // 過去の期間アコーディオンの開閉状態と、期間ごとの目標・KPI読み込み
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { GOAL_COLUMNS } from '@/lib/goals/types'
 import type { ArchivedPeriodData, GoalKpi, PersonalGoal } from './kpi-utils'
 
 export function useArchivedPeriod(companyId: string | null | undefined, userId: string | undefined) {
@@ -17,8 +18,8 @@ export function useArchivedPeriod(companyId: string | null | undefined, userId: 
     setArchiveLoading(true)
     try {
       const [goalRes, kpisRes] = await Promise.all([
-        supabase.from('personal_goals').select('id, company_id, user_id, title, goal_period_id, created_at, updated_at')
-          .eq('company_id', companyId).eq('user_id', userId).eq('goal_period_id', periodId).limit(1).maybeSingle(),
+        supabase.from('goals').select(GOAL_COLUMNS)
+          .eq('company_id', companyId).eq('level', 'personal').eq('owner_user_id', userId).eq('period_id', periodId).limit(1).maybeSingle(),
         supabase.from('goal_kpis').select('*').eq('company_id', companyId).eq('user_id', userId).order('created_at', { ascending: true }),
       ])
       const archGoal = goalRes.error ? null : (goalRes.data as PersonalGoal)

@@ -1,4 +1,5 @@
-// 目標設定ダイアログ Step 1（ミッション・バリュー表示 + 目標入力）
+// 目標設定ダイアログ Step 1（ミッション・バリュー表示 + 目標入力 + つながり先）
+import type { ReactNode } from 'react'
 import { splitBrandCopy } from '@/lib/brand-mvv'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -24,6 +25,8 @@ type Props = {
   setupGoalText: string
   setSetupGoalText: (text: string) => void
   handleGoalStepNext: () => void
+  /** つながるチーム目標・行動指針の入力欄（PersonalGoalLinkFields） */
+  linkFields?: ReactNode
 }
 
 export function GoalSetupDialog({
@@ -36,6 +39,7 @@ export function GoalSetupDialog({
   setupGoalText,
   setSetupGoalText,
   handleGoalStepNext,
+  linkFields,
 }: Props) {
   return (
     <Dialog open={setupStep === 1} onOpenChange={open => { if (!open) setSetupStep(0) }}>
@@ -101,6 +105,8 @@ export function GoalSetupDialog({
               placeholder="例：ブランド学習動画を月2本公開し、社内の理解度を30%向上させる"
             />
           </div>
+
+          {linkFields}
         </div>
 
         <div className="sticky bottom-0 bg-background z-10 border-t px-6 py-4">

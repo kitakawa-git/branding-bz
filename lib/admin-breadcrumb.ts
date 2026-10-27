@@ -58,7 +58,7 @@ const breadcrumbMap: Record<string, AdminCrumb> = {
   '/admin/members': { title: 'メンバー' },
   '/admin/members-portal': { title: 'アカウント作成' },
   '/admin/card-template': { title: 'スマート名刺' },
-  '/admin/kpi': { title: '目標・KPI管理' },
+  '/admin/kpi': { title: '目標・KPI管理', child: { section: '目標・KPI管理', title: '会社・チーム目標' } },
   '/admin/announcements': { title: 'お知らせ管理' },
   '/admin/settings': { title: '表示設定' },
   // ブランド基盤セクション

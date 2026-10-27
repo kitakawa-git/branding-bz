@@ -18,6 +18,7 @@ const titleMap: Record<string, string> = {
   '/admin/card-template': 'QRコード出力',
   '/admin/announcements': 'お知らせ管理',
   '/admin/kpi': '目標管理',
+  '/admin/kpi/goals': '会社・チーム目標',
   '/admin/ci-manual': 'CIマニュアル出力',
   '/admin/learning': 'ラーニング',
 }

@@ -35,10 +35,11 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import { Switch } from '@/components/ui/switch'
-import { ChevronDown, ChevronUp, AlertCircle, CalendarDays, Trash2, Clock, Archive, Search } from 'lucide-react'
+import { ChevronDown, ChevronUp, ChevronRight, AlertCircle, CalendarDays, Trash2, Clock, Archive, Search } from 'lucide-react'
 import { toast } from 'sonner'
 import { PlanUpsell } from '@/components/billing/plan-gate'
 import { can } from '@/lib/billing/entitlements'
+import { pickCurrentPeriod } from '@/lib/goals/types'
 
 // ============================================
 // Types
@@ -215,14 +216,14 @@ export default function AdminKpiPage() {
         supabase.from('members').select('auth_id, display_name, profile:profiles(name, photo_url, position)').eq('company_id', companyId).eq('is_active', true),
         supabase.from('goal_periods').select('*').eq('company_id', companyId).order('created_at', { ascending: false }),
         supabase.from('companies').select('goal_period').eq('id', companyId).single(),
-        supabase.from('personal_goals').select('id, user_id, title, goal_period_id').eq('company_id', companyId),
+        supabase.from('goals').select('id, owner_user_id, title, period_id').eq('company_id', companyId).eq('level', 'personal'),
         supabase.from('goal_kpis').select('id, goal_id, user_id, title, deadline, progress, weight, status').eq('company_id', companyId).order('created_at', { ascending: true }),
       ])
 
       const period = (companyRes.data?.goal_period as GoalPeriod) || null
       const allPeriods = (periodsRes.data || []) as GoalPeriodRecord[]
 
-      const current = allPeriods.find(p => p.is_current && p.status === 'active') || null
+      const current = pickCurrentPeriod(allPeriods, 'personal')
       const pending = allPeriods.find(p => p.status === 'pending_approval') || null
       const archived = allPeriods.filter(p => p.status === 'archived').sort((a, b) => b.start_date.localeCompare(a.start_date))
 
@@ -266,12 +267,12 @@ export default function AdminKpiPage() {
         }
       }
 
-      // 現在の期間の目標だけを使う。goal_periodsが1つもない場合は goal_period_id が null のもの（移行前データ）
+      // 現在の期間の目標だけを使う。goal_periodsが1つもない場合は period_id が null のもの（移行前データ）
       const currentPeriodId = current?.id || null
       const goalByUser = new Map<string, { id: string; title: string }>()
-      ;(allGoalsRes.data || []).forEach((g: { id: string; user_id: string; title: string; goal_period_id: string | null }) => {
-        if ((g.goal_period_id ?? null) !== currentPeriodId) return
-        goalByUser.set(g.user_id, { id: g.id, title: g.title })
+      ;(allGoalsRes.data || []).forEach((g: { id: string; owner_user_id: string; title: string; period_id: string | null }) => {
+        if ((g.period_id ?? null) !== currentPeriodId) return
+        goalByUser.set(g.owner_user_id, { id: g.id, title: g.title })
       })
 
       // KPIを現在の期間の目標IDだけでフィルタ
@@ -476,13 +477,13 @@ export default function AdminKpiPage() {
     try {
       const [membersRes, goalsRes, kpisRes] = await Promise.all([
         supabase.from('members').select('auth_id, display_name, profile:profiles(name, photo_url, position)').eq('company_id', companyId).eq('is_active', true),
-        supabase.from('personal_goals').select('id, user_id, title').eq('company_id', companyId).eq('goal_period_id', periodId),
+        supabase.from('goals').select('id, owner_user_id, title').eq('company_id', companyId).eq('level', 'personal').eq('period_id', periodId),
         supabase.from('goal_kpis').select('id, goal_id, user_id, title, deadline, progress, weight, status').eq('company_id', companyId).order('created_at', { ascending: true }),
       ])
 
       const goalByUser = new Map<string, { id: string; title: string }>()
-      ;(goalsRes.data || []).forEach((g: { id: string; user_id: string; title: string }) => {
-        goalByUser.set(g.user_id, { id: g.id, title: g.title })
+      ;(goalsRes.data || []).forEach((g: { id: string; owner_user_id: string; title: string }) => {
+        goalByUser.set(g.owner_user_id, { id: g.id, title: g.title })
       })
 
       const goalIds = new Set([...goalByUser.values()].map(g => g.id))
@@ -537,7 +538,7 @@ export default function AdminKpiPage() {
       // RLS 0行対策: .delete() 単体は弾かれても error が null なので、
       // .select() で影響行を受け取って 0 件を権限なしとして扱う
       const { data, error } = await supabase
-        .from('personal_goals').delete().eq('id', goalId).select('id')
+        .from('goals').delete().eq('id', goalId).eq('level', 'personal').select('id')
       if (error) throw error
       if (!data?.length) {
         toast.error('削除する権限がありません')
@@ -680,6 +681,19 @@ export default function AdminKpiPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* ===== 会社目標・チーム目標への入口 ===== */}
+      <Link href="/admin/kpi/goals" className="block mb-4 no-underline">
+        <Card className="bg-[hsl(0_0%_97%)] border shadow-none hover:bg-muted/60 transition-colors">
+          <CardContent className="p-5 flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-xs font-bold text-foreground m-0">会社目標・チーム目標</h2>
+              <p className="text-xs text-muted-foreground m-0 mt-1">会社 → チーム → 個人 と目標をつなげます。チームの作成・メンバーとリーダーの割り当てもここで行います。</p>
+            </div>
+            <ChevronRight size={16} className="text-muted-foreground shrink-0" />
+          </CardContent>
+        </Card>
+      </Link>
 
       {/* ===== ゴール期間設定 ===== */}
       <Card className="bg-[hsl(0_0%_97%)] border shadow-none mb-4">

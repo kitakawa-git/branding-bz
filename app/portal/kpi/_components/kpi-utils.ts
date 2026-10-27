@@ -1,4 +1,5 @@
 // 目標・KPI管理ページの型・定数・ヘルパー
+import type { Goal, Team, TeamMember } from '@/lib/goals/types'
 
 // ============================================
 // Types
@@ -16,17 +17,12 @@ export type GoalKpi = {
   status: 'not_started' | 'in_progress' | 'completed'
   created_at: string
   updated_at: string
+  /** 上位（チーム・会社）の KPI への寄与。任意 */
+  contributes_to_kpi_id?: string | null
 }
 
-export type PersonalGoal = {
-  id: string
-  company_id: string
-  user_id: string
-  title: string
-  goal_period_id: string | null
-  created_at: string
-  updated_at: string
-}
+// 個人目標は goals（level='personal'）の1行
+export type PersonalGoal = Goal
 
 export type GoalPeriod = {
   type: 'quarter' | 'half' | 'year' | 'custom'
@@ -44,6 +40,7 @@ export type GoalPeriodRecord = {
   end_date: string
   is_current: boolean
   status: 'active' | 'pending_approval' | 'archived'
+  parent_period_id?: string | null
   created_at: string
 }
 
@@ -69,12 +66,31 @@ export type ArchivedPeriodData = {
   kpis: GoalKpi[]
 }
 
+// 会社・チーム目標と、個人目標のつながり先の候補（会社 / チーム タブ・設定ダイアログで使う）
+export type GoalOption = { id: string; title: string }
+
+export type PortalGoalContext = {
+  /** 今の期間の会社目標 */
+  companyGoals: Goal[]
+  /** 今の期間のチーム目標（全チーム分。閲覧は自社全員） */
+  teamGoals: Goal[]
+  teams: Team[]
+  teamMembers: TeamMember[]
+  /** auth_id → 表示名 */
+  memberNames: Record<string, string>
+  /** 行動指針（philosophy_elements の action_guideline） */
+  guidelines: GoalOption[]
+}
+
+export const emptyGoalContext: PortalGoalContext = { companyGoals: [], teamGoals: [], teams: [], teamMembers: [], memberNames: {}, guidelines: [] }
+
 export type PortalKpiCache = {
   goal: PersonalGoal | null
   kpis: GoalKpi[]
   goalPeriod: GoalPeriod | null
   currentPeriodId: string | null
   archivedPeriods: GoalPeriodRecord[]
+  goalContext: PortalGoalContext
 }
 
 // ============================================

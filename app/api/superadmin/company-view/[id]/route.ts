@@ -140,7 +140,7 @@ export async function GET(
       rows(admin.from('brand_score_snapshots').select('*').eq('company_id', companyId).order('snapshot_date', { ascending: true })),
       rows(byCompany('goal_periods', '*', 'created_at')),
       rows(byCompany('goal_kpis', '*', 'created_at')),
-      count(admin.from('personal_goals').select('id', { count: 'exact', head: true }).eq('company_id', companyId)),
+      count(admin.from('goals').select('id', { count: 'exact', head: true }).eq('company_id', companyId).eq('level', 'personal')),
       rows(byCompany('brand_surveys', '*', 'created_at')),
       count(admin.from('brand_micro_feedbacks').select('id', { count: 'exact', head: true }).eq('company_id', companyId)),
       rows(byCompany('timeline_posts', 'id, created_at', 'created_at').limit(5)),
