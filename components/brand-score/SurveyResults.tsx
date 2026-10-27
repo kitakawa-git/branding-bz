@@ -134,9 +134,14 @@ type Props = {
   questions: SurveyResultsQuestion[]
   insights?: Partial<Record<InsightKey, string>>
   insightsLoading?: boolean
+  /**
+   * 'admin'（管理画面のサーベイ詳細）は「段階の通過率」で、バーの中に人数を出し、
+   * SP / BO を右の列に縦に並べる（値が無ければ「-」）。'portal' はバーの下に1行で出す。
+   */
+  variant?: 'portal' | 'admin'
 }
 
-export function SurveyResults({ data, questions, insights, insightsLoading }: Props) {
+export function SurveyResults({ data, questions, insights, insightsLoading, variant = 'portal' }: Props) {
   const [questionAxis, setQuestionAxis] = useState<QuestionAxis>('stage')
 
   // 設問別スコア（by_question）と設問メタ（sort_order・reference_data）を結合して funnel を算出
@@ -157,8 +162,9 @@ export function SurveyResults({ data, questions, insights, insightsLoading }: Pr
         referenceData: q.reference_data,
       })
     }
-    return input.length ? calcFunnel(input) : null
-  }, [data, questions])
+    // 管理画面は以前から、一致する設問が無くても calcFunnel([]) の結果を使っていた（挙動を変えないため分けている）
+    return input.length || variant === 'admin' ? calcFunnel(input) : null
+  }, [data, questions, variant])
 
   const funnelData = data.funnel ?? null
   const breakdown = data.breakdown ?? null
@@ -208,7 +214,19 @@ export function SurveyResults({ data, questions, insights, insightsLoading }: Pr
   const questionsByStageSize = breakdown
     ? new Set(breakdown.byQuestion.map(q => resolveStage(q.sortOrder, breakdown.byQuestion.length, null))).size
     : 0
-  if (questionsByStageSize > 0) availableAxes.push('stage')
+  // 管理画面は「設問の reference_data まで使って段階を解決でき、かつ解決できた設問が1問以上ある」ときだけ浸透段階を出す。
+  // ポータルは段階を解決できない設問（null）も1つに数えるので、段階に分けられないサーベイでも
+  // 「浸透段階」が選ばれて中身が空になる（既知・ポータルの挙動は変えていない）
+  const adminStageAxisAvailable = (() => {
+    if (questions.length === 0) return false
+    const byId = new Map(questions.map(q => [q.id, q]))
+    const total = data.by_question.filter(bq => byId.has(bq.question_id)).length
+    return data.by_question.some(bq => {
+      const q = byId.get(bq.question_id)
+      return !!q && !!resolveStage(q.sort_order, total, q.reference_data)
+    })
+  })()
+  if (variant === 'admin' ? adminStageAxisAvailable : questionsByStageSize > 0) availableAxes.push('stage')
   if (CATEGORY_ORDER.some(c => [...categoryOf.values()].includes(c))) availableAxes.push('category')
   const effectiveAxis: QuestionAxis =
     availableAxes.includes(questionAxis) ? questionAxis : (availableAxes[0] ?? 'stage')
@@ -450,13 +468,31 @@ export function SurveyResults({ data, questions, insights, insightsLoading }: Pr
                         <div className="h-6 rounded bg-muted">
                           <div className="flex h-full items-center justify-end gap-2 rounded bg-ds-app-accent-soft px-2" style={{ width: `${cum?.rate ?? 0}%` }}>
                             <span className="text-[10px] font-bold text-white whitespace-nowrap">{cum?.rate.toFixed(1)}%</span>
+                            {variant === 'admin' && (
+                              <span className="text-[10px] text-white/80 whitespace-nowrap">{cum?.count}人</span>
+                            )}
                           </div>
                         </div>
-                        <div className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-[10px] text-muted-foreground">
-                          {sp !== null && <span>SP {sp.toFixed(1)}%{spCount !== null && `（${spCount}人）`}</span>}
-                          {bo !== null && <span>BO {bo.toFixed(1)}%{boCount !== null && `（${boCount}人）`}</span>}
-                        </div>
+                        {variant === 'portal' && (
+                          <div className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-[10px] text-muted-foreground">
+                            {sp !== null && <span>SP {sp.toFixed(1)}%{spCount !== null && `（${spCount}人）`}</span>}
+                            {bo !== null && <span>BO {bo.toFixed(1)}%{boCount !== null && `（${boCount}人）`}</span>}
+                          </div>
+                        )}
                       </div>
+                      {variant === 'admin' && (
+                        // 段階別の詳細の右カラムと幅を揃える
+                        <div className="w-[140px] shrink-0 text-right">
+                          <p className="m-0 whitespace-nowrap text-[10px] text-green-600">
+                            SP {sp !== null ? `${sp.toFixed(1)}%` : '-'}
+                            {spCount !== null && <span className="ml-1">{spCount}人</span>}
+                          </p>
+                          <p className="m-0 whitespace-nowrap text-[10px] text-orange-600">
+                            BO {bo !== null ? `${bo.toFixed(1)}%` : '-'}
+                            {boCount !== null && <span className="ml-1">{boCount}人</span>}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )
