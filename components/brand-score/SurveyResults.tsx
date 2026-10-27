@@ -211,12 +211,17 @@ export function SurveyResults({ data, questions, insights, insightsLoading, vari
   // 設問別スコアの軸ごとのグループ化（各グループ内スコア昇順）
   const categoryOf = new Map(data.by_question.map(bq => [bq.question_id, bq.category]))
   const availableAxes: QuestionAxis[] = []
+  // 浸透段階の軸は、下の questionGroups と同じ振り分け（breakdown.byQuestion × resolveStage）で
+  // 段階が1つ以上取れたときだけ出す。段階を解決できない設問（null）は数えない
+  // （以前は null も1つに数えていたため、段階に分けられないサーベイで「浸透段階」が選ばれ中身が空になっていた）
   const questionsByStageSize = breakdown
-    ? new Set(breakdown.byQuestion.map(q => resolveStage(q.sortOrder, breakdown.byQuestion.length, null))).size
+    ? new Set(
+        breakdown.byQuestion
+          .map(q => resolveStage(q.sortOrder, breakdown.byQuestion.length, null))
+          .filter(stage => stage !== null),
+      ).size
     : 0
-  // 管理画面は「設問の reference_data まで使って段階を解決でき、かつ解決できた設問が1問以上ある」ときだけ浸透段階を出す。
-  // ポータルは段階を解決できない設問（null）も1つに数えるので、段階に分けられないサーベイでも
-  // 「浸透段階」が選ばれて中身が空になる（既知・ポータルの挙動は変えていない）
+  // 管理画面は「設問の reference_data まで使って段階を解決でき、かつ解決できた設問が1問以上ある」ときだけ浸透段階を出す
   const adminStageAxisAvailable = (() => {
     if (questions.length === 0) return false
     const byId = new Map(questions.map(q => [q.id, q]))

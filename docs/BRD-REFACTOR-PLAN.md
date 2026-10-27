@@ -50,7 +50,7 @@ warnings は `no-unused-vars` 156、`no-img-element` 96、`no-unused-expressions
 
 | # | 対象 | 内容 |
 |---|---|---|
-| D1 | `app/admin/brand-score/settings/page.tsx` | どこからもリンクされていない。中身（印象タグ設定・154行中121行）は `app/admin/card-template/page.tsx` の「印象タグ設定＋QR出力」に統合済みに見える。削除すると URL `/admin/brand-score/settings` が消えるので、北川さんの判断が要る |
+| D1 | `app/admin/brand-score/settings/page.tsx` | どこからもリンクされていない。中身（印象タグ設定・154行中121行）は `app/admin/card-template/page.tsx` の「印象タグ設定＋QR出力」に統合済みに見える。削除すると URL `/admin/brand-score/settings` が消えるので、北川さんの判断が要る → **2026-10-27 削除済み**（承認済み。リンク元なし・同じ設定は card-template にある） |
 | D2 | lint の React Compiler 系 errors 44件 | 直すとレンダー時の挙動が変わりうる（リファクタリングの範囲外）。必要なら別作業として扱う |
 
 ---
