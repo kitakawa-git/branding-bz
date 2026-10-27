@@ -12,20 +12,30 @@ import { YouTubePlayer } from '@/components/learning/YouTubePlayer'
 import type { LearningVideoWithProgress } from '@/lib/types/learning'
 import { usePortalAuth } from '../../components/PortalDataProvider'
 import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
+import { getPageCache, setPageCache } from '@/lib/page-cache'
+import { findVideoInStructure, learningStructureKey, learningVideoKey, type Structure } from '../learning-cache'
 
 export default function PortalLearningWatchPage() {
-  const { company } = usePortalAuth()
+  const { companyId, company } = usePortalAuth()
   const learningEnabled = isFeatureEnabled(company, 'learning_enabled')
   const params = useParams()
   const videoId = params.id as string
 
-  const [video, setVideo] = useState<LearningVideoWithProgress | null>(null)
-  const [loading, setLoading] = useState(true)
+  // 初期表示: この動画の保存分 → 無ければ一覧の保存分から探す。表示した後に裏で取り直す（learning-cache.ts）
+  const [initialVideo] = useState<LearningVideoWithProgress | null>(
+    () =>
+      getPageCache<LearningVideoWithProgress>(learningVideoKey(videoId), { persist: true }) ??
+      (companyId
+        ? findVideoInStructure(getPageCache<Structure>(learningStructureKey(companyId), { persist: true }), videoId)
+        : null)
+  )
+  const [video, setVideo] = useState<LearningVideoWithProgress | null>(initialVideo)
+  const [loading, setLoading] = useState(initialVideo === null)
   const [notFound, setNotFound] = useState(false)
 
   // ライブ進捗（プレイヤーから更新）
-  const [liveProgress, setLiveProgress] = useState(0)
-  const [liveCompleted, setLiveCompleted] = useState(false)
+  const [liveProgress, setLiveProgress] = useState(initialVideo?.my_progress_percent || 0)
+  const [liveCompleted, setLiveCompleted] = useState(initialVideo?.my_completed || false)
 
   useEffect(() => {
     let cancelled = false
@@ -42,8 +52,10 @@ export default function PortalLearningWatchPage() {
           setNotFound(true)
         } else {
           setVideo(found)
-          setLiveProgress(found.my_progress_percent || 0)
-          setLiveCompleted(found.my_completed || false)
+          // 視聴中に進んだ分を、取り直した値で巻き戻さない
+          setLiveProgress((prev) => Math.max(prev, found.my_progress_percent || 0))
+          setLiveCompleted((prev) => prev || found.my_completed || false)
+          setPageCache(learningVideoKey(videoId), found, { persist: true })
         }
       } catch (err) {
         console.error('[PortalLearningWatch] 取得エラー:', err)

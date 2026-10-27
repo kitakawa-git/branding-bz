@@ -11,24 +11,12 @@ import { GraduationCap, PlayCircle, CheckCircle2, Youtube, FolderOpen } from 'lu
 import type { LearningVideoWithProgress } from '@/lib/types/learning'
 import { usePortalAuth } from '../components/PortalDataProvider'
 import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
+import { getPageCache, setPageCache } from '@/lib/page-cache'
+import { learningStructureKey, type Structure } from './learning-cache'
 import { isPortalPageVisibleForRole } from '@/lib/constants/member-roles'
 import { PlanUpsell } from '@/components/billing/plan-gate'
 import { can } from '@/lib/billing/entitlements'
 
-type ThemeNode = {
-  id: string
-  name: string
-  description: string | null
-  video_count: number
-  videos: LearningVideoWithProgress[]
-}
-type CategoryNode = {
-  id: string
-  name: string
-  direct_videos: LearningVideoWithProgress[]
-  themes: ThemeNode[]
-}
-type Structure = { categories: CategoryNode[]; uncategorized: LearningVideoWithProgress[] }
 
 function ProgressBadge({ video }: { video: LearningVideoWithProgress }) {
   if (video.my_completed) {
@@ -81,10 +69,13 @@ function VideoCard({ video }: { video: LearningVideoWithProgress }) {
 }
 
 export default function PortalLearningPage() {
-  const { company, roleCategory, isAdmin } = usePortalAuth()
+  const { companyId, company, roleCategory, isAdmin } = usePortalAuth()
   const learningEnabled = isFeatureEnabled(company, 'learning_enabled')
-  const [structure, setStructure] = useState<Structure | null>(null)
-  const [loading, setLoading] = useState(true)
+  // 保存分があればすぐ出し、裏で取り直す（learning-cache.ts）
+  const [structure, setStructure] = useState<Structure | null>(() =>
+    companyId ? getPageCache<Structure>(learningStructureKey(companyId), { persist: true }) : null
+  )
+  const [loading, setLoading] = useState(() => structure === null)
 
   useEffect(() => {
     let cancelled = false
@@ -93,7 +84,10 @@ export default function PortalLearningPage() {
         const res = await fetch('/api/learning/structure?published=true')
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         const data = await res.json()
-        if (!cancelled) setStructure({ categories: data.categories || [], uncategorized: data.uncategorized || [] })
+        if (cancelled) return
+        const next: Structure = { categories: data.categories || [], uncategorized: data.uncategorized || [] }
+        setStructure(next)
+        if (companyId) setPageCache(learningStructureKey(companyId), next, { persist: true })
       } catch (err) {
         console.error('[PortalLearning] 取得エラー:', err)
       } finally {
@@ -103,7 +97,7 @@ export default function PortalLearningPage() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [companyId])
 
   // 機能トグル: 無効なら案内のみ表示（フックより後に置くこと）
   if (!learningEnabled) {
