@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { splitBrandCopy } from '@/lib/brand-mvv'
 import { Card, CardContent } from '@/components/ui/card'
 import { ArrowRight } from 'lucide-react'
+import { ConceptVisualBackdrop } from '@/components/brand/ConceptVisualBackdrop'
 
 export function DashboardMissionCard({
   mission,
@@ -13,17 +14,8 @@ export function DashboardMissionCard({
 }) {
   return (
     <Card className="relative overflow-hidden bg-[hsl(0_0%_97%)] border shadow-none mb-4">
-      {/* コンセプトビジュアルが設定されていれば背景に敷く（可読性のため白スクリムを重ねる） */}
-      {conceptVisualUrl && (
-        <>
-          <div
-            className="absolute inset-0 bg-cover bg-center"
-            style={{ backgroundImage: `url(${conceptVisualUrl})` }}
-            aria-hidden
-          />
-          <div className="absolute inset-0 bg-white/70 backdrop-blur-[2px]" aria-hidden />
-        </>
-      )}
+      {/* コンセプトビジュアルが設定されていれば背景に敷く（目標設定ダイアログと共通） */}
+      <ConceptVisualBackdrop url={conceptVisualUrl} />
       <CardContent className="relative p-4 sm:p-5">
         <Link
           href="/portal/guidelines"

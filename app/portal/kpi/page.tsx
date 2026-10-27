@@ -35,6 +35,7 @@ import { KpiEditDialog } from './_components/KpiEditDialog'
 import { GoalCard } from './_components/GoalCard'
 import { KpiListCard } from './_components/KpiListCard'
 import { KpiUnavailableNotice, KpiPageSkeleton, GoalPeriodNoticeCard, GoalEmptyCard } from './_components/KpiPagePlaceholders'
+import { pickConceptVisual } from '@/components/brand/ConceptVisualBackdrop'
 
 // ============================================
 // Component
@@ -67,6 +68,7 @@ export default function KpiPage() {
   const [setupKpis, setSetupKpis] = useState<KpiFormItem[]>([{ id: crypto.randomUUID(), title: '', deadline: undefined, weight: 100 }])
   const [missionText, setMissionText] = useState<string | null>(null)
   const [valuesData, setValuesData] = useState<BrandValue[]>([])
+  const [conceptVisualUrl, setConceptVisualUrl] = useState<string | null>(null)
   const [brandDataLoaded, setBrandDataLoaded] = useState(false)
 
   // KPI edit dialog (for editing individual KPIs after initial setup)
@@ -201,10 +203,15 @@ export default function KpiPage() {
     setSetupStep(1)
 
     if (!brandDataLoaded && companyId) {
-      // mission/values は philosophy_elements 由来（brand_guidelines から正規化済み）
-      const phil = await fetchPhilosophy(supabase, companyId)
+      // mission/values は philosophy_elements 由来（brand_guidelines から正規化済み）。
+      // 背景のコンセプトビジュアルも並列で取る（ダッシュボードのミッションカードと同じ背景にする）
+      const [phil, cvRes] = await Promise.all([
+        fetchPhilosophy(supabase, companyId),
+        supabase.from('brand_guidelines').select('concept_visuals, concept_visual_url').eq('company_id', companyId).maybeSingle(),
+      ])
       setMissionText(phil.mission)
       setValuesData(phil.values as BrandValue[])
+      setConceptVisualUrl(pickConceptVisual(cvRes.data))
       setBrandDataLoaded(true)
     }
   }
@@ -484,6 +491,7 @@ export default function KpiPage() {
       goalPeriod={goalPeriod}
       missionText={missionText}
       valuesData={valuesData}
+      conceptVisualUrl={conceptVisualUrl}
       setupGoalText={setupGoalText}
       setSetupGoalText={setSetupGoalText}
       handleGoalStepNext={handleGoalStepNext}

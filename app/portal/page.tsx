@@ -36,6 +36,7 @@ import {
   DashboardTimelineSection,
 } from './_components/DashboardTimelineSection'
 import { useDashboardReview } from './_components/useDashboardReview'
+import { pickConceptVisual } from '@/components/brand/ConceptVisualBackdrop'
 
 // ============================================
 // Types
@@ -221,10 +222,7 @@ export default function PortalTopPage() {
           conceptVisualRes.status === 'fulfilled'
             ? (conceptVisualRes.value.data as { concept_visuals?: string[] | null; concept_visual_url?: string | null } | null)
             : null
-        const conceptVisual =
-          (Array.isArray(cvRow?.concept_visuals) && cvRow!.concept_visuals!.length > 0
-            ? cvRow!.concept_visuals![0]
-            : cvRow?.concept_visual_url) || null
+        const conceptVisual = pickConceptVisual(cvRow)
         setConceptVisualUrl(conceptVisual)
 
         const allUserPosts: UserPostRaw[] =

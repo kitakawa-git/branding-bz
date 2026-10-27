@@ -12,6 +12,7 @@ import {
   type BrandValue,
   type GoalPeriod,
 } from './kpi-utils'
+import { ConceptVisualBackdrop } from '@/components/brand/ConceptVisualBackdrop'
 
 type Props = {
   setupStep: 0 | 1 | 2
@@ -19,6 +20,7 @@ type Props = {
   goalPeriod: GoalPeriod | null
   missionText: string | null
   valuesData: BrandValue[]
+  conceptVisualUrl: string | null
   setupGoalText: string
   setSetupGoalText: (text: string) => void
   handleGoalStepNext: () => void
@@ -30,6 +32,7 @@ export function GoalSetupDialog({
   goalPeriod,
   missionText,
   valuesData,
+  conceptVisualUrl,
   setupGoalText,
   setSetupGoalText,
   handleGoalStepNext,
@@ -55,7 +58,10 @@ export function GoalSetupDialog({
           </div>
 
           {(missionText || valuesData.length > 0) && (
-            <div className="bg-muted/50 rounded-lg p-4 space-y-4">
+            // 背景はダッシュボードの「私たちのミッション」カードと同じ（コンセプトビジュアル＋白い紗）
+            <div className="relative overflow-hidden rounded-xl border bg-[hsl(0_0%_97%)]">
+              <ConceptVisualBackdrop url={conceptVisualUrl} />
+              <div className="relative p-4 space-y-4">
               {missionText && (() => {
                 const { copy, body } = splitBrandCopy(missionText)
                 return (
@@ -79,6 +85,7 @@ export function GoalSetupDialog({
                   </div>
                 </div>
               )}
+              </div>
             </div>
           )}
 
