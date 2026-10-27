@@ -287,11 +287,12 @@ export default function MarketSurveysPage() {
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart
                   data={trend.map(t => ({ 実施: formatDate(t.date), 市場浸透: t.market_score }))}
-                  margin={{ top: 4, right: 8, left: -16, bottom: 0 }}
+                  margin={{ top: 4, right: 8, left: 0, bottom: 0 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
                   <XAxis dataKey="実施" tick={{ fontSize: 11, fill: '#6b7280' }} />
-                  <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: '#9ca3af' }} />
+                  {/* width: 既定の 60px だと目盛りの左に大きな空白ができる。数字（最大「100」）が収まる幅に詰める */}
+                  <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: '#9ca3af' }} width={32} />
                   <Tooltip formatter={(v: number) => [`${v}点`, '市場浸透']} />
                   <Line
                     type="monotone"

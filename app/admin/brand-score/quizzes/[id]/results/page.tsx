@@ -173,10 +173,11 @@ export default function QuizResultsPage() {
             <>
               <div className="h-48 w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={overallChartData} margin={{ top: 8, right: 8, bottom: 8, left: -16 }}>
+                  <BarChart data={overallChartData} margin={{ top: 8, right: 8, bottom: 8, left: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                     <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                    <YAxis domain={[0, 100]} tick={{ fontSize: 12 }} />
+                    {/* width: 既定の 60px だと目盛りの左に大きな空白ができる。数字（最大「100」）が収まる幅に詰める */}
+                    <YAxis domain={[0, 100]} tick={{ fontSize: 12 }} width={34} />
                     <Bar dataKey="value" radius={[4, 4, 0, 0]}>
                       {overallChartData.map((d, i) => (
                         <Cell key={i} fill={barColor(d.value)} />
