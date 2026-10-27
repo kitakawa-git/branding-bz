@@ -11,6 +11,7 @@ import DocumentFloatingCta from '@/components/lp/DocumentFloatingCta'
 import { ctaClass } from '@/components/lp/cta'
 import { headingClass } from '@/components/lp/heading'
 import JaWrap from '@/components/lp/JaWrap'
+import { ToolJsonLd } from '@/components/seo/ToolJsonLd'
 
 const PERSONA_CARDS = [
   {
@@ -116,49 +117,11 @@ function FeatureCard({ icon: Icon, label, title, description }: { icon: LucideIc
 export default function PersonaLandingPage() {
   return (
     <div data-dark className="min-h-screen bg-[#08080a] text-white">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'SoftwareApplication',
-            name: 'ペルソナビルダー',
-            applicationCategory: 'BusinessApplication',
-            operatingSystem: 'Web',
-            offers: { '@type': 'Offer', price: '0', priceCurrency: 'JPY' },
-            description: 'AIがターゲット顧客のペルソナを自動生成。名前・年齢・職業・行動パターン・インサイトまで具体化。',
-            provider: { '@type': 'Organization', name: 'branding.bz', url: 'https://branding.bz' },
-          }),
-        }}
-      />
-      {/* FAQPage: 下の可視FAQと同じ FAQ_ITEMS を参照して1文字違わず一致を担保 */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'FAQPage',
-            mainEntity: FAQ_ITEMS.map((item) => ({
-              '@type': 'Question',
-              name: item.q,
-              acceptedAnswer: { '@type': 'Answer', text: item.a },
-            })),
-          }),
-        }}
-      />
-      {/* BreadcrumbList: 画面表示なし、schema のみ */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'BreadcrumbList',
-            itemListElement: [
-              { '@type': 'ListItem', position: 1, name: 'ホーム', item: 'https://branding.bz/' },
-              { '@type': 'ListItem', position: 2, name: 'ペルソナビルダー', item: 'https://branding.bz/tools/persona' },
-            ],
-          }),
-        }}
+      <ToolJsonLd
+        name="ペルソナビルダー"
+        description="AIがターゲット顧客のペルソナを自動生成。名前・年齢・職業・行動パターン・インサイトまで具体化。"
+        path="/tools/persona"
+        faqItems={FAQ_ITEMS}
       />
       <Nav />
 

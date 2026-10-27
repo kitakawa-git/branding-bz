@@ -11,6 +11,7 @@ import DocumentFloatingCta from '@/components/lp/DocumentFloatingCta'
 import { ctaClass } from '@/components/lp/cta'
 import { headingClass } from '@/components/lp/heading'
 import JaWrap from '@/components/lp/JaWrap'
+import { ToolJsonLd } from '@/components/seo/ToolJsonLd'
 
 const CONCEPT_CARDS = [
   { label: 'パーソナリティとは？', icon: Fingerprint, title: 'ブランドを「人格」に翻訳', description: '「もしブランドが人だったら、どんな性格か」。頭の中にある感覚を10問の質問で引き出し、AIが人格として言語化します。' },
@@ -81,49 +82,11 @@ function FeatureCard({ icon: Icon, label, title, description }: { icon: LucideIc
 export default function PersonalityLandingPage() {
   return (
     <div className="min-h-screen bg-[#08080a] text-white">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'SoftwareApplication',
-            name: 'ブランドパーソナリティ診断',
-            applicationCategory: 'BusinessApplication',
-            operatingSystem: 'Web',
-            offers: { '@type': 'Offer', price: '0', priceCurrency: 'JPY' },
-            description: '10問の質問に答えるだけで、AIがブランドの人格を診断。Aaker 5次元と12アーキタイプの2フレームワークで「らしさ」を言語化。',
-            provider: { '@type': 'Organization', name: 'branding.bz', url: 'https://branding.bz' },
-          }),
-        }}
-      />
-      {/* FAQPage: 下の可視FAQと同じ FAQ_ITEMS を参照して1文字違わず一致を担保 */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'FAQPage',
-            mainEntity: FAQ_ITEMS.map((item) => ({
-              '@type': 'Question',
-              name: item.q,
-              acceptedAnswer: { '@type': 'Answer', text: item.a },
-            })),
-          }),
-        }}
-      />
-      {/* BreadcrumbList: 画面表示なし、schema のみ */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'BreadcrumbList',
-            itemListElement: [
-              { '@type': 'ListItem', position: 1, name: 'ホーム', item: 'https://branding.bz/' },
-              { '@type': 'ListItem', position: 2, name: 'ブランドパーソナリティ診断', item: 'https://branding.bz/tools/personality' },
-            ],
-          }),
-        }}
+      <ToolJsonLd
+        name="ブランドパーソナリティ診断"
+        description="10問の質問に答えるだけで、AIがブランドの人格を診断。Aaker 5次元と12アーキタイプの2フレームワークで「らしさ」を言語化。"
+        path="/tools/personality"
+        faqItems={FAQ_ITEMS}
       />
       <Nav />
 

@@ -11,6 +11,7 @@ import DocumentFloatingCta from '@/components/lp/DocumentFloatingCta'
 import { ctaClass } from '@/components/lp/cta'
 import { headingClass } from '@/components/lp/heading'
 import JaWrap from '@/components/lp/JaWrap'
+import { ToolJsonLd } from '@/components/seo/ToolJsonLd'
 
 const STP_CARDS = [
   { label: 'S（Segmentation）', icon: LayoutGrid, title: '市場を細分化する', description: '顧客の年齢・価値観・購買行動などの特性をもとに、市場を意味のある複数のグループへ細かく分類していきます。' },
@@ -81,49 +82,11 @@ function FeatureCard({ icon: Icon, label, title, description }: { icon: LucideIc
 export default function STPLandingPage() {
   return (
     <div className="min-h-screen bg-[#08080a] text-white">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'SoftwareApplication',
-            name: 'STP分析ツール',
-            applicationCategory: 'BusinessApplication',
-            operatingSystem: 'Web',
-            offers: { '@type': 'Offer', price: '0', priceCurrency: 'JPY' },
-            description: 'AIが業種に合ったセグメンテーション・ターゲティング・ポジショニングを提案。ポジショニングマップの自動作成・PDF出力に対応（PDF出力は Standard 以上）。',
-            provider: { '@type': 'Organization', name: 'branding.bz', url: 'https://branding.bz' },
-          }),
-        }}
-      />
-      {/* FAQPage: 下の可視FAQと同じ FAQ_ITEMS を参照して1文字違わず一致を担保 */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'FAQPage',
-            mainEntity: FAQ_ITEMS.map((item) => ({
-              '@type': 'Question',
-              name: item.q,
-              acceptedAnswer: { '@type': 'Answer', text: item.a },
-            })),
-          }),
-        }}
-      />
-      {/* BreadcrumbList: 画面表示なし、schema のみ */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'BreadcrumbList',
-            itemListElement: [
-              { '@type': 'ListItem', position: 1, name: 'ホーム', item: 'https://branding.bz/' },
-              { '@type': 'ListItem', position: 2, name: 'STP分析ツール', item: 'https://branding.bz/tools/stp' },
-            ],
-          }),
-        }}
+      <ToolJsonLd
+        name="STP分析ツール"
+        description="AIが業種に合ったセグメンテーション・ターゲティング・ポジショニングを提案。ポジショニングマップの自動作成・PDF出力に対応（PDF出力は Standard 以上）。"
+        path="/tools/stp"
+        faqItems={FAQ_ITEMS}
       />
       <Nav />
 

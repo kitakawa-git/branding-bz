@@ -11,6 +11,7 @@ import DocumentFloatingCta from '@/components/lp/DocumentFloatingCta'
 import { ctaClass } from '@/components/lp/cta'
 import { headingClass } from '@/components/lp/heading'
 import JaWrap from '@/components/lp/JaWrap'
+import { ToolJsonLd } from '@/components/seo/ToolJsonLd'
 
 const EXAMPLE_PALETTES = [
   {
@@ -149,49 +150,12 @@ function FeatureCard({ icon: Icon, label, title, description }: { icon: LucideIc
 export default function ColorsLandingPage() {
   return (
     <div className="min-h-screen bg-[#08080a] text-white">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'SoftwareApplication',
-            name: 'ブランドカラー定義ツール',
-            applicationCategory: 'DesignApplication',
-            operatingSystem: 'Web',
-            offers: { '@type': 'Offer', price: '0', priceCurrency: 'JPY' },
-            description: 'AIが業種やブランドの個性に合わせたカラーパレットを提案。主要な3組の配色のコントラスト比を確認でき、PDF出力とCSSカスタムプロパティのコピーに対応（PDF出力は Standard 以上）。',
-            provider: { '@type': 'Organization', name: 'branding.bz', url: 'https://branding.bz' },
-          }),
-        }}
-      />
-      {/* FAQPage: 下の可視FAQと同じ FAQ_ITEMS を参照して1文字違わず一致を担保 */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'FAQPage',
-            mainEntity: FAQ_ITEMS.map((item) => ({
-              '@type': 'Question',
-              name: item.q,
-              acceptedAnswer: { '@type': 'Answer', text: item.a },
-            })),
-          }),
-        }}
-      />
-      {/* BreadcrumbList: 画面表示なし、schema のみ */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'BreadcrumbList',
-            itemListElement: [
-              { '@type': 'ListItem', position: 1, name: 'ホーム', item: 'https://branding.bz/' },
-              { '@type': 'ListItem', position: 2, name: 'ブランドカラー定義ツール', item: 'https://branding.bz/tools/colors' },
-            ],
-          }),
-        }}
+      <ToolJsonLd
+        name="ブランドカラー定義ツール"
+        description="AIが業種やブランドの個性に合わせたカラーパレットを提案。主要な3組の配色のコントラスト比を確認でき、PDF出力とCSSカスタムプロパティのコピーに対応（PDF出力は Standard 以上）。"
+        path="/tools/colors"
+        applicationCategory="DesignApplication"
+        faqItems={FAQ_ITEMS}
       />
       <Nav />
 
