@@ -165,11 +165,12 @@ export async function requireOwnToolSession(
 }
 
 /**
- * 「その会社のデータに触ってよいか」。自社なら通す。superadmin は他社も通す。
+ * 「その会社のデータに触ってよいか」。自社のときだけ通す。
+ * superadmin も他社は通さない（lib/billing/guard の requireCompanyMember と同じ扱いに揃えている。
+ * superadmin が他社を見る画面は /api/superadmin/* を使う）。
  * 存在の有無を教えないため、権限不足と資源なしは区別せず 403 にする。
  */
 export function assertSameCompany(caller: CallerContext, companyId: string | null | undefined): Failure | null {
-  if (caller.isSuperadmin) return null
   if (!companyId || caller.companyId !== companyId) {
     return fail(403, 'この会社のデータにはアクセスできません')
   }
