@@ -13,8 +13,23 @@ export function PWARegister() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (!("serviceWorker" in navigator)) return;
-    // dev では SW を無効化しているので何もしない
-    if (process.env.NODE_ENV !== "production") return;
+    // dev では SW を使わない。さらに、残っている SW は外してキャッシュも消す。
+    // 以前 localhost で本番ビルド（next build の public/sw.js）が登録されると、開発に戻っても SW が残り、
+    // 開発中の JS（ファイル名が中身で変わらない）を古いキャッシュから出し続ける
+    // （修正したはずの画面が古いまま、というのが実際に起きた）
+    if (process.env.NODE_ENV !== "production") {
+      navigator.serviceWorker
+        .getRegistrations()
+        .then((regs) => regs.forEach((r) => r.unregister()))
+        .catch(() => {});
+      if ("caches" in window) {
+        caches
+          .keys()
+          .then((keys) => keys.forEach((k) => caches.delete(k)))
+          .catch(() => {});
+      }
+      return;
+    }
 
     (async () => {
       const { Serwist } = await import("@serwist/window");
