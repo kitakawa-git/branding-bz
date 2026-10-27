@@ -191,11 +191,12 @@ export function PortalSidebar() {
         <SidebarHeader>
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton size="lg" asChild>
+              {/* 高さは中身に合わせる（size="lg" は h-12 固定で、スローガンが2行になると社名が上に押し出されて隠れていた） */}
+              <SidebarMenuButton size="lg" className="h-auto min-h-12 py-1.5" asChild>
                 <Link href="/portal/about" onClick={handleNavClick}>
                   {/* ロゴ未登録時はアイコン枠を表示しない（フォールバックの頭文字も出さない） */}
                   {companyLogoUrl && (
-                    <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground overflow-hidden">
+                    <div className="flex aspect-square size-8 shrink-0 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground overflow-hidden">
                       <img src={companyLogoUrl} alt={companyName || ''} className="size-full object-cover" />
                     </div>
                   )}
@@ -203,9 +204,9 @@ export function PortalSidebar() {
                   {(() => {
                     const subText = isStaffRole(roleCategory) ? slogan : memberRoleLabel(roleCategory)
                     return (
-                      <div className={`flex flex-col leading-none ${subText ? 'gap-0.5' : 'justify-center'}`}>
-                        <span className="font-semibold">{companyName || 'branding.bz'}</span>
-                        {subText && <span className="text-xs text-sidebar-foreground/70">{subText}</span>}
+                      <div className={`flex min-w-0 flex-col ${subText ? 'gap-0.5' : 'justify-center'}`}>
+                        <span className="font-semibold leading-tight">{companyName || 'branding.bz'}</span>
+                        {subText && <span className="text-xs leading-snug text-sidebar-foreground/70">{subText}</span>}
                       </div>
                     )
                   })()}
