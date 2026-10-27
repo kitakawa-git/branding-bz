@@ -1,8 +1,7 @@
 'use client'
 
 // ポータルダッシュボード: ミッション + KPI + 個人サマリー + 投稿フィード
-import { useEffect, useState, useMemo } from 'react'
-import Link from 'next/link'
+import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { usePortalAuth } from './components/PortalDataProvider'
 import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
@@ -11,143 +10,36 @@ import { can } from '@/lib/billing/entitlements'
 import { BrandScorePortalSection } from '@/components/brand-score/BrandScorePortalSection'
 import { SurveyBanner } from './components/SurveyBanner'
 import { QuizBanner } from './components/QuizBanner'
-import { getRelativeTime } from '@/lib/time-utils'
-import { splitBrandCopy } from '@/lib/brand-mvv'
 import { fetchPhilosophy } from '@/lib/brand/philosophy'
-import { PieChart, Pie, Cell } from 'recharts'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
-import { Slider } from '@/components/ui/slider'
-import {
-  type ChartConfig,
-  ChartContainer,
-} from '@/components/ui/chart'
-import { Badge } from '@/components/ui/badge'
-import { Progress } from '@/components/ui/progress'
-import { Skeleton } from '@/components/ui/skeleton'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
-import { toast } from 'sonner'
 import { useOnboarding } from '@/components/onboarding/use-onboarding'
 import { useRashisaCardVisible } from '@/components/portal/rashisa-card-visibility'
 import { OnboardingChecklist } from '@/components/onboarding/OnboardingChecklist'
 import { PortalIntroCard } from '@/components/onboarding/PortalIntroCard'
+import { DashboardPost, calculateCurrentStreak } from './_components/DashboardPostCard'
+import { DashboardSkeleton } from './_components/DashboardSkeleton'
+import { DashboardWelcome } from './_components/DashboardWelcome'
+import { AnnouncementSummary, DashboardAnnouncements } from './_components/DashboardAnnouncements'
+import { DashboardMissionCard } from './_components/DashboardMissionCard'
+import { DashboardRashisaCard } from './_components/DashboardRashisaCard'
 import {
-  FileText,
-  Heart,
-  Star,
-  ArrowRight,
-  PieChart as PieChartIcon,
-  User,
-  Users,
-  Target,
-  Compass,
-  Smile,
-  Eye,
-} from 'lucide-react'
-import { DashboardPost, calculateCurrentStreak, DashboardPostCard } from './_components/DashboardPostCard'
-
-// ============================================
-// Constants
-// ============================================
-
-const CATEGORY_COLORS = [
-  '#F87E0C',
-  '#A90CF8',
-  '#1785F3',
-  '#EDD600',
-  '#F41189',
-  '#47C95C',
-]
-
-// 私たちの「らしさ」4象限概観カード（内部=紫 → 外部=緑 の順）
-const BRAND_QUADRANTS = [
-  {
-    perspective: '考え方',
-    noun: 'ブランド方針',
-    items: 'MVV・行動指針・ストーリー',
-    href: '/portal/guidelines',
-    icon: Compass,
-    tone: 'purple' as const,
-  },
-  {
-    perspective: '感じられ方',
-    noun: 'ブランドパーソナリティ',
-    items: 'ブランドの人格・キャラクター',
-    href: '/portal/personality',
-    icon: Smile,
-    tone: 'purple' as const,
-  },
-  {
-    perspective: '見え方・聞こえ方',
-    noun: 'ブランド表現',
-    items: 'ロゴ・カラー・言葉づかい・用語のルール',
-    href: '/portal/visuals',
-    icon: Eye,
-    tone: 'green' as const,
-  },
-  {
-    perspective: '接し方',
-    noun: 'ブランド戦略',
-    items: '届けたいお客様像・立ち位置・提供する価値',
-    href: '/portal/strategy',
-    icon: Target,
-    tone: 'green' as const,
-  },
-]
-
-// 内部=紫系 / 外部=緑系（既存のポータル配色に馴染ませる）
-const QUADRANT_TONES = {
-  purple: { bar: 'bg-purple-500', tile: 'bg-purple-100 text-purple-700' },
-  green: { bar: 'bg-green-500', tile: 'bg-green-100 text-green-700' },
-}
+  KpiItemSummary,
+  DashboardGoalBanner,
+  DashboardKpiSummary,
+  DashboardReviewBanner,
+  DashboardReviewDialog,
+} from './_components/DashboardKpiSections'
+import {
+  StatsPeriod,
+  UserPostRaw,
+  PersonalStats,
+  DashboardTimelineSection,
+} from './_components/DashboardTimelineSection'
+import { useDashboardReview } from './_components/useDashboardReview'
 
 // ============================================
 // Types
 // ============================================
-
-type StatsPeriod = 'month' | '30d' | '90d' | 'all'
-
-type UserPostRaw = {
-  id: string
-  category: string
-  created_at: string
-}
-
-type PersonalStats = {
-  monthlyPosts: number
-  monthlyLikesReceived: number
-  currentStreak: number
-  categoryDistribution: { category: string; count: number }[]
-}
-
-// ============================================
-// Main Component
-// ============================================
-
-type AnnouncementSummary = {
-  id: string
-  title: string
-  category: string
-  created_at: string
-  content: string
-}
-
-const ANNOUNCEMENT_CATEGORY_COLORS: Record<string, string> = {
-  '重要': 'bg-red-100 text-red-700',
-  'イベント': 'bg-blue-100 text-ds-app-accent-hover',
-  '更新': 'bg-green-100 text-green-700',
-  'その他': 'bg-gray-100 text-gray-700',
-}
-
-type KpiItemSummary = {
-  id: string
-  title: string
-  progress: number
-  weight: number
-  status: string
-  deadline: string | null
-}
 
 type DashboardCache = {
   mission: string | null
@@ -166,17 +58,9 @@ type DashboardCache = {
   showReviewBanner: boolean
 }
 
-// 1行の見出しの幅を「文字の大きさ何個分（em）」で見積もる。全角は1、半角英数・記号は0.6、空白は0.3。
-// 太字の和文で実測した値に少し余裕（1.04倍）を足している
-function welcomeWidthEm(text: string): number {
-  let em = 0
-  for (const ch of text) {
-    if (/\s/.test(ch)) em += 0.3
-    else if (/[\u0020-\u007e\uff61-\uff9f]/.test(ch)) em += 0.6
-    else em += 1
-  }
-  return Math.round(em * 1.04 * 100) / 100
-}
+// ============================================
+// Main Component
+// ============================================
 
 export default function PortalTopPage() {
   const { companyId, user, member, slogan, company, roleCategory, isAdmin } = usePortalAuth()
@@ -236,77 +120,22 @@ export default function PortalTopPage() {
   const [showReviewBanner, setShowReviewBanner] = useState<boolean>(cached?.showReviewBanner ?? true)
   const [chartKey, setChartKey] = useState(0)
 
-  // フィルタ期間に基づく統計計算
-  const filteredStats = useMemo(() => {
-    let filteredPosts = allUserPostsRaw
-    const now = new Date()
-
-    if (statsPeriod === 'month') {
-      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
-      filteredPosts = allUserPostsRaw.filter(p => p.created_at >= monthStart)
-    } else if (statsPeriod === '30d') {
-      const d30ago = new Date(now.getTime() - 30 * 86400000).toISOString()
-      filteredPosts = allUserPostsRaw.filter(p => p.created_at >= d30ago)
-    } else if (statsPeriod === '90d') {
-      const d90ago = new Date(now.getTime() - 90 * 86400000).toISOString()
-      filteredPosts = allUserPostsRaw.filter(p => p.created_at >= d90ago)
-    }
-    // 'all' — フィルタなし
-
-    const filteredPostIds = new Set(filteredPosts.map(p => p.id))
-    const filteredLikeCount = allLikePostIds.filter(pid => filteredPostIds.has(pid)).length
-
-    // Category distribution
-    const catMap = new Map<string, number>()
-    filteredPosts.forEach(p => {
-      catMap.set(p.category, (catMap.get(p.category) || 0) + 1)
-    })
-    const categoryDistribution = [...catMap.entries()]
-      .map(([category, count]) => ({ category, count }))
-      .sort((a, b) => b.count - a.count)
-
-    return {
-      postCount: filteredPosts.length,
-      likeCount: filteredLikeCount,
-      categoryDistribution,
-    }
-  }, [allUserPostsRaw, allLikePostIds, statsPeriod])
-
+  // 期間フィルタの統計計算は DashboardTimelineSection 側（表示するのはそこだけ）
   const handlePeriodChange = (period: StatsPeriod) => {
     setStatsPeriod(period)
     setChartKey(prev => prev + 1)
   }
 
   // 自己評価ポップアップ
-  const [reviewOpen, setReviewOpen] = useState(false)
-  const [reviewProgress, setReviewProgress] = useState<Record<string, number>>({})
-  const [reviewSaving, setReviewSaving] = useState(false)
-
-  const openReviewDialog = () => {
-    const initial: Record<string, number> = {}
-    kpiGoals.forEach(k => { initial[k.id] = k.progress })
-    setReviewProgress(initial)
-    setReviewOpen(true)
-  }
-
-  const handleReviewSave = async () => {
-    if (!companyId || !user?.id) return
-    setReviewSaving(true)
-    try {
-      const updates = Object.entries(reviewProgress).map(([id, progress]) =>
-        supabase.from('goal_kpis').update({ progress, updated_at: new Date().toISOString() }).eq('id', id)
-      )
-      await Promise.all(updates)
-      // ローカルstateを即時更新
-      setKpiGoals(prev => prev.map(k => reviewProgress[k.id] !== undefined ? { ...k, progress: reviewProgress[k.id] } : k))
-      toast.success('進捗を更新しました')
-      setReviewOpen(false)
-    } catch {
-      toast.error('更新に失敗しました')
-    } finally {
-      setReviewSaving(false)
-    }
-  }
+  const {
+    reviewOpen,
+    setReviewOpen,
+    reviewProgress,
+    setReviewProgress,
+    reviewSaving,
+    openReviewDialog,
+    handleReviewSave,
+  } = useDashboardReview({ companyId, userId: user?.id, kpiGoals, setKpiGoals })
 
   useEffect(() => {
     if (!companyId || !user?.id) {
@@ -677,87 +506,13 @@ export default function PortalTopPage() {
   // 差し替わって一瞬ちらつく。管理者のときだけ判定を待つ
   // （メンバーには案内を出さないので待たせる理由がない）
   if (loading || (isAdmin && onboarding.loading)) {
-    return (
-      <div className="max-w-4xl mx-auto px-5 py-10 space-y-8">
-        {/* スローガン＋ようこそ（中央） */}
-        <div className="text-center space-y-2">
-          <Skeleton className="h-10 w-72 max-w-full mx-auto" />
-          <Skeleton className="h-4 w-40 mx-auto" />
-        </div>
-        {/* ミッションカード */}
-        <Skeleton className="h-44 w-full rounded-xl" />
-        {/* 私たちの「らしさ」4象限カード（実体と同じ 2列グリッド） */}
-        <div className="space-y-3">
-          <Skeleton className="h-4 w-40" />
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {[1, 2, 3, 4].map((i) => (
-              <Card key={i} className="bg-[hsl(0_0%_97%)] border shadow-none">
-                <CardContent className="p-4 pl-5 flex items-start gap-3">
-                  <Skeleton className="size-10 rounded-xl shrink-0" />
-                  <div className="flex-1 space-y-2">
-                    <Skeleton className="h-5 w-32" />
-                    <Skeleton className="h-3 w-full" />
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-        {/* KPIバナー（ピル型）— KPI機能が有効な企業のみ実描画されるためトグルで出し分け */}
-        {kpiVisible && <Skeleton className="h-14 w-full rounded-full" />}
-        {/* あなたのタイムライン分析（見出し＋統計カード3枚）— タイムライン機能が有効な企業のみ */}
-        {timelineEnabled && (
-          <div className="space-y-3">
-            <Skeleton className="h-4 w-40" />
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {[1, 2, 3].map((i) => (
-                <Card key={i} className="bg-[hsl(0_0%_97%)] border shadow-none">
-                  <CardContent className="p-4 flex flex-col gap-2">
-                    <Skeleton className="h-4 w-20" />
-                    <Skeleton className="h-8 w-12" />
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    )
+    return <DashboardSkeleton kpiVisible={kpiVisible} timelineEnabled={timelineEnabled} />
   }
-
-  // Chart config for category pie chart (フィルタ済みデータから生成)
-  const categoryChartConfig: ChartConfig =
-    filteredStats.categoryDistribution.reduce<ChartConfig>((acc, item, i) => {
-      acc[item.category] = {
-        label: item.category,
-        color: CATEGORY_COLORS[i % CATEGORY_COLORS.length],
-      }
-      return acc
-    }, {})
 
   return (
     <div className="max-w-4xl mx-auto px-5 pt-6 pb-10">
       {/* ===== 1. スローガン ===== */}
-      {/* containerType: 「ようこそ、〇〇 さん」の文字サイズを、この枠の幅（cqi）から決めるため */}
-      <div className="text-center mb-8" style={{ containerType: 'inline-size' }}>
-        {/* スローガン未設定（ブランク）のときは見出しを非表示にする */}
-        {member && (
-          // 1行に収める（「さ／ん」のように名前の途中や末尾で折れないように）。
-          // 文字サイズは「枠の幅 ÷ 文字数」で決め、上限は 36px（text-4xl）。短い名前は従来どおりの大きさ、
-          // 長い名前やスマホ幅では自動で小さくなる。文字数は名前から決まるので、サーバーとブラウザで同じになる
-          <p
-            className="font-bold text-foreground m-0 whitespace-nowrap"
-            style={{ fontSize: `min(2.25rem, calc(100cqi / ${welcomeWidthEm(`ようこそ、${member.display_name} さん`)}))` }}
-          >
-            ようこそ、{member.display_name} さん
-          </p>
-        )}
-        {slogan && (
-          <h1 className="text-base sm:text-sm font-normal text-muted-foreground m-0 mt-1">
-            {slogan}
-          </h1>
-        )}
-      </div>
+      <DashboardWelcome member={member} slogan={slogan} />
 
       {/* ===== 1.2. 初回セットアップ案内（管理者・未セットアップのときだけ） =====
           ここが出ているあいだは、下のダッシュボード本体は出さない。
@@ -786,30 +541,7 @@ export default function PortalTopPage() {
           サーベイ・理解度テストと同じ「やってください」の通知なので、
           並べて同じ様式・同じ位置に置く（以前は下のブランドスコアの後にあり、種類が違うものに見えていた） */}
       {kpiVisible && !hasGoals && showGoalBanner && (
-        <div className="mb-4 bg-red-50 border border-red-200 rounded-xl p-4 flex items-center gap-4">
-          <div className="shrink-0 text-red-600">
-            <Target size={24} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-base font-semibold text-red-600 m-0">
-              目標とKPIを決めましょう
-            </p>
-            <p className="text-sm text-muted-foreground m-0 mt-0.5 truncate">
-              {goalPeriodType === 'year'
-                ? '年間の目標'
-                : goalPeriodType === 'half'
-                  ? '半年間の目標'
-                  : goalPeriodType === 'quarter'
-                    ? '３ヶ月間の目標'
-                    : '今期の目標'}
-            </p>
-          </div>
-          <Button asChild className="shrink-0 h-11 px-5 rounded-full">
-            <Link href="/portal/kpi?setup=true" className="no-underline">
-              設定
-            </Link>
-          </Button>
-        </div>
+        <DashboardGoalBanner goalPeriodType={goalPeriodType} />
       )}
 
       {/* ===== 1.4. 未受験 理解度テストバナー ===== */}
@@ -825,146 +557,18 @@ export default function PortalTopPage() {
           件どうしの区切りは内側の罫線だけで表す。
           見出しと「すべて見る」もカードの中に入れる（ミッションカードと同じ作法） */}
       {announcementsEnabled && latestAnnouncements.length > 0 && (
-        <Card className="border shadow-none overflow-hidden mb-4">
-          <CardContent className="p-0">
-            <div className="flex items-center justify-between px-3 py-3">
-              <h2 className="text-sm font-bold text-foreground tracking-wide m-0">
-                最新のお知らせ
-              </h2>
-              {/* 矢印だけ。文字が無くなるので、読み上げ用の名前を付ける。
-                  大きさと色はミッションカードの矢印に合わせる */}
-              <Link
-                href="/portal/announcements"
-                aria-label="お知らせをすべて見る"
-                className="no-underline"
-              >
-                <ArrowRight size={18} className="text-muted-foreground" />
-              </Link>
-            </div>
-            {latestAnnouncements.map(a => (
-              <Link
-                key={a.id}
-                href={`/portal/announcements/${a.id}`}
-                className="no-underline block border-t border-border p-3 transition-colors hover:bg-muted/40"
-              >
-                {/* タイトル・カテゴリ・時刻を1行に畳む。時刻は右端に寄せて、
-                    複数件並んだときに縦のラインが揃うようにする */}
-                <div className="flex items-center gap-2 mb-0.5">
-                  <h3 className="min-w-0 truncate text-sm font-semibold text-foreground m-0">
-                    {a.title}
-                  </h3>
-                  <Badge variant="secondary" className={`shrink-0 text-[10px] px-1.5 py-0 ${ANNOUNCEMENT_CATEGORY_COLORS[a.category] || ANNOUNCEMENT_CATEGORY_COLORS['その他']}`}>
-                    {a.category}
-                  </Badge>
-                  <span className="ml-auto shrink-0 text-[11px] text-muted-foreground" suppressHydrationWarning>
-                    {getRelativeTime(a.created_at)}
-                  </span>
-                </div>
-                <p className="text-xs text-muted-foreground line-clamp-2 m-0 whitespace-pre-wrap">
-                  {a.content}
-                </p>
-              </Link>
-            ))}
-          </CardContent>
-        </Card>
+        <DashboardAnnouncements latestAnnouncements={latestAnnouncements} />
       )}
 
       {/* ===== 2. ミッションカード ===== */}
       {mission && (
-        <Card className="relative overflow-hidden bg-[hsl(0_0%_97%)] border shadow-none mb-4">
-          {/* コンセプトビジュアルが設定されていれば背景に敷く（可読性のため白スクリムを重ねる） */}
-          {conceptVisualUrl && (
-            <>
-              <div
-                className="absolute inset-0 bg-cover bg-center"
-                style={{ backgroundImage: `url(${conceptVisualUrl})` }}
-                aria-hidden
-              />
-              <div className="absolute inset-0 bg-white/80 backdrop-blur-[2px]" aria-hidden />
-            </>
-          )}
-          <CardContent className="relative p-4 sm:p-5">
-            <Link
-              href="/portal/guidelines"
-              className="no-underline flex items-center justify-between mb-3"
-            >
-              <h2 className="text-sm font-bold text-foreground tracking-wide m-0">
-                私たちのミッション
-              </h2>
-              <ArrowRight size={18} className="text-muted-foreground" />
-            </Link>
-            {(() => {
-              const { copy, body } = splitBrandCopy(mission)
-              return (
-                <>
-                  {copy && (
-                    <p className="text-2xl font-bold text-foreground m-0 leading-relaxed">
-                      {copy}
-                    </p>
-                  )}
-                  {body && (
-                    <p className="text-base text-foreground/80 leading-relaxed whitespace-pre-line mt-4 m-0">
-                      {body}
-                    </p>
-                  )}
-                </>
-              )
-            })()}
-          </CardContent>
-        </Card>
+        <DashboardMissionCard mission={mission} conceptVisualUrl={conceptVisualUrl} />
       )}
 
       {/* ===== 2.7. 私たちの「らしさ」4象限概観カード =====
           サイドバー見出しのスイッチで隠せる（端末ごとの好み）。
           同じ5項目がサイドバーに常時あるので、慣れた人には要らない */}
-      <div
-        className={`grid transition-all duration-300 ease-out ${
-          rashisaCardVisible ? 'mb-4 grid-rows-[1fr] opacity-100' : 'mb-0 grid-rows-[0fr] opacity-0'
-        }`}
-      >
-        {/* 高さを 0fr↔1fr で動かすので、中身は overflow-hidden の箱に入れる。
-            max-height だと閉じ切るまでの速さが中身の量で変わる */}
-        <div className="min-h-0 overflow-hidden">
-          <div className="rounded-xl border border-gray-200 bg-[hsl(0_0%_97%)] p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <h2 className="text-sm font-bold text-foreground tracking-wide m-0">
-                私たちの「らしさ」
-              </h2>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 auto-rows-fr">
-              {BRAND_QUADRANTS.map((q) => {
-                const Icon = q.icon
-                const tone = QUADRANT_TONES[q.tone]
-                return (
-                  <Link key={q.href} href={q.href} className="no-underline block h-full">
-                    <Card className="relative h-full bg-white border shadow-none hover:shadow-sm transition-shadow overflow-hidden">
-                      <CardContent className="p-4 flex items-start gap-3">
-                        <div className={`shrink-0 size-11 rounded-xl flex items-center justify-center ${tone.tile}`}>
-                          <Icon size={24} />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-baseline gap-1.5 flex-wrap">
-                            <span className="text-lg font-bold text-foreground leading-tight">
-                              {q.perspective}
-                            </span>
-                            <span className="text-sm font-normal text-muted-foreground">
-                              ｜{q.noun}
-                            </span>
-                          </div>
-                          <p className="text-base sm:text-sm text-muted-foreground leading-relaxed mt-1 m-0">
-                            {q.items}
-                          </p>
-                        </div>
-                        <ArrowRight size={18} className="text-muted-foreground shrink-0 mt-1" />
-                      </CardContent>
-                    </Card>
-                  </Link>
-                )
-              })}
-            </div>
-          </div>
-        </div>
-      </div>
+      <DashboardRashisaCard visible={rashisaCardVisible} />
 
       {/* ===== 2.4. ブランドスコア（区分ごとの表示設定で出し分け） =====
           表示は管理画面と同じ BrandScoreView。読み取り専用で、
@@ -982,334 +586,43 @@ export default function PortalTopPage() {
       )}
 
       {/* ===== 2.5. KPIサマリー（KPI無効時は非表示。未設定時のバナーは 1.35 に置く） ===== */}
-      {kpiVisible && hasGoals && (() => {
-        const STATUS_LABELS: Record<string, string> = { not_started: '未着手', in_progress: '進行中', completed: '達成' }
-        const STATUS_COLORS: Record<string, string> = { not_started: 'bg-gray-100 text-gray-600', in_progress: 'bg-blue-100 text-ds-app-accent-hover', completed: 'bg-green-100 text-green-700' }
-        let totalWeight = 0, weightedSum = 0
-        kpiGoals.forEach(k => { const w = k.weight || 0; weightedSum += k.progress * w; totalWeight += w })
-        const overallProgress = totalWeight > 0 ? Math.round(weightedSum / totalWeight) : 0
-        const displayKpis = kpiGoals.slice(0, 3)
-
-        return (
-          <div className="mb-8">
-            <Card className="bg-white border shadow-none">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h2 className="text-sm font-bold text-foreground tracking-wide m-0">
-                    あなたの目標・KPI
-                  </h2>
-                  <Link href="/portal/kpi" className="text-xs text-muted-foreground hover:text-foreground no-underline flex items-center gap-0.5">
-                    すべての目標を見る <ArrowRight size={14} />
-                  </Link>
-                </div>
-                {goalTitle && (
-                  <p className="text-2xl font-semibold text-foreground m-0 mb-3 leading-relaxed">{goalTitle}</p>
-                )}
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs text-muted-foreground">KPI 総合進捗率</span>
-                  <span className="text-2xl font-bold text-foreground">{overallProgress}%</span>
-                </div>
-                <Progress value={overallProgress} className="h-2 mb-4" animate />
-                {displayKpis.length > 0 && (
-                  <div className="space-y-2">
-                    {displayKpis.map(k => (
-                      <div key={k.id} className="flex items-center gap-3">
-                        <span className="text-sm font-bold text-foreground flex-1 truncate">{k.title}</span>
-                        <Badge variant="secondary" className={`text-[10px] px-1.5 py-0 shrink-0 ${STATUS_COLORS[k.status] || ''}`}>
-                          {STATUS_LABELS[k.status] || k.status}
-                        </Badge>
-                        <span className="text-sm font-semibold text-foreground w-10 text-right shrink-0">{k.progress}%</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        )
-      })()}
+      {kpiVisible && hasGoals && (
+        <DashboardKpiSummary kpiGoals={kpiGoals} goalTitle={goalTitle} />
+      )}
 
       {/* ===== 3. 自己評価バナー（KPI無効時は非表示） ===== */}
       {kpiVisible && showReviewBanner && kpiGoals.length > 0 && (
-        <button type="button" onClick={openReviewDialog} className="w-full mb-8 cursor-pointer border-0 p-0 bg-transparent">
-          <div className="rounded-full bg-[#47C95C] px-6 py-4 flex items-center justify-between hover:opacity-90 transition-opacity">
-            <p className="text-white text-base font-semibold m-0">
-              あなたの{goalPeriodType === 'year' ? '１年間' : goalPeriodType === 'half' ? '半年間' : goalPeriodType === 'quarter' ? '３ヶ月間' : '期間'}を振り返り、自己評価を行いましょう！
-            </p>
-            <ArrowRight size={18} className="text-white shrink-0 ml-3" />
-          </div>
-        </button>
+        <DashboardReviewBanner goalPeriodType={goalPeriodType} onOpen={openReviewDialog} />
       )}
 
       {/* ===== 4. あなたのブランドコミット（タイムライン由来。無効時は非表示） ===== */}
+      {/* 5. 投稿カードも同じ枠の中（DashboardTimelineSection） */}
       {timelineEnabled && personalStats && (
-      <div className="mb-4 rounded-xl border border-gray-200 bg-[hsl(0_0%_97%)] p-5">
-      {(() => {
-        const catWithData = filteredStats.categoryDistribution.filter(d => d.count > 0)
-        const totalCatCount = catWithData.reduce((sum, d) => sum + d.count, 0)
-
-        const periodOptions: { value: StatsPeriod; label: string }[] = [
-          { value: 'all', label: 'すべて' },
-          { value: '90d', label: '90日間' },
-          { value: '30d', label: '30日間' },
-          { value: 'month', label: '今月' },
-        ]
-
-        return (
-          <div className="mb-3">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-bold text-foreground tracking-wide m-0">
-                あなたのタイムライン分析
-              </h2>
-              <div className="flex gap-1">
-                {periodOptions.map(opt => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => handlePeriodChange(opt.value)}
-                    className={`rounded-full text-sm font-medium px-3.5 py-1.5 border-0 cursor-pointer transition-colors ${
-                      statsPeriod === opt.value
-                        ? 'bg-foreground text-background'
-                        : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* 2fr 1fr グリッド: 左(2x2) + 右(円グラフ) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {/* === 左側: 2行構成 === */}
-              <div className="flex flex-col gap-3">
-                {/* 上段: 投稿数 + いいね数 (2列) */}
-                <div className="grid grid-cols-2 gap-3">
-                  {/* 投稿数 */}
-                  <Card className="bg-white border shadow-none">
-                    <CardContent className="p-4 pb-3">
-                      <div className="flex items-center gap-2 mb-3">
-                        <FileText size={18} className="text-foreground" />
-                        <h3 className="text-sm font-semibold text-foreground m-0">投稿数</h3>
-                      </div>
-                      <p className="text-3xl font-bold text-foreground m-0 text-center">
-                        {filteredStats.postCount}
-                      </p>
-                    </CardContent>
-                  </Card>
-
-                  {/* いいね数 */}
-                  <Card className="bg-white border shadow-none">
-                    <CardContent className="p-4 pb-3">
-                      <div className="flex items-center gap-2 mb-3">
-                        <Heart size={18} className="text-foreground" />
-                        <h3 className="text-sm font-semibold text-foreground m-0">いいね数</h3>
-                      </div>
-                      <p className="text-3xl font-bold text-foreground m-0 text-center">
-                        {filteredStats.likeCount}
-                      </p>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {/* 下段: 連続投稿記録 (2列ぶち抜き) */}
-                <Card className="bg-white border shadow-none">
-                  <CardContent className="p-4 sm:p-5">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <Star size={18} className="text-foreground" />
-                        <h3 className="text-sm font-semibold text-foreground m-0">連続投稿記録</h3>
-                      </div>
-                      {personalStats.currentStreak > 0 && (
-                        <span className="text-xs text-muted-foreground">
-                          {personalStats.currentStreak}日継続中
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center justify-center gap-8">
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <div key={i} className="flex flex-col items-center gap-1.5">
-                          <Star
-                            size={24}
-                            className={
-                              i < Math.min(personalStats.currentStreak, 5)
-                                ? 'text-[#EDD600] fill-[#EDD600]'
-                                : 'text-muted-foreground/25'
-                            }
-                          />
-                          <span className="text-[10px] text-muted-foreground">
-                            {i + 1}日目
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* === 右側: 行動指針別割合 === */}
-              <Card className="bg-white border shadow-none">
-                <CardContent className="p-4 sm:p-5">
-                  <div className="flex items-center gap-2 mb-3">
-                    <PieChartIcon size={18} className="text-foreground" />
-                    <h3 className="text-sm font-semibold text-foreground m-0">行動指針別割合</h3>
-                  </div>
-                  {catWithData.length > 0 ? (
-                    <div className="flex items-center gap-4 flex-1">
-                      {/* 円グラフ */}
-                      <div className="shrink-0">
-                        <ChartContainer
-                          config={categoryChartConfig}
-                          className="aspect-square h-[150px] w-[150px]"
-                        >
-                          <PieChart key={chartKey}>
-                            <Pie
-                              data={catWithData}
-                              cx="50%"
-                              cy="50%"
-                              outerRadius={65}
-                              innerRadius={0}
-                              dataKey="count"
-                              nameKey="category"
-                              strokeWidth={2}
-                              isAnimationActive={true}
-                              animationBegin={200}
-                              animationDuration={800}
-                              animationEasing="ease-out"
-                            >
-                              {catWithData.map((_, i) => (
-                                <Cell
-                                  key={i}
-                                  fill={CATEGORY_COLORS[i % CATEGORY_COLORS.length]}
-                                />
-                              ))}
-                            </Pie>
-                          </PieChart>
-                        </ChartContainer>
-                      </div>
-
-                      {/* 凡例 */}
-                      <div className="flex-1 min-w-0 flex flex-col gap-2">
-                        {catWithData.map((item, i) => {
-                          const pct = totalCatCount > 0
-                            ? Math.round((item.count / totalCatCount) * 100)
-                            : 0
-                          return (
-                            <div
-                              key={item.category}
-                              className="flex items-center text-xs leading-none h-5"
-                            >
-                              <div
-                                className="size-2.5 rounded-full shrink-0"
-                                style={{
-                                  backgroundColor: CATEGORY_COLORS[i % CATEGORY_COLORS.length],
-                                }}
-                              />
-                              <span className="font-semibold text-foreground w-10 text-right tabular-nums shrink-0">
-                                {pct}%
-                              </span>
-                              <span className="text-muted-foreground truncate ml-1">
-                                {item.category}
-                              </span>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-center flex-1 text-muted-foreground text-xs">
-                      —
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        )
-      })()}
-
-      {/* ===== 5. 投稿カード（2カラム・タイムライン由来。ラップ内なので判定不要） ===== */}
-      <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* 左: あなたの投稿 */}
-        <div>
-          <div className="flex items-center gap-2 mb-3">
-            <User size={18} className="text-foreground" />
-            <h3 className="text-sm font-semibold text-foreground m-0">あなたの投稿</h3>
-          </div>
-          <div className="space-y-2">
-            {myRecentPosts.length > 0 ? (
-              myRecentPosts.map((post) => (
-                <DashboardPostCard key={post.id} post={post} />
-              ))
-            ) : (
-              <p className="text-xs text-muted-foreground m-0">
-                まだ投稿がありません
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* 右: みんなの投稿 */}
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <Users size={18} className="text-foreground" />
-              <h3 className="text-sm font-semibold text-foreground m-0">みんなの投稿</h3>
-            </div>
-            <Link
-              href="/portal/timeline"
-              className="text-xs text-ds-app-accent hover:underline flex items-center gap-1 no-underline"
-            >
-              すべて見る <ArrowRight size={14} />
-            </Link>
-          </div>
-          <div className="space-y-2">
-            {companyRecentPosts.length > 0 ? (
-              companyRecentPosts.map((post) => (
-                <DashboardPostCard key={post.id} post={post} showAuthor />
-              ))
-            ) : (
-              <p className="text-xs text-muted-foreground m-0">
-                まだ投稿がありません
-              </p>
-            )}
-          </div>
-        </div>
-      </div>
-      </div>
+        <DashboardTimelineSection
+          personalStats={personalStats}
+          allUserPostsRaw={allUserPostsRaw}
+          allLikePostIds={allLikePostIds}
+          statsPeriod={statsPeriod}
+          onPeriodChange={handlePeriodChange}
+          chartKey={chartKey}
+          myRecentPosts={myRecentPosts}
+          companyRecentPosts={companyRecentPosts}
+        />
       )}
 
       </>
       )}
 
       {/* ===== 自己評価ダイアログ ===== */}
-      <Dialog open={reviewOpen} onOpenChange={setReviewOpen}>
-        <DialogContent className="sm:max-w-[520px]">
-          <DialogTitle>KPI進捗を更新</DialogTitle>
-          <div className="space-y-5 mt-3">
-            {kpiGoals.map(kpi => (
-              <div key={kpi.id}>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-semibold text-foreground">{kpi.title}</span>
-                  <span className="text-sm font-bold text-foreground">{reviewProgress[kpi.id] ?? kpi.progress}%</span>
-                </div>
-                <Slider
-                  value={[reviewProgress[kpi.id] ?? kpi.progress]}
-                  onValueChange={v => setReviewProgress(prev => ({ ...prev, [kpi.id]: v[0] }))}
-                  max={100}
-                  step={5}
-                  className="w-full"
-                />
-              </div>
-            ))}
-          </div>
-          <div className="flex justify-end mt-5">
-            <Button onClick={handleReviewSave} disabled={reviewSaving} className="min-w-[100px]">
-              {reviewSaving ? '保存中...' : '保存する'}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <DashboardReviewDialog
+        open={reviewOpen}
+        onOpenChange={setReviewOpen}
+        kpiGoals={kpiGoals}
+        reviewProgress={reviewProgress}
+        setReviewProgress={setReviewProgress}
+        onSave={handleReviewSave}
+        saving={reviewSaving}
+      />
     </div>
   )
 }
