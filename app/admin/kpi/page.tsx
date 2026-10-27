@@ -1,7 +1,7 @@
 'use client'
 
 // 全社員 目標・KPI管理ページ（管理画面）— ゴール期間設定 + 期間切り替え + 1人1目標 閲覧専用一覧
-import { useEffect, useState, useMemo, useCallback } from 'react'
+import { useEffect, useState, useMemo, useRef } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '../components/AdminDataProvider'
@@ -86,11 +86,14 @@ type GoalPeriodRecord = {
   created_at: string
 }
 
+// persist: 再読込（引っ張り更新を含む）後も前回の内容をすぐ出し、裏で取り直す（lib/page-cache.ts）。
+// 期間の入力欄は、ユーザーが触った後は取り直しで書き換えない（periodFormTouched）
 type AdminKpiCache = {
   members: MemberSummary[]
   goalPeriod: GoalPeriod | null
   currentPeriodRecord: GoalPeriodRecord | null
   archivedPeriods: GoalPeriodRecord[]
+  pendingPeriod?: GoalPeriodRecord | null
 }
 
 // ============================================
@@ -165,7 +168,7 @@ export default function AdminKpiPage() {
   const kpiEnabled = isFeatureEnabled(company, 'kpi_enabled')
 
   const cacheKey = `admin-kpi-${companyId}`
-  const cached = companyId ? getPageCache<AdminKpiCache>(cacheKey) : null
+  const cached = companyId ? getPageCache<AdminKpiCache>(cacheKey, { persist: true }) : null
 
   const [members, setMembers] = useState<MemberSummary[]>(cached?.members ?? [])
   const [loading, setLoading] = useState(!cached)
@@ -183,14 +186,16 @@ export default function AdminKpiPage() {
 
   // goal_periods テーブル
   const [currentPeriodRecord, setCurrentPeriodRecord] = useState<GoalPeriodRecord | null>(cached?.currentPeriodRecord ?? null)
-  const [pendingPeriod, setPendingPeriod] = useState<GoalPeriodRecord | null>(null)
+  const [pendingPeriod, setPendingPeriod] = useState<GoalPeriodRecord | null>(cached?.pendingPeriod ?? null)
   const [archivedPeriods, setArchivedPeriods] = useState<GoalPeriodRecord[]>(cached?.archivedPeriods ?? [])
   const [approvingSaving, setApprovingSaving] = useState(false)
 
   // 承認待ちの編集用
-  const [pendingType, setPendingType] = useState<string>('')
-  const [pendingStart, setPendingStart] = useState<Date | undefined>(undefined)
-  const [pendingEnd, setPendingEnd] = useState<Date | undefined>(undefined)
+  const [pendingType, setPendingType] = useState<string>(cached?.pendingPeriod ? dbTypeToUi(cached.pendingPeriod.type) : '')
+  const [pendingStart, setPendingStart] = useState<Date | undefined>(cached?.pendingPeriod ? new Date(cached.pendingPeriod.start_date + 'T00:00:00') : undefined)
+  const [pendingEnd, setPendingEnd] = useState<Date | undefined>(cached?.pendingPeriod ? new Date(cached.pendingPeriod.end_date + 'T00:00:00') : undefined)
+  // 期間の入力欄（今の期間・承認待ち）を触ったか。触った後は、裏の取り直しで入力中の値を書き換えない
+  const periodFormTouched = useRef(false)
 
   // 過去の期間展開
   const [expandedArchiveId, setExpandedArchiveId] = useState<string | null>(null)
@@ -201,13 +206,17 @@ export default function AdminKpiPage() {
   // ============================================
   // Fetch
   // ============================================
-  const fetchData = useCallback(async () => {
+  // useCallback にしない（React Compiler がメモ化する。手動のメモ化と推論が食い違うと最適化が止まる）
+  const fetchData = async () => {
     if (!companyId) return
     try {
-      const [membersRes, periodsRes, companyRes] = await Promise.all([
+      // 目標は会社の分をまとめて取り、今の期間の分は下で絞り込む（期間の取得を待たずに1回の往復で済ませる）
+      const [membersRes, periodsRes, companyRes, allGoalsRes, kpisRes] = await Promise.all([
         supabase.from('members').select('auth_id, display_name, profile:profiles(name, photo_url, position)').eq('company_id', companyId).eq('is_active', true),
         supabase.from('goal_periods').select('*').eq('company_id', companyId).order('created_at', { ascending: false }),
         supabase.from('companies').select('goal_period').eq('id', companyId).single(),
+        supabase.from('personal_goals').select('id, user_id, title, goal_period_id').eq('company_id', companyId),
+        supabase.from('goal_kpis').select('id, goal_id, user_id, title, deadline, progress, weight, status').eq('company_id', companyId).order('created_at', { ascending: true }),
       ])
 
       const period = (companyRes.data?.goal_period as GoalPeriod) || null
@@ -221,13 +230,14 @@ export default function AdminKpiPage() {
       setPendingPeriod(pending)
       setArchivedPeriods(archived)
 
-      // 承認待ちの編集用state初期化
-      if (pending) {
+      // 承認待ちの編集用state初期化（入力欄を触った後は書き換えない）
+      if (pending && !periodFormTouched.current) {
         setPendingType(dbTypeToUi(pending.type))
         setPendingStart(new Date(pending.start_date + 'T00:00:00'))
         setPendingEnd(new Date(pending.end_date + 'T00:00:00'))
       }
 
+      let pendingForCache: GoalPeriodRecord | null = pending
       // 自動期間生成: 現在の期間が終了していて、pending_approvalがなければ自動生成
       const today = new Date()
       today.setHours(0, 0, 0, 0)
@@ -247,6 +257,7 @@ export default function AdminKpiPage() {
           }).select().single()
           if (!insertErr && newPeriod) {
             const rec = newPeriod as GoalPeriodRecord
+            pendingForCache = rec
             setPendingPeriod(rec)
             setPendingType(dbTypeToUi(rec.type))
             setPendingStart(new Date(rec.start_date + 'T00:00:00'))
@@ -255,23 +266,11 @@ export default function AdminKpiPage() {
         }
       }
 
-      // 現在の期間のgoal_period_idで目標・KPIを取得
+      // 現在の期間の目標だけを使う。goal_periodsが1つもない場合は goal_period_id が null のもの（移行前データ）
       const currentPeriodId = current?.id || null
-      let goalsQuery = supabase.from('personal_goals').select('id, user_id, title, goal_period_id').eq('company_id', companyId)
-      if (currentPeriodId) {
-        goalsQuery = goalsQuery.eq('goal_period_id', currentPeriodId)
-      } else {
-        // goal_periodsが1つもない場合は goal_period_id IS NULL のデータを取得（移行前データ）
-        goalsQuery = goalsQuery.is('goal_period_id', null)
-      }
-      const [goalsRes, kpisRes] = await Promise.all([
-        goalsQuery,
-        supabase.from('goal_kpis').select('id, goal_id, user_id, title, deadline, progress, weight, status').eq('company_id', companyId).order('created_at', { ascending: true }),
-      ])
-
-      // Maps
       const goalByUser = new Map<string, { id: string; title: string }>()
-      ;(goalsRes.data || []).forEach((g: { id: string; user_id: string; title: string }) => {
+      ;(allGoalsRes.data || []).forEach((g: { id: string; user_id: string; title: string; goal_period_id: string | null }) => {
+        if ((g.goal_period_id ?? null) !== currentPeriodId) return
         goalByUser.set(g.user_id, { id: g.id, title: g.title })
       })
 
@@ -304,7 +303,13 @@ export default function AdminKpiPage() {
       })
 
       setMembers(summaries)
-      if (period) {
+      if (periodFormTouched.current) {
+        // 入力中の期間設定は書き換えない（バナー表示の切り替えは即保存なので反映してよい）
+        if (period) {
+          setShowGoalBanner(period.show_goal_banner ?? true)
+          setShowReviewBanner(period.show_review_banner ?? true)
+        }
+      } else if (period) {
         setPeriodType(period.type)
         setStartDate(new Date(period.start_date + 'T00:00:00'))
         setEndDate(new Date(period.end_date + 'T00:00:00'))
@@ -316,21 +321,28 @@ export default function AdminKpiPage() {
         setStartDate(new Date(current.start_date + 'T00:00:00'))
         setEndDate(new Date(current.end_date + 'T00:00:00'))
       }
-      setPageCache(cacheKey, { members: summaries, goalPeriod: period, currentPeriodRecord: current, archivedPeriods: archived })
+      setPageCache(cacheKey, { members: summaries, goalPeriod: period, currentPeriodRecord: current, archivedPeriods: archived, pendingPeriod: pendingForCache }, { persist: true })
     } catch (err) { console.error('[AdminKPI] Error:', err) }
     finally { setLoading(false) }
-  }, [companyId, cacheKey])
+  }
 
-  useEffect(() => { if (companyId && !cached) fetchData() }, [companyId, cached, fetchData])
+  // 再読込前の保存分（表示用）ではなく、この読み込み以降に取得済みのときだけ取り直さない（lib/page-cache.ts）
+  useEffect(() => {
+    if (companyId && !getPageCache<AdminKpiCache>(cacheKey)) fetchData()
+    // 会社が変わったときだけ取り直す（fetchData は描画ごとに作り直される）
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [companyId, cacheKey])
 
   // ============================================
   // Period auto-calc
   // ============================================
   const handlePeriodTypeChange = (t: string) => {
+    periodFormTouched.current = true
     setPeriodType(t)
     if (t !== 'custom' && startDate) { const e = calcEndDate(t, startDate.toISOString().slice(0, 10)); if (e) setEndDate(new Date(e + 'T00:00:00')) }
   }
   const handleStartChange = (d: Date | undefined) => {
+    periodFormTouched.current = true
     setStartDate(d)
     if (d && periodType && periodType !== 'custom') { const e = calcEndDate(periodType, d.toISOString().slice(0, 10)); if (e) setEndDate(new Date(e + 'T00:00:00')) }
   }
@@ -371,7 +383,7 @@ export default function AdminKpiPage() {
 
       toast.success('目標期間を保存しました')
       const c = getPageCache<AdminKpiCache>(cacheKey)
-      if (c) setPageCache(cacheKey, { ...c, goalPeriod: payload })
+      if (c) setPageCache(cacheKey, { ...c, goalPeriod: payload }, { persist: true })
     } catch { toast.error('保存に失敗しました') }
     finally { setPeriodSaving(false) }
   }
@@ -392,7 +404,7 @@ export default function AdminKpiPage() {
       if (error) throw error
       toast.success('設定を更新しました')
       const c = getPageCache<AdminKpiCache>(cacheKey)
-      if (c) setPageCache(cacheKey, { ...c, goalPeriod: updated as GoalPeriod })
+      if (c) setPageCache(cacheKey, { ...c, goalPeriod: updated as GoalPeriod }, { persist: true })
     } catch { toast.error('更新に失敗しました') }
   }
 
@@ -438,6 +450,7 @@ export default function AdminKpiPage() {
 
   // 承認待ちの期間タイプ変更
   const handlePendingTypeChange = (t: string) => {
+    periodFormTouched.current = true
     setPendingType(t)
     if (t !== 'custom' && pendingStart) {
       const e = calcEndDate(t, pendingStart.toISOString().slice(0, 10))
@@ -445,6 +458,7 @@ export default function AdminKpiPage() {
     }
   }
   const handlePendingStartChange = (d: Date | undefined) => {
+    periodFormTouched.current = true
     setPendingStart(d)
     if (d && pendingType && pendingType !== 'custom') {
       const e = calcEndDate(pendingType, d.toISOString().slice(0, 10))
@@ -657,7 +671,7 @@ export default function AdminKpiPage() {
               </div>
               <div className="w-[180px]">
                 <Label className="text-xs font-bold mb-1.5 block text-amber-900">終了日</Label>
-                <DatePicker value={pendingEnd} onChange={d => setPendingEnd(d)} placeholder="終了日" disabled={!!pendingType && pendingType !== 'custom'} />
+                <DatePicker value={pendingEnd} onChange={d => { periodFormTouched.current = true; setPendingEnd(d) }} placeholder="終了日" disabled={!!pendingType && pendingType !== 'custom'} />
               </div>
             </div>
             <Button onClick={handleApprovePeriod} disabled={approvingSaving || !pendingStart || !pendingEnd} className="bg-amber-600 hover:bg-amber-700 text-white">
@@ -696,7 +710,7 @@ export default function AdminKpiPage() {
             </div>
             <div className="w-[180px]">
               <Label className="text-xs font-bold mb-1.5 block">終了日</Label>
-              <DatePicker value={endDate} onChange={d => setEndDate(d)} placeholder="終了日" disabled={!!periodType && periodType !== 'custom'} />
+              <DatePicker value={endDate} onChange={d => { periodFormTouched.current = true; setEndDate(d) }} placeholder="終了日" disabled={!!periodType && periodType !== 'custom'} />
             </div>
             <Button onClick={handleSavePeriod} disabled={periodSaving || !periodType || !startDate || !endDate} size="sm" className="h-9">
               {periodSaving ? '保存中...' : '保存する'}
