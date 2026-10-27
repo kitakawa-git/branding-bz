@@ -3,50 +3,25 @@
 // Good Action投稿
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
-import { fetchWithRetry } from '@/lib/supabase-fetch'
 import { fetchPhilosophy } from '@/lib/brand/philosophy'
 import { usePortalAuth } from '../components/PortalDataProvider'
 import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
 import { isPortalPageVisibleForRole } from '@/lib/constants/member-roles'
-import { Card, CardContent } from '@/components/ui/card'
-import { Skeleton } from '@/components/ui/skeleton'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
-import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
-import { Switch } from '@/components/ui/switch'
-import { Label } from '@/components/ui/label'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog'
-import {
-  ImagePlus,
-  X,
-  Pencil,
-  UserRound,
-} from 'lucide-react'
-import { Fab, FabButton } from '@/components/ui/fab'
 import { toast } from 'sonner'
 import { PlanUpsell } from '@/components/billing/plan-gate'
 import { can } from '@/lib/billing/entitlements'
-import { useSearchParams } from 'next/navigation'
 import { useRegisterPortalSearch } from '@/components/portal/portal-search'
-import { PostProfile, TimelinePost, TimelineComment, PostCard } from './_components/PostCard'
+import { PostProfile, TimelinePost } from './_components/PostCard'
+import { usePostComposer } from './_components/usePostComposer'
+import { useTimelineComments } from './_components/useTimelineComments'
+import { PostComposer } from './_components/PostComposer'
+import { CategoryFilter } from './_components/CategoryFilter'
+import { PostList } from './_components/PostList'
+import { ImageDialog, DeletePostDialog, DeleteCommentDialog } from './_components/TimelineDialogs'
+import { TimelineNotice, TimelineSkeleton } from './_components/TimelineStates'
 
 const PAGE_SIZE = 20
-const MAX_IMAGES = 3
-const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 
 // ============================================
 // Main Page Component
@@ -73,69 +48,6 @@ export default function PortalTimelinePage() {
   const [filterCategory, setFilterCategory] = useState<string>('all')
   // 検索フィールドはヘッダーの虫眼鏡。ここでは入力された文字列だけを受け取る
   const searchQuery = useRegisterPortalSearch('投稿を検索...')
-
-  // Post form
-  const [formContent, setFormContent] = useState('')
-  const [formCategory, setFormCategory] = useState('')
-  const [formAnonymous, setFormAnonymous] = useState(false)
-  const [formImages, setFormImages] = useState<File[]>([])
-  const [formImagePreviews, setFormImagePreviews] = useState<string[]>([])
-  const [posting, setPosting] = useState(false)
-  // 投稿フォーム（モーダル）の開閉
-  const [composerOpen, setComposerOpen] = useState(false)
-  // 初回セットアップ案内のステップ②から ?compose=1 で直接開く。
-  // 投稿UIはダイアログなので、URL から開ける口が無いと案内の導線が1手増える
-  const searchParams = useSearchParams()
-  useEffect(() => {
-    if (searchParams.get('compose') === '1') setComposerOpen(true)
-  }, [searchParams])
-
-  // Edit mode
-  const [editingPostId, setEditingPostId] = useState<string | null>(null)
-  const [editExistingImages, setEditExistingImages] = useState<string[]>([])
-
-  // Image dialog
-  const [dialogImage, setDialogImage] = useState<string | null>(null)
-
-  // Delete confirm
-  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null)
-  const [deleting, setDeleting] = useState(false)
-
-  // Comment states
-  const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set())
-  const [commentsByPost, setCommentsByPost] = useState<Record<string, TimelineComment[]>>({})
-  const [commentInputs, setCommentInputs] = useState<Record<string, string>>({})
-  const [commentSubmitting, setCommentSubmitting] = useState<Record<string, boolean>>({})
-
-  // Delete comment confirm
-  const [deleteCommentTarget, setDeleteCommentTarget] = useState<{ postId: string; commentId: string } | null>(null)
-
-  const fileInputRef = useRef<HTMLInputElement>(null)
-
-  // ============================================
-  // Fetch categories (action guidelines)
-  // ============================================
-  useEffect(() => {
-    if (!companyId) return
-    // 再読込前の保存分（表示用）ではなく、この読み込み以降に取得済みのときだけスキップ（lib/page-cache.ts）
-    if (getPageCache<TimelineCache>(cacheKey)) return
-    fetchPhilosophy(supabase, companyId).then((phil) => {
-      let cats = ['未分類']
-      const titles = phil.action_guidelines.map(g => g.title).filter(Boolean)
-      if (titles.length > 0) cats = titles
-      setCategories(cats)
-      categoriesRef.current = cats
-      // カテゴリが1つだけの場合は自動選択
-      if (cats.length === 1) {
-        setFormCategory(cats[0])
-      }
-      // キャッシュが既に存在する場合、カテゴリを更新
-      const existingCache = getPageCache<TimelineCache>(cacheKey)
-      if (existingCache) {
-        setPageCache(cacheKey, { ...existingCache, categories: cats }, { persist: true })
-      }
-    })
-  }, [companyId, cacheKey])
 
   // ============================================
   // Fetch posts
@@ -269,181 +181,58 @@ export default function PortalTimelinePage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [companyId, user?.id])
 
+  // 投稿フォーム（モーダル）: 状態・画像選択・投稿/編集処理
+  const {
+    formContent, setFormContent, formCategory, setFormCategory, formAnonymous, setFormAnonymous,
+    formImages, formImagePreviews, posting, composerOpen, setComposerOpen, editingPostId, editExistingImages,
+    fileInputRef, handleImageSelect, removeImage, removeExistingImage, handleSubmit, resetForm, startEdit,
+  } = usePostComposer({ companyId, user, fetchPosts })
+
+  // Image dialog
+  const [dialogImage, setDialogImage] = useState<string | null>(null)
+
+  // Delete confirm
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState(false)
+
+  // コメント: 開閉・読み込み・投稿・削除
+  const {
+    expandedComments, commentsByPost, commentInputs, setCommentInputs, commentSubmitting,
+    deleteCommentTarget, setDeleteCommentTarget, toggleComments, submitComment, handleDeleteComment,
+  } = useTimelineComments({ companyId, user, setPosts })
+
+  // ============================================
+  // Fetch categories (action guidelines)
+  // ============================================
+  useEffect(() => {
+    if (!companyId) return
+    // 再読込前の保存分（表示用）ではなく、この読み込み以降に取得済みのときだけスキップ（lib/page-cache.ts）
+    if (getPageCache<TimelineCache>(cacheKey)) return
+    fetchPhilosophy(supabase, companyId).then((phil) => {
+      let cats = ['未分類']
+      const titles = phil.action_guidelines.map(g => g.title).filter(Boolean)
+      if (titles.length > 0) cats = titles
+      setCategories(cats)
+      categoriesRef.current = cats
+      // カテゴリが1つだけの場合は自動選択
+      if (cats.length === 1) {
+        setFormCategory(cats[0])
+      }
+      // キャッシュが既に存在する場合、カテゴリを更新
+      const existingCache = getPageCache<TimelineCache>(cacheKey)
+      if (existingCache) {
+        setPageCache(cacheKey, { ...existingCache, categories: cats }, { persist: true })
+      }
+    })
+  // setFormCategory は useState のセッター（参照は不変）。カスタムフック経由のため依存に明示
+  }, [companyId, cacheKey, setFormCategory])
+
   useEffect(() => {
     if (companyId && user?.id && !getPageCache<TimelineCache>(cacheKey)) {
       fetchPosts()
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [companyId, user?.id, fetchPosts])
-
-  // ============================================
-  // Image handling
-  // ============================================
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || [])
-    const currentCount = formImages.length + editExistingImages.length
-    const remaining = MAX_IMAGES - currentCount
-
-    if (remaining <= 0) {
-      toast.error(`画像は最大${MAX_IMAGES}枚までです`)
-      return
-    }
-
-    const validFiles: File[] = []
-    for (const file of files.slice(0, remaining)) {
-      if (!ALLOWED_TYPES.includes(file.type)) {
-        toast.error('JPG、PNG、WebP形式の画像を選択してください')
-        continue
-      }
-      if (file.size > MAX_FILE_SIZE) {
-        toast.error('ファイルサイズは5MB以下にしてください')
-        continue
-      }
-      validFiles.push(file)
-    }
-
-    if (validFiles.length > 0) {
-      setFormImages(prev => [...prev, ...validFiles])
-      const newPreviews = validFiles.map(f => URL.createObjectURL(f))
-      setFormImagePreviews(prev => [...prev, ...newPreviews])
-    }
-
-    if (fileInputRef.current) fileInputRef.current.value = ''
-  }
-
-  const removeImage = (index: number) => {
-    URL.revokeObjectURL(formImagePreviews[index])
-    setFormImages(prev => prev.filter((_, i) => i !== index))
-    setFormImagePreviews(prev => prev.filter((_, i) => i !== index))
-  }
-
-  const removeExistingImage = (index: number) => {
-    setEditExistingImages(prev => prev.filter((_, i) => i !== index))
-  }
-
-  // ============================================
-  // Upload images to Storage
-  // ============================================
-  const uploadImages = async (postId: string, files: File[]): Promise<string[]> => {
-    if (!companyId || files.length === 0) return []
-    const urls: string[] = []
-
-    for (const file of files) {
-      const ext = file.name.split('.').pop()
-      const fileName = `${companyId}/${postId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-
-      const { error } = await supabase.storage
-        .from('timeline-images')
-        .upload(fileName, file, { upsert: true })
-
-      if (error) {
-        console.error('[Timeline] Image upload error:', error.message)
-        toast.error(`画像のアップロードに失敗: ${error.message}`)
-        continue
-      }
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('timeline-images')
-        .getPublicUrl(fileName)
-
-      urls.push(publicUrl)
-    }
-
-    return urls
-  }
-
-  // ============================================
-  // Submit post
-  // ============================================
-  const handleSubmit = async () => {
-    if (!companyId || !user || !formContent.trim() || !formCategory) return
-
-    setPosting(true)
-    try {
-      if (editingPostId) {
-        // Edit existing post
-        const newImageUrls = await uploadImages(editingPostId, formImages)
-        const allImages = [...editExistingImages, ...newImageUrls]
-
-        const { data: updateData, error } = await supabase
-          .from('timeline_posts')
-          .update({
-            content: formContent.trim(),
-            category: formCategory,
-            is_anonymous: formAnonymous,
-            images: allImages,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', editingPostId)
-          .select()
-
-        if (error) throw error
-        if (!updateData || updateData.length === 0) {
-          throw new Error('更新対象の投稿が見つかりません（権限不足の可能性があります）')
-        }
-        toast.success('投稿を更新しました')
-        setEditingPostId(null)
-        setEditExistingImages([])
-      } else {
-        // Create new post: 先に画像アップロード → URL付きでINSERT（UPDATEステップ不要）
-        const postId = crypto.randomUUID()
-        const imageUrls = await uploadImages(postId, formImages)
-
-        const { error } = await supabase
-          .from('timeline_posts')
-          .insert({
-            id: postId,
-            company_id: companyId,
-            user_id: user.id,
-            content: formContent.trim(),
-            category: formCategory,
-            is_anonymous: formAnonymous,
-            images: imageUrls,
-          })
-
-        if (error) throw error
-        toast.success('投稿しました')
-      }
-
-      // Reset form & close modal
-      resetForm()
-      setComposerOpen(false)
-      // Refresh posts
-      await fetchPosts()
-    } catch (err) {
-      console.error('Post error:', err)
-      const msg = err && typeof err === 'object' && 'message' in err ? (err as { message: string }).message : String(err)
-      toast.error('投稿に失敗しました: ' + msg)
-    } finally {
-      setPosting(false)
-    }
-  }
-
-  const resetForm = () => {
-    setFormContent('')
-    setFormCategory('')
-    setFormAnonymous(false)
-    formImagePreviews.forEach(url => URL.revokeObjectURL(url))
-    setFormImages([])
-    setFormImagePreviews([])
-    setEditingPostId(null)
-    setEditExistingImages([])
-  }
-
-  // ============================================
-  // Edit post
-  // ============================================
-  const startEdit = (post: TimelinePost) => {
-    setEditingPostId(post.id)
-    setFormContent(post.content)
-    setFormCategory(post.category)
-    setFormAnonymous(post.is_anonymous)
-    setEditExistingImages(post.images || [])
-    setFormImages([])
-    setFormImagePreviews([])
-    // 編集も同じ投稿モーダルを開く
-    setComposerOpen(true)
-  }
 
   // ============================================
   // Delete post
@@ -536,150 +325,6 @@ export default function PortalTimelinePage() {
   }
 
   // ============================================
-  // Comments
-  // ============================================
-  const toggleComments = async (postId: string) => {
-    setExpandedComments(prev => {
-      const next = new Set(prev)
-      if (next.has(postId)) {
-        next.delete(postId)
-      } else {
-        next.add(postId)
-        // Load comments if not loaded
-        if (!commentsByPost[postId]) {
-          loadComments(postId)
-        }
-      }
-      return next
-    })
-  }
-
-  const loadComments = async (postId: string) => {
-    if (!companyId) return
-    const { data } = await fetchWithRetry(() =>
-      supabase
-        .from('timeline_comments')
-        .select('*')
-        .eq('post_id', postId)
-        .order('created_at', { ascending: true })
-    )
-
-    if (!data || !Array.isArray(data)) {
-      setCommentsByPost(prev => ({ ...prev, [postId]: [] }))
-      return
-    }
-
-    // Fetch commenter profiles
-    const userIds = [...new Set(data.map((c: Record<string, unknown>) => c.user_id as string))]
-    const { data: membersData } = await fetchWithRetry(() =>
-      supabase
-        .from('members')
-        .select('auth_id, display_name, profile:profiles(name, photo_url)')
-        .in('auth_id', userIds)
-        .eq('company_id', companyId)
-    )
-
-    const profileMap = new Map<string, { name: string | null; photo_url: string | null }>()
-    if (membersData && Array.isArray(membersData)) {
-      for (const m of membersData) {
-        const rec = m as Record<string, unknown>
-        const profileRaw = rec.profile as { name: string; photo_url: string } | { name: string; photo_url: string }[] | null
-        const profile = Array.isArray(profileRaw) ? profileRaw[0] ?? null : profileRaw
-        profileMap.set(rec.auth_id as string, {
-          name: profile?.name || (rec.display_name as string) || null,
-          photo_url: profile?.photo_url || null,
-        })
-      }
-    }
-
-    const comments: TimelineComment[] = data.map((c: unknown) => {
-      const rec = c as Record<string, unknown>
-      const uid = rec.user_id as string
-      const info = profileMap.get(uid)
-      return {
-        id: rec.id as string,
-        user_id: uid,
-        content: rec.content as string,
-        created_at: rec.created_at as string,
-        profile_name: info?.name || null,
-        profile_photo_url: info?.photo_url || null,
-      }
-    })
-
-    setCommentsByPost(prev => ({ ...prev, [postId]: comments }))
-  }
-
-  const submitComment = async (postId: string) => {
-    const text = commentInputs[postId]?.trim()
-    if (!text || !user || !companyId) return
-
-    setCommentSubmitting(prev => ({ ...prev, [postId]: true }))
-    try {
-      const { error } = await supabase
-        .from('timeline_comments')
-        .insert({
-          post_id: postId,
-          user_id: user.id,
-          company_id: companyId,
-          content: text,
-        })
-
-      if (error) throw error
-
-      setCommentInputs(prev => ({ ...prev, [postId]: '' }))
-
-      // Update comment count
-      setPosts(prev => prev.map(p =>
-        p.id === postId ? { ...p, comment_count: p.comment_count + 1 } : p
-      ))
-
-      // Reload comments
-      await loadComments(postId)
-    } catch {
-      toast.error('コメントの投稿に失敗しました')
-    } finally {
-      setCommentSubmitting(prev => ({ ...prev, [postId]: false }))
-    }
-  }
-
-  const handleDeleteComment = async () => {
-    if (!deleteCommentTarget) return
-    const { postId, commentId } = deleteCommentTarget
-
-    try {
-      // RLS 0行対策: 弾かれても error は null なので影響行で判定する
-      const { data, error } = await supabase
-        .from('timeline_comments')
-        .delete()
-        .eq('id', commentId)
-        .select('id')
-
-      if (error) throw error
-      if (!data?.length) {
-        toast.error('削除する権限がありません')
-        return
-      }
-
-      // Update comment count
-      setPosts(prev => prev.map(p =>
-        p.id === postId ? { ...p, comment_count: Math.max(0, p.comment_count - 1) } : p
-      ))
-
-      // Remove from local state
-      setCommentsByPost(prev => ({
-        ...prev,
-        [postId]: (prev[postId] || []).filter(c => c.id !== commentId),
-      }))
-
-      toast.success('コメントを削除しました')
-    } catch {
-      toast.error('コメントの削除に失敗しました')
-    } finally {
-      setDeleteCommentTarget(null)
-    }
-  }
-
-  // ============================================
   // Filtered posts
   // ============================================
   const filteredPosts = useMemo(() => {
@@ -704,17 +349,7 @@ export default function PortalTimelinePage() {
   // ============================================
   // 機能トグルがオフ: 内容は表示せず、案内のみ（URL直打ち時に状況が分かるように）
   if (!timelineEnabled) {
-    return (
-      <div className="max-w-4xl mx-auto px-5 pt-4 pb-10">
-        <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-          <CardContent className="py-16 text-center">
-            <p className="text-muted-foreground text-[15px] m-0">
-              この機能は現在ご利用いただけません
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    )
+    return <TimelineNotice message="この機能は現在ご利用いただけません" />
   }
 
   // 区分ごとの表示設定で非表示（URL直打ち時の防御）
@@ -739,351 +374,84 @@ export default function PortalTimelinePage() {
   }
 
   if (!isPortalPageVisibleForRole(company, 'timeline', roleCategory, isAdmin)) {
-    return (
-      <div className="max-w-4xl mx-auto px-5 pt-4 pb-10">
-        <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-          <CardContent className="py-16 text-center">
-            <p className="text-muted-foreground text-[15px] m-0">
-              このページはご利用の区分では表示されません
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    )
+    return <TimelineNotice message="このページはご利用の区分では表示されません" />
   }
 
   if (loading) {
-    return (
-      <div className="max-w-4xl mx-auto px-5 pt-4 pb-10 space-y-6">
-        {/* カテゴリフィルタ＋検索（投稿はFAB＋モーダルのためフォームは出さない）
-            カテゴリピルは実画面と同じく categories.length > 1 のときだけ出す
-            （既定の単一カテゴリではピルが無いため、ロード時のちらつきを防ぐ） */}
-        <div className="flex items-center gap-2 flex-wrap">
-          {categories.length > 1 &&
-            [1, 2, 3, 4].map(i => <Skeleton key={i} className="h-8 w-16 rounded-full" />)}
-          <Skeleton className="h-9 w-48 ml-auto rounded-md" />
-        </div>
-        <div className="space-y-4">
-          {[1, 2, 3].map(i => (
-            <Card key={i} className="bg-[hsl(0_0%_97%)] border shadow-none">
-              <CardContent className="p-4 sm:p-5">
-                <div className="flex items-start gap-3 mb-3">
-                  <Skeleton className="size-9 rounded-full shrink-0" />
-                  <div className="flex-1">
-                    <Skeleton className="h-4 w-28 mb-1" />
-                    <Skeleton className="h-3 w-16" />
-                  </div>
-                </div>
-                <Skeleton className="h-5 w-20 rounded-full mb-3" />
-                <Skeleton className="h-16 w-full mb-3" />
-                <div className="flex gap-4 pt-2 border-t border-border">
-                  <Skeleton className="h-4 w-10" />
-                  <Skeleton className="h-4 w-10" />
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    )
+    return <TimelineSkeleton showCategoryPills={categories.length > 1} />
   }
 
   return (
     <div className="max-w-4xl mx-auto px-5 pt-4 pb-10 space-y-6">
-      {/* ============================================ */}
       {/* Post Form (右下FAB + モーダル) */}
-      {/* ============================================ */}
-      {/* 右下のFABボタン: クリックで投稿モーダルを開く */}
-      <Fab>
-        <FabButton onClick={() => { resetForm(); setComposerOpen(true) }} icon={<Pencil size={18} />}>
-          投稿する
-        </FabButton>
-      </Fab>
+      <PostComposer
+        categories={categories}
+        profileName={profileName}
+        profilePhotoUrl={profilePhotoUrl}
+        memberDisplayName={member?.display_name}
+        composerOpen={composerOpen}
+        setComposerOpen={setComposerOpen}
+        resetForm={resetForm}
+        editingPostId={editingPostId}
+        formContent={formContent}
+        setFormContent={setFormContent}
+        formCategory={formCategory}
+        setFormCategory={setFormCategory}
+        formAnonymous={formAnonymous}
+        setFormAnonymous={setFormAnonymous}
+        formImages={formImages}
+        formImagePreviews={formImagePreviews}
+        editExistingImages={editExistingImages}
+        posting={posting}
+        fileInputRef={fileInputRef}
+        handleImageSelect={handleImageSelect}
+        removeImage={removeImage}
+        removeExistingImage={removeExistingImage}
+        handleSubmit={handleSubmit}
+      />
 
-      {/* 投稿モーダル */}
-      <Dialog open={composerOpen} onOpenChange={(o) => { if (!o) resetForm(); setComposerOpen(o) }}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogTitle>{editingPostId ? '投稿を編集' : '投稿する'}</DialogTitle>
-          <DialogDescription>
-            行動指針に基づく取り組みを共有し、互いに称賛しましょう
-          </DialogDescription>
-          <div className="space-y-4">
-          <div className="flex items-center gap-3 mb-1">
-            <Avatar className="size-9 shrink-0">
-              {!formAnonymous && profilePhotoUrl && (
-                <AvatarImage src={profilePhotoUrl} alt={profileName || ''} />
-              )}
-              <AvatarFallback className="bg-muted text-muted-foreground text-xs">
-                {formAnonymous ? <UserRound className="size-4" /> : (profileName?.slice(0, 1) || '?')}
-              </AvatarFallback>
-            </Avatar>
-            <span className="text-sm font-medium text-foreground">
-              {formAnonymous ? '匿名メンバー' : (profileName || member?.display_name || '')}
-            </span>
-          </div>
-
-          {/* Text */}
-          <div>
-            <Textarea
-              placeholder="行動指針に基づいた取り組みを共有しましょう..."
-              value={formContent}
-              onChange={(e) => setFormContent(e.target.value.slice(0, 1000))}
-              className="min-h-[100px] resize-none bg-background"
-            />
-            <p className="text-xs text-muted-foreground text-right mt-1 m-0">
-              {formContent.length}/1000
-            </p>
-          </div>
-
-          {/* Image previews */}
-          {(formImagePreviews.length > 0 || editExistingImages.length > 0) && (
-            <div className="flex gap-2 flex-wrap">
-              {editExistingImages.map((url, i) => (
-                <div key={`existing-${i}`} className="relative">
-                  <img
-                    src={url}
-                    alt=""
-                    className="w-20 h-20 object-cover rounded-lg border border-border"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeExistingImage(i)}
-                    className="absolute -top-1.5 -right-1.5 size-5 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center"
-                  >
-                    <X className="size-4" />
-                  </button>
-                </div>
-              ))}
-              {formImagePreviews.map((url, i) => (
-                <div key={`new-${i}`} className="relative">
-                  <img
-                    src={url}
-                    alt=""
-                    className="w-20 h-20 object-cover rounded-lg border border-border"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeImage(i)}
-                    className="absolute -top-1.5 -right-1.5 size-5 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center"
-                  >
-                    <X className="size-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Bottom row: category + image + anonymous + submit */}
-          <div className="flex flex-wrap items-center gap-3">
-            {/* Category select */}
-            <Select value={formCategory} onValueChange={setFormCategory}>
-              <SelectTrigger className="w-[200px] bg-background">
-                <SelectValue placeholder="行動指針を選択" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((cat) => (
-                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {/* Image upload button */}
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={formImages.length + editExistingImages.length >= MAX_IMAGES}
-            >
-              <ImagePlus className="size-4 mr-1.5" />
-              画像
-            </Button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              multiple
-              onChange={handleImageSelect}
-              className="hidden"
-            />
-
-            {/* Anonymous toggle */}
-            <div className="flex items-center gap-2">
-              <Switch
-                id="anonymous"
-                checked={formAnonymous}
-                onCheckedChange={setFormAnonymous}
-              />
-              <Label htmlFor="anonymous" className="text-xs text-muted-foreground cursor-pointer">
-                匿名で投稿
-              </Label>
-            </div>
-
-            {/* Submit button + hint */}
-            <div className="flex items-center gap-2 ml-auto">
-              {formContent.trim() && !formCategory && (
-                <span className="text-xs text-amber-600">← 行動指針を選択してください</span>
-              )}
-              <Button
-                onClick={handleSubmit}
-                disabled={!formContent.trim() || !formCategory || posting}
-                size="sm"
-              >
-                {posting ? '投稿中...' : editingPostId ? '更新する' : '投稿する'}
-              </Button>
-            </div>
-
-            {/* Cancel edit */}
-            {editingPostId && (
-              <Button variant="outline" size="sm" onClick={() => { resetForm(); setComposerOpen(false) }}>
-                キャンセル
-              </Button>
-            )}
-          </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* ============================================ */}
       {/* Category Filter */}
-      {/* ============================================ */}
-      <div className="flex flex-col sm:flex-row sm:items-start gap-3">
-        {categories.length > 1 && (
-          // 折り返さず横1列。入りきらないぶんは横スクロールで辿る。
-          // スクロールバーは隠す（チップ列の下に細い帯が出ると窮屈に見えるため）。
-          // タッチとトラックパッドは素で流れ、マウスは Shift+ホイールで動く
-          <div className="flex min-w-0 gap-2 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <button
-              onClick={() => setFilterCategory('all')}
-              className={`shrink-0 whitespace-nowrap px-3.5 py-2 rounded-full text-sm font-medium transition-colors ${
-                filterCategory === 'all'
-                  ? 'bg-foreground text-background'
-                  : 'bg-muted text-muted-foreground hover:bg-muted/80'
-              }`}
-            >
-              すべて
-            </button>
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setFilterCategory(cat)}
-                className={`shrink-0 whitespace-nowrap px-3.5 py-2 rounded-full text-sm font-medium transition-colors ${
-                  filterCategory === cat
-                    ? 'bg-foreground text-background'
-                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+      <CategoryFilter
+        categories={categories}
+        filterCategory={filterCategory}
+        setFilterCategory={setFilterCategory}
+      />
 
-      {/* ============================================ */}
       {/* Posts list */}
-      {/* ============================================ */}
-      {filteredPosts.length === 0 ? (
-        <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
-          <CardContent className="py-16 text-center">
-            <p className="text-muted-foreground text-[15px] m-0">
-              まだ投稿がありません。最初のGood Actionを共有しましょう！
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        // 投稿カード間は12px（space-y-3）
-        <div className="space-y-3">
-          {filteredPosts.map((post) => (
-            <PostCard
-              key={post.id}
-              post={post}
-              currentUserId={user?.id || ''}
-              isAdmin={isAdmin}
-              onLike={() => toggleLike(post.id)}
-              onToggleComments={() => toggleComments(post.id)}
-              onEdit={() => startEdit(post)}
-              onDelete={() => setDeleteTargetId(post.id)}
-              onImageClick={setDialogImage}
-              isCommentsExpanded={expandedComments.has(post.id)}
-              comments={commentsByPost[post.id]}
-              commentInput={commentInputs[post.id] || ''}
-              onCommentInputChange={(val) => setCommentInputs(prev => ({ ...prev, [post.id]: val }))}
-              onCommentSubmit={() => submitComment(post.id)}
-              commentSubmitting={commentSubmitting[post.id] || false}
-              onDeleteComment={(commentId) => setDeleteCommentTarget({ postId: post.id, commentId })}
-            />
-          ))}
+      <PostList
+        filteredPosts={filteredPosts}
+        currentUserId={user?.id}
+        isAdmin={isAdmin}
+        hasMore={hasMore}
+        filterCategory={filterCategory}
+        onLoadMore={() => fetchPosts(posts.length, true)}
+        toggleLike={toggleLike}
+        toggleComments={toggleComments}
+        startEdit={startEdit}
+        setDeleteTargetId={setDeleteTargetId}
+        setDialogImage={setDialogImage}
+        expandedComments={expandedComments}
+        commentsByPost={commentsByPost}
+        commentInputs={commentInputs}
+        setCommentInputs={setCommentInputs}
+        submitComment={submitComment}
+        commentSubmitting={commentSubmitting}
+        setDeleteCommentTarget={setDeleteCommentTarget}
+      />
 
-          {/* Load more */}
-          {hasMore && filterCategory === 'all' && (
-            <div className="text-center pt-2">
-              <Button
-                variant="outline"
-                onClick={() => fetchPosts(posts.length, true)}
-              >
-                もっと見る
-              </Button>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ============================================ */}
-      {/* Image Dialog */}
-      {/* ============================================ */}
-      <Dialog open={!!dialogImage} onOpenChange={() => setDialogImage(null)}>
-        <DialogContent className="max-w-[90vw] max-h-[90vh] p-2 bg-transparent border-none shadow-none">
-          <DialogTitle className="sr-only">画像拡大表示</DialogTitle>
-          {dialogImage && (
-            <img
-              src={dialogImage}
-              alt="拡大表示"
-              className="max-w-full max-h-[85vh] object-contain rounded-lg mx-auto"
-            />
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* ============================================ */}
-      {/* Delete Post Confirm Dialog */}
-      {/* ============================================ */}
-      <Dialog open={!!deleteTargetId} onOpenChange={() => setDeleteTargetId(null)}>
-        <DialogContent className="max-w-sm">
-          <DialogTitle>投稿を削除</DialogTitle>
-          <p className="text-sm text-muted-foreground">
-            この投稿を削除しますか？この操作は取り消せません。
-          </p>
-          <div className="flex justify-end gap-2 mt-4">
-            <Button variant="outline" size="sm" onClick={() => setDeleteTargetId(null)}>
-              キャンセル
-            </Button>
-            <Button variant="destructive" size="sm" onClick={handleDelete} disabled={deleting}>
-              {deleting ? '削除中...' : '削除する'}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* ============================================ */}
-      {/* Delete Comment Confirm Dialog */}
-      {/* ============================================ */}
-      <Dialog open={!!deleteCommentTarget} onOpenChange={() => setDeleteCommentTarget(null)}>
-        <DialogContent className="max-w-sm">
-          <DialogTitle>コメントを削除</DialogTitle>
-          <p className="text-sm text-muted-foreground">
-            このコメントを削除しますか？
-          </p>
-          <div className="flex justify-end gap-2 mt-4">
-            <Button variant="outline" size="sm" onClick={() => setDeleteCommentTarget(null)}>
-              キャンセル
-            </Button>
-            <Button variant="destructive" size="sm" onClick={handleDeleteComment}>
-              削除する
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Dialogs: 画像拡大 / 投稿削除確認 / コメント削除確認 */}
+      <ImageDialog dialogImage={dialogImage} setDialogImage={setDialogImage} />
+      <DeletePostDialog
+        deleteTargetId={deleteTargetId}
+        setDeleteTargetId={setDeleteTargetId}
+        handleDelete={handleDelete}
+        deleting={deleting}
+      />
+      <DeleteCommentDialog
+        deleteCommentTarget={deleteCommentTarget}
+        setDeleteCommentTarget={setDeleteCommentTarget}
+        handleDeleteComment={handleDeleteComment}
+      />
     </div>
   )
 }
