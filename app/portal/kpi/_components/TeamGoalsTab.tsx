@@ -94,13 +94,15 @@ export function TeamGoalsTab({ teams, teamMembers, memberNames, teamGoals, compa
                 <div className="space-y-4">
                   {goals.map(g => (
                     <div key={g.id}>
-                      <GoalItem
-                        goal={g}
-                        parentTitle={g.parent_goal_id ? companyTitle.get(g.parent_goal_id) ?? null : null}
-                        editable={canEdit}
-                        onEdit={() => setFormTarget({ mode: 'edit', goal: g, teamName: team.name })}
-                        onDelete={() => handleDelete(g)}
-                      />
+                      <div id={`goal-${g.id}`} className="transition-shadow">
+                        <GoalItem
+                          goal={g}
+                          parentTitle={g.parent_goal_id ? companyTitle.get(g.parent_goal_id) ?? null : null}
+                          editable={canEdit}
+                          onEdit={() => setFormTarget({ mode: 'edit', goal: g, teamName: team.name })}
+                          onDelete={() => handleDelete(g)}
+                        />
+                      </div>
                       <GoalKpiSection
                         goal={g}
                         kpis={sharedKpis.filter(k => k.goal_id === g.id)}

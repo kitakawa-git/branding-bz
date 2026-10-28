@@ -84,11 +84,13 @@ export type PortalGoalContext = {
   guidelines: GoalOption[]
   /** 会社・チーム目標の KPI（チームタブ・個人 KPI の寄与先に使う） */
   sharedKpis: GoalKpi[]
+  /** 期間 id → 表示名（年度は「2026年度」、それ以外は「2025年10月〜2026年3月」） */
+  periodLabels: Record<string, string>
   /** 上位 KPI の id → それに寄与している KPI の数（見えている分だけ。リーダーはメンバーの分も見える） */
   contributionCounts: Record<string, number>
 }
 
-export const emptyGoalContext: PortalGoalContext = { companyGoals: [], teamGoals: [], teams: [], teamMembers: [], memberNames: {}, guidelines: [], sharedKpis: [], contributionCounts: {} }
+export const emptyGoalContext: PortalGoalContext = { companyGoals: [], teamGoals: [], teams: [], teamMembers: [], memberNames: {}, guidelines: [], periodLabels: {}, sharedKpis: [], contributionCounts: {} }
 
 export type PortalKpiCache = {
   goal: PersonalGoal | null
@@ -145,6 +147,12 @@ export function getRemainingDays(endDate: string): number {
   const today = new Date(); today.setHours(0, 0, 0, 0)
   const end = new Date(endDate); end.setHours(0, 0, 0, 0)
   return Math.ceil((end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+}
+
+/** 期間の表示名。年度は「2026年度」（開始日の年）、それ以外は「2025年10月〜2026年3月」 */
+export function periodLabel(p: { type: string; start_date: string; end_date: string }): string {
+  if (p.type === 'year') return `${new Date(p.start_date).getFullYear()}年度`
+  return `${formatDateShort(p.start_date)}〜${formatDateShort(p.end_date)}`
 }
 
 export function getPeriodTitle(period: GoalPeriod | null): string {

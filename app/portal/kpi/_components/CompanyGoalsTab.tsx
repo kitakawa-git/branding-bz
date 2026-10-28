@@ -38,7 +38,9 @@ export function CompanyGoalsTab({ companyGoals, teamGoals, sharedKpis, contribut
           const linked = teamGoals.filter(t => t.parent_goal_id === g.id).length
           return (
             <div key={g.id}>
-              <GoalItem goal={g} editable={false} />
+              <div id={`goal-${g.id}`} className="transition-shadow">
+                <GoalItem goal={g} editable={false} />
+              </div>
               {linked > 0 && <p className="text-[11px] text-muted-foreground m-0 mt-1 ml-1">つながるチーム目標 {linked}件</p>}
               <GoalKpiSection
                 goal={g}

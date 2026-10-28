@@ -30,6 +30,7 @@ import {
   type PortalKpiCache,
   type PortalGoalContext,
   emptyGoalContext,
+  periodLabel,
 } from './_components/kpi-utils'
 import { useArchivedPeriod } from './_components/useArchivedPeriod'
 import { ArchivedPeriodsSection } from './_components/ArchivedPeriodsSection'
@@ -37,12 +38,11 @@ import { GoalSetupDialog } from './_components/GoalSetupDialog'
 import { KpiSetupDialog } from './_components/KpiSetupDialog'
 import { GoalEditDialog } from './_components/GoalEditDialog'
 import { KpiEditDialog } from './_components/KpiEditDialog'
-import { GoalCard } from './_components/GoalCard'
 import { KpiListCard } from './_components/KpiListCard'
 import { KpiUnavailableNotice, KpiPageSkeleton, GoalPeriodNoticeCard, GoalEmptyCard } from './_components/KpiPagePlaceholders'
 import { pickConceptVisual } from '@/components/brand/ConceptVisualBackdrop'
 import { PersonalGoalLinkFields, NO_LINK } from './_components/PersonalGoalLinkFields'
-import { GoalConnectionCard } from './_components/GoalConnectionCard'
+import { GoalTreeCard } from './_components/GoalTreeCard'
 import { CompanyGoalsTab } from './_components/CompanyGoalsTab'
 import { TeamGoalsTab } from './_components/TeamGoalsTab'
 
@@ -168,6 +168,7 @@ export default function KpiPage() {
         guidelines: ((guidelinesRes.data || []) as { id: string; title: string | null; body: string | null }[])
           .map(g => ({ id: g.id, title: g.title || g.body || '' }))
           .filter(g => g.title),
+        periodLabels: Object.fromEntries(allPeriods.map(p => [p.id, periodLabel(p)])),
         sharedKpis: allKpis.filter(k => sharedGoalIds.has(k.goal_id)),
         contributionCounts,
       }
@@ -590,6 +591,18 @@ export default function KpiPage() {
     : []
   const contributeTitles = Object.fromEntries(goalContext.sharedKpis.map(k => [k.id, k.title]))
 
+  // ツリーの会社・チーム目標から、そのタブの該当目標へ移る（タブを切り替えてから、描画後にスクロール）
+  const jumpToGoal = (target: 'company' | 'team', goalId: string) => {
+    setTab(target)
+    window.setTimeout(() => {
+      const el = document.getElementById(`goal-${goalId}`)
+      if (!el) return
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      el.classList.add('ring-2', 'ring-ds-app-accent', 'rounded-lg')
+      window.setTimeout(() => el.classList.remove('ring-2', 'ring-ds-app-accent', 'rounded-lg'), 1600)
+    }, 60)
+  }
+
   const canEdit = goalPeriod?.show_goal_banner !== false
   const canReview = goalPeriod?.show_review_banner === true
 
@@ -607,19 +620,19 @@ export default function KpiPage() {
     </>
   ) : (
     <>
-      {/* わたしの目標 → チーム目標 → 会社目標 */}
-      <GoalConnectionCard
+      {/* 会社目標 → チーム目標 → わたしの目標（ツリー。目標名はここで1回だけ） */}
+      <GoalTreeCard
         goal={goal}
+        goalPeriod={goalPeriod}
         teamGoals={goalContext.teamGoals}
         companyGoals={goalContext.companyGoals}
         teams={goalContext.teams}
         guidelines={goalContext.guidelines}
+        periodLabels={goalContext.periodLabels ?? {}}
         canEdit={canEdit}
         openGoalEdit={openGoalEdit}
+        onJump={jumpToGoal}
       />
-
-      {/* ゴール期間 + 目標表示 */}
-      <GoalCard goal={goal} goalPeriod={goalPeriod} canEdit={canEdit} openGoalEdit={openGoalEdit} />
 
       {/* KPI総合サマリー + KPI一覧（入れ子） */}
       <KpiListCard
