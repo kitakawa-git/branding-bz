@@ -30,6 +30,7 @@ import {
 } from '@/components/ui/dialog'
 import { getPageCache, setPageCache } from '@/lib/page-cache'
 import { MEMBER_ROLE_OPTIONS } from '@/lib/constants/member-roles'
+import type { TeamRole } from '@/lib/goals/types'
 import { Button } from '@/components/ui/button'
 import { Check, Pencil, Eye, EyeOff, Trash2, Link2, ChevronDown, ChevronUp, Plus, Upload, UserPlus, CheckCircle2, XCircle } from 'lucide-react'
 import { Fab, FabButton } from '@/components/ui/fab'
@@ -83,7 +84,12 @@ type AdminMembersCache = {
   inviteLinks: InviteLink[]
   /** 管理者の auth_id 一覧（admin_users に行がある人） */
   adminAuthIds: string[]
+  /** auth_id → 所属チーム（目標・KPI のチーム。リーダーかどうかも） */
+  teamsByUser: Record<string, MemberTeam[]>
 }
+
+// 所属チーム。区分（経営層/管理職/従業員）とは別軸で、チームごとに管理者が割り当てる（/admin/kpi/goals）
+type MemberTeam = { teamId: string; name: string; role: TeamRole }
 
 // ============================================
 // Helpers
@@ -120,6 +126,7 @@ export default function MembersPage() {
   // 招待リンク
   const [inviteLinks, setInviteLinks] = useState<InviteLink[]>(cached?.inviteLinks ?? [])
   const [adminAuthIds, setAdminAuthIds] = useState<string[]>(cached?.adminAuthIds ?? [])
+  const [teamsByUser, setTeamsByUser] = useState<Record<string, MemberTeam[]>>(cached?.teamsByUser ?? {})
   const [togglingAdminId, setTogglingAdminId] = useState<string | null>(null)
   const [generatingLink, setGeneratingLink] = useState(false)
   const [showInviteLinks, setShowInviteLinks] = useState(false)
@@ -143,7 +150,7 @@ export default function MembersPage() {
     setFetchError('')
 
     // fetchWithRetry: タイムアウト6秒 + リトライ1回（setTimeout リーク防止＋短縮）
-    const [membersRes, linksRes] = await Promise.all([
+    const [membersRes, linksRes, teamsRes, teamMembersRes] = await Promise.all([
       fetchWithRetry(() =>
         supabase
           .from('members')
@@ -158,6 +165,9 @@ export default function MembersPage() {
           .eq('company_id', companyId)
           .order('created_at', { ascending: false })
       ),
+      // 所属チーム（リーダー表示用）。管理者は自社のチームとメンバー割り当てをすべて読める（RLS）
+      supabase.from('teams').select('id, name').eq('company_id', companyId).order('created_at', { ascending: true }),
+      supabase.from('team_members').select('team_id, user_id, role'),
     ])
 
     if (membersRes.error) {
@@ -178,12 +188,24 @@ export default function MembersPage() {
       .filter((m: MemberWithProfile) => m.status !== 'pending')
     const linksData = (linksRes.data ?? []) as InviteLink[]
 
+    const teamName = new Map(((teamsRes.data ?? []) as { id: string; name: string }[]).map(t => [t.id, t.name]))
+    const teamsByUserData: Record<string, MemberTeam[]> = {}
+    ;((teamMembersRes.data ?? []) as { team_id: string; user_id: string; role: TeamRole }[]).forEach(tm => {
+      const name = teamName.get(tm.team_id)
+      if (!name) return
+      ;(teamsByUserData[tm.user_id] ??= []).push({ teamId: tm.team_id, name, role: tm.role })
+    })
+    // リーダーを先に
+    Object.values(teamsByUserData).forEach(list => list.sort((a, b) => Number(b.role === 'leader') - Number(a.role === 'leader')))
+
     setMembers(membersData)
     setInviteLinks(linksData)
+    setTeamsByUser(teamsByUserData)
     setPageCache(cacheKey, {
       members: membersData,
       inviteLinks: linksData,
       adminAuthIds,
+      teamsByUser: teamsByUserData,
     })
     setLoading(false)
   }
@@ -525,6 +547,9 @@ export default function MembersPage() {
     }
   }
 
+  // チームに誰も割り当てていない会社では列を出さない
+  const hasTeams = Object.keys(teamsByUser).length > 0
+
   // ============================================
   // Render
   // ============================================
@@ -767,6 +792,11 @@ export default function MembersPage() {
                   <th className="px-4 py-3 font-medium">名前</th>
                   <th className="px-4 py-3 font-medium">メール</th>
                   <th className="px-4 py-3 font-medium">区分</th>
+                  {hasTeams && (
+                    <th className="px-4 py-3 font-medium whitespace-nowrap">
+                      <Link href="/admin/kpi/goals" className="text-muted-foreground hover:text-foreground no-underline">チーム</Link>
+                    </th>
+                  )}
                   <th className="px-4 py-3 font-medium whitespace-nowrap">名刺</th>
                   <th className="px-4 py-3 font-medium whitespace-nowrap">管理者</th>
                   {/* 「ステータス」「有効」は幅が詰まると1文字ずつ折り返してしまう */}
@@ -809,6 +839,25 @@ export default function MembersPage() {
                           <span className="text-muted-foreground text-xs">-</span>
                         )}
                       </td>
+                      {hasTeams && (
+                        <td className="px-4 py-3">
+                          {/* 区分とは別軸。リーダーはそのチームの目標・KPI を作成・編集できる */}
+                          {teamsByUser[member.auth_id]?.length ? (
+                            <div className="flex flex-wrap gap-1 max-w-[220px]">
+                              {teamsByUser[member.auth_id].map(t => (
+                                <span
+                                  key={t.teamId}
+                                  className={`inline-block py-0.5 px-2 rounded text-xs whitespace-nowrap ${t.role === 'leader' ? 'bg-amber-50 text-amber-700 font-bold' : 'bg-muted text-muted-foreground'}`}
+                                >
+                                  {t.name}{t.role === 'leader' && ' リーダー'}
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground text-xs">-</span>
+                          )}
+                        </td>
+                      )}
                       <td className="px-4 py-3">
                         {profileId ? (
                           <button
