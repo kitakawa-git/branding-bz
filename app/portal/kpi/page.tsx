@@ -547,6 +547,7 @@ export default function KpiPage() {
   const linkFields = (parentId: string, setParentId: (v: string) => void, guidelineId: string, setGuidelineId: (v: string) => void) => (
     <PersonalGoalLinkFields
       teamGoals={goalContext.teamGoals}
+      companyGoals={goalContext.companyGoals}
       teams={goalContext.teams}
       myTeamIds={myTeamIds}
       guidelines={goalContext.guidelines}
@@ -590,6 +591,9 @@ export default function KpiPage() {
     ? goalContext.sharedKpis.filter(k => k.goal_id === goal.parent_goal_id).map(k => ({ id: k.id, title: k.title }))
     : []
   const contributeTitles = Object.fromEntries(goalContext.sharedKpis.map(k => [k.id, k.title]))
+  // つながっている先が会社目標なら、寄与先は会社KPI
+  const parentIsCompany = !!goal?.parent_goal_id && goalContext.companyGoals.some(g => g.id === goal.parent_goal_id)
+  const contributeLabel = parentIsCompany ? '会社KPI' : 'チームKPI'
 
   // ツリーの会社・チーム目標から、そのタブの該当目標へ移る（タブを切り替えてから、描画後にスクロール）
   const jumpToGoal = (target: 'company' | 'team', goalId: string) => {
@@ -646,6 +650,7 @@ export default function KpiPage() {
         openKpiEdit={openKpiEdit}
         handleKpiDelete={handleKpiDelete}
         contributeTitles={contributeTitles}
+        contributeLabel={contributeLabel}
       />
 
       {/* 過去の期間 */}
@@ -719,6 +724,7 @@ export default function KpiPage() {
         saving={saving}
         handleKpiEditSave={handleKpiEditSave}
         contributeOptions={contributeOptions}
+        contributeLabel={`寄与する${contributeLabel}`}
       />
 
       {/* 右下FAB: 目標とKPIを設定する（わたしタブ・目標未設定・設定期間内のみ表示） */}

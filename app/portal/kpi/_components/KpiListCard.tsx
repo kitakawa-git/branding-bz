@@ -35,6 +35,8 @@ type Props = {
   handleKpiDelete: (kpiId: string) => void
   /** 寄与先の上位 KPI の id → タイトル（個人 KPI に「→ チームKPI」を出す） */
   contributeTitles?: Record<string, string>
+  /** 寄与先の呼び名（つながる先がチーム目標なら「チームKPI」、会社目標なら「会社KPI」） */
+  contributeLabel?: string
 }
 
 export function KpiListCard({
@@ -48,6 +50,7 @@ export function KpiListCard({
   openKpiEdit,
   handleKpiDelete,
   contributeTitles = {},
+  contributeLabel = 'チームKPI',
 }: Props) {
   return (
     <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
@@ -101,7 +104,7 @@ export function KpiListCard({
                     {kpi.contributes_to_kpi_id && contributeTitles[kpi.contributes_to_kpi_id] && (
                       <p className="text-[11px] text-muted-foreground m-0 mb-2 flex items-start gap-1">
                         <CornerLeftUp size={12} className="shrink-0 mt-0.5" />
-                        <span>チームKPI：{contributeTitles[kpi.contributes_to_kpi_id]}</span>
+                        <span>{contributeLabel}：{contributeTitles[kpi.contributes_to_kpi_id]}</span>
                       </p>
                     )}
                     <div className="flex items-center gap-3 mb-2">

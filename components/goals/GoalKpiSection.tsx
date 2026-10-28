@@ -37,7 +37,7 @@ import type { Goal } from '@/lib/goals/types'
 const MAX_KPIS = 5
 
 const LEVEL_TEXT = {
-  company: { label: '会社KPI', contributors: 'チームKPI', placeholder: '例: 指名での問い合わせを年間120件にする' },
+  company: { label: '会社KPI', contributors: 'KPI', placeholder: '例: 指名での問い合わせを年間120件にする' },
   team: { label: 'チームKPI', contributors: '個人KPI', placeholder: '例: 導入事例を6本公開' },
   personal: { label: 'KPI', contributors: 'KPI', placeholder: '例: 新規顧客を10社獲得' },
 } as const

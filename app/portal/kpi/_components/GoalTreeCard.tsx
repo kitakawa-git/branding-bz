@@ -1,4 +1,5 @@
 // わたしタブ上部: 会社目標 → チーム目標 → わたしの目標 を縦の線でつなぐツリー（目標名はここで1回だけ出す）
+// 個人目標が会社目標に直接つながっているとき（チームを作らない会社など）は 会社目標 → わたしの目標 の2段
 // 左に幅12pxのレール（点と線）、右に中身。会社・チーム目標を押すとそのタブの該当目標へ移る
 import type { ReactNode } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
@@ -34,7 +35,12 @@ type Props = {
 
 export function GoalTreeCard({ goal, goalPeriod, teamGoals, companyGoals, teams, guidelines, periodLabels, canEdit, openGoalEdit, onJump }: Props) {
   const teamGoal = teamGoals.find(g => g.id === goal.parent_goal_id) ?? null
-  const companyGoal = teamGoal ? companyGoals.find(g => g.id === teamGoal.parent_goal_id) ?? null : null
+  // 会社目標: チーム目標の親、または個人目標が直接つながっている会社目標
+  const directCompanyGoal = teamGoal ? null : companyGoals.find(g => g.id === goal.parent_goal_id) ?? null
+  const companyGoal = teamGoal ? companyGoals.find(g => g.id === teamGoal.parent_goal_id) ?? null : directCompanyGoal
+  const linked = !!teamGoal || !!directCompanyGoal
+  // つなげる先の候補（チーム目標があればそちらを案内。無ければ会社目標）
+  const linkTarget = teamGoals.length > 0 ? 'チーム目標' : companyGoals.length > 0 ? '会社目標' : null
   const teamName = teamGoal ? teams.find(t => t.id === teamGoal.team_id)?.name : undefined
   const companyPeriodLabel = companyGoal?.period_id ? periodLabels[companyGoal.period_id] : undefined
   const guideline = guidelines.find(g => g.id === goal.behavior_guideline_id) ?? null
@@ -42,7 +48,7 @@ export function GoalTreeCard({ goal, goalPeriod, teamGoals, companyGoals, teams,
   return (
     <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
       <CardContent className="p-4 sm:p-5">
-        {teamGoal ? (
+        {linked ? (
           <>
             {/* 1. 会社目標 */}
             <TreeRow rail={<RailDot />}>
@@ -58,24 +64,28 @@ export function GoalTreeCard({ goal, goalPeriod, teamGoals, companyGoals, teams,
                 </>
               )}
             </TreeRow>
-            {/* 2. チーム目標 */}
-            <TreeRow rail={<RailDot />}>
-              <span className="text-xs text-muted-foreground">チーム目標{teamName ? `・${teamName}` : ''}</span>
-              <GoalLink title={teamGoal.title} onClick={() => onJump('team', teamGoal.id)} />
-            </TreeRow>
+            {/* 2. チーム目標（会社目標に直接つながっているときは無し） */}
+            {teamGoal && (
+              <TreeRow rail={<RailDot />}>
+                <span className="text-xs text-muted-foreground">チーム目標{teamName ? `・${teamName}` : ''}</span>
+                <GoalLink title={teamGoal.title} onClick={() => onJump('team', teamGoal.id)} />
+              </TreeRow>
+            )}
           </>
         ) : (
-          // チーム目標につながっていない: 1・2行目の代わりに点線の箱
+          // どこにもつながっていない: 1・2行目の代わりに点線の箱
           <TreeRow rail={<RailDot dashed />}>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-lg border border-dashed border-muted-foreground/40 bg-background px-3.5 py-2.5">
               <span className="text-sm text-muted-foreground">
-                {teamGoals.length > 0
+                {linkTarget === 'チーム目標'
                   ? 'チーム目標とつなげると、会社目標までの道すじが見えます'
-                  : 'チーム目標ができると、つなげて会社目標までの道すじが見られます'}
+                  : linkTarget === '会社目標'
+                    ? '会社目標とつなげると、会社の目標とのつながりが見えます'
+                    : '会社目標やチーム目標ができると、つなげて道すじが見られます'}
               </span>
-              {canEdit && teamGoals.length > 0 && (
+              {canEdit && linkTarget && (
                 <Button size="sm" className="h-9 gap-1.5 shrink-0 self-start sm:self-auto" onClick={openGoalEdit}>
-                  <Link2 size={14} />チーム目標とつなげる
+                  <Link2 size={14} />{linkTarget}とつなげる
                 </Button>
               )}
             </div>
@@ -105,7 +115,7 @@ export function GoalTreeCard({ goal, goalPeriod, teamGoals, companyGoals, teams,
                 <CalendarDays size={16} className="shrink-0" />
                 <span>{PERIOD_TYPE_LABELS[goalPeriod.type]}（{formatDateShort(goalPeriod.start_date)}〜{formatDateShort(goalPeriod.end_date)}）</span>
                 <PeriodBadge goalPeriod={goalPeriod} />
-                {canEdit && teamGoal && (
+                {canEdit && linked && (
                   <button type="button" onClick={openGoalEdit} className="ml-auto text-[13px] text-ds-app-accent hover:underline bg-transparent border-0 p-0 cursor-pointer">
                     つながりを変える
                   </button>
