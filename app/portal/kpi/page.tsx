@@ -314,12 +314,16 @@ export default function KpiPage() {
         behavior_guideline_id: setupGuidelineId === NO_LINK ? null : setupGuidelineId,
       }
 
+      let savedGoal: PersonalGoal | null = null
       if (goalId) {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('goals')
           .update({ ...setupLinks, title: setupGoalText.trim(), updated_at: new Date().toISOString() })
           .eq('id', goalId)
+          .select(GOAL_COLUMNS)
+          .single()
         if (error) throw error
+        savedGoal = data as PersonalGoal
         // 目標の作り直し。ここは 0 件でも正常（KPI をまだ作っていない場合）なので、
         // RLS 0行対策の判定は入れずに error だけ見る
         const { error: kpiDelErr } = await supabase
@@ -327,7 +331,7 @@ export default function KpiPage() {
         if (kpiDelErr) throw kpiDelErr
       } else {
         goalId = crypto.randomUUID()
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('goals')
           .insert({
             ...setupLinks,
@@ -341,7 +345,10 @@ export default function KpiPage() {
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           })
+          .select(GOAL_COLUMNS)
+          .single()
         if (error) throw error
+        savedGoal = data as PersonalGoal
       }
 
       const kpiPayloads = validKpis.map(k => ({
@@ -357,15 +364,18 @@ export default function KpiPage() {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       }))
-      const { error: kpiErr } = await supabase.from('goal_kpis').insert(kpiPayloads)
+      const { data: savedKpis, error: kpiErr } = await supabase.from('goal_kpis').insert(kpiPayloads).select('*')
       if (kpiErr) {
         console.error('[KPI] KPI insert error:', kpiErr)
         throw kpiErr
       }
 
+      // 保存した内容を先に画面へ出し、全体の取り直しは裏で（待たせない）
+      setGoal(savedGoal)
+      setKpis((savedKpis || []) as GoalKpi[])
       toast.success('目標とKPIを保存しました')
       setSetupStep(0)
-      await fetchData()
+      void fetchData()
     } catch (err) {
       console.error('[KPI] 保存エラー:', err)
       toast.error('保存に失敗しました')
@@ -388,7 +398,7 @@ export default function KpiPage() {
     if (!goal || !goalEditText.trim()) return
     setSaving(true)
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('goals')
         .update({
           title: goalEditText.trim(),
@@ -397,10 +407,14 @@ export default function KpiPage() {
           updated_at: new Date().toISOString(),
         })
         .eq('id', goal.id)
+        .select(GOAL_COLUMNS)
+        .single()
       if (error) throw error
+      // 保存した内容を先に画面へ出し、全体の取り直しは裏で（つながりを変えたときの KPI の寄与先の解除などもそこで反映）
+      setGoal(data as PersonalGoal)
       toast.success('目標を更新しました')
       setGoalEditOpen(false)
-      await fetchData()
+      void fetchData()
     } catch { toast.error('更新に失敗しました') }
     finally { setSaving(false) }
   }
@@ -458,23 +472,26 @@ export default function KpiPage() {
         updated_at: new Date().toISOString(),
       }
       if (editingKpiId) {
-        const { error } = await supabase.from('goal_kpis').update(payload).eq('id', editingKpiId)
+        const { data, error } = await supabase.from('goal_kpis').update(payload).eq('id', editingKpiId).select('*').single()
         if (error) throw error
+        setKpis(prev => prev.map(k => (k.id === editingKpiId ? (data as GoalKpi) : k)))
         toast.success('KPIを更新しました')
       } else {
-        const { error } = await supabase.from('goal_kpis').insert({
+        const { data, error } = await supabase.from('goal_kpis').insert({
           ...payload,
           id: crypto.randomUUID(),
           goal_id: goal.id,
           company_id: companyId,
           user_id: user.id,
           created_at: new Date().toISOString(),
-        })
+        }).select('*').single()
         if (error) throw error
+        setKpis(prev => [...prev, data as GoalKpi])
         toast.success('KPIを追加しました')
       }
       setKpiEditOpen(false)
-      await fetchData()
+      // 全体の取り直しは裏で（画面は上で先に反映済み）
+      void fetchData()
     } catch { toast.error('保存に失敗しました') }
     finally { setSaving(false) }
   }
@@ -488,8 +505,9 @@ export default function KpiPage() {
         toast.error('削除する権限がありません')
         return
       }
+      setKpis(prev => prev.filter(k => k.id !== kpiId))
       toast.success('KPIを削除しました')
-      await fetchData()
+      void fetchData()
     } catch { toast.error('削除に失敗しました') }
   }
 
