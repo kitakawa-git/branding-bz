@@ -17,6 +17,7 @@ export default function robots(): MetadataRoute.Robots {
           '/tools/stp/app/',
           '/tools/persona/app/',
           '/tools/personality/app/',
+          '/tools/logo-checker/app/',
           '/tools/colors/auth/',
           '/tools/stp/auth/',
           '/tools/persona/auth/',

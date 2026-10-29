@@ -17,6 +17,7 @@ const SUBTITLES: Record<string, string> = {
   colors: 'ブランドカラー定義ツールを利用するにはログインが必要です',
   stp: 'STP分析ツールを利用するにはログインが必要です',
   personality: 'ブランドパーソナリティ診断を利用するにはログインが必要です',
+  'logo-checker': 'ロゴ規定ツールを利用するにはログインが必要です',
 }
 
 export default function PortalAuthPage() {

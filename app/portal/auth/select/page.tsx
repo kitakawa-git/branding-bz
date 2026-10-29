@@ -6,7 +6,7 @@
 import { Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { Palette, BarChart3, UserCircle, Fingerprint, Building2, ChevronDown, Plus, Clock, CheckCircle2, Trash2, Loader2 } from 'lucide-react'
+import { Palette, BarChart3, UserCircle, Fingerprint, Ruler, Building2, ChevronDown, Plus, Clock, CheckCircle2, Trash2, Loader2 } from 'lucide-react'
 
 interface SessionSummary {
   id: string
@@ -81,6 +81,16 @@ const SERVICES: ServiceCard[] = [
     highlightButtonLabel: '続ける',
   },
   {
+    // 保存する作業データが無いツールなので、セッション履歴（SESSION_TOOLS）には載せない
+    id: 'logo-checker',
+    Icon: Ruler,
+    title: 'ロゴ規定ツール',
+    description: 'ロゴの最小サイズを実寸で測り、クリアスペースと使用シーンまで検証して使用規定にまとめます',
+    href: '/tools/logo-checker/app',
+    buttonLabel: '始める',
+    highlightButtonLabel: '使う',
+  },
+  {
     id: 'platform',
     Icon: Building2,
     // 遷移先はアクセス権で分かれる（あり: /portal のダッシュボード、なし: トップ）。
@@ -99,6 +109,7 @@ const CARD_BG: Record<string, string> = {
   persona: 'linear-gradient(160deg,#0f172a,#312e81 60%,#a855f7)',
   colors: 'conic-gradient(from 200deg at 60% 40%,#f43f5e,#8b5cf6,#22d3ee,#f43f5e)',
   personality: 'radial-gradient(120% 120% at 25% 20%,#10b981 0%,#0f172a 65%)',
+  'logo-checker': 'linear-gradient(140deg,#E4007F 0%,#4c1d95 50%,#0f172a 85%)',
   platform: 'linear-gradient(135deg, #16181f 0%, #0a0b10 100%)',
 }
 

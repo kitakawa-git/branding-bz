@@ -1,4 +1,4 @@
-import { Target, UserCircle, Palette, Fingerprint, type LucideIcon } from 'lucide-react'
+import { Target, UserCircle, Palette, Fingerprint, Ruler, type LucideIcon } from 'lucide-react'
 
 /* 構築ツール（無料）の共通データソース。
    トップページの「無料ツール」セクションと、/features の「構築」セクションで共有する。 */
@@ -42,5 +42,12 @@ export const tools: Tool[] = [
     icon: Fingerprint,
     d: 'ブランドの人格を|10問で診断。|Aaker 5次元と|12アーキタイプで|個性を捉えます。',
     color: 'radial-gradient(120% 120% at 25% 20%,#10b981 0%,#0f172a 65%)',
+  },
+  {
+    href: '/tools/logo-checker',
+    label: 'ロゴ規定ツール',
+    icon: Ruler,
+    d: 'ロゴの最小サイズを|実寸で測り、|余白と使用シーンまで|検証して、|使用規定に|まとめます。',
+    color: 'linear-gradient(140deg,#E4007F 0%,#4c1d95 50%,#0f172a 85%)',
   },
 ]

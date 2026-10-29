@@ -34,6 +34,7 @@ const STATIC_PAGES: Array<{
   { path: '/tools/stp', lastModified: '2026-07-14', changeFrequency: 'monthly', priority: 0.9 },
   { path: '/tools/persona', lastModified: '2026-07-14', changeFrequency: 'monthly', priority: 0.9 },
   { path: '/tools/personality', lastModified: '2026-07-14', changeFrequency: 'monthly', priority: 0.9 },
+  { path: '/tools/logo-checker', lastModified: '2026-10-29', changeFrequency: 'monthly', priority: 0.9 },
   { path: '/terms', lastModified: '2026-07-14', changeFrequency: 'yearly', priority: 0.3 },
   { path: '/privacy-policy', lastModified: '2026-07-14', changeFrequency: 'yearly', priority: 0.3 },
   { path: '/tokusho', lastModified: '2026-07-14', changeFrequency: 'yearly', priority: 0.3 },

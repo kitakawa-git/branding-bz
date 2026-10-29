@@ -572,7 +572,7 @@ function Tools() {
             無料登録で、各ツールを月3回まで。<br className="sm:hidden" />ブランディングの第一歩を、ここから。
           </p>
         </div>
-        <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {tools.map((t) => (
             <ToolCard key={t.href} tool={t} />
           ))}
