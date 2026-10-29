@@ -258,7 +258,7 @@ export default function LpFeaturesPage() {
             {/* 「構築」レイヤーには、すぐ試せる無料の構築ツールカードも併置する */}
             {g.layer === '構築' && (
               <div className={g.features.length > 0 ? 'mt-10' : ''}>
-                <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+                <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
                   {tools.map((t) => (
                     <ToolCard key={t.href} tool={t} />
                   ))}

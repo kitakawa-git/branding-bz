@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import { sendGAEvent } from '@next/third-parties/google'
-import { Menu, X, ChevronDown, Target, UserCircle, Palette, Fingerprint, CalendarDays, type LucideIcon } from 'lucide-react'
+import { Menu, X, ChevronDown, Target, UserCircle, Palette, Fingerprint, type LucideIcon } from 'lucide-react'
 import { ctaClass } from '@/components/lp/cta'
 
 /* 新デザイン（/lp 系）の共通ヘッダー。
@@ -24,7 +24,6 @@ const toolItems: { href: string; label: string; icon: LucideIcon }[] = [
   { href: '/tools/persona', label: 'ペルソナビルダー', icon: UserCircle },
   { href: '/tools/colors', label: 'ブランドカラー定義', icon: Palette },
   { href: '/tools/personality', label: 'パーソナリティ診断', icon: Fingerprint },
-  { href: '/tools/sorou', label: '日程調整', icon: CalendarDays },
 ]
 
 const linkClass =

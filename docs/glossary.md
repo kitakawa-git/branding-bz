@@ -50,7 +50,6 @@
 | ブランドカラー定義ツール | – | Free 以上 | ブランドカラー定義 / カラーツール |
 | ペルソナビルダーツール | – | Free 以上 | ペルソナビルダー |
 | パーソナリティ診断ツール | – | Free 以上 | パーソナリティ診断 / ブランドパーソナリティ診断 |
-| 日程調整ツール | – | Free 以上（作成は構築ツールの月3回枠。回答はログイン不要） | 日程調整 / sorou（URL・app_type だけで使う） |
 | CIマニュアル出力 | `ciManual` | Standard 以上 | CIマニュアルPDF |
 | ブランド掲示 | `brandGuidelinesEdit` ほか | Free 以上（編集＋閲覧） | ブランドガイドライン / ブランドページ |
 | Good Action投稿 | `timeline` | Standard 以上 | Good Job（旧称） / Good Actionタイムライン（旧称） / タイムライン投稿 |
