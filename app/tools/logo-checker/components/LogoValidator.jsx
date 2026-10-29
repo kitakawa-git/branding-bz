@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useMemo } from "react";
+import { StepProgressBar } from "@/components/shared/StepProgressBar";
 
 /* =========================================================================
    ロゴ検証ツール
@@ -40,11 +41,11 @@ const CONDITIONS = [
 ];
 
 const STEPS = [
-  { key: "intake",  label: "取り込み", sub: "アセットと実寸校正" },
-  { key: "measure", label: "測定",     sub: "版 × 条件の限界" },
-  { key: "rules",   label: "規定",     sub: "使用ルールの導出" },
-  { key: "verify",  label: "検証",     sub: "使用シーンでの確認" },
-  { key: "spec",    label: "仕様",     sub: "ガイドライン出力" },
+  { key: "intake",  label: "取り込み", sub: "アセットと実寸校正", desc: "画面を実寸に合わせてから、ロゴの各版（シンボル・ロゴタイプ・組み合わせ）を読み込みます。" },
+  { key: "measure", label: "測定",     sub: "版 × 条件の限界",   desc: "版ごとに、出力条件を切り替えながら読める限界のサイズを決めます。" },
+  { key: "rules",   label: "規定",     sub: "使用ルールの導出",   desc: "測定した最小サイズの一覧と、クリアスペース（余白）の規定を決めます。" },
+  { key: "verify",  label: "検証",     sub: "使用シーンでの確認", desc: "アプリアイコン・ウェブヘッダー・ファビコン・名刺に当て、各シーンで収まる版を自動で選んで表示します。赤が出たら、規定か使い方のどちらかを見直す合図です。" },
+  { key: "spec",    label: "仕様",     sub: "ガイドライン出力",   desc: "使用規定をまとめます。Markdown でコピーして、ブランドガイドラインに貼れます。" },
 ];
 
 const LADDER_MM = [2, 3, 4, 5, 6, 8, 10, 13, 16, 20, 25];
@@ -365,7 +366,7 @@ const condBg = (cond) => (cond === "knockout" ? "#141414" : "#ffffff");
 function Field({ label, children, hint }) {
   return (
     <div>
-      {label ? <label className="text-[11px] text-neutral-500 block mb-1">{label}</label> : null}
+      {label ? <label className="text-xs font-bold text-foreground block mb-1.5">{label}</label> : null}
       {children}
       {hint && <div className="text-[10px] text-neutral-400 mt-1">{hint}</div>}
     </div>
@@ -379,7 +380,7 @@ function Slider({ label, val, set, min, max, step, unit, sub, width = "w-40" }) 
         <input type="range" min={min} max={max} step={step} value={val}
           onChange={(e) => set(parseFloat(e.target.value))} className={width} />
         <span className="font-mono text-[11px] w-28 shrink-0 whitespace-nowrap">
-          <span className="text-blue-700 font-semibold">{val}{unit}</span>
+          <span className="text-ds-app-accent font-semibold">{val}{unit}</span>
           {sub && <span className="text-neutral-400"> · {sub}</span>}
         </span>
       </div>
@@ -389,11 +390,11 @@ function Slider({ label, val, set, min, max, step, unit, sub, width = "w-40" }) 
 
 function Panel({ title, desc, children, right }) {
   return (
-    <section className="rounded-lg border border-neutral-200 bg-white p-5">
+    <section className="rounded-xl border bg-[hsl(0_0%_97%)] p-5">
       <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
         <div>
-          <h2 className="text-[13px] font-semibold text-neutral-800">{title}</h2>
-          {desc && <p className="text-[10px] text-neutral-400 mt-1 leading-relaxed max-w-xl">{desc}</p>}
+          <h2 className="text-sm font-bold text-foreground">{title}</h2>
+          {desc && <p className="text-[13px] text-muted-foreground mt-1 leading-relaxed max-w-2xl">{desc}</p>}
         </div>
         {right}
       </div>
@@ -404,8 +405,8 @@ function Panel({ title, desc, children, right }) {
 
 function Empty({ children, action }) {
   return (
-    <div className="rounded-lg border border-dashed border-neutral-200 bg-white/50 px-8 py-14 text-center">
-      <p className="text-[12px] text-neutral-400 leading-relaxed max-w-md mx-auto">{children}</p>
+    <div className="rounded-xl border border-dashed bg-[hsl(0_0%_97%)] px-8 py-14 text-center">
+      <p className="text-sm text-muted-foreground leading-relaxed max-w-md mx-auto">{children}</p>
       {action}
     </div>
   );
@@ -452,6 +453,13 @@ export default function LogoValidator() {
     setComposition((c) => { const n = { ...c }; delete n[k]; return n; });
   };
 
+  const stepIndex = Math.max(0, STEPS.findIndex((x) => x.key === step));
+  const goStep = (delta) => {
+    const next = STEPS[stepIndex + delta];
+    if (!next) return;
+    setStep(next.key);
+    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+  };
   const hasAssets = Object.keys(assets).length > 0;
   const hasMinima = Object.values(minima).some((v) => v != null);
   const done = {
@@ -463,20 +471,20 @@ export default function LogoValidator() {
   };
 
   return (
-    <div className="w-full min-h-screen bg-neutral-50 text-neutral-900">
+    <div className="w-full text-foreground">
       <style>{`
         input[type=range]{
-          accent-color:#2563eb;
+          accent-color:var(--ds-app-accent);
           height:20px;
           cursor:pointer;
         }
         input[type=range]:focus-visible{
-          outline:2px solid #2563eb;
+          outline:2px solid var(--ds-app-accent);
           outline-offset:2px;
           border-radius:4px;
         }
         input[type=checkbox]{
-          accent-color:#2563eb;
+          accent-color:var(--ds-app-accent);
           width:14px;
           height:14px;
           cursor:pointer;
@@ -484,54 +492,21 @@ export default function LogoValidator() {
         input[type=color]{cursor:pointer}
       `}</style>
 
-      <header className="bg-white border-b border-neutral-200">
-        <div className="max-w-5xl mx-auto px-6 pt-4">
-          <div className="flex items-end justify-between mb-4">
-            <div>
-              <div className="text-[10px] tracking-[0.22em] uppercase text-neutral-400 font-medium">
-                Brand Asset QA
-              </div>
-              <h1 className="text-lg font-semibold tracking-tight">ロゴ使用規定の検証</h1>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className={`text-[10px] font-mono px-2 py-1 rounded ${
-                calibrated ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
-              }`}>
-                {calibrated ? `校正済 ${ppmm.toFixed(2)}px/mm` : "実寸未校正"}
-              </span>
-              <span className="text-[10px] font-mono text-neutral-400">
-                {Object.keys(assets).length}/4 版
-              </span>
-            </div>
+      <div className="mx-auto max-w-4xl px-5 py-8">
+        <StepProgressBar steps={STEPS.map((x) => ({ label: x.label }))} currentStep={stepIndex + 1} className="mb-8" />
+
+        <div className="mb-2 flex flex-wrap items-end justify-between gap-2">
+          <h1 className="text-2xl font-bold text-foreground">{`Step ${stepIndex + 1}: ${STEPS[stepIndex].label}`}</h1>
+          <div className="flex items-center gap-2">
+            <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
+              calibrated ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
+            }`}>
+              {calibrated ? `実寸校正済み ${ppmm.toFixed(2)}px/mm` : "実寸未校正"}
+            </span>
+            <span className="text-xs text-muted-foreground">取り込み済み {Object.keys(assets).length}/4 版</span>
           </div>
-
-          {/* ステップナビ */}
-          <nav className="flex -mb-px">
-            {STEPS.map((s, i) => {
-              const on = step === s.key;
-              return (
-                <button key={s.key} onClick={() => setStep(s.key)}
-                  className={`group flex-1 text-left px-3 py-2.5 border-b-2 transition-colors ${
-                    on ? "border-blue-600" : "border-transparent hover:bg-neutral-50"
-                  }`}>
-                  <div className="flex items-center gap-2">
-                    <span className={`w-4 h-4 rounded-full text-[9px] font-mono flex items-center justify-center shrink-0 ${
-                      done[s.key] ? "bg-blue-600 text-white"
-                        : on ? "bg-blue-600 text-white" : "bg-neutral-200 text-neutral-500"
-                    }`}>{done[s.key] ? "✓" : i + 1}</span>
-                    <span className={`text-[12px] font-medium ${on ? "text-neutral-900" : "text-neutral-500"}`}>
-                      {s.label}
-                    </span>
-                  </div>
-                  <div className="text-[9px] text-neutral-400 mt-0.5 pl-6 hidden sm:block">{s.sub}</div>
-                </button>
-              );
-            })}
-          </nav>
         </div>
-      </header>
-
-      <div className="max-w-5xl mx-auto px-6 py-6">
+        <p className="mb-5 text-[13px] text-muted-foreground">{STEPS[stepIndex].desc}</p>
         {step === "intake" && (
           <IntakeStep assets={assets} setAsset={setAsset} clearSlot={clearSlot}
             ppmm={ppmm} setPpmm={setPpmm} calibrated={calibrated} setCalibrated={setCalibrated}
@@ -548,7 +523,7 @@ export default function LogoValidator() {
               derived={derived} setDerived={setDerived} />
           ) : (
             <Empty action={<button onClick={() => setStep("intake")}
-              className="mt-3 text-[11px] px-3 py-1.5 rounded bg-blue-600 text-white">取り込みへ戻る</button>}>
+              className="mt-3 inline-flex h-9 items-center justify-center rounded-full bg-primary px-4 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90">取り込みへ戻る</button>}>
               測定する版がありません。先にアセットを取り込んでください。
             </Empty>
           )
@@ -570,11 +545,25 @@ export default function LogoValidator() {
             clearRule={clearRule} ppmm={ppmm} calibrated={calibrated} scene={scene}
             derived={derived} />
         )}
-      </div>
 
-      <footer className="max-w-5xl mx-auto px-6 py-5 text-[10px] text-neutral-300 leading-relaxed">
-        「ロゴマーク」は定義が揺れる語のため、本ツールでは シンボルマーク（Symbol）／ロゴタイプ（Wordmark）／組み合わせ（Lockup）で区別しています。
-      </footer>
+        <p className="mt-6 text-xs text-muted-foreground">
+          「ロゴマーク」は定義が揺れる語のため、本ツールでは シンボルマーク（Symbol）／ロゴタイプ（Wordmark）／組み合わせ（Lockup）で区別しています。
+        </p>
+
+        {/* ステップの移動（他の構築ツールと同じ下部固定のナビゲーション） */}
+        <div className="sticky bottom-0 -mx-5 mt-6 flex items-center justify-between gap-3 border-t border-border bg-background/80 px-5 py-3 backdrop-blur">
+          <button type="button" onClick={() => goStep(-1)} disabled={stepIndex === 0}
+            className="inline-flex h-9 items-center justify-center rounded-full border border-input bg-background px-4 text-sm font-medium shadow-sm transition-colors hover:bg-accent disabled:pointer-events-none disabled:opacity-40">
+            ← 戻る
+          </button>
+          {stepIndex < STEPS.length - 1 && (
+            <button type="button" onClick={() => goStep(1)}
+              className="inline-flex h-9 items-center justify-center rounded-full bg-primary px-4 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90">
+              次のステップへ →
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -592,14 +581,14 @@ function IntakeStep({ assets, setAsset, clearSlot, ppmm, setPpmm, calibrated, se
         title="実寸校正"
         desc="以降のすべての mm 表記がこの値に依存します。最初に一度だけ合わせてください。"
         right={
-          <span className={`text-[10px] font-mono px-2 py-1 rounded ${
+          <span className={`text-[10px] font-mono px-2 py-1 rounded-full ${
             calibrated ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
           }`}>{calibrated ? "完了" : "未実施"}</span>
         }>
         <p className="text-[11px] text-neutral-500 mb-3">
           下のバーの長さを、手元のカード（クレジットカード・運転免許証）の横幅に合わせてください。
         </p>
-        <div className="h-9 rounded border border-neutral-300 bg-neutral-100 flex items-center justify-center text-[10px] text-neutral-400 mb-3"
+        <div className="h-9 rounded-lg border border-neutral-300 bg-neutral-100 flex items-center justify-center text-[10px] text-neutral-400 mb-3"
           style={{ width: CARD_MM * ppmm }}>85.6 mm</div>
         <div className="flex items-center gap-4">
           <input type="range" min={2.5} max={6} step={0.001} value={ppmm}
@@ -617,8 +606,8 @@ function IntakeStep({ assets, setAsset, clearSlot, ppmm, setPpmm, calibrated, se
           <div className="flex gap-1">
             {[["split", "一体データを分割"], ["individual", "個別に読み込む"]].map(([k, l]) => (
               <button key={k} onClick={() => setMode(k)}
-                className={`text-[10px] px-2.5 py-1.5 rounded border ${
-                  mode === k ? "bg-blue-600 text-white border-blue-600" : "border-neutral-300 text-neutral-600 hover:bg-neutral-50"
+                className={`inline-flex h-9 items-center justify-center gap-1.5 rounded-full border px-3.5 text-xs font-medium transition-colors ${
+                  mode === k ? "bg-ds-app-accent text-white border-ds-app-accent" : "border-border bg-background text-foreground hover:bg-muted"
                 }`}>{l}</button>
             ))}
           </div>
@@ -629,9 +618,9 @@ function IntakeStep({ assets, setAsset, clearSlot, ppmm, setPpmm, calibrated, se
               const a = assets[s.key];
               const over = dragSlot === s.key;
               return (
-                <div key={s.key} className="rounded border border-neutral-200 p-3">
+                <div key={s.key} className="rounded-lg bg-white border border-neutral-200 p-3">
                   <div className="text-[11px] font-medium text-neutral-800">{s.label}</div>
-                  <div className="text-[9px] font-mono text-neutral-400 mb-2">{s.en}</div>
+                  <div className="text-[11px] font-mono text-neutral-400 mb-2">{s.en}</div>
                   <div
                     onDragEnter={(e) => { e.preventDefault(); setDragSlot(s.key); }}
                     onDragOver={(e) => { e.preventDefault(); setDragSlot(s.key); }}
@@ -641,16 +630,16 @@ function IntakeStep({ assets, setAsset, clearSlot, ppmm, setPpmm, calibrated, se
                       const r = await readAsset(e.dataTransfer?.files?.[0]);
                       if (r) setAsset(s.key, r);
                     }}
-                    className={`h-20 flex items-center justify-center rounded border-2 border-dashed mb-2 p-2 transition-colors ${
-                      over ? "border-blue-600 bg-blue-50" : "border-neutral-200 bg-neutral-50"
+                    className={`h-20 flex items-center justify-center rounded-lg border-2 border-dashed mb-2 p-2 transition-colors ${
+                      over ? "border-ds-app-accent bg-blue-50" : "border-neutral-200 bg-neutral-50"
                     }`}>
                     {over
                       ? <span className="text-[10px] text-neutral-600">ここに落とす</span>
                       : a ? <img src={a.url} alt="" style={{ maxHeight: 60, maxWidth: "100%" }} />
-                          : <span className="text-[9px] text-neutral-300 text-center leading-snug">{s.hint}</span>}
+                          : <span className="text-[11px] text-neutral-300 text-center leading-snug">{s.hint}</span>}
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <label className="flex-1 text-center cursor-pointer text-[10px] font-medium px-2 py-1 rounded bg-neutral-100 hover:bg-neutral-200 text-neutral-700">
+                    <label className="flex-1 text-center cursor-pointer text-[10px] font-medium px-2 py-1 rounded-full bg-neutral-100 hover:bg-neutral-200 text-neutral-700">
                       {a ? "差し替え" : "選択"}
                       <input type="file" accept=".svg,image/svg+xml,image/png,image/jpeg" className="hidden"
                         onChange={async (e) => {
@@ -673,7 +662,7 @@ function IntakeStep({ assets, setAsset, clearSlot, ppmm, setPpmm, calibrated, se
       {count > 0 && (
         <div className="flex justify-end">
           <button onClick={onNext}
-            className="text-[12px] px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700">
+            className="inline-flex h-9 items-center justify-center rounded-full bg-primary px-4 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90">
             測定へ進む
           </button>
         </div>
@@ -688,7 +677,7 @@ function IntakeStep({ assets, setAsset, clearSlot, ppmm, setPpmm, calibrated, se
       <span className="text-[10px] text-neutral-400 shrink-0">{k}</span>
       <span className="flex-1 border-b border-dotted border-neutral-200" />
       <span className="text-[10px] font-mono text-neutral-700">{v}</span>
-      {note && <span className="text-[9px] text-neutral-400">{note}</span>}
+      {note && <span className="text-[11px] text-neutral-400">{note}</span>}
     </div>
   );
 }
@@ -863,7 +852,7 @@ function SplitTool({ onAssign, assets, ppmm, onNext }) {
   // 描画中に作るコンポーネントは描画ごとに作り直され状態が消えるため、関数として呼ぶ（中でフックは使っていない）
   const renderPartCard = ({ part, side, roleKey }) => {
     if (!part) return (
-      <div className="rounded border border-neutral-200 p-3 flex items-center justify-center h-56">
+      <div className="rounded-lg bg-white border border-neutral-200 p-3 flex items-center justify-center h-56">
         <span className="text-[10px] text-neutral-300">この側に要素がありません</span>
       </div>
     );
@@ -872,17 +861,17 @@ function SplitTool({ onAssign, assets, ppmm, onNext }) {
     const inferred = part.infer;
     const saved = justSaved.includes(role) && assets[role];
     return (
-      <div className="rounded border border-neutral-200 p-3">
+      <div className="rounded-lg bg-white border border-neutral-200 p-3">
         <div className="flex items-center justify-between mb-2">
           <span className="text-[11px] font-medium text-neutral-700">{side}</span>
           {inferred && (
-            <span className="text-[9px] px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-500">
+            <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-neutral-100 text-neutral-500">
               {inferred.confident ? "自動判定" : "推定（要確認）"}
             </span>
           )}
         </div>
 
-        <div className="h-20 flex items-center justify-center bg-neutral-50 border border-neutral-100 rounded mb-2 p-2">
+        <div className="h-20 flex items-center justify-center bg-neutral-50 border border-neutral-100 rounded-lg mb-2 p-2">
           <img src={part.url} alt="" style={{ maxHeight: 68, maxWidth: "100%" }} />
         </div>
 
@@ -895,7 +884,7 @@ function SplitTool({ onAssign, assets, ppmm, onNext }) {
         </div>
 
         {inferred && (
-          <p className="text-[9px] text-neutral-400 leading-relaxed mb-2">
+          <p className="text-[11px] text-neutral-400 leading-relaxed mb-2">
             {inferred.why.join(" / ")} → {SLOTS.find((s) => s.key === inferred.role)?.label}と推定
           </p>
         )}
@@ -904,16 +893,16 @@ function SplitTool({ onAssign, assets, ppmm, onNext }) {
           {SLOTS.map((s) => (
             <button key={s.key}
               onClick={() => { setTouched(true); setRoles((r) => ({ ...r, [roleKey]: s.key })); }}
-              className={`flex-1 text-[9px] px-1 py-1 rounded border ${
-                role === s.key ? "bg-blue-600 text-white border-blue-600" : "border-neutral-300 text-neutral-500 hover:bg-neutral-50"
+              className={`flex-1 inline-flex h-8 items-center justify-center rounded-full border px-1 text-[11px] font-medium transition-colors ${
+                role === s.key ? "bg-ds-app-accent text-white border-ds-app-accent" : "border-border bg-background text-foreground hover:bg-muted"
               }`}>{s.label.replace("組み合わせ・", "組")}</button>
           ))}
         </div>
 
         <button onClick={() => saveOne(roleKey, role)}
-          className={`w-full text-[10px] px-2 py-1.5 rounded font-medium ${
+          className={`w-full inline-flex h-9 items-center justify-center rounded-full px-3 text-xs font-medium transition-colors ${
             saved ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                  : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
+                  : "border border-input bg-background text-foreground hover:bg-accent"
           }`}>
           {saved ? `✓ ${SLOTS.find((s) => s.key === role)?.label}に登録済` : `${SLOTS.find((s) => s.key === role)?.label}に登録`}
         </button>
@@ -925,7 +914,7 @@ function SplitTool({ onAssign, assets, ppmm, onNext }) {
     <div className="space-y-4">
       <div {...dragProps}
         className={`rounded-lg border-2 border-dashed transition-colors ${
-          drag ? "border-blue-600 bg-blue-50" : "border-neutral-300 bg-white"
+          drag ? "border-ds-app-accent bg-blue-50" : "border-neutral-300 bg-white"
         } ${src ? "px-4 py-3" : "px-6 py-10"}`}>
         {src ? (
           <div className="flex flex-wrap items-center gap-3">
@@ -936,7 +925,7 @@ function SplitTool({ onAssign, assets, ppmm, onNext }) {
                 {drag ? "ここに落とすと差し替えます" : "別のファイルをここにドロップしても差し替えられます"}
               </div>
             </div>
-            <label className="cursor-pointer text-[10px] font-medium px-2.5 py-1.5 rounded bg-neutral-100 hover:bg-neutral-200 text-neutral-700 shrink-0">
+            <label className="cursor-pointer text-[10px] font-medium px-2.5 py-1.5 rounded-full bg-neutral-100 hover:bg-neutral-200 text-neutral-700 shrink-0">
               ファイルを選択
               <input type="file" accept="image/png,image/jpeg,image/svg+xml,.svg" className="hidden"
                 onChange={(e) => { const f = e.target.files[0]; if (accept(f)) load(f); }} />
@@ -944,11 +933,11 @@ function SplitTool({ onAssign, assets, ppmm, onNext }) {
           </div>
         ) : (
           <div className="text-center">
-            <p className="text-[12px] text-neutral-600 font-medium">
+            <p className="text-sm text-neutral-600 font-medium">
               {drag ? "ここに落としてください" : "一体データをドラッグ＆ドロップ"}
             </p>
             <p className="text-[10px] text-neutral-400 mt-1">SVG / PNG / JPG</p>
-            <label className="inline-block mt-3 cursor-pointer text-[11px] font-medium px-3 py-1.5 rounded bg-blue-600 text-white hover:bg-blue-700">
+            <label className="inline-block mt-3 cursor-pointer text-[11px] font-medium px-3 py-1.5 rounded-full bg-ds-app-accent text-white hover:bg-ds-app-accent-hover">
               ファイルを選択
               <input type="file" accept="image/png,image/jpeg,image/svg+xml,.svg" className="hidden"
                 onChange={(e) => { const f = e.target.files[0]; if (accept(f)) load(f); }} />
@@ -967,8 +956,8 @@ function SplitTool({ onAssign, assets, ppmm, onNext }) {
               <div className="flex gap-1">
                 {[["x", "縦線で割る"], ["y", "横線で割る"]].map(([k, l]) => (
                   <button key={k} onClick={() => setAxis(k)}
-                    className={`text-[10px] px-2.5 py-1.5 rounded border ${
-                      axis === k ? "bg-blue-600 text-white border-blue-600" : "border-neutral-300 text-neutral-600"
+                    className={`inline-flex h-9 items-center justify-center gap-1.5 rounded-full border px-3.5 text-xs font-medium transition-colors ${
+                      axis === k ? "bg-ds-app-accent text-white border-ds-app-accent" : "border-border bg-background text-foreground hover:bg-muted"
                     }`}>{l}</button>
                 ))}
               </div>
@@ -981,7 +970,7 @@ function SplitTool({ onAssign, assets, ppmm, onNext }) {
             </label>
           </div>
 
-          <div className="relative inline-block border border-neutral-200 rounded overflow-hidden max-w-full">
+          <div className="relative inline-block border border-neutral-200 rounded-lg bg-white overflow-hidden max-w-full">
             <img src={src.url} alt="" style={{ display: "block", maxWidth: "100%", height: "auto" }} />
             <div style={{
               position: "absolute",
@@ -994,9 +983,9 @@ function SplitTool({ onAssign, assets, ppmm, onNext }) {
           {/* 検出結果 */}
           <div>
             <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
-              <h3 className="text-[12px] font-semibold text-neutral-800">検出結果</h3>
+              <h3 className="text-sm font-semibold text-neutral-800">検出結果</h3>
               <button onClick={saveAll}
-                className="text-[11px] px-3 py-1.5 rounded bg-blue-600 text-white hover:bg-blue-700">
+                className="inline-flex h-9 items-center justify-center rounded-full bg-primary px-4 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90">
                 この内容で 3 版まとめて登録
               </button>
             </div>
@@ -1010,14 +999,14 @@ function SplitTool({ onAssign, assets, ppmm, onNext }) {
 
               {/* 全体 */}
               {parts.whole && (
-                <div className="rounded border border-neutral-200 p-3">
+                <div className="rounded-lg bg-white border border-neutral-200 p-3">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-[11px] font-medium text-neutral-700">全体</span>
-                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-500">
+                    <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-neutral-100 text-neutral-500">
                       {axis === "y" ? "縦組み" : "横組み"}
                     </span>
                   </div>
-                  <div className="h-20 flex items-center justify-center bg-neutral-50 border border-neutral-100 rounded mb-2 p-2">
+                  <div className="h-20 flex items-center justify-center bg-neutral-50 border border-neutral-100 rounded-lg mb-2 p-2">
                     <img src={parts.whole.url} alt="" style={{ maxHeight: 68, maxWidth: "100%" }} />
                   </div>
                   <div className="mb-2">
@@ -1027,15 +1016,15 @@ function SplitTool({ onAssign, assets, ppmm, onNext }) {
                     <StatRow k="色数" v={parts.whole.stats.colors} />
                     <StatRow k="占有率" v={`${(parts.whole.stats.coverage * 100).toFixed(0)}%`} />
                   </div>
-                  <p className="text-[9px] text-neutral-400 leading-relaxed mb-2">
+                  <p className="text-[11px] text-neutral-400 leading-relaxed mb-2">
                     余白を除いた外接矩形。組み合わせ版として登録します。
                   </p>
                   <div className="h-[26px] mb-2" />
                   <button onClick={() => saveOne("whole", lockupSlot)}
-                    className={`w-full text-[10px] px-2 py-1.5 rounded font-medium ${
+                    className={`w-full inline-flex h-9 items-center justify-center rounded-full px-3 text-xs font-medium transition-colors ${
                       justSaved.includes(lockupSlot) && assets[lockupSlot]
                         ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                        : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
+                        : "border border-input bg-background text-foreground hover:bg-accent"
                     }`}>
                     {justSaved.includes(lockupSlot) && assets[lockupSlot]
                       ? `✓ ${SLOTS.find((s) => s.key === lockupSlot)?.label}に登録済`
@@ -1051,7 +1040,7 @@ function SplitTool({ onAssign, assets, ppmm, onNext }) {
             <div className="rounded-lg border border-neutral-200 bg-white p-4">
               <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
                 <div>
-                  <h3 className="text-[12px] font-semibold text-neutral-800">
+                  <h3 className="text-sm font-semibold text-neutral-800">
                     {axis === "x" ? "縦組み" : "横組み"}の自動生成
                   </h3>
                   <p className="text-[10px] text-neutral-400 mt-1 leading-relaxed max-w-xl">
@@ -1066,7 +1055,7 @@ function SplitTool({ onAssign, assets, ppmm, onNext }) {
               </div>
 
               <div className="flex flex-wrap gap-5">
-                <div className="rounded border border-neutral-200 bg-neutral-50 p-4 flex items-center justify-center"
+                <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-4 flex items-center justify-center"
                   style={{ minWidth: 160, minHeight: 140 }}>
                   <img src={gen.url} alt="" style={{ maxHeight: 120, maxWidth: 200 }} />
                 </div>
@@ -1078,27 +1067,27 @@ function SplitTool({ onAssign, assets, ppmm, onNext }) {
                     min={0.5} max={5} step={0.05} unit="×" width="w-52" />
                   <div className="flex flex-wrap gap-2 pt-1">
                     <button onClick={() => { setGenGap(gapPx); setSymScale(1); }}
-                      className="text-[10px] px-2.5 py-1.5 rounded border border-neutral-300 text-neutral-600 hover:bg-neutral-50">
+                      className="inline-flex h-9 items-center justify-center gap-1.5 rounded-full border px-3.5 text-xs font-medium transition-colors border-border bg-background text-foreground hover:bg-muted">
                       初期値に戻す
                     </button>
                     <button onClick={saveGenerated}
-                      className={`text-[10px] px-2.5 py-1.5 rounded font-medium ${
+                      className={`inline-flex h-9 items-center justify-center rounded-full px-3.5 text-xs font-medium transition-colors ${
                         justSaved.includes(genSlot) && assets[genSlot]
                           ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                          : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
+                          : "border border-input bg-background text-foreground hover:bg-accent"
                       }`}>
                       {justSaved.includes(genSlot) && assets[genSlot]
                         ? `✓ ${SLOTS.find((s) => s.key === genSlot)?.label}に登録済`
                         : `${SLOTS.find((s) => s.key === genSlot)?.label}に登録`}
                     </button>
                   </div>
-                  <div className="text-[9px] font-mono text-neutral-400">
+                  <div className="text-[11px] font-mono text-neutral-400">
                     {gen.px.w}×{gen.px.h}px · 比率 {gen.aspect.toFixed(2)}
                   </div>
                 </div>
               </div>
 
-              <div className="mt-3 rounded border border-amber-200 bg-amber-50 p-3">
+              <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
                 <p className="text-[10px] text-amber-800 leading-relaxed">
                   これは<span className="font-semibold">検討用のモック</span>です。実際の{axis === "x" ? "縦組み" : "横組み"}は、
                   間隔や要素の相対サイズが元の向きと同じとは限らず、光学的な中心合わせも施されます。
@@ -1110,14 +1099,14 @@ function SplitTool({ onAssign, assets, ppmm, onNext }) {
           )}
 
           {/* 登録状況 */}
-          <div className="rounded border border-neutral-200 bg-neutral-50 p-3">
+          <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3">
             <div className="text-[10px] font-medium text-neutral-600 mb-2">登録状況</div>
             <div className="flex flex-wrap gap-2">
               {SLOTS.map((s) => {
                 const on = !!assets[s.key];
                 return (
                   <span key={s.key}
-                    className={`text-[10px] px-2 py-1 rounded flex items-center gap-1.5 ${
+                    className={`text-[10px] px-2 py-1 rounded-full flex items-center gap-1.5 ${
                       on ? "bg-white border border-emerald-200 text-emerald-700" : "bg-white border border-neutral-200 text-neutral-400"
                     }`}>
                     {on && <img src={assets[s.key].url} alt="" style={{ maxHeight: 12, maxWidth: 44 }} />}
@@ -1129,7 +1118,7 @@ function SplitTool({ onAssign, assets, ppmm, onNext }) {
             </div>
           </div>
 
-          <div className="rounded border border-amber-200 bg-amber-50 p-3">
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
             <ul className="text-[10px] text-amber-800 space-y-1 leading-relaxed list-disc pl-4">
               <li>測定精度は元画像の解像度（横 {ana.w}px）に縛られます。最終数値はベクターでの再測定を推奨します。</li>
               <li>{ana.transparentBg
@@ -1142,10 +1131,10 @@ function SplitTool({ onAssign, assets, ppmm, onNext }) {
           {/* 画面下部の一括登録 */}
           {plan.length > 0 && (
             <div className={`rounded-lg border-2 p-4 ${
-              allSaved ? "border-emerald-300 bg-emerald-50" : "border-blue-600 bg-blue-50"
+              allSaved ? "border-emerald-300 bg-emerald-50" : "border-ds-app-accent bg-blue-50"
             }`}>
               <div className="flex items-baseline justify-between gap-3 mb-3">
-                <h3 className={`text-[12px] font-semibold ${allSaved ? "text-emerald-800" : "text-blue-900"}`}>
+                <h3 className={`text-sm font-semibold ${allSaved ? "text-emerald-800" : "text-blue-900"}`}>
                   {allSaved ? "登録が完了しました" : "この内容で登録します"}
                 </h3>
                 <span className="text-[10px] text-neutral-500">{plan.length} 版</span>
@@ -1155,12 +1144,12 @@ function SplitTool({ onAssign, assets, ppmm, onNext }) {
                 {plan.map((p, i) => {
                   const saved = assets[p.slot] && justSaved.includes(p.slot);
                   return (
-                    <div key={i} className="rounded bg-white border border-neutral-200 p-2 flex items-center gap-2">
-                      <div className="w-12 h-10 flex items-center justify-center bg-neutral-50 rounded shrink-0">
+                    <div key={i} className="rounded-lg bg-white border border-neutral-200 p-2 flex items-center gap-2">
+                      <div className="w-12 h-10 flex items-center justify-center bg-neutral-50 rounded-lg shrink-0">
                         <img src={p.part.url} alt="" style={{ maxHeight: 32, maxWidth: 44 }} />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <div className={`text-[9px] ${p.generated ? "text-amber-600" : "text-neutral-400"}`}>{p.from}</div>
+                        <div className={`text-[11px] ${p.generated ? "text-amber-600" : "text-neutral-400"}`}>{p.from}</div>
                         <div className="text-[10px] font-medium text-neutral-800 truncate">
                           {SLOTS.find((s) => s.key === p.slot)?.label}
                         </div>
@@ -1173,12 +1162,12 @@ function SplitTool({ onAssign, assets, ppmm, onNext }) {
 
               <div className="flex flex-wrap gap-2">
                 <button onClick={saveAll}
-                  className="flex-1 min-w-[200px] text-[12px] font-medium px-4 py-2.5 rounded bg-blue-600 text-white hover:bg-blue-700">
+                  className="flex-1 min-w-[200px] inline-flex h-11 items-center justify-center rounded-full bg-primary px-5 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90">
                   {allSaved ? "同じ内容で登録し直す" : `${plan.length} 版をまとめて登録`}
                 </button>
                 {allSaved && onNext && (
                   <button onClick={onNext}
-                    className="flex-1 min-w-[160px] text-[12px] font-medium px-4 py-2.5 rounded border-2 border-blue-600 text-blue-700 bg-white hover:bg-blue-50">
+                    className="flex-1 min-w-[160px] inline-flex h-11 items-center justify-center rounded-full border border-input bg-background px-5 text-sm font-medium shadow-sm transition-colors hover:bg-accent">
                     測定へ進む →
                   </button>
                 )}
@@ -1269,8 +1258,8 @@ function MeasureStep({
           const der = !!derived[s.key];
           return (
             <button key={s.key} onClick={() => setActive(s.key)}
-              className={`w-full rounded border p-2.5 text-left transition-colors ${
-                on ? "border-blue-600 bg-white" : "border-neutral-200 bg-white hover:border-neutral-400"
+              className={`w-full rounded-lg border p-2.5 text-left transition-colors ${
+                on ? "border-ds-app-accent ring-1 ring-ds-app-accent bg-white" : "border-border bg-white hover:border-neutral-400"
               }`}>
               <div className="h-10 flex items-center justify-center mb-1.5">
                 <img src={assets[s.key].url} alt="" style={{ maxHeight: 34, maxWidth: "100%" }} />
@@ -1290,7 +1279,7 @@ function MeasureStep({
 
       <div className="space-y-5">
         {!calibrated && (
-          <div className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-[10px] text-amber-800">
+          <div className="rounded-full border border-amber-200 bg-amber-50 px-3 py-2 text-[10px] text-amber-800">
             実寸未校正です。表示サイズが実際の mm とずれている可能性があります。
           </div>
         )}
@@ -1299,7 +1288,7 @@ function MeasureStep({
           <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
             <div className="flex flex-wrap items-start justify-between gap-3 mb-2">
               <div>
-                <h3 className="text-[12px] font-semibold text-blue-900">組み合わせから他の版を推定</h3>
+                <h3 className="text-sm font-semibold text-blue-900">組み合わせから他の版を推定</h3>
                 <p className="text-[10px] text-blue-800 mt-1 leading-relaxed max-w-xl">
                   組み合わせの測定値を、分割時に得た構成比で各版に配分します。
                   得られるのは<span className="font-semibold">上限値</span>で、実測すればこれより小さくなる可能性があります。
@@ -1307,15 +1296,15 @@ function MeasureStep({
                 </p>
               </div>
               <button onClick={deriveFromLockup}
-                className="text-[11px] px-3 py-1.5 rounded bg-blue-600 text-white hover:bg-blue-700 shrink-0">
+                className="shrink-0 inline-flex h-9 items-center justify-center rounded-full bg-primary px-4 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90">
                 推定値を入れる
               </button>
             </div>
             <div className="flex flex-wrap gap-3 mt-3">
               {derivable.map((s) => (
-                <div key={s.key} className="text-[10px] bg-white rounded border border-blue-100 px-2.5 py-1.5">
+                <div key={s.key} className="text-[10px] bg-white rounded-full border border-blue-100 px-2.5 py-1.5">
                   <span className="text-neutral-500">{s.label}</span>
-                  <span className="font-mono text-blue-700 ml-2">
+                  <span className="font-mono text-ds-app-accent ml-2">
                     幅比 {((composition[s.key] / lockBase) * 100).toFixed(1)}%
                   </span>
                 </div>
@@ -1329,7 +1318,7 @@ function MeasureStep({
           desc="条件を切り替えて、最も早く破綻する見え方を探してください。記録するのは版につき 1 つの限界サイズです。"
           right={
             <button onClick={run} disabled={busy}
-              className="text-[11px] px-3 py-1.5 rounded border border-neutral-300 hover:bg-neutral-50 disabled:opacity-40">
+              className="inline-flex h-9 items-center justify-center rounded-full border border-input bg-background px-4 text-sm font-medium shadow-sm transition-colors hover:bg-accent disabled:opacity-40">
               {busy ? "解析中…" : "自動アシスト"}
             </button>
           }>
@@ -1341,8 +1330,8 @@ function MeasureStep({
               const isBind = binding[active] === c.key;
               return (
                 <button key={c.key} onClick={() => setCond(c.key)}
-                  className={`text-[10px] px-2.5 py-1.5 rounded border flex items-center gap-1.5 ${
-                    on ? "bg-blue-600 text-white border-blue-600" : "border-neutral-300 text-neutral-600 hover:bg-neutral-50"
+                  className={`inline-flex h-9 items-center justify-center gap-1.5 rounded-full border px-3.5 text-xs font-medium transition-colors ${
+                    on ? "bg-ds-app-accent text-white border-ds-app-accent" : "border-border bg-background text-foreground hover:bg-muted"
                   }`}>
                   <span className={`w-1.5 h-1.5 rounded-full ${
                     seen ? (on ? "bg-white" : "bg-blue-400") : (on ? "bg-blue-300" : "bg-neutral-300")
@@ -1370,7 +1359,7 @@ function MeasureStep({
             縦横比 {asset.aspect.toFixed(2)}　数値は<span className="text-neutral-600">幅</span>の mm。
             この版は幅 10mm のとき高さ {(10 / asset.aspect).toFixed(2)}mm。
           </div>
-          <div className="flex flex-wrap items-end gap-4 p-4 rounded" style={{ background: condBg(cond) }}>
+          <div className="flex flex-wrap items-end gap-4 p-4 rounded-lg" style={{ background: condBg(cond) }}>
             {LADDER_MM.map((mm) => {
               const d = dims(mm);
               const sc = list?.find((s) => s.mm === mm)?.score;
@@ -1387,7 +1376,7 @@ function MeasureStep({
                   <span className="mt-2 text-[10px] font-mono"
                     style={{ color: cond === "knockout" ? "#a3a3a3" : "#737373" }}>{mm}</span>
                   {sc != null && (
-                    <span className="text-[9px] font-mono"
+                    <span className="text-[11px] font-mono"
                       style={{ color: sc >= 0.93 ? "#059669" : "#dc2626" }}>{(sc * 100).toFixed(0)}</span>
                   )}
                 </button>
@@ -1409,45 +1398,45 @@ function MeasureStep({
             <p className="text-[11px] text-neutral-400">まだ記録がありません。上のラダーから限界サイズを選んでください。</p>
           ) : (
             <div className="flex flex-wrap items-stretch gap-4">
-              <div className="rounded border p-3 min-w-[150px]"
+              <div className="rounded-lg bg-white border p-3 min-w-[150px]"
                 style={{ borderColor: REG, background: `${REG}0a` }}>
                 <div className="text-[10px] text-neutral-500">最小使用サイズ</div>
                 <div className="text-2xl font-mono mt-0.5"
                   style={{ color: derived[active] ? "#b45309" : "#111" }}>
                   {recorded}mm{derived[active] ? "*" : ""}
                 </div>
-                {derived[active] && <div className="text-[9px] text-amber-700 mt-0.5">推定（上限）</div>}
+                {derived[active] && <div className="text-[11px] text-amber-700 mt-0.5">推定（上限）</div>}
               </div>
 
-              <div className="rounded border border-neutral-200 p-3 min-w-[150px]">
+              <div className="rounded-lg bg-white border border-neutral-200 p-3 min-w-[150px]">
                 <div className="text-[10px] text-neutral-500">限界を決めた条件</div>
                 <div className="text-base font-medium mt-1 text-neutral-800">{bindLabel || "—"}</div>
-                <div className="text-[9px] text-neutral-400 mt-0.5">
+                <div className="text-[11px] text-neutral-400 mt-0.5">
                   {CONDITIONS.find((c) => c.key === binding[active])?.hint}
                 </div>
               </div>
 
-              <div className="rounded border border-neutral-200 p-3 flex-1 min-w-[180px]">
+              <div className="rounded-lg bg-white border border-neutral-200 p-3 flex-1 min-w-[180px]">
                 <div className="text-[10px] text-neutral-500 mb-1.5">確認した条件</div>
                 <div className="flex flex-wrap gap-1.5">
                   {CONDITIONS.map((c) => {
                     const seen = !!viewed[active]?.[c.key];
                     return (
                       <span key={c.key}
-                        className={`text-[10px] px-1.5 py-0.5 rounded ${
+                        className={`text-[10px] px-1.5 py-0.5 rounded-full ${
                           seen ? "bg-neutral-100 text-neutral-600" : "bg-white border border-dashed border-neutral-200 text-neutral-300"
                         }`}>{c.label}</span>
                     );
                   })}
                 </div>
                 {unviewed.length > 0 && (
-                  <p className="text-[9px] text-amber-700 mt-2 leading-relaxed">
+                  <p className="text-[11px] text-amber-700 mt-2 leading-relaxed">
                     未確認の条件が残っています。より厳しい条件で先に破綻する可能性があります。
                   </p>
                 )}
               </div>
 
-              <div className="rounded border border-neutral-200 p-3">
+              <div className="rounded-lg bg-white border border-neutral-200 p-3">
                 <div className="text-[10px] text-neutral-500 mb-1.5">実寸</div>
                 <div className="bg-white flex items-center" style={{ minHeight: 24 }}>
                   <Render asset={asset} w={recorded * ppmm} h={(recorded * ppmm) / asset.aspect}
@@ -1524,12 +1513,12 @@ function RulesStep({ assets, minima, binding, clearRule, setClearRule, derived }
                     </td>
                     <td className="pl-4">
                       <div className="flex flex-wrap gap-1">
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded ${
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
                           v == null ? "text-neutral-300"
                             : der ? "bg-amber-50 text-amber-700" : "bg-neutral-100 text-neutral-600"
                         }`}>{v == null ? "未測定" : der ? "推定（上限）" : "実測"}</span>
                         {assets[s.key].generated && (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-700">自動生成</span>
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700">自動生成</span>
                         )}
                       </div>
                     </td>
@@ -1561,7 +1550,7 @@ function RulesStep({ assets, minima, binding, clearRule, setClearRule, derived }
           <>
             <div className="flex gap-3 mb-4">
               {[["symbol", "シンボルマーク", symbolMin], ["logotype", "ロゴタイプ", typeMin]].map(([k, label, v]) => (
-                <div key={k} className="flex-1 rounded p-3 border"
+                <div key={k} className="flex-1 rounded-lg bg-white p-3 border"
                   style={{ borderColor: constraintSide === k ? REG : "#e5e5e5", background: constraintSide === k ? `${REG}0a` : "#fff" }}>
                   <div className="text-[10px] text-neutral-500">{label}</div>
                   <div className="text-lg font-mono mt-0.5">{v}mm</div>
@@ -1570,7 +1559,7 @@ function RulesStep({ assets, minima, binding, clearRule, setClearRule, derived }
               ))}
             </div>
             {(derived?.symbol || derived?.logotype) && (
-              <div className="rounded border border-amber-200 bg-amber-50 p-3 mb-3">
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 mb-3">
                 <p className="text-[10px] text-amber-800 leading-relaxed">
                   {derived?.symbol && derived?.logotype
                     ? "両方とも推定値のため、制約要因の判定は構成比をなぞっているだけで根拠になりません。少なくとも一方を実測してください。"
@@ -1578,7 +1567,7 @@ function RulesStep({ assets, minima, binding, clearRule, setClearRule, derived }
                 </p>
               </div>
             )}
-            <div className="rounded bg-slate-900 text-white p-4">
+            <div className="rounded-lg bg-slate-900 text-white p-4">
               <div className="text-[10px] text-neutral-400">組み合わせの理論下限</div>
               <div className="text-2xl font-mono mt-1">{theoretical}mm</div>
               <p className="text-[11px] text-neutral-300 mt-2 leading-relaxed">
@@ -1595,7 +1584,7 @@ function RulesStep({ assets, minima, binding, clearRule, setClearRule, derived }
               )}
             </div>
             {symbolMin < typeMin && (
-              <div className="mt-3 rounded border border-neutral-200 p-3">
+              <div className="mt-3 rounded-lg bg-white border border-neutral-200 p-3">
                 <div className="text-[11px] font-medium text-neutral-700 mb-1">小サイズ運用の切り替え帯</div>
                 <p className="text-[10px] text-neutral-500 leading-relaxed">
                   {symbolMin}mm 〜 {typeMin}mm はシンボルマーク単体のみが使える領域です。
@@ -1614,8 +1603,8 @@ function RulesStep({ assets, minima, binding, clearRule, setClearRule, derived }
             <div className="flex gap-1">
               {CLEAR_BASES.map((b) => (
                 <button key={b.key} onClick={() => setClearRule({ ...clearRule, basis: b.key })}
-                  className={`text-[10px] px-2.5 py-1.5 rounded border ${
-                    clearRule.basis === b.key ? "bg-blue-600 text-white border-blue-600" : "border-neutral-300 text-neutral-600"
+                  className={`inline-flex h-9 items-center justify-center gap-1.5 rounded-full border px-3.5 text-xs font-medium transition-colors ${
+                    clearRule.basis === b.key ? "bg-ds-app-accent text-white border-ds-app-accent" : "border-border bg-background text-foreground hover:bg-muted"
                   }`}>{b.label}</button>
               ))}
             </div>
@@ -1639,7 +1628,7 @@ function ClearPreview({ asset, ratio, sym }) {
   const logoW = logoH * asset.aspect;
   const pad = logoH * ratio;
   return (
-    <div className="rounded border border-neutral-200 bg-neutral-50 p-8 flex justify-center overflow-x-auto">
+    <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-8 flex justify-center overflow-x-auto">
       <div style={{ position: "relative", width: logoW + pad * 2, height: logoH + pad * 2, flexShrink: 0 }}>
         <div style={{ position: "absolute", inset: 0, border: `1px dashed ${REG}`, background: `${REG}0d` }} />
         <div style={{ position: "absolute", left: pad, top: pad, width: logoW, height: logoH, outline: `1px solid ${REG2}` }}>
@@ -1699,7 +1688,7 @@ function evalSlot(assets, governing, availMm, k) {
 
 function Verdict({ rec, availMm }) {
   const label = SLOTS.find((s) => s.key === rec.key)?.label;
-  const base = "text-[10px] px-2 py-1 rounded whitespace-nowrap";
+  const base = "text-[10px] px-2 py-1 rounded-full whitespace-nowrap";
   if (rec.status === "none")
     return <span className={`${base} bg-red-50 text-red-700`}>実効 {availMm.toFixed(1)}mm — 収まる版なし</span>;
   if (rec.status === "unmeasured")
@@ -1734,10 +1723,6 @@ function VerifyStep({ assets, governing, ppmm, scene, setScene, clearRule }) {
 
   return (
     <div className="space-y-5">
-      <p className="text-[11px] text-neutral-500 leading-relaxed">
-        規定値を実際の使用シーンに当てます。各シーンの実効サイズを計算し、収まる版を自動で選んで表示しています。赤が出たら規定か運用のどちらかを見直す合図です。
-      </p>
-
       {/* スマホアイコン */}
       <Panel title="スマホアイコン" desc={`iOS ホーム画面の実寸 ${ICON_MM}mm 角を基準に表示しています。`}
         right={<Verdict rec={recIcon} availMm={iconAvail} />}>
@@ -1747,10 +1732,10 @@ function VerifyStep({ assets, governing, ppmm, scene, setScene, clearRule }) {
             <div className="flex gap-1.5">
               {SW.map((c) => (
                 <button key={c} onClick={() => set("iconBg", c)} aria-label={c} style={{ background: c }}
-                  className={`w-6 h-6 rounded border ${scene.iconBg === c ? "ring-2 ring-blue-600 ring-offset-1" : "border-neutral-300"}`} />
+                  className={`w-8 h-8 rounded-full border ${scene.iconBg === c ? "ring-2 ring-ds-app-accent ring-offset-1" : "border-neutral-300"}`} />
               ))}
               <input type="color" value={scene.iconBg} onChange={(e) => set("iconBg", e.target.value)}
-                className="w-6 h-6 rounded border border-neutral-300 p-0 cursor-pointer" />
+                className="w-6 h-6 rounded-lg bg-white border border-neutral-300 p-0 cursor-pointer" />
             </div>
           </Field>
         </div>
@@ -1777,7 +1762,7 @@ function VerifyStep({ assets, governing, ppmm, scene, setScene, clearRule }) {
                   {[[iconPx, "ホーム"], [40, "設定"], [29, "通知"], [20, "検索"]].map(([s, l]) => (
                     <div key={l} className="flex flex-col items-center gap-1.5">
                       <AppIcon asset={iconAsset} size={s} inset={scene.iconInset} bg={scene.iconBg} />
-                      <span className="text-[9px] font-mono text-neutral-400">{l}</span>
+                      <span className="text-[11px] font-mono text-neutral-400">{l}</span>
                     </div>
                   ))}
                 </div>
@@ -1789,7 +1774,7 @@ function VerifyStep({ assets, governing, ppmm, scene, setScene, clearRule }) {
                 <div className="flex items-end gap-4">
                   <div className="flex flex-col items-center gap-1.5">
                     <AppIcon asset={iconAsset} size={iconPx} inset={scene.iconInset} bg={scene.iconBg} circle />
-                    <span className="text-[9px] font-mono text-neutral-400">円</span>
+                    <span className="text-[11px] font-mono text-neutral-400">円</span>
                   </div>
                   <div className="flex flex-col items-center gap-1.5">
                     <div style={{ position: "relative" }}>
@@ -1800,7 +1785,7 @@ function VerifyStep({ assets, governing, ppmm, scene, setScene, clearRule }) {
                         transform: "translate(-50%,-50%)", border: `1px dashed ${REG}`, borderRadius: "50%",
                       }} />
                     </div>
-                    <span className="text-[9px] font-mono text-neutral-400">セーフゾーン</span>
+                    <span className="text-[11px] font-mono text-neutral-400">セーフゾーン</span>
                   </div>
                 </div>
               </div>
@@ -1816,7 +1801,7 @@ function VerifyStep({ assets, governing, ppmm, scene, setScene, clearRule }) {
             min={14} max={64} step={1} unit="px" sub={`幅 ${hdrAvail.toFixed(1)}mm`} />
         </div>
         {hdrAsset && [false, true].map((dark) => (
-          <div key={String(dark)} className="mb-2 rounded overflow-hidden border border-neutral-200">
+          <div key={String(dark)} className="mb-2 rounded-lg bg-white overflow-hidden border border-neutral-200">
             <div className="flex items-center justify-between px-5"
               style={{ background: dark ? "#111" : "#fff", height: Math.max(56, scene.headerH + 28),
                 borderBottom: `1px solid ${dark ? "#2a2a2a" : "#e5e5e5"}` }}>
@@ -1857,14 +1842,14 @@ function VerifyStep({ assets, governing, ppmm, scene, setScene, clearRule }) {
                   <div className="border border-neutral-200 p-1.5 bg-white">
                     <img src={favAsset.url} alt="" style={{ width: s, height: s / favAsset.aspect, display: "block" }} />
                   </div>
-                  <span className="text-[9px] font-mono text-neutral-400">{s}px</span>
+                  <span className="text-[11px] font-mono text-neutral-400">{s}px</span>
                 </div>
               ))}
               <div className="flex flex-col items-center gap-1.5">
                 <div className="border border-neutral-200 p-1.5" style={{ background: "#111" }}>
                   <img src={favAsset.url} alt="" style={{ width: 16, height: 16 / favAsset.aspect, display: "block", filter: FILTERS.knockout }} />
                 </div>
-                <span className="text-[9px] font-mono text-neutral-400">16px 暗</span>
+                <span className="text-[11px] font-mono text-neutral-400">16px 暗</span>
               </div>
             </div>
           </>
@@ -1878,13 +1863,13 @@ function VerifyStep({ assets, governing, ppmm, scene, setScene, clearRule }) {
           <Field label="名刺に載せる版" hint={cardSlot === "auto" ? "収まる版を自動で選択中" : undefined}>
             <div className="flex flex-wrap gap-1">
               <button onClick={() => set("cardSlot", "auto")}
-                className={`text-[10px] px-2.5 py-1.5 rounded border ${
-                  cardSlot === "auto" ? "bg-blue-600 text-white border-blue-600" : "border-neutral-300 text-neutral-600 hover:bg-neutral-50"
+                className={`inline-flex h-9 items-center justify-center gap-1.5 rounded-full border px-3.5 text-xs font-medium transition-colors ${
+                  cardSlot === "auto" ? "bg-ds-app-accent text-white border-ds-app-accent" : "border-border bg-background text-foreground hover:bg-muted"
                 }`}>自動</button>
               {cardChoices.map((s) => (
                 <button key={s.key} onClick={() => set("cardSlot", s.key)}
-                  className={`text-[10px] px-2.5 py-1.5 rounded border ${
-                    cardSlot === s.key ? "bg-blue-600 text-white border-blue-600" : "border-neutral-300 text-neutral-600 hover:bg-neutral-50"
+                  className={`inline-flex h-9 items-center justify-center gap-1.5 rounded-full border px-3.5 text-xs font-medium transition-colors ${
+                    cardSlot === s.key ? "bg-ds-app-accent text-white border-ds-app-accent" : "border-border bg-background text-foreground hover:bg-muted"
                   }`}>{s.label.replace("組み合わせ・", "組")}</button>
               ))}
             </div>
@@ -2016,7 +2001,7 @@ function ScenePlate({ sceneKey, asset, ppmm, scene }) {
         ].map((v) => (
           <div key={v.cap} className="flex flex-col items-center gap-1.5">
             <AppIcon asset={asset} size={px} inset={scene.iconInset} bg={scene.iconBg} circle={v.circle} />
-            <span className="text-[9px] font-mono text-neutral-400">{v.cap}</span>
+            <span className="text-[11px] font-mono text-neutral-400">{v.cap}</span>
           </div>
         ))}
         <div className="flex flex-col items-center gap-1.5">
@@ -2028,7 +2013,7 @@ function ScenePlate({ sceneKey, asset, ppmm, scene }) {
               transform: "translate(-50%,-50%)", border: `1px dashed ${REG}`, borderRadius: "50%",
             }} />
           </div>
-          <span className="text-[9px] font-mono text-neutral-400">セーフゾーン</span>
+          <span className="text-[11px] font-mono text-neutral-400">セーフゾーン</span>
         </div>
       </div>
     );
@@ -2038,7 +2023,7 @@ function ScenePlate({ sceneKey, asset, ppmm, scene }) {
     return (
       <div className="space-y-1.5 py-2">
         {[false, true].map((dark) => (
-          <div key={String(dark)} className="rounded overflow-hidden border border-neutral-200">
+          <div key={String(dark)} className="rounded-lg bg-white overflow-hidden border border-neutral-200">
             <div className="flex items-center justify-between px-4"
               style={{ background: dark ? "#111" : "#fff", height: Math.max(48, scene.headerH + 24) }}>
               <img src={asset.url} alt=""
@@ -2075,14 +2060,14 @@ function ScenePlate({ sceneKey, asset, ppmm, scene }) {
           {[16, 32, 48].map((s) => (
             <div key={s} className="flex flex-col items-center gap-1">
               <img src={asset.url} alt="" style={{ width: s, height: s / asset.aspect, display: "block" }} />
-              <span className="text-[9px] font-mono text-neutral-400">{s}px</span>
+              <span className="text-[11px] font-mono text-neutral-400">{s}px</span>
             </div>
           ))}
           <div className="flex flex-col items-center gap-1">
             <div className="p-1" style={{ background: "#111" }}>
               <img src={asset.url} alt="" style={{ width: 16, height: 16 / asset.aspect, display: "block", filter: FILTERS.knockout }} />
             </div>
-            <span className="text-[9px] font-mono text-neutral-400">16px 暗</span>
+            <span className="text-[11px] font-mono text-neutral-400">16px 暗</span>
           </div>
         </div>
       </div>
@@ -2114,11 +2099,11 @@ function ScenePlate({ sceneKey, asset, ppmm, scene }) {
 function VerBadges({ v, der, generated }) {
   return (
     <div className="flex flex-wrap gap-1">
-      <span className={`text-[10px] px-1.5 py-0.5 rounded ${
+      <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
         v == null ? "text-neutral-300" : der ? "bg-amber-50 text-amber-700" : "bg-neutral-100 text-neutral-600"
       }`}>{v == null ? "未測定" : der ? "推定（上限）" : "実測"}</span>
       {generated && (
-        <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-700">自動生成</span>
+        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700">自動生成</span>
       )}
     </div>
   );
@@ -2156,8 +2141,8 @@ function VersionsCards({ items, assets, minima, binding, derived, usageBy, ppmm 
             </div>
             <div className="p-4">
               <div className="flex items-baseline gap-2">
-                <span className="text-[12px] font-semibold text-neutral-800">{s.label}</span>
-                <span className="text-[9px] font-mono text-neutral-400">{s.en}</span>
+                <span className="text-sm font-semibold text-neutral-800">{s.label}</span>
+                <span className="text-[11px] font-mono text-neutral-400">{s.en}</span>
               </div>
               <p className="text-[10px] text-neutral-500 mt-1 leading-relaxed">
                 使いどころ：{use.length ? use.join("、") : "この一覧の中では該当なし"}
@@ -2187,7 +2172,7 @@ function VersionsCards({ items, assets, minima, binding, derived, usageBy, ppmm 
               </dl>
               {v != null && (
                 <div className="mt-3 pt-3 border-t border-neutral-100">
-                  <div className="text-[9px] text-neutral-400 mb-1.5">最小指定サイズでの実寸</div>
+                  <div className="text-[11px] text-neutral-400 mb-1.5">最小指定サイズでの実寸</div>
                   <ActualSample asset={a} mm={v} ppmm={ppmm} />
                 </div>
               )}
@@ -2319,7 +2304,7 @@ function SpecStep({ assets, minima, binding, clearRule, ppmm, calibrated, scene,
         desc="青が使用可、赤が使用不可の領域。マゼンタの破線は各使用シーンの実効サイズです。">
         <SizeBandChart assets={assets} governing={governing} rows={rows} maxMm={maxMm} />
         {symbolMin != null && typeMin != null && symbolMin < typeMin && (
-          <div className="mt-3 rounded border border-blue-200 bg-blue-50 p-3">
+          <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 p-3">
             <div className="text-[11px] font-medium text-blue-900 mb-1">切り替えルール</div>
             <ul className="text-[10px] text-blue-800 space-y-0.5 leading-relaxed">
               <li>幅 {symbolMin}mm 未満：使用不可</li>
@@ -2333,7 +2318,7 @@ function SpecStep({ assets, minima, binding, clearRule, ppmm, calibrated, scene,
       {/* 3. クリアスペース */}
       <Panel title="3. クリアスペース">
         {items[0] && <ClearPreview asset={assets[items[0].key]} ratio={clearRule.ratio} sym={basis.sym} />}
-        <div className="mt-3 rounded border border-neutral-200 bg-neutral-50 p-3 text-[11px] text-neutral-700 leading-relaxed">
+        <div className="mt-3 rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-[11px] text-neutral-700 leading-relaxed">
           {basis.label}を {basis.sym} としたとき、ロゴの周囲に <span className="font-mono font-semibold">{clearRule.ratio.toFixed(2)}{basis.sym}</span> 以上の余白を確保する。この領域には他の要素（文字・図版・罫線・版面の端）を配置しない。
         </div>
       </Panel>
@@ -2363,7 +2348,7 @@ function SpecStep({ assets, minima, binding, clearRule, ppmm, calibrated, scene,
                     <td className="text-right font-mono px-3 text-neutral-600">{r.avail.toFixed(1)}mm</td>
                     <td className="px-3 text-neutral-700">{label}</td>
                     <td className="pl-3">
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded ${
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
                         ok ? "bg-emerald-50 text-emerald-700" : un ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-700"
                       }`}>{ok ? "適合" : un ? "未測定" : "不適合"}</span>
                     </td>
@@ -2383,12 +2368,12 @@ function SpecStep({ assets, minima, binding, clearRule, ppmm, calibrated, scene,
             const bad = r.rec.status === "none";
             return (
               <div key={r.key}
-                className={`rounded border p-3 ${r.key === "header" ? "lg:col-span-2" : ""} ${
+                className={`rounded-lg border p-3 ${r.key === "header" ? "lg:col-span-2" : ""} ${
                   bad ? "border-red-200 bg-red-50" : "border-neutral-200 bg-white"
                 }`}>
                 <div className="flex flex-wrap items-baseline justify-between gap-2 mb-1">
                   <span className="text-[11px] font-semibold text-neutral-800">{r.label}</span>
-                  <span className="text-[9px] font-mono text-neutral-400">{r.detail}</span>
+                  <span className="text-[11px] font-mono text-neutral-400">{r.detail}</span>
                 </div>
                 <div className="text-[10px] mb-2">
                   {bad ? (
@@ -2402,7 +2387,7 @@ function SpecStep({ assets, minima, binding, clearRule, ppmm, calibrated, scene,
                     </span>
                   )}
                 </div>
-                <div className="rounded bg-neutral-50 border border-neutral-100">
+                <div className="rounded-lg bg-neutral-50 border border-neutral-100">
                   <ScenePlate sceneKey={r.key} asset={a} ppmm={ppmm} scene={scene} />
                 </div>
               </div>
@@ -2473,11 +2458,11 @@ function SpecStep({ assets, minima, binding, clearRule, ppmm, calibrated, scene,
       <Panel title="テキスト出力" desc="Markdown 形式。ドキュメントにそのまま貼り付けられます。"
         right={
           <button onClick={copy}
-            className="text-[11px] px-3 py-1.5 rounded bg-blue-600 text-white hover:bg-blue-700">
+            className="inline-flex h-9 items-center justify-center rounded-full bg-primary px-4 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90">
             {copied ? "コピーしました" : "クリップボードにコピー"}
           </button>
         }>
-        <pre className="text-[10px] font-mono bg-neutral-50 border border-neutral-200 rounded p-4 overflow-x-auto whitespace-pre-wrap leading-relaxed text-neutral-700 max-h-96">
+        <pre className="text-[10px] font-mono bg-neutral-50 border border-neutral-200 rounded-lg p-4 overflow-x-auto whitespace-pre-wrap leading-relaxed text-neutral-700 max-h-96">
           {md}
         </pre>
       </Panel>

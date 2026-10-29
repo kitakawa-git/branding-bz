@@ -16,7 +16,7 @@ export default function LogoCheckerAppLayout({ children }: { children: React.Rea
 function LogoCheckerAppLayoutInner({ children }: { children: React.ReactNode }) {
   const { signOut } = useAppAuth()
   return (
-    <div className="flex min-h-screen flex-col bg-neutral-50">
+    <div className="flex min-h-screen flex-col bg-background">
       <LogoCheckerHeader showSignOut onSignOut={signOut} />
       <main className="flex-1">{children}</main>
       <Footer />
