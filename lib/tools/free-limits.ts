@@ -8,7 +8,7 @@
 // 従来どおり user_id ベースで数える（他人の枠を使わせない安全側）。
 // 失敗した生成は status='completed' にならないため、そもそもカウント対象外。
 
-/** 月間の完了セッション上限（4ツール共通） */
+/** 月間の完了セッション上限（構築ツール共通） */
 export const MONTHLY_FREE_LIMIT = 3
 
 /**
@@ -39,7 +39,7 @@ export function pickCountScope(args: { companyId: string | null | undefined; aut
 }
 
 /** 構築ツールの app_type。mini_app_sessions.app_type の値と同じ。 */
-export type BuildToolAppType = 'stp' | 'brand_colors' | 'persona' | 'personality'
+export type BuildToolAppType = 'stp' | 'brand_colors' | 'persona' | 'personality' | 'sorou'
 
 /**
  * 当月(JST)に完了した構築ツールセッション数を数える。
@@ -67,11 +67,11 @@ export async function countCompletedThisMonth(
   return typeof count === 'number' ? count : 0
 }
 
-/** 上限到達時のエラーメッセージ（4ツール共通） */
+/** 上限到達時のエラーメッセージ（構築ツール共通） */
 export const MONTHLY_LIMIT_REACHED_MESSAGE =
   `無料プランの月に${MONTHLY_FREE_LIMIT}回の上限に達しました。翌月1日 0:00（日本時間）にリセットされます。`
 
-/** LP の CTA バッジ文言（4ツール共通） */
+/** LP の CTA バッジ文言（構築ツール共通） */
 export const FREE_TIER_BADGE_LABEL = `無料で月に${MONTHLY_FREE_LIMIT}回まで利用可能`
 
 /** LP ヒーローの CTA 直下の説明（新規企業は superadmin 承認制のため「審査完了後」と明記する。営業資料 v12 p12 と同じ説明） */

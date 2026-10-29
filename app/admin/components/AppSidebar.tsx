@@ -56,7 +56,7 @@ import {
   Crosshair,
   UserRound,
   Palette,
-  Fingerprint,
+  Fingerprint, CalendarDays,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -97,6 +97,7 @@ const buildItems: NavItem[] = [
   { href: '/tools/persona/app', label: 'ペルソナビルダー', icon: UserRound, appType: 'persona' },
   { href: '/tools/colors/app', label: 'ブランドカラー定義', icon: Palette, appType: 'brand_colors' },
   { href: '/tools/personality/app', label: 'パーソナリティ診断', icon: Fingerprint, appType: 'personality' },
+  { href: '/tools/sorou/app', label: '日程調整', icon: CalendarDays, appType: 'sorou' },
 ]
 
 // 浸透（branding.bz本体の浸透施策）: サーベイ・市場調査・理解度テスト・ラーニング

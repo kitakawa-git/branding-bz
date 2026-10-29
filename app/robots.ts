@@ -17,6 +17,9 @@ export default function robots(): MetadataRoute.Robots {
           '/tools/stp/app/',
           '/tools/persona/app/',
           '/tools/personality/app/',
+          '/tools/sorou/app/',
+          // 日程調整の共有リンク（参加者だけが見るページ）
+          '/tools/sorou/e/',
           '/tools/colors/auth/',
           '/tools/stp/auth/',
           '/tools/persona/auth/',

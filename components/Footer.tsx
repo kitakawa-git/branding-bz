@@ -17,6 +17,7 @@ const footerLinks = {
     { href: '/tools/persona', label: 'ペルソナビルダー' },
     { href: '/tools/colors', label: 'ブランドカラー定義' },
     { href: '/tools/personality', label: 'パーソナリティ診断' },
+    { href: '/tools/sorou', label: '日程調整' },
   ],
   company: [
     { href: 'https://include.bz/', label: 'ID INC. について', external: true },

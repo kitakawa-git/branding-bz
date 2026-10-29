@@ -12,7 +12,7 @@ import { getEffectivePlan, getBuildToolMonthlyLimit } from '@/lib/billing/entitl
 import { fetchCompanyPlan, fetchCompanyIdForAuth } from '@/lib/billing/guard'
 
 /** mini_app_sessions.app_type と画面上のツールの対応 */
-const APP_TYPES: readonly BuildToolAppType[] = ['brand_colors', 'stp', 'persona', 'personality'] as const
+const APP_TYPES: readonly BuildToolAppType[] = ['brand_colors', 'stp', 'persona', 'personality', 'sorou'] as const
 
 export async function GET() {
   try {

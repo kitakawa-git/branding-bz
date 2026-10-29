@@ -6,7 +6,7 @@
 import { Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { Palette, BarChart3, UserCircle, Fingerprint, Building2, ChevronDown, Plus, Clock, CheckCircle2, Trash2, Loader2 } from 'lucide-react'
+import { Palette, BarChart3, UserCircle, Fingerprint, CalendarDays, Building2, ChevronDown, Plus, Clock, CheckCircle2, Trash2, Loader2 } from 'lucide-react'
 
 interface SessionSummary {
   id: string
@@ -81,6 +81,16 @@ const SERVICES: ServiceCard[] = [
     highlightButtonLabel: '続ける',
   },
   {
+    // 日程調整は「作った日程調整の一覧」が入口なので、セッション履歴（SESSION_TOOLS）には載せない
+    id: 'sorou',
+    Icon: CalendarDays,
+    title: '日程調整ツール',
+    description: '候補日を選んでリンクを送るだけ。回答する人はログイン不要で、集まれる日程がひと目でわかります',
+    href: '/tools/sorou/app',
+    buttonLabel: '始める',
+    highlightButtonLabel: '続ける',
+  },
+  {
     id: 'platform',
     Icon: Building2,
     // 遷移先はアクセス権で分かれる（あり: /portal のダッシュボード、なし: トップ）。
@@ -99,6 +109,7 @@ const CARD_BG: Record<string, string> = {
   persona: 'linear-gradient(160deg,#0f172a,#312e81 60%,#a855f7)',
   colors: 'conic-gradient(from 200deg at 60% 40%,#f43f5e,#8b5cf6,#22d3ee,#f43f5e)',
   personality: 'radial-gradient(120% 120% at 25% 20%,#10b981 0%,#0f172a 65%)',
+  sorou: 'radial-gradient(120% 120% at 25% 20%,#f59e0b 0%,#7c2d12 40%,#0f172a 72%)',
   platform: 'linear-gradient(135deg, #16181f 0%, #0a0b10 100%)',
 }
 

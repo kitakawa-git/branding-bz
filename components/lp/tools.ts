@@ -1,4 +1,4 @@
-import { Target, UserCircle, Palette, Fingerprint, type LucideIcon } from 'lucide-react'
+import { Target, UserCircle, Palette, Fingerprint, CalendarDays, type LucideIcon } from 'lucide-react'
 
 /* 構築ツール（無料）の共通データソース。
    トップページの「無料ツール」セクションと、/features の「構築」セクションで共有する。 */
@@ -42,5 +42,12 @@ export const tools: Tool[] = [
     icon: Fingerprint,
     d: 'ブランドの人格を|10問で診断。|Aaker 5次元と|12アーキタイプで|個性を捉えます。',
     color: 'radial-gradient(120% 120% at 25% 20%,#10b981 0%,#0f172a 65%)',
+  },
+  {
+    href: '/tools/sorou',
+    label: '日程調整ツール',
+    icon: CalendarDays,
+    d: '候補日を選んで|リンクを送るだけ。|回答する人は|ログイン不要で、|集まれる日程が|ひと目でわかります。',
+    color: 'radial-gradient(120% 120% at 25% 20%,#f59e0b 0%,#7c2d12 40%,#0f172a 72%)',
   },
 ]
