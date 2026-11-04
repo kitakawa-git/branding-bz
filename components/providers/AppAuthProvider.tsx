@@ -19,6 +19,9 @@ type AppAuthContextValue = {
 
 const AppAuthContext = createContext<AppAuthContextValue | null>(null)
 
+// 初回表示のデータ取得が終わるころにセッションを検証する
+const VERIFY_DELAY_MS = 3000
+
 export function AppAuthProvider({
   children,
   redirectOnSignOutTo,
@@ -34,6 +37,7 @@ export function AppAuthProvider({
 
   useEffect(() => {
     let cancelled = false
+    let verifyTimer: ReturnType<typeof setTimeout> | undefined
 
     // 旧クライアントの localStorage キーをクリーンアップ
     if (typeof window !== 'undefined') {
@@ -58,13 +62,16 @@ export function AppAuthProvider({
         setLoading(false)
         if (!current) return
 
-        // 失効していないかは裏で確かめる。通信エラーではログアウトさせない
-        const { error } = await supabase.auth.getUser()
-        if (cancelled || !error) return
-        if (error.status === 401 || error.status === 403 || error.name === 'AuthSessionMissingError') {
-          setSession(null)
-          setUser(null)
-        }
+        // 失効していないかは少し後で確かめる。通信エラーではログアウトさせない。
+        // すぐ呼ぶと、getUser の応答までクライアントの内部ロックで最初のデータ取得が待たされる
+        verifyTimer = setTimeout(async () => {
+          const { error } = await supabase.auth.getUser()
+          if (cancelled || !error) return
+          if (error.status === 401 || error.status === 403 || error.name === 'AuthSessionMissingError') {
+            setSession(null)
+            setUser(null)
+          }
+        }, VERIFY_DELAY_MS)
       } catch (err) {
         if (!cancelled) {
           console.error('[AppAuthProvider] セッション確認に失敗:', err)
@@ -103,6 +110,7 @@ export function AppAuthProvider({
 
     return () => {
       cancelled = true
+      if (verifyTimer) clearTimeout(verifyTimer)
       subscription.unsubscribe()
       document.removeEventListener('visibilitychange', onVisible)
     }
