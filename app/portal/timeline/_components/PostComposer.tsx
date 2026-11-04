@@ -1,5 +1,6 @@
 // 投稿フォーム（右下FAB＋投稿/編集モーダル）の表示部分
 import type { RefObject, ChangeEvent } from 'react'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
@@ -29,6 +30,7 @@ import { MAX_IMAGES } from './usePostComposer'
 
 type PostComposerProps = {
   categories: string[]
+  isAdmin: boolean
   profileName: string | null
   profilePhotoUrl: string | null
   memberDisplayName: string | undefined
@@ -55,6 +57,7 @@ type PostComposerProps = {
 
 export function PostComposer({
   categories,
+  isAdmin,
   profileName,
   profilePhotoUrl,
   memberDisplayName,
@@ -78,6 +81,15 @@ export function PostComposer({
   removeExistingImage,
   handleSubmit,
 }: PostComposerProps) {
+  // 行動指針が未登録の会社は「未分類」だけになる（フォーム側で自動選択済み）
+  const noGuidelines = categories.length === 1 && categories[0] === '未分類'
+  // 押せない理由（押せるときは出さない）
+  const disabledReason = !formContent.trim()
+    ? '本文を入力すると投稿できます'
+    : !formCategory
+      ? '行動指針を選択すると投稿できます'
+      : null
+
   return (
     <>
       {/* 右下のFABボタン: クリックで投稿モーダルを開く */}
@@ -208,8 +220,8 @@ export function PostComposer({
 
             {/* Submit button + hint */}
             <div className="flex items-center gap-2 ml-auto">
-              {formContent.trim() && !formCategory && (
-                <span className="text-xs text-amber-600">← 行動指針を選択してください</span>
+              {disabledReason && !posting && (
+                <span className="text-xs text-muted-foreground">{disabledReason}</span>
               )}
               <Button
                 onClick={handleSubmit}
@@ -227,6 +239,17 @@ export function PostComposer({
               </Button>
             )}
           </div>
+
+          {noGuidelines && (
+            <p className="text-xs text-muted-foreground m-0">
+              行動指針が未登録のため「未分類」で投稿します。
+              {isAdmin ? (
+                <Link href="/admin/brand/guidelines" className="text-ds-app-accent hover:underline ml-1">行動指針を登録する</Link>
+              ) : (
+                '管理者が登録すると、ここで選べるようになります。'
+              )}
+            </p>
+          )}
           </div>
         </DialogContent>
       </Dialog>

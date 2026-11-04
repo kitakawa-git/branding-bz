@@ -1,7 +1,7 @@
 // 既存企業への参加リクエスト付き登録
 // POST /api/signup/join-company
 // Auth user + profiles + members(status='pending') を作成
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import { Resend } from 'resend'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { generateRandomSlug } from '@/lib/generate-slug'
@@ -126,8 +126,8 @@ export async function POST(request: NextRequest) {
     }
 
 
-    // 管理者へメール通知（失敗してもリクエスト作成は成功扱い）
-    await notifyCompanyAdmins(supabaseAdmin, company, { userName, email, department, position })
+    // 管理者へメール通知（失敗してもリクエスト作成は成功扱い）。利用者を待たせないよう応答の後に送る
+    after(() => notifyCompanyAdmins(supabaseAdmin, company, { userName, email, department, position }))
 
     return NextResponse.json({
       success: true,

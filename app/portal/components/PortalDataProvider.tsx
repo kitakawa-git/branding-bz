@@ -12,7 +12,7 @@ import { FEATURE_TOGGLE_COLUMNS } from '@/lib/constants/feature-toggles'
 import { useAppAuth } from '@/components/providers/AppAuthProvider'
 import { ShieldAlert } from 'lucide-react'
 import { GateShell } from '@/components/admin/GateShell'
-import { AuthSplash } from '@/components/admin/AuthSplash'
+import { PortalShellSkeleton } from './PortalShellSkeleton'
 import { clearPageCache, getPageCache, setPageCache } from '@/lib/page-cache'
 
 type MemberInfo = {
@@ -318,7 +318,7 @@ export function PortalDataProvider({ children }: { children: React.ReactNode }) 
   if (authLoading || loading) {
     return (
       <PortalDataContext.Provider value={contextValue}>
-        <AuthSplash />
+        <PortalShellSkeleton />
       </PortalDataContext.Provider>
     )
   }

@@ -10,16 +10,23 @@ export const MAX_IMAGES = 3
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 
+/** timeline_posts の1行（保存時に DB から返る形） */
+export type PostRow = Pick<TimelinePost, 'id' | 'user_id' | 'content' | 'images' | 'category' | 'is_anonymous' | 'created_at' | 'updated_at'>
+
 type UsePostComposerArgs = {
   companyId: string | null
   user: User | null
-  fetchPosts: (offset?: number, append?: boolean) => Promise<void>
+  /** 選択が空のときに使う行動指針（1つしかないとき。複数なら空文字で、選んでもらう） */
+  defaultCategory: string
+  /** 保存できたときに、DB が返した行を渡す（一覧への反映は呼び出し側） */
+  onSaved: (saved: PostRow, isNew: boolean) => void
 }
 
-export function usePostComposer({ companyId, user, fetchPosts }: UsePostComposerArgs) {
+export function usePostComposer({ companyId, user, defaultCategory, onSaved }: UsePostComposerArgs) {
   // Post form
   const [formContent, setFormContent] = useState('')
-  const [formCategory, setFormCategory] = useState('')
+  const [selectedCategory, setFormCategory] = useState('')
+  const formCategory = selectedCategory || defaultCategory
   const [formAnonymous, setFormAnonymous] = useState(false)
   const [formImages, setFormImages] = useState<File[]>([])
   const [formImagePreviews, setFormImagePreviews] = useState<string[]>([])
@@ -122,7 +129,9 @@ export function usePostComposer({ companyId, user, fetchPosts }: UsePostComposer
     if (!companyId || !user || !formContent.trim() || !formCategory) return
 
     setPosting(true)
+    const isNew = !editingPostId
     try {
+      let savedPost: PostRow
       if (editingPostId) {
         // Edit existing post
         const newImageUrls = await uploadImages(editingPostId, formImages)
@@ -144,6 +153,7 @@ export function usePostComposer({ companyId, user, fetchPosts }: UsePostComposer
         if (!updateData || updateData.length === 0) {
           throw new Error('更新対象の投稿が見つかりません（権限不足の可能性があります）')
         }
+        savedPost = updateData[0] as PostRow
         toast.success('投稿を更新しました')
         setEditingPostId(null)
         setEditExistingImages([])
@@ -152,7 +162,7 @@ export function usePostComposer({ companyId, user, fetchPosts }: UsePostComposer
         const postId = crypto.randomUUID()
         const imageUrls = await uploadImages(postId, formImages)
 
-        const { error } = await supabase
+        const { data: inserted, error } = await supabase
           .from('timeline_posts')
           .insert({
             id: postId,
@@ -163,16 +173,18 @@ export function usePostComposer({ companyId, user, fetchPosts }: UsePostComposer
             is_anonymous: formAnonymous,
             images: imageUrls,
           })
+          .select()
+          .single()
 
         if (error) throw error
+        savedPost = inserted as PostRow
         toast.success('投稿しました')
       }
 
       // Reset form & close modal
       resetForm()
       setComposerOpen(false)
-      // Refresh posts
-      await fetchPosts()
+      onSaved(savedPost, isNew)
     } catch (err) {
       console.error('Post error:', err)
       const msg = err && typeof err === 'object' && 'message' in err ? (err as { message: string }).message : String(err)

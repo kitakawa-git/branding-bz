@@ -1,7 +1,7 @@
 // セルフサービス登録API
 // POST /api/signup
 // サービスロールキーを使用してAuth user + 企業 + admin_users + profiles を一括作成
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import { Resend } from 'resend'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { generateRandomSlug } from '@/lib/generate-slug'
@@ -218,7 +218,8 @@ export async function POST(request: NextRequest) {
     // superadmin へ承認依頼メール（失敗しても登録は成功扱い）。競合ドメイン一致は警告。
     const resendApiKey = process.env.RESEND_API_KEY
     const devEmail = process.env.SIGNUP_NOTIFICATION_EMAIL || process.env.CONTACT_NOTIFICATION_EMAIL
-    if (resendApiKey && devEmail) {
+    // 利用者を待たせないよう、応答を返した後に送る（after は応答後もサーバーレス関数を生かす）
+    if (resendApiKey && devEmail) after(async () => {
       try {
         const resend = new Resend(resendApiKey)
         const warn = competitorFlag
@@ -250,7 +251,7 @@ export async function POST(request: NextRequest) {
       } catch (emailError) {
         console.error('[Signup] 承認依頼メール送信エラー:', emailError)
       }
-    }
+    })
 
     return NextResponse.json({
       success: true,

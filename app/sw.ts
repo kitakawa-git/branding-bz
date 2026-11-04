@@ -21,6 +21,18 @@ const authBypass: RuntimeCaching = {
   handler: new NetworkOnly(),
 };
 
+// ── Supabase（REST・Auth 等）もネットワーク直行 ──
+// defaultCache の cross-origin ルール（NetworkFirst・10秒で打ち切り・最大32件）に任せると、
+// - 認証付きの応答がディスクに残る
+// - 通信が10秒を超えると古い応答が返る（投稿直後の取り直しに「投稿0件」の古い一覧が返り、空のままに見えた）
+// - 応答のたびにキャッシュと期限管理への書き込みが走り、一度に多くの通信を出す画面で全体が数秒待たされる
+// 公開ストレージの画像だけは従来どおりキャッシュしてよい。
+const supabaseBypass: RuntimeCaching = {
+  matcher: ({ url }) =>
+    url.hostname.endsWith(".supabase.co") && !url.pathname.startsWith("/storage/v1/object/public/"),
+  handler: new NetworkOnly(),
+};
+
 const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
   // 新SWを待機させず即時有効化する。
@@ -34,7 +46,7 @@ const serwist = new Serwist({
   navigationPreload: true,
   // 認証バイパスを先頭に。残りは Next.js 最適化済みの defaultCache
   // （静的資産=CacheFirst/SWR、公開ページHTML=NetworkFirst 等）に委ねる。
-  runtimeCaching: [authBypass, ...defaultCache],
+  runtimeCaching: [authBypass, supabaseBypass, ...defaultCache],
   // オフライン時、document ナビゲーションは /offline にフォールバック
   fallbacks: {
     entries: [
@@ -47,6 +59,23 @@ const serwist = new Serwist({
 });
 
 serwist.addEventListeners();
+
+// 以前の版が cross-origin キャッシュに残した Supabase の応答を消す（認証付きの内容をディスクに残さない）
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches.open("cross-origin").then(async (cache) => {
+      const keys = await cache.keys();
+      await Promise.all(
+        keys
+          .filter((req) => {
+            const url = new URL(req.url);
+            return url.hostname.endsWith(".supabase.co") && !url.pathname.startsWith("/storage/v1/object/public/");
+          })
+          .map((req) => cache.delete(req)),
+      );
+    }),
+  );
+});
 
 // ── Web Push（お知らせ等の通知）──
 // 送信ペイロード: { title, body, url }

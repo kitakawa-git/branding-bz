@@ -128,7 +128,8 @@ function freeConfig(plan: Plan): OnboardingConfig {
       },
     ],
     upsell: {
-      text: '登録した「らしさ」を、タイムラインやお知らせで日常に広げるのは Standard プランから。まずは登録を仕上げましょう。',
+      // Free で使えない機能だけを挙げる（lib/billing/entitlements.ts の FEATURE_MATRIX と揃える）
+      text: '社外に配るスマート名刺や、ガイドラインのPDF書き出しは Standard プランから。まずは登録を仕上げましょう。',
       href: '/plan',
     },
   }

@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { LogOut } from 'lucide-react'
+import { ArrowLeft, LogOut } from 'lucide-react'
 
 interface STPHeaderProps {
   onSignOut?: () => void
@@ -25,15 +25,23 @@ export function STPHeader({ onSignOut, showSignOut = false }: STPHeaderProps) {
         </Link>
 
         {showSignOut && onSignOut && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onSignOut}
-            className="text-gray-500 hover:text-gray-700"
-          >
-            <LogOut className="mr-1.5 h-4 w-4" />
-            ログアウト
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="sm" asChild className="text-gray-500 hover:text-gray-700">
+              <Link href="/portal" className="no-underline">
+                <ArrowLeft className="mr-1.5 h-4 w-4" />
+                ポータルへ戻る
+              </Link>
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onSignOut}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              <LogOut className="mr-1.5 h-4 w-4" />
+              ログアウト
+            </Button>
+          </div>
         )}
       </div>
     </header>

@@ -21,9 +21,14 @@ interface MatchedCompany {
 
 type RegistrationMode = 'new' | 'join'
 
+/** 「登録する」の応答を待つ上限と、「時間がかかっています」に切り替えるまでの時間 */
+const SIGNUP_TIMEOUT_MS = 30_000
+const SIGNUP_SLOW_NOTICE_MS = 5_000
+
 export default function SignupPage() {
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
+  const [slow, setSlow] = useState(false)
   const [checkingDomain, setCheckingDomain] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -130,9 +135,14 @@ export default function SignupPage() {
     if (!validateStep3()) return
 
     setLoading(true)
+    // 応答が無いまま押せない状態で止まらないよう打ち切る（打ち切り後にサーバー側で登録が済んでいる場合があるので、文言で案内する）
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), SIGNUP_TIMEOUT_MS)
+    const slowId = setTimeout(() => setSlow(true), SIGNUP_SLOW_NOTICE_MS)
     try {
       if (registrationMode === 'join' && selectedCompanyId) {
         const res = await fetch('/api/signup/join-company', {
+          signal: controller.signal,
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -151,6 +161,7 @@ export default function SignupPage() {
         setStep(4)
       } else {
         const res = await fetch('/api/signup', {
+          signal: controller.signal,
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, password, companyName, userName, position, department }),
@@ -167,8 +178,15 @@ export default function SignupPage() {
         setStep(4)
       }
     } catch (err) {
-      setError(`登録中にエラーが発生しました: ${err instanceof Error ? err.message : String(err)}`)
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        setError('サーバーからの応答がありませんでした。もう一度お試しください。「既に登録されています」と表示された場合は登録済みですので、承認の連絡をお待ちください。')
+      } else {
+        setError(`登録中にエラーが発生しました: ${err instanceof Error ? err.message : String(err)}`)
+      }
     } finally {
+      clearTimeout(timeoutId)
+      clearTimeout(slowId)
+      setSlow(false)
       setLoading(false)
     }
   }
@@ -430,7 +448,7 @@ export default function SignupPage() {
                     disabled={loading}
                     className="relative flex-1 h-12 rounded-full text-base font-semibold text-black bg-white overflow-hidden transition-transform hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100"
                   >
-                    {loading ? '登録中...' : registrationMode === 'join' ? '参加リクエストを送信' : '登録する'}
+                    {loading ? (slow ? '処理に時間がかかっています...' : '登録中...') : registrationMode === 'join' ? '参加リクエストを送信' : '登録する'}
                   </button>
                 </div>
               </>

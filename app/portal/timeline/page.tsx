@@ -13,7 +13,7 @@ import { PlanUpsell } from '@/components/billing/plan-gate'
 import { can } from '@/lib/billing/entitlements'
 import { useRegisterPortalSearch } from '@/components/portal/portal-search'
 import { PostProfile, TimelinePost } from './_components/PostCard'
-import { usePostComposer } from './_components/usePostComposer'
+import { usePostComposer, type PostRow } from './_components/usePostComposer'
 import { useTimelineComments } from './_components/useTimelineComments'
 import { PostComposer } from './_components/PostComposer'
 import { CategoryFilter } from './_components/CategoryFilter'
@@ -42,7 +42,8 @@ export default function PortalTimelinePage() {
   const categoriesRef = useRef<string[]>(cached?.categories ?? [])
   const [posts, setPosts] = useState<TimelinePost[]>(cached?.posts ?? [])
   const [loading, setLoading] = useState(!cached)
-  const [hasMore, setHasMore] = useState(true)
+  // 「もっと見る」は1ページぶん埋まっているときだけ（キャッシュ表示で取り直しを省く再訪時も同じ）
+  const [hasMore, setHasMore] = useState((cached?.posts.length ?? 0) >= PAGE_SIZE)
 
   // Filter
   const [filterCategory, setFilterCategory] = useState<string>('all')
@@ -52,7 +53,8 @@ export default function PortalTimelinePage() {
   // ============================================
   // Fetch posts
   // ============================================
-  const fetchPosts = useCallback(async (offset = 0, append = false) => {
+  // silent: 投稿直後の裏での取り直し。失敗しても表示中の一覧はそのままで、通知もしない
+  const fetchPosts = useCallback(async (offset = 0, append = false, silent = false) => {
     if (!companyId || !user?.id) return
 
     try {
@@ -63,9 +65,11 @@ export default function PortalTimelinePage() {
         .order('created_at', { ascending: false })
         .range(offset, offset + PAGE_SIZE - 1)
 
-      if (postsError || !postsData || postsData.length === 0) {
+      // 取得失敗を「0件」として扱わない（表示中の一覧を消さない）
+      if (postsError) throw postsError
+
+      if (!postsData || postsData.length === 0) {
         if (!append) setPosts([])
-        setLoading(false)
         setHasMore(false)
         return
       }
@@ -174,19 +178,51 @@ export default function PortalTimelinePage() {
       setHasMore(newPosts.length === PAGE_SIZE)
     } catch (err) {
       console.error('[Timeline] fetchPosts error:', err)
-      if (!append) setPosts([])
+      if (!silent) toast.error('投稿の取得に失敗しました。時間をおいて再読み込みしてください')
     } finally {
       setLoading(false)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [companyId, user?.id])
 
+  // 一覧を差し替え、ページキャッシュも揃える（ページを移動して戻っても同じ内容にする）
+  const commitPosts = useCallback((update: (prev: TimelinePost[]) => TimelinePost[]) => {
+    setPosts(prev => {
+      const next = update(prev)
+      setPageCache(cacheKey, { categories: categoriesRef.current, posts: next }, { persist: true })
+      return next
+    })
+  }, [cacheKey])
+
+  // 投稿できたら取り直しを待たずに一覧へ反映する（プロフィール等の残りは裏の取り直しで揃う）
+  const handlePostSaved = useCallback((saved: PostRow, isNew: boolean) => {
+    if (isNew) {
+      commitPosts(prev => [{
+        ...saved,
+        images: saved.images || [],
+        profile: profileName || profilePhotoUrl ? { name: profileName, photo_url: profilePhotoUrl, position: null } : null,
+        member_display_name: member?.display_name || null,
+        like_count: 0,
+        comment_count: 0,
+        is_liked: false,
+      }, ...prev])
+      // 別の行動指針で絞り込み中でも、いま投稿したものが隠れないようにする
+      setFilterCategory(cur => (cur === 'all' || cur === saved.category ? cur : 'all'))
+    } else {
+      commitPosts(prev => prev.map(p => (p.id === saved.id ? { ...p, ...saved, images: saved.images || [] } : p)))
+    }
+    void fetchPosts(0, false, true)
+  }, [commitPosts, fetchPosts, member?.display_name, profileName, profilePhotoUrl])
+
+  // 行動指針が1つだけ（未登録で「未分類」のみの場合を含む）なら、選ばなくても投稿できる
+  const defaultCategory = categories.length === 1 ? categories[0] : ''
+
   // 投稿フォーム（モーダル）: 状態・画像選択・投稿/編集処理
   const {
     formContent, setFormContent, formCategory, setFormCategory, formAnonymous, setFormAnonymous,
     formImages, formImagePreviews, posting, composerOpen, setComposerOpen, editingPostId, editExistingImages,
     fileInputRef, handleImageSelect, removeImage, removeExistingImage, handleSubmit, resetForm, startEdit,
-  } = usePostComposer({ companyId, user, fetchPosts })
+  } = usePostComposer({ companyId, user, defaultCategory, onSaved: handlePostSaved })
 
   // Image dialog
   const [dialogImage, setDialogImage] = useState<string | null>(null)
@@ -214,18 +250,13 @@ export default function PortalTimelinePage() {
       if (titles.length > 0) cats = titles
       setCategories(cats)
       categoriesRef.current = cats
-      // カテゴリが1つだけの場合は自動選択
-      if (cats.length === 1) {
-        setFormCategory(cats[0])
-      }
       // キャッシュが既に存在する場合、カテゴリを更新
       const existingCache = getPageCache<TimelineCache>(cacheKey)
       if (existingCache) {
         setPageCache(cacheKey, { ...existingCache, categories: cats }, { persist: true })
       }
     })
-  // setFormCategory は useState のセッター（参照は不変）。カスタムフック経由のため依存に明示
-  }, [companyId, cacheKey, setFormCategory])
+  }, [companyId, cacheKey])
 
   useEffect(() => {
     if (companyId && user?.id && !getPageCache<TimelineCache>(cacheKey)) {
@@ -267,7 +298,7 @@ export default function PortalTimelinePage() {
         return
       }
 
-      setPosts(prev => prev.filter(p => p.id !== deleteTargetId))
+      commitPosts(prev => prev.filter(p => p.id !== deleteTargetId))
       toast.success('投稿を削除しました')
     } catch (err) {
       console.error('Delete error:', err)
@@ -386,6 +417,7 @@ export default function PortalTimelinePage() {
       {/* Post Form (右下FAB + モーダル) */}
       <PostComposer
         categories={categories}
+        isAdmin={isAdmin}
         profileName={profileName}
         profilePhotoUrl={profilePhotoUrl}
         memberDisplayName={member?.display_name}
