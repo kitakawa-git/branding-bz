@@ -168,8 +168,9 @@
 
 **間欠遅延の主因が判明: DB のメモリ不足によるスワップ。** `/customer/v1/privileged/metrics` の実測で MemTotal 431MB（Nano 相当）、スワップ使用 約430〜590MB、起動以来のスワップ入出力 各約14億ページ。テスト負荷を止めた75秒でも swap in 98,103ページ（約380MB）・iowait 37%。実行計画がすべて shared hit の同じクエリが 265ms → 3,462ms に悪化し、主キー検索も1〜16秒かかる。ブラウザの CPU 処理は計0.2秒程度で主因ではない。
 
-- [ ] **未決（北川さん判断）: compute を Nano → Micro（1GB）へ。** 組織は Pro で、公式ドキュメントでは有料組織の Nano は Micro と同額。切替時に通常2分未満の停止あり。これが済むまで前後比較は DB の揺れに埋もれる。
-- [ ] **切替後に再計測**（ritz@include.bz は QA が実施）。
+- [x] **compute を Nano → Micro（1GB）に変更**（2026-11-04 20:22 JST・北川さん指示）。料金は変わらず（確認画面 `+$0.00 per month`）。本番APIの中断は約1分。
+- 遅い回線の再現（往復150ms・10Mbps・CPU 1/4、デモ会社、3回中央値）: `/portal` 3.2→2.5秒、`/portal/survey` 2.4→2.2秒、`/portal/market-survey` 2.7→2.4秒、`/portal/visuals` 2.2→1.8秒、`/portal/strategy` 6.0→1.9秒、`/portal/about` 2.2→1.8秒。
+- [ ] **ritz@include.bz での再計測は QA が実施**（リィツの回答11,760行はデモの条件では再現しない）。
 
 コード側の変更（`65248c7` `3bcda89`）:
 - 先読み（`next-router-prefetch`）では middleware の getUser を省略。
