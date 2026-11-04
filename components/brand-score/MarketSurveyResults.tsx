@@ -10,6 +10,10 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { Card, CardContent } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Progress } from '@/components/ui/progress'
+import { getRank } from '@/lib/brand-score/calculate-snapshot'
+import { getRankBadgeClass, getScoreColor, getScoreProgressColor } from '@/components/brand-score/score-style'
 import {
   ResponsiveContainer,
   RadarChart,
@@ -236,9 +240,17 @@ export function MarketSurveyResults({
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-4 text-center">
             <p className="mb-1 text-xs text-muted-foreground">市場浸透</p>
-            <span className="text-3xl font-bold text-green-600">
-              {marketScore !== null ? marketScore.toFixed(1) : '-'}
-            </span>
+            <div className="mb-2 flex items-center justify-center gap-2">
+              <span className={`text-3xl font-bold ${getScoreColor(marketScore)}`}>
+                {marketScore !== null ? marketScore.toFixed(1) : '-'}
+              </span>
+              {marketScore !== null && (
+                <Badge variant="outline" className={`text-xs font-bold ${getRankBadgeClass(getRank(marketScore))}`}>
+                  {getRank(marketScore)}
+                </Badge>
+              )}
+            </div>
+            <Progress value={marketScore ?? 0} className={`h-1.5 ${getScoreProgressColor(marketScore)}`} />
             {marketScore === null && (
               <p className="mt-2 text-[10px] leading-snug text-muted-foreground">
                 スコアを算出できた段階が3件未満です
@@ -273,12 +285,16 @@ export function MarketSurveyResults({
                         s?.status === 'scored'
                           ? isWeakest
                             ? 'text-orange-600'
-                            : 'text-green-600'
+                            : 'text-ds-app-accent'
                           : 'text-muted-foreground'
                       }`}
                     >
                       {s?.status === 'scored' ? s.score?.toFixed(1) : '—'}
                     </span>
+                    <Progress
+                      value={s?.status === 'scored' ? (s.score ?? 0) : 0}
+                      className={`h-1.5 mt-1.5 ${isWeakest ? '[&>div]:bg-orange-500' : '[&>div]:bg-ds-app-accent-soft'}`}
+                    />
                   </div>
                 )
               })}
