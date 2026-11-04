@@ -239,7 +239,7 @@ export function MarketSurveyResults({
       <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-[minmax(150px,1fr)_3fr]">
         <Card className="bg-[hsl(0_0%_97%)] border shadow-none">
           <CardContent className="p-4 text-center">
-            <p className="mb-1 text-xs text-muted-foreground">市場浸透</p>
+            <p className="mb-1 text-xs text-muted-foreground">総合</p>
             <div className="mb-2 flex items-center justify-center gap-2">
               <span className="text-3xl font-bold text-green-600">
                 {marketScore !== null ? marketScore.toFixed(1) : '-'}
