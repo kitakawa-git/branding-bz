@@ -3,11 +3,12 @@
 // STP分析ツール — セッション履歴一覧（認証後の入口）
 // 過去セッション（進行中・完了）から選んで再開、または新規作成。
 import { useEffect, useState, useCallback } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Plus, ArrowRight, Clock, CheckCircle2 } from 'lucide-react'
+import { Plus, ArrowLeft, ArrowRight, Clock, CheckCircle2 } from 'lucide-react'
 
 interface SessionSummary {
   id: string
@@ -89,8 +90,14 @@ export default function STPAppPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border px-6 py-4">
+      <header className="flex items-center justify-between gap-3 border-b border-border px-6 py-3">
         <span className="text-sm font-bold">branding.bz <span className="font-normal text-muted-foreground">STP分析ツール</span></span>
+        <Button variant="ghost" size="sm" asChild className="shrink-0 text-gray-500 hover:text-gray-700">
+          <Link href="/portal" className="no-underline">
+            <ArrowLeft className="mr-1.5 h-4 w-4" />
+            ポータルへ戻る
+          </Link>
+        </Button>
       </header>
 
       <div className="mx-auto max-w-2xl px-6 py-10">

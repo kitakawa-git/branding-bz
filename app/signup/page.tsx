@@ -460,8 +460,9 @@ export default function SignupPage() {
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-500/15 mb-4">
                   <Clock className="h-8 w-8 text-amber-400" />
                 </div>
+                {/* 承認者: 新規企業の登録は ID INC.（superadmin）、既存企業への参加はその企業の管理者。本文は各APIの message */}
                 <h2 className="text-lg font-bold text-white mb-2">
-                  参加リクエストを送信しました
+                  {registrationMode === 'join' ? '参加リクエストを送信しました' : '登録を受け付けました'}
                 </h2>
                 <p className="text-sm text-white/60 mb-6">
                   {success || '企業の管理者が承認するまでお待ちください。承認されるとログインできるようになります。'}
