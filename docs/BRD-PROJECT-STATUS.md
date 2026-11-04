@@ -5,8 +5,8 @@
 > Cowork: 直接読み書き
 > Claude Projects: ナレッジとしてアップロード（週1回推奨）
 
-**最終更新:** 2026-11-04（その27）
-**更新者:** Claude Code（2026-11-04 その27・/sync-status）
+**最終更新:** 2026-11-04（その28）
+**更新者:** Claude Code（2026-11-04 その28・/sync-status）
 
 **2026-09-23 のサマリ（その2・最新）:** **`element_relations` を自社の管理者・メンバーだけが読める形にした**（`4f92357`・本番 green）。未ログインの経路からの参照は0件（サーバー側はすべて service_role、ブラウザで読むのは superadmin 画面のみ）。⚠️ 外した直後に **anon の SELECT が0件ではなく権限エラーになった**＝`element_relations_superadmin_all` が PUBLIC 向けで、anon が実行権の無い `is_current_user_superadmin()` を評価していた。authenticated に絞って解消。実測: anon 0件／デモ企業の管理者・メンバー 2件／superadmin・service_role 42件。本番 REST に anon キーで問い合わせても `[]`。**棚卸しで `USING (true)` の SELECT が17表**。うち公開経路で使うのは6表、会社単位にすべきが9表。**さらに深刻な書き込み側**＝`companies`（INSERT/DELETE）・`profiles`（INSERT/UPDATE/DELETE）・`news`（INSERT/UPDATE/DELETE）・`value_propositions`（ALL）が、**ログインさえしていれば誰でも全行を書き換え・削除できる**。今回は塞いでいない（指示どおり一覧で止めた）。
 
@@ -163,6 +163,15 @@
 ---
 
 ## 3. 完了済み機能
+
+### 🆕 QA 再確認の残件（2026-11-04 その28・**push済み・green**）
+- **構築ツールLPのヘッダーのログイン** `1c0dd52`：`from` を付け、ログイン後にサービス選択画面を挟む。
+- **STP一覧に「ポータルへ戻る」** `2079c0c`：一覧だけ STPHeader を使わず独自ヘッダーだったため漏れていた。
+- **登録完了の見出し** `2079c0c`：新規企業でも「参加リクエストを送信しました」と出ていたのを「登録を受け付けました」に。
+- **仕様の整理**：「別の企業として新規登録」は新会社を pending で作成し、承認者は ID INC.（superadmin）固定。既存企業への参加のみ、その企業の管理者が承認。
+- **未対応（判断待ち）**：`/api/signup/check-domain` が pending の企業も候補に出す。参加を選ぶと、承認者がログインできず止まる。
+- **QAデータ（削除は北川さんの承認待ち）**：QAテスト株式会社（active・投稿2・セッション4・行動指針1）／QAテスト2株式会社（pending）。`mini_app_sessions` は companies への FK が無く、削除で残るので明示的に消す。
+- **チケット継続**：ポータルの間欠遅延（数秒〜18秒）は原因未特定。Supabase の CPU / Disk IO は未確認。
 
 ### 🆕 QA 不具合調査の対応（2026-11-04 その27・**push済み・green**）
 
