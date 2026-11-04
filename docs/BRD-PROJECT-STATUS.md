@@ -5,8 +5,8 @@
 > Cowork: 直接読み書き
 > Claude Projects: ナレッジとしてアップロード（週1回推奨）
 
-**最終更新:** 2026-11-04（その28）
-**更新者:** Claude Code（2026-11-04 その28・/sync-status）
+**最終更新:** 2026-11-04（その29）
+**更新者:** Claude Code（2026-11-04 その29・/sync-status）
 
 **2026-09-23 のサマリ（その2・最新）:** **`element_relations` を自社の管理者・メンバーだけが読める形にした**（`4f92357`・本番 green）。未ログインの経路からの参照は0件（サーバー側はすべて service_role、ブラウザで読むのは superadmin 画面のみ）。⚠️ 外した直後に **anon の SELECT が0件ではなく権限エラーになった**＝`element_relations_superadmin_all` が PUBLIC 向けで、anon が実行権の無い `is_current_user_superadmin()` を評価していた。authenticated に絞って解消。実測: anon 0件／デモ企業の管理者・メンバー 2件／superadmin・service_role 42件。本番 REST に anon キーで問い合わせても `[]`。**棚卸しで `USING (true)` の SELECT が17表**。うち公開経路で使うのは6表、会社単位にすべきが9表。**さらに深刻な書き込み側**＝`companies`（INSERT/DELETE）・`profiles`（INSERT/UPDATE/DELETE）・`news`（INSERT/UPDATE/DELETE）・`value_propositions`（ALL）が、**ログインさえしていれば誰でも全行を書き換え・削除できる**。今回は塞いでいない（指示どおり一覧で止めた）。
 
@@ -164,6 +164,24 @@
 
 ## 3. 完了済み機能
 
+### 🆕 ポータル速度の調査と改善（2026-11-04 その29・**push済み・green**）
+
+**間欠遅延の主因が判明: DB のメモリ不足によるスワップ。** `/customer/v1/privileged/metrics` の実測で MemTotal 431MB（Nano 相当）、スワップ使用 約430〜590MB、起動以来のスワップ入出力 各約14億ページ。テスト負荷を止めた75秒でも swap in 98,103ページ（約380MB）・iowait 37%。実行計画がすべて shared hit の同じクエリが 265ms → 3,462ms に悪化し、主キー検索も1〜16秒かかる。ブラウザの CPU 処理は計0.2秒程度で主因ではない。
+
+- [ ] **未決（北川さん判断）: compute を Nano → Micro（1GB）へ。** 組織は Pro で、公式ドキュメントでは有料組織の Nano は Micro と同額。切替時に通常2分未満の停止あり。これが済むまで前後比較は DB の揺れに埋もれる。
+- [ ] **切替後に再計測**（ritz@include.bz は QA が実施）。
+
+コード側の変更（`65248c7` `3bcda89`）:
+- 先読み（`next-router-prefetch`）では middleware の getUser を省略。
+- 初回は getSession で進め、getUser は3秒後に検証。失効は 401/403 でログインへ戻す（改ざん JWT で確認）。getUser は supabase の内部ロックを持つので、すぐ呼ぶと最初のデータ取得が待たされる。
+- `members` に会社とスローガンを埋め込み、最初の取得を2往復から1往復に。
+- 機能オフの会社ではタイムライン・KPI・お知らせを取りに行かない（タイムライン・KPI オフで7本削減）。
+- `/api/onboarding` の同時呼び出しを1本に。
+- closed サーベイの集計を `unstable_cache` でキャッシュ（`lib/brand-score/survey-score-cache.ts`）。サーベイ・設問の更新で無効化（デモ会社で即反映を確認）。キーにデプロイ SHA を含む。
+- 市場調査 API を並列化し、`?view=summary` で生セルを省略（デモ 87KB → 7KB）。
+
+市場調査の総合スコア欄（`df1ad60` `d59a42c` `951d38e`）: 見出しを「総合」にし、ランクバッジとバーをサーベイ結果に揃えた。色は市場調査の緑のまま。
+
 ### 🆕 QA 再確認の残件（2026-11-04 その28・**push済み・green**）
 - **構築ツールLPのヘッダーのログイン** `1c0dd52`：`from` を付け、ログイン後にサービス選択画面を挟む。
 - **STP一覧に「ポータルへ戻る」** `2079c0c`：一覧だけ STPHeader を使わず独自ヘッダーだったため漏れていた。
@@ -171,7 +189,7 @@
 - **仕様の整理**：「別の企業として新規登録」は新会社を pending で作成し、承認者は ID INC.（superadmin）固定。既存企業への参加のみ、その企業の管理者が承認。
 - **参加先の候補を承認済みの企業に限定** `e79eea3`：`check-domain` と `join-company` に `approval_status='active'` を追加。承認待ちの会社に参加すると、オーナーがログインできず止まり、却下時は参加者のアカウントも消えるため。
 - **QAデータは削除済み**（北川さんが SQL Editor で実行）：QAテスト／QAテスト2／QAテスト3 の3社、`mail.grokbot.com` の3アカウント、投稿2・セッション4・カラープロジェクト1・行動指針1。他テーブルの件数は削除前と同じ。
-- **チケット継続**：ポータルの間欠遅延（数秒〜18秒）は原因未特定。Supabase の CPU / Disk IO は未確認。
+- **チケット継続**：ポータルの間欠遅延は、その29 で DB のメモリ不足（スワップ）が主因と判明。
 
 ### 🆕 QA 不具合調査の対応（2026-11-04 その27・**push済み・green**）
 
