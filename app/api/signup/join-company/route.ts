@@ -47,11 +47,12 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 企業の存在確認
+    // 企業の存在確認。参加できるのは承認済みの企業だけ（check-domain の候補と同じ条件）
     const { data: company, error: companyCheckError } = await supabaseAdmin
       .from('companies')
       .select('id, name')
       .eq('id', companyId)
+      .eq('approval_status', 'active')
       .single()
 
     if (companyCheckError || !company) {

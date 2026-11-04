@@ -29,11 +29,13 @@ export async function POST(request: NextRequest) {
 
     const supabaseAdmin = getSupabaseAdmin()
 
-    // email_domain が一致する企業を検索
+    // email_domain が一致する企業を検索。候補は承認済みだけ
+    // （承認待ちの会社はオーナーがログインできず、参加リクエストを承認できない。却下時は参加者のアカウントも消える）
     const { data: companies, error } = await supabaseAdmin
       .from('companies')
       .select('id, name, logo_url')
       .eq('email_domain', domain)
+      .eq('approval_status', 'active')
 
     if (error) {
       console.error('[CheckDomain] DB検索エラー:', error.message)
