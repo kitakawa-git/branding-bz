@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import { sendGAEvent } from '@next/third-parties/google'
 import { Menu, X, ChevronDown, Target, UserCircle, Palette, Fingerprint, Ruler, type LucideIcon } from 'lucide-react'
@@ -33,6 +34,10 @@ const linkClass =
 export default function Nav() {
   const [open, setOpen] = useState(false)
   const [toolsOpen, setToolsOpen] = useState(false)
+  // 構築ツールのLPからのログインは、ログイン後にサービス選択画面を挟む（/portal/auth の from で分岐）
+  const pathname = usePathname()
+  const toolId = toolItems.some((t) => t.href === pathname) ? pathname.split('/').pop() : null
+  const loginHref = toolId ? `/portal/auth?from=${toolId}` : '/portal/auth'
 
   return (
     <header className="fixed inset-x-0 top-0 z-50">
@@ -106,7 +111,7 @@ export default function Nav() {
             資料請求
           </Link>
           <Link
-            href="/portal/auth"
+            href={loginHref}
             className="hidden whitespace-nowrap rounded-full px-2.5 py-1.5 text-sm font-medium text-white/70 transition-colors hover:text-white min-[360px]:inline sm:px-4"
           >
             {/* 360px 未満はロゴ＋2ボタン＋ハンバーガーが物理的に入らない
@@ -186,7 +191,7 @@ export default function Nav() {
         >
           資料請求
         </Link>
-        <Link href="/portal/auth" className="block rounded-xl px-3 py-2.5 text-base font-medium text-white/80 hover:bg-white/10">
+        <Link href={loginHref} className="block rounded-xl px-3 py-2.5 text-base font-medium text-white/80 hover:bg-white/10">
           ログイン
         </Link>
         <Link
