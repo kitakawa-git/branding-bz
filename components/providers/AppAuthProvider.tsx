@@ -1,7 +1,7 @@
 'use client'
 
 // 共通認証 Provider（責務はセッション管理のみ）
-// - getUser() を使う（サーバー検証 → 期限切れトークンを自動リフレッシュ）
+// - 初回は getSession() で進め、getUser()（サーバー検証）は裏で行う
 // - middleware と組み合わせて cookie ベースで動く
 // - アプリ固有データ取得は AdminDataProvider / PortalDataProvider に分離
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
@@ -44,28 +44,30 @@ export function AppAuthProvider({
       }
     }
 
-    // 初回は getSession ではなく getUser を使う（サーバー検証 → 期限切れトークンを自動リフレッシュ）
+    // 初回は cookie のセッションですぐ画面を進める（期限切れならここでリフレッシュされる）。
+    // getUser の往復を待つと、ポータルの全ページで最初のデータ取得がその分遅れる。
+    // ここで得た user は画面の出し分けと問い合わせの条件にしか使わない。
+    // データは RLS と API 側の検証が守るので、失効済みでも何も読めない。
     ;(async () => {
       try {
-        const { data } = await supabase.auth.getUser()
+        const { data: { session: current } } = await supabase.auth.getSession()
         if (cancelled) return
-        if (data.user) {
-          const { data: sessionData } = await supabase.auth.getSession()
-          if (cancelled) return
-          setSession(sessionData.session)
-          setUser(data.user)
-        } else {
+        setSession(current)
+        setUser(current?.user ?? null)
+        initialFetchedRef.current = true
+        setLoading(false)
+        if (!current) return
+
+        // 失効していないかは裏で確かめる。通信エラーではログアウトさせない
+        const { error } = await supabase.auth.getUser()
+        if (cancelled || !error) return
+        if (error.status === 401 || error.status === 403 || error.name === 'AuthSessionMissingError') {
           setSession(null)
           setUser(null)
         }
       } catch (err) {
         if (!cancelled) {
-          console.error('[AppAuthProvider] getUser 失敗:', err)
-          setSession(null)
-          setUser(null)
-        }
-      } finally {
-        if (!cancelled) {
+          console.error('[AppAuthProvider] セッション確認に失敗:', err)
           initialFetchedRef.current = true
           setLoading(false)
         }

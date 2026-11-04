@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { requireResourceCompany } from '@/lib/billing/guard'
+import { invalidateSurveyScore } from '@/lib/brand-score/survey-score-cache'
 
 type RouteContext = { params: Promise<{ id: string; questionId: string }> }
 
@@ -55,6 +56,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: updateError.message }, { status })
     }
 
+    invalidateSurveyScore(id)
     return NextResponse.json({ question: updated })
   } catch (err) {
     console.error('[Question PATCH] 予期しないエラー:', err)

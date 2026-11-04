@@ -147,61 +147,81 @@ export default function PortalTopPage() {
 
     const fetchAll = async () => {
       try {
+        // 機能をオフにしている会社では、そのデータを取りに行かない（画面に出ないのに往復だけ増える）
+        const noRows = Promise.resolve({ data: [] as never[] })
+        const noRow = Promise.resolve({ data: null })
+
         // === Group 1: base queries (parallel) ===
         const [missionRes, allUserPostsRes, userRecent3Res, companyRecent3Res, announcementsRes, announcementReadsRes, kpiGoalsRes, goalPeriodRes, goalPeriodsRes, conceptVisualRes] =
           await Promise.allSettled([
             fetchPhilosophy(supabase, companyId),
-            supabase
-              .from('timeline_posts')
-              .select('id, category, created_at')
-              .eq('company_id', companyId)
-              .eq('user_id', user.id)
-              .order('created_at', { ascending: false }),
-            supabase
-              .from('timeline_posts')
-              .select('id, content, category, created_at, is_anonymous')
-              .eq('company_id', companyId)
-              .eq('user_id', user.id)
-              .order('created_at', { ascending: false })
-              .limit(3),
-            supabase
-              .from('timeline_posts')
-              .select('id, user_id, content, category, created_at, is_anonymous')
-              .eq('company_id', companyId)
-              .order('created_at', { ascending: false })
-              .limit(3),
+            timelineEnabled
+              ? supabase
+                .from('timeline_posts')
+                .select('id, category, created_at')
+                .eq('company_id', companyId)
+                .eq('user_id', user.id)
+                .order('created_at', { ascending: false })
+              : noRows,
+            timelineEnabled
+              ? supabase
+                .from('timeline_posts')
+                .select('id, content, category, created_at, is_anonymous')
+                .eq('company_id', companyId)
+                .eq('user_id', user.id)
+                .order('created_at', { ascending: false })
+                .limit(3)
+              : noRows,
+            timelineEnabled
+              ? supabase
+                .from('timeline_posts')
+                .select('id, user_id, content, category, created_at, is_anonymous')
+                .eq('company_id', companyId)
+                .order('created_at', { ascending: false })
+                .limit(3)
+              : noRows,
             // 未読を3件出したいので多めに取ってから絞る。
             // limit(3) のまま既読を落とすと、新しい3件が既読なだけで
             // 未読が残っていても何も出なくなる
-            supabase
-              .from('announcements')
-              .select('id, title, category, created_at, content')
-              .eq('company_id', companyId)
-              .eq('is_published', true)
-              .order('created_at', { ascending: false })
-              .limit(20),
-            supabase
-              .from('announcement_reads')
-              .select('announcement_id')
-              .eq('user_id', user.id)
-              .eq('company_id', companyId),
-            supabase
-              .from('goal_kpis')
-              .select('id, goal_id, title, progress, weight, status, deadline')
-              .eq('company_id', companyId)
-              .eq('user_id', user.id)
-              .order('created_at', { ascending: false }),
-            supabase
-              .from('companies')
-              .select('goal_period')
-              .eq('id', companyId)
-              .single(),
-            supabase
-              .from('goal_periods')
-              .select('id, type, is_current, status')
-              .eq('company_id', companyId)
-              .eq('is_current', true)
-              .eq('status', 'active'),
+            announcementsEnabled
+              ? supabase
+                .from('announcements')
+                .select('id, title, category, created_at, content')
+                .eq('company_id', companyId)
+                .eq('is_published', true)
+                .order('created_at', { ascending: false })
+                .limit(20)
+              : noRows,
+            announcementsEnabled
+              ? supabase
+                .from('announcement_reads')
+                .select('announcement_id')
+                .eq('user_id', user.id)
+                .eq('company_id', companyId)
+              : noRows,
+            kpiVisible
+              ? supabase
+                .from('goal_kpis')
+                .select('id, goal_id, title, progress, weight, status, deadline')
+                .eq('company_id', companyId)
+                .eq('user_id', user.id)
+                .order('created_at', { ascending: false })
+              : noRows,
+            kpiVisible
+              ? supabase
+                .from('companies')
+                .select('goal_period')
+                .eq('id', companyId)
+                .single()
+              : noRow,
+            kpiVisible
+              ? supabase
+                .from('goal_periods')
+                .select('id, type, is_current, status')
+                .eq('company_id', companyId)
+                .eq('is_current', true)
+                .eq('status', 'active')
+              : noRows,
             supabase
               .from('brand_guidelines')
               .select('concept_visuals, concept_visual_url')
@@ -343,7 +363,7 @@ export default function PortalTopPage() {
                   .eq('company_id', companyId)
               : Promise.resolve({ data: [] as { auth_id: string; display_name: string; profile: { name: string } | { name: string }[] | null }[] }),
             // [4] 今期の目標。Group 1 にしか依存しないのでここに相乗りさせている
-            goalQuery.limit(1).maybeSingle(),
+            kpiVisible ? goalQuery.limit(1).maybeSingle() : noRow,
           ])
 
         // --- 目標と KPI（goalRes を読んでから） ---
@@ -495,8 +515,7 @@ export default function PortalTopPage() {
     }
 
     fetchAll()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [companyId, user?.id, cacheKey])
+  }, [companyId, user?.id, cacheKey, timelineEnabled, announcementsEnabled, kpiVisible])
 
   // ============================================
   // Loading state

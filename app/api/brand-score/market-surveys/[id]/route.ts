@@ -28,7 +28,7 @@ type CellRow = {
   source_row: number | null
 }
 
-export async function GET(_request: NextRequest, context: RouteContext) {
+export async function GET(request: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params
     // URL のリソース ID から会社を引き、呼び出し元の所属を照合する
@@ -39,22 +39,27 @@ export async function GET(_request: NextRequest, context: RouteContext) {
 
     const supabase = getSupabaseAdmin()
 
-    const { data: survey, error: surveyErr } = await supabase
-      .from('market_surveys')
-      .select('*')
-      .eq('id', id)
-      .single()
+    // 互いに独立な問い合わせは同時に投げる（直列だと往復の数だけ画面の待ち時間が伸びる）
+    const [
+      { data: survey, error: surveyErr },
+      { data: blocks, error: blockErr },
+      { data: mappings },
+      { data: scores },
+    ] = await Promise.all([
+      supabase.from('market_surveys').select('*').eq('id', id).single(),
+      supabase
+        .from('market_survey_blocks')
+        .select('*')
+        .eq('survey_id', id)
+        .order('block_index', { ascending: true }),
+      supabase.from('market_survey_stage_mappings').select('*').eq('survey_id', id),
+      supabase.from('market_survey_stage_scores').select('*').eq('survey_id', id),
+    ])
 
     if (surveyErr) {
       const status = surveyErr.code === 'PGRST116' ? 404 : 500
       return NextResponse.json({ error: surveyErr.message }, { status })
     }
-
-    const { data: blocks, error: blockErr } = await supabase
-      .from('market_survey_blocks')
-      .select('*')
-      .eq('survey_id', id)
-      .order('block_index', { ascending: true })
 
     if (blockErr) {
       return NextResponse.json({ error: blockErr.message }, { status: 500 })
@@ -78,11 +83,6 @@ export async function GET(_request: NextRequest, context: RouteContext) {
       }
       cells = data ?? []
     }
-
-    const [{ data: mappings }, { data: scores }] = await Promise.all([
-      supabase.from('market_survey_stage_mappings').select('*').eq('survey_id', id),
-      supabase.from('market_survey_stage_scores').select('*').eq('survey_id', id),
-    ])
 
     // 段階ごとの「自社＋競合」の並び。詳細画面のランキング表示に使う。
     // 母数の小さい競合は順位を歪めるので外す（段階スコアの benchmark と同じ基準）。
@@ -116,11 +116,15 @@ export async function GET(_request: NextRequest, context: RouteContext) {
         : null
     const extras = extractMarketExtras(blocks ?? [], cells, selfName)
 
+    // ポータルは集計済みの値しか描かない。生のセル（実例1,608行）は管理画面のときだけ返す
+    const summaryOnly = request.nextUrl.searchParams.get('view') === 'summary'
+
     return NextResponse.json({
       survey,
-      blocks: blocks ?? [],
-      cells,
-      mappings: mappings ?? [],
+      blockCount: (blocks ?? []).length,
+      ...(summaryOnly
+        ? {}
+        : { blocks: blocks ?? [], cells, mappings: mappings ?? [] }),
       ranking,
       selfName,
       extras,

@@ -33,6 +33,17 @@ type OnboardingResponse = {
  */
 const seenAllDoneByCompany = new Map<string, boolean>()
 
+// サイドバーとダッシュボードが同時に呼ぶので、取得中なら同じ応答を共有する
+let inflight: Promise<OnboardingResponse | null> | null = null
+function fetchOnboarding(): Promise<OnboardingResponse | null> {
+  inflight ??= fetch('/api/onboarding')
+    .then((r) => (r.ok ? r.json() : null))
+    .finally(() => {
+      inflight = null
+    })
+  return inflight
+}
+
 type CompanyLike = Parameters<typeof can>[0]
 
 export type OnboardingState = {
@@ -78,9 +89,8 @@ export function useOnboarding(
 
   useEffect(() => {
     let cancelled = false
-    fetch('/api/onboarding')
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d: OnboardingResponse | null) => {
+    fetchOnboarding()
+      .then((d) => {
         if (cancelled || !d) return
         setApplicable(!!d.applicable)
         setCompanyId(d.companyId ?? null)

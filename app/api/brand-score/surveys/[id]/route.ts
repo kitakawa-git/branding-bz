@@ -5,6 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { requireResourceCompany } from '@/lib/billing/guard'
+import { invalidateSurveyScore } from '@/lib/brand-score/survey-score-cache'
 import { fetchSurveyTargetProfileIds } from '@/lib/brand-score/survey-participants'
 
 type RouteContext = { params: Promise<{ id: string }> }
@@ -181,6 +182,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: updateError.message }, { status: 500 })
     }
 
+    invalidateSurveyScore(id)
     return NextResponse.json({ survey: updated })
   } catch (err) {
     console.error('[Survey PATCH] 予期しないエラー:', err)
@@ -239,6 +241,7 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: deleteError.message }, { status: 500 })
     }
 
+    invalidateSurveyScore(id)
     return NextResponse.json({ deleted: true })
   } catch (err) {
     console.error('[Survey DELETE] 予期しないエラー:', err)

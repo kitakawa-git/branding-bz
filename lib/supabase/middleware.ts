@@ -38,6 +38,13 @@ function timeoutSignal(): AbortSignal | undefined {
 }
 
 export async function updateSession(request: NextRequest) {
+  // サイドバーのリンクの先読み（1ページ開くごとに約25本）ではセッションを更新しない。
+  // 中身は静的なページの殻で、ここで getUser すると Auth への往復が同じ数だけ
+  // ページ本体のデータ取得と同時に走る。実際の遷移・API では従来どおり更新する
+  if (request.headers.has('next-router-prefetch')) {
+    return NextResponse.next({ request })
+  }
+
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(

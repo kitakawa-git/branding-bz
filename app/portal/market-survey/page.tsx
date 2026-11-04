@@ -121,7 +121,7 @@ export default function PortalMarketSurveyPage() {
       setResultLoading(true)
     }
     try {
-      const res = await fetch(`/api/brand-score/market-surveys/${surveyId}`)
+      const res = await fetch(`/api/brand-score/market-surveys/${surveyId}?view=summary`)
       if (latestRequest.current !== surveyId) return
       if (!res.ok) {
         // 前に選んでいた調査の結果を出したままにしない（この調査の保存分を出しているならそのまま）
@@ -134,7 +134,7 @@ export default function PortalMarketSurveyPage() {
         survey: data.survey ?? null,
         stageScores: data.stageScores ?? [],
         ranking: data.ranking ?? {},
-        blockCount: (data.blocks ?? []).length,
+        blockCount: data.blockCount ?? 0,
         extras: data.extras ?? null,
       }
       setSurvey(next.survey)

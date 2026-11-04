@@ -10,6 +10,7 @@ import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { fetchAllRows } from '@/lib/brand-score/fetch-all-rows'
 import { computeSurveyScores } from '@/lib/brand-score/calculate-snapshot'
 import {guardCompanyFeature, requireCompanyMember } from '@/lib/billing/guard'
+import { cachedSurveyScore } from '@/lib/brand-score/survey-score-cache'
 
 export async function GET(request: NextRequest) {
   try {
@@ -20,10 +21,11 @@ export async function GET(request: NextRequest) {
 
     // 呼び出し元がこの会社の人かを確かめる。company_id をクライアントから受けるので、
     // これが無いと他社の ID を渡すだけで中身が返る（プラン判定は所属の確認にならない）
-    const forbidden = await requireCompanyMember(companyId)
+    const [forbidden, denied] = await Promise.all([
+      requireCompanyMember(companyId),
+      guardCompanyFeature(companyId, 'brandScoreInner'),
+    ])
     if (forbidden) return forbidden
-
-    const denied = await guardCompanyFeature(companyId, 'brandScoreInner')
     if (denied) return denied
 
     const supabase = getSupabaseAdmin()
@@ -42,37 +44,43 @@ export async function GET(request: NextRequest) {
     for (const s of surveys) {
       const surveyId = s.id as string
 
-      // 回答は1サーベイで1000行を超える（実例 392人×32問=12,544）。
-      // PostgREST の既定上限で黙って切られるためページングで全件取る
-      const { data: responses } = await fetchAllRows<{
-        question_id: string
-        score: number
-      }>(() =>
-        supabase
-          .from('brand_survey_responses')
-          .select('question_id, score')
-          .eq('survey_id', surveyId)
-          .order('id')
+      const computed = await cachedSurveyScore(
+        { id: surveyId, status: s.status as string },
+        'trend',
+        async () => {
+          // 回答は1サーベイで1000行を超える（実例 392人×32問=12,544）。
+          // PostgREST の既定上限で黙って切られるためページングで全件取る
+          const { data: responses } = await fetchAllRows<{
+            question_id: string
+            score: number
+          }>(() =>
+            supabase
+              .from('brand_survey_responses')
+              .select('question_id, score')
+              .eq('survey_id', surveyId)
+              .order('id')
+          )
+          if (!responses || responses.length === 0) return null
+
+          const { data: questions } = await supabase
+            .from('brand_survey_questions')
+            .select('id, sort_order, reference_data')
+            .eq('survey_id', surveyId)
+            .eq('is_active', true)
+          if (!questions || questions.length === 0) return null
+
+          return computeSurveyScores(
+            responses,
+            questions.map((q) => ({
+              id: q.id as string,
+              sort_order: q.sort_order as number,
+              reference_data: q.reference_data as Record<string, unknown> | null,
+            }))
+          )
+        }
       )
-
-      if (!responses || responses.length === 0) continue
-
-      const { data: questions } = await supabase
-        .from('brand_survey_questions')
-        .select('id, sort_order, reference_data')
-        .eq('survey_id', surveyId)
-        .eq('is_active', true)
-
-      if (!questions || questions.length === 0) continue
-
-      const { score, stages } = computeSurveyScores(
-        responses,
-        questions.map((q) => ({
-          id: q.id as string,
-          sort_order: q.sort_order as number,
-          reference_data: q.reference_data as Record<string, unknown> | null,
-        }))
-      )
+      if (!computed) continue
+      const { score, stages } = computed
       if (score === null) continue
 
       points.push({

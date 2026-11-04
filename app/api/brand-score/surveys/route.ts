@@ -17,10 +17,11 @@ export async function GET(request: NextRequest) {
 
     // 呼び出し元がこの会社の人かを確かめる。company_id をクライアントから受けるので、
     // これが無いと他社の ID を渡すだけで中身が返る（プラン判定は所属の確認にならない）
-    const forbidden = await requireCompanyMember(companyId)
+    const [forbidden, denied] = await Promise.all([
+      requireCompanyMember(companyId),
+      guardCompanyFeature(companyId, 'innerSurvey'),
+    ])
     if (forbidden) return forbidden
-
-    const denied = await guardCompanyFeature(companyId, 'innerSurvey')
     if (denied) return denied
 
     const supabase = getSupabaseAdmin()

@@ -43,6 +43,18 @@ type PortalSnapshot = {
 }
 const snapshotKey = (userId: string) => `portal-provider-${userId}`
 
+type ProfileRow = { name: string; photo_url: string; slug: string; role_category: string | null }
+type MemberRow = {
+  id: string
+  company_id: string
+  display_name: string
+  email: string
+  profile: ProfileRow | ProfileRow[] | null
+  company: CompanyRecord | CompanyRecord[] | null
+}
+// 埋め込みは関係の張り方によって配列でも1件でも返る
+const firstOf = <T,>(v: T | T[] | null): T | null => (Array.isArray(v) ? v[0] ?? null : v)
+
 type PortalDataContextValue = {
   user: User | null
   companyId: string | null
@@ -153,11 +165,12 @@ export function PortalDataProvider({ children }: { children: React.ReactNode }) 
         resetFields()
       }
       try {
-        // member 取得と admin_users 取得を並列化
+        // member に会社とスローガンを埋め込んで1往復で取る。
+        // 以前は member → company の2段で、全ページの最初のスケルトンがその分長かった
         const [memberRes, adminRes] = await Promise.all([
           supabase
             .from('members')
-            .select('*, profile:profiles(name, photo_url, slug, role_category)')
+            .select(`*, profile:profiles(name, photo_url, slug, role_category), company:companies(${COMPANY_SELECT}, brand_guidelines(slogan))`)
             .eq('auth_id', user.id)
             .eq('is_active', true)
             .maybeSingle(),
@@ -170,7 +183,7 @@ export function PortalDataProvider({ children }: { children: React.ReactNode }) 
 
         if (cancelled) return
 
-        const memberData = memberRes.data
+        const memberData = memberRes.data as unknown as MemberRow | null
         if (!memberData) {
           // 退会・無効化された場合は、保存分も含めて消す
           clearPageCache(key)
@@ -187,11 +200,7 @@ export function PortalDataProvider({ children }: { children: React.ReactNode }) 
           email: memberData.email,
         })
 
-        const profileRaw = memberData.profile as
-          | { name: string; photo_url: string; slug: string; role_category: string | null }
-          | { name: string; photo_url: string; slug: string; role_category: string | null }[]
-          | null
-        const profile = Array.isArray(profileRaw) ? profileRaw[0] ?? null : profileRaw
+        const profile = firstOf(memberData.profile)
         setProfileName(profile?.name || memberData.display_name || null)
         setProfilePhotoUrl(profile?.photo_url || null)
         setProfileSlug(profile?.slug || null)
@@ -199,24 +208,13 @@ export function PortalDataProvider({ children }: { children: React.ReactNode }) 
 
         setIsAdmin(!!adminRes.data)
 
-        // companies と brand_guidelines を並列取得（companyId 確定後）
-        const [companyRes, guidelinesRes] = await Promise.all([
-          supabase
-            .from('companies')
-            .select(COMPANY_SELECT)
-            .eq('id', memberData.company_id)
-            .maybeSingle(),
-          supabase
-            .from('brand_guidelines')
-            .select('slogan')
-            .eq('company_id', memberData.company_id)
-            .maybeSingle(),
-        ])
+        const { brand_guidelines: guidelinesRaw, ...rec } = (firstOf(memberData.company) ?? {}) as CompanyRecord & {
+          brand_guidelines?: { slogan: string | null } | { slogan: string | null }[] | null
+        }
+        const hasCompany = !!firstOf(memberData.company)
+        const nextSlogan = firstOf(guidelinesRaw ?? null)?.slogan || null
 
-        if (cancelled) return
-
-        if (companyRes.data) {
-          const rec = companyRes.data as unknown as CompanyRecord
+        if (hasCompany) {
           setCompany({ ...rec, id: memberData.company_id })
           setCompanyName((rec.name as string) || null)
           setCompanyLogoUrl((rec.logo_url as string) || null)
@@ -224,11 +222,10 @@ export function PortalDataProvider({ children }: { children: React.ReactNode }) 
         }
         // brand_guidelines 行が無い企業でも必ず反映する。
         // 条件付きにすると行が無いとき setSlogan が呼ばれず、前企業の slogan が残る（別企業の値が漏れる）
-        setSlogan(guidelinesRes.data?.slogan || null)
+        setSlogan(nextSlogan)
 
         // 次回の再読込ですぐ表示できるよう保存（会社情報が取れたときだけ）
-        if (companyRes.data) {
-          const rec = companyRes.data as unknown as CompanyRecord
+        if (hasCompany) {
           setPageCache<PortalSnapshot>(
             key,
             {
@@ -237,7 +234,7 @@ export function PortalDataProvider({ children }: { children: React.ReactNode }) 
               companyLogoUrl: (rec.logo_url as string) || null,
               company: { ...rec, id: memberData.company_id },
               portalSubtitles: (rec.portal_subtitles as PortalSubtitles) || null,
-              slogan: guidelinesRes.data?.slogan || null,
+              slogan: nextSlogan,
               member: { id: memberData.id, display_name: memberData.display_name, email: memberData.email },
               profileName: profile?.name || memberData.display_name || null,
               profilePhotoUrl: profile?.photo_url || null,
