@@ -5,8 +5,8 @@
 > Cowork: 直接読み書き
 > Claude Projects: ナレッジとしてアップロード（週1回推奨）
 
-**最終更新:** 2026-11-04（その29）
-**更新者:** Claude Code（2026-11-04 その29・/sync-status）
+**最終更新:** 2026-11-05（その30）
+**更新者:** Claude Code（2026-11-05 その30・/sync-status）
 
 **2026-09-23 のサマリ（その2・最新）:** **`element_relations` を自社の管理者・メンバーだけが読める形にした**（`4f92357`・本番 green）。未ログインの経路からの参照は0件（サーバー側はすべて service_role、ブラウザで読むのは superadmin 画面のみ）。⚠️ 外した直後に **anon の SELECT が0件ではなく権限エラーになった**＝`element_relations_superadmin_all` が PUBLIC 向けで、anon が実行権の無い `is_current_user_superadmin()` を評価していた。authenticated に絞って解消。実測: anon 0件／デモ企業の管理者・メンバー 2件／superadmin・service_role 42件。本番 REST に anon キーで問い合わせても `[]`。**棚卸しで `USING (true)` の SELECT が17表**。うち公開経路で使うのは6表、会社単位にすべきが9表。**さらに深刻な書き込み側**＝`companies`（INSERT/DELETE）・`profiles`（INSERT/UPDATE/DELETE）・`news`（INSERT/UPDATE/DELETE）・`value_propositions`（ALL）が、**ログインさえしていれば誰でも全行を書き換え・削除できる**。今回は塞いでいない（指示どおり一覧で止めた）。
 
@@ -163,6 +163,12 @@
 ---
 
 ## 3. 完了済み機能
+
+### 🆕 入力サポートのバナーをブランドごとに切り替え（2026-11-05 その30・**push済み・green**）
+
+- スーパー管理のブランド詳細に「ポータルの表示 > 入力サポートのバナー」のスイッチを追加（`c12c774`）。押すとすぐ保存する。
+- `companies.setup_support_banner_enabled`（既定 true・適用済み）。ポータルのサイドバーの表示条件に追加。
+- 管理画面 `/admin/setup` のバナーは対象外。
 
 ### 🆕 ポータル速度の調査と改善（2026-11-04 その29・**push済み・green**）
 
