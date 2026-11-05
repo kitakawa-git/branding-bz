@@ -5,8 +5,8 @@
 > Cowork: 直接読み書き
 > Claude Projects: ナレッジとしてアップロード（週1回推奨）
 
-**最終更新:** 2026-11-05（その30）
-**更新者:** Claude Code（2026-11-05 その30・/sync-status）
+**最終更新:** 2026-11-05（その31）
+**更新者:** Claude Code（2026-11-05 その31・/sync-status）
 
 **2026-09-23 のサマリ（その2・最新）:** **`element_relations` を自社の管理者・メンバーだけが読める形にした**（`4f92357`・本番 green）。未ログインの経路からの参照は0件（サーバー側はすべて service_role、ブラウザで読むのは superadmin 画面のみ）。⚠️ 外した直後に **anon の SELECT が0件ではなく権限エラーになった**＝`element_relations_superadmin_all` が PUBLIC 向けで、anon が実行権の無い `is_current_user_superadmin()` を評価していた。authenticated に絞って解消。実測: anon 0件／デモ企業の管理者・メンバー 2件／superadmin・service_role 42件。本番 REST に anon キーで問い合わせても `[]`。**棚卸しで `USING (true)` の SELECT が17表**。うち公開経路で使うのは6表、会社単位にすべきが9表。**さらに深刻な書き込み側**＝`companies`（INSERT/DELETE）・`profiles`（INSERT/UPDATE/DELETE）・`news`（INSERT/UPDATE/DELETE）・`value_propositions`（ALL）が、**ログインさえしていれば誰でも全行を書き換え・削除できる**。今回は塞いでいない（指示どおり一覧で止めた）。
 
@@ -163,6 +163,15 @@
 ---
 
 ## 3. 完了済み機能
+
+### 🆕 ログインなしの公開読み取りを廃止（2026-11-05 その31・**本番適用済み・green**）
+
+- `/card/[slug]` を `lib/public-card.ts`（service_role・列指定・行の絞り込み）経由に変更（`4c0379c`）。未承認の会社の名刺は404、理念は `status='published'` のみ。
+- `20261105040609_remove_anon_select_brand_tables` を適用: `companies`・`brand_guidelines`・`brand_visuals`・`philosophy_elements` の anon 向け SELECT を削除し、自社用・superadmin 用を authenticated で追加。
+- **方針: 公開ブランドページを作るときも anon の SELECT を戻さず、`lib/public-card.ts` に必要な列だけ足す。**
+- [ ] **未対応: `profiles_public_card_select`。** anon が68人全員の18列（メール含む）を読める。コードからは未使用になった。削除は別途判断。
+- [ ] 名刺の404画面の HTTP ステータスは200のまま。原因は `app/loading.tsx`（全ページ共通の Suspense）。一時退避で404になることを確認。直すなら loading の置き場所の見直しが必要。
+- [ ] スーパー管理画面の実操作確認は北川さん。
 
 ### 🆕 入力サポートのバナーをブランドごとに切り替え（2026-11-05 その30・**push済み・green**）
 
@@ -978,7 +987,7 @@ update wiki_terms set status='published',  updated_at=now() where slug = '<slug>
 - [x] 上の書き込み4表を塞ぐ（最優先）→ 2026-10-06 その6 で対応（`20261006150000_rls_lock_write_four_tables`・本番適用済み）。`companies_update_superadmin_or_own_admin` も authenticated に変更済み（下の7ポリシーのうち1つ）
 - [ ] 会社単位にすべき9グループを塞ぐ（ブラウザから直接読んでいる画面があるので、画面ごとに読めることを確認しながら）→ 2026-10-06 その8 で `timeline_posts` / `timeline_comments` / `timeline_likes` / `brand_survey_responses` は対応済み。残りは `value_propositions`（その6で対応済み）以外の `survey_participants`・`brand_micro_feedbacks`・`card_views`・`card_events`・`brand_page_views`
 - [x] ~~🚨 **会社単位の残り5表は読み取りだけでなく書き込みも全開**（2026-10-06 に本番のポリシーで確認）: `survey_participants`・`brand_micro_feedbacks`・`card_views`・`card_events`・`brand_page_views` は、ログインしていれば全社分の SELECT・UPDATE・DELETE が可能（`USING (true)`）、INSERT は未ログインでも可。次に塞ぐ最優先~~ ✅ 2026-10-22 対応（`20261022120000_security_close_invite_storage_analytics`・本番適用済み。§3 の 2026-10-22 の項）
-- [ ] 名刺ページ用の5表は「名刺を公開している会社・行だけ」に絞る
+- [x] ~~名刺ページ用の5表は「名刺を公開している会社・行だけ」に絞る~~ → 2026-11-05 その31 で4表の anon SELECT を廃止。`profiles` は未対応
 - [ ] **同じ形の潜在バグが7ポリシー**＝PUBLIC 向けのまま `is_current_user_superadmin()` を呼ぶ（`companies_update_superadmin_or_own_admin`／`philosophy_elements_superadmin_all`／`copy_*` 5表）。いまは `USING (true)` の公開 SELECT が OR で先に通るか anon が触らないため表に出ていないだけで、公開 SELECT を外すと anon の読み取りが権限エラーになる。塞ぐときに一緒に authenticated へ
 
 ### 🆕 公開サイトの文言修正 GPTレビュー §1〜§9（**§1〜§8 本番反映済み**・2026-09-14 その4）

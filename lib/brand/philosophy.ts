@@ -6,8 +6,9 @@
 // 返り値は旧データ形（values={name,description,added_index} / action_guidelines={title,description,added_index}）に
 // 揃えてあるため、既存consumerは mission/vision/values/action_guidelines をそのまま差し替えられる。
 //
-// RLS: philosophy_elements は公開SELECT（card等の未認証表示用。brand_guidelines をミラー）。
-//   呼び出し側の supabase クライアント（anon/authenticated/service_role いずれでも可）をそのまま渡す。
+// RLS: philosophy_elements は authenticated の自社行（＋superadmin）だけ読める。anon は読めない。
+//   呼び出し側の supabase クライアント（ログインセッション／service_role）をそのまま渡す。
+//   未ログインの公開名刺は lib/public-card.ts が service_role で読む（status='published' のみ）。
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 export type PhilosophyValue = { name: string; description: string; added_index: number }
