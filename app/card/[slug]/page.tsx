@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import { createClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
 import { parseFontsFromDB, getCssFontFamily, getGoogleFontsUrl } from '@/lib/brand-fonts'
 import { splitBrandCopy } from '@/lib/brand-mvv'
@@ -13,8 +12,7 @@ import { Button } from '@/components/ui/button'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
 import { Mail, Phone, ExternalLink } from 'lucide-react'
-import { isFeatureEnabled } from '@/lib/constants/feature-toggles'
-import { fetchPhilosophy } from '@/lib/brand/philosophy'
+import { getPublicCard } from '@/lib/public-card'
 
 type Props = {
   params: Promise<{ slug: string }>
@@ -26,31 +24,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const noindex = { robots: { index: false, follow: false } } as const
 
   const { slug } = await params
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  if (!supabaseUrl || !supabaseKey) return { title: 'branding.bz', ...noindex }
+  // 名刺が非公開・存在しないときは、タブタイトルに氏名や会社名を出さない
+  const card = await getPublicCard(slug)
+  if (card.status !== 'ok') return { title: 'branding.bz', ...noindex }
 
-  const supabase = createClient(supabaseUrl, supabaseKey)
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('name, companies(name, logo_url, card_enabled)')
-    .eq('slug', slug)
-    .eq('card_enabled', true)
-    .single()
-
-  if (!profile) return { title: 'branding.bz', ...noindex }
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const companies = profile.companies as any
-  // 機能トグル: 会社のスマート名刺が無効なら、タブタイトルに氏名を出さない
-  if (!isFeatureEnabled(companies, 'card_enabled')) return { title: 'branding.bz', ...noindex }
-  const companyName = companies?.name as string | undefined
-  const companyLogoUrl = companies?.logo_url as string | undefined
+  const { profile, company } = card
   return {
     title: {
-      absolute: companyName ? `${profile.name} | ${companyName}` : (profile.name || 'branding.bz'),
+      absolute: company.name ? `${profile.name} | ${company.name}` : (profile.name || 'branding.bz'),
     },
-    icons: { icon: companyLogoUrl || '/icon.svg' },
+    icons: { icon: company.logo_url || '/icon.svg' },
     ...noindex,
   }
 }
@@ -101,48 +84,15 @@ function InstagramIcon() {
 export default async function CardPage({ params }: Props) {
   const { slug } = await params
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const card = await getPublicCard(slug)
 
-  if (!supabaseUrl || !supabaseKey) {
-    return (
-      <div className="p-10">
-        <h1>環境変数エラー</h1>
-        <p>URL: {supabaseUrl ? '設定済み' : '未設定'}</p>
-        <p>KEY: {supabaseKey ? '設定済み' : '未設定'}</p>
-      </div>
-    )
-  }
-
-  const supabase = createClient(supabaseUrl, supabaseKey)
-
-  const { data: profile, error } = await supabase
-    .from('profiles')
-    .select('*, companies(*)')
-    .eq('slug', slug)
-    .eq('card_enabled', true)
-    .single()
-
-  if (error) {
-    return (
-      <div className="p-10">
-        <h1>データ取得エラー</h1>
-        <p>slug: {slug}</p>
-        <p>エラー: {error.message}</p>
-      </div>
-    )
-  }
-
-  if (!profile) {
+  if (card.status === 'not_found') {
     notFound()
   }
 
-  const company = profile.companies
-  const companyId = profile.company_id
-
   // 機能トグル【門番ガード】: 会社のスマート名刺が無効なら、名刺の中身は一切表示せず
   // 「非公開」案内のみを表示する。slug・プロフィールは保持し、再オンで自動復活する。
-  if (!isFeatureEnabled(company as Record<string, unknown> | null, 'card_enabled')) {
+  if (card.status === 'disabled') {
     return (
       <div className="min-h-screen bg-white font-sans flex items-center justify-center p-6">
         <div className="text-center max-w-sm">
@@ -157,24 +107,8 @@ export default async function CardPage({ params }: Props) {
     )
   }
 
-  // ブランドデータをブランドテーブルから取得
-  const [guidelinesRes, visualsRes, phil] = await Promise.all([
-    supabase
-      .from('brand_guidelines')
-      .select('*')
-      .eq('company_id', companyId)
-      .single(),
-    supabase
-      .from('brand_visuals')
-      .select('*')
-      .eq('company_id', companyId)
-      .single(),
-    // ミッション・ビジョン・バリューは philosophy_elements 由来
-    fetchPhilosophy(supabase, companyId),
-  ])
-
-  const guidelines = guidelinesRes.data
-  const visuals = visualsRes.data
+  const { profile, company, guidelines, visuals, philosophy: phil } = card
+  const companyId = company.id
 
   // ブランドフォント
   const brandFonts = parseFontsFromDB(visuals?.fonts)
@@ -182,7 +116,7 @@ export default async function CardPage({ params }: Props) {
   const secondaryFontFamily = getCssFontFamily(brandFonts.secondary_font)
 
   // ブランドカラー
-  const palette = visuals?.color_palette as { brand_colors?: { hex: string }[]; secondary_colors?: { hex: string }[]; accent_colors?: { hex: string }[] } | null
+  const palette = visuals?.color_palette
   const primaryColor = palette?.brand_colors?.[0]?.hex || '#1a1a1a'
   const secondaryColor = palette?.secondary_colors?.[0]?.hex || '#666666'
   const headerTextColor = getContrastTextColor(primaryColor)
@@ -198,8 +132,8 @@ export default async function CardPage({ params }: Props) {
 
   // カバー写真: 個人のカバー写真があれば優先、なければ企業のコンセプトビジュアル（先頭画像）を適用
   const conceptVisualCover = (Array.isArray(guidelines?.concept_visuals) && guidelines.concept_visuals.length > 0)
-    ? (guidelines.concept_visuals[0] as string)
-    : (guidelines?.concept_visual_url as string | undefined) || ''
+    ? guidelines.concept_visuals[0]
+    : guidelines?.concept_visual_url || ''
   const coverImageUrl = profile.cover_image_url || conceptVisualCover
 
   // ミッション表示用テキスト
@@ -327,7 +261,7 @@ export default async function CardPage({ params }: Props) {
                 eventData={{ sns_type: sns.label.toLowerCase() }}
               >
                 <a
-                  href={sns.url}
+                  href={sns.url ?? undefined}
                   target="_blank"
                   rel="noopener noreferrer"
                   title={sns.label}
