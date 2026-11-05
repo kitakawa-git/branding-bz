@@ -24,6 +24,9 @@ import { MEMBER_ROLE_LABELS } from '@/lib/constants/member-roles'
 
 type Result = { email: string; ok: boolean; error?: string }
 
+// fileToRows が読める形式だけ。ドロップでは input の accept が効かないのでここで弾く
+const ACCEPTED_EXT = /\.(csv|xlsx)$/i
+
 export function MemberCsvImportDialog({
   open,
   onOpenChange,
@@ -41,6 +44,9 @@ export function MemberCsvImportDialog({
   const [parsing, setParsing] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [results, setResults] = useState<Result[] | null>(null)
+  const [dragActive, setDragActive] = useState(false)
+  // 子要素をまたぐたびに enter/leave が発火するので深さで数える（点滅防止）
+  const dragDepth = useRef(0)
 
   const reset = () => {
     setFileName(null)
@@ -65,6 +71,40 @@ export function MemberCsvImportDialog({
       setParsing(false)
     }
   }, [])
+
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault()
+    dragDepth.current += 1
+    setDragActive(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    dragDepth.current -= 1
+    if (dragDepth.current <= 0) {
+      dragDepth.current = 0
+      setDragActive(false)
+    }
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    dragDepth.current = 0
+    setDragActive(false)
+    if (parsing) return
+
+    const dropped = Array.from(e.dataTransfer.files)
+    if (dropped.length === 0) return
+    if (dropped.length > 1) {
+      toast.error('ファイルは1つずつ取り込んでください')
+      return
+    }
+    if (!ACCEPTED_EXT.test(dropped[0].name)) {
+      toast.error('.csv / .xlsx のみ取り込めます')
+      return
+    }
+    handleFile(dropped[0])
+  }
 
   const okRows = rows.filter(r => r.error === null)
   const ngRows = rows.filter(r => r.error !== null)
@@ -115,7 +155,13 @@ export function MemberCsvImportDialog({
         onOpenChange(v)
       }}
     >
-      <DialogContent className="w-[calc(100vw-2rem)] max-w-2xl overflow-x-hidden">
+      {/* 枠を少し外して落としてもブラウザがファイルを開かないように、ダイアログ全体で既定動作を止める。
+          このファイルにはパスワードが平文で入っている */}
+      <DialogContent
+        className="w-[calc(100vw-2rem)] max-w-2xl overflow-x-hidden"
+        onDragOver={e => e.preventDefault()}
+        onDrop={e => e.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle>CSVで一括登録</DialogTitle>
           <DialogDescription>
@@ -150,15 +196,23 @@ export function MemberCsvImportDialog({
             <button
               type="button"
               onClick={() => inputRef.current?.click()}
-              className="flex w-full flex-col items-center gap-2 rounded-xl border border-dashed p-6 text-center transition-colors hover:bg-muted/40"
+              onDragEnter={handleDragEnter}
+              onDragLeave={handleDragLeave}
+              onDragOver={e => e.preventDefault()}
+              onDrop={handleDrop}
+              className={`flex w-full flex-col items-center gap-2 rounded-xl border border-dashed p-6 text-center transition-colors ${
+                dragActive ? 'border-primary bg-primary/5' : 'hover:bg-muted/40'
+              }`}
             >
               {parsing ? (
                 <Loader2 size={20} className="animate-spin text-muted-foreground" />
               ) : (
-                <Upload size={20} className="text-muted-foreground" />
+                <Upload size={20} className={dragActive ? 'text-primary' : 'text-muted-foreground'} />
               )}
               <span className="text-sm text-foreground">
-                {fileName ?? 'CSV / Excel ファイルを選ぶ'}
+                {dragActive
+                  ? 'ここにドロップ'
+                  : fileName ?? 'ファイルをドラッグ＆ドロップ、またはクリックして選択'}
               </span>
               <span className="text-[11px] text-muted-foreground">
                 .csv / .xlsx に対応
