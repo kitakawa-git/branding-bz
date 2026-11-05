@@ -11,6 +11,8 @@ import { Label } from '@/components/ui/label'
 import { ArrowLeft, ArrowRight, Check, Eye } from 'lucide-react'
 import { Fab, FabButton } from '@/components/ui/fab'
 import { Button } from '@/components/ui/button'
+import { Switch } from '@/components/ui/switch'
+import { toast } from 'sonner'
 import { PLAN_LABELS, PLAN_VALUES, resolvePlanDisplay } from '@/lib/billing/plan-display'
 import { type ValuePropositionRef } from './_sections/ProofPointsSection'
 import OntologySummaryHub from './_sections/OntologySummaryHub'
@@ -27,6 +29,7 @@ type Company = {
   plan_started_at: string | null
   plan_expires_at: string | null
   is_demo: boolean | null
+  setup_support_banner_enabled: boolean
 }
 
 type Profile = {
@@ -104,6 +107,7 @@ export default function CompanyDetailPage() {
   const [editPlanExpiresAt, setEditPlanExpiresAt] = useState('') // yyyy-mm-dd。空＝無期限
   const [editIsDemo, setEditIsDemo] = useState(false)
   const [savingPlan, setSavingPlan] = useState(false)
+  const [savingBanner, setSavingBanner] = useState(false)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -284,6 +288,25 @@ export default function CompanyDetailPage() {
     }
   }
 
+  // 入力サポートのバナーの表示。押したらすぐ保存し、失敗したら元に戻す
+  const handleToggleSupportBanner = async (enabled: boolean) => {
+    setSavingBanner(true)
+    setCompany((prev) => (prev ? { ...prev, setup_support_banner_enabled: enabled } : prev))
+    // RLS で弾かれても error は null になるので、更新できた行で判定する
+    const { data, error } = await supabase
+      .from('companies')
+      .update({ setup_support_banner_enabled: enabled })
+      .eq('id', companyId)
+      .select('id')
+    if (error || !data?.length) {
+      setCompany((prev) => (prev ? { ...prev, setup_support_banner_enabled: !enabled } : prev))
+      toast.error('バナーの設定を保存できませんでした')
+    } else {
+      toast.success(enabled ? 'バナーを表示する設定にしました' : 'バナーを非表示にしました')
+    }
+    setSavingBanner(false)
+  }
+
   if (loading) {
     return (
       <p className="text-muted-foreground text-center p-10">
@@ -433,6 +456,30 @@ export default function CompanyDetailPage() {
           <Button type="button" onClick={handleSavePlan} disabled={savingPlan} size="sm">
             {savingPlan ? '保存中...' : 'プランを保存'}
           </Button>
+        </CardContent>
+      </Card>
+
+      {/* === ポータルの表示 === */}
+      <Card className="bg-muted/50 border shadow-none mb-6">
+        <CardContent className="p-6">
+          <h3 className="text-base font-bold text-foreground mb-4">ポータルの表示</h3>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <Label htmlFor="setup-support-banner" className="font-bold">
+                入力サポートのバナー
+              </Label>
+              <p className="text-xs text-muted-foreground mt-1 m-0">
+                ポータルのサイドバーに「入力にお困りですか？」を出します。オンでも、セットアップが未完了の管理者にしか表示されません。
+              </p>
+            </div>
+            <Switch
+              id="setup-support-banner"
+              checked={company?.setup_support_banner_enabled !== false}
+              onCheckedChange={handleToggleSupportBanner}
+              disabled={savingBanner}
+              className="shrink-0"
+            />
+          </div>
         </CardContent>
       </Card>
 

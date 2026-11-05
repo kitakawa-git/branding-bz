@@ -158,10 +158,11 @@ export function PortalSidebar() {
 
   // セットアップ中の管理者にだけ入力サポートの案内を出す。
   // hidden は「管理者でない・全ステップ完了」を含むので、これだけで条件を満たす。
-  // dismissed は見ない＝ポータルの「あとで」で消す対象ではない
+  // dismissed は見ない＝ポータルの「あとで」で消す対象ではない。
+  // スーパー管理のブランド詳細で、会社ごとにオフにできる
   const onboarding = useOnboarding(company)
   const setupOpen = !onboarding.loading && !onboarding.hidden
-  const showSupportBanner = setupOpen
+  const showSupportBanner = setupOpen && company?.setup_support_banner_enabled !== false
   // セットアップ中は管理画面の先頭タブが「セットアップの進捗」になる。
   // /admin は無条件に /admin/brand-score へ飛ばすので、ここで直接そのタブへ送る
   // （管理画面のサイドバー・タブは既に同じ出し分けをしている）
