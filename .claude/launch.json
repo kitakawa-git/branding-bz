@@ -4,8 +4,8 @@
     {
       "name": "dev",
       "runtimeExecutable": "/opt/homebrew/bin/node",
-      "runtimeArgs": ["/opt/homebrew/bin/npx", "next", "dev", "--port", "3004"],
-      "port": 3004,
+      "runtimeArgs": ["/opt/homebrew/bin/npx", "next", "dev", "--port", "3001"],
+      "port": 3001,
       "autoPort": false
     }
   ]
