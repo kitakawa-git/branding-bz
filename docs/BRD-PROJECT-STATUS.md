@@ -5,8 +5,8 @@
 > Cowork: 直接読み書き
 > Claude Projects: ナレッジとしてアップロード（週1回推奨）
 
-**最終更新:** 2026-11-05（その31）
-**更新者:** Claude Code（2026-11-05 その31・/sync-status）
+**最終更新:** 2026-11-24
+**更新者:** Claude Code（2026-11-24・**Next.js 16.4.2→16.4.6**（画像最適化の SVG すり抜け・Edge ルートの HttpOnly cookie 露出・use cache のキャッシュ漏れの修正を取り込み）＋ `npm audit fix`（互換範囲のみ・--force なし）で audit 27→3件（`9b476f2`・本番 green）。残り3件は本番に影響なし（brace-expansion は eslint 経由の開発時のみ、exceljs/uuid は修正案が 3.4.0 への降格のため見送り）。React 19.2.3 は据え置き（最新 19.3.1 はマイナー更新）。tsc 0・テスト 27・build green。本番で公開ページ・ログイン画面の 200・表示・コンソールエラーなしを確認（ログイン後の画面はセッション切れのため未確認）。lint は生成物 public/sw.js（gitignore）を除いて 127件。新ルール no-location-assign-relative-destination の警告2件（app/error.tsx・plan-required-toast.ts の意図的な全体再読み込み）は据え置き。前回更新者の記録: Claude Code（2026-11-05 その31・/sync-status）
 
 **2026-09-23 のサマリ（その2・最新）:** **`element_relations` を自社の管理者・メンバーだけが読める形にした**（`4f92357`・本番 green）。未ログインの経路からの参照は0件（サーバー側はすべて service_role、ブラウザで読むのは superadmin 画面のみ）。⚠️ 外した直後に **anon の SELECT が0件ではなく権限エラーになった**＝`element_relations_superadmin_all` が PUBLIC 向けで、anon が実行権の無い `is_current_user_superadmin()` を評価していた。authenticated に絞って解消。実測: anon 0件／デモ企業の管理者・メンバー 2件／superadmin・service_role 42件。本番 REST に anon キーで問い合わせても `[]`。**棚卸しで `USING (true)` の SELECT が17表**。うち公開経路で使うのは6表、会社単位にすべきが9表。**さらに深刻な書き込み側**＝`companies`（INSERT/DELETE）・`profiles`（INSERT/UPDATE/DELETE）・`news`（INSERT/UPDATE/DELETE）・`value_propositions`（ALL）が、**ログインさえしていれば誰でも全行を書き換え・削除できる**。今回は塞いでいない（指示どおり一覧で止めた）。
 
