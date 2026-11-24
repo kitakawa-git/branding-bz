@@ -5,8 +5,8 @@
 > Cowork: 直接読み書き
 > Claude Projects: ナレッジとしてアップロード（週1回推奨）
 
-**最終更新:** 2026-11-24
-**更新者:** Claude Code（2026-11-24・**Next.js 16.4.2→16.4.6**（画像最適化の SVG すり抜け・Edge ルートの HttpOnly cookie 露出・use cache のキャッシュ漏れの修正を取り込み）＋ `npm audit fix`（互換範囲のみ・--force なし）で audit 27→3件（`9b476f2`・本番 green）。残り3件は本番に影響なし（brace-expansion は eslint 経由の開発時のみ、exceljs/uuid は修正案が 3.4.0 への降格のため見送り）。React 19.2.3 は据え置き（最新 19.3.1 はマイナー更新）。tsc 0・テスト 27・build green。本番で公開ページ・ログイン画面の 200・表示・コンソールエラーなしを確認（ログイン後の画面はセッション切れのため未確認）。lint は生成物 public/sw.js（gitignore）を除いて 127件。新ルール no-location-assign-relative-destination の警告2件（app/error.tsx・plan-required-toast.ts の意図的な全体再読み込み）は据え置き。前回更新者の記録: Claude Code（2026-11-05 その31・/sync-status）
+**最終更新:** 2026-11-24（その2）
+**更新者:** Claude Code（2026-11-24 その2・**セキュリティ再点検**。10/27 以降の追加（goals・teams の API と RLS・トリガー、brand-score/signup の改修 API）は会社照合・管理者判定・同一会社の強制がそろっており問題なし。**🔴 profiles の anon 公開を廃止**: `profiles_public_card_select`（anon が card_enabled の行＝実質68人全員・16社のメール68件・電話13件を含む全18列を一覧で読めた）を migration `20261124025055_security_drop_anon_profiles_card_select` で削除・本番適用。適用前 anon で68行→適用後0行、`/card/[slug]` は従来どおり表示（lib/public-card.ts が service_role で読む）を確認。低（任意）: 閲覧・フィードバック系4表の anon INSERT（数値の水増しは可能・漏えいなし）、check-domain でドメインから企業名がわかる（仕様）。前回更新者の記録: Claude Code（2026-11-24・**Next.js 16.4.2→16.4.6**（画像最適化の SVG すり抜け・Edge ルートの HttpOnly cookie 露出・use cache のキャッシュ漏れの修正を取り込み）＋ `npm audit fix`（互換範囲のみ・--force なし）で audit 27→3件（`9b476f2`・本番 green）。残り3件は本番に影響なし（brace-expansion は eslint 経由の開発時のみ、exceljs/uuid は修正案が 3.4.0 への降格のため見送り）。React 19.2.3 は据え置き（最新 19.3.1 はマイナー更新）。tsc 0・テスト 27・build green。本番で公開ページ・ログイン画面の 200・表示・コンソールエラーなしを確認（ログイン後の画面はセッション切れのため未確認）。lint は生成物 public/sw.js（gitignore）を除いて 127件。新ルール no-location-assign-relative-destination の警告2件（app/error.tsx・plan-required-toast.ts の意図的な全体再読み込み）は据え置き。前回更新者の記録: Claude Code（2026-11-05 その31・/sync-status）
 
 **2026-09-23 のサマリ（その2・最新）:** **`element_relations` を自社の管理者・メンバーだけが読める形にした**（`4f92357`・本番 green）。未ログインの経路からの参照は0件（サーバー側はすべて service_role、ブラウザで読むのは superadmin 画面のみ）。⚠️ 外した直後に **anon の SELECT が0件ではなく権限エラーになった**＝`element_relations_superadmin_all` が PUBLIC 向けで、anon が実行権の無い `is_current_user_superadmin()` を評価していた。authenticated に絞って解消。実測: anon 0件／デモ企業の管理者・メンバー 2件／superadmin・service_role 42件。本番 REST に anon キーで問い合わせても `[]`。**棚卸しで `USING (true)` の SELECT が17表**。うち公開経路で使うのは6表、会社単位にすべきが9表。**さらに深刻な書き込み側**＝`companies`（INSERT/DELETE）・`profiles`（INSERT/UPDATE/DELETE）・`news`（INSERT/UPDATE/DELETE）・`value_propositions`（ALL）が、**ログインさえしていれば誰でも全行を書き換え・削除できる**。今回は塞いでいない（指示どおり一覧で止めた）。
 
@@ -169,7 +169,7 @@
 - `/card/[slug]` を `lib/public-card.ts`（service_role・列指定・行の絞り込み）経由に変更（`4c0379c`）。未承認の会社の名刺は404、理念は `status='published'` のみ。
 - `20261105040609_remove_anon_select_brand_tables` を適用: `companies`・`brand_guidelines`・`brand_visuals`・`philosophy_elements` の anon 向け SELECT を削除し、自社用・superadmin 用を authenticated で追加。
 - **方針: 公開ブランドページを作るときも anon の SELECT を戻さず、`lib/public-card.ts` に必要な列だけ足す。**
-- [ ] **未対応: `profiles_public_card_select`。** anon が68人全員の18列（メール含む）を読める。コードからは未使用になった。削除は別途判断。
+- [x] ~~**未対応: `profiles_public_card_select`。** anon が68人全員の18列（メール含む）を読める。コードからは未使用になった。削除は別途判断。~~ → 2026-11-24 削除・本番適用（anon 68行→0行）
 - [ ] 名刺の404画面の HTTP ステータスは200のまま。原因は `app/loading.tsx`（全ページ共通の Suspense）。一時退避で404になることを確認。直すなら loading の置き場所の見直しが必要。
 - [ ] スーパー管理画面の実操作確認は北川さん。
 
